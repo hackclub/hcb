@@ -8,8 +8,13 @@ module Api
       before_action :set_api_event, only: [:create]
 
       def create
+        amount = params[:amount_cents]
+        if params[:fee_covered] && @event.config.cover_donation_fees
+          amount = (params[:amount_cents] / (1 - @event.revenue_fee)).ceil
+        end
+
         @donation = Donation.new({
-                                   amount: params[:amount_cents],
+                                   amount:,
                                    event_id: @event.id,
                                    collected_by_id: current_user.id,
                                    in_person: true,
