@@ -69,7 +69,7 @@
             <span style="flex-grow: 1;">
               <% if Rails.cache.fetch("tx_#{pt.hcb_code}/card_grant", expires_in: 12.hours) { pt.local_hcb_code.card_grant? } && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
-              <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
+              <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
                   <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 <% end %>
@@ -196,7 +196,7 @@
   <% end %>
 </tr>
 
-<% if pt.stripe_card&.subledger&.present? || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
+<% if (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
   <% pretty_title = Rails.cache.fetch(["pt_#{pt.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
        pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
      end %>
