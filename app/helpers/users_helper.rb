@@ -114,8 +114,9 @@ module UsersHelper
     if user && viewer&.auditor?
       button = content_tag(
         :div,
-        content + inline_icon("down-caret", size: 18, class: "ml-0 -mr-1"),
-        class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
+        content,
+        class: "*:align-middle tooltipped tooltipped--n menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
+        "aria-label": "Right click for admin tools",
         data: {
           "menu-target": "toggle",
           action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
