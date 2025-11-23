@@ -115,13 +115,14 @@ module UsersHelper
       button = content_tag(
         :div,
         content,
-        class: "*:align-middle tooltipped tooltipped--n menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
-        "aria-label": "Right click for admin tools",
+        class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
           action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
+
+      aria_label += " | Right click for admin tools"
 
       # Menu content items
       menu_items = safe_join([
