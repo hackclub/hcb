@@ -280,7 +280,7 @@
   </section>
 <% end %>
 
-<% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && ct.local_hcb_code.card_grant? %>
+<% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } %>
   <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
     <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), external_link: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant)) %>
     <%= turbo_frame_tag "spending_#{ct.local_hcb_code.disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant, params: { frame: true }), loading: :lazy do %>
