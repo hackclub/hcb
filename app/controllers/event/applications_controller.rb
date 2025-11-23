@@ -5,7 +5,7 @@ class Event
     before_action :set_application, except: [:new, :create]
 
     layout "apply"
-    
+
     def new
       skip_authorization
     end

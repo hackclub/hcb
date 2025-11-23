@@ -21,8 +21,7 @@
       <script
         defer
         data-domain="hcb.hackclub.com"
-        src="https://plausible.io/js/script.pageview-props.tagged-events.js"
-      ></script>
+        src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
     <% end %>
 
     <% unless Rails.env.production? %>
@@ -70,14 +69,12 @@
         rel="icon"
         type="image/png"
         sizes="32x32"
-        href="/favicon-<%= Rails.env %>-32x32.png"
-      >
+        href="/favicon-<%= Rails.env %>-32x32.png">
       <link
         rel="icon"
         type="image/png"
         sizes="16x16"
-        href="/favicon-<%= Rails.env %>-16x16.png"
-      >
+        href="/favicon-<%= Rails.env %>-16x16.png">
     <% end %>
 
     <link rel="manifest" href="/site.webmanifest">
@@ -121,9 +118,7 @@
   </head>
 
   <body
-    [AST_ERB_YIELD_NODE]
-    class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>"
-  >
+    class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %> ">
     <%# LET THERE BE SNOW %>
     <% if winter? %>
       <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
@@ -133,40 +128,33 @@
     <%# ghosts and ghouls %>
     <% if fall? %>
       <img
-        src="https://cloud-iuqyduosh-hack-club-bot.vercel.app/0image.png"
-        alt="oOoOoOoOo"
-        class="flying-spook ghost"
-      >
+        src=" https: cloud-iuqyduosh-hack-club-bot.vercel.app 0image.png "
+        alt=" oOoOoOoOo "
+        class=" flying-spook ghost ">
       <img
-        src="https://cloud-fy14iajlp-hack-club-bot.vercel.app/0image__50_-removebg-preview.png"
-        alt="witch orpheus"
-        class="flying-spook"
-      >
+        src=" https: cloud-fy14iajlp-hack-club-bot.vercel.app 0image__50_-removebg-preview.png "
+        alt=" witch orpheus "
+        class=" flying-spook ">
     <% end %>
 
     <%= yield(:header) %>
 
     <main
-      class="container <%= content_for :container_class %> h-full"
-      style="<%= content_for :container_style %>"
-    >
-      <div class="flex flex-col h-full">
-        <div class="flex flex-col">
-          <div class="flex flex-row items-center justify-start p-6 gap-4">
+      class=" container <%= content_for :container_class %> h-full "
+      style="<%= content_for :container_style %>">
+      <div class=" flex flex-col h-full ">
+        <div class=" flex flex-col ">
+          <div class=" flex flex-row items-center justify-start p-6 gap-4 ">
             <%= render partial: "application/logo" %>
             <div>
-              <h2 class="m-0">Apply for HCB</h2>
+              <h2 class=" m-0 ">Apply for HCB</h2>
             </div>
           </div>
-          <div class="bg-smoke h-2">
-            <div class="bg-primary h-2" style="width: <%= @application&.completion_percentage || 0 %>%"></div>
-          </div>
-        </div>
-        <div class="p-6 flex-grow">
+          <div class=" bg-smoke h-2 ">
+            <div class=" bg-primary h-2 " style=" width: <%= @application&.completion_percentage || 0 %>
           <%= render "application/flash" unless @hide_flash %>
-          <%= yield %>
-        </div>
-        <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke mt-4">
+          <%= yield %>>
+        <div class=" p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke mt-4 ">
           <%= yield(:footer) %>
         </div>
       </div>
