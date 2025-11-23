@@ -2,13 +2,13 @@
 
 <div class="flex flex-row justify-between items-center width-100 gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
-      <%= render "search", form: %>
+      <%= render "events/search", form: %>
     <% if @tag %>
       <%= form.hidden_field :tag, value: @tag.label %>
     <% end %>
   <% end %>
 
-  <%= render partial: "filter_menu" unless filter_applied %>
+  <%= render partial: "events/filter_menu" unless filter_applied %>
 
   <% if @event.canonical_transactions.any? %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
@@ -100,7 +100,7 @@
 
 <% if filter_applied %>
   <div class="flex items-center filter-menu">
-    <%= render partial: "filter_menu" %>
+    <%= render partial: "events/filter_menu" %>
 
     <%= link_to event_ledger_path(@event), class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>

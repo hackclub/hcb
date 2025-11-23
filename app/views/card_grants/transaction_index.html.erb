@@ -1,23 +1,10 @@
 <%= turbo_frame_tag :card_grant_transaction_overview do %>
   <h2 class="heading mt4 pb1">Card grant transactions</h2>
 
-  <% if @hcb_codes.any? %>
-    <div class="table-container">
-      <table>
-        <tbody data-behavior="transactions">
-          <% @paginated_hcb_codes.each do |hcb_code| %>
-            <% if hcb_code.canonical_transactions.any? %>
-              <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true } %>
-            <% else %>
-              <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt %>
-            <% end %>
-          <% end %>
-        </tbody>
-      </table>
+  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, subledger: @subledger), loading: :eager do %>
+    <%# i'd like to have this show to improve the loading experience eventually but the ledger and filter code needs to be refactored more %>
+    <%# <%= render partial: "events/filter" %>
 
-      <%= paginate @paginated_hcb_codes %>
-    </div>
-  <% else %>
-    <%= blankslate "No transactions yet" %>
+    <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 <% end %>
