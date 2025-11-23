@@ -36,8 +36,6 @@ class OrganizerPosition < ApplicationRecord
   belongs_to :user
   belongs_to :event
 
-  before_save :cancel_cards_if_demoted_to_reader
-
   has_one :organizer_position_invite, required: true
   has_many :organizer_position_deletion_requests
   has_many :tours, as: :tourable, dependent: :destroy
@@ -77,21 +75,5 @@ class OrganizerPosition < ApplicationRecord
   end
 
   private
-
-  def cancel_cards_if_demoted_to_reader
-    return unless will_save_change_to_role?
-
-    old_role = role_before_last_save
-    new_role = self.role
-
-    return if old_role.nil?
-
-    if OrganizerPosition.roles[old_role] > OrganizerPosition.roles[new_role] &&
-       new_role == "reader"
-      stripe_cards.where(event: event).find_each do |card|
-        card.cancel! unless card.stripe_status == "canceled"
-      end
-    end
-  end
 
 end
