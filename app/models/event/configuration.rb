@@ -30,6 +30,7 @@ class Event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
+    validates :event, uniqueness: true
 
     after_save :create_or_destroy_monthly_announcement
 
