@@ -19,8 +19,8 @@ module Api
       def transactions
         authorize @event, :show_in_v4?
 
-        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(filters).run
-        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(filters).run
+        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(**filters).run
+        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(**filters).run
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
@@ -70,7 +70,7 @@ module Api
       end
 
       def filters
-        filter_params = params.require(:filters).permit(
+        filter_params = params.fetch(:filters, {}).permit(
           :search,
           :tag_id,
           :expenses,
