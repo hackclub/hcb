@@ -2,11 +2,13 @@ class CreateContracts < ActiveRecord::Migration[8.0]
   def up
     create_table :contracts do |t|
       t.string :type, null: false
-      t.string :aasm_state
+      t.string :aasm_state, null: false
       t.string :cosigner_email
       t.integer :external_service
+      t.string :external_template_id
       t.boolean :include_videos
       t.string :external_id
+      t.jsonb :prefills
 
       t.datetime :signed_at
       t.datetime :void_at

@@ -17,8 +17,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "pg_stat_statements"
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state"
@@ -625,7 +625,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   end
 
   create_table "contracts", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "contractable_id"
     t.string "contractable_type"
     t.string "cosigner_email"
@@ -634,7 +634,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.bigint "document_id"
     t.string "external_id"
     t.integer "external_service"
+    t.string "external_template_id"
     t.boolean "include_videos"
+    t.jsonb "prefills"
     t.datetime "signed_at"
     t.string "type", null: false
     t.datetime "updated_at", null: false
