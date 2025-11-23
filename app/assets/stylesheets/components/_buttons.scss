@@ -10,7 +10,7 @@ input[type='submit'],
     color: $snow;
   }
   color: $black;
-  cursor: pointer;
+  cursor: default;
   display: inline-flex;
   font-size: 1rem;
   font-weight: 600;
@@ -32,9 +32,7 @@ input[type='submit'],
   &:hover,
   &:focus,
   &[aria-expanded='true'] {
-    box-shadow:
-      var(--shadow-border-md),
-      inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
+    transition-duration: 0s;
     background: darken($white, 5%);
 
     [data-dark='true'] & {
@@ -97,6 +95,10 @@ input[type='submit'],
 
     &:active,
     &:focus {
+      transition:
+        box-shadow 0.125s ease-in-out,
+        background-color 0.125s ease-in-out,
+        color 0.125s ease-in-out;
       background-color: darken(map-get($palette, primary), 10%);
     }
   }
