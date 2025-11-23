@@ -1299,7 +1299,7 @@ class EventsController < ApplicationController
     @category = TransactionCategory.find_by(slug: params[:category])
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }

@@ -44,15 +44,15 @@
   <% elsif tx.local_hcb_code.donation? %>
     <% label = "Donation" %>
     <% icon = inline_icon "support" %>
-  <% elsif tx.local_hcb_code.disbursement&.special_appearance? %>
+  <% elsif local_assigns[:special_appearance].present? %>
     <% if tx.amount.negative? %>
-      <% label = "Outgoing #{tx.local_hcb_code.disbursement.special_appearance&.dig(:title) || "transfer"}" %>
+      <% label = "Outgoing #{local_assigns[:special_appearance]&.[]("title") || "transfer"}" %>
       <% icon = inline_icon "door-leave" %>
     <% else %>
-      <% label = tx.local_hcb_code.disbursement.special_appearance[:title] %>
-      <% icon = inline_icon(tx.local_hcb_code.disbursement.special_appearance&.dig(:icon) || "door-enter") %>
+      <% label = local_assigns[:special_appearance][:title] %>
+      <% icon = inline_icon(local_assigns[:special_appearance]&.[]("icon") || "door-enter") %>
     <% end %>
-  <% elsif tx.local_hcb_code.card_grant? %>
+  <% elsif Rails.cache.fetch("tx_#{tx.hcb_code}/card_grant", expires_in: 12.hours) { tx.local_hcb_code.card_grant? } %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
   <% elsif tx.local_hcb_code.disbursement? %>

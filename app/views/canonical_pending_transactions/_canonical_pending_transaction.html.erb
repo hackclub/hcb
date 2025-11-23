@@ -133,7 +133,7 @@
   <% end %>
 
   <% if local_assigns[:show_author_column] %>
-    <% cache "pt_#{instance}_author", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
+    <% cache "pt_#{pt.hcb_code}_author", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
       <% author = pt.local_hcb_code.author %>
       <% author_name = pt.local_hcb_code.author_name %>
       <td>
