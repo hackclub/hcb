@@ -8,7 +8,7 @@
     <% else %>
       They do not have an initial spending allowance given.
     <% end %>
-  <% elsif @invite.role == :manager %>
+  <% elsif @invite.role == :manager || @invite.initial_control_allowance_amount_cents.nil? %>
     They have an unlimited spending allowance.
   <% else %>
     They do not have an initial spending allowance given.
