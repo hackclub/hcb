@@ -234,7 +234,7 @@
                       data-action="dblclick->navigation#navigate"
                       data-navigation-location-param="<%= my_inbox_path %>"
                       data-navigation-frame-param="2">
-                  <%= ct.local_hcb_code.humanized_type %>
+                  <%= Rails.cache.fetch("ct_#{ct.hcb_code}/humanized_type", expires_in: 12.hours) { ct.local_hcb_code.humanized_type } %>
                   <span class="regular muted">for $-</span>
                 </span>
               </span>
