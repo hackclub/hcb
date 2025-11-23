@@ -12,7 +12,7 @@
 <% end %>
 
 <% if @event.invoices.none? %>
-  <%= render "callout", type: "info", title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
+  <%= render "invoices/callout", type: "info", title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
 <% else %>
   <p class="h5 line-height-3 muted mt0 mb2">
     Invoices can be paid with a card or bank transfer (ACH / Wire). If your
@@ -22,4 +22,4 @@
   </p>
 <% end %>
 
-<%= render "form", invoice: @invoice, sponsor: @sponsor %>
+<%= render "invoices/form", invoice: @invoice, sponsor: @sponsor %>

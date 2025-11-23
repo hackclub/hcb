@@ -25,7 +25,7 @@
 
 <% title "Transactions for #{@event.name}" %>
 
-<%= render "nav", selected: :transactions %>
+<%= render "events/nav", selected: :transactions %>
 
 <%# Demo mode callout thing %>
 <% if organizer_signed_in? && @event.demo_mode && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
@@ -139,10 +139,10 @@
     <span style="flex-grow: 1">Transactions</span>
   </h2>
 
-  <%= render "pinned_transactions" %>
+  <%= render "events/pinned_transactions" %>
 
   <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, request.query_parameters) do %>
-    <%= render partial: "filter" %>
+    <%= render partial: "events/filter" %>
 
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>

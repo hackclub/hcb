@@ -7,7 +7,7 @@
     <strong>Organization’s slug history:</strong> <%= event.slugs.pluck(:slug).join ", " %>
   <% end %>
 
-  <%= render partial: "admin_viewer", locals: { record: event } %>
+  <%= render partial: "events/settings/admin_viewer", locals: { record: event } %>
 
   <% admin_tool do %>
     <details>

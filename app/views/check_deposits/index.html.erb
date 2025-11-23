@@ -5,8 +5,8 @@
 <h1 class="heading">Deposit a check</h1>
 
 <div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
-  <%= render "new", event: @event %>
-  <%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
+  <%= render "check_deposits/new", event: @event %>
+  <%= render "check_deposits/callout", type: "info", title: "Check deposit basics", footer: :questions do %>
     <ul class="pl-4">
       <li>
         The check must be made out to

@@ -4,7 +4,7 @@
 
 <h1>Send a HCB transfer</h1>
 
-<%= render "callout", type: "warning", title: "Important info about transfers", footer: :questions do %>
+<%= render "disbursements/callout", type: "warning", title: "Important info about transfers", footer: :questions do %>
   <p>Transfers are reviewed by the HCB team and process within 24 hours on weekdays.</p>
 <% end %>
 
@@ -26,4 +26,4 @@
   <% end %>
 <% end %>
 
-<%= render "form", disbursement: @disbursement, event: @event, source_event: @source_event, destination_event: @destination_event, allowed_source_events: @allowed_source_events, allowed_destination_events: @allowed_destination_events %>
+<%= render "disbursements/form", disbursement: @disbursement, event: @event, source_event: @source_event, destination_event: @destination_event, allowed_source_events: @allowed_source_events, allowed_destination_events: @allowed_destination_events %>

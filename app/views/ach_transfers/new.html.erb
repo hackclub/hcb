@@ -4,7 +4,7 @@
 
 <h1>Send an ACH transfer</h1>
 
-<%= render "callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
+<%= render "ach_transfers/callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
   <ul>
     <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
     <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
@@ -17,4 +17,4 @@
   <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
 <% end %>
 
-<%= render "form", ach_transfer: @ach_transfer %>
+<%= render "ach_transfers/form", ach_transfer: @ach_transfer %>

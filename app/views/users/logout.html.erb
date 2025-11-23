@@ -3,7 +3,7 @@
 <% @return_to = root_path if params[:error] == "unauthorised_card_grant" %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Hack Club" do %>
+  <%= render "users/header", label: "Hack Club" do %>
     Sign in to HCB
   <% end %>
   <%= render "logins/badge", user: current_user %>

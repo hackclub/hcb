@@ -3,7 +3,7 @@
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <div class="my-auto">
-    <%= render "header", label: "Hack Club" do %>
+    <%= render "logins/header", label: "Hack Club" do %>
       Sign <%= params[:signup] ? "up for" : "in to" %> HCB
     <% end %>
     <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
@@ -26,6 +26,6 @@
       <%= link_to "Sign in another way", choose_login_preference_logins_path(return_to: @return_to), class: "display-none block mt2 no-underline", data: { "webauthn-auth-target" => "loginCode" } %>
     <% end %>
   </div>
-  <%= render partial: "environment_banner" %>
+  <%= render partial: "logins/environment_banner" %>
 </div>
-<%= render partial: "footer", locals: { whats_hcb: true } %>
+<%= render partial: "logins/footer", locals: { whats_hcb: true } %>
