@@ -1,6 +1,6 @@
 <% title "Transfer to #{@disbursement.event.name}" %>
 <% page_sm %>
-<% render "events/nav" %>
+<%= render "events/nav" %>
 
 <% admin_tool("mt3") do %>
   <%= link_to "All disbursements", disbursements_admin_index_path, class: "breadcrumb" %>

@@ -2,7 +2,6 @@
 <% page_md %>
 <% auto_discover_feed(@event) %>
 <%= render "events/nav", selected: :announcements %>
-<%= render "followers_modal", event_follows: @event.event_follows %>
 
 <h1 class="flex heading items-center">
   <span class="flex-grow flex items-center flex-1">
@@ -10,7 +9,9 @@
     <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
       <%= inline_icon "rss", size: 30 %>
     <% end %>
-    <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
+    <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
+    <%= render "followers_modal", event_follows: @event.event_follows if show_followers_modal %>
+    <% if show_followers_modal %>
       <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
         <%= inline_icon "person", size: 20 %>
         <%= pluralize(@event.followers.count, "follower") %>

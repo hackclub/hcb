@@ -11,6 +11,7 @@
 #  category_lock              :string
 #  email                      :string           not null
 #  instructions               :text
+#  invite_message             :string
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
@@ -71,6 +72,7 @@ class CardGrant < ApplicationRecord
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
+  before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
@@ -92,7 +94,7 @@ class CardGrant < ApplicationRecord
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_recipient, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
   scope :expires_on, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') = ?", date) }
 
@@ -191,7 +193,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
   end
 
   def expire!
@@ -332,6 +334,16 @@ class CardGrant < ApplicationRecord
 
   def send_email
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
+  end
+
+  def set_defaults
+    # If it's blank, allow it to continue being blank. This likely means the
+    # user explicitly cleared the field in the UI.
+    # However, if it's `nil`, then use the default from the setting. The field
+    # was likely left unset via the API.
+    if self.invite_message.nil?
+      self.invite_message = setting.invite_message
+    end
   end
 
 end
