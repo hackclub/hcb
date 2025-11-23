@@ -13,7 +13,7 @@ class Announcement
         # announcements that have block with data will be promoted to drafts in this job.
 
         if announcement.template_draft? && announcement.blocks.any?(&:empty?)
-          AnnouncementMailer.with(announcement:).canceled.deliver_now
+          AnnouncementMailer.with(announcement:).skipped.deliver_now
         else
           if announcement.template_draft?
             announcement.mark_draft!
