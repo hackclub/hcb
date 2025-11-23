@@ -8,8 +8,10 @@
     <% else %>
       They do not have an initial spending allowance given.
     <% end %>
-  <% else %>
+  <% elsif @invite.role == :manager %>
     They have an unlimited spending allowance.
+  <% else %>
+    They do not have an initial spending allowance given.
   <% end %>
 </p>
 
