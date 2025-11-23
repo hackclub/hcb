@@ -31,7 +31,9 @@
       <%= inline_icon "checkmark" %>
     </td>
   <% end %>
-  <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% cache(["pt_#{pt.hcb_code}", "icon", local_assigns[:authorless], defined?(selectable) && selectable], expires_in: 12.hours) do %>
+    <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% end %>
   <td>
     <%= format_date pt.created_at %>
   </td>

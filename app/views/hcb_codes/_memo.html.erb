@@ -30,8 +30,9 @@
         <% end %>
 
     <% else %>
-      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : url_for(hcb_code) %>
-      <% modal = hcb_code.card_grant? ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
+      <% card_grant = Rails.cache.fetch("tx_#{hcb_code.hcb_code}/card_grant", expires_in: 12.hours) { hcb_code.card_grant? } %>
+      <% details_link = card_grant ? spending_card_grant_path(hcb_code.disbursement.card_grant) : url_for(hcb_code) %>
+      <% modal = card_grant ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
               data-controller="navigation"

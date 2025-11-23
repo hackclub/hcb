@@ -526,7 +526,7 @@ class HcbCode < ApplicationRecord
   end
 
   def receipts
-    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
   end
