@@ -16,12 +16,7 @@
         <%= inline_icon "person", size: 20 %>
         <%= pluralize(@event.followers.count, "follower") %>
       <% end %>
-      <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
-        <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
-          <%= inline_icon "person", size: 20 %>
-          <%= pluralize(@event.followers.count, "follower") %>
-        <% end %>
-      <% end %>
+    <% end %>
     </span>
   </span>
 

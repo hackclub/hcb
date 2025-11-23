@@ -92,7 +92,7 @@
       <% if can_change_role %>
         <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
           <% OrganizerPositionInvite.roles.keys.each do |role| %>
-            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), class: "#{'menu__action--active' if organizer_position_invite.role == role}", data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), class: ("menu__action--active" if organizer_position_invite.role == role).to_s, data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
               <%= role.humanize %>
             <% end %>
           <% end %>
