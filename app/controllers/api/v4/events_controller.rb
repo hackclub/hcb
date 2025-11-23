@@ -20,10 +20,7 @@ module Api
         authorize @event, :show_in_v4?
 
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(filters).run
-        TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @settled_transactions, event: @event).run!
-
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(filters).run
-        PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: @pending_transactions, event: @event).run!
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
