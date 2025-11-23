@@ -781,8 +781,7 @@ class Event < ApplicationRecord
   end
 
   def airtable_record
-    # ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
-    {}
+    ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
   end
 
   def default_stripe_card_personalization_design
