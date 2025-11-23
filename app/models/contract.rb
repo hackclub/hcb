@@ -61,7 +61,7 @@ class Contract < ApplicationRecord
     event :mark_signed do
       transitions from: [:pending, :sent], to: :signed
       after do
-        contractable.on_contract_signed
+        contractable.on_contract_signed(self)
       end
     end
 
@@ -69,7 +69,7 @@ class Contract < ApplicationRecord
       transitions from: [:pending, :sent], to: :voided
       after do
         archive_on_docuseal!
-        contractable.on_contract_voided
+        contractable.on_contract_voided(self)
       end
     end
   end

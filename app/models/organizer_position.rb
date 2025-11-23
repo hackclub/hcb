@@ -45,6 +45,8 @@ class OrganizerPosition < ApplicationRecord
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
 
+  has_one :contract, required: false
+
   alias_attribute :signee, :is_signee
 
   def tourable_options

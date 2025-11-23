@@ -223,18 +223,24 @@ class OrganizerPositionInvite < ApplicationRecord
     event.plan.contract_docuseal_template_id
   end
 
-  def on_contract_signed
-    deliver
+  def on_contract_signed(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      deliver
 
-    # Unfreeze the event if this is the first signed contract
-    if event.contracts.signed.count == 1
-      event.update!(financially_frozen: false)
+      # Unfreeze the event if this is the first signed contract
+      if event.contracts.signed.count == 1
+        event.update!(financially_frozen: false)
+      end
+
+      organizer_position&.update!(contract:)
     end
   end
 
-  def on_contract_voided
-    update(is_signee: false)
-    organizer_position&.update(is_signee: false)
+  def on_contract_voided(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      update(is_signee: false)
+      organizer_position&.update(is_signee: false, contract: nil)
+    end
   end
 
   private
