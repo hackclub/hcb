@@ -25,20 +25,6 @@
   <% end %>
 
   <% if policy(@event).can_invite_user? %>
-    <action type="button" class="pop menu__toggle" data-behavior="menu_toggle" aria-expanded="false" tabindex="0">
-      <%= inline_icon "link" %>
-      <div class="menu__content" data-behavior="menu_content">
-        <%= link_to event_invite_links_path(event_id: @event.slug),
-          data: { behavior: "modal_trigger", modal: "view_invite_links" } do %>
-          View invite links
-        <% end %>
-        <%= link_to new_event_invite_link_path(@event),
-          data: { behavior: "modal_trigger", modal: "new_invite_link" } do %>
-          Create new invite link
-        <% end %>
-      </div>
-    </action>
-
     <%= link_to new_event_organizer_position_invite_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite_member" }, disabled: !organizer_signed_in?(as: :manager) do %>
       <%= inline_icon "member-add" %>
       Invite
@@ -88,7 +74,7 @@
         <th>Name</th>
         <th>Role</th>
         <th>Contact</th>
-        <th></th>
+        <th><%# spending controls and remove buttons %></th>
       </tr>
     </thead>
     <tbody>
@@ -190,19 +176,6 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
     <%= modal_header "Invite a team member" %>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
-  </section>
-<% end %>
-
-<% if policy(@event).can_invite_user? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="view_invite_links">
-    <%= modal_header "Active invite links" %>
-
-    <%= render "organizer_position_invite/links/link_list", event: @event, invite_links: @invite_links %>
-  </section>
-
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new_invite_link">
-    <%= modal_header "New invite link" %>
-
-    <%= render "organizer_position_invite/links/form", event: @event %>
+    <%= render "invite_links_section", event: @event, invite_links: @invite_links %>
   </section>
 <% end %>
