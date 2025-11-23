@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1693,6 +1693,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   end
 
   create_table "organizer_positions", force: :cascade do |t|
+    t.bigint "contract_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
     t.bigint "event_id"
@@ -1702,6 +1703,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.integer "sort_index"
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id"
+    t.index ["contract_id"], name: "index_organizer_positions_on_contract_id"
     t.index ["event_id"], name: "index_organizer_positions_on_event_id"
     t.index ["user_id"], name: "index_organizer_positions_on_user_id"
   end
@@ -2735,6 +2737,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   add_foreign_key "organizer_position_spending_control_allowances", "organizer_position_spending_controls"
   add_foreign_key "organizer_position_spending_control_allowances", "users", column: "authorized_by_id"
   add_foreign_key "organizer_position_spending_controls", "organizer_positions"
+  add_foreign_key "organizer_positions", "contracts"
   add_foreign_key "organizer_positions", "events"
   add_foreign_key "organizer_positions", "users"
   add_foreign_key "payment_recipients", "events"
