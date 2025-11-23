@@ -242,7 +242,7 @@ class EventsController < ApplicationController
       @mock_total = @transactions.sum(&:amount_cents)
     end
 
-    render layout: false
+    render layout: (!turbo_frame_request? && admin_signed_in?)
   end
 
   def balance_by_date
