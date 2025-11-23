@@ -185,7 +185,7 @@ export default class extends Controller {
     if (this.enabledValue && !this.lockedValue) {
       this.lightboxTarget.style.display = 'block'
       this.cardTarget.style.position = 'relative'
-      this.cardTarget.style.zIndex = '2001'
+      this.cardTarget.style.zIndex = '11'
       this.lightboxTarget.addEventListener('click', e => {
         e.preventDefault()
         this.formTarget.requestSubmit()
