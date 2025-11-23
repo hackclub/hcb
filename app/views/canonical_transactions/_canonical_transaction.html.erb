@@ -133,7 +133,12 @@
       <% end %>
       <% if ct.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
-        <%= list_badge_for ct.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?(event, type), required: ct.local_hcb_code.missing_receipt?(event, type) %>
+        <% receipts_count = if ct.local_hcb_code.reimbursement_expense_payout?
+                              Rails.cache.fetch("ct_#{ct.hcb_code}/receipts_count", expires_in: 12.hours) { ct.local_hcb_code.receipts.size }
+                            else
+                              ct.local_hcb_code.association(:receipts).reader.size
+                            end %>
+        <%= list_badge_for receipts_count, "receipt", "payment-docs", optional: ct.local_hcb_code.receipt_optional?(event, type), required: ct.local_hcb_code.missing_receipt?(event, type) %>
       <% end %>
     </div>
   </td>
