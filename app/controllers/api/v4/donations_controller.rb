@@ -15,7 +15,9 @@ module Api
                                    in_person: true,
                                    name: params[:name].presence,
                                    email: params[:email].presence,
-                                   tax_deductible: params[:tax_deductible] || true
+                                   anonymous: params[:anonymous].presence,
+                                   tax_deductible: params[:tax_deductible].presence,
+                                   fee_covered: params[:fee_covered].presence && @event.config.cover_donation_fees
                                  })
 
         authorize @donation
