@@ -4,11 +4,13 @@ class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:new, :create]
 
+    layout "apply"
+    
     def new
       skip_authorization
     end
 
-    def edit
+    def show
       authorize @application
     end
 

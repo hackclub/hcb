@@ -1,0 +1,10 @@
+<% title "Apply" %>
+
+<%= turbo_frame_tag :application_step, src: application_step_path(@application) do %>
+  <p>Loading application...</p>
+<% end %>
+
+<% content_for :footer do %>
+  <%= link_to "Back to Dashboard", "", class: "btn btn-secondary" %>
+  <%= button_to "Submit Application", "", method: :put, class: "btn btn-primary" %>
+<% end %>

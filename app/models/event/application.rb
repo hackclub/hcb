@@ -52,6 +52,10 @@ class Event
       state :rejected
     end
 
+    def completion_percentage
+      33
+    end
+
   end
 
 end

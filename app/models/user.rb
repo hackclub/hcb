@@ -80,6 +80,7 @@ class User < ApplicationRecord
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user, dependent: :destroy
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, dependent: :destroy
