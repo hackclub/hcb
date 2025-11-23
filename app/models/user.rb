@@ -291,6 +291,20 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # gary@hackclub.com → g***y@hackclub.com
+  # gt@hackclub.com → g*@hackclub.com
+  # g@hackclub.com → g@hackclub.com
+  def redacted_email
+    handle, domain = email.split("@")
+    redacted_handle =
+      if handle.length <= 2
+        handle[0] + "*" * (handle.length - 1)
+      else
+        "#{handle[0]}***#{handle[-1]}"
+      end
+    "#{redacted_handle}@#{domain}"
+  end
+
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
   end
@@ -338,7 +352,7 @@ class User < ApplicationRecord
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
       user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
-      user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
+      user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
     end
   end
 

@@ -200,7 +200,8 @@ class EventsController < ApplicationController
       missing_receipts: @missing_receipts,
       category: @category,
       merchant: @merchant,
-      order_by: @order_by.to_sym
+      order_by: @order_by.to_sym,
+      subledger: params[:subledger]
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -241,7 +242,7 @@ class EventsController < ApplicationController
       @mock_total = @transactions.sum(&:amount_cents)
     end
 
-    render layout: false
+    render layout: !turbo_frame_request? && admin_signed_in?
   end
 
   def balance_by_date
@@ -705,12 +706,11 @@ class EventsController < ApplicationController
     @checks = @event.checks.includes(:lob_address)
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
-    @card_grants = @event.card_grants.includes(:user, :subledger, :stripe_card)
 
-    @disbursements = @disbursements.not_card_grant_related if @event.plan.card_grants_enabled?
+    @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents) + @card_grants.sum(:amount_cents),
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
       in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).sum(&:usd_amount_cents),
       canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.sum(&:usd_amount_cents)
     }
@@ -729,8 +729,6 @@ class EventsController < ApplicationController
     @increase_checks = @increase_checks.increase_deposited if params[:filter] == "deposited"
     @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
     @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
-
-    @card_grants = @card_grants.search_recipient(params[:q]) if params[:q].present?
 
     @disbursements = @disbursements.reviewing_or_processing if params[:filter] == "in_transit"
     @disbursements = @disbursements.fulfilled if params[:filter] == "deposited"
@@ -752,7 +750,7 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
 
     # Generate mock data
     if helpers.show_mock_data?
@@ -1301,7 +1299,7 @@ class EventsController < ApplicationController
     @category = TransactionCategory.find_by(slug: params[:category])
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -1328,7 +1326,8 @@ class EventsController < ApplicationController
       missing_receipts: @missing_receipts,
       category: @category,
       merchant: @merchant,
-      order_by: @order_by&.to_sym || "date"
+      order_by: @order_by&.to_sym || "date",
+      subledger: params[:subledger]
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
@@ -1344,20 +1343,24 @@ class EventsController < ApplicationController
   end
 
   def set_cacheable
-    return false unless params[:q].blank? &&
-                        params[:page].blank? &&
-                        params[:per].blank? &&
-                        @user.nil? &&
-                        @tag.blank? &&
-                        @type.blank? &&
-                        @start_date.blank? &&
-                        @end_date.blank? &&
-                        @minimum_amount.nil? &&
-                        @maximum_amount.nil? &&
-                        !@missing_receipts
-    return false if organizer_signed_in?
+    has_filters = !(
+      params[:q].blank? &&
+        params[:page].blank? &&
+        params[:per].blank? &&
+        @user.nil? &&
+        @tag.blank? &&
+        @type.blank? &&
+        @start_date.blank? &&
+        @end_date.blank? &&
+        @minimum_amount.nil? &&
+        @maximum_amount.nil? &&
+        @direction.nil? &&
+        @category.nil? &&
+        @merchant.nil? &&
+        !@missing_receipts
+    )
 
-    true
+    @cacheable = !(organizer_signed_in? || has_filters)
   end
 
   def set_mock_data
