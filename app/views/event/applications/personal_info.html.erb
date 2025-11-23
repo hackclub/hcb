@@ -50,3 +50,9 @@
     <%= form.submit "Next" %>
   <% end %>
 <% end %>
+
+<% content_for :footer do %>
+  <%= link_to "Back", application_project_info_path(@application), class: "btn" %>
+  <%= link_to "Continue", application_submit_path(@application), class: "btn" %>
+<% end %>
+  

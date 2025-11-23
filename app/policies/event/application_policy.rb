@@ -6,12 +6,13 @@ class Event
       record.user == user
     end
 
-    def edit?
+    def show?
       record.user == user
     end
 
-    alias_method :step?, :edit?
-    alias_method :update?, :edit?
+    alias_method :update?, :show?
+    alias_method :personal_info?, :show?
+    alias_method :project_info?, :show?
 
   end
 

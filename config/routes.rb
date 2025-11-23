@@ -818,8 +818,9 @@ Rails.application.routes.draw do
   scope module: :event do
     get "apply", to: "applications#new"
 
-    resources :applications, only: [:create, :edit, :update] do
-      get "step"
+    resources :applications, only: [:index, :create, :show, :update] do
+      get "personal_info"
+      get "project_info"
     end
   end
 

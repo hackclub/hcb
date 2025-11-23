@@ -1,0 +1,16 @@
+
+<% if @applications.any? %>
+  <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Applications</h2>
+
+  <div class="grid grid--wide mb-12">
+    <% @applications.each do |application| %>
+      <div class="card">
+        <div class="p-4">
+          <h3 class="heading h3 mb-2"><%= application.aasm_state.humanize %></h3>
+          <p class="mb-4">Status: <strong><%= application.aasm_state.humanize %></strong></p>
+          <%= link_to "View application", application_path(application), class: "btn btn--small" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

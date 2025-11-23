@@ -2,9 +2,14 @@
 
 class Event
   class ApplicationsController < ApplicationController
-    before_action :set_application, except: [:new, :create]
+    before_action :set_application, except: [:new, :create, :index]
 
     layout "apply"
+
+    def index
+      skip_authorization
+      @applications = current_user.applications
+    end
 
     def new
       skip_authorization
@@ -18,7 +23,17 @@ class Event
       @application = Event::Application.create!(user: current_user)
       authorize @application
 
-      redirect_to edit_application_path(@application)
+      redirect_to application_path(@application)
+    end
+
+    def personal_info
+      authorize @application
+
+    end
+
+    def project_info
+      authorize @application
+
     end
 
     def update

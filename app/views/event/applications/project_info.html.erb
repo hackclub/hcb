@@ -20,3 +20,8 @@
     <%= form.submit "Next" %>
   <% end %>
 <% end %>
+
+<% content_for :footer do %>
+  <%= link_to "Back", application_path(@application), class: "btn" %>
+  <%= link_to "Continue", application_personal_info_path(@application), class: "btn" %>
+<% end %>
