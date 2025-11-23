@@ -31,7 +31,7 @@
   }
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
-    background: lighten($white, 2.5%);
+    background-color: lighten($white, 2.5%);
 
     [data-dark='true'] & {
       background-color: darken($darkless, 2.5%);
@@ -48,12 +48,12 @@
         rgba(255, 255, 255, 0.75) 0%,
         rgba(255, 255, 255, 0.95) 90%
       ),
-      var(--bg-image);
+      var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
         linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
-        var(--bg-image);
+        var(--bg-image) !important;
     }
   }
 }
