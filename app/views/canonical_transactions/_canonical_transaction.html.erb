@@ -43,7 +43,9 @@
     </td>
   <% end %>
 
-  <%= render "hcb_codes/icon", tx: ct, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && ct.local_hcb_code.hashid, special_appearance: special_appearance %>
+  <% cache(["ct_#{ct.hcb_code}", "icon", local_assigns[:authorless], defined?(selectable) && selectable], expires_in: 12.hours) do %>
+    <%= render "hcb_codes/icon", tx: ct, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && ct.local_hcb_code.hashid, special_appearance: special_appearance %>
+  <% end %>
 
   <td>
     <% if subscription %>
@@ -72,7 +74,7 @@
         <div class="flex items-center justify-start" style="gap: 1ch;">
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
-              <% if ct.local_hcb_code.card_grant? && !organizer_signed_in? %>
+              <% if Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif ct.local_hcb_code.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(ct.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
@@ -211,7 +213,9 @@
 </tr>
 
 <% if ct.local_hcb_code.stripe_card&.subledger.present? || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present? && !show_mock_data?(event)) %>
-  <% pretty_title = ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:) %>
+  <% pretty_title = Rails.cache.fetch(["ct_#{ct.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
+       ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
+     end %>
   <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(ct.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
     <%= modal_header(pretty_title, external_link: url_for(ct.local_hcb_code)) %>
     <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_path(transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance), loading: :lazy, target: "_top" do %>
@@ -278,7 +282,7 @@
   </section>
 <% end %>
 
-<% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && ct.local_hcb_code.card_grant? %>
+<% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } %>
   <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
     <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), external_link: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant)) %>
     <%= turbo_frame_tag "spending_#{ct.local_hcb_code.disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant, params: { frame: true }), loading: :lazy do %>

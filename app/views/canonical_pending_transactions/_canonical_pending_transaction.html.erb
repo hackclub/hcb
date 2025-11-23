@@ -31,7 +31,9 @@
       <%= inline_icon "checkmark" %>
     </td>
   <% end %>
-  <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% cache(["pt_#{pt.hcb_code}", "icon", local_assigns[:authorless], defined?(selectable) && selectable], expires_in: 12.hours) do %>
+    <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% end %>
   <td>
     <%= format_date pt.created_at %>
   </td>
@@ -64,7 +66,7 @@
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
-              <% if pt.local_hcb_code.card_grant? && !organizer_signed_in? %>
+              <% if Rails.cache.fetch("tx_#{pt.hcb_code}/card_grant", expires_in: 12.hours) { pt.local_hcb_code.card_grant? } && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
@@ -194,7 +196,9 @@
 </tr>
 
 <% if pt.stripe_card&.subledger&.present? || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
-  <% pretty_title = pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:) %>
+  <% pretty_title = Rails.cache.fetch(["pt_#{pt.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
+       pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
+     end %>
   <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(pt.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
     <%= modal_header(pretty_title, external_link: url_for(pt.local_hcb_code)) %>
     <%= turbo_frame_tag pt.local_hcb_code.public_id, src: pt.local_hcb_code.popover_path(transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance), loading: :lazy, target: "_top" do %>

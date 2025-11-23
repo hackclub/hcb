@@ -48,7 +48,10 @@
           <span class="m0 muted">
             <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
           </span>
-          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt, tooltip_direction: "w" %>
+          <% tx = pin.hcb_code.ct || pin.hcb_code.pt %>
+          <% cache(["tx_#{tx.hcb_code}", "icon", "pinned", "w"], expires_in: 12.hours) do %>
+            <%= render "hcb_codes/icon", tx: tx, tooltip_direction: "w" %>
+          <% end %>
         </footer>
       <% end %>
     <% end %>
