@@ -214,6 +214,7 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+  scope :financially_frozen, -> { where(financially_frozen: true) }
 
   before_validation :enforce_transparency_eligibility
 

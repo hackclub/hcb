@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  include RedirectToUi3
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
@@ -41,9 +43,9 @@ class ApplicationController < ActionController::Base
     params[:return_to] = url_from(params[:return_to])
   end
 
-  # Enable Rack::MiniProfiler for admins
+  # Enable Rack::MiniProfiler for auditors
   before_action do
-    if current_user&.admin?
+    if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
     end
   end
