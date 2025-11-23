@@ -21,7 +21,7 @@ module Api
                                    name: params[:name].presence,
                                    email: params[:email].presence,
                                    anonymous: params[:anonymous].presence,
-                                   tax_deductible: params[:tax_deductible].presence,
+                                   tax_deductible: params[:tax_deductible].nil? || params[:tax_deductible],
                                    fee_covered: params[:fee_covered].presence && @event.config.cover_donation_fees
                                  })
 
