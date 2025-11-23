@@ -156,6 +156,10 @@ tr.clickable {
   position: relative;
   overflow: visible; // for tooltips
 
+  &:hover {
+    transition-duration: 0s;
+  }
+
   & td {
     pointer-events: none;
 
@@ -179,7 +183,6 @@ tr.clickable {
   }
 
   border-radius: var(--radius-lg);
-  cursor: pointer;
   line-height: 1.75;
   transition:
     color 0.125s ease-in-out,
