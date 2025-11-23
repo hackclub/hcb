@@ -7,7 +7,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: default;
   font-size: 15px;
   font-weight: 500;
   transition: background-color 0.125s ease;
@@ -16,10 +16,12 @@
 
   &:hover {
     background-color: rgba(200, 200, 200, 0.2);
+    transition-duration: 0s;
   }
 
   &:active {
     background-color: rgba(200, 200, 200, 0.3);
+    transition-duration: 0.125s;
   }
 
   &.active {

@@ -126,6 +126,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: default !important;
   font-size: 0.875rem;
   height: 36px;
   width: 36px;
@@ -140,9 +141,13 @@
 
   &:hover,
   &:focus {
-    box-shadow:
-      var(--shadow-border-md),
-      inset 0 0 0px 0.5px rgba(0, 0, 0, 0.1);
+    background-color: rgba(map-get($palette, muted), 0.2);
+    transition-duration: 0s;
+
+    &:active {
+      background-color: rgba(map-get($palette, muted), 0.25);
+      transition-duration: 0.125s;
+    }
   }
 
   &.no_hover:hover,
