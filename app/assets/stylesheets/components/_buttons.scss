@@ -147,6 +147,25 @@ input[type='submit'],
     }
   }
 
+  &.bg-warning {
+    background-color: map-get($palette, warning);
+    color: darken(map-get($palette, warning), 33.3%) !important;
+
+    html[data-dark='true'] & {
+      color: darken(map-get($palette, warning), 33.3%) !important;
+    }
+  }
+
+  &.bg-light-warning {
+    background-color: map-get($palette, white) !important;
+    color: darken(map-get($palette, warning), 33.3%) !important;
+
+    html[data-dark='true'] & {
+      background: $darkless !important;
+      color: darken(map-get($palette, warning), 33.3%) !important;
+    }
+  }
+
   &.bg-purple {
     @include gradient(purple);
     color: darken(map-get($palette, purple), 40%) !important;

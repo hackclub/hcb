@@ -66,7 +66,7 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <button class="btn bg-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
+            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
