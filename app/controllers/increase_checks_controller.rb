@@ -2,6 +2,7 @@
 
 class IncreaseChecksController < ApplicationController
   include SetEvent
+  include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_check, only: %i[approve reject]
@@ -45,7 +46,7 @@ class IncreaseChecksController < ApplicationController
   def approve
     authorize @check
 
-    Governance::Admin.ensure_may_approve_transfer!(current_user, @check.amount)
+    ensure_admin_may_approve!(@check, amount_cents: @check.amount)
     @check.send_check!
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }

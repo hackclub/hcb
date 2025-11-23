@@ -206,7 +206,13 @@ class HcbCodesController < ApplicationController
     @secret = params[:s]
     @hcb_code = HcbCode.find_signed(@secret, purpose: :receipt_status)
 
-    raise Pundit::NotAuthorizedError if @hcb_code.nil?
+    if @hcb_code.nil?
+      raise Pundit::NotAuthorizedError
+    end
+
+    file_name = @hcb_code.missing_receipt? ? "receipt_status_upload.png" : "receipt_status_uploaded.png"
+
+    send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
 
   def toggle_tag
@@ -246,7 +252,7 @@ class HcbCodesController < ApplicationController
 
     authorize hcb_code
 
-    if hcb_code.amount_cents >= -100
+    if hcb_code.amount_cents > -100
       flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
       return redirect_to hcb_code
     end

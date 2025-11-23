@@ -31,6 +31,20 @@ module Api
 
         @total_count = @pending_transactions.count + @settled_transactions.count
         @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
+
+        if @transactions.any?
+
+          page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
+          page_pending = @transactions.select { |tx| tx.is_a?(CanonicalPendingTransaction) }
+
+          if page_settled.any?
+            TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: page_settled, event: @event).run!
+          end
+
+          if page_pending.any?
+            PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: page_pending, event: @event).run!
+          end
+        end
       end
 
       def followers

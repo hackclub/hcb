@@ -6,8 +6,34 @@ class CardGrantsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
 
-  before_action :set_event, only: %i[new create]
-  before_action :set_card_grant, except: %i[new create]
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
+
+  def index
+    authorize @event, :card_grant_overview?
+  end
+
+  def card_index
+    authorize @event, :card_grant_overview?
+
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    card_grants_page = (params[:page] || 1).to_i
+    card_grants_per_page = (params[:per] || 20).to_i
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :subledger).order(created_at: :desc)
+    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+  end
+
+  def transaction_index
+    authorize @event, :card_grant_overview?
+
+    @subledger = true
+  end
 
   def new
     @card_grant = @event.card_grants.build(email: params[:email])
@@ -21,7 +47,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -49,7 +75,7 @@ class CardGrantsController < ApplicationController
     end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-    redirect_to event_transfers_path(@event)
+    redirect_back_or_to event_transfers_path(@event)
   end
 
   def edit_overview
@@ -131,7 +157,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card&.local_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame

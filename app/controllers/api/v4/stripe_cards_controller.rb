@@ -4,6 +4,7 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       def index
         if params[:event_id].present?
@@ -23,11 +24,11 @@ module Api
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        @hcb_codes = @stripe_card.hcb_codes.order(created_at: :desc)
+        @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def create
@@ -48,7 +49,7 @@ module Api
         )
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
@@ -153,6 +154,20 @@ module Api
       rescue Stripe::InvalidRequestError
         return render json: { error: "internal_server_error" }, status: :internal_server_error
 
+      end
+
+      def card_designs
+        if params[:event_id].present?
+          set_api_event
+          authorize @event, :create_stripe_card?, policy_class: EventPolicy
+
+          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
+        else
+          skip_authorization
+          @designs = StripeCard::PersonalizationDesign.common.available
+        end
+
+        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
       end
 
     end

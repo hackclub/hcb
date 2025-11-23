@@ -249,13 +249,18 @@
             <% end %>
             <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
-                <%= inline_icon "wise" %>
-                Convert to standard Wise transfer
+                <%= inline_icon "thumbsup" %>
+                Approve & send Wise reimbursement
               </button>
               <section data-behavior="modal" role="dialog" id="convert_to_wise_transfer" class="modal modal--scroll modal--wide bg-snow">
-                <%= modal_header "Convert this report to a standard Wise transfer" %>
+                <%= modal_header "Process Wise reimbursement" %>
 
-                Because of ongoing disruptions with Wise and side effects with HCB's reimbursement system, it's recommended to convert this reimbursement report into a standard Wise transfer and sending funds directly from <%= report.event.name %>.
+                <button class="btn bg-info" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
+                  <%= inline_icon "attachment" %>
+                  Preferred: Process as reimbursement report
+                </button>
+
+                <p>Alternatively, because of ongoing disruptions with Wise and side effects with HCB's reimbursement system, we are providing the option to convert this reimbursement report into a standard Wise transfer and sending funds directly from <%= report.event.name %>. Only do this if you are encountering issues with the standard reimbursement flow.</p>
 
                 <p>Doing this will:</p>
 
@@ -266,17 +271,10 @@
                   <li>Close this reimbursement report without marking it as reimbursed</li>
                 </ul>
 
-                <div class="flex flex-row items-center justify-between mt-6">
-                  <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-info", method: :post do %>
-                    <%= inline_icon "wise" %>
-                    Convert to Wise transfer
-                  <% end %>
-
-                  <button class="btn bg-error tooltipped tooltipped--n" aria-label="Don't do this without checking with engineering first!" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
-                    <%= inline_icon "important" %>
-                    Risky: Process as reimbursement report
-                  </button>
-                </div>
+                <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-muted tooltipped tooltipped--n", method: :post, "aria-label": "Don't do this without checking with engineering first!" do %>
+                  <%= inline_icon "important" %>
+                  Alternative: Convert to Wise transfer
+                <% end %>
               </section>
               <section data-behavior="modal" role="dialog" id="wise_approval" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Approve & send Wise reimbursement" %>
@@ -342,7 +340,6 @@
                   </div>
 
                   <%= form.submit "Approve report" %>
-                  <p class="muted text-xs">🚧 Warning: this is risky—do not do this without checking with engineering first.</p>
                 <% end %>
               </section>
             <% else %>
@@ -368,39 +365,48 @@
     <% end %>
   <% end %>
   <% if report.expenses.any? %>
-    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>" id="summary">
-      <div class="stat stat--small" style="flex-shrink: 0;">
-        <span class="stat__label">Amount requested</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
-      </div>
-      <% if report.locked? %>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Expenses approved</span>
-          <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
-        </div>
+    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>">
+      <div id="summary">
         <div class="stat stat--small" style="flex-shrink: 0;">
-          <span class="stat__label">Amount approved</span>
-        <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
+          <span class="stat__label">Amount requested</span>
+          <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
         </div>
-        <% if report.fees_charged_cents > 0 %>
+        <% if report.locked? %>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Expenses approved</span>
+            <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
+          </div>
           <div class="stat stat--small" style="flex-shrink: 0;">
-            <span class="stat__label">Fees charged</span>
-            <span class="stat__value"><%= render_money report.fees_charged_cents, unit: "" %></span>
+            <span class="stat__label">Amount approved</span>
+          <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
+          </div>
+          <% if report.fees_charged_cents > 0 %>
+            <div class="stat stat--small" style="flex-shrink: 0;">
+              <span class="stat__label">Fees charged</span>
+              <span class="stat__value"><%= render_money report.fees_charged_cents, unit: "" %></span>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Total expenses</span>
+            <span class="stat__value"><%= report.expenses.to_sum.count %></span>
+          </div>
+          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+            <span class="stat__label">Complete</span>
+            <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
         <% end %>
-      <% else %>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Total expenses</span>
-          <span class="stat__value"><%= report.expenses.to_sum.count %></span>
-        </div>
-        <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
-          <span class="stat__label">Complete</span>
-          <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
+        <p class="mt0 mb0" id="summary-hint">
+          <%= button_hint %>
+        </p>
+      </div>
+      <% if report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
+          <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
+            Fetching latest estimate...
+          <% end %>
         </div>
       <% end %>
-      <p class="mt0 mb0" id="summary-hint">
-        <%= button_hint %>
-      </p>
     </div>
   <% end %>
 </div>

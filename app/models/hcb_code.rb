@@ -419,6 +419,8 @@ class HcbCode < ApplicationRecord
       paypal_transfer
     elsif wire? && wire&.reimbursement_payout_holding.present?
       wire
+    elsif wise_transfer? && wise_transfer&.reimbursement_payout_holding.present?
+      wise_transfer
     else
       nil
     end
