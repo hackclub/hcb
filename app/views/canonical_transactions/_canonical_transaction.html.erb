@@ -140,17 +140,19 @@
   <% end %>
 
   <% if local_assigns[:show_author_column] %>
-    <% author = ct.local_hcb_code.author %>
-    <% author_name = ct.local_hcb_code.author_name %>
-    <td>
-      <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
-        <% if author.present? %>
-          <%= avatar_for author, class: "align-middle author" %>
-        <% elsif ct.local_hcb_code.fallback_avatar %>
-          <%= image_tag(ct.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
-        <% end %>
-      </div>
+    <% cache "ct_#{instance}_author", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
+      <% author = ct.local_hcb_code.author %>
+      <% author_name = ct.local_hcb_code.author_name %>
+      <td>
+        <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
+          <% if author.present? %>
+            <%= avatar_for author, class: "align-middle author", cached: true %>
+          <% elsif ct.local_hcb_code.fallback_avatar %>
+            <%= image_tag(ct.local_hcb_code.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
+          <% end %>
+        </div>
     </td>
+    <% end %>
   <% end %>
 
   <% if local_assigns[:receipt_upload_button] %>
