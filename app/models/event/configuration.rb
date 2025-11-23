@@ -16,7 +16,7 @@
 #
 # Indexes
 #
-#  index_event_configurations_on_event_id  (event_id)
+#  index_event_configurations_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
