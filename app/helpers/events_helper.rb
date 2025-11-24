@@ -204,11 +204,24 @@ module EventsHelper
   def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
     icon_tag = icon.present? ? inline_icon(icon, size: 32) : nil
     badge_tag = async_badge.present? ? turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }) : nil
-    prefix = icon_tag || badge_tag ? content_tag(:div, icon_tag || badge_tag, class: "line-height-0 relative") : ""
-    children = prefix + name.html_safe
+
+    icon_wrapper =
+      if icon_tag || badge_tag
+      content_tag(:div, class: "dock__item-icon-wrapper") do
+        safe_join([icon_tag, badge_tag].compact)
+      end
+      end
+
+    children = []
+    children << icon_wrapper if icon_wrapper
+    children << tag.span(name, class: "dock__item-label")
+    children = safe_join(children)
+
     if admin && !auditor_signed_in?
       return ""
     end
+
+    puts badge_tag
 
     link_to children, (disabled ? "javascript:" : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",

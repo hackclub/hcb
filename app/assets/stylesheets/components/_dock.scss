@@ -123,9 +123,16 @@ summary.dock__item {
   flex: 1;
   display: inline-flex;
   align-items: center;
-  overflow: visible; // for tooltips
 
-  svg:first-child {
+  & .dock__item-icon-wrapper {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    margin-right: 0.5rem;
+  }
+
+  svg:first-child,
+  & .dock__item-icon-wrapper svg {
     fill: map-get($palette, muted);
     width: 28px;
     height: 28px;
@@ -179,10 +186,7 @@ summary.dock__item {
   .dock__item--badge {
     position: absolute;
     top: -0.3125rem;
-    right: 0.3125rem;
-    @media (max-width: 32em) {
-      right: calc(0.3125rem - 0.5rem);
-    }
+    right: 0px;
     line-height: initial;
     color: white;
     font-size: 0.75rem;
