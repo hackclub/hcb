@@ -52,8 +52,29 @@ class Event
       state :rejected
     end
 
+    def next_step
+      return "Tell us about your project" if name.blank? || description.blank? || political.nil?
+      return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
+      return "Review and submit" if draft?
+    end
+
+    def status_color
+      return :muted if draft?
+      return :blue if submitted?
+      return :purple if under_review?
+      return :green if approved?
+      return :red if rejected?
+
+      :muted
+    end
+
     def completion_percentage
-      33
+      return 25 if next_step == "Tell us about your project"
+      return 50 if next_step == "Add your information"
+      return 75 if next_step == "Review and submit"
+      return 100 if submitted?
+
+      0
     end
 
   end

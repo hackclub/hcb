@@ -821,6 +821,7 @@ Rails.application.routes.draw do
     resources :applications, only: [:index, :create, :show, :update] do
       get "personal_info"
       get "project_info"
+      post "submit"
     end
   end
 

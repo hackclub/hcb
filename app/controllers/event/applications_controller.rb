@@ -41,9 +41,14 @@ class Event
 
       @application.update!(application_params)
 
-      new_step = params[:step].to_i + 1
+      @return_to = url_from(params[:event_application][:return_to])
 
-      redirect_to application_step_path(@application, step: new_step)
+      return redirect_to @return_to if @return_to.present?
+      redirect_back_or_to application_path(@application)
+    end
+
+    def submit
+      authorize @application
     end
 
     def step
@@ -62,7 +67,7 @@ class Event
     end
 
     def application_params
-      params.permit(:name, :description, :political, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes)
+      params.require(:event_application).permit(:name, :description, :political, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes)
     end
 
   end

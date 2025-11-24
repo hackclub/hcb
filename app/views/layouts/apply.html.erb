@@ -144,11 +144,12 @@
       style="<%= content_for :container_style %>">
       <div class="flex flex-col h-full">
         <div class="flex flex-col">
-          <div class="flex flex-row items-center justify-start p-6 gap-4">
+          <div class="flex flex-row items-center justify-start p-6 gap-4 bg-snow dark:bg-darkless">
             <div class="flex flex-row items-center justify-start gap-4">
               <%= render partial: "application/logo" %>
-              <div>
+              <div class="flex flex-col items-start justify-start">
                 <h2 class="m-0">Apply for HCB</h2>
+                <h3 class="text-sm muted m-0">Turn your ideas into reality</h3>
               </div>
             </div>
             <div>
@@ -156,18 +157,18 @@
             </div>
           </div>
           <% if @application.present? %>
-            <div class="bg-smoke h-2">
-              <div class="bg-primary h-2" style="width: <%= @application&.completion_percentage || 0 %>%"></div>
+            <div class="bg-smoke dark:bg-slate h-1">
+              <div class="bg-primary h-1" style="width: <%= @application&.completion_percentage || 0 %>%"></div>
             </div>
           <% else %>
-            <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke"></div>
+            <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke dark:border-slate"></div>
           <% end %>
         </div>
         <div class="flex-grow p-6">
           <%= yield %>
         </div>
         <% if @application.present? %>
-          <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke mt-4 ">
+          <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke dark:border-slate mt-4 dark:bg-darkless">
             <%= yield(:footer) %>
           </div>
         <% end %>
