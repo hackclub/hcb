@@ -19,7 +19,7 @@
 <%= render partial: "card_grants/header_banner", locals: { card_grant: @card_grant, footer: } %>
 
 <% if @card_grant.instructions.present? %>
-  <%= render "card_grants/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
+  <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
       <%= @card_grant.instructions %>
     </p>

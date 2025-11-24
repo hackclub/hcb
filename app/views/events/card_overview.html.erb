@@ -34,7 +34,7 @@
 
   <% if control = @organizer_position&.active_spending_control %>
     <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
-    <%= render "events/callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
+    <%= render "application/callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
       <ul class="m0">
         <li>Spending controls are enabled for this organization.</li>
         <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>

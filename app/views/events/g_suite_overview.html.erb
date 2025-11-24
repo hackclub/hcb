@@ -31,7 +31,7 @@
       <%= render "g_suite_revocations/notice" %>
     <% end %>
     <% if @g_suite.verification_error? && @g_suite.previously_verified? && !(@g_suite.revocation.present? && @g_suite.revocation.revoked?) %>
-      <%= render "events/callout", type: "error", title: "We've detected that you're missing some DNS records required by Google Workspace." do %>
+      <%= render "application/callout", type: "error", title: "We've detected that you're missing some DNS records required by Google Workspace." do %>
         You can still access, configure, and manage accounts, but you may be unable to send or receive emails until after you've fixed <%= @g_suite.domain %>'s DNS records.
       <% end %>
     <% end %>

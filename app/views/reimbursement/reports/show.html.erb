@@ -211,7 +211,7 @@
 </div>
 
 <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
-  <%= render "reimbursements/reports/callout",
+  <%= render "application/callout",
       type: "info",
       icon: "wise",
       title: "Important information about Wise reimbursements",

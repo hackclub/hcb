@@ -33,7 +33,7 @@
 </h1>
 
 <% if @event.parent.present? %>
-  <%= render "events/callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+  <%= render "application/callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
     <p>Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
 
     <% if @indirect_access.present? %>

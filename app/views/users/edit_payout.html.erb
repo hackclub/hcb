@@ -19,7 +19,7 @@
     <% if @user.can_update_payout_method? %>
       <%= render "users/payout_form", user: @user %>
     <% else %>
-      <%= render "users/callout",
+      <%= render "application/callout",
           type: "info",
           title: "Changing your payout method is currently disabled." do %>
       We are currently processing a payout to you using Wise. At this time, you can not update your payout method.
