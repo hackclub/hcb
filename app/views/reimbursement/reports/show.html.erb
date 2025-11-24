@@ -64,7 +64,7 @@
 
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow">
   <%= modal_header "Edit report" %>
-  <%= render "reimbursements/reports/edit_form" %>
+  <%= render "reimbursement/reports/edit_form" %>
 </section>
 
 <section data-behavior="modal" role="dialog" id="request_changes" class="modal modal--scroll bg-snow">
@@ -173,7 +173,7 @@
       </strong>
     </div>
 
-    <%= render partial: "reimbursements/reports/wise_information", locals: { report: @report } %>
+    <%= render partial: "reimbursement/reports/wise_information", locals: { report: @report } %>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <%= form_with(model: false, local: true, url: reimbursement_report_admin_send_wise_transfer_path(@report), method: :post) do |form| %>
@@ -206,8 +206,8 @@
 <% end %>
 
 <div id="expenses">
-  <%= render partial: "reimbursements/reports/expenses", locals: { report: @report } %>
-  <%= render partial: "reimbursements/reports/blankslate", locals: { report: @report } %>
+  <%= render partial: "reimbursement/reports/expenses", locals: { report: @report } %>
+  <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 
 <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
@@ -235,9 +235,9 @@
   <% end %>
 <% end %>
 
-<%= render partial: "reimbursements/reports/actions", locals: { report: @report, user: @user } %>
+<%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
-<%= render partial: "reimbursements/reports/conversation" %>
+<%= render partial: "reimbursement/reports/conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add payout information" %>
