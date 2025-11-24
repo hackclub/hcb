@@ -13,31 +13,33 @@ const amountToCheckWords = amount => {
   return words
 }
 
-$('[id^="increase_check_"]').on('change paste keyup input', event => {
-  const fieldName = event.currentTarget.id.replace('increase_check_', '')
+$(document).on('turbo:load', function () {
+  $('[id^="increase_check_"]').on('change paste keyup input', event => {
+    const fieldName = event.currentTarget.id.replace('increase_check_', '')
 
-  if (fieldName == 'memo') {
-    $('[data-behavior~="check_memo"]').text(
-      $(event.currentTarget).val() || '　'
-    )
-  }
-
-  if (fieldName == 'amount') {
-    let amount = $(event.currentTarget).val()
-    if (amount.includes('.')) {
-      amount = amount.slice(0, amount.indexOf('.') + 3)
+    if (fieldName == 'memo') {
+      $('[data-behavior~="check_memo"]').text(
+        $(event.currentTarget).val() || '　'
+      )
     }
-    const words = amountToCheckWords(amount)
 
-    $('[data-behavior~="check_amount"]').text(amount ? event.currentTarget.valueAsNumber?.toLocaleString("en-US", { minimumFractionDigits: 2 }) : '　')
-    $('[data-behavior~="check_amount_words"]').text(words || '　')
-  }
+    if (fieldName == 'amount') {
+      let amount = $(event.currentTarget).val()
+      if (amount.includes('.')) {
+        amount = amount.slice(0, amount.indexOf('.') + 3)
+      }
+      const words = amountToCheckWords(amount)
 
-  if (fieldName == 'recipient_name') {
-    $('[data-behavior~="check_orderof"]').text(
-      $(event.currentTarget).val() || '　'
-    )
-  }
+      $('[data-behavior~="check_amount"]').text(amount ? event.currentTarget.valueAsNumber?.toLocaleString("en-US", { minimumFractionDigits: 2 }) : '　')
+      $('[data-behavior~="check_amount_words"]').text(words || '　')
+    }
+
+    if (fieldName == 'recipient_name') {
+      $('[data-behavior~="check_orderof"]').text(
+        $(event.currentTarget).val() || '　'
+      )
+    }
+  })
 })
 
 $(document).on('turbo:load', function () {
