@@ -28,7 +28,9 @@
       </div>
       <%= paginate @transactions %>
     <% else %>
-      <%= blankslate "No transactions yet" %>
+      <div class="mt-2">
+        <%= blankslate "No transactions yet" %>
+      </div>
     <% end %>
 
     <%#
