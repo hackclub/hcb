@@ -101,7 +101,7 @@
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
           <tr>
-            <td class="!pl-0 flex items-center justify-center" style="margin-top: 1px;">
+            <td class="flex items-center justify-center" style="margin-top: 1px;">
               <%= avatar_for report.user, size: 24 %>
             </td>
             <td>
