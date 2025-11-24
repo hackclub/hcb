@@ -207,9 +207,9 @@ module EventsHelper
 
     icon_wrapper =
       if icon_tag || badge_tag
-      content_tag(:div, class: "dock__item-icon-wrapper") do
-        safe_join([icon_tag, badge_tag].compact)
-      end
+        content_tag(:div, class: "dock__item-icon-wrapper") do
+          safe_join([icon_tag, badge_tag].compact)
+        end
       end
 
     children = []
