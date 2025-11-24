@@ -44,6 +44,7 @@ class Event
       @return_to = url_from(params[:event_application][:return_to])
 
       return redirect_to @return_to if @return_to.present?
+
       redirect_back_or_to application_path(@application)
     end
 
