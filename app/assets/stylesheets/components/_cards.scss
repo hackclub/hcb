@@ -26,15 +26,25 @@
   }
 
   &.card--hover {
-    transition: background-color 0.125s ease;
+    transition: filter 0.125s ease;
     cursor: pointer;
   }
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
-    background-color: lighten($white, 2.5%);
+    transition-duration: 0s;
+    filter: brightness(0.95);
 
     [data-dark='true'] & {
-      background-color: darken($darkless, 2.5%);
+      filter: brightness(1.05);
+    }
+
+    &:active {
+      transition-duration: 0.125s;
+      filter: brightness(0.9);
+
+      [data-dark='true'] & {
+        filter: brightness(1.1);
+      }
     }
   }
 
