@@ -8,11 +8,11 @@
 <% end %>
 
 <% @hcb_code.canonical_pending_transactions.each do |pt| %>
-<%= render partial: "hcb_codes/admin_viewer", locals: { record: pt } %>
-<%= render partial: "hcb_codes/admin_viewer", locals: { record: pt.raw_pending_stripe_transaction } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt.raw_pending_stripe_transaction } %>
 <% end %>
 <% @hcb_code.canonical_transactions.each do |pt| %>
-<%= render partial: "hcb_codes/admin_viewer", locals: { record: pt } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt } %>
 <% end %>
 
 <article class="card pb0 mt3 mb1">
