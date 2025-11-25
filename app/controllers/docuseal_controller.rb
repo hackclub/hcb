@@ -5,7 +5,7 @@ class DocusealController < ActionController::Base
 
   def webhook
     ActiveRecord::Base.transaction do
-      contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
+      contract = Contract.find_by(external_id: params[:data][:submission_id])
       return render json: { success: true } unless contract # sometimes contracts are sent using Docuseal that aren't in HCB
 
       return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
@@ -17,8 +17,8 @@ class DocusealController < ActionController::Base
         return render json: { success: true } if contract.signed?
 
         document = Document.new(
-          event: contract.organizer_position_invite.event,
-          name: "Fiscal sponsorship contract with #{contract.organizer_position_invite.user.name}"
+          event: contract.event,
+          name: "Fiscal sponsorship contract with #{contract.user.name}"
         )
 
         response = Faraday.get(params[:data][:documents][0][:url]) do |req|
@@ -30,7 +30,7 @@ class DocusealController < ActionController::Base
           filename: "#{params[:data][:documents][0][:name]}.pdf"
         )
 
-        document.user = User.find_by(email: params[:data][:email]) || contract.organizer_position_invite.event.point_of_contact
+        document.user = User.find_by(email: params[:data][:email]) || contract.event.point_of_contact
         document.save!
         contract.update(document:)
         contract.mark_signed!
@@ -38,10 +38,10 @@ class DocusealController < ActionController::Base
         contract.mark_voided!
       elsif cosigner.present? && cosigner["status"] != "completed"
         # send email about cosigner needing to pay
-        OrganizerPosition::ContractsMailer.with(contract:).pending_cosigner.deliver_later
+        ContractMailer.with(contract:).pending_cosigner.deliver_later
       elsif signee["status"] == "completed" && (cosigner.nil? || cosigner["status"] == "completed")
         # send email about hcb needing to sign
-        OrganizerPosition::ContractsMailer.with(contract:).pending_hcb.deliver_later
+        ContractMailer.with(contract:).pending_hcb.deliver_later
       end
     end
   rescue => e
