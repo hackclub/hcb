@@ -1,6 +1,7 @@
 <% instance = pt.__id__ %>
 <% event = @event || pt.local_hcb_code.event %>
 <% tagged_with = pt.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
+<% type = Rails.cache.fetch("#{pt.hcb_code}/cached_type", expires_in: 12.hours) { pt.local_hcb_code.type } %>
 
 <tr
   class="transaction muted <%= unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user)
@@ -31,7 +32,9 @@
       <%= inline_icon "checkmark" %>
     </td>
   <% end %>
-  <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% cache(["pt_#{pt.hcb_code}", "icon", local_assigns[:authorless], defined?(selectable) && selectable], expires_in: 12.hours) do %>
+    <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% end %>
   <td>
     <%= format_date pt.created_at %>
   </td>
@@ -64,9 +67,9 @@
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
-              <% if pt.local_hcb_code.card_grant? && !organizer_signed_in? %>
+              <% if Rails.cache.fetch("tx_#{pt.hcb_code}/card_grant", expires_in: 12.hours) { pt.local_hcb_code.card_grant? } && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
-              <% elsif pt.stripe_card&.subledger.present? && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
+              <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
                   <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 <% end %>
@@ -121,7 +124,12 @@
       <% end %>
       <% if pt.local_hcb_code %>
         <%= list_badge_for auditor_signed_in? ? pt.local_hcb_code.comments.size : pt.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
-        <%= list_badge_for pt.local_hcb_code.receipts.size, "receipt", "payment-docs", optional: pt.local_hcb_code.receipt_optional?(event), required: pt.local_hcb_code.missing_receipt?(event) %>
+        <% receipts_count = if pt.local_hcb_code.reimbursement_expense_payout?
+                              Rails.cache.fetch("pt_#{pt.hcb_code}/receipts_count", expires_in: 12.hours) { pt.local_hcb_code.receipts.size }
+                            else
+                              pt.local_hcb_code.association(:receipts).reader.size
+                            end %>
+        <%= list_badge_for receipts_count, "receipt", "payment-docs", optional: pt.local_hcb_code.receipt_optional?(event, type), required: pt.local_hcb_code.missing_receipt?(event, type) %>
       <% end %>
     </div>
   </td>
@@ -150,7 +158,7 @@
 
   <% if local_assigns[:receipt_upload_button] %>
     <td style="width: 1%">
-      <% if pt.local_hcb_code.missing_receipt?(event) || !local_assigns[:updated_via_turbo_stream] %>
+      <% if pt.local_hcb_code.missing_receipt?(event, type) || !local_assigns[:updated_via_turbo_stream] %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{pt.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
           <%= form.hidden_field :redirect_url, value: @card_grant ? card_grant_path(@card_grant) : my_inbox_path %>
@@ -193,7 +201,7 @@
   <% end %>
 </tr>
 
-<% if pt.stripe_card&.subledger&.present? || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
+<% if (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
   <% pretty_title = Rails.cache.fetch(["pt_#{pt.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
        pt.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
      end %>
@@ -215,7 +223,7 @@
                       data-action="dblclick->navigation#navigate"
                       data-navigation-location-param="<%= my_inbox_path %>"
                       data-navigation-frame-param="2">
-                  <%= pt.local_hcb_code.humanized_type %>
+                  <%= Rails.cache.fetch("pt_#{pt.hcb_code}/humanized_type", expires_in: 12.hours) { pt.local_hcb_code.humanized_type } %>
                   <span class="regular muted">for $-</span>
                 </span>
               </span>

@@ -100,6 +100,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
   has_one :event, through: :canonical_event_mapping
+  has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
