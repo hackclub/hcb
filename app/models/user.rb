@@ -593,7 +593,7 @@ class User < ApplicationRecord
     end
 
     if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
-      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please cancel those reports first.")
+      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 
