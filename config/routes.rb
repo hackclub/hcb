@@ -335,7 +335,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+  resources :contracts, only: [:create] do
     member do
       post "void"
       post "resend_to_user"

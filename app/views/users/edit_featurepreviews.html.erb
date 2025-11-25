@@ -7,7 +7,7 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "previews" %>
   <section>
-    <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @event), "mb3") do %>
+    <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @user), "mb3") do %>
       <%= render partial: "features/preview", locals: {
             id: "minimalistic-ledger",
             feature_flag: :transactions_background_2024_06_05,

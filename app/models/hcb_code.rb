@@ -176,6 +176,22 @@ class HcbCode < ApplicationRecord
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
 
+  def subledgers
+    @subledgers ||=
+      begin
+        ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
+                .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
+                .compact
+                .uniq
+
+        Subledger.where(id: ids)
+      end
+  end
+
+  def subledger
+    subledgers.first
+  end
+
   def event
     events.first
   end
@@ -502,7 +518,7 @@ class HcbCode < ApplicationRecord
   # we optionally take an event parameter here. this
   # is a performance optimisation because it allows us to
   # load the event once on the ledger and never again
-  def receipt_required?(event = self.event)
+  def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
     return false unless event&.plan&.receipts_required?
@@ -516,17 +532,17 @@ class HcbCode < ApplicationRecord
     false
   end
 
-  def receipt_optional?(event = self.event)
-    !receipt_required?(event)
+  def receipt_optional?(event = self.event, type = self.type)
+    !receipt_required?(event, type)
   end
 
   # we have a custom implementation here for caching
-  def missing_receipt?(event = self.event)
-    receipt_required?(event) && without_receipt? && !no_or_lost_receipt?
+  def missing_receipt?(event = self.event, type = self.type)
+    receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
   end
 
   def receipts
-    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
   end
