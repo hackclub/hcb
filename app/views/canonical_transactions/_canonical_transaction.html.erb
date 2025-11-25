@@ -218,7 +218,7 @@
   <% end %>
 </tr>
 
-<% if (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present? && !show_mock_data?(event)) %>
+<% if (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
   <% pretty_title = Rails.cache.fetch(["ct_#{ct.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
        ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
      end %>
