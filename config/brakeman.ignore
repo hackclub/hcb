@@ -464,8 +464,42 @@
         89
       ],
       "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "ecbe561482618c695ecfd0475ccb9d510d259edd35da594a94adab706b1f5291",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped parameter value",
+      "file": "app/views/admin/inspect_resource.html.erb",
+      "line": 13,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "ap(Inspector.find_object(params[:resource], params[:id]))",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "inspect_resource",
+          "line": 1423,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/inspect_resource",
+            "file": "app/views/admin/inspect_resource.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/inspect_resource"
+      },
+      "user_input": "params[:resource]",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "These are all safely handled and don't get directly rendered on the page"
     }
   ],
-  "updated": "2025-10-13 08:21:43 +0000",
+  "updated": "2025-10-13 15:31:23 -0700",
   "brakeman_version": "6.2.2"
 }
