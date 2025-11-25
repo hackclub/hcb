@@ -544,6 +544,10 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
+[data-expense-form-enabled-value='true'] textarea {
+  margin-bottom: -16px !important;
+}
+
 @media print {
   .home,
   .dock,
