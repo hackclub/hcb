@@ -100,6 +100,8 @@ module UsersHelper
                    "#{user.name} is an admin"
                  elsif user.auditor?
                    "#{user.name} is an auditor"
+                 else
+                   user.name
                  end
 
     content = if user&.auditor? && !options[:hide_avatar]
