@@ -221,7 +221,7 @@ module Reimbursement
 
     def admin_approve
       authorize @report
-      wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if currency != "USD" && params[:wise_total_including_fees].present?
+      wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
       ensure_admin_may_approve!(@report, amount_cents: wise_amount_cents || @report.amount_to_reimburse_cents)
 
       begin
