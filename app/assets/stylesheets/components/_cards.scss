@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .card {
   --card-bg: #ffffff;
   background-color: $white;
@@ -65,6 +69,34 @@
         linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
         var(--bg-image) !important;
     }
+  }
+}
+
+.hcb-code {
+  @extend .card;
+  @apply pb-0 mb-1 mt-3 shadow-none;
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  box-shadow: var(--shadow-sm);
+}
+
+.hcb-code--details {
+  @extend .details-horiz;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+  border-color: rgba(200, 200, 200, 0.3);
+  margin: 0 calc(-1rem + 1px);
+  padding: 0.75rem 1rem;
+  background-color: rgba(245, 245, 245, 0.75);
+
+  & strong {
+    @extend .eyebrow;
+    margin-top: 0 !important;
+    margin-bottom: 0.1rem !important;
+    opacity: 0.7 !important;
+  }
+
+  html[data-dark='true'] & {
+    background-color: rgba(50, 50, 55, 0.5);
   }
 }
 

@@ -138,6 +138,19 @@ input[type='submit'],
     &:focus {
       background-color: lighten(map-get($palette, muted), 20%) !important;
     }
+
+    &.btn-text {
+      color: darken(map-get($palette, muted), 20%) !important;
+      background-color: transparent !important;
+
+      &:hover {
+        background-color: rgba(map-get($palette, muted), 0.1) !important;
+      }
+      &:active,
+      &:focus {
+        background-color: rgba(map-get($palette, muted), 0.15) !important;
+      }
+    }
   }
 
   &.bg-warning {
