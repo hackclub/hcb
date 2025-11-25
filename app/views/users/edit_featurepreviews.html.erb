@@ -72,6 +72,7 @@
       <%= render partial: "features/preview", locals: {
             id: "turbo",
             classes: ["feature-turbo"],
+            feature_flag: :turbo_2023_01_23,
             fully_shipped: true,
             name: "Turbo Async Pages",
             description: "Opting into this preview will enable <a href=\"https://turbo.hotwired.dev\" target=\"_blank\">Turbo</a>, a framework for speeding up web application UIs (like HCB's!) Possible side effects include:
@@ -125,7 +126,6 @@
 
       <%= render partial: "features/preview", locals: {
             id: "suggested-memos",
-            classes: ["feature-disbursements"],
             feature_flag: :ai_memos_2024_06_20,
             fully_shipped: true,
             name: "Transaction Memo Suggestions",
