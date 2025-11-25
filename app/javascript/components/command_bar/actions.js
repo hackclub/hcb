@@ -246,11 +246,6 @@ export const initalActions = [
     perform: () => BK.setDark(theme),
   })),
   {
-    section: 'Actions',
-    icon: <Icon glyph="idea" size={16} />,
-    priority: Priority.HIGH,
-  },
-  {
     id: 'signout',
     name: 'Sign out',
     keywords: 'sign out logout log out',

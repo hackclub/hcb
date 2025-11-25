@@ -40,7 +40,7 @@
       <%= sanitize(local_assigns[:description]) %>
     </p>
     <% if local_assigns[:footer].present? %>
-      <section class="card__banner card__darker secondary border-top mt-4 -mb-4">
+      <section class="card__banner card__darker secondary border-top mt-4">
         <p class="m-0">
           <%= sanitize(local_assigns[:footer], attributes: %w(href data-turbo-action)) %>
         </p>
