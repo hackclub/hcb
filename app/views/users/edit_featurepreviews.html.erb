@@ -71,6 +71,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "turbo",
+            feature_flag: :turbo_2023_01_23,
             classes: ["feature-turbo"],
             fully_shipped: true,
             name: "Turbo Async Pages",
@@ -86,6 +87,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "weekly-receipt-email",
+            feature_flag: :receipt_report_2023_04_19,
             classes: ["feature-weekly-receipt-email", "feature-generic"],
             fully_shipped: true,
             name: "Receipt Report",
@@ -96,6 +98,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "receipt-email-upload",
+            feature_flag: :receipt_email_upload_2022_05_10,
             classes: ["feature-receipt-upload"],
             fully_shipped: true,
             name: "Email Receipt Upload",
@@ -109,6 +112,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "internal-transfers",
+            feature_flag: :transfers_2022_04_21,
             classes: ["feature-disbursements"],
             fully_shipped: true,
             name: "Internal Transfers",
@@ -124,7 +128,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "suggested-memos",
-            classes: ["feature-disbursements"],
+            feature_flag: :ai_memos_2024_06_20,
             fully_shipped: true,
             name: "Transaction Memo Suggestions",
             description: "Renaming transactions is a great way for donors and team members to
@@ -169,8 +173,8 @@
 
       <%= render partial: "features/preview", locals: {
             id: "sms-receipt-notification",
-            classes: ["feature-sms-receipt-notification"],
             feature_flag: :sms_receipt_notifications_2022_11_23,
+            classes: ["feature-sms-receipt-notification"],
             fully_shipped: true,
             name: "SMS Charge Notifications",
             description: "We're experimenting with new ways to alert people that they need to
