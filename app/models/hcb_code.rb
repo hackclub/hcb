@@ -175,23 +175,23 @@ class HcbCode < ApplicationRecord
            foreign_key: "hcb_code",
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
-  
+
   def subledgers
     @subledgers ||=
-    begin
-      ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
-              .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
-              .compact
-              .uniq
-    
-      Subledger.where(id: ids)
-    end
+      begin
+        ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
+                .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
+                .compact
+                .uniq
+
+        Subledger.where(id: ids)
+      end
   end
 
   def subledger
     subledgers.first
   end
-  
+
   def event
     events.first
   end

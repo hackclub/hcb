@@ -492,11 +492,11 @@ class EventsController < ApplicationController
     per_page = (params[:per] || 20).to_i
 
     display_cards = [
-                      @user_stripe_cards.active,
-                      @stripe_cards.active,
-                      @user_stripe_cards.deactivated,
-                      @stripe_cards.deactivated
-                    ].flatten
+      @user_stripe_cards.active,
+      @stripe_cards.active,
+      @user_stripe_cards.deactivated,
+      @stripe_cards.deactivated
+    ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
