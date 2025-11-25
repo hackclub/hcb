@@ -234,7 +234,7 @@ class EventsController < ApplicationController
       end
     end
 
-    render layout: !turbo_frame_request? && admin_signed_in?
+    render layout: !turbo_frame_request? && auditor_signed_in?
   end
 
   def balance_by_date
