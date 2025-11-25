@@ -16,6 +16,8 @@
     <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
     <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
     <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+    
+    <%= render "application/helpscout_beacon" %>
 
     <% if Rails.env.production? %>
       <script
@@ -142,9 +144,9 @@
     <main
       class=" container <%= content_for :container_class %> h-full "
       style="<%= content_for :container_style %>">
-      <div class="flex flex-col h-full">
+      <div class="flex flex-col h-full max-h-dvh overflow-hidden">
         <div class="flex flex-col">
-          <div class="flex flex-row items-center justify-start p-6 gap-4 bg-snow dark:bg-darkless">
+          <div class="flex flex-row items-center justify-between p-6 gap-4 bg-snow dark:bg-darkless">
             <div class="flex flex-row items-center justify-start gap-4">
               <%= render partial: "application/logo" %>
               <div class="flex flex-col items-start justify-start">
@@ -154,6 +156,26 @@
             </div>
             <div>
               <%= render "application/flash" unless @hide_flash %>
+            </div>
+            <div class="pr-3">
+              <div class="flex flex-row items-center justify-start gap-2 text-darkless dark:text-smoke" id="autosave--saving" style="display: none;">
+                <h3 class="font-medium text-lg my-0">
+                  <%= inline_icon "cloud-upload", size: 32, class: "align-top text-muted" %>
+                  Saving your application...
+                </h3>
+              </div>
+              <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--saved">
+                <%= inline_icon "checkmark", size: 32, class: "align-top text-green" %>
+                <h3 class="font-medium text-lg my-0">
+                  Application saved!
+                </h3>
+              </div>
+              <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--error" style="display: none;">
+                <%= inline_icon "important", size: 32, class: "align-top text-orange" %>
+                <h3 class="font-medium text-lg my-0">
+                  Error saving application
+                </h3>
+              </div>
             </div>
           </div>
           <% if @application.present? %>
@@ -168,7 +190,7 @@
           <%= yield %>
         </div>
         <% if @application.present? %>
-          <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke dark:border-slate mt-4 dark:bg-darkless">
+          <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke dark:border-slate dark:bg-darkless">
             <%= yield(:footer) %>
           </div>
         <% end %>

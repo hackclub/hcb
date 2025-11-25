@@ -1,23 +1,25 @@
-<div class="flex flex-row gap-4">
-  <div class="flex flex-col flex-grow">
-    <h2 class="text-4xl">
-      Tell us about your project
-    </h2>
+<div class="flex flex-col md:flex-row gap-4 h-full">
+  <div class="flex flex-col flex-grow justify-between md:max-w-[50%]">
+    <div class="flex flex-col">
+      <h2 class="text-4xl">
+        Tell us about your project
+      </h2>
 
-    <p class="mt-0 text-lg muted">Help our team understand your mission</p>
-
-    <div class="mb-12">
-      <div class="flex flex-col gap-5 h-10">
-      </div>
+      <p class="mt-0 text-lg muted">Help our team understand your mission</p>
     </div>
 
-    <div class="max-w-lg card flex flex-col gap-4 card--sunken">
-      <h3 class="text-lg my-0">Need help?</h3>
-      <p class="my-0">Email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+
+    <div class="max-w-lg card flex flex-col gap-3 card--sunken mb-7">
+      <div class="flex flex-row items-center justify-start gap-2">
+        <%= inline_icon "help", size: 28 %>
+        <h3 class="text-lg my-0">Need help?</h3>
+      </div>
+      <p class="my-0"><%= link_to "Live chat support", "#" %> is currently available.</p>
+      <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
     </div>
   </div>
   <div class="flex flex-col flex-grow">
-    <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
+    <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7" do |form| %>
 
       <div class="field">
         <%= form.label :name, "Project name" %>
@@ -40,6 +42,12 @@
 </div>
 
 <% content_for :footer do %>
-  <%= link_to "Back", application_path(@application), class: "btn" %>
+  <div class="flex flex-row gap-6 items-start justify-center">
+    <%= link_to "Back", application_path(@application), class: "btn bg-muted" %>
+    <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
+      <%= inline_icon "message", size: 28 %>
+      Live chat support
+    <% end %>
+  </div>
   <button class="btn" form="edit_application_<%= @application.id %>">Continue</button>
 <% end %>
