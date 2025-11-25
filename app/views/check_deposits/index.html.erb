@@ -1,30 +1,29 @@
 <% title "Deposit a check to #{@event.name}" %>
-<% page_md %>
+<% page_sm %>
+<% content_for(:container_class, " max-w-xl") %>
 <%= render "events/nav", selected: :deposit_check %>
 
 <h1 class="heading">Deposit a check</h1>
 
-<div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
-  <%= render "new", event: @event %>
-  <%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
-    <ul class="pl-4">
-      <li>
-        The check must be made out to
-        <strong class='primary nowrap'>Hack Club</strong> or
-        <strong class='primary nowrap'>The Hack Foundation</strong>.
-      </li>
-      <li>Take clear photos of the entire front & back of the check.</li>
-      <li>You don't need to sign the back of the check.</li>
-      <li>Make sure the amount you enter here matches the amount on the
-        check.
-      </li>
-      <li>We only accept checks from U.S. financial institutions, in U.S.
-        dollars.
-      </li>
-      <li>For information on how to physically deposit checks, <%= link_to "view our Help Center", "https://help.hcb.hackclub.com/article/42-how-do-i-deposit-checks" %>.</li>
-    </ul>
-  <% end %>
-</div>
+<%= render "new", event: @event %>
+<%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
+  <ul class="pl-4">
+    <li>
+      The check must be made out to
+      <strong class='primary nowrap'>Hack Club</strong> or
+      <strong class='primary nowrap'>The Hack Foundation</strong>.
+    </li>
+    <li>Take clear photos of the entire front & back of the check.</li>
+    <li>You don't need to sign the back of the check.</li>
+    <li>Make sure the amount you enter here matches the amount on the
+      check.
+    </li>
+    <li>We only accept checks from U.S. financial institutions, in U.S.
+      dollars.
+    </li>
+    <li>For information on how to physically deposit checks, <%= link_to "view our Help Center", "https://help.hcb.hackclub.com/article/42-how-do-i-deposit-checks" %>.</li>
+  </ul>
+<% end %>
 
 <% if @check_deposits.count > 0 %>
   <hr>
