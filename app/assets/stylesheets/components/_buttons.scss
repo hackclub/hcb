@@ -90,7 +90,7 @@ input[type='submit'],
     color: darken(map-get($palette, primary), 50%) !important;
 
     &:hover {
-      background-color: saturate(darken(map-get($palette, primary), 5%), 10%);
+      background-color: saturate(lighten(map-get($palette, primary), 5%), 10%);
     }
 
     &:active,
@@ -99,7 +99,7 @@ input[type='submit'],
         box-shadow 0.125s ease-in-out,
         background-color 0.125s ease-in-out,
         color 0.125s ease-in-out;
-      background-color: darken(map-get($palette, primary), 10%);
+      background-color: saturate(map-get($palette, primary), 10%);
     }
   }
 
