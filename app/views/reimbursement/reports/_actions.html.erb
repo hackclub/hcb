@@ -24,7 +24,7 @@
                                   button_icon: "plus",
                                   name: "type",
                                   button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" } },
-                                  template: ->(value) { "Add #{report.expenses.count > 0 ? "another" : "a"} #{value} expense" } %>
+                                  template: ->(value) { "Add #{value} expense" } %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
