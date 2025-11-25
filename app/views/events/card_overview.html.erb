@@ -38,7 +38,7 @@
       <ul class="m0">
         <li>Spending controls are enabled for this organization.</li>
         <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>
-        <li>Managers can issue allowances
+        <li>Owners or managers can issue allowances
           from <%= link_to "your spending controls page", event_organizer_position_spending_controls_path(organizer_position_id: @organizer_position) %>
           , which can be accessed from the <%= link_to "team page", event_team_path(@event) %>.
         </li>

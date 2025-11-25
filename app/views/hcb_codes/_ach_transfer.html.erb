@@ -117,7 +117,7 @@
       <% if policy(@hcb_code.ach_transfer).cancel? %>
         <%= cancel_button %>
       <% else %>
-        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+        <div class="tooltipped tooltipped--e w-fit" aria-label="Only owners or managers can cancel ACHs!">
           <%= cancel_button %>
         </div>
       <% end %>

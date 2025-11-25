@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class DocumentPreviewService
-  def initialize(type:, event:, contract_signers: nil, ach_transfer: nil, disbursement: nil)
+  def initialize(type:, event:, owners: nil, ach_transfer: nil, disbursement: nil)
     @type = type
     @event = event
-    @contract_signers = contract_signers
+    @owners = owners
     @ach_transfer = ach_transfer
     @disbursement = disbursement
   end
@@ -18,7 +18,7 @@ class DocumentPreviewService
   def pdf_string
     @pdf_string ||= ActionController::Base.new.tap do |c|
       c.instance_variable_set(:@event, @event)
-      c.instance_variable_set(:@contract_signers, @contract_signers) if @contract_signers
+      c.instance_variable_set(:@owners, @owners) if @owners
       c.instance_variable_set(:@ach_transfer, @ach_transfer) if @ach_transfer
       c.instance_variable_set(:@disbursement, @disbursement) if @disbursement
     end.render_to_string pdf: template_name, template: template_path, encoding: "UTF-8", formats: :pdf
