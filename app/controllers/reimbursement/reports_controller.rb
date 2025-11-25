@@ -221,8 +221,7 @@ module Reimbursement
 
     def admin_approve
       authorize @report
-      # TODO: This does NOT consider currency
-      ensure_admin_may_approve!(@report, amount_cents: @report.amount_to_reimburse_cents)
+      ensure_admin_may_approve!(@report, amount_cents: currency == "USD" ? @report.amount_to_reimburse_cents : params[:wise_total_including_fees])
 
       begin
         @report.with_lock do
