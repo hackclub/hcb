@@ -1,6 +1,6 @@
 <%# locals: (expense:, new: false) -%>
 
-<%= form_with(model: expense.becomes(Reimbursement::Expense), url: reimbursement_expense_path(expense), class: "h-100 flex flex-col", style: "max-width: 600px;", local: true, data: { "expense-form-target": "form", turbo: true }) do |form| %>
+<%= form_with(model: expense.becomes(Reimbursement::Expense), url: reimbursement_expense_path(expense), class: "h-100 flex flex-col mb-3", style: "max-width: 600px;", local: true, data: { "expense-form-target": "form", turbo: true }) do |form| %>
   <div class="flex flex-row items-center">
     <div style="flex-grow: 1;">
       <%= form.label :memo, "Memo", class: "bold" %>
