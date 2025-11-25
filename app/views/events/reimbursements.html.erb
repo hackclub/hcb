@@ -68,6 +68,7 @@
         <th>Report</th>
         <th>From</th>
         <th class="right-align">Amount</th>
+        <th class="right-align">Created</th>
       </tr>
       </thead>
       <tbody>
@@ -91,6 +92,9 @@
             </td>
             <td class="right-align">
                <%= report.amount.format %>
+            </td>
+            <td class="right-align">
+               <%= format_date report.created_at %>
             </td>
           </tr>
         <% end %>
