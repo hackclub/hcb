@@ -1,57 +1,83 @@
-<%= turbo_frame_tag :application_step do %>
-  <%= form_with url: application_path(@application), method: :patch do |form| %>
-    <%= form.hidden_field :step, value: Event::Application::APPLICATION_STEPS.find_index(:personal_info) %>
+<div class="flex flex-col md:flex-row gap-4 h-full">
+  <div class="flex flex-col flex-grow justify-between md:max-w-[50%]">
+    <div class="flex flex-col">
+      <h2 class="text-4xl">
+        Tell us about your project
+      </h2>
 
-    <%= form.label :address_line1, "Street address" %>
-    <div class="flex gap-2">
+      <p class="mt-0 text-lg muted">Help our team understand your mission</p>
+    </div>
+
+    <div class="max-w-lg card flex flex-col gap-3 card--sunken mb-7">
+      <div class="flex flex-row items-center justify-start gap-2">
+        <%= inline_icon "help", size: 28 %>
+        <h3 class="text-lg my-0">Need help?</h3>
+      </div>
+      <p class="my-0"><%= link_to "Live chat support", "#" %> is currently available.</p>
+      <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+    </div>
+  </div>
+  <div class="flex flex-col flex-grow">
+    <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7" do |form| %>
+      <%= form.hidden_field :step, value: Event::Application::APPLICATION_STEPS.find_index(:personal_info) %>
+
+      <%= form.label :address_line1, "Street address" %>
+      <div class="flex gap-2">
+        <div class="field">
+          <%= form.text_field :address_line1, placeholder: "1 Letterman Drive" %>
+        </div>
+        <div class="field">
+          <%= form.text_field :address_line2, placeholder: "Suite 500" %>
+        </div>
+      </div>
+      <div class="flex">
+        <div class="field flex-auto mr1">
+          <%= form.label :address_city, "City" %>
+          <%= form.text_field :address_city, placeholder: "San Francisco" %>
+        </div>
+        <div class="field flex-auto ml1">
+          <%= form.label :address_state, "State" %>
+          <%= form.text_field :address_state, placeholder: "CA" %>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <div class="field flex-auto">
+          <%= form.label :address_postal_code, "Zip code" %>
+          <%= form.text_field :address_postal_code, placeholder: "94129" %>
+        </div>
+        <div class="field flex-auto">
+          <%= form.label :address_country, "Country" %>
+          <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country" %>
+        </div>
+      </div>
+
       <div class="field">
-        <%= form.text_field :address_line1, placeholder: "1 Letterman Drive" %>
+        <%= form.label :referrer, "How did you hear about HCB?" %>
+        <%= form.text_field :referrer %>
       </div>
+
       <div class="field">
-        <%= form.text_field :address_line2, placeholder: "Suite 500" %>
+        <%= form.label :referral_code, "Referral code" %>
+        <%= form.text_field :referral_code %>
       </div>
-    </div>
-    <div class="flex">
-      <div class="field flex-auto mr1">
-        <%= form.label :address_city, "City" %>
-        <%= form.text_field :address_city, placeholder: "San Francisco" %>
-      </div>
-      <div class="field flex-auto ml1">
-        <%= form.label :address_state, "State" %>
-        <%= form.text_field :address_state, placeholder: "CA" %>
-      </div>
-    </div>
-    <div class="flex gap-2">
-      <div class="field flex-auto">
-        <%= form.label :address_postal_code, "Zip code" %>
-        <%= form.text_field :address_postal_code, placeholder: "94129" %>
-      </div>
-      <div class="field flex-auto">
-        <%= form.label :address_country, "Country" %>
-        <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country" %>
-      </div>
-    </div>
 
-    <div class="field">
-      <%= form.label :referrer, "How did you hear about HCB?" %>
-      <%= form.text_field :referrer %>
-    </div>
+      <div class="field">
+        <%= form.label :notes, "Accessibility needs" %>
+        <%= form.text_area :notes %>
+      </div>
 
-    <div class="field">
-      <%= form.label :referral_code, "Referral code" %>
-      <%= form.text_field :referral_code %>
-    </div>
-
-    <div class="field">
-      <%= form.label :notes, "Accessibility needs" %>
-      <%= form.text_area :notes %>
-    </div>
-
-    <%= form.submit "Next" %>
-  <% end %>
-<% end %>
+      <%= form.hidden_field :return_to, value: application_personal_info_path(@application) %>
+    <% end %>
+  </div>
+</div>
 
 <% content_for :footer do %>
-  <%= link_to "Back", application_project_info_path(@application), class: "btn" %>
-  <%= link_to "Continue", application_submit_path(@application), class: "btn" %>
+  <div class="flex flex-row gap-6 items-start justify-center">
+    <%= link_to "Back", application_path(@application), class: "btn bg-muted" %>
+    <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
+      <%= inline_icon "message", size: 28 %>
+      Live chat support
+    <% end %>
+  </div>
+  <button class="btn" form="edit_application_<%= @application.id %>">Continue</button>
 <% end %>
