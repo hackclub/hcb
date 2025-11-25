@@ -90,7 +90,7 @@ module UsersHelper
     klasses << options[:class] if options[:class]
     klass = klasses.uniq.join(" ")
 
-    aria_label = if options[:aria_label]
+    aria_label = if options[:aria_label].present?
                    options[:aria_label]
                  elsif user.nil?
                    "No user found"
