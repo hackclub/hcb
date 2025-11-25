@@ -122,7 +122,7 @@ module UsersHelper
         },
       )
 
-      aria_label += " | Right click for admin tools"
+      aria_label = [aria_label, "Right click for admin tools"].compact.join(" | ")
 
       # Menu content items
       menu_items = safe_join([
