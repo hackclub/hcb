@@ -99,7 +99,7 @@
       </thead>
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
-          <tr>
+          <tr class="clickable">
             <td class="flex items-center justify-center" style="margin-top: 1px;">
               <%= avatar_for report.user, size: 24 %>
             </td>
@@ -113,7 +113,8 @@
               <% end %>
             </td>
             <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-              <%= link_to report.name, report %>
+              <%= link_to "", report, class: "stretched-link" %>
+              <span><%= report.name %></span>
             </td>
             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                <%= report.event&.name || "None" %>

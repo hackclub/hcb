@@ -84,7 +84,7 @@
             </td>
             <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis;">
               <%= link_to "", report, class: "stretched-link" %>
-              <span class="muted">(<%= report.created_at.strftime("%m/%d/%Y") %>)</span>
+              <span class="muted"><%= report.name %></span>
             </td>
             <td style="width: 200px; overflow: hidden; text-overflow: ellipsis;">
                <%= user_mention report.user %>
