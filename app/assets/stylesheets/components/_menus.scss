@@ -54,7 +54,9 @@
 
   input[type='submit'].menu__action,
   button.menu__action {
-    background: transparent;
+    &:not(:hover) {
+      background: transparent;
+    }
     font-size: inherit;
     width: 100%;
     text-align: left;
@@ -184,7 +186,6 @@
   position: relative;
   text-decoration: none;
   letter-spacing: 0;
-  background-color: transparent;
   transition: 0.125s ease background-color;
   cursor: pointer;
   border-radius: var(--radius-lg);
