@@ -7,6 +7,16 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_nav", active: "previews" %>
   <section>
+    <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @user), "mb3") do %>
+      <%= render partial: "features/preview", locals: {
+            id: "minimalistic-ledger",
+            feature_flag: :transactions_background_2024_06_05,
+            name: "Minimalistic Ledger",
+            description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions.",
+            user: @user
+          } %>
+    <% end %>
+
     <%= render partial: "features/preview", locals: {
           id: "transaction-popovers",
           feature_flag: :hcb_code_popovers_2023_06_16,
@@ -14,14 +24,6 @@
           description: "This feature flag enables a popover allowing quick and easy access to transaction details, card information, and more!",
           user: @user
         } %>
-
-    <%= render partial: "features/preview", locals: {
-          id: "minimalistic-ledger",
-          feature_flag: :transactions_background_2024_06_05,
-          name: "Minimalistic Ledger",
-          description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions.",
-          user: @user
-        } if Flipper.enabled?(:transactions_background_2024_06_05, @user) %>
 
     <%= render partial: "features/preview", locals: {
           id: "sudo-mode",

@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
+    mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
@@ -633,7 +634,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show] do
+          resources :invitations, only: [:index, :show, :create] do
             member do
               post "accept"
               post "reject"
@@ -666,6 +667,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
+          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create]
 

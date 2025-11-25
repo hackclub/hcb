@@ -24,7 +24,7 @@ module Api
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        @hcb_codes = @stripe_card.hcb_codes.order(created_at: :desc)
+        @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
@@ -49,7 +49,7 @@ module Api
         )
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
