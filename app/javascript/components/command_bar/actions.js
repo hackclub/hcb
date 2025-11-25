@@ -242,6 +242,8 @@ export const initalActions = [
   ...['light', 'dark', 'system'].map(theme => ({
     id: `${theme}-theme`,
     name: `Set theme to ${theme}`,
+    section: 'Actions',
+    icon: <Icon glyph="idea" size={16} />,
     keywords: theme, // eslint-disable-next-line no-undef
     perform: () => BK.setDark(theme),
   })),
