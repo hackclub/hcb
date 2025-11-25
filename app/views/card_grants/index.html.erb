@@ -18,25 +18,10 @@
 </h1>
 
 <%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
-  <div class="table-container mb2">
-    <table>
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Date</th>
-          <th>To</th>
-          <th>For</th>
-          <th>Amount</th>
-          <th class="text-right">Balance</th>
-          <th></th>
-        </tr>
-      </thead>
-    </table>
-  </div>
-  <%= blankslate "Loading..." %>
+  <<%= render "application/loading_container", klass: "mt-8" %>
 <% end %>
 
+<h2 class="heading mt4 pb1">Card grant transactions</h2>
 <%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
-  <h2 class="heading mt4 pb1">Card grant transactions</h2>
-  <%= blankslate "Loading..." %>
+  <%= render "application/loading_container", klass: "mt-8" %>
 <% end %>
