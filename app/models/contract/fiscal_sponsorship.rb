@@ -61,7 +61,7 @@ class Contract
               },
               {
                 name: "Organization",
-                default_value: prefills[:name],
+                default_value: prefills["name"],
                 readonly: true
               }
             ]
@@ -79,7 +79,7 @@ class Contract
             fields: [
               {
                 name: "HCB ID",
-                default_value: prefills[:public_id],
+                default_value: prefills["public_id"],
                 readonly: true
               },
               {
@@ -89,7 +89,7 @@ class Contract
               },
               {
                 name: "The Project",
-                default_value: prefills[:description],
+                default_value: prefills["description"],
                 readonly: false
               }
             ]
