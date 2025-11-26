@@ -5,7 +5,7 @@ class AdminMailer < ApplicationMailer
   default to: -> do
     [
       Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
-      User.find_by_public_id("usr_MVtap3") # Lucy
+      User.find_by_public_id("usr_MVtap3")&.email_address_with_name # Lucy
     ].compact
   end
 
