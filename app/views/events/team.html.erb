@@ -155,7 +155,7 @@
   </div>
 <% end %>
 
-<% admin_tool("mt2") do %>
+<% admin_tool("mt2 p-3") do %>
   <h2 class="flex items-center mt1 mb2">
     Previous members
     <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
