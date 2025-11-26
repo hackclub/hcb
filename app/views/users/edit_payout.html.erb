@@ -23,6 +23,9 @@
       We are currently processing a payout to you using Wise. At this time, you can not update your payout method.
       <strong>Something wrong?</strong> <%= help_message %>
       <% end %>
+      <% admin_tool do %>
+        <%= render "payout_form", user: @user %>
+      <% end %>
     <% end %>
   </section>
 </turbo-frame>

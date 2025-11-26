@@ -201,7 +201,7 @@
       <div class="sidebar--scroll-container">
         <%= yield(:header) %>
         <div class="hidden lg:block">
-          <%= render "application/flash" %>
+          <%= render "application/flash", klass: "mt2" %>
         </div>
         <div class="hidden lg:block flex-1">
           <%= yield(:nav) %>
