@@ -1,6 +1,6 @@
 <% title "Cards for #{@event.name}" %>
 <% page_md %>
-<%= render "nav", selected: :cards %>
+<%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
 <% if current_user.try(:full_name).try(:blank?) %>
 
@@ -19,26 +19,22 @@
       <%= badge_for @event.stripe_cards.active.on_main_ledger.count, class: "bg-muted" %>
     </span>
 
-    <div class="mt-1">
-      <div class="flex ml-auto gap-2 items-center -mt-3">
-        <%= render "filter_cards_menu" unless @has_filter %>
-        <%= pop_icon_to @view == "list" ? "grid" : "list",
-                        "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
-        <% if organizer_signed_in?(as: :member) %>
-          <%= link_to event_cards_new_path(event_id: @event.slug), class: "!ml-1 btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
-            <%= inline_icon "card-add" %>
-            Order a card
-          <% end %>
-        <% end %>
-      </div>
-    </div>
+    <%= render "events/filter_cards_menu" unless @has_filter %>
+    <%= pop_icon_to @view == "list" ? "grid" : "list",
+                    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
+        <%= inline_icon "card-add" %>
+        Order a card
+      <% end %>
+    <% end %>
   </h1>
 
-  <%= render "filter_cards" if @has_filter %>
+  <%= render "events/filter_cards" if @has_filter %>
 
   <% if control = @organizer_position&.active_spending_control %>
     <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
-    <%= render "callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
+    <%= render "application/callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
       <ul class="m0">
         <li>Spending controls are enabled for this organization.</li>
         <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>

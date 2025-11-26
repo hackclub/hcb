@@ -10,7 +10,7 @@
 
 <h1>Send a PayPal transfer</h1>
 
-<%= render "callout",
+<%= render "application/callout",
     type: "info",
     title: "Important info about PayPal transfers" do %>
     <p>HCB never charges fees to send transfers, however PayPal may charge processing fees to your organization or the recipient.</p>
@@ -26,7 +26,7 @@
     </ul>
 <% end %>
 
-<%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions %>
+<%= render "application/callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions %>
 
 <%= form_with(model: [@event, @paypal_transfer], local: true) do |form| %>
 

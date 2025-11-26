@@ -6,7 +6,7 @@
 
 <% title @event.name %>
 <% page_md %>
-<%= render "nav", selected: :home %>
+<%= render "events/nav", selected: :home %>
 
 <% if @event.is_public %>
   <% auto_discover_feed(@event) %>
@@ -66,7 +66,7 @@
       <% end %>
     </div>
     <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
-    <%= render "transfer_modal" %>
+    <%= render "events/transfer_modal" %>
     <%= render "card_grants/create_modal" %>
     <%= render "invoices/modal" %>
 

@@ -1,6 +1,6 @@
 <% title "Team overview" %>
 <% page_md %>
-<%= render "nav", selected: :team %>
+<%= render "events/nav", selected: :team %>
 
 <h1 class="heading gap-2">
   <span class="flex flex-grow items-center">
@@ -33,7 +33,7 @@
 </h1>
 
 <% if @event.parent.present? %>
-  <%= render "callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+  <%= render "application/callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
     <p>Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
 
     <% if @indirect_access.present? %>
@@ -50,9 +50,9 @@
   <% end %>
 <% end %>
 
-<div class="flex flex-row justify-between items-center width-100 gap-2 mb-3">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1") do |form| %>
-    <%= render "search", form: %>
+<div class="filterbar flex flex-row justify-between items-center width-100 gap-2">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+    <%= render "events/search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
@@ -178,6 +178,6 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
     <%= modal_header "Invite a team member" %>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
-    <%= render "invite_links_section", event: @event, invite_links: @invite_links %>
+    <%= render "events/invite_links_section", event: @event, invite_links: @invite_links %>
   </section>
 <% end %>

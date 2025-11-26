@@ -12,8 +12,8 @@
     Jump to <%= link_to "the fiscal sponsorship section", "#fiscal-sponsorship", style: "color: inherit;" %>
     to see how you can accurately represent your 501(c)(3) status.
   <% end %>
-  <%= render "callout", type: "info", title: fs_callout_title %>
-</section>
+  <%= render "application/callout", type: "info", title: fs_callout_title %>
+</div>
 
 <section class="mb-8">
   <h2>Our Name</h2>
@@ -23,13 +23,13 @@
     <li>Refrain from adding/removing additional characters and words (e.g. 'Hack Club HCB')</li>
     <li>Refrain from using our previous name, "Hack Club Bank".</li>
   </ul>
-  <%= render "callout", type: "warning", title: "As a reminder, HCB is not a bank!" do %>
+  <%= render "application/callout", type: "warning", title: "As a reminder, HCB is not a bank!" do %>
     <ul>
       <li>We are a fiscal sponsorship platform backed by <%= link_to "Column", "https://column.com", target: "_blank" %>.</li>
       <li>When you sign the fiscal sponsorship agreement, a “restricted fund”—a privatized section of these bank accounts for your team only—is created for your organization through our platform.</li>
     </ul>
   <% end %>
-  <%= render "callout", type: "info", title: "When using HCB in legal settings, use either;" do %>
+  <%= render "application/callout", type: "info", title: "When using HCB in legal settings, use either;" do %>
     <ul>
       <li>HCB, a project by The Hack Foundation (d.b.a. Hack Club)"</li>
       <li>The Hack Foundation (d.b.a. Hack Club).</li>
@@ -48,12 +48,12 @@
   <p>
     If you'd like to modify the above statement, make sure it clearly shares that you're fiscally sponsored by HCB. If you have questions or would like to run your phrasing by us, feel free to <%= link_to "contact the HCB team", "mailto:hcb@hackclub.com" %>.
   </p>
-    <%= render "callout", type: "warning", title: "Fiscal sponsor ≠ sponsor or donor" do %>
+    <%= render "application/callout", type: "warning", title: "Fiscal sponsor ≠ sponsor or donor" do %>
       <p class="m0">Unless you have received direct financial support from us, please do NOT use this reference as your organization’s relationship to HCB.</p>
     <% end %>
 
-  <%= render "callout", type: "warning", title: "Misrepresenting your relationship with HCB or Hack Club could result in the termination of your fiscal sponsorship agreement." %>
-</section>
+    <%= render "application/callout", type: "warning", title: "Misrepresenting your relationship with HCB or Hack Club could result in the termination of your fiscal sponsorship agreement." %>
+</div>
 
 <section class="mb-8">
   <h2>Our Logos</h2>
@@ -80,8 +80,8 @@
     By downloading or using any icon/logo or the HCB brand, you agree to abide by the
     <%= link_to "general usage rules", "#general-usage-rules", style: "color: inherit;" %>.
   <% end %>
-  <%= render "callout", type: "info", title: logo_usage_callout_title %>
-</section>
+  <%= render "application/callout", type: "info", title: logo_usage_callout_title %>
+</div>
 
 <section class="mb-8" id="general-usage-rules">
   <h2>General Usage Rules</h2>
@@ -116,5 +116,5 @@
     permission to use the brand for purposes other than those described above,
     please <%= link_to "contact the HCB team", "mailto:hcb@hackclub.com", style: "color: inherit;" %>.
   <% end %>
-  <%= render "callout", type: "info", title: help_callout_title %>
-</section>
+  <%= render "application/callout", type: "info", title: help_callout_title %>
+</div>

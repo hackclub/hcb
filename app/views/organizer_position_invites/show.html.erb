@@ -2,7 +2,7 @@
 
 <% if @invite.contract && !@invite.contract.signed? %>
   <% pending_signee = @invite.contract.pending_signee_information %>
-  <%= render "callout", type: "warning", title: "You have a pending contract for this organization." do %>
+  <%= render "application/callout", type: "warning", title: "You have a pending contract for this organization." do %>
     <% if pending_signee %>
       The contract is still pending because <%= pending_signee[:label] %> (<%= pending_signee[:email] %>) hasn't signed it yet.
     <% else %>

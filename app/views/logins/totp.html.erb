@@ -3,10 +3,10 @@
 
 <div class="flex flex-col flex-1 justify-center">
   <div class="flex flex-col justify-between items-start">
-    <%= render "header", label: "Sign in to HCB" do %>
+    <%= render "logins/header", label: "Sign in to HCB" do %>
       One-time code
     <% end %>
-    <%= render "badge", user: @login.user %>
+    <%= render "logins/badge", user: @login.user %>
   </div>
   <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
@@ -55,5 +55,5 @@
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>
