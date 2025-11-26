@@ -51,7 +51,7 @@
   <% end %>
 
   <% if expense.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
-    <% admin_tool do %>
+    <% admin_tool("mt-4") do %>
       <div class="warning bold">
         ⚠️ Please check these receipts closely, we suspect that their amounts don't match
       </div>
