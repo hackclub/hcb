@@ -48,7 +48,7 @@
   <% end %>
 </section>
 
-<article class="card pb0 mt3 mb1">
+<article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @donation.name(show_anonymous: organizer_signed_in?) %>
@@ -71,7 +71,7 @@
     </span>
   <% end %>
 
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
+  <section class="hcb-code--details">
     <% if @donation.payment_method_type == 'card' %>
       <p data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
         <strong>
