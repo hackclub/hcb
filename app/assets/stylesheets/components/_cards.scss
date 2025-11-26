@@ -93,10 +93,15 @@
     margin-top: 0 !important;
     margin-bottom: 0.1rem !important;
     opacity: 0.7 !important;
+    white-space: nowrap !important;
   }
 
   html[data-dark='true'] & {
     background-color: rgba(50, 50, 55, 0.5);
+  }
+
+  & p {
+    flex-direction: column;
   }
 }
 

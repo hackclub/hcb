@@ -27,42 +27,44 @@
 
   <section class="hcb-code--details">
     <% unless @hcb_code.disbursement.requested_by.nil? %>
-      <p>
+      <div>
         <% if @hcb_code.disbursement.reviewing? || @hcb_code.disbursement.rejected? %>
           <strong>Requested by</strong>
         <% else %>
           <strong>Sent by</strong>
         <% end %>
         <%= user_mention @hcb_code.disbursement.requested_by %>
-      </p>
+      </div>
     <% end %>
 
     <% unless @hcb_code.disbursement.fulfilled_by.nil? %>
-      <% admin_tool("", "p") do %>
+      <% admin_tool("", "div") do %>
         <strong>Fulfilled by</strong>
         <%= user_mention @hcb_code.disbursement.fulfilled_by %>
       <% end %>
     <% end %>
 
-    <p>
-      <% if @hcb_code.disbursement.processed? %>
+    <% if @hcb_code.disbursement.processed? %>
+      <div>
         <strong>Transferred at</strong>
         <%= format_datetime @hcb_code.disbursement.transferred_at %>
-      <% else %>
+      </div>
+    <% else %>
+      <div>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.disbursement.created_at %>
         <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
-          <% admin_tool("", "p") do %>
+          <% admin_tool("", "div") do %>
             <strong>Scheduled at</strong>
             <%= @hcb_code.disbursement.scheduled_on.strftime("%B %e, %Y") %>
           <% end %>
         <% end %>
-      <% end %>
-      <% admin_tool("", "p") do %>
-        <strong>Disbursement ID</strong>
-        <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
-      <% end %>
-    </p>
+      </div>
+    <% end %>
+    <% admin_tool("", "div") do %>
+      <strong>Disbursement ID</strong>
+      <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
+    <% end %>
 
   </section>
 
