@@ -82,7 +82,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   belongs_to :organizer_position, optional: true
 
-  validate :not_already_organizer
+  validate :not_already_organizer, if: -> { event_changed? || user_changed? }
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
@@ -221,7 +221,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def on_contract_signed(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      deliver
+      deliver if organizer_position.nil?
 
       # Unfreeze the event if this is the first signed contract
       if event.contracts.signed.count == 1
