@@ -87,7 +87,7 @@
   </div>
 
   <% if @hcb_code.check_deposit.pending? || @hcb_code.fee_waived? %>
-    <section class="card__banner card__darker secondary border-top italic">
+    <section class="hcb-code--footer">
       <% if @hcb_code.check_deposit.pending? %>
         Checks may take up to 2 weeks to deposit.
       <% end %>
