@@ -48,13 +48,6 @@ preload_app! unless ENV.fetch("RAILS_ENV", "development") == "development"
 # Report stats to AppSignal
 plugin :appsignal
 
-# https://docs.appsignal.com/ruby/integrations/puma.html#usage-with-preload_app
-# Add this before_fork callback to stop the minutely probes in the Puma main process
-before_fork do
-  Appsignal::Probes.stop
-end
+require_relative "../app/lib/credentials"
 
-# Add this on_worker_boot callback to start the minutely probes in the Puma worker processes
-on_worker_boot do
-  Appsignal::Probes.start
-end
+Credentials.load if ENV["DOPPLER_TOKEN"]
