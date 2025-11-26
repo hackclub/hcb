@@ -332,10 +332,11 @@ Rails.application.routes.draw do
     post "resend"
     member do
       post "change_position_role"
+      post "send_contract"
     end
   end
 
-  resources :contracts, only: [:create] do
+  resources :contracts, only: [] do
     member do
       post "void"
       post "resend_to_user"
