@@ -40,30 +40,30 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <% if @hcb_code.increase_check.sent? %>
         <strong>Sent by</strong>
       <% else %>
         <strong>Requested by</strong>
       <% end %>
       <%= user_mention @hcb_code.increase_check.user %>
-    </p>
+    </div>
     <% if @hcb_code.increase_check.sent? %>
-      <p>
+      <div>
         <strong>Sent at</strong>
         <%= format_datetime @hcb_code.increase_check.approved_at %>
-      </p>
+      </div>
     <% else %>
-      <p>
+      <div>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.increase_check.created_at %>
-      </p>
+      </div>
     <% end %>
     <% if @hcb_code.increase_check.reimbursement_payout_holding.present? %>
-      <p>
+      <div>
         <strong>Reimbursing</strong>
        <%= link_to @hcb_code.increase_check.reimbursement_payout_holding.report.name, @hcb_code.increase_check.reimbursement_payout_holding.report, data: { turbo_frame: "_top" } %>
-      </p>
+      </div>
     <% end %>
   </section>
 

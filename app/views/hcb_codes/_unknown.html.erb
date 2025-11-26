@@ -2,14 +2,14 @@
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Date</strong>
       <%= format_date @hcb_code.date %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Type</strong>
       Bank account transaction
-    </p>
+    </div>
   </section>
 
   <section class='details pt2 pb2'>

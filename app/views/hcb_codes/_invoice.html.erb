@@ -66,14 +66,14 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Sent by</strong>
       <%= user_mention @invoice.creator %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Sent at</strong>
       <%= invoice_sent_at(@invoice) %>
-    </p>
+    </div>
   </section>
   <!-- recipient info -->
   <section class="details pt2 pb2 details--wide details--tall">
@@ -229,21 +229,21 @@
           </span>
         </action>
       <% else %>
-        <p>
+        <div>
           <strong>Payment method</strong>
           <span class="inline-flex">
             <%= invoice_payment_method_mention %>
           </span>
-        </p>
+        </div>
       <% end %>
-      <p>
+      <div>
         <strong>Paid at</strong>
         <% if @invoice.manually_marked_as_paid? %>
           <%= format_datetime @invoice.manually_marked_as_paid_at %>
         <% else %>
           <%= format_datetime @invoice.payout_creation_queued_at %>
         <% end %>
-      </p>
+      </div>
       <% admin_tool do %>
         <%= invoice_payout_datetime %>
       <% end %>

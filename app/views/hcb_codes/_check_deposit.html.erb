@@ -36,25 +36,25 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Deposited by</strong>
       <%= user_mention @hcb_code.check_deposit.created_by %>
-    </p>
+    </div>
     <% if @hcb_code.ct %>
-      <p>
+      <div>
         <strong>Deposited on</strong>
         <%= format_date @hcb_code.ct.date %>
-      </p>
+      </div>
     <% else %>
-      <p>
+      <div>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.check_deposit.created_at %>
-      </p>
+      </div>
       <% if @hcb_code.check_deposit.estimated_arrival_date %>
-        <p>
+        <div>
           <strong>Estimated arrival</strong>
           <%= @hcb_code.check_deposit.estimated_arrival_date.strftime("%b %e, %Y") %>
-        </p>
+        </div>
       <% end %>
     <% end %>
   </section>

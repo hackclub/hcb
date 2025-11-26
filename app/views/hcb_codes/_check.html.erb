@@ -24,14 +24,14 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Sent by</strong>
       <%= user_mention @hcb_code.check.creator %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong><%= @hcb_code.check.sent? ? "Scheduled at" : "Sent at" %></strong>
       <%= format_datetime @hcb_code.check.send_date %>
-    </p>
+    </div>
 
     <% if @hcb_code.check.in_transit? || @hcb_code.check.in_transit_and_processed? %>
       <div>

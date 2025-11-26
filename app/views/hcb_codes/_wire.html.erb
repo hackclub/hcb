@@ -26,14 +26,14 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Sent by</strong>
       <%= user_mention @hcb_code.wire.user %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Sent at</strong>
       <%= format_datetime @hcb_code.wire.created_at %>
-    </p>
+    </div>
   </section>
   <turbo-frame id="details">
     <section class="details pt2 pb2">

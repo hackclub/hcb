@@ -73,7 +73,7 @@
 
   <section class="hcb-code--details">
     <% if @donation.payment_method_type == 'card' %>
-      <p data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
+      <div data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
         <strong>
           <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
           <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -84,24 +84,24 @@
         <span class="inline-flex">
           <%= donation_payment_method_mention %>
         </span>
-      </p>
+      </div>
     <% else %>
-      <p>
+      <div>
         <strong>Payment method</strong>
         <span class="inline-flex">
           <%= donation_payment_method_mention %>
         </span>
-      </p>
+      </div>
     <% end %>
-    <p>
+    <div>
       <strong>Donated at</strong>
       <%= format_datetime @donation.donated_at %>
-    </p>
+    </div>
     <% if @donation.collected_by.present? %>
-      <p>
+      <div>
         <strong>Collected by</strong>
         <%= user_mention @donation.collected_by %>
-      </p>
+      </div>
     <% end %>
     <% admin_tool do %>
       <%= donation_payout_datetime %>

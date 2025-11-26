@@ -60,33 +60,33 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Card</strong>
       <%= stripe_card_mention @hcb_code.stripe_card %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong><%= @hcb_code.stripe_refund? ? "Refunded to" : "Spender" %></strong>
       <%= link_to @hcb_code.stripe_card do %>
         <%= user_mention @hcb_code.stripe_card.user %>
       <% end %>
-    </p>
+    </div>
     <% if @hcb_code.stripe_atm_fee %>
-      <p>
+      <div>
         <strong>ATM fee</strong>
         <span><%= render_money @hcb_code.stripe_atm_fee %></span>
-      </p>
+      </div>
     <% end %>
-    <p>
+    <div>
       <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
       <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %>
     </p>
     <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
-      <p>
+      <div>
         <strong>Settled after</strong>
         <span title="<%= Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
         <%= distance_of_time_in_words @hcb_code.pt.raw_pending_stripe_transaction.created_at, @hcb_code.ct.created_at %>
         </span>
-      </p>
+      </div>
     <% end %>
   </section>
 

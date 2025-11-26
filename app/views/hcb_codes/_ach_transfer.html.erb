@@ -19,20 +19,20 @@
   <% end %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Sent by</strong>
       <%= user_mention @hcb_code.ach_transfer.creator %>
-    </p>
+    </div>
     <% unless @hcb_code.ach_transfer.processor.nil? %>
-      <% admin_tool("", "p") do %>
+      <% admin_tool("", "div") do %>
         <strong>Processed by</strong>
         <%= user_mention @hcb_code.ach_transfer.processor %>
       <% end %>
     <% end %>
-    <p>
+    <div>
       <strong>Sent at</strong>
       <%= format_datetime @hcb_code.ach_transfer.created_at %>
-    </p>
+    </div>
   </section>
   <turbo-frame id="details">
     <section class="details pt2 pb2">

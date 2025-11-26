@@ -4,18 +4,18 @@
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
   <section class="hcb-code--details">
-    <p>
+    <div>
       <strong>Date</strong>
       <%= format_date @hcb_code.date %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Type</strong>
       <% if expense.is_fee? %>
         Wise transfer fee
       <% else %>
         Reimbursed expense
       <% end %>
-    </p>
+    </div>
   </section>
   <section class="details pt2 pb2">
     <p>
