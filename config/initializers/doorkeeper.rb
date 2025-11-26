@@ -7,6 +7,10 @@ Doorkeeper.configure do
 
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_authenticator do
+    # Block OAuth authorization for impersonated sessions to prevent admins from
+    # authorizing applications on behalf of users they are impersonating.
+    next nil if try(:current_session)&.impersonated?
+
     try(:current_user)
   end
 
