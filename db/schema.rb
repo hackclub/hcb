@@ -17,8 +17,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "pg_stat_statements"
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state"
@@ -622,6 +622,27 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["username"], name: "index_console1984_users_on_username"
+  end
+
+  create_table "contracts", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.bigint "contractable_id"
+    t.string "contractable_type"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.bigint "document_id"
+    t.string "external_id"
+    t.integer "external_service"
+    t.string "external_template_id"
+    t.boolean "include_videos"
+    t.jsonb "prefills"
+    t.datetime "signed_at"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "void_at"
+    t.index ["contractable_type", "contractable_id"], name: "index_contracts_on_contractable"
+    t.index ["document_id"], name: "index_contracts_on_document_id"
   end
 
   create_table "disbursements", force: :cascade do |t|
@@ -1678,12 +1699,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
     t.datetime "deleted_at", precision: nil
     t.bigint "event_id"
     t.boolean "first_time", default: true
+    t.bigint "fiscal_sponsorship_contract_id"
     t.boolean "is_signee", default: false
     t.integer "role", default: 100, null: false
     t.integer "sort_index"
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id"
     t.index ["event_id"], name: "index_organizer_positions_on_event_id"
+    t.index ["fiscal_sponsorship_contract_id"], name: "index_organizer_positions_on_fiscal_sponsorship_contract_id"
     t.index ["user_id"], name: "index_organizer_positions_on_user_id"
   end
 
@@ -2620,6 +2643,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
   add_foreign_key "column_account_numbers", "events"
   add_foreign_key "comment_reactions", "comments"
   add_foreign_key "comment_reactions", "users", column: "reactor_id"
+  add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
   add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
@@ -2715,6 +2739,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
   add_foreign_key "organizer_position_spending_control_allowances", "organizer_position_spending_controls"
   add_foreign_key "organizer_position_spending_control_allowances", "users", column: "authorized_by_id"
   add_foreign_key "organizer_position_spending_controls", "organizer_positions"
+  add_foreign_key "organizer_positions", "contracts", column: "fiscal_sponsorship_contract_id"
   add_foreign_key "organizer_positions", "events"
   add_foreign_key "organizer_positions", "users"
   add_foreign_key "payment_recipients", "events"

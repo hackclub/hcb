@@ -7,7 +7,7 @@
 <%= render "events/nav" if @event %>
 
 <% if @emburse_card %>
-  <%= render @emburse_card %>
+  <%= render "emburse_cards/emburse_card", emburse_card: @emburse_card %>
 <% end %>
 
 <% admin_tool("mt3 mb0") do %>

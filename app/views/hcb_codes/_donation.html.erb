@@ -2,8 +2,8 @@
 
 <% instance = @hcb_code.hashid %>
 
-<%= render partial: "admin_viewer", locals: { record: @donation } %>
-<%= render partial: "admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
+<%= render partial: "application/admin_viewer", locals: { record: @donation } %>
+<%= render partial: "application/admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
 
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @donation.stripe_dashboard_url, class: "btn bg-accent" %>

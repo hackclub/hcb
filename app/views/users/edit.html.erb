@@ -126,7 +126,7 @@
   <%= render "users/nav", selected: :settings %>
   <h1>Settings</h1>
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-    <%= render "settings_nav", active: "general" unless @onboarding %>
+    <%= render "users/settings_nav", active: "general" unless @onboarding %>
     <section>
       <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>
