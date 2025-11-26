@@ -76,13 +76,6 @@
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <div id="tooltip-container"></div>
-    <%= react_component "tour/TourOverlay",
-                        tour: @tour&.name,
-                        id: @tour&.id,
-                        step: @tour&.step || 0,
-                        options: @tour&.tourable&.try(:tourable_options) || {},
-                        back_to_tour: @back_to_tour %>
-
     <%= render "application/maintenance_banner",
                datetime: "2025-05-07T00:00:00-08:00",
                duration: 30.minutes,
@@ -185,7 +178,7 @@
               </div>
 
               <div class="mb2">
-                <button class="btn" data-action="welcome#tour">Show me around</button>
+                <button class="btn">Show me around</button>
               </div>
               <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
             </div>
