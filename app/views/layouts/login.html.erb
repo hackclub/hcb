@@ -110,6 +110,8 @@
         <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
           <div class="flex flex-row gap-4 items-start">
             <%= render partial: "application/logo" %>
+          </div>
+          <div class="mt-4">
             <%= render "application/flash" unless @hide_flash %>
           </div>
           <%= yield %>

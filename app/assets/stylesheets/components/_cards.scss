@@ -189,7 +189,6 @@ a.card {
   @extend .card;
   border: 1px solid currentColor;
   font-weight: 500;
-  max-width: 24rem;
   padding: 0.5rem 0.75rem 0.5rem 1rem;
 
   &.success {
