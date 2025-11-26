@@ -327,6 +327,7 @@ class EventsController < ApplicationController
     if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
       return redirect_to edit_event_path(@event.slug, tab: "details")
     end
+
     @settings_tab = params[:tab]
     @frame = params[:frame]
     @activities_before = params[:activities_before] || Time.now

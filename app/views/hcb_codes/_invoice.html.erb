@@ -299,7 +299,7 @@
 
     <% unless @invoice.deposited? %>
       <% if @invoice.event.can_front_balance? %>
-        <section class="card__banner card__darker secondary border-top">
+        <section class="hcb-code--footer">
           <p class="my0 italic">
             <% if @hcb_code.fee_waived? %>
               Fees were waived on this transaction — enjoy!
@@ -312,7 +312,7 @@
     <% end %>
 
     <% if (@invoice.deposited? || !@invoice.event.can_front_balance?) && @hcb_code.fee_waived? %>
-      <section class="card__banner card__darker secondary border-top">
+      <section class="hcb-code--footer">
         <p class="my0 italic">
           Fees were waived on this transaction — enjoy!
         </p>
