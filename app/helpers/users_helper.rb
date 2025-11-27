@@ -113,7 +113,7 @@ module UsersHelper
 
     if user && viewer&.auditor?
       button = content_tag(
-        :div,
+        :span,
         content,
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
@@ -146,14 +146,14 @@ module UsersHelper
                              ])
 
       menu_content = content_tag(
-        :div,
+        :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
         data: { "menu-target": "content" }
       )
 
       menu_wrapper = content_tag(
-        :div,
+        :span,
         button + menu_content,
         data: { controller: "menu", "menu-placement-value": "bottom-start" },
         class: "mention__menu"
