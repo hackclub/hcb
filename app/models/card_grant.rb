@@ -239,6 +239,7 @@ class CardGrant < ApplicationRecord
       current_user: user,
       ip_address:,
       subledger:,
+      skip_notify_user: true,
     ).run
 
     save!
