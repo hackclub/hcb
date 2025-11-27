@@ -232,15 +232,7 @@ module EventsHelper
   end
 
   def show_mock_data?(event = @event)
-    event&.demo_mode? && session[mock_data_session_key]
-  end
-
-  def set_mock_data!(bool = true, event = @event)
-    session[mock_data_session_key] = bool
-  end
-
-  def mock_data_session_key(event = @event)
-    "show_mock_data_#{event.id}".to_sym
+    false
   end
 
   def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)

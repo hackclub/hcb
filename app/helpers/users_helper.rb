@@ -172,7 +172,7 @@ module UsersHelper
 
     if user && viewer&.auditor?
       button = content_tag(
-        :div,
+        :span,
         content,
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
@@ -186,18 +186,18 @@ module UsersHelper
       # Menu content items
       menu_items = safe_join([
                                content_tag(
-                                 :div,
+                                 :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
                                  onclick: "window.open('mailto:#{user.email}'); return false;",
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                ),
                                content_tag(
-                                 :div,
+                                 :span,
                                  nil,
                                  class: "menu__divider"
                                ),
                                content_tag(
-                                 :div,
+                                 :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
                                  onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
@@ -205,14 +205,14 @@ module UsersHelper
                              ])
 
       menu_content = content_tag(
-        :div,
+        :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
         data: { "menu-target": "content" }
       )
 
       menu_wrapper = content_tag(
-        :div,
+        :span,
         button + menu_content,
         data: { controller: "menu", "menu-placement-value": "bottom-start" },
         class: "mention__menu"

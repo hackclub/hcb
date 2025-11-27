@@ -13,7 +13,7 @@
       <% else %>
         <% reimbursed_change_text = capture do %>
           <%= error_boundary fallback_text: "initiated a transfer" do %>
-            <% raw_text = render_money(@report.amount_cents) + " " + @report.transfer_text %>
+            <% raw_text = render_money(@report.payout_holding.amount_cents) + " " + @report.transfer_text %>
             <% payout_transfer_url = hcb_code_path(@report.payout_holding&.payout_transfer&.local_hcb_code) if @report.payout_holding&.payout_transfer&.local_hcb_code %>
 
             <%= @report.initiated_transfer_text %> a

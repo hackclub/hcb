@@ -13,7 +13,6 @@ class EventsController < ApplicationController
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
   skip_before_action :signed_in_user
-  before_action :set_mock_data
   before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
@@ -233,13 +232,6 @@ class EventsController < ApplicationController
       @transactions.reverse.reduce(initial_subtotal) do |running_total, transaction|
         transaction.running_balance = running_total + transaction.amount
       end
-    end
-
-    if helpers.show_mock_data?
-      @transactions = MockTransactionEngineService::GenerateMockTransaction.new.run
-
-      @transactions = Kaminari.paginate_array(@transactions).page(params[:page]).per(params[:per] || 75)
-      @mock_total = @transactions.sum(&:amount_cents)
     end
 
     render layout: !turbo_frame_request? && auditor_signed_in?
@@ -500,53 +492,15 @@ class EventsController < ApplicationController
 
     authorize @event
 
-    # Generate mock data
-    if helpers.show_mock_data?
-      @user_stripe_cards = []
-
-      if organizer_signed_in?
-        # The user's cards
-        2.times.each_with_index do |_, i|
-          state = i > 0
-          virtual = rand > 0.5
-          card = OpenStruct.new(
-            id: Faker::Number.number(digits: 1),
-            virtual?: virtual,
-            physical?: !virtual,
-            remote_shipping_status: rand > 0.5 ? "PENDING" : "SHIPPED",
-            created_at: Faker::Time.between(from: 1.year.ago, to: Time.now),
-            state: state ? "success" : "muted",
-            state_text: state ? "Active" : "Frozen",
-            status_text: state ? "Active" : "Frozen",
-            stripe_name: current_user.name,
-            user: current_user,
-            formatted_card_number: Faker::Finance.credit_card(:mastercard),
-            hidden_card_number: "•••• •••• •••• ••••",
-            hidden_card_number_with_last_four: "•••• •••• •••• #{Faker::Number.number(digits: 4)}",
-            to_partial_path: "stripe_cards/stripe_card",
-          )
-          @user_stripe_cards << card
-        end
-      end
-      # Sort by date issued
-      @user_stripe_cards.sort_by! { |card| card.created_at }.reverse!
-    end
-
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || 20).to_i
 
-    display_cards = if helpers.show_mock_data? && organizer_signed_in?
-                      @user_stripe_cards
-                    elsif helpers.show_mock_data?
-                      []
-                    else
-                      [
-                        @user_stripe_cards.active,
-                        @stripe_cards.active,
-                        @user_stripe_cards.deactivated,
-                        @stripe_cards.deactivated
-                      ].flatten
-                    end
+    display_cards = [
+      @user_stripe_cards.active,
+      @stripe_cards.active,
+      @user_stripe_cards.deactivated,
+      @stripe_cards.deactivated
+    ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
@@ -653,43 +607,6 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    if helpers.show_mock_data?
-      @all_donations = []
-      @recurring_donations = []
-      @stats = { deposited: 0, in_transit: 0, refunded: 0 }
-
-      (0..rand(20..50)).each do |_|
-        refunded = rand > 0.9
-        amount = rand(1..100) * 100
-        started_on = Faker::Date.backward(days: 365 * 2)
-
-        donation = OpenStruct.new(
-          amount:,
-          total_donated: amount * rand(1..5),
-          stripe_status: "active",
-          state: refunded ? "warning" : "success",
-          state_text: refunded ? "Refunded" : "Deposited",
-          filter: refunded ? "refunded" : "deposited",
-          created_at: started_on,
-          name: Faker::Name.name,
-          recurring: rand > 0.9,
-          local_hcb_code: OpenStruct.new(hashid: ""),
-          hcb_code: "",
-        )
-        @stats[:deposited] += amount unless refunded
-        @stats[:refunded] += amount if refunded
-        @all_donations << donation
-      end
-      @all_donations.each do |donation|
-        if donation[:recurring]
-          @recurring_donations << donation
-        end
-      end
-      # Sort by date descending
-      @recurring_donations.sort_by! { |invoice| invoice[:created_at] }.reverse!
-      @all_donations.sort_by! { |invoice| invoice[:created_at] }.reverse!
-    end
-
     @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
@@ -755,36 +672,6 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
     @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
-
-    # Generate mock data
-    if helpers.show_mock_data?
-      @transfers = []
-      @stats = { deposited: 0, in_transit: 0, canceled: 0 }
-
-      (0..rand(20..100)).each do |_|
-        transfer = OpenStruct.new(
-          state: "success",
-          state_text: rand > 0.5 ? "Fufilled" : "Deposited",
-          created_at: Faker::Date.backward(days: 365 * 2),
-          amount: rand(1000..10000),
-          name: Faker::Name.name,
-          hcb_code: "",
-        )
-        @stats[:deposited] += transfer.amount
-        @transfers << transfer
-      end
-      # Sort by date
-      @transfers = @transfers.sort_by { |o| o.created_at }.reverse!
-
-      # Set the most recent 0-3 invoices to be pending
-      (0..rand(-1..2)).each do |i|
-        @transfers[i].state = "muted"
-        @transfers[i].state_text = "Pending"
-        @stats[:in_transit] += @transfers[i].amount
-      end
-
-      @transfers = Kaminari.paginate_array(@transfers).page(params[:page]).per(100)
-    end
   end
 
   def new_transfer
@@ -1365,12 +1252,6 @@ class EventsController < ApplicationController
     )
 
     @cacheable = !(organizer_signed_in? || has_filters)
-  end
-
-  def set_mock_data
-    if params[:show_mock_data].present?
-      helpers.set_mock_data!(params[:show_mock_data] == "true")
-    end
   end
 
   def set_timeframe

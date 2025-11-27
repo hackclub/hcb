@@ -58,7 +58,7 @@
 </h1>
 
 <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-  <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) || show_mock_data? %>
+  <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
     <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
       <div class="stat statset__wide" data-tour-step="balance">
         <span class="stat__label">Account balance</span>
@@ -69,7 +69,7 @@
             fee credit</span>
         <% else %>
         <span class="stat__value">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
+          <%= render_money_amount(@event.balance_available_v2_cents) %>
         </span>
         <% end %>
       </div>
@@ -104,7 +104,7 @@
             fee credit</span>
         <% else %>
         <span class="stat__value" data-balance-graph-target="sizing">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
+          <%= render_money_amount(@event.balance_available_v2_cents) %>
         </span>
         <% end %>
       </div>
