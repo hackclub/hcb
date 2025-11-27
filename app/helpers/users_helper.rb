@@ -127,18 +127,18 @@ module UsersHelper
       # Menu content items
       menu_items = safe_join([
                                content_tag(
-                                 :div,
+                                 :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
                                  onclick: "window.open('mailto:#{user.email}'); return false;",
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                ),
                                content_tag(
-                                 :div,
+                                 :span,
                                  nil,
                                  class: "menu__divider"
                                ),
                                content_tag(
-                                 :div,
+                                 :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
                                  onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
