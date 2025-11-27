@@ -102,6 +102,7 @@ class WiseTransfer < ApplicationRecord
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
+  # Flowchart: https://www.figma.com/board/Hf3wy2qhR8rH9OAYUCrkoQ/Wise-transfer-flowchart?node-id=0-1&t=nBQqJBuASTxeCObj-1
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
