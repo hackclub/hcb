@@ -3,7 +3,7 @@
 module StripeCardService
   class Create
     def initialize(current_user:, ip_address:, event_id:,
-                   card_type:, subledger: nil,
+                   card_type:, subledger: nil, skip_notify_user: false,
                    stripe_shipping_name: nil, stripe_shipping_address_city: nil,
                    stripe_shipping_address_state: nil, stripe_shipping_address_line1: nil,
                    stripe_shipping_address_line2: nil, stripe_shipping_address_postal_code: nil,
@@ -12,6 +12,7 @@ module StripeCardService
       @ip_address = ip_address
       @event_id = event_id
       @subledger = subledger
+      @skip_notify_user = skip_notify_user
 
       @card_type = card_type
       @stripe_shipping_name = stripe_shipping_name
@@ -31,7 +32,9 @@ module StripeCardService
       stripe_cardholder
 
       ActiveRecord::Base.transaction do
-        card = event.stripe_cards.create!(attrs)
+        card = event.stripe_cards.new(attrs)
+        card.skip_notify_user = @skip_notify_user
+        card.save!
 
         remote_stripe_card = create_remote_stripe_card!
 
