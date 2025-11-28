@@ -13,7 +13,7 @@ class Rack::Attack
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
   # Blacklist
-  bad_ips = Credentials.fetch("BLOCKED_IPS")&.split(",")
+  bad_ips = Credentials.fetch("BLOCKED_IPS")&.split(",")&.map(&:strip)
   Rack::Attack.blocklist "Block IPs from Environment Variable" do |req|
     bad_ips&.include?(req.ip)
   end
