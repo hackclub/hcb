@@ -761,6 +761,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.string "name", null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
+    t.boolean "published", default: false, null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
   end
 
