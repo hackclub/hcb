@@ -817,6 +817,16 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: :event do
+    get "apply", to: "applications#new"
+
+    resources :applications, only: [:index, :create, :show, :update] do
+      get "personal_info"
+      get "project_info"
+      post "submit"
+    end
+  end
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
