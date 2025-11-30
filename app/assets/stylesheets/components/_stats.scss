@@ -53,6 +53,11 @@
   align-items: center;
   padding: 1rem;
   background-color: #ffffff;
+
+  [data-dark='true'] & {
+    background-color: var(--darker);
+  }
+
   box-shadow: var(--shadow-border-sm);
   border-radius: var(--radius-md);
   text-align: center;
