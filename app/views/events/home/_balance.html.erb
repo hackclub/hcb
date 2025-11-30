@@ -7,10 +7,10 @@
       <div data-balance-graph-target="stat" data-tour-step="balance">
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
-          <span class="stat__value tabular-nums" data-balance-graph-target="balance">$<%= render_money_amount @event.balance_v2_cents %></span>
+          <span class="stat__value tabular-nums !text-4xl lg:!text-5xl" data-balance-graph-target="balance">$<%= render_money_amount @event.balance_v2_cents %></span>
           <span class="self-end tabular-nums" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit</span>
         <% else %>
-          <span class="stat__value tracking-tight tabular-nums" data-balance-graph-target="balance">
+          <span class="stat__value tracking-tight tabular-nums !text-4xl lg:!text-5xl" data-balance-graph-target="balance">
             $<%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
           </span>
         <% end %>
