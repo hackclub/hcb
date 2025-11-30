@@ -136,7 +136,7 @@ module SessionsHelper
       if request.fullpath == "/"
         redirect_to auth_users_path(require_reload: true)
       else
-        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true, signup: params[:signup])
       end
     end
   end
