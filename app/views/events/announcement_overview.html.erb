@@ -3,7 +3,7 @@
 <% auto_discover_feed(@event) %>
 <%= render "events/nav", selected: :announcements %>
 
-<h1 class="flex heading flex-col sm:flex-row items-center gap-2">
+<h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
   <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
     Announcements
     <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>

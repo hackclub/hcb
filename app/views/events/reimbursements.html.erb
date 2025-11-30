@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
-<h1 class="heading gap-2 flex-col sm:flex-row">
+<h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
   <span class="flex-grow">Reimbursements</span>
   <div class="flex items-center gap-2">
     <%= pop_icon_to "download",
@@ -33,7 +33,7 @@
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
-<div class="statset mt3 mb3 xs-hide">
+<div class="statset mb-2">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@event.reimbursement_reports.to_calculate_total.sum(&:amount_cents)) %></span>

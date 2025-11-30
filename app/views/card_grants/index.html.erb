@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :card_grants %>
 
-<h1 class="flex heading items-center">
+<h1 class="flex heading items-center gap-2 flex-col sm:flex-row mb-2 border-0">
   <span class="flex-grow flex items-center flex-1">
     Card grants
     <%= badge_for @event.card_grants.active.count, class: "bg-muted" %>

@@ -13,7 +13,7 @@
   <%= render "cards/name_required" %>
 <% else %>
 
-  <h1 class="heading flex-col sm:flex-row">
+  <h1 class="heading flex-col sm:flex-row mb-0 border-0 gap-2 mt-3">
     <span class="flex-grow flex items-center flex-1 mb-1">
       Cards
       <%= badge_for @event.stripe_cards.active.on_main_ledger.count, class: "bg-muted" %>

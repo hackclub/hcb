@@ -501,19 +501,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 
 // Make mobile views nice. Full-bleed separator lines
 @media screen and (max-width: 32em) {
-  table:not(.table-container > table),
-  .table-container,
-  .list,
-  .heading,
-  .details,
-  h1,
-  h2,
-  h3 {
-    width: calc(100% + 2rem);
-    margin-left: -1rem;
-    margin-right: -1rem;
-  }
-
   td,
   th {
     &:first-child {

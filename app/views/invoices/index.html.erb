@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :invoices %>
 
-<h1 class="heading gap-2 flex-col sm:flex-row">
+<h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
   <span class="flex items-center">
     Invoices
     <%= badge_for @invoices.size, class: "bg-muted" %>
@@ -22,7 +22,7 @@
   <%= render "invoices/modal" %>
 <% end %>
 
-<div class="statset mb3">
+<div class="statset mb-2">
   <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
     <span class="stat__label">Total invoiced</span>
     <span class="stat__value"><%= render_money_amount @stats[:total] %></span>

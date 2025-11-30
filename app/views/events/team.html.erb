@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :team %>
 
-<h1 class="heading gap-2">
+<h1 class="heading gap-2 mb-2 border-0">
   <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
@@ -51,7 +51,7 @@
 <% end %>
 
 <div class="mb-4 flex flex-row justify-between items-center width-100 gap-2">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
     <%= render "events/search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>

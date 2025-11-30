@@ -3,7 +3,7 @@
 <%= render "events/nav", selected: :transfers %>
 <%= render "card_grants/create_modal" %>
 
-<h1 class="heading">
+<h1 class="heading border-0 mb-0">
   <span class="flex items-center">
     Transfers
     <%= badge_for @transfers.total_count, class: "bg-muted" %>
@@ -17,7 +17,7 @@
   <% end %>
 </h1>
 
-<div class="statset mt3 mb3">
+<div class="statset mb-4">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>

@@ -64,7 +64,11 @@
     }
 
     .sidebar--scroll-container {
-      @apply flex-1 overflow-y-auto w-full p-2 px-5;
+      overflow: hidden;
+      @apply flex-1 w-full p-2 px-5;
+      @media (min-width: 1023px) {
+        overflow-y: auto;
+      }
     }
   }
 

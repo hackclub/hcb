@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :donations %>
 
-<h1 class="heading gap-2">
+<h1 class="heading gap-2 border-0 mb-2">
   <span class="flex items-center flex-grow">
     Donations
     <%= badge_for @donations.count, class: "bg-muted" %>
@@ -84,7 +84,7 @@
   </div>
 <% end %>
 
-<h2 class="heading mt3 justify-between" style="margin-bottom: 16px;">
+<h2 class="heading mt3 justify-between">
   Past donations
 
     <div data-controller="menu" data-menu-placement-value="bottom-end">
