@@ -29,6 +29,10 @@
   content: var(--unit);
 }
 
+.stat__value--no-space:before {
+  margin-right: -5px;
+}
+
 .stat__label {
   display: block;
   opacity: 0.75;

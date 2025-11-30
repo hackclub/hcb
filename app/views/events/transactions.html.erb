@@ -62,11 +62,11 @@
     <span class="stat__label">Account balance</span>
     <%# this event has a fee credit (owes negative fees) %>
     <% if @event.fee_balance_v2_cents < 0 %>
-      <span class="stat__value"><%= render_money_amount @event.balance_v2_cents %></span>
+      <span class="stat__value stat__value--no-space"><%= render_money_amount @event.balance_v2_cents %></span>
       <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
         fee credit</span>
     <% else %>
-    <span class="stat__value">
+    <span class="stat__value stat__value--no-space">
       <%= render_money_amount(@event.balance_available_v2_cents) %>
     </span>
     <% end %>
@@ -74,14 +74,14 @@
 
   <div class="stat stat--small">
     <span class="stat__label">Total raised</span>
-    <span class="stat__value">
+    <span class="stat__value stat__value--no-space">
       <%= render_money_amount(@event.total_raised) %>
     </span>
   </div>
 
   <div class="stat stat--small">
     <span class="stat__label">Total spent</span>
-    <span class="stat__value">
+    <span class="stat__value stat__value--no-space">
       <%= render_money_amount(@event.total_spent_cents) %>
     </span>
   </div>
