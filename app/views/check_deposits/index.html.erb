@@ -1,11 +1,10 @@
 <% title "Deposit a check to #{@event.name}" %>
 <% page_sm %>
-<% content_for(:container_class, " max-w-xl") %>
 <%= render "events/nav", selected: :deposit_check %>
 
 <h1 class="heading">Deposit a check</h1>
 
-<div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
+<div class="grid">
   <%= render "check_deposits/new", event: @event %>
   <%= render "application/callout", type: "info", title: "Check deposit basics", footer: :questions do %>
     <ul class="pl-4">
