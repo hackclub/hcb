@@ -1,5 +1,6 @@
 <% title "Initiate a disbursement" %>
 <% page_sm %>
+<%= content_for(:container_class, " px-4 pb-4") %>
 <%= render "events/nav", selected: :transfers if @event %>
 
 <h1>Send a HCB transfer</h1>
@@ -13,15 +14,15 @@
 <% end %>
 
 <% if @source_event && @destination_event %>
-  <% admin_tool("mb2") do %>
+  <% admin_tool("mb2 p-2 px-3") do %>
     Looking to make a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.
   <% end %>
 <% elsif @source_event %>
-  <% admin_tool("mb2") do %>
+  <% admin_tool("mb2 p-2 px-3") do %>
     Looking to make a transfer to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id) %>.
   <% end %>
 <% elsif @destination_event %>
-  <% admin_tool("mb2")  do %>
+  <% admin_tool("mb2 p-2 px-3")  do %>
     Looking to make a transfer from <%= @destination_event.name %>? <%= link_to "Click here", new_disbursement_path(source_event_id: @destination_event.id) %>.
   <% end %>
 <% end %>

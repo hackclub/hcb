@@ -14,6 +14,8 @@ const loadModals = element => {
       e.stopPropagation()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
+      fadeDuration: 200,
+      fadeDelay: 0.75,
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
@@ -272,7 +274,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -479,7 +481,6 @@ $(document).on('turbo:load', function () {
       perspective: 1500,
       glare: true,
       maxGlare: 0.25,
-      scale: 1.0625,
     })
   const disableTilt = () => tiltElement.tilt.destroy.call(tiltElement)
   const setTilt = function () {
@@ -496,7 +497,7 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-$(document).on('turbo:frame-load', function () {
+const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
@@ -574,7 +575,10 @@ $(document).on('turbo:frame-load', function () {
       }
     )
   }
-})
+}
+
+$(document).on('turbo:load', initPayoutMethodToggles)
+$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',

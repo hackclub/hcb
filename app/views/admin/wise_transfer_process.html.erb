@@ -11,7 +11,7 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") do %>
+  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0", target: "_blank") do %>
     <%= inline_icon "wise" %>
     Open Wise
   <% end %>
