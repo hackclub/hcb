@@ -79,7 +79,7 @@
     <div>
       <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
       <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %>
-    </p>
+    </div>
     <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
       <div>
         <strong>Settled after</strong>
