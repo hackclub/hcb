@@ -5,7 +5,7 @@ class OrganizerPositionInvite
     before_action :set_request
 
     def created
-      @emails = @event.organizer_contact_emails(only_managers: true)
+      @emails = @request.link.event.organizer_contact_emails(only_managers: true)
 
       mail to: @emails, subject: "#{@request.requester.name} has requested to join #{@request.link.event.name}"
     end
