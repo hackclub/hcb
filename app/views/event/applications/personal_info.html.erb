@@ -23,42 +23,44 @@
 
       <%= form.label :address_line1, "Street address" %>
       <div class="grid grid-cols-2 w-fit">
-        <div class="field">
+        <div class="field mb-0">
           <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", class: "mb-1" %>
           <%= form.text_field :address_line2, placeholder: "Suite 500" %>
         </div>
         <br>
 
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :address_city, "City" %>
           <%= form.text_field :address_city, placeholder: "San Francisco" %>
         </div>
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :address_state, "State" %>
           <%= form.text_field :address_state, placeholder: "CA" %>
         </div>
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :address_postal_code, "Zip code" %>
           <%= form.text_field :address_postal_code, placeholder: "94129" %>
         </div>
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :address_country, "Country" %>
           <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country" %>
         </div>
+
+        <hr class="col-span-2">
       
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :referrer, "How did you hear about HCB?" %>
           <%= form.text_field :referrer %>
         </div>
         <br>
 
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :referral_code, "Referral code" %>
           <%= form.text_field :referral_code %>
         </div>
         <br>
 
-        <div class="field">
+        <div class="field mb-0">
           <%= form.label :notes, "Accessibility needs" %>
           <%= form.text_area :notes %>
         </div>
