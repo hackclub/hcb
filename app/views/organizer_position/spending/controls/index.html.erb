@@ -1,10 +1,10 @@
-<% title "Spending allowances for #{@organizer_position.user.name}" %>
+<% title "Allowances for #{@organizer_position.user.name}" %>
 <% page_md %>
 <%= render "events/nav" %>
 
 <h1 class="heading justify-between">
   <span class="inline-flex items-center justify-center">
-    <%= @organizer_position.user.name %>'s Spending
+    <%= @organizer_position.user.possessive_name %> allowances
     <% if @active_control %>
       <% admin_tool("w-fit h5 ml1 muted", "span") do %>
         Control ID: <%= @active_control&.id %>
@@ -30,7 +30,7 @@
 
 <% if @active_control %>
   <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new">
-    <%= modal_header "New spending allowance" %>
+    <%= modal_header "New allowance" %>
     <%= render "organizer_position/spending/controls/allowances/form" %>
   </div>
 <% end %>
@@ -68,7 +68,7 @@
       <% end %>
     <% else %>
       <% control_enable_button = form_with url: event_organizer_position_spending_controls_path(@event, @organizer_position), method: :post, local: true do |form| %>
-        <%= form.submit "Enable controls for #{@organizer_position.user.first_name}", class: "btn btn-small bg-info tooltipped tooltipped--e #{"disabled" unless policy(@provisional_control).new?}" %>
+        <%= form.submit "Enable spending controls for #{@organizer_position.user.first_name}", class: "btn btn-small bg-info tooltipped tooltipped--e #{"disabled" unless policy(@provisional_control).new?}" %>
       <% end %>
 
       <% if policy(@provisional_control).new? %>
@@ -81,7 +81,7 @@
     <% end %>
   <% end %>
 
-  <%= render "callout", type: "info", title: "Spending controls are #{@active_control ? "enabled" : "disabled"} for #{@organizer_position.user.first_name}.", footer: spending_controls_callout_footer  do %>
+  <%= render "application/callout", type: "info", title: "Spending controls are #{@active_control ? "enabled" : "disabled"} for #{@organizer_position.user.first_name}.", footer: spending_controls_callout_footer  do %>
     <ul>
       <li>Spending controls let managers control and pre-authorize an amount to be spent by a user.</li>
       <li>Your organization's balance will not change when an allowance is created.</li>
@@ -90,7 +90,7 @@
   <% end %>
 <% else %>
   <% user_is_you = @organizer_position.user == current_user %>
-  <%= render "callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
+  <%= render "application/callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
     <ul class="m0">
       <li>Roles can be changed on the <%= link_to "team page", event_team_path(@event.slug) %>.</li>
       <% if @inactive_control_count.zero? %>
@@ -119,7 +119,7 @@
 <div class="mixed-grid grid--spacious mt-20">
   <%= link_to "#", data: { behavior: "modal_trigger", modal: "past-controls" }, class: "card flex justify-between #{"opacity-50 pointer-events-none" if @inactive_control_count.zero?}" do %>
     <div class="flex flex-col">
-      <p class="bold black">Past controls</p>
+      <p class="bold black">Past spending controls</p>
       <p class="muted">
         <% if @inactive_control_count.zero? %>
           There are no previous spending controls
