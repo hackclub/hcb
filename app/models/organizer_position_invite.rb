@@ -216,13 +216,15 @@ class OrganizerPositionInvite < ApplicationRecord
     if contract.is_a?(Contract::FiscalSponsorship)
       deliver if organizer_position.nil?
 
-      # Unfreeze the event if this is the first signed contract
-      if event.contracts.signed.count == 1
-        event.update!(financially_frozen: false)
-      end
+      ActiveRecord::Base.transaction do
+        # Unfreeze the event if this is the first signed contract
+        if event.contracts.signed.count == 1
+          event.update!(financially_frozen: false)
+        end
 
-      organizer_position&.update!(role: :owner, fiscal_sponsorship_contract:)
-      update!(role: :owner)
+        organizer_position&.update!(role: :owner, fiscal_sponsorship_contract:)
+        update!(role: :owner)
+      end
     end
   end
 
