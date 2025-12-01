@@ -21,7 +21,7 @@ export default function Snow() {
             pointerEvents: 'none',
           }}
         >
-          <Snowfall />
+          <Snowfall snowflakeCount={75} />
         </div>
       ) : null}
     </>
