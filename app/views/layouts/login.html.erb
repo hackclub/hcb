@@ -95,7 +95,6 @@
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:0px" } %>
     <% end %>
     <%# ghosts and ghouls %>
