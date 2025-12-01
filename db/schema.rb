@@ -951,24 +951,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
 
   create_table "event_applications", force: :cascade do |t|
     t.string "aasm_state"
-    t.string "airtable_record_id"
-    t.string "airtable_status"
-    t.bigint "user_id", null: false
-    t.bigint "event_id"
-    t.string "name"
-    t.text "description"
-    t.boolean "political"
+    t.string "address_city"
+    t.string "address_country"
     t.string "address_line1"
     t.string "address_line2"
-    t.string "address_city"
-    t.string "address_state"
     t.string "address_postal_code"
-    t.string "address_country"
-    t.string "referrer"
-    t.string "referral_code"
-    t.text "notes"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
     t.datetime "created_at", null: false
+    t.text "description"
+    t.bigint "event_id"
+    t.string "name"
+    t.text "notes"
+    t.boolean "political"
+    t.string "referral_code"
+    t.string "referrer"
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
