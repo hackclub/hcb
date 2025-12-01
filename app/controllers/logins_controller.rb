@@ -21,6 +21,8 @@ class LoginsController < ApplicationController
 
     @prefill_email = params[:email] if params[:email].present?
     @referral_program = Referral::Program.find_by_hashid(params[:referral]) if params[:referral].present?
+
+    @signup = params[:signup] == "true"
   end
 
   # when you submit your email
