@@ -7,10 +7,11 @@ class OrganizerPositionInvite
     def created
       @emails = @event.organizer_contact_emails(only_managers: true)
 
-      mail to: @emails, subject: "#{@invite.user.name} has requested to join #{@invite.event.name}"
+      mail to: @emails, subject: "#{@request.requester.name} has requested to join #{@request.link.event.name}"
     end
 
     def approved
+      @invite = @request.organizer_position_invite
       @emails = (@invite.event.users.map(&:email_address_with_name) + [@invite.event.config.contact_email]).compact
 
       @announcement = Announcement::Templates::NewTeamMember.new(
@@ -25,14 +26,13 @@ class OrganizerPositionInvite
     def denied
       @email = @request.requester.email
 
-      mail to: @email, subject: "Your request to join #{@invite.event.name} has been denied"
+      mail to: @email, subject: "Your request to join #{@request.link.event.name} has been denied"
     end
 
     private
 
     def set_request
       @request = params[:request]
-      @invite = @request.organizer_position_invite
     end
   end
 
