@@ -107,7 +107,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def deliver
-    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
+    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later unless organizer_position_invite_request.present?
   end
 
   def accept(show_onboarding: true)
@@ -149,7 +149,7 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     # Don't send mailer if this is the first organizer
-    if self.event.users.size > 1
+    if self.event.users.size > 1 || organizer_position_invite_request.present?
       OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
     end
 
