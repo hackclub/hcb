@@ -222,7 +222,7 @@ class OrganizerPositionInvite < ApplicationRecord
           event.update!(financially_frozen: false)
         end
 
-        organizer_position&.update!(role: :owner, fiscal_sponsorship_contract:)
+        organizer_position&.update!(role: :owner, fiscal_sponsorship_contract: contract)
         update!(role: :owner)
       end
     end
