@@ -40,7 +40,7 @@ RSpec.describe OrganizerPositionInvitesController do
       user = create(:user, :make_admin)
       event = create(:event, organizers: [user])
 
-      # `OrganizerPosition::Contract` makes external requests to Airtable and
+      # `Contract` makes external requests to Airtable and
       # Docuseal which we don't want to perform in this context.
       expect(ApplicationsTable).to(
         receive(:all)
@@ -81,7 +81,7 @@ RSpec.describe OrganizerPositionInvitesController do
       invite = event.organizer_position_invites.last
       expect(invite.is_signee).to eq(true)
 
-      contract = invite.organizer_position_contracts.sole
+      contract = invite.contracts.sole
       expect(contract.cosigner_email).to eq("cosigner@hackclub.com")
       expect(contract.include_videos).to eq(true)
       expect(contract.external_service).to eq("docuseal")

@@ -88,9 +88,15 @@ module Reimbursement
     def wise_transfer_breakdown
       authorize @report
 
-      @with_fees_quote_amount = @report.wise_transfer_quote_amount
-      @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
-      @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+      if @report.payout_holding.present?
+        @with_fees_quote_amount = Money.from_cents(@report.payout_holding.amount_cents)
+        @fees_amount = Money.from_cents(@report.fees_charged_cents)
+        @without_fees_quote_amount = @with_fees_quote_amount - @fees_amount
+      else
+        @with_fees_quote_amount = @report.wise_transfer_quote_amount
+        @without_fees_quote_amount = @report.wise_transfer_quote_without_fees_amount
+        @fees_amount = @with_fees_quote_amount - @without_fees_quote_amount
+      end
 
       render :wise_transfer_breakdown, layout: false
     end
@@ -215,8 +221,10 @@ module Reimbursement
 
     def admin_approve
       authorize @report
-      # TODO: This does NOT consider currency
-      ensure_admin_may_approve!(@report, amount_cents: @report.amount_to_reimburse_cents)
+      # For Wise, the amount stored on the report is not in USD. By using the passed in :wise_total_including_fees parameter,
+      # we're able to track admin transfer amounts based on the amounts used in the reimbursement processing flow.
+      wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
+      ensure_admin_may_approve!(@report, amount_cents: wise_amount_cents || @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
