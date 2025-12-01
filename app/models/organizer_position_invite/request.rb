@@ -33,17 +33,25 @@ class OrganizerPositionInvite
     belongs_to :link, class_name: "OrganizerPositionInvite::Link", foreign_key: "organizer_position_invite_link_id", inverse_of: :requests
     belongs_to :requester, class_name: "User"
 
+    after_create_commit do
+      OrganizerPositionInvite::RequestsMailer.with(request: self).created.deliver_later
+    end
+
     aasm timestamps: true do
       state :pending, default: true
       state :approved
       state :denied
 
       event :approve do
-        transitions from: :pending, to: :approved
+        transitions from: :pending, to: :approved do
+          OrganizerPositionInvite::RequestsMailer.with(request: self).approved.deliver_later
+        end
       end
 
       event :deny do
-        transitions from: :pending, to: :denied
+        transitions from: :pending, to: :denied do
+          OrganizerPositionInvite::RequestsMailer.with(request: self).denied.deliver_later
+        end
       end
     end
 
