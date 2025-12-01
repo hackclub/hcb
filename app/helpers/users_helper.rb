@@ -113,40 +113,47 @@ module UsersHelper
 
     if user && viewer&.auditor?
       button = content_tag(
-        :a,
-        content + inline_icon("down-caret", size: 18, class: "ml-0 -mr-1"),
+        :span,
+        content,
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
 
+      aria_label = [aria_label, "Right click for admin tools"].compact.join(" | ")
+
       # Menu content items
       menu_items = safe_join([
-                               link_to(
+                               content_tag(
+                                 :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 "mailto:#{user.email}",
-                                 target: "_blank",
-                                 class: "menu__item menu__item--icon", rel: "noopener"
+                                 onclick: "window.open('mailto:#{user.email}'); return false;",
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                ),
-                               link_to(
+                               content_tag(
+                                 :span,
+                                 nil,
+                                 class: "menu__divider"
+                               ),
+                               content_tag(
+                                 :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 admin_user_url(user),
-                                 target: "_blank",
-                                 class: "menu__item menu__item--icon", rel: "noopener"
+                                 onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])
 
       menu_content = content_tag(
-        :div,
+        :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
         data: { "menu-target": "content" }
       )
 
       menu_wrapper = content_tag(
-        :div,
+        :span,
         button + menu_content,
         data: { controller: "menu", "menu-placement-value": "bottom-start" },
         class: "mention__menu"

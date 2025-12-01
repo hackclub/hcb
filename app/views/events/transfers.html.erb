@@ -34,7 +34,7 @@
 
 <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "search", form: %>
+    <%= render "events/search", form: %>
   <% end %>
   <div>
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
@@ -61,7 +61,7 @@
 
       <tbody>
         <% @transfers.each do |d| %>
-          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) && !show_mock_data? %>
+          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) %>
             <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="Transfer of <%= render_money(d.local_hcb_code.amount_cents_by_event(@event).abs) %>">
               <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}", external_link: hcb_code_url(d.hcb_code)) %>
               <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
@@ -157,7 +157,7 @@
             <td>
               <% if organizer_signed_in? %>
                 <% if d.is_a? CardGrant %>
-                  <%= render "card_grant_actions", card_grant: d %>
+                  <%= render "events/card_grant_actions", card_grant: d %>
                 <% else %>
                   <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
                   <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) ? { behavior: "modal_trigger", modal: "transfer_modal_#{d.hcb_code}" } : nil %>
@@ -176,5 +176,5 @@
 <% end %>
 
 <% if organizer_signed_in? %>
-  <%= render "transfer_modal" %>
+  <%= render "events/transfer_modal" %>
 <% end %>
