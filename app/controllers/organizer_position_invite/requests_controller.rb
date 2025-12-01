@@ -18,7 +18,7 @@ class OrganizerPositionInvite
       authorize @request
 
       link = @request.link
-      role = params[:role] || :reader
+      role = params[:role] || "reader"
 
       if role == "owner" && !admin_signed_in?
         role = "manager"
