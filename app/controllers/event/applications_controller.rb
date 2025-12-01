@@ -68,7 +68,7 @@ class Event
     end
 
     def application_params
-      params.require(:event_application).permit(:name, :description, :political, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes)
+      params.require(:event_application).permit(:name, :description, :political, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email)
     end
 
   end

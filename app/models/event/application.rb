@@ -13,6 +13,7 @@
 #  address_postal_code :string
 #  address_state       :string
 #  airtable_status     :string
+#  cosigner_email      :string
 #  description         :text
 #  name                :string
 #  notes               :text

@@ -24,11 +24,10 @@
       <%= form.label :address_line1, "Street address" %>
       <div class="grid grid-cols-2 w-fit">
         <div class="field">
-          <%= form.text_field :address_line1, placeholder: "1 Letterman Drive" %>
-        </div>
-        <div class="field">
+          <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", class: "mb-1" %>
           <%= form.text_field :address_line2, placeholder: "Suite 500" %>
         </div>
+        <br>
 
         <div class="field">
           <%= form.label :address_city, "City" %>
@@ -64,6 +63,14 @@
           <%= form.text_area :notes %>
         </div>
         <br>
+
+        <% if @application.user.teenager? %>
+          <div class="field col-span-2">
+            <%= form.label :cosigner_email, "Parent email" %>
+            <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to cosign the fiscal sponsorship agreement. They will not have access to your organization on HCB.</p>
+            <%= form.email_field :cosigner_email %>
+          </div>
+        <% end %>
       </div>
 
       <%= form.hidden_field :return_to, value: application_personal_info_path(@application) %>
