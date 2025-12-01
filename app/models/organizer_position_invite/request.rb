@@ -43,13 +43,15 @@ class OrganizerPositionInvite
       state :denied
 
       event :approve do
-        transitions from: :pending, to: :approved do
+        transitions from: :pending, to: :mark_approved
+        after do
           OrganizerPositionInvite::RequestsMailer.with(request: self).approved.deliver_later
         end
       end
 
       event :deny do
-        transitions from: :pending, to: :denied do
+        transitions from: :pending, to: :denied
+        after do
           OrganizerPositionInvite::RequestsMailer.with(request: self).denied.deliver_later
         end
       end
