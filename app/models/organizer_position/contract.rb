@@ -47,10 +47,10 @@ class OrganizerPosition
     normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
 
     # does not run when placed after the send_using_docuseal callback, aka here
-    # In case a contract is created for a position that is not already marked as owner
+    # dont think this is needed anyways bc is_signee is alr set to true by the creation form but will leave here bc idk
     after_create_commit do
-      organizer_position_invite.update(role: :owner)
-      organizer_position_invite.organizer_position&.update(role: :owner)
+      organizer_position_invite.update(is_signee: true)
+      organizer_position_invite.organizer_position&.update(is_signee: true)
     end
 
     aasm timestamps: true do
@@ -83,8 +83,8 @@ class OrganizerPosition
         transitions from: [:pending, :sent], to: :voided
         after do
           archive_on_docuseal!
-          organizer_position_invite.update(role: :manager)
-          organizer_position_invite.organizer_position&.update(role: :manager)
+          organizer_position_invite.update(is_signee: false)
+          organizer_position_invite.organizer_position&.update(is_signee: false)
         end
       end
     end
