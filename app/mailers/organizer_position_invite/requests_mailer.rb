@@ -36,5 +36,6 @@ class OrganizerPositionInvite
     end
 
   end
+  end
 
 end
