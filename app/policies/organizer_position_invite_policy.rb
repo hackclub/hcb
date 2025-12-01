@@ -41,6 +41,10 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     admin_or_manager? && !record.owner?
   end
 
+  def send_contract?
+    user&.admin?
+  end
+
   private
 
   def admin_or_manager?

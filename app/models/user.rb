@@ -85,7 +85,7 @@ class User < ApplicationRecord
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
@@ -590,6 +590,10 @@ class User < ApplicationRecord
       else
         errors.add(:payout_method, "is invalid. Please choose another option.")
       end
+    end
+
+    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
+      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 

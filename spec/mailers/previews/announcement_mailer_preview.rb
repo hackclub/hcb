@@ -18,7 +18,7 @@ class AnnouncementMailerPreview < ActionMailer::Preview
     AnnouncementMailer.with(event: Announcement.monthly.last.event, monthly_announcement: Announcement.monthly.last).notice
   end
 
-  def canceled
+  def skipped
     AnnouncementMailer.with(announcement: Announcement.monthly.last).skipped
   end
 

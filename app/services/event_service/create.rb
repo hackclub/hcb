@@ -61,7 +61,7 @@ module EventService
           invite_service.run!
 
           if @is_owner
-            OrganizerPosition::Contract.create(organizer_position_invite: invite_service.model, cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
           end
         end
 

@@ -4,7 +4,7 @@ class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
   include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :resend]
+  before_action :set_opi, except: [:new, :create]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -32,7 +32,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
     if service.run
       if @invite.role == "owner"
-        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+        @invite.send_contract(cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
@@ -108,6 +108,15 @@ class OrganizerPositionInvitesController < ApplicationController
     @invite.deliver
 
     flash[:success] = "Invite successfully resent to #{@invite.user.email}"
+    redirect_to event_team_path @invite.event
+  end
+
+  def send_contract
+    authorize @invite
+
+    @invite.send_contract(cosigner_email: params[:cosigner_email].presence, include_videos: params[:include_videos])
+
+    flash[:success] = "Contract successfully sent"
     redirect_to event_team_path @invite.event
   end
 

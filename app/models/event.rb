@@ -293,7 +293,7 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :owners, -> { where(organizer_positions: { role: :owner }) }, through: :organizer_positions, source: :user
@@ -647,7 +647,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -932,7 +932,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+    return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing an owner, non-demo mode organizations must have an owner.")
   end
