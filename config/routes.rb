@@ -332,10 +332,11 @@ Rails.application.routes.draw do
     post "resend"
     member do
       post "change_position_role"
+      post "send_contract"
     end
   end
 
-  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+  resources :contracts, only: [] do
     member do
       post "void"
       post "resend_to_user"
@@ -580,6 +581,7 @@ Rails.application.routes.draw do
   get "brand_guidelines", to: redirect("branding")
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
+  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"

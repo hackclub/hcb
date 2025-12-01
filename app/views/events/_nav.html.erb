@@ -4,6 +4,14 @@
     <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
   <% end %>
 
+  <% if @event.demo_mode? %>
+    <div>
+      <span class="badge m-0 bg-blue">
+        Demo Account
+      </span>
+    </div>
+  <% end %>
+
   <div>
     <% admin_tool("m0 p0 badge mb2", "span") do %>
       <span class="m0 badge bg-muted pointer" data-controller="clipboard" data-clipboard-text-value="<%= @event.name %>" data-action="click->clipboard#copy">
