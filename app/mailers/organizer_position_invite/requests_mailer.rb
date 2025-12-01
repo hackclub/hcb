@@ -34,6 +34,7 @@ class OrganizerPositionInvite
     def set_request
       @request = params[:request]
     end
+
   end
 
 end
