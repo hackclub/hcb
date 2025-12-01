@@ -83,7 +83,7 @@
 
   <div class="inline muted h6 m0">
     Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
-    as a
+    as <%= organizer_position_invite.role == "owner" ? "an" : "a" %>
     <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
       <% can_change_role = policy(organizer_position_invite).change_position_role? %>
 
