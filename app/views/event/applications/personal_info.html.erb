@@ -22,48 +22,48 @@
       <%= form.hidden_field :step, value: Event::Application::APPLICATION_STEPS.find_index(:personal_info) %>
 
       <%= form.label :address_line1, "Street address" %>
-      <div class="flex gap-2">
+      <div class="grid grid-cols-2 w-fit">
         <div class="field">
           <%= form.text_field :address_line1, placeholder: "1 Letterman Drive" %>
         </div>
         <div class="field">
           <%= form.text_field :address_line2, placeholder: "Suite 500" %>
         </div>
-      </div>
-      <div class="flex">
-        <div class="field flex-auto mr1">
+
+        <div class="field">
           <%= form.label :address_city, "City" %>
           <%= form.text_field :address_city, placeholder: "San Francisco" %>
         </div>
-        <div class="field flex-auto ml1">
+        <div class="field">
           <%= form.label :address_state, "State" %>
           <%= form.text_field :address_state, placeholder: "CA" %>
         </div>
-      </div>
-      <div class="flex gap-2">
-        <div class="field flex-auto">
+        <div class="field">
           <%= form.label :address_postal_code, "Zip code" %>
           <%= form.text_field :address_postal_code, placeholder: "94129" %>
         </div>
-        <div class="field flex-auto">
+        <div class="field">
           <%= form.label :address_country, "Country" %>
           <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country" %>
         </div>
-      </div>
+      
+        <div class="field">
+          <%= form.label :referrer, "How did you hear about HCB?" %>
+          <%= form.text_field :referrer %>
+        </div>
+        <br>
 
-      <div class="field">
-        <%= form.label :referrer, "How did you hear about HCB?" %>
-        <%= form.text_field :referrer %>
-      </div>
+        <div class="field">
+          <%= form.label :referral_code, "Referral code" %>
+          <%= form.text_field :referral_code %>
+        </div>
+        <br>
 
-      <div class="field">
-        <%= form.label :referral_code, "Referral code" %>
-        <%= form.text_field :referral_code %>
-      </div>
-
-      <div class="field">
-        <%= form.label :notes, "Accessibility needs" %>
-        <%= form.text_area :notes %>
+        <div class="field">
+          <%= form.label :notes, "Accessibility needs" %>
+          <%= form.text_area :notes %>
+        </div>
+        <br>
       </div>
 
       <%= form.hidden_field :return_to, value: application_personal_info_path(@application) %>
