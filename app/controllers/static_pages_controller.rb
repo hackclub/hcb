@@ -5,7 +5,7 @@ require "net/http"
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
   skip_before_action :signed_in_user, only: [:mobile, :branding, :roles, :security]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
 
   after_action only: [:index, :branding, :security] do
     # Allow indexing home and branding pages
