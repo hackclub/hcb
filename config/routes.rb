@@ -579,6 +579,7 @@ Rails.application.routes.draw do
   end
 
   get "brand_guidelines", to: redirect("branding")
+  get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
   get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
