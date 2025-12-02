@@ -68,9 +68,9 @@ module Governance
 
     def authentication_session_is_user_session
       # authentication_session was made polymorphic to potentially support
-      # tracking API requests in the future, but for now we only want UserSession.
-      unless authentication_session.is_a?(UserSession)
-        errors.add(:authentication_session, "must be a UserSession")
+      # tracking API requests in the future, but for now we only want User::Session.
+      unless authentication_session.is_a?(User::Session)
+        errors.add(:authentication_session, "must be a User::Session")
       end
     end
 

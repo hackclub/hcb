@@ -38,7 +38,7 @@ module SessionsHelper
         user.session_validity_preference
       end
     expiration_at = session_duration.seconds.from_now
-    cookies.encrypted[:session_token] = { value: session_token, expires: UserSession::MAX_SESSION_DURATION.from_now, httponly: true }
+    cookies.encrypted[:session_token] = { value: session_token, expires: User::Session::MAX_SESSION_DURATION.from_now, httponly: true }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
@@ -128,7 +128,7 @@ module SessionsHelper
     return nil if session_token.nil?
 
     # Find a valid session (not expired) using the session token
-    @current_session = UserSession.not_expired.find_by(session_token:)
+    @current_session = User::Session.not_expired.find_by(session_token:)
   end
 
   def signed_in_user
