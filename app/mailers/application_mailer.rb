@@ -55,6 +55,8 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   def prevent_noisy_delivery
+    return if mail.to.nil? # This may happen if `mail` was never called.
+
     remaining_recipients = mail.to - self.class.earmuffed_recipients
 
     if remaining_recipients.blank?
