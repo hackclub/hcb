@@ -52,6 +52,16 @@ class StaticPagesController < ApplicationController
     @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
   end
 
+  def mobile
+    if request.user_agent.match("iPhone")
+      redirect_to "https://apps.apple.com/us/app/hcb-by-hack-club/id6465424810", allow_other_host: true
+    elsif request.user_agent.match("Android")
+      redirect_to "https://play.google.com/store/apps/details?id=com.hackclub.hcb", allow_other_host: true
+    else
+      redirect_to "https://hackclub.com/hcb", allow_other_host: true
+    end
+  end
+
   def branding
     @logos = [
       { name: "Original Light", criteria: "For white or light colored backgrounds.", background: "smoke" },
