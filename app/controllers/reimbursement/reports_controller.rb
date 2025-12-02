@@ -234,8 +234,8 @@ module Reimbursement
               return redirect_to @report
             end
 
-            wise_total_including_fees_cents = params[:wise_total_including_fees].to_f * 100
-            wise_total_without_fees_cents = params[:wise_total_without_fees].to_f * 100
+            wise_total_including_fees_cents = (params[:wise_total_including_fees].to_f * 100).to_i
+            wise_total_without_fees_cents = (params[:wise_total_without_fees].to_f * 100).to_i
 
             unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents, @report.event)
               flash[:error] = "This organization does not have sufficient funds to cover the transfer."
