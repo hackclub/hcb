@@ -41,17 +41,21 @@ class ApplicationMailer < ActionMailer::Base
     mail.recipients.compact.empty?
   end
 
-  EARMUFFED_RECIPIENTS = [
+  EARMUFFED_USER_IDS = [
     "usr_b9YtZb", # Zach
     "usr_b6mtLG", # Christina
     "usr_N4tk5d", # Rachel A (personal)
     "usr_ZBt5g5", # Rachel A (Hack Club)
-  ].filter_map do |id|
-    User.find_by_public_id(id)&.email
+  ].freeze
+
+  def self.earmuffed_recipients
+    @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
+      User.find_by_public_id(id)&.email
+    end
   end
 
   def prevent_noisy_delivery
-    remaining_recipients = mail.to - EARMUFFED_RECIPIENTS
+    remaining_recipients = mail.to - self.class.earmuffed_recipients
 
     if remaining_recipients.blank?
       # If there are no recipients left (e.g. direct email to earmuffed recipient,

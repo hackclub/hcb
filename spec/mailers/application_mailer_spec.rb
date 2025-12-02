@@ -21,7 +21,7 @@ RSpec.describe ApplicationMailer, type: :mailer do
     let(:another_earmuffed_recipient) { "another_earmuffed@example.com" }
 
     before do
-      stub_const("ApplicationMailer::EARMUFFED_RECIPIENTS", [earmuffed_recipient, another_earmuffed_recipient])
+      allow(ApplicationMailer).to receive(:earmuffed_recipients).and_return([earmuffed_recipient, another_earmuffed_recipient])
     end
 
     context "when there are no earmuffed recipients" do
