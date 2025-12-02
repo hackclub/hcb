@@ -9,6 +9,8 @@ class ApplicationMailer < ActionMailer::Base
   default from: "HCB <hcb@#{DOMAIN}>"
   layout "mailer/default"
 
+  after_action :prevent_noisy_delivery
+
   # allow usage of application helper
   helper :application
 
@@ -37,6 +39,27 @@ class ApplicationMailer < ActionMailer::Base
 
   def no_recipients?
     mail.recipients.compact.empty?
+  end
+
+  EARMUFFED_RECIPIENTS = [
+    "usr_b9YtZb", # Zach
+    "usr_b6mtLG", # Christina
+    "usr_N4tk5d", # Rachel A (personal)
+    "usr_ZBt5g5", # Rachel A (Hack Club)
+  ].filter_map do |id|
+    User.find_by_public_id(id)&.email
+  end
+
+  def prevent_noisy_delivery
+    remaining_recipients = mail.to - EARMUFFED_RECIPIENTS
+
+    if remaining_recipients.blank?
+      # If there are no recipients left (e.g. direct email to earmuffed recipient,
+      # or all recipients are earmuffed), then send the email normally.
+      return
+    end
+
+    mail.to = remaining_recipients
   end
 
 end
