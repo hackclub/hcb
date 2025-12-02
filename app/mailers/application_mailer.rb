@@ -24,6 +24,19 @@ class ApplicationMailer < ActionMailer::Base
     super(mail)
   end
 
+  EARMUFFED_USER_IDS = [
+    "usr_b9YtZb", # Zach
+    "usr_b6mtLG", # Christina
+    "usr_N4tk5d", # Rachel A (personal)
+    "usr_ZBt5g5", # Rachel A (Hack Club)
+  ].freeze
+
+  def self.earmuffed_recipients
+    @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
+      User.find_by_public_id(id)&.email
+    end
+  end
+
   protected
 
   def hcb_email_with_name_of(object)
@@ -39,19 +52,6 @@ class ApplicationMailer < ActionMailer::Base
 
   def no_recipients?
     mail.recipients.compact.empty?
-  end
-
-  EARMUFFED_USER_IDS = [
-    "usr_b9YtZb", # Zach
-    "usr_b6mtLG", # Christina
-    "usr_N4tk5d", # Rachel A (personal)
-    "usr_ZBt5g5", # Rachel A (Hack Club)
-  ].freeze
-
-  def self.earmuffed_recipients
-    @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
-      User.find_by_public_id(id)&.email
-    end
   end
 
   def prevent_noisy_delivery
