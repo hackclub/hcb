@@ -30,6 +30,8 @@ class Announcement < ApplicationRecord
   include Hashid::Rails
   include AASM
 
+  ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze
+
   has_paper_trail
   acts_as_paranoid
 
@@ -72,6 +74,8 @@ class Announcement < ApplicationRecord
 
   before_save :autofollow_organizers
 
+  before_save :escape_href_attribute
+
   def render
     ProsemirrorService::Renderer.render_html(content, event)
   end
@@ -81,6 +85,32 @@ class Announcement < ApplicationRecord
   end
 
   private
+
+  def escape_href_attribute
+    return if self.content.blank?
+
+    new_content = ProsemirrorService::Renderer.map_nodes self.content do |node|
+      if node["marks"].present?
+        new_marks = node["marks"].map do |mark|
+          next mark unless mark["attrs"].present? && mark["attrs"]["href"].present?
+
+          url = URI.parse(URI::RFC2396_PARSER.escape(mark["attrs"]["href"]))
+
+          if Announcement::ALLOWED_URL_SCHEMES.exclude? url.scheme
+            mark["attrs"]["href"] = "#"
+          end
+
+          mark
+        end
+
+        node["marks"] = new_marks
+      end
+
+      node
+    end
+
+    self.content = new_content
+  end
 
   def autofollow_organizers
     # is this the first announcement to be published?
