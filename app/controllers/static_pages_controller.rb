@@ -53,9 +53,9 @@ class StaticPagesController < ApplicationController
   end
 
   def mobile
-    if request.user_agent.match("iPhone")
+    if request.user_agent&.match("iPhone")
       redirect_to "https://apps.apple.com/us/app/hcb-by-hack-club/id6465424810", allow_other_host: true
-    elsif request.user_agent.match("Android")
+    elsif request.user_agent&.match("Android")
       redirect_to "https://play.google.com/store/apps/details?id=com.hackclub.hcb", allow_other_host: true
     else
       redirect_to "https://hackclub.com/hcb", allow_other_host: true
