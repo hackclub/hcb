@@ -10,7 +10,7 @@ class ReceiptablePolicy < ApplicationPolicy
   end
 
   def link_modal?
-    upload?
+    upload? || user&.auditor?
   end
 
   def mark_no_or_lost?
