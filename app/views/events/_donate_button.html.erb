@@ -1,0 +1,8 @@
+<%# locals: (event:) %>
+
+<% if event.donation_page_available? %>
+  <%= link_to start_donation_donations_path(event), target: "_blank", class: "btn bg-blue flex items-center" do %>
+    <%= inline_icon "purse" %>
+    Donate
+  <% end %>
+<% end %>
