@@ -26,11 +26,13 @@ module ProsemirrorService
           content = @renderer.render json
         end
 
-        <<-HTML.chomp
+        unsanitized_html = <<-HTML.chomp
           <div class="pm-content">
             #{content}
           </div>
         HTML
+
+        ActionController::Base.helpers.sanitize(unsanitized_html)
       end
 
       def create_renderer
