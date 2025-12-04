@@ -1,7 +1,7 @@
 <% @invoice = @hcb_code.invoice %>
 <% @sponsor = @invoice.sponsor %>
 
-<%= render partial: "admin_viewer", locals: { record: @invoice } %>
+<%= render partial: "application/admin_viewer", locals: { record: @invoice } %>
 
 <% admin_tool("mt3") do %>
   <%= link_to "View on Stripe", @invoice.stripe_dashboard_url, class: "btn bg-accent" %>

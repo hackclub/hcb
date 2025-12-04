@@ -53,7 +53,7 @@ class CommentPolicy < ApplicationPolicy
       user_list = [record.commentable.user]
 
       unless record.commentable.event&.users&.empty?
-        user_list += record.commentable.event&.users
+        user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
       end
     elsif record.commentable.is_a?(Event)
       user_list = record.commentable.users
