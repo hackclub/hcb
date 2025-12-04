@@ -45,7 +45,7 @@ class ApplicationMailer < ActionMailer::Base
 
       unless all_recipients.empty?
         msg.to = new_to
-        msg.cc = new_bcc
+        msg.cc = new_cc
         msg.bcc = new_bcc
       end
     end
