@@ -123,6 +123,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def async_sub_organization_balance?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
@@ -145,6 +149,10 @@ class EventPolicy < ApplicationPolicy
 
   def transfers?
     show? && record.plan.transfers_enabled?
+  end
+
+  def card_grant_overview?
+    (is_public || auditor_or_reader?) && (record.plan.card_grants_enabled? || record.card_grants.any?)
   end
 
   def promotions?

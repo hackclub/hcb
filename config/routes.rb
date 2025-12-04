@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
+    mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
     mount Blazer::Engine, at: "blazer"
@@ -252,6 +253,7 @@ Rails.application.routes.draw do
       get "employee_payments", to: "admin#employee_payments"
       get "emails", to: "admin#emails"
       get "email", to: "admin#email"
+      get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
@@ -330,10 +332,11 @@ Rails.application.routes.draw do
     post "resend"
     member do
       post "change_position_role"
+      post "send_contract"
     end
   end
 
-  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+  resources :contracts, only: [] do
     member do
       post "void"
       post "resend_to_user"
@@ -546,6 +549,7 @@ Rails.application.routes.draw do
       post "update_currency"
       post "draft"
       get "wise_transfer_quote"
+      get "wise_transfer_breakdown"
       collection do
         post "quick_expense"
         get "/:event_name/finished", to: "reports#finished", as: "finished"
@@ -575,8 +579,10 @@ Rails.application.routes.draw do
   end
 
   get "brand_guidelines", to: redirect("branding")
+  get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
+  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
@@ -631,7 +637,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show] do
+          resources :invitations, only: [:index, :show, :create] do
             member do
               post "accept"
               post "reject"
@@ -664,6 +670,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
+          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create]
 
@@ -677,6 +684,10 @@ Rails.application.routes.draw do
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
+          collection do
+            get "card_designs"
+          end
+
           member do
             get "transactions"
             get "ephemeral_keys"
@@ -846,12 +857,16 @@ Rails.application.routes.draw do
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
     get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
+    get "card_grants", to: "card_grants#index", as: :card_grant_overview
+    get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
+    get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
 
     resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"
 
     get "async_balance"
+    get "async_sub_organization_balance"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
@@ -862,6 +877,7 @@ Rails.application.routes.draw do
     get "reimbursements"
     get "employees"
     get "sub_organizations"
+    get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate

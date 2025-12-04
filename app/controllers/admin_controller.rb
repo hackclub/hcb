@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
-  rescue_from Governance::Admin::InsufficientApprovalLimitError do |e|
-    redirect_back fallback_location: root_path, flash: { error: e.message }
-  end
-
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -317,6 +313,9 @@ class AdminController < Admin::BaseController
       end
     end
 
+    # Auto mapp the transactions
+    ::EventMappingEngine::Nightly.new.run
+
     duplicates = transactions.count - raw_intrafi_transactions.count
 
     redirect_to raw_intrafi_transactions_admin_index_path, flash: {
@@ -488,9 +487,16 @@ class AdminController < Admin::BaseController
 
     relation = relation.reimbursement_requested if @pending
 
+    @unprocessed_wise_report_ids = Reimbursement::Report
+                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .select(:id)
+                                   .pluck(:id)
+
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'reimbursement_requested' DESC"),
+      @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
+      Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       # Arel.sql("aasm_state = 'draft' ASC"),
       "reimbursement_reports.created_at desc"
     )
@@ -1305,6 +1311,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1327,7 +1337,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants

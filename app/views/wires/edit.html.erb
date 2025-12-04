@@ -38,7 +38,7 @@
   <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
   </div>
 
-  <%= render partial: "recipient_details", locals: { form:, disabled:, required: true } %>
+  <%= render partial: "wires/recipient_details", locals: { form:, disabled:, required: true } %>
 
   <h2 class="mb2 mt3">Payment information</h2>
 
@@ -48,9 +48,9 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
-  <%= render partial: "account_details", locals: { form:, disabled:, required: true } %>
+  <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
 
-  <%= render partial: "country_specific_details", locals: { form:, disabled:, required: true } %>
+  <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
 
   <div class="actions inline-block mt1">
     <%= form.submit "Update wire", disabled: %>

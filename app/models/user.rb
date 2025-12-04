@@ -85,7 +85,7 @@ class User < ApplicationRecord
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
@@ -231,10 +231,13 @@ class User < ApplicationRecord
     ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
   end
 
-  # admin? takes into account an admin user's preference
+  # admin? by default, takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def admin?
-    ["admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def admin?(override_pretend: false)
+    has_admin_role = ["admin", "superadmin"].include?(self.access_level)
+    return has_admin_role if override_pretend
+
+    has_admin_role && !self.pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
@@ -288,6 +291,20 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # gary@hackclub.com → g***y@hackclub.com
+  # gt@hackclub.com → g*@hackclub.com
+  # g@hackclub.com → g@hackclub.com
+  def redacted_email
+    handle, domain = email.split("@")
+    redacted_handle =
+      if handle.length <= 2
+        handle[0] + "*" * (handle.length - 1)
+      else
+        "#{handle[0]}***#{handle[-1]}"
+      end
+    "#{redacted_handle}@#{domain}"
+  end
+
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
   end
@@ -335,7 +352,7 @@ class User < ApplicationRecord
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
       user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
-      user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
+      user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
     end
   end
 
@@ -365,8 +382,28 @@ class User < ApplicationRecord
     return events.organized_by_hack_clubbers.any?
   end
 
+  def age_on(date)
+    return unless birthday
+
+    dob = birthday.to_date
+    y = date.year
+
+    # Safely handle leap years. Clamp the day to the number of days in dob.month for given year.
+    day = [dob.day, Time.days_in_month(dob.month, y)].min
+    bday_this_year = Date.new(y, dob.month, day)
+
+    age = y - dob.year
+    age -= 1 if date < bday_this_year
+    age
+  end
+
+  def age
+    age_on(Date.current)
+  end
+
   def teenager?
-    birthday&.after?(19.years.ago)
+    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
+    age&.<=(18)
   end
 
   def last_seen_at
@@ -553,6 +590,10 @@ class User < ApplicationRecord
       else
         errors.add(:payout_method, "is invalid. Please choose another option.")
       end
+    end
+
+    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
+      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 

@@ -7,7 +7,7 @@
   Settings
 </h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "notifications" %>
+  <%= render "users/settings_nav", active: "notifications" %>
   <section>
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
       <fieldset class="field">

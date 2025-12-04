@@ -58,6 +58,10 @@
     flex-shrink: initial !important;
     min-width: 7.5rem;
   }
+
+  #action-wrapper {
+    flex-direction: column-reverse !important;
+  }
 }
 
 #summary {

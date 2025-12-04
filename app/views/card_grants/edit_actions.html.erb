@@ -1,5 +1,5 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "edit_nav", active: "actions" %>
+  <%= render "card_grants/edit_nav", active: "actions" %>
 
 <% if @card_grant.active? %>
   <div class="mt3 grid gap-8 *:self-center max-lg:!grid-cols-[1fr] lg:!grid-cols-[max-content 1fr]">

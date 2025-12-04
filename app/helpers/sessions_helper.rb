@@ -38,7 +38,7 @@ module SessionsHelper
         user.session_validity_preference
       end
     expiration_at = session_duration.seconds.from_now
-    cookies.encrypted[:session_token] = { value: session_token, expires: UserSession::MAX_SESSION_DURATION.from_now }
+    cookies.encrypted[:session_token] = { value: session_token, expires: UserSession::MAX_SESSION_DURATION.from_now, httponly: true }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
@@ -134,9 +134,9 @@ module SessionsHelper
   def signed_in_user
     unless signed_in?
       if request.fullpath == "/"
-        redirect_to auth_users_path(require_reload: true)
+        redirect_to auth_users_path(require_reload: true, signup: params[:signup])
       else
-        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true, signup: params[:signup])
       end
     end
   end
