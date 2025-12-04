@@ -37,9 +37,17 @@ class ApplicationMailer < ActionMailer::Base
 
   def mail(headers = {}, &block)
     super(headers, &block).tap do |msg|
-      msg.to = msg.to - self.class.earmuffed_recipients if msg.to.present?
-      msg.cc = msg.cc - self.class.earmuffed_recipients if msg.cc.present?
-      msg.bcc = msg.bcc - self.class.earmuffed_recipients if msg.bcc.present?
+      new_to = (msg.to || []) - self.class.earmuffed_recipients
+      new_cc = (msg.cc || []) - self.class.earmuffed_recipients
+      new_bcc = (msg.bcc || []) - self.class.earmuffed_recipients
+
+      all_recipients = new_to + new_cc + new_bcc
+
+      unless all_recipients.empty?
+        msg.to = new_to
+        msg.cc = new_bcc
+        msg.bcc = new_bcc
+      end
     end
   end
 
