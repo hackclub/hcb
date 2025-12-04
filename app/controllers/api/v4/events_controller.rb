@@ -24,6 +24,7 @@ module Api
 
         if params[:email].blank?
           render json: { error: "invalid_operation", messages: "Organizer email is required" }, status: :bad_request
+          return
         end
 
         @event = ::EventService::Create.new(
