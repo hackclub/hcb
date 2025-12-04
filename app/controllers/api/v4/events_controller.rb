@@ -3,11 +3,45 @@
 module Api
   module V4
     class EventsController < ApplicationController
-      before_action :set_event, except: [:index]
+      before_action :set_event, except: [:index, :create]
       skip_after_action :verify_authorized, only: [:index]
 
       def index
-        @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+        if params[:event_id]
+          event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
+          authorize event, :sub_organizations?
+
+          @events = event.subevents.includes(:users).order("organizer_positions.created_at DESC")
+        else
+          @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+        end
+      end
+
+      def create
+        parent_event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
+        authorize parent_event, :create_sub_organization?
+        
+
+        if params[:email].blank?
+          render json: { error: "invalid_operation", messages: "Organizer email is required" }, status: :bad_request
+        end
+
+        @event = ::EventService::Create.new(
+          name: params[:name],
+          emails: [params[:email]],
+          cosigner_email: params[:cosigner_email],
+          is_signee: true,
+          country: params[:country],
+          point_of_contact_id: parent_event.point_of_contact_id,
+          invited_by: current_user,
+          is_public: parent_event.is_public,
+          plan: parent_event.config.subevent_plan.presence,
+          risk_level: parent_event.risk_level,
+          parent_event: parent_event,
+          scoped_tags: params[:scoped_tags]
+        ).run
+
+        render :show, status: :created, location: api_v4_event_path(@event)
       end
 
       def show
