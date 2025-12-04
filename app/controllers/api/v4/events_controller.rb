@@ -25,9 +25,11 @@ module Api
         parent_event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
         authorize parent_event, :create_sub_organization?
 
-        if params[:email].blank?
-          render json: { error: "invalid_operation", messages: ["Organizer email is required"] }, status: :bad_request
-          return
+        if params[:email].blank? || params[:name].blank?
+          messages = []
+          messages << "Organizer email is required" if params[:email].blank?
+          messages << "Organization name is required" if params[:name].blank?
+          render json: { error: "invalid_operation", messages: }, status: :bad_request and return
         end
 
         @event = ::EventService::Create.new(
