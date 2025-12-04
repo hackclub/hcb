@@ -2,7 +2,7 @@
 
 class OrganizerPositionPolicy < ApplicationPolicy
   def destroy?
-    admin_or_contract_signee? || record.user == user
+    admin_or_contract_signee?
   end
 
   def set_index?
