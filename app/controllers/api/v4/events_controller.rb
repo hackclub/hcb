@@ -8,6 +8,10 @@ module Api
 
       def index
         if params[:event_id]
+          if current_token.scopes.exclude?("organizations:read")
+            raise Pundit::NotAuthorizedError
+          end
+
           event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
           authorize event, :sub_organizations?
 
@@ -20,7 +24,6 @@ module Api
       def create
         parent_event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
         authorize parent_event, :create_sub_organization?
-
 
         if params[:email].blank?
           render json: { error: "invalid_operation", messages: "Organizer email is required" }, status: :bad_request
