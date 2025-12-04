@@ -26,7 +26,7 @@ module Api
         authorize parent_event, :create_sub_organization?
 
         if params[:email].blank?
-          render json: { error: "invalid_operation", messages: "Organizer email is required" }, status: :bad_request
+          render json: { error: "invalid_operation", messages: ["Organizer email is required"] }, status: :bad_request
           return
         end
 
