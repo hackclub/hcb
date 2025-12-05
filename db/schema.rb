@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_05_035043) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1981,9 +1981,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
 
   create_table "referral_attributions", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "referral_link_id"
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
@@ -2003,11 +2005,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
   create_table "referral_programs", force: :cascade do |t|
     t.string "background_image_url"
     t.datetime "created_at", null: false
+    t.bigint "creator_id"
     t.text "login_body_text"
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2764,6 +2768,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
+  add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
   add_foreign_key "referral_links", "referral_programs", column: "program_id"

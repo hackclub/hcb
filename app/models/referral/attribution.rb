@@ -7,16 +7,19 @@
 #  id                  :bigint           not null, primary key
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
+#  referral_link_id    :bigint
 #  referral_program_id :bigint           not null
 #  user_id             :bigint           not null
 #
 # Indexes
 #
+#  index_referral_attributions_on_referral_link_id     (referral_link_id)
 #  index_referral_attributions_on_referral_program_id  (referral_program_id)
 #  index_referral_attributions_on_user_id              (user_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (referral_link_id => referral_links.id)
 #  fk_rails_...  (referral_program_id => referral_programs.id)
 #  fk_rails_...  (user_id => users.id)
 #

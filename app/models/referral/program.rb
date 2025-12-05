@@ -12,6 +12,11 @@
 #  name                 :string           not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
+#  creator_id           :bigint
+#
+# Indexes
+#
+#  index_referral_programs_on_creator_id  (creator_id)
 #
 module Referral
   class Program < ApplicationRecord
