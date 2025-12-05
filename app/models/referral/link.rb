@@ -37,5 +37,6 @@ module Referral
     def value
       slug || hashid
     end
+
   end
 end
