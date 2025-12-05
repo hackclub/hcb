@@ -43,7 +43,7 @@
   <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
 </h1>
 
-<div class="flex flex-col gap-[20px]" data-controller="event-home">
+<div class="flex flex-col gap-[20px] -mt-3" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden mt-3">
       <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
