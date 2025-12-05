@@ -1403,7 +1403,7 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :referral_links)
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def referral_program_create
