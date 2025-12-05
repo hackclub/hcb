@@ -22,7 +22,7 @@
 #
 class Event
   class Plan
-    class USPSDebit < Internal
+    class USPSDebit < HackClubHQ
       def label = "HQ USPS debit"
 
       validate do
