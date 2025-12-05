@@ -989,6 +989,9 @@ Rails.application.routes.draw do
   scope module: "referral" do
     resources :programs, only: [:show], path: "referrals"
     resources :programs, only: [:show], path: "from/*slug"
+
+    resources :links, only: [:show], path: "referral_links" # Temporary, until programs are migrated to links
+    resources :links, only: [:show], path: "from_link/*slug" # Temporary, until programs are migrated to links
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/

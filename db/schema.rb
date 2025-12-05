@@ -12,7 +12,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
+  create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -651,7 +652,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
     t.bigint "destination_subledger_id"
-    t.bigint "destination_transaction_category_id"
     t.datetime "errored_at", precision: nil
     t.bigint "event_id"
     t.bigint "fulfilled_by_id"
@@ -664,16 +664,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.boolean "should_charge_fee", default: false
     t.bigint "source_event_id"
     t.bigint "source_subledger_id"
-    t.bigint "source_transaction_category_id"
     t.datetime "updated_at", precision: nil, null: false
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
-    t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
-    t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
 
   create_table "discord_messages", force: :cascade do |t|
@@ -1518,10 +1515,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.text "browser_token_ciphertext"
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
+    t.bigint "referral_link_id"
     t.bigint "referral_program_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
+    t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
@@ -1984,6 +1983,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
     t.bigint "user_id", null: false
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+  end
+
+  create_table "referral_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.string "name", null: false
+    t.bigint "program_id", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+    t.index ["program_id"], name: "index_referral_links_on_program_id"
+    t.index ["slug"], name: "index_referral_links_on_slug", unique: true
   end
 
   create_table "referral_programs", force: :cascade do |t|
@@ -2646,8 +2657,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
-  add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
-  add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
   add_foreign_key "discord_messages", "activities"
@@ -2752,6 +2761,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_links", "referral_programs", column: "program_id"
+  add_foreign_key "referral_links", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

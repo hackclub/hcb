@@ -23,6 +23,7 @@
 module Referral
   class Attribution < ApplicationRecord
     belongs_to :program, class_name: "Referral::Program", foreign_key: "referral_program_id", inverse_of: :attributions
+    belongs_to :link, class_name: "Referral::Link", foreign_key: "referral_link_id", inverse_of: :attributions
     belongs_to :user # Referee (person being referred)
 
   end
