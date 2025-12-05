@@ -35,8 +35,8 @@ class ApplicationMailer < ActionMailer::Base
     end
   end
 
-  def mail(headers = {}, &block)
-    super(headers, &block).tap do |msg|
+  def mail(...)
+    super(...).tap do |msg|
       new_to = (msg.to || []) - self.class.earmuffed_recipients
       new_cc = (msg.cc || []) - self.class.earmuffed_recipients
       new_bcc = (msg.bcc || []) - self.class.earmuffed_recipients
