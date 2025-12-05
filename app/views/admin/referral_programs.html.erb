@@ -7,7 +7,7 @@
         <div class="flex flex-row items-center p-4 gap-8 border-bottom w-100 mb-0">
           <div class="flex flex-col">
             <h5 class="m-0 p-0"><%= program.name %></h5>
-            <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code> • Created by <%= program.creator.name %></small>
+            <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %></small>
           </div>
           <div class="flex flex-row gap-2 justify-between m-0">
             <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
@@ -49,7 +49,7 @@
               <%= form.text_field :name, placeholder: "Reddit Post", required: true, class: "w-100" %>
               <br>
               <%= form.label :slug, "Custom slug" %>
-              <%= form.text_field :slug, placeholder: "my-custom-slug", required: true, class: "w-100" %>
+              <%= form.text_field :slug, placeholder: "my-custom-slug", class: "w-100" %>
               <br>
               <%= form.submit "Create Link", class: "bg-success" %>
             </fieldset>
