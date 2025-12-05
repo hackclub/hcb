@@ -3,26 +3,23 @@
 module Api
   module V4
     class EventsController < ApplicationController
-      before_action :set_event, except: [:index, :create]
+      before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
       def index
-        if params[:event_id]
-          if current_token.scopes.exclude?("organizations:read")
-            raise Pundit::NotAuthorizedError
-          end
-
-          event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
-          authorize event, :sub_organizations?
-
-          @events = event.subevents.includes(:users).order("organizer_positions.created_at DESC")
-        else
-          @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
-        end
+        @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
       end
 
-      def create
-        parent_event = Event.find_by_public_id(params[:event_id]) || Event.find_by!(slug: params[:event_id])
+      def sub_organizations
+        authorize @event, :sub_organizations?
+
+        @events = @event.subevents.includes(:users).order("organizer_positions.created_at DESC")
+      end
+
+      require_oauth2_scope "organizations:read", :sub_organizations
+
+      def create_sub_organization
+        parent_event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
         authorize parent_event, :create_sub_organization?
 
         if params[:email].blank? || params[:name].blank?

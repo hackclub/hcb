@@ -674,9 +674,10 @@ Rails.application.routes.draw do
 
           resources :donations, path: "donations", only: [:create]
 
-          resources :events, path: "organizations", only: [:index, :create]
-
           member do
+            get "sub_organizations"
+            post "sub_organizations", to: "events#create_sub_organization"
+
             get "transactions"
             get :followers
           end
