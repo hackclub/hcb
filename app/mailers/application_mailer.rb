@@ -43,7 +43,7 @@ class ApplicationMailer < ActionMailer::Base
 
       all_recipients = new_to + new_cc + new_bcc
 
-      unless all_recipients.empty?
+      unless all_recipients.empty? || Rails.env.development?
         msg.to = new_to
         msg.cc = new_cc
         msg.bcc = new_bcc
