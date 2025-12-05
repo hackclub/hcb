@@ -6,7 +6,7 @@
       <div class="flex flex-row items-center border p-4 gap-8 w-100 mb-0">
         <div class="flex flex-col">
           <h5 class="m-0 p-0"><%= program.name %></h5>
-          <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code></small>
+          <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code> • <% program.links.each do |link| %><code><%= link.name %>: <%= link.slug %></code> <% end %></small>
         </div>
         <div class="flex flex-row gap-2 justify-between m-0">
           <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>

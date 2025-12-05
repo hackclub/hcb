@@ -51,7 +51,7 @@ module ApplicationHelper
     content << [obj.address_line1, tag.br].join("")
     content << [obj.address_line2 + tag.br].join("") if obj.address_line2.present?
     content << [obj.address_city, obj.address_state, obj.address_postal_code].join(", ")
-    content_tag(:span, content.join.html_safe)
+    content_tag(:span, sanitize(content.join))
   end
 
   def blankslate(text, **options)
@@ -118,14 +118,14 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", external_link, target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
   end
 
   def modal_header(text, external_link: nil)
     content_tag :header, class: "pb2" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, text.html_safe, class: "h1 mt0 mb0 pb0 border-none")
+        content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 
@@ -402,9 +402,9 @@ module ApplicationHelper
       (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
           options[:options].map.with_index do |option, index|
-            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
-            (options[:form].label options[:name], class: "!h-auto", value: option[1] do
-              (tag.strong option[0]) + (tag.p option[2])
+            (options[:form].radio_button sanitize(options[:name]), option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": sanitize(template.call(option[1])) } }) +
+            (options[:form].label sanitize(options[:name]), value: option[1] do
+              (tag.strong sanitize(option[0])) + (tag.p sanitize(option[2]))
             end)
           end.join.html_safe
         end

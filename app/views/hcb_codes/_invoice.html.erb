@@ -179,29 +179,12 @@
       disabled: !organizer_signed_in?,
       method: :post,
       data: { confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone." },
-      class: "btn bg-error mr1 right" if @invoice.open_v2? %>
-    <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
-      (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
-      disabled: !organizer_signed_in?,
-      method: :post,
-      class: "btn btn-text bg-muted" unless @invoice.void_v2? %>
-
-    <div class="btn-group ml-auto">
-      <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
-        disabled: !organizer_signed_in?,
-        class: "btn bg-accent mr1",
-        target: "_blank" do %>
-        <%= inline_icon "external" %>
-        View sent invoice
-      <% end %>
-      <%= link_to organizer_signed_in? ? invoice_pdf_path(@invoice.hashid) : root_path,
-        disabled: !organizer_signed_in?,
-        class: "btn bg-info mr1",
-        target: "_blank" do %>
-        <%= inline_icon "download" %>
-        PDF
-      <% end %>
-    </div>
+      class: "btn bg-error mr1 right" if @invoice.open_v2? && InvoicePolicy.new(@user, @hcb_code).void? %>
+  <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
+    (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
+    disabled: !organizer_signed_in?,
+    method: :post,
+    class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @hcb_code).archive? %>
   </section>
 </article>
 

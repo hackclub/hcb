@@ -15,7 +15,7 @@ module Referral
         authorize(@program)
 
         Rails.error.handle do
-          Referral::Attribution.create!(user: current_user, program: @program)
+          Referral::Attribution.create!(user: current_user, program: @program, link: @program.links.first) # We're temporarily inferring the link
         end
       else
         skip_authorization

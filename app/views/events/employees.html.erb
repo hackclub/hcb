@@ -2,11 +2,13 @@
 <% page_md %>
 <%= render "events/nav", selected: :payroll %>
 
-<h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-0">
-  Contractors
-  <%= link_to "#", class: "!ml-0 sm:!ml-auto btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
-    <%= inline_icon "plus" %>
-    Invite a contractor
+<h1 class="heading flex">
+  <span class="flex-grow">Contractors</span>
+  <% if EmployeePolicy.new(current_user, @event).new? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+      <%= inline_icon "plus" %>
+      Invite a contractor
+    <% end %>
   <% end %>
 </h1>
 
