@@ -10,6 +10,7 @@ module OneTimeJobs
           creator: program.creator,
           name: "Default link (backfilled from program)"
         )
+      end
     end
 
   end
