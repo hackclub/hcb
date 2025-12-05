@@ -1412,8 +1412,7 @@ class AdminController < Admin::BaseController
     if @referral_program.save
       redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
     else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
+      redirect_to referral_programs_admin_index_path, flash: { error: @referral_program.errors.full_messages.to_sentence }
     end
   end
 
@@ -1424,8 +1423,7 @@ class AdminController < Admin::BaseController
     if @referral_link.save
       redirect_to referral_programs_admin_index_path, flash: { success: "Referral link created successfully." }
     else
-      flash[:error] = @referral_link.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
+      redirect_to referral_programs_admin_index_path, flash: { error: @referral_link.errors.full_messages.to_sentence }
     end
   end
 
