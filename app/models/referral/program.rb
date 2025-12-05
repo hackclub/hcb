@@ -24,7 +24,7 @@ module Referral
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
     has_many :logins, foreign_key: :referral_program_id, class_name: "Login", inverse_of: :referral_program
-    has_many :links, foreign_key: :program_id, class_name: "Link", inverse_of: :program
+    has_many :links, class_name: "Link", inverse_of: :program
 
     def background_image_css
       background_image_url.present? ? "url('#{background_image_url}')" : nil
