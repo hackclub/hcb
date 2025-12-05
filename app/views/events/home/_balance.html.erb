@@ -30,7 +30,7 @@
       </div>
     </div>
     <div class="flex-grow"></div>
-    <div style="height: <%= @recent_transactions.size * 60 %>px;z-index:1">
+    <div style="height: <%= (@recent_transactions.size - 1) * 60 %>px;z-index:1">
       <svg data-balance-graph-target="graph" id="balance-chart" class="sparkline sparkline--filled w-full absolute" style="bottom: -2px; left: -4px;width: calc(100% + 8px)" height="<%= @recent_transactions.size * 60 %>" stroke-width="4"></svg>
     </div>
   </div>
