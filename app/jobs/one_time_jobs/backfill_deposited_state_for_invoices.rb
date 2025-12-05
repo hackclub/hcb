@@ -5,7 +5,7 @@ module OneTimeJobs
     queue_as :default
 
     def perform
-      Invoice.find_each do |invoice|
+      Invoice.where(aasm_state: :paid_v2).find_each do |invoice|
         if invoice.deposited?
           invoice.mark_deposited!
         end
