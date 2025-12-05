@@ -13,7 +13,6 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
-  create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -652,6 +651,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
     t.bigint "destination_subledger_id"
+    t.bigint "destination_transaction_category_id"
     t.datetime "errored_at", precision: nil
     t.bigint "event_id"
     t.bigint "fulfilled_by_id"
@@ -664,13 +664,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
     t.boolean "should_charge_fee", default: false
     t.bigint "source_event_id"
     t.bigint "source_subledger_id"
+    t.bigint "source_transaction_category_id"
     t.datetime "updated_at", precision: nil, null: false
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
+    t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
+    t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
   end
 
   create_table "discord_messages", force: :cascade do |t|
@@ -2657,6 +2660,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_023624) do
   add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
+  add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
+  add_foreign_key "disbursements", "transaction_categories", column: "source_transaction_category_id"
   add_foreign_key "disbursements", "users", column: "fulfilled_by_id"
   add_foreign_key "disbursements", "users", column: "requested_by_id"
   add_foreign_key "discord_messages", "activities"
