@@ -8,9 +8,11 @@
     </tr>
   </thead>
   <tbody>
+    <%# ideally this pulls from a list of all users that have made a link %>
     <% User.auditor.each do |user| %>
       <tr>
         <td><%= user_mention user %></td>
+        <%# ideally we do this in all sql instead of rails %>
         <td><%= Referral::Link.where(creator: user).sum { |link| link.new_users.where(teenager: true) } %></td>
       </tr>
     <% end %>
