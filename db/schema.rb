@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_01_033046) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1645,9 +1645,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   create_table "organizer_position_invite_requests", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
+    t.bigint "organizer_position_invite_id"
     t.bigint "organizer_position_invite_link_id", null: false
     t.bigint "requester_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_0bf62e304a"
     t.index ["organizer_position_invite_link_id"], name: "idx_on_organizer_position_invite_link_id_241807b5ee"
     t.index ["requester_id"], name: "index_organizer_position_invite_requests_on_requester_id"
   end
@@ -2731,6 +2733,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_092317) do
   add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
   add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
   add_foreign_key "organizer_position_invite_requests", "organizer_position_invite_links"
+  add_foreign_key "organizer_position_invite_requests", "organizer_position_invites"
   add_foreign_key "organizer_position_invite_requests", "users", column: "requester_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
