@@ -4,7 +4,7 @@ module OneTimeJobs
   class MigrateReferralProgramsToLinks < ApplicationJob
     def perform
       Referral::Program.find_each do |program|
-        link = Referral::Link.create!(
+        Referral::Link.create!(
           program:,
           slug: program.hashid,
           creator: program.creator,
