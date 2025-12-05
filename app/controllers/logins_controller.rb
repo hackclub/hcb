@@ -159,8 +159,8 @@ class LoginsController < ApplicationController
     # has not created a user session before
     if @login.complete? && @login.user_session.nil?
       @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
-      if @referral_program.present?
-        redirect_to program_path(@referral_program)
+      if @referral_link.present?
+        redirect_to referral_link_url(@referral_link)
       elsif @user.full_name.blank? || @user.phone_number.blank?
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
@@ -193,6 +193,7 @@ class LoginsController < ApplicationController
     begin
       if params[:id]
         @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
+        @referral_link = @login.referral_link
         @referral_program = @login.referral_program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.
