@@ -152,6 +152,12 @@ summary.dock__item {
   }
 
   padding: 0.25rem 0.5rem;
+
+  &:not(:has(svg)) {
+    padding-left: 0.75rem;
+    margin-left: 1.75rem !important;
+  }
+
   border-radius: var(--radius-lg);
 
   @media (min-width: 768px) {
