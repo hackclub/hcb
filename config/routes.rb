@@ -260,6 +260,7 @@ Rails.application.routes.draw do
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
+      get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
     end
 
     member do
