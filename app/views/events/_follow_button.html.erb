@@ -2,7 +2,7 @@
 
 <% if event_follow.nil? %>
   <% if event.is_public || Announcement.where(event:).published.any? %>
-    <%= button_to event_follows_path(event), method: :post, class: "btn bg-blue flex items-center" do %>
+    <%= button_to event_follows_path(event), method: :post, class: "btn bg-success flex items-center" do %>
       <%= inline_icon "event-add" %>
       Follow
     <% end %>

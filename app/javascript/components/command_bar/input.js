@@ -119,7 +119,7 @@ export function KBarInput(props) {
       placeholder ||
       (currentRootActionId && actions[currentRootActionId]
         ? actions[currentRootActionId].label ||
-        actions[currentRootActionId].name
+          actions[currentRootActionId].name
         : defaultText)
     )
   }, [actions, currentRootActionId, defaultPlaceholder, placeholder])

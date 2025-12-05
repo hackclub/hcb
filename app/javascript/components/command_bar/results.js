@@ -15,22 +15,22 @@ export function RenderResults() {
       }
       onRender={({ item, active }) =>
         typeof item === 'string' ||
-          item.id?.startsWith('loading') ||
-          item.id?.startsWith('results:') ? (
+        item.id?.startsWith('loading') ||
+        item.id?.startsWith('results:') ? (
           <div
             style={
               (typeof item === 'string' && item == 'search_guide') ||
-                item.id?.startsWith('results:')
+              item.id?.startsWith('results:')
                 ? {
-                  padding: '8px 16px',
-                  color: 'rgba(0, 0, 0, 0.5)',
-                }
+                    padding: '8px 16px',
+                    color: 'rgba(0, 0, 0, 0.5)',
+                  }
                 : {
-                  padding: '8px 16px',
-                  fontSize: '10px',
-                  textTransform: 'uppercase',
-                  opacity: 0.5,
-                }
+                    padding: '8px 16px',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    opacity: 0.5,
+                  }
             }
           >
             {typeof item === 'string' && item != 'search_guide' ? (

@@ -1,4 +1,8 @@
 <%= pop_icon_to "share", "javascript:void(0)", data: { behavior: "modal_trigger", modal: "share_donation_page" } %>
+<a href="<%= start_donation_donations_url(@event) %>" class="ml2 btn bg-success gap-2" target="_blank">
+  Donation page
+  <%= inline_icon "external", class: "!m-0" %>
+</a>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="share_donation_page">
   <div data-controller="tabs" data-tabs-default-tab-value="link">
