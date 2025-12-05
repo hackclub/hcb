@@ -1410,10 +1410,12 @@ class AdminController < Admin::BaseController
     @referral_program = Referral::Program.new(name: params[:name], creator: current_user)
 
     if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+      flash[:success] = "Referral program created successfully."
     else
-      redirect_to referral_programs_admin_index_path, flash: { error: @referral_program.errors.full_messages.to_sentence }
+      flash[:error] = @referral_program.errors.full_messages.to_sentence
     end
+
+    redirect_to referral_programs_admin_index_path
   end
 
   def referral_link_create
@@ -1421,10 +1423,12 @@ class AdminController < Admin::BaseController
     @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug], creator: current_user)
 
     if @referral_link.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral link created successfully." }
+      flash[:success] = "Referral link created successfully."
     else
-      redirect_to referral_programs_admin_index_path, flash: { error: @referral_link.errors.full_messages.to_sentence }
+      flash[:error] = @referral_link.errors.full_messages.to_sentence
     end
+
+    redirect_to referral_programs_admin_index_path
   end
 
   def active_teenagers_leaderboard
