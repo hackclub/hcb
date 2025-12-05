@@ -13,5 +13,6 @@ module EventMappingEngine
     HACK_FOUNDATION_INTEREST = 2740
     REIMBURSEMENT_CLEARING = 4318
     SVB_SWEEPS = 5832
+    HQ_USPS_OPS = 7893
   end
 end
