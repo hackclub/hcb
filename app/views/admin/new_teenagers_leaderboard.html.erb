@@ -13,7 +13,7 @@
       <tr>
         <td><%= user_mention user %></td>
         <%# ideally we do this in all sql instead of rails %>
-        <td><%= Referral::Link.where(creator: user).sum { |link| link.new_users.where(teenager: true) } %></td>
+        <td><%= Referral::Link.where(creator: user).sum { |link| link.program.new_users.where(teenager: true) } %></td>
       </tr>
     <% end %>
   </tbody>
