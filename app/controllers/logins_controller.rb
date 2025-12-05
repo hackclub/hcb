@@ -160,7 +160,7 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.nil?
       @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
       if @referral_link.present?
-        redirect_to referral_link_url(@referral_link)
+        redirect_to referral_link_path(@referral_link)
       elsif @user.full_name.blank? || @user.phone_number.blank?
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
