@@ -1,4 +1,10 @@
 <%= turbo_frame_tag :card_grant_card_overview do %>
+  <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/search", form: %>
+    <% end %>
+  </div>
+
   <% if @card_grants.any? %>
     <div class="table-container">
       <table>

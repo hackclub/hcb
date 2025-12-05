@@ -10,7 +10,7 @@
 
 <h1>Send a Wise transfer</h1>
 
-<%= render "callout",
+<%= render "application/callout",
     type: "info",
     icon: "wise",
     title: "Important information about Wise transfers",
@@ -40,7 +40,7 @@
     <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value" %>
   </div>
 
-  <%= render partial: "recipient_details", locals: { form:, disabled: } %>
+  <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
 
   <h2 class="mt3">Payment information</h2>
   <p>Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
@@ -79,7 +79,7 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
-  <%= render partial: "currency_specific_details", locals: { form:, disabled: } %>
+  <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">

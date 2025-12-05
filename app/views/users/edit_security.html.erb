@@ -8,7 +8,7 @@
   Settings
 </h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "security" %>
+  <%= render "users/settings_nav", active: "security" %>
   <fieldset>
     <% unless @user.phone_number.blank? %>
       <%= turbo_frame_tag :sms_auth_card do %>
@@ -164,9 +164,9 @@
     <div class="grid grid--split">
       <% @all_sessions.each do |session| %>
         <% if session.is_a? UserSession %>
-          <%= render "user_session", session: %>
+          <%= render "users/user_session", session: %>
         <% elsif session.respond_to? :authorization_count %>
-          <%= render "oauth_authorization", authorization: session, disabled: %>
+          <%= render "users/oauth_authorization", authorization: session, disabled: %>
         <% end %>
       <% end %>
     </div>
@@ -179,9 +179,9 @@
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>
           <% if session.is_a? UserSession %>
-            <%= render "user_session", session: %>
+            <%= render "users/user_session", session: %>
           <% elsif session.respond_to? :authorization_count %>
-            <%= render "oauth_authorization", authorization: session, disabled: %>
+            <%= render "users/oauth_authorization", authorization: session, disabled: %>
           <% end %>
         <% end %>
       </div>

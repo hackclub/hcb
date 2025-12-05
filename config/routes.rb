@@ -332,10 +332,11 @@ Rails.application.routes.draw do
     post "resend"
     member do
       post "change_position_role"
+      post "send_contract"
     end
   end
 
-  resources :organizer_position_contracts, only: [:create], path: "contracts" do
+  resources :contracts, only: [] do
     member do
       post "void"
       post "resend_to_user"
@@ -578,8 +579,10 @@ Rails.application.routes.draw do
   end
 
   get "brand_guidelines", to: redirect("branding")
+  get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
+  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
@@ -634,7 +637,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show] do
+          resources :invitations, only: [:index, :show, :create] do
             member do
               post "accept"
               post "reject"
@@ -667,6 +670,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
+          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create]
 

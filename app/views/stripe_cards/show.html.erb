@@ -12,7 +12,7 @@
     <% end %>
   <% end %>
 
-  <%= render partial: "canceled_warning", locals: { stripe_card: @card } %>
+  <%= render partial: "stripe_cards/canceled_warning", locals: { stripe_card: @card } %>
 
   <turbo-frame id="details">
     <article class="check--form flex <%= "flex-col" if @frame %> items-start justify-center mt3 mb3 gap-4">
@@ -25,12 +25,12 @@
           <% end %>
         <% end %>
 
-        <%= render @card, headless: true %>
+        <%= render "stripe_cards/stripe_card", stripe_card: @card, headless: true %>
 
-        <%= render partial: "actions", locals: { stripe_card: @card } %>
+        <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card } %>
       </section>
 
-      <%= render partial: "details", locals: { stripe_card: @card } if @card.initially_activated? %>
+      <%= render partial: "stripe_cards/details", locals: { stripe_card: @card } if @card.initially_activated? %>
       <% if @card.physical? && !@card.initially_activated? && !@card.canceled? %>
         <div class="mt2 max-width-2 w-100 mx-auto">
           <div class="grid mb3" style="max-width: 36rem; margin: 0px auto; width: 100%;">
@@ -41,5 +41,5 @@
     </article>
   </turbo-frame>
 
-  <%= render partial: "transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes } %>
+  <%= render partial: "stripe_cards/transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes } %>
 <% end %>
