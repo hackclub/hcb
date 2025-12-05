@@ -153,7 +153,7 @@ summary.dock__item {
 
   padding: 0.25rem 0.5rem;
 
-  &:not(:has(svg)) {
+  details &:not(:has(svg)) {
     padding-left: 0.75rem;
     margin-left: 1.75rem !important;
   }

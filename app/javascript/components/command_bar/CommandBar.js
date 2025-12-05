@@ -64,7 +64,7 @@ const animatorStyle = {
   width: '100%',
   background: 'var(--kbar-background)',
   color: 'var(--kbar-foreground)',
-  borderRadius: 'var(--radius-2xl)',
+  borderRadius: 'var(--radius-xl)',
   overflow: 'hidden',
   boxShadow: 'var(--shadow-modal)',
 }
@@ -113,21 +113,21 @@ function SearchAndResults() {
         ),
         ...(search != ''
           ? [
-              {
-                id: 'search',
-                name: 'Search',
-                keywords: 'search',
-                icon: <Icon glyph="search" size={16} />,
-                priority: Priority.HIGH,
-              },
-              {
-                id: `results: ${search}`,
-                parent: currentRootActionId,
-                name: `Loading...`,
-                keywords: search,
-                priority: Priority.HIGH,
-              },
-            ]
+            {
+              id: 'search',
+              name: 'Search',
+              keywords: 'search',
+              icon: <Icon glyph="search" size={16} />,
+              priority: Priority.HIGH,
+            },
+            {
+              id: `results: ${search}`,
+              parent: currentRootActionId,
+              name: `Loading...`,
+              keywords: search,
+              priority: Priority.HIGH,
+            },
+          ]
           : []),
       ])
     }
@@ -211,18 +211,16 @@ function SearchAndResults() {
         defaultPlaceholder={'Search for organizations, pages, actions...'}
         placeholder={
           searched && actions.filter(x => x.id == 'result').length > 0
-            ? `Successfully found ${
-                actions.filter(x => x.id == 'result').length
-              } result${
-                actions.filter(x => x.id == 'result').length > 1 ? 's' : ''
-              }.`
+            ? `Successfully found ${actions.filter(x => x.id == 'result').length
+            } result${actions.filter(x => x.id == 'result').length > 1 ? 's' : ''
+            }.`
             : searched && actions.filter(x => x.error).length > 0
               ? searchedFor
               : searched &&
-                  actions.filter(
-                    x =>
-                      x.id == 'search' && x.parent == `results: ${searchedFor}`
-                  ).length > 0
+                actions.filter(
+                  x =>
+                    x.id == 'search' && x.parent == `results: ${searchedFor}`
+                ).length > 0
                 ? 'Found 0 results.'
                 : null
         }
