@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_035043) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2773,6 +2773,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035043) do
   add_foreign_key "referral_attributions", "users"
   add_foreign_key "referral_links", "referral_programs", column: "program_id"
   add_foreign_key "referral_links", "users", column: "creator_id"
+  add_foreign_key "referral_programs", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

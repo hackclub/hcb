@@ -18,6 +18,10 @@
 #
 #  index_referral_programs_on_creator_id  (creator_id)
 #
+# Foreign Keys
+#
+#  fk_rails_...  (creator_id => users.id)
+#
 module Referral
   class Program < ApplicationRecord
     include Hashid::Rails
