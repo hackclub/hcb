@@ -11,8 +11,9 @@ module OneTimeJobs
           name: "Default link (backfilled from program)"
         )
 
-        program.attributions.update_all(referral_link_id: link.id)
-      end
+    end
+
+  end
     end
 
   end
