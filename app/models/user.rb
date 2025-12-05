@@ -62,6 +62,7 @@ class User < ApplicationRecord
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
+  scope :auditor, -> { where(access_level: [:auditor, :admin, :superadmin])}
 
   enum :receipt_report_option, {
     none: 0,
