@@ -986,9 +986,9 @@ Rails.application.routes.draw do
     get "balance_by_date"
   end
 
-  scope module: "referral" do
-    resources :programs, only: [:show], path: "referrals"
-    resources :programs, only: [:show], path: "from/*slug"
+  scope as: "referral", module: "referral" do
+    resources :links, only: [:show], path: "referrals"
+    resources :links, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/
