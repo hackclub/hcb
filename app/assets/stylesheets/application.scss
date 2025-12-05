@@ -511,16 +511,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
       padding-right: 1rem;
     }
   }
-
-  .list > a > li,
-  .list > li,
-  .details > p,
-  .details > div,
-  h2,
-  h3 {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
 }
 
 @media not print {
