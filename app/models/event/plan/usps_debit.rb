@@ -35,8 +35,6 @@ class Event
         "account for HQ's USPS integration - no receipts (if it gets card-locked we're federally cooked)"
       end
 
-      def features = %w[cards account_number transfers documentation unrestricted_disbursements front_disbursements]
-
       def card_lockable? = false
 
       def receipts_required? = false
