@@ -11,7 +11,7 @@
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
       </div>
       <%= hidden_field_tag :return_to, @return_to if @return_to %>
-      <%= hidden_field_tag :referral_program_id, @referral_program.hashid if @referral_program %>
+      <%= hidden_field_tag :referral_link_id, @referral_link.value if @referral_link %>
       <%= email_field_tag :email, @prefill_email, placeholder: "Enter your email...", autofocus: true, autocomplete: "username", class: "!max-w-full w-full", style: "padding: 12px 15px", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
       <div class="flex justify-between items-center gap-4">
         <% if @signup %>
