@@ -1,9 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 .card {
   --card-bg: #ffffff;
   background-color: $white;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.125);
+  box-shadow: var(--shadow-border-sm);
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   transition: 0.125s ease-in-out;
   transition-property: transform, box-shadow;
@@ -25,14 +29,27 @@
       0 4px 8px 0 rgba(map-get($palette, info), 0.125);
   }
 
+  &.card--hover {
+    transition: filter 0.125s ease;
+    cursor: pointer;
+  }
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
-  }
+    transition-duration: 0s;
+    filter: brightness(0.93);
 
-  &.card--hover:active {
-    transform: translateY(-1px);
+    [data-dark='true'] & {
+      filter: brightness(1.05);
+    }
+
+    &:active {
+      transition-duration: 0.125s;
+      filter: brightness(0.9);
+
+      [data-dark='true'] & {
+        filter: brightness(1.1);
+      }
+    }
   }
 
   &.card--background-image,
@@ -45,13 +62,63 @@
         rgba(255, 255, 255, 0.75) 0%,
         rgba(255, 255, 255, 0.95) 90%
       ),
-      var(--bg-image);
+      var(--bg-image) !important;
 
     html[data-dark='true'] & {
       background-image:
         linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
-        var(--bg-image);
+        var(--bg-image) !important;
     }
+  }
+}
+
+.hcb-code {
+  @extend .card;
+  @apply pb-0 mb-1 mt-3 shadow-none;
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  box-shadow: var(--shadow-sm);
+}
+
+.hcb-code--details {
+  @extend .details-horiz;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+  border-color: rgba(200, 200, 200, 0.3);
+  margin: 0 calc(-1rem + 1px);
+  padding: 0.75rem 1rem;
+  background-color: rgba(245, 245, 245, 0.75);
+
+  & strong {
+    @extend .eyebrow;
+    margin-top: 0 !important;
+    margin-bottom: 0.1rem !important;
+    opacity: 0.7 !important;
+    white-space: nowrap !important;
+  }
+
+  html[data-dark='true'] & {
+    background-color: rgba(50, 50, 55, 0.5);
+  }
+
+  & p {
+    flex-direction: column;
+  }
+}
+
+.hcb-code--footer {
+  border-top: 1px solid rgba(200, 200, 200, 0.3);
+  background: rgba(200, 200, 200, 0.2);
+  padding: 0.75rem 1rem;
+  font-style: italic;
+  text-align: center;
+  font-size: 0.875rem;
+  color: rgba(100, 100, 100, 0.85);
+  margin-left: -16px !important;
+  margin-right: -16px !important;
+
+  html[data-dark='true'] & {
+    color: rgba(150, 150, 150, 0.85);
+    border-top-color: rgba(80, 80, 85, 0.3);
   }
 }
 
@@ -75,21 +142,23 @@ a.card {
 }
 
 .card__darker {
-  background: map-get($palette, snow);
+  background: darken(map-get($palette, snow), 2%);
 }
 
 .card__banner {
-  margin: 0 -1rem;
+  margin: 0 calc(-1rem + 1px);
   padding: 0.75rem 1rem;
   line-height: 1.25;
 }
 .card__banner--top {
-  margin-top: -1rem;
+  margin-top: calc(-1rem + 1px);
   margin-bottom: 1rem;
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 .card__banner--bottom {
   margin-top: 1rem;
-  margin-bottom: -1rem;
+  margin-bottom: calc(-1rem + 1px);
 }
 
 .error-card {
@@ -142,7 +211,6 @@ a.card {
   @extend .card;
   border: 1px solid currentColor;
   font-weight: 500;
-  max-width: 24rem;
   padding: 0.5rem 0.75rem 0.5rem 1rem;
 
   &.success {
@@ -167,19 +235,6 @@ a.card {
 
 .card--sunset {
   background-image: url('https://cloud-awvmmj0xe.vercel.app/sunset_card.png');
-}
-
-.card--breakdown {
-  @extend .card;
-  @extend .border;
-  padding: 20px;
-  padding-top: 0px;
-  padding-bottom: 24px;
-  border: 1px solid map-get($palette, smoke);
-
-  & .error {
-    color: saturate(lighten(map-get($palette, error), 40%), 60%);
-  }
 }
 
 #card-pin {

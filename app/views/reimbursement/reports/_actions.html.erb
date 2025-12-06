@@ -20,10 +20,11 @@
                                     ["Standard expense", "standard", "Expense with a monetary amount."],
                                     ["Mileage expense", "mileage", "Expense for miles traveled based on the standard mileage rate."]
                                   ],
+                                  class: "w-full",
                                   button_icon: "plus",
                                   name: "type",
                                   button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" } },
-                                  template: ->(value) { "Add #{report.expenses.count > 0 ? "another" : "a"} #{value} expense" } %>
+                                  template: ->(value) { "Add #{value} expense" } %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
@@ -65,7 +66,7 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <button class="btn bg-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
+            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -88,7 +89,7 @@
       <div style="flex-grow: 1;" class="flex justify-end">
         <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
-            <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
+            <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? || user.payout_method.present? ? "Edit" : "Add" %> payout information
               <% button_hint = capture do %>
@@ -295,7 +296,7 @@
                       Open <%= report.user.full_name %> on Wise
                     <% end %>
                   <% else %>
-                    <%= link_to "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
+                    <%= link_to "https://wise.com/send", class: "btn btn-small !bg-[#9fe870] hover:brightness-90 text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
                       <%= inline_icon "wise" %>
                       Open Wise
                     <% end %>
@@ -396,7 +397,7 @@
             <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
         <% end %>
-        <p class="mt0 mb0" id="summary-hint">
+        <p class="mt-1 mb0" id="summary-hint">
           <%= button_hint %>
         </p>
       </div>

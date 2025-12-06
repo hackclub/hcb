@@ -3,7 +3,7 @@
 <%= render "events/nav", selected: :transfers %>
 <%= render "card_grants/create_modal" %>
 
-<h1 class="heading">
+<h1 class="heading border-0 mb-0">
   <span class="flex items-center">
     Transfers
     <%= badge_for @transfers.total_count, class: "bg-muted" %>
@@ -17,7 +17,7 @@
   <% end %>
 </h1>
 
-<div class="statset mt3 mb3">
+<div class="statset mb-4">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
@@ -32,11 +32,11 @@
   </div>
 </div>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/search", form: %>
   <% end %>
-  <div>
+  <div class="filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
     <%= link_to "In transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>

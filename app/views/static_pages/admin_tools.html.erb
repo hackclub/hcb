@@ -92,7 +92,7 @@
       </ul>
       <details>
         <summary>Old cards</summary>
-        <ul class="grid left-align w-100 mt0" id="old-card-grid">
+        <ul class="grid left-align w-100 pt-2" id="old-card-grid">
           <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
           <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
           <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
