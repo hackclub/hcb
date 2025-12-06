@@ -179,12 +179,12 @@
       disabled: !organizer_signed_in?,
       method: :post,
       data: { confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone." },
-      class: "btn bg-error mr1 right" if @invoice.open_v2? && InvoicePolicy.new(@user, @hcb_code).void? %>
+      class: "btn bg-error mr1 right" if @invoice.open_v2? && InvoicePolicy.new(@user, @invoice).void? %>
   <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
     (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
     disabled: !organizer_signed_in?,
     method: :post,
-    class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @hcb_code).archive? %>
+    class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @invoice).archive? %>
   </section>
 </article>
 

@@ -350,7 +350,12 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_account_verification_related?
-    hcb_code.starts_with?("HCB-000-") && memo.downcase.include?("acctverify") && amount_cents.abs < 100
+    # Substring match (case-insensitive) for any of these identifiers in the
+    # memo indicating an account verification transaction. The majority use
+    # "ACCTVERIFY", however, it appears a few companies use other variants.
+    memo_matches = %w[acctverify verify validation sdv-vrfy].any? { |s| memo.downcase.include?(s) }
+
+    hcb_code.starts_with?("HCB-000-") && amount_cents.abs < 100 && memo_matches
   end
 
   def short_code
