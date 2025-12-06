@@ -10,7 +10,11 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager?
+    if record.role == :owner
+      user&.admin?
+    else
+      admin_or_manager?
+    end
   end
 
   def show?
@@ -34,7 +38,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def change_position_role?
-    admin_or_manager? && !record.signee?
+    admin_or_manager? && !record.owner?
   end
 
   def send_contract?

@@ -9,7 +9,7 @@
       <% if event.users.size > 1 %>
         <div class="field field--checkbox">
           <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>
-          <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
+          <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers or owners." %>
         </div>
       <% end %>
       <div class="field field--checkbox">
