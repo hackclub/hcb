@@ -8,7 +8,7 @@
       <%= inline_icon "more", size: 24 %>
     </button>
     <div class="menu__content menu__content--switcher h5" data-menu-target="content">
-      <span class="muted font-medium h5 pl-2 p-1 m0">Parent organizations</span>
+      <span class="muted font-medium h5 pl-2 p-1 m0">Parent <%= "organization".pluralize(@event.ancestors[0...-1].count) %></span>
       <% @event.ancestors[0...-1].each do |ancestor| %>
         <%= link_to ancestor.name, ancestor %>
       <% end %>

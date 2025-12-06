@@ -36,7 +36,7 @@
   :not(.draggable-source--is-dragging) > &.card--hover:hover,
   &.card--hover:focus {
     transition-duration: 0s;
-    filter: brightness(0.93);
+    filter: brightness(0.94);
 
     [data-dark='true'] & {
       filter: brightness(1.05);
@@ -44,7 +44,7 @@
 
     &:active {
       transition-duration: 0.125s;
-      filter: brightness(0.9);
+      filter: brightness(0.93);
 
       [data-dark='true'] & {
         filter: brightness(1.1);
