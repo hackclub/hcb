@@ -10,6 +10,7 @@
 #  login_header_text    :string
 #  login_text_color     :string
 #  name                 :string           not null
+#  redirect_to          :string
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  creator_id           :bigint

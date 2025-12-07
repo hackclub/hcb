@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_07_022849) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2010,6 +2010,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
+    t.string "redirect_to"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
