@@ -7,7 +7,7 @@
       class="flash flex items-center <%= "mt2" unless index == 0 %> mb1 shrink-none <%= key %> <%= klass %>"
       data-behavior="flash"
       data-turbo-temporary>
-      <div class="flex min-w-0 overflow-hidden break-words hyphens-auto">
+      <div class="min-w-0 overflow-hidden break-words hyphens-auto">
         <% if value.is_a? Hash %>
           <%= value["text"] %>
           <%= link_to value["link_text"], value["link"] if value["link"] %>
