@@ -79,14 +79,14 @@
 
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
-        <p class="h5 medium center py-2">
+        <p class="h5 medium center py-2 my-0">
           <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
         </p>
       </div>
     <% end %>
     <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
       <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
-        <p class="h5 font-medium text-center text-balance mt1 mb1">
+        <p class="h5 font-medium text-center text-balance py-2 my-0">
           This HCB organization has made their finances public.
           Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
         </p>
