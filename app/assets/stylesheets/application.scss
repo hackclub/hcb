@@ -657,3 +657,18 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     display: none;
   }
 }
+.command-bar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  color: inherit;
+  transition: background-color 0.125s ease-in-out;
+  cursor: pointer;
+  &:hover {
+    transition-duration: 0s;
+  }
+  &:active {
+    transition-duration: 0.125s;
+  }
+}

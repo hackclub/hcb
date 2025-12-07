@@ -7,22 +7,6 @@
     display: none;
   }
 
-  .command-bar-item {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    color: inherit;
-    transition: background-color 0.125s ease-in-out;
-    cursor: pointer;
-    &:hover {
-      transition-duration: 0s;
-    }
-    &:active {
-      transition-duration: 0.125s;
-    }
-  }
-
   .sidebar {
     @apply fixed top-0 left-0 w-screen lg:w-72 lg:h-dvh flex items-center lg:items-start lg:flex-col
       overflow-x-visible border border-x-0 lg:border-r lg:border-b-0 lg:border-l-0
