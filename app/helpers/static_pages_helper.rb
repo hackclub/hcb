@@ -17,7 +17,7 @@ module StaticPagesHelper
     content_tag(:div, id: "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
                           [
-                            content_tag(:strong, name, class: "card-name"),
+                            content_tag(:strong, sanitize(name), class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
                             badge,
