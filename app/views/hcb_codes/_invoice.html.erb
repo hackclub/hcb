@@ -185,6 +185,13 @@
     disabled: !organizer_signed_in?,
     method: :post,
     class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @invoice).archive? %>
+  <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
+      disabled: !organizer_signed_in?,
+      class: "btn bg-accent mr1",
+      target: "_blank" do %>
+      <%= inline_icon "external" %>
+      View sent invoice
+    <% end %>
   </section>
 </article>
 
