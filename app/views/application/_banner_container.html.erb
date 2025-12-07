@@ -6,7 +6,7 @@
 
   <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
     <div class="w-100 px4 !bg-red transparency-banner">
-      <p class="h5 medium center py-2 text-white text-xl">
+      <p class="h5 medium center py-2 my-0 text-white text-xl">
         ⚠️ Admin users are required to
         <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
       </p>
