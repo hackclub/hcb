@@ -89,8 +89,6 @@
 
 <%= render "events/public_message" %>
 <main data-controller="transactions" class="mt-2">
-  <%= render partial: "events/filter" %>
-
   <%= render "events/pinned_transactions" %>
   <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, request.query_parameters) do %>
     <%= render "application/loading_container", klass: "mt-8" %>
