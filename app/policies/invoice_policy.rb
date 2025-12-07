@@ -68,6 +68,7 @@ class InvoicePolicy < ApplicationPolicy
 
   def event
     return record.event if record.respond_to?(:event)
+
     record&.sponsor&.event
   end
 
