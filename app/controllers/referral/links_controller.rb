@@ -17,11 +17,13 @@ module Referral
         Rails.error.handle do
           Referral::Attribution.create!(user: current_user, program: @link.program, link: @link)
         end
+
+        redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
       else
         skip_authorization
-      end
 
-      redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
+        redirect_to params[:return_to] || root_path
+      end
     end
 
     private
