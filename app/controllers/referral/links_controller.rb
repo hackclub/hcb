@@ -21,7 +21,7 @@ module Referral
         skip_authorization
       end
 
-      redirect_to params[:return_to] || root_path
+      redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
     end
 
     private
