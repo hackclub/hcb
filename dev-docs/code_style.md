@@ -30,7 +30,7 @@ This is superior to instance variables because of the added rigidity to your cod
 
 **GOOD:**
 ```
-<%= locals: (example_local: "") %>
+<%# locals: (example_local: "") %>
 
 <%= example_local %>
 ```
