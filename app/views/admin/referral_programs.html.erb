@@ -8,7 +8,7 @@
           <div class="flex flex-col">
             <h5 class="m-0 p-0"><%= program.name %></h5>
             <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %></small>
-            <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url, program.redirect_to.presence || root_url) %></small>
+            <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url) %></small>
           </div>
           <div class="flex flex-row gap-2 justify-between m-0">
             <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
