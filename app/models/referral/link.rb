@@ -27,6 +27,8 @@ module Referral
   class Link < ApplicationRecord
     include Hashid::Rails
 
+    validates :slug, uniqueness: true
+
     belongs_to :program, class_name: "Referral::Program"
     belongs_to :creator, class_name: "User"
 
