@@ -3,8 +3,8 @@
 class CardGrantsController < ApplicationController
   include SetEvent
 
-  skip_before_action :signed_in_user, only: [:show, :spending]
-  skip_after_action :verify_authorized, only: [:show, :spending]
+  skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
+  skip_after_action :verify_authorized, only: [:index, :card_index, :transaction_index, :show, :spending]
 
   before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index]
   before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
