@@ -10,13 +10,13 @@ There are some rules we are trying to enforce for partials. You may come across 
 This makes it both easier to understand what is being rendered and also improves performance by reducing the amount of searching Rails needs to do.
 
 **GOOD:**
-```
+```ruby
 <%= render "events/nav" %>
 
 <%= render "stripe_cards/stripe_card", stripe_card: @stripe_card %>
 ```
 **BAD:**
-```
+```ruby
 <%= render "nav" %>
 
 <%= render @stripe_card %>
@@ -29,13 +29,13 @@ Strict locals provide an easy to reference comment at the top of the file of whi
 This is superior to instance variables because of the added rigidity to your code that it will fail immediately if a local is not passed. When you use instance variables, you don't always know that it will be defined depending on where the partial is rendered from.
 
 **GOOD:**
-```
+```ruby
 <%# locals: (example_local: "") %>
 
 <%= example_local %>
 ```
 **BAD:**
-```
+```ruby
 <%= example_local %>
 ```
 
@@ -49,11 +49,11 @@ Strict locals with nil defaults function similarly to local_assigns with the add
 It is advised to use this function over using a ternary with `present?` to improve readability.
 
 **GOOD:**
-```
+```ruby
 @event_id = params[:event_id].presence
 ```
 **BAD:**
-```
+```ruby
 @event_id = params[:event_id].present? ? params[:event_id] : nil
 ```
 
@@ -61,11 +61,11 @@ It is advised to use this function over using a ternary with `present?` to impro
 Most of the UI uses sentence case.
 
 **GOOD:**
-```
+```ruby
 "Get reimbursed"
 ```
 **BAD:**
-```
+```ruby
 "Get Reimbursed"
 ```
 
@@ -74,7 +74,7 @@ If you have a column with an empty `<th>` tag, for example, a logo column, pleas
 
 
 **GOOD:**
-```
+```ruby
 <tr>
   <th><%# icon %></th>
   <th>Status</th>
@@ -86,7 +86,7 @@ If you have a column with an empty `<th>` tag, for example, a logo column, pleas
 </tr>
 ```
 **BAD:**
-```
+```ruby
 <tr>
   <th></th>
   <th>Status</th>
