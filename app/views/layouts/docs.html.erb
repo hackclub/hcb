@@ -79,7 +79,7 @@
 
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
-        <p class="h5 medium center mt1 mb1">
+        <p class="h5 medium center py-2">
           <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
         </p>
       </div>
