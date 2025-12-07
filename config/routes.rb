@@ -679,7 +679,7 @@ Rails.application.routes.draw do
             get "sub_organizations"
             post "sub_organizations", to: "events#create_sub_organization"
 
-            get "transactions"
+            get "transactions", to: "transactions#index"
             get :followers
           end
         end
