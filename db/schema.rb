@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1995,7 +1995,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
     t.bigint "creator_id", null: false
     t.string "name", null: false
     t.bigint "program_id", null: false
-    t.string "slug", null: false
+    t.string "slug"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_links_on_creator_id"
     t.index ["program_id"], name: "index_referral_links_on_program_id"

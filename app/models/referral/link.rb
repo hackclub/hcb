@@ -6,7 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  name       :string           not null
-#  slug       :string           not null
+#  slug       :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  creator_id :bigint           not null
