@@ -27,7 +27,7 @@
             <div class="flex flex-row items-center justify-between w-100">
               <small><%= link.name %> • <span class="text-muted">Created by <%= link.creator.name %></span></small>
               <small>
-                <%= link_to referral_link_url(link.value), referral_link_url(link.value) %> • <%= pluralize(link.attributions.count, "attribution") %>
+                <%= link_to referral_link_url(link.slug), referral_link_url(link.slug) %> • <%= pluralize(link.attributions.count, "attribution") %>
               </small>
             </div>
           <% end %>

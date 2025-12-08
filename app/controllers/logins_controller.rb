@@ -20,7 +20,7 @@ class LoginsController < ApplicationController
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
-    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence || Referral::Link.find_by_hashid(params[:referral]) if params[:referral].present?
+    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence if params[:referral].present?
 
     @signup = params[:signup] == "true"
   end
@@ -30,7 +30,7 @@ class LoginsController < ApplicationController
     user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
 
     if params[:referral_link_id].present?
-      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence || Referral::Link.find_by_hashid(params[:referral_link_id])
+      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
       login = user.logins.create(referral_program: referral_link&.program, referral_link:)
     else
       login = user.logins.create

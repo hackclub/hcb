@@ -37,10 +37,6 @@ module Referral
     has_many :users, -> { distinct }, through: :attributions, source: :user
     has_many :logins, foreign_key: :referral_link_id, class_name: "Login", inverse_of: :referral_link
 
-    def value
-      slug.presence || hashid
-    end
-
     private
 
     def set_default_slug!
