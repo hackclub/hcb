@@ -7,7 +7,7 @@
     Donations
     <%= badge_for @donations.count, class: "bg-muted" %>
   </span>
-  <% if organizer_signed_in? && !show_mock_data? %>
+  <% if organizer_signed_in? %>
     <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="<%= @all_donations.not_pending.any? ? "Email all donors" : "You can't email donors when you don't have any donations!" %>">
       <%= pop_icon_to "email",
         "mailto:?bcc=#{@all_donations.pluck(:email).uniq.compact.join(',')}",

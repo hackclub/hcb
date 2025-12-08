@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1518,10 +1518,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
     t.text "browser_token_ciphertext"
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
+    t.bigint "referral_link_id"
     t.bigint "referral_program_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
+    t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
@@ -1979,21 +1981,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
 
   create_table "referral_attributions", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "referral_link_id"
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+  end
+
+  create_table "referral_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.string "name", null: false
+    t.bigint "program_id", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+    t.index ["program_id"], name: "index_referral_links_on_program_id"
+    t.index ["slug"], name: "index_referral_links_on_slug", unique: true
   end
 
   create_table "referral_programs", force: :cascade do |t|
     t.string "background_image_url"
     t.datetime "created_at", null: false
+    t.bigint "creator_id"
     t.text "login_body_text"
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2750,8 +2768,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_23_205131) do
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
+  add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_links", "referral_programs", column: "program_id"
+  add_foreign_key "referral_links", "users", column: "creator_id"
+  add_foreign_key "referral_programs", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

@@ -97,7 +97,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !ct.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, ct).update? && !ct.instance_of?(OpenStruct) %>
         <% if suggestion = ct.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
@@ -218,7 +218,7 @@
   <% end %>
 </tr>
 
-<% if (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present? && !show_mock_data?(event)) %>
+<% if (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
   <% pretty_title = Rails.cache.fetch(["ct_#{ct.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
        ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
      end %>

@@ -67,7 +67,7 @@
             <% end %>
             <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position.organizer_position_invite.id %>">
               <%= modal_header "Send a contract" %>
-              <%= render "contract/form", contract: Contract::FiscalSponsorship.new(contractable: organizer_position.organizer_position_invite) %>
+              <%= render "organizer_position_invites/contract_form", opi: organizer_position.organizer_position_invite %>
             </section>
           <% end %>
         </div>
