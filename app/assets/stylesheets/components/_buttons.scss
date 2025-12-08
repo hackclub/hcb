@@ -129,10 +129,10 @@ input[type='submit'],
   }
 
   &.bg-muted {
-    background-color: lighten(map-get($palette, muted), 10%);
+    background-color: lighten(map-get($palette, muted), 30%);
     color: darken(map-get($palette, muted), 50%) !important;
     &:hover {
-      background-color: lighten(map-get($palette, muted), 15%) !important;
+      background-color: lighten(map-get($palette, muted), 25%) !important;
     }
     &:active,
     &:focus {

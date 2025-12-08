@@ -8,7 +8,8 @@
     <% end %>
   <% end %>
 <% else %>
-  <%= button_to follow_path(event_follow), method: :delete, class: "pop tooltipped tooltipped--w", "aria-label": "Unfollow" do %>
-    <%= inline_icon "event-cancel", style: "width: 24px; height: 24px;" %>
+  <%= button_to follow_path(event_follow), method: :delete, class: "btn bg-muted flex items-center", "aria-label": "Unfollow" do %>
+    <%= inline_icon "event-check", style: "width: 24px; height: 24px;" %>
+    Following
   <% end %>
 <% end %>
