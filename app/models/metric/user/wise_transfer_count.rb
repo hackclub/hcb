@@ -24,7 +24,7 @@ class Metric
 
       def calculate
         user.wise_transfers.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).count +
-        user.reimbursement_reports.reimbursed.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).where.not(currency: "USD").count
+          user.reimbursement_reports.reimbursed.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).where.not(currency: "USD").count
       end
 
     end
