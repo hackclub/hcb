@@ -7,7 +7,7 @@
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
-    <title><%= yield(:title).concat(" –") if content_for?(:title) %>HCB</title>
+    <title><%= yield(:title).concat(" –") if content_for?(:title) %> HCB</title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
