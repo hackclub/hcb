@@ -21,9 +21,9 @@ json.organization stripe_card.event, partial: "api/v4/events/event", as: :event 
 json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)
 
 if stripe_card.physical?
-  json.personalization do
-    json.color stripe_card.personalization_design&.color
-    json.logo_url rails_blob_url(stripe_card.personalization_design&.logo)
+  json.personalization if stripe_card.personalization_design.present? do
+    json.color stripe_card.personalization_design.color
+    json.logo_url rails_blob_url(stripe_card.personalization_design.logo)
   end
   json.shipping if policy(stripe_card).shipping? do
     json.status stripe_card.remote_shipping_status
