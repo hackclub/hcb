@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_08_174819) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
