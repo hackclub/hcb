@@ -8,6 +8,7 @@ class User
       def perform
         User::Session.expired.where("created_at < ?", 1.year.ago).find_each(&:clear_metadata!)
       end
+
     end
 
   end
