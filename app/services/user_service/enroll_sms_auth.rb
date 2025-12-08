@@ -54,7 +54,7 @@ module UserService
     end
 
     def disallow_fresh_users
-      return if user.created_at < 1.day.ago
+      return if @user.created_at < 1.day.ago
 
       raise SMSEnrollmentError("Please wait at least 24 hours after creating your account before enrolling in SMS authentication.")
     end
