@@ -1420,7 +1420,7 @@ class AdminController < Admin::BaseController
 
   def referral_link_create
     @referral_program = Referral::Program.find(params[:program_id])
-    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug], creator: current_user)
+    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
 
     if @referral_link.save
       flash[:success] = "Referral link created successfully."
