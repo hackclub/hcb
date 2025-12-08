@@ -6,7 +6,7 @@
   </div>
 </div>
 
-<section class="lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none" style="height: auto;padding-bottom:40px" data-behavior="modal" role="dialog" id="mobile_nav">
+<section class="lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none" style="height: auto;padding-bottom:40px;width:100%;margin:0;max-width:100%" data-behavior="modal" role="dialog" id="mobile_nav">
   <div class="mobile-nav--popover">
     <div class="overflow-y-auto overflow-x-hidden p-5">
       <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
