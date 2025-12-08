@@ -80,7 +80,7 @@ class DonationsController < ApplicationController
 
     authorize @donation
 
-    @monthly = params[:monthly].present?
+    @monthly = params[:monthly].present? || params[:tier_id].present?
 
     if @monthly
       @recurring_donation = @event.recurring_donations.build(

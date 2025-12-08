@@ -35,7 +35,7 @@ module Referral
     has_many :logins, foreign_key: :referral_link_id, class_name: "Login", inverse_of: :referral_link
 
     def value
-      slug || hashid
+      slug.presence || hashid
     end
 
   end

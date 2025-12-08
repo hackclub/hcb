@@ -257,6 +257,7 @@ Rails.application.routes.draw do
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
+      post "referral_link_create", to: "admin#referral_link_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
@@ -987,12 +988,9 @@ Rails.application.routes.draw do
     get "balance_by_date"
   end
 
-  scope module: "referral" do
-    resources :programs, only: [:show], path: "referrals"
-    resources :programs, only: [:show], path: "from/*slug"
-
-    resources :links, only: [:show], path: "referral_links" # Temporary, until programs are migrated to links
-    resources :links, only: [:show], path: "from_link/*slug" # Temporary, until programs are migrated to links
+  scope as: "referral", module: "referral" do
+    resources :links, only: [:show], path: "referrals"
+    resources :links, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/
