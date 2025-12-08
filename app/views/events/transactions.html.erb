@@ -27,35 +27,9 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<%# Demo mode callout thing %>
-<% if organizer_signed_in? && @event.demo_mode && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-  <div class="mt-4 card border pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
-    <p class="mt0">
-      <strong>Welcome to Playground Mode</strong>
-      <br>
-      While in Playground mode, explore the dashboard with mock data, and invite your team.
-    </p>
-
-    <%= link_to({ show_mock_data: !show_mock_data? }, class: "btn btn-small mb-4 w-fit shrink-none nowrap") do %>
-      <%= inline_icon "view" %>
-      <%= show_mock_data? ? "Hide" : "Show" %> mock data
-    <% end %>
-  </div>
-<% end %>
-
-<h1 class="flex items-center flex-wrap mb-0 border-0">
+<%= render "events/heading", event: @event, event_follow: @event_follow do %>
   <span class="flex-grow">Transactions</span>
-  <% admin_tool("p0 m2 my-0 badge bg-transparent", "span") do %>
-    <span class="m0 badge bg-muted">
-      #<%= @event.id %>
-    </span>
-    <span class="m0 badge bg-muted ml1">
-      SL<%= @event.service_level %>
-    </span>
-  <% end %>
-
-  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-</h1>
+<% end %>
 
 <div class="statset mb-2">
   <div class="stat">
