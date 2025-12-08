@@ -174,7 +174,7 @@ update_teenager_column_job:
 
 clear_old_user_sessions:
   cron: "0 3 * * *" # every day at 3:00 AM
-  class: "UserSession::ClearOldUserSessionsJob"
+  class: "User::Session::ClearOldUserSessionsJob"
   queue: low
 
 card_grant_expiration_job:
