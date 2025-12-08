@@ -12,11 +12,15 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
+      disallow_fresh_users
+
       TwilioVerificationService.new.send_verification_request(@user.phone_number)
     end
 
     # Completing the phone number verification by checking that exchanging code works
     def complete_verification(verification_code)
+      disallow_fresh_users
+
       begin
         verified = TwilioVerificationService.new.check_verification_token(@user.phone_number, verification_code)
       rescue Twilio::REST::RestError
@@ -33,6 +37,8 @@ module UserService
       raise SMSEnrollmentError("user has no phone number") if @user.phone_number.blank?
       raise SMSEnrollmentError("user has not verified phone number") unless @user.phone_number_verified
 
+      disallow_fresh_users
+
       @user.use_sms_auth = true
       @user.save!
     end
@@ -45,6 +51,12 @@ module UserService
     private
 
     class SMSEnrollmentError < StandardError
+    end
+
+    def disallow_fresh_users
+      return if user.created_at < 1.day.ago
+
+      raise SMSEnrollmentError("Please wait at least 24 hours after creating your account before enrolling in SMS authentication.")
     end
 
   end
