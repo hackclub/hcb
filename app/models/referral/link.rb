@@ -27,6 +27,7 @@ module Referral
   class Link < ApplicationRecord
     include Hashid::Rails
 
+    after_create_commit :set_default_slug!
     validates :slug, uniqueness: true
 
     belongs_to :program, class_name: "Referral::Program"
@@ -38,6 +39,12 @@ module Referral
 
     def value
       slug.presence || hashid
+    end
+
+    private
+
+    def set_default_slug!
+      update_column(:slug, self.hashid)
     end
 
   end
