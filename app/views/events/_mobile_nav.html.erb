@@ -5,7 +5,7 @@
     <%= inline_icon "up-caret", class: "ml-auto muted" %>
   </div>
 </div>
-<section class="mobile-nav--modal !bg-transparent md:!shadow-none" data-behavior="modal" role="dialog" id="mobile_nav" style="height: 100vh!important;padding-bottom:40px">
+<section class="mobile-nav--modal !bg-transparent md:!shadow-none" data-behavior="modal" role="dialog" id="mobile_nav" style="height: 100vh!important;padding-bottom:40px;width:100%;max-width:100%;margin:0">
   <div class="mobile-nav--popover h-full">
     <div class="h-full overflow-y-auto overflow-x-hidden p-4">
       <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>

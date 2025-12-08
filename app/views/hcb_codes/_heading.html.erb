@@ -5,13 +5,14 @@
     <% if hcb_code.custom_memo.nil? && !render_memo %>
       <%= yield %>
     <% else %>
-      <span class="flex-auto">
+      <span>
         <span data-memo-for="<%= dom_id(hcb_code) %>"><%= hcb_code.memo %></span>
         <span class="regular muted"> for </span>
         <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event).abs %></span>
       </span>
     <% end %>
 
+    <div class="flex-1"></div>
     <%= render "hcb_codes/memo_stream", hcb_code: %>
     <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: } %>
     <%= pop_icon_to "edit",
