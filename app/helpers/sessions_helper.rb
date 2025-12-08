@@ -134,9 +134,9 @@ module SessionsHelper
   def signed_in_user
     unless signed_in?
       if request.fullpath == "/"
-        redirect_to auth_users_path(require_reload: true)
+        redirect_to auth_users_path(require_reload: true, signup: params[:signup])
       else
-        redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true, signup: params[:signup])
       end
     end
   end

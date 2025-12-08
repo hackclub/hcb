@@ -27,19 +27,9 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<h1 class="flex items-center flex-wrap">
-  <span class="flex-grow mb1">Transactions</span>
-  <% admin_tool("p0 m2 badge", "span") do %>
-    <span class="m0 badge bg-muted">
-      #<%= @event.id %>
-    </span>
-    <span class="m0 badge bg-muted ml1">
-      SL<%= @event.service_level %>
-    </span>
-  <% end %>
-
-  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-</h1>
+<%= render "events/heading", event: @event, event_follow: @event_follow do %>
+  <span class="flex-grow">Transactions</span>
+<% end %>
 
 <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
   <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>

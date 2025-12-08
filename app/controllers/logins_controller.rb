@@ -20,15 +20,21 @@ class LoginsController < ApplicationController
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
-    @referral_program = Referral::Program.find_by_hashid(params[:referral]) if params[:referral].present?
+    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence || Referral::Link.find_by_hashid(params[:referral]) if params[:referral].present?
+
+    @signup = params[:signup] == "true"
   end
 
   # when you submit your email
   def create
     user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
 
-    referral_program = Referral::Program.find_by_hashid(params[:referral_program_id]) if params[:referral_program_id].present?
-    login = user.logins.create(referral_program:)
+    if params[:referral_link_id].present?
+      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence || Referral::Link.find_by_hashid(params[:referral_link_id])
+      login = user.logins.create(referral_program: referral_link&.program, referral_link:)
+    else
+      login = user.logins.create
+    end
 
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
 
@@ -153,8 +159,8 @@ class LoginsController < ApplicationController
     # has not created a user session before
     if @login.complete? && @login.user_session.nil?
       @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
-      if @referral_program.present?
-        redirect_to program_path(@referral_program)
+      if @referral_link.present?
+        redirect_to referral_link_path(@referral_link)
       elsif @user.full_name.blank? || @user.phone_number.blank?
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
@@ -187,6 +193,7 @@ class LoginsController < ApplicationController
     begin
       if params[:id]
         @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
+        @referral_link = @login.referral_link
         @referral_program = @login.referral_program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.
