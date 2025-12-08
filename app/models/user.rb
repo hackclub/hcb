@@ -522,6 +522,10 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  def new_teenagers_from_referrals_count
+    self.referral_links.sum { |link| link.new_teenagers.length }
+  end
+
   def has_discord_account?
     discord_id.present?
   end

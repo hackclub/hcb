@@ -8,12 +8,10 @@
     </tr>
   </thead>
   <tbody>
-    <%# ideally this pulls from a list of all users that have made a link %>
-    <% Referral::Link.select(:creator).map(&:creator).uniq.find_each do |user| %>
+    <% @link_creators.sort_by { |u| -u.new_teenagers_from_referrals_count }.each do |user| %>
       <tr>
         <td><%= user_mention user %></td>
-        <%# ideally we do this in all sql instead of rails %>
-        <td><%= user.referral_links.sum { |link| link.new_users.where(teenager: true) } %></td>
+        <td><%= user.referral_links.sum { |link| link.new_teenagers.length } %></td>
       </tr>
     <% end %>
   </tbody>

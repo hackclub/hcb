@@ -1435,6 +1435,7 @@ class AdminController < Admin::BaseController
   end
 
   def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private
