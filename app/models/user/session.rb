@@ -57,9 +57,9 @@ class User
 
     after_create_commit do
       if user.user_sessions.size == 1
-        UserSessionMailer.first_login(user:).deliver_later
+        User::SessionMailer.first_login(user:).deliver_later
       elsif fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
-        UserSessionMailer.new_login(user_session: self).deliver_later
+        User::SessionMailer.new_login(user_session: self).deliver_later
       end
     end
 
