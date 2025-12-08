@@ -44,7 +44,7 @@ class User
     belongs_to :user
     belongs_to :impersonated_by, class_name: "User", optional: true
     belongs_to :webauthn_credential, optional: true
-    has_many(:logins)
+    has_many :logins, foreign_key: "user_session_id", inverse_of: :user_session
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
