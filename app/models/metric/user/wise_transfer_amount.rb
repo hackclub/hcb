@@ -23,7 +23,7 @@ class Metric
       include Subject
 
       def calculate
-        user.wise_transfers.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:usd_amount_cents) +
+        user.wise_transfers.sent.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:usd_amount_cents) +
           Reimbursement::PayoutHolding.where(report: user.reimbursement_reports.reimbursed.where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).where.not(currency: "USD")).sum(:amount_cents)
       end
 
