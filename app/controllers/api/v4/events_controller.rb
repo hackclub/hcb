@@ -29,13 +29,16 @@ module Api
           render json: { error: "invalid_operation", messages: }, status: :bad_request and return
         end
 
+        # Use the current user as POC if they're an admin, otherwise use the system user (hcb@hackclub.com)
+        poc_id = current_user.admin? ? current_user.id : User.system_user.id
+
         @event = ::EventService::Create.new(
           name: params[:name],
           emails: [params[:email]],
           cosigner_email: params[:cosigner_email],
           is_signee: true,
           country: params[:country],
-          point_of_contact_id: parent_event.point_of_contact_id,
+          point_of_contact_id: poc_id,
           invited_by: current_user,
           is_public: parent_event.is_public,
           plan: parent_event.config.subevent_plan.presence,
