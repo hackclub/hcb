@@ -390,3 +390,39 @@ form .flex-auto + input[type='submit'] {
     }
   }
 }
+
+.btn.btn--list-item {
+  height: auto !important;
+  width: 100% !important;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+  background-color: transparent !important;
+  box-shadow: none;
+  padding: 10px 20px !important;
+
+  & p {
+    margin: 0;
+  }
+
+  &:hover {
+    background-color: rgba(200, 200, 200, 0.1) !important;
+  }
+
+  &:active,
+  &:focus {
+    background-color: rgba(200, 200, 200, 0.2) !important;
+  }
+
+  & svg {
+    padding: 5px;
+    width: 35px !important;
+    height: 35px !important;
+    border-radius: var(--radius-xl);
+    background: rgba(map-get($palette, muted), 0.15) !important;
+  }
+
+  &.bg-error svg {
+    background: rgba(map-get($palette, error), 0.15) !important;
+  }
+}

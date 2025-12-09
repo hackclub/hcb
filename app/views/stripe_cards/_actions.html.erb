@@ -1,6 +1,6 @@
 <%# locals: (stripe_card:) %>
 
-<div class="mt-6 mb-2 flex justify-center flex-wrap gap-1">
+<div class="mt-3 mb-2 flex flex-col justify-center flex-wrap card card--homepage p-2">
   <% if !stripe_card.initially_activated? %>
     <%= render "stripe_cards/actions/activate", stripe_card: %>
   <% else %>
