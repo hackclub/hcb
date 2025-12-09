@@ -146,19 +146,19 @@ a.card {
 }
 
 .card__banner {
-  margin: 0 calc(-1rem + 1px);
+  margin: 0 -1rem;
   padding: 0.75rem 1rem;
   line-height: 1.25;
 }
 .card__banner--top {
-  margin-top: calc(-1rem + 1px);
+  margin-top: -1rem;
   margin-bottom: 1rem;
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
 }
 .card__banner--bottom {
   margin-top: 1rem;
-  margin-bottom: calc(-1rem + 1px);
+  margin-bottom: -1rem;
 }
 
 .error-card {
