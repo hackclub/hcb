@@ -33,7 +33,7 @@
         <span class="regular muted">for</span>
         <span class="regular"><%= render_money @hcb_code.increase_check.amount %></span>
       </span>
-      <span class="badge h4 md-right nowrap bg-<%= @hcb_code.increase_check.state %>">
+      <span class="badge h4 nowrap bg-<%= @hcb_code.increase_check.state %>">
         <%= @hcb_code.increase_check.state_text %>
       </span>
     </div>

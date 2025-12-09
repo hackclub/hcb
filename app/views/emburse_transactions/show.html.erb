@@ -25,7 +25,7 @@
       <% else %>
         <span class="flex-auto mb1">Transfer of <%= render_money @emburse_transaction.amount %></span>
       <% end %>
-      <span class="badge h4 md-right ml0 mb1 bg-<%= @emburse_transaction.status_badge_type %>">
+      <span class="badge h4 ml0 mb1 bg-<%= @emburse_transaction.status_badge_type %>">
         <%= @emburse_transaction.status_text %>
       </span>
     </h2>
