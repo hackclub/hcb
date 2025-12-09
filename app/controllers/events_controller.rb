@@ -759,7 +759,7 @@ class EventsController < ApplicationController
       return redirect_back fallback_location: event_sub_organizations_path(@event)
     end
 
-    # Use the current user as POC if they're an admin, otherwise use the system user (hcb@hackclub.com)
+    # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
     poc_id = current_user.admin? ? current_user.id : User.system_user.id
 
     subevent = ::EventService::Create.new(
