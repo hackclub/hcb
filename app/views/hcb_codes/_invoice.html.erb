@@ -44,13 +44,13 @@
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <%= @sponsor.name %>
       <span class="regular muted"> invoiced for </span>
       <span class="regular"><%= render_money @invoice.item_amount %></span>
     </span>
 
-    <span class="ml-auto">
+    <span>
       <% if @invoice.personal_transaction.present? %>
         <span class="badge h4 bg-warning">
           Repayment for Personal Transaction
