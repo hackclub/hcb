@@ -41,6 +41,8 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     user&.admin?
   end
 
+  alias_method :contract_signed?, :show?
+
   private
 
   def admin_or_manager?

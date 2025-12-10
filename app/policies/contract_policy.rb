@@ -17,4 +17,8 @@ class ContractPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def show?
+    record.user == user || user&.admin?
+  end
+
 end

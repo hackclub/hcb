@@ -10,9 +10,6 @@ class DocusealController < ActionController::Base
 
       return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
 
-      signee = contract.docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }&.first
-      cosigner = contract.docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }&.first
-
       if params[:event_type] == "form.completed" && params[:data][:submission][:status] == "completed"
         return render json: { success: true } if contract.signed?
 
@@ -36,10 +33,10 @@ class DocusealController < ActionController::Base
         contract.mark_signed!
       elsif params[:event_type] == "form.declined"
         contract.mark_voided!
-      elsif cosigner.present? && cosigner["status"] != "completed"
-        # send email about cosigner needing to pay
+      elsif !contract.cosigner_signed?
+        # send email about cosigner needing to sign
         ContractMailer.with(contract:).pending_cosigner.deliver_later
-      elsif signee["status"] == "completed" && (cosigner.nil? || cosigner["status"] == "completed")
+      elsif contract.signee_signed? && contract.cosigner_signed?
         # send email about hcb needing to sign
         ContractMailer.with(contract:).pending_hcb.deliver_later
       end

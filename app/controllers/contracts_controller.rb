@@ -1,7 +1,33 @@
 # frozen_string_literal: true
 
 class ContractsController < ApplicationController
-  before_action :set_contract, only: [:void, :resend_to_user, :resend_to_cosigner]
+  before_action :set_contract, only: [:show, :void, :resend_to_user, :resend_to_cosigner]
+  skip_before_action :signed_in_user, only: [:show]
+  skip_after_action :verify_authorized, only: [:show]
+
+  def show
+    begin
+      authorize @contract, policy_class: ContractPolicy
+    rescue Pundit::NotAuthorizedError
+      raise unless Contract.find_signed(params[:s], purpose: :cosigner_url) == @contract
+    end
+
+    @advance_path = @contract.contractable.contract_advance_path(params[:s])
+    @docuseal_url = params[:s].present? ? @contract.docuseal_cosigner_signature_url : @contract.docuseal_user_signature_url
+
+    if @contract.signee_signed?
+      redirect_to @advance_path
+      return
+    elsif @contract.voided?
+      flash[:error] = "This contract has been voided."
+      redirect_to root_path
+      return
+    elsif @contract.pending?
+      flash[:error] = "This contract has not been sent yet. Try again later."
+      redirect_to root_path
+      return
+    end
+  end
 
   def void
     authorize @contract, policy_class: ContractPolicy

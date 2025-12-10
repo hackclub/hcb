@@ -8,7 +8,8 @@ class OrganizerPositionInvitesController < ApplicationController
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
-  skip_before_action :signed_in_user, only: [:show]
+  skip_before_action :signed_in_user, only: [:show, :contract_signed]
+  skip_after_action :verify_authorized, only: [:contract_signed]
 
   def new
     service = OrganizerPositionInviteService::Create.new(event: @event)
@@ -119,6 +120,23 @@ class OrganizerPositionInvitesController < ApplicationController
 
     flash[:success] = "Contract successfully sent"
     redirect_to event_team_path @invite.event
+  end
+
+  def contract_signed
+    begin
+      authorize @invite
+    rescue Pundit::NotAuthorizedError
+      raise unless @invite.contract.present? && Contract.find_signed(params[:s], purpose: :cosigner_url) == @invite.contract
+    end
+
+    @role = params[:s].present? ? :cosigner : :signee
+
+    if @role == :signee && (@invite.contract.nil? || @invite.contract.signed?)
+      redirect_to organizer_position_invite_path(@invite)
+      return
+    end
+
+    confetti!
   end
 
   private

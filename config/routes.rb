@@ -330,13 +330,16 @@ Rails.application.routes.draw do
     post "reject"
     post "cancel"
     post "resend"
+
+    get "contract_signed"
+
     member do
       post "change_position_role"
       post "send_contract"
     end
   end
 
-  resources :contracts, only: [] do
+  resources :contracts, only: [:show] do
     member do
       post "void"
       post "resend_to_user"

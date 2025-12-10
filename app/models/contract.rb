@@ -33,6 +33,8 @@
 #
 class Contract < ApplicationRecord
   include AASM
+  include Hashid::Rails
+
   acts_as_paranoid
   has_paper_trail
 
@@ -87,16 +89,12 @@ class Contract < ApplicationRecord
     docuseal_client.get("submissions/#{external_id}").body
   end
 
-  def user_signature_url
-    docuseal_user_signature_url if sent_with_docuseal?
-  end
-
   def docuseal_user_signature_url
     "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
   end
 
   def cosigner_signature_url
-    docuseal_cosigner_signature_url if sent_with_docuseal?
+    Rails.application.routes.url_helpers.contract_url(self, s: signed_id(purpose: :cosigner_url))
   end
 
   def docuseal_cosigner_signature_url
@@ -149,6 +147,16 @@ class Contract < ApplicationRecord
 
   def event
     contractable.contract_event
+  end
+
+  def signee_signed?
+    signee = docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }&.first
+    signee["status"] == "completed"
+  end
+
+  def cosigner_signed?
+    cosigner = docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }&.first
+    cosigner.nil? || cosigner["status"] == "completed"
   end
 
   private
