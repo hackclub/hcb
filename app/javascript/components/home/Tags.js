@@ -29,9 +29,7 @@ export default function Tags({ data }) {
           cy="50%"
           outerRadius={115}
           fill="#82ca9d"
-          label={({ percent }) =>
-            percent > 0.1 ? `${(percent * 100).toFixed(0)}%` : ''
-          }
+          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
           labelLine={false}
           strokeWidth={2}
           stroke={isDark ? '#252429' : '#FFFFFF'}
