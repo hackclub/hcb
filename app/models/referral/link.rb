@@ -6,7 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  name       :string           not null
-#  slug       :string           not null
+#  slug       :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #  creator_id :bigint           not null
@@ -27,6 +27,9 @@ module Referral
   class Link < ApplicationRecord
     include Hashid::Rails
 
+    after_create_commit :set_default_slug!
+    validates :slug, uniqueness: true
+
     belongs_to :program, class_name: "Referral::Program"
     belongs_to :creator, class_name: "User"
 
@@ -34,8 +37,18 @@ module Referral
     has_many :users, -> { distinct }, through: :attributions, source: :user
     has_many :logins, foreign_key: :referral_link_id, class_name: "Login", inverse_of: :referral_link
 
-    def value
-      slug.presence || hashid
+    private
+
+    def set_default_slug!
+      update!(slug: self.hashid) unless self.slug.present?
+    end
+
+    def new_teenagers
+      attributions.joins(:user)
+                  .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
+                  .where("users.teenager = true")
+                  .map(&:user)
+                  .uniq
     end
 
   end
