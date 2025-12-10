@@ -11,7 +11,6 @@ import {
 } from 'recharts'
 import { CustomTooltip } from './components'
 import { generateColor, USDollarNoCents, useDarkMode } from './utils'
-import React from 'react'
 
 export default function Users({ data }) {
   const isDark = useDarkMode()
