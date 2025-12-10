@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { CustomTooltip } from './components'
 import { generateColor, USDollarNoCents, useDarkMode } from './utils'
+import React from 'react'
 
 export default function Users({ data }) {
   const isDark = useDarkMode()
@@ -24,7 +25,15 @@ export default function Users({ data }) {
       <BarChart data={data} layout="vertical">
         <XAxis
           type="number"
-          tickFormatter={n => USDollarNoCents.format(n)}
+          tickFormatter={n => {
+            if (n >= 1000000) {
+              return `$${(n / 1000000).toFixed(0)}M`
+            }
+            if (n >= 1000) {
+              return `$${(n / 1000).toFixed(0)}K`
+            }
+            return USDollarNoCents.format(n)
+          }}
           width={
             USDollarNoCents.format(Math.max(data.map(d => d['value']))).length *
             18
