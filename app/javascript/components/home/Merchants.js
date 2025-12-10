@@ -21,14 +21,14 @@ export default function Merchants({ data }) {
         <YAxis
           tickFormatter={n => {
             if (n >= 1000000) {
-              return `$${(n / 1000000).toFixed(1)}M`
+              return `$${(n / 1000000).toFixed(0)}M`
             }
             if (n >= 1000) {
-              return `$${(n / 1000).toFixed(1)}K`
+              return `$${(n / 1000).toFixed(0)}K`
             }
             return USDollarNoCents.format(n)
           }}
-          width={80}
+          width={70}
           tickMargin={0}
         />
         {data.length > 8 ? (
