@@ -6,13 +6,17 @@
   <p>
     You've signed your part! Your child will hear back from us soon once we process the contract.
   </p>
+
+  <p>
+    Questions? <%= help_message %>
+  </p>
 <% elsif @role == :signee %>
-  <% if @invite.contract.cosigner_signed? %>
+  <% if @contract.cosigner_signed? %>
     <p>The HCB team will finalize the contract and activate your project within one business day.</p>
   <% else %>
     <p>
-      Your cosigner (<%= @invite.contract.cosigner_email %>) still needs to sign - we just sent them a reminder email.
-      Once they sign, you'll be able to accept your invite to <%= @invite.event.name %>!
+      Your cosigner (<%= @contract.cosigner_email %>) still needs to sign - we just sent them a reminder email.
+      Once they sign, you'll be able to start your new project!
     </p>
   <% end %>
 <% end %>

@@ -21,4 +21,6 @@ class ContractPolicy < ApplicationPolicy
     record.user == user || user&.admin?
   end
 
+  alias_method :contract_signed?, :show?
+
 end

@@ -239,10 +239,6 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
-  def contract_advance_path(secret)
-    Rails.application.routes.url_helpers.organizer_position_invite_contract_signed_path(self, s: secret)
-  end
-
   private
 
   def not_already_organizer

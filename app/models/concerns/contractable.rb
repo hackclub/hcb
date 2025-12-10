@@ -20,10 +20,5 @@ module Contractable
       # This method should be overwritten in specific classes
       raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contract_docuseal_template_id."
     end
-
-    def contract_advance_path(secret)
-      # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contract_advance_path."
-    end
   end
 end

@@ -331,8 +331,6 @@ Rails.application.routes.draw do
     post "cancel"
     post "resend"
 
-    get "contract_signed"
-
     member do
       post "change_position_role"
       post "send_contract"
@@ -344,6 +342,8 @@ Rails.application.routes.draw do
       post "void"
       post "resend_to_user"
       post "resend_to_cosigner"
+
+      get "contract_signed"
     end
   end
 

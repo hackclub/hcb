@@ -19,6 +19,6 @@
         it's a mystery!
       </p>
     <% end %>
-    <%= link_to "Next", @advance_path, class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
+    <%= link_to "Next", contract_signed_contract_path(s: @secret), class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
   </div>
 </div>

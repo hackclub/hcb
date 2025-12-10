@@ -1,22 +1,25 @@
 # frozen_string_literal: true
 
 class ContractsController < ApplicationController
-  before_action :set_contract, only: [:show, :void, :resend_to_user, :resend_to_cosigner]
-  skip_before_action :signed_in_user, only: [:show]
-  skip_after_action :verify_authorized, only: [:show]
+  before_action :set_contract, only: [:show, :void, :resend_to_user, :resend_to_cosigner, :contract_signed]
+  skip_before_action :signed_in_user, only: [:show, :contract_signed]
+  skip_after_action :verify_authorized, only: [:show, :contract_signed]
 
   def show
+    @secret = params[:s]
+
     begin
       authorize @contract, policy_class: ContractPolicy
     rescue Pundit::NotAuthorizedError
-      raise unless Contract.find_signed(params[:s], purpose: :cosigner_url) == @contract
+      raise unless Contract.find_signed(@secret, purpose: :cosigner_url) == @contract
     end
 
-    @advance_path = @contract.contractable.contract_advance_path(params[:s])
-    @docuseal_url = params[:s].present? ? @contract.docuseal_cosigner_signature_url : @contract.docuseal_user_signature_url
+    @role = params[:s].present? ? :cosigner : :signee
 
-    if @contract.signee_signed?
-      redirect_to @advance_path
+    @docuseal_url = @role == :cosigner ? @contract.docuseal_cosigner_signature_url : @contract.docuseal_user_signature_url
+
+    if (@role == :signee && @contract.signee_signed?) || (@role == :cosigner && @contract.cosigner_signed?)
+      redirect_to contract_signed_contract_path(s: @secret)
       return
     elsif @contract.voided?
       flash[:error] = "This contract has been voided."
@@ -56,6 +59,23 @@ class ContractsController < ApplicationController
     end
 
     redirect_back(fallback_location: event_team_path(@contract.event))
+  end
+
+  def contract_signed
+    begin
+      authorize @contract, policy_class: ContractPolicy
+    rescue Pundit::NotAuthorizedError
+      raise unless Contract.find_signed(params[:s], purpose: :cosigner_url) == @contract
+    end
+
+    @role = params[:s].present? ? :cosigner : :signee
+
+    if @role == :signee && @contract.signed?
+      redirect_to @contract.contractable
+      return
+    end
+
+    confetti!
   end
 
   private
