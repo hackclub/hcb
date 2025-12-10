@@ -28,7 +28,7 @@ export default function Merchants({ data }) {
             }
             return USDollarNoCents.format(n)
           }}
-          width={70}
+          width={65}
           tickMargin={0}
         />
         {data.length > 8 ? (
