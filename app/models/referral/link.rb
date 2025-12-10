@@ -40,7 +40,7 @@ module Referral
     private
 
     def set_default_slug!
-      update_column(:slug, self.hashid)
+      update!(slug: self.hashid)
     end
 
   end
