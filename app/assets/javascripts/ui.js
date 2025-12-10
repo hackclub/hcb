@@ -120,10 +120,34 @@ $(document).keydown(function (e) {
 
 window.attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
+  let mutationObserver = null;
 
   const removeTooltips = () => {
     if (window.innerWidth < 768) return;
     tooltip.className = "";
+    // Stop observing when tooltip is closed
+    if (mutationObserver) {
+      mutationObserver.disconnect();
+      mutationObserver = null;
+    }
+  }
+
+  const updateTooltipPosition = (trigger) => {
+    const triggerRect = trigger.getBoundingClientRect();
+    const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+    const offset = 5;
+    const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+    const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+    const positions = {
+      s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+      n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+      e: () => [triggerRect.right + window.scrollX + offset, centerY],
+      w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+    };
+
+    const [left, top] = (positions[placement] || positions.n)();
+    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
   }
 
   $(".tooltipped").on({
@@ -132,10 +156,6 @@ window.attachTooltipListener = () => {
 
       const trigger = event.currentTarget;
       if (!trigger.classList.contains("tooltipped")) return;
-
-      const triggerRect = trigger.getBoundingClientRect();
-      const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
-      const offset = 5;
 
       const label = trigger.getAttribute("aria-label").trim();
       if (!label) return;
@@ -148,18 +168,18 @@ window.attachTooltipListener = () => {
         if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
       });
 
-      const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
-      const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+      updateTooltipPosition(trigger);
 
-      const positions = {
-        s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
-        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
-        e: () => [triggerRect.right + window.scrollX + offset, centerY],
-        w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
-      };
-
-      const [left, top] = (positions[placement] || positions.n)();
-      Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+      // Observe trigger for aria-label changes
+      if (mutationObserver) mutationObserver.disconnect();
+      mutationObserver = new MutationObserver(() => {
+        const updatedLabel = trigger.getAttribute("aria-label").trim();
+        if (updatedLabel) {
+          tooltip.textContent = updatedLabel;
+          updateTooltipPosition(trigger);
+        }
+      });
+      mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
     },
 
     mouseleave() {
