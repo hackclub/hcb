@@ -330,7 +330,6 @@ Rails.application.routes.draw do
     post "reject"
     post "cancel"
     post "resend"
-
     member do
       post "change_position_role"
       post "send_contract"
