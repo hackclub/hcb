@@ -33,7 +33,7 @@ export default function Tags({ data }) {
             percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
           }
           labelLine={false}
-          strokeWidth={2}
+          strokeWidth={1.5}
           stroke={isDark ? '#252429' : '#FFFFFF'}
         >
           {data.map((_, i) => (
