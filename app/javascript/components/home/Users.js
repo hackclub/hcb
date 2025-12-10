@@ -45,6 +45,24 @@ export default function Users({ data }) {
           verticalAnchor="start"
           interval={0}
           height={80}
+          // Add left margin to text
+          tick={({ x, y, payload }) => (
+            <g transform={`translate(${x - 10},${y})`}>
+              {payload.value.split(' ').map((line, index) => (
+                <text
+                  key={index}
+                  x={0}
+                  y={index * 10}
+                  dy={16}
+                  textAnchor="end"
+                  fill="#666"
+                  fontSize={12}
+                >
+                  {line}
+                </text>
+              ))}
+            </g>
+          )}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
