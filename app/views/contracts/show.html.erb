@@ -4,15 +4,15 @@
 
 <h2>Sign your HCB contract</h2>
 
-<div class="grid grid-cols-5 gap-5" data-controller="contract">
-  <div class="max-h-[75vh] overflow-scroll col-span-3">
+<div class="grid md:grid-cols-5 gap-5" data-controller="contract">
+  <div class="max-h-[75vh] overflow-scroll md:col-span-3">
     <docuseal-form
       id="docusealForm"
       data-src=<%= @docuseal_url %>
       data-action="completed->contract#completed declined->contract#void">
     </docuseal-form>
   </div>
-  <div class="flex flex-col justify-between col-span-2">
+  <div class="flex flex-col justify-between md:col-span-2">
     <%= render "application/callout", title: "Questions about the HCB contract?", type: "info", class: "mt-0", footer: :questions do %>
       <p>
         <span class="font-bold">Why do I need to sign this contract?</span><br>
