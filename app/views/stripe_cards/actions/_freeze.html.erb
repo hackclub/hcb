@@ -6,7 +6,7 @@
               method: :post,
               class: "btn btn--list-item",
               disabled: !policy(stripe_card).defrost? do %>
-    <%= inline_icon "freeze" %> 
+    <%= inline_icon "freeze" %>
     <div>
       <strong>Defrost</strong>
       <p class="text-sm opacity-60"><%= policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %></p>
@@ -18,7 +18,7 @@
               method: :post,
               class: "btn btn--list-item",
               disabled: !policy(stripe_card).freeze? do %>
-    <%= inline_icon "freeze" %> 
+    <%= inline_icon "freeze" %>
     <div>
       <strong>Freeze</strong>
       <p class="text-sm opacity-60"><%= policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %></p>

@@ -9,7 +9,7 @@
             method: :post,
             class: "btn btn--list-item",
             disabled: !policy(card_grant).disable_pre_authorization? do %>
-  <%= inline_icon "pre-authorization", size: 20 %> 
+  <%= inline_icon "pre-authorization", size: 20 %>
   <div>
     <p><strong>Disable pre-authorization</strong></p>
     <p class="text-sm opacity-60"><%= pre_authorization_tooltip %></p>
