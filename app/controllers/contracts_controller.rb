@@ -2,19 +2,16 @@
 
 class ContractsController < ApplicationController
   before_action :set_contract, only: [:show, :void, :resend_to_user, :resend_to_cosigner, :contract_signed]
+  before_action :set_cosigner_secret, only: [:show, :contract_signed]
   skip_before_action :signed_in_user, only: [:show, :contract_signed]
   skip_after_action :verify_authorized, only: [:show, :contract_signed]
 
   def show
-    @secret = params[:s]
-
     begin
       authorize @contract, policy_class: ContractPolicy
     rescue Pundit::NotAuthorizedError
       raise unless Contract.find_signed(@secret, purpose: :cosigner_url) == @contract
     end
-
-    @role = params[:s].present? ? :cosigner : :signee
 
     @docuseal_url = @role == :cosigner ? @contract.docuseal_cosigner_signature_url : @contract.docuseal_user_signature_url
 
@@ -68,8 +65,6 @@ class ContractsController < ApplicationController
       raise unless Contract.find_signed(params[:s], purpose: :cosigner_url) == @contract
     end
 
-    @role = params[:s].present? ? :cosigner : :signee
-
     if @role == :signee && @contract.signed?
       redirect_to @contract.contractable
       return
@@ -79,6 +74,11 @@ class ContractsController < ApplicationController
   end
 
   private
+
+  def set_cosigner_secret
+    @secret = params[:s]
+    @role = params[:s].present? ? :cosigner : :signee
+  end
 
   def set_contract
     @contract = Contract.find(params[:id])
