@@ -37,18 +37,18 @@ module Referral
     has_many :users, -> { distinct }, through: :attributions, source: :user
     has_many :logins, foreign_key: :referral_link_id, class_name: "Login", inverse_of: :referral_link
 
-    private
-
-    def set_default_slug!
-      update!(slug: self.hashid) unless self.slug.present?
-    end
-
     def new_teenagers
       attributions.joins(:user)
                   .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
                   .where("users.teenager = true")
                   .map(&:user)
                   .uniq
+    end
+
+    private
+
+    def set_default_slug!
+      update!(slug: self.hashid) unless self.slug.present?
     end
 
   end
