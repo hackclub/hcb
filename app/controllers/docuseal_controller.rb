@@ -15,7 +15,7 @@ class DocusealController < ActionController::Base
 
         document = Document.new(
           event: contract.event,
-          name: "Fiscal sponsorship contract with #{contract.user.name}"
+          name: "Fiscal sponsorship agreement with #{contract.user.name}"
         )
 
         response = Faraday.get(params[:data][:documents][0][:url]) do |req|

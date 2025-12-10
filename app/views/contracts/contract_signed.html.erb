@@ -1,10 +1,10 @@
-<% title "Thanks for signing the HCB contract" %>
+<% title "Thanks for signing the HCB agreement" %>
 
-<h2>Thank you for signing the HCB contract!</h2>
+<h2>Thank you for signing the HCB agreement!</h2>
 
 <% if @role == :cosigner %>
   <p>
-    You've signed your part! Your child will hear back from us soon once we process the contract.
+    You've signed your part! Your child will hear back from us soon once we process the agreement.
   </p>
 
   <p>
@@ -12,7 +12,7 @@
   </p>
 <% elsif @role == :signee %>
   <% if @contract.cosigner_signed? %>
-    <p>The HCB team will finalize the contract and activate your project within one business day.</p>
+    <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
   <% else %>
     <p>
       Your cosigner (<%= @contract.cosigner_email %>) still needs to sign - we just sent them a reminder email.
