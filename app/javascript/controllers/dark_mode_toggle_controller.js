@@ -35,7 +35,7 @@ export default class extends Controller {
   }
 
   updateBlogEmbed(theme) {
-    const resolvedTheme = this.resolveTheme(theme);
+    const resolvedTheme = this.resolveTheme(theme)
 
     const blogEmbed = document.getElementById('blog-widget-embed')
     if (blogEmbed) {
@@ -44,16 +44,19 @@ export default class extends Controller {
   }
 
   updateDocusealForm(theme) {
-    const resolvedTheme = this.resolveTheme(theme);
+    const resolvedTheme = this.resolveTheme(theme)
 
     const docusealForm = document.getElementById('docusealForm')
     if (docusealForm) {
-      if (resolvedTheme == "dark") {
-        docusealForm.setAttribute("data-background-color", "#15151a")
-        docusealForm.setAttribute("data-custom-css", "label, svg { color: white; }")
+      if (resolvedTheme == 'dark') {
+        docusealForm.setAttribute('data-background-color', '#15151a')
+        docusealForm.setAttribute(
+          'data-custom-css',
+          'label, svg { color: white; }'
+        )
       } else {
-        docusealForm.removeAttribute("data-background-color")
-        docusealForm.removeAttribute("data-custom-css")
+        docusealForm.removeAttribute('data-background-color')
+        docusealForm.removeAttribute('data-custom-css')
       }
     }
   }
