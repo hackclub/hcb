@@ -91,9 +91,14 @@
 
       <% if can_change_role %>
         <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-          <% OrganizerPositionInvite.roles.keys.each do |role| %>
+          <% OrganizerPositionInvite.roles.keys.excluding("owner").each do |role| %>
             <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
               <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
+            <% end %>
+          <% end %>
+          <% if admin_signed_in? %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: "owner"), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == "owner" } do %>
+              Owner<%= " ✔" if organizer_position_invite.role == "owner" %>
             <% end %>
           <% end %>
           <div class="menu__divider"></div>
