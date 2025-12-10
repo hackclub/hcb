@@ -522,7 +522,7 @@ class User < ApplicationRecord
   end
 
   def new_teenagers_from_referrals_count
-    self.referral_links.sum { |link| link.new_teenagers.length }
+    self.referral_links.sum { |link| link.new_teenagers.size }
   end
 
   def has_discord_account?
