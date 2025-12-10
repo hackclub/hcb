@@ -8,6 +8,6 @@ export default class extends Controller {
   }
 
   void() {
-    window.location.path = "/"
+    window.location.path = '/'
   }
 }
