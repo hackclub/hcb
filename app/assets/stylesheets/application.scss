@@ -672,3 +672,17 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     transition-duration: 0.125s;
   }
 }
+
+// Tiptap menu bar formatting styles
+.format-button {
+  @extend .pop;
+  @apply bg-white dark:bg-neutral-700 text-black dark:text-white text-lg;
+
+  &:hover {
+    @apply bg-smoke dark:bg-darkless;
+  }
+
+  &.is-active {
+    @apply bg-primary text-white;
+  }
+}

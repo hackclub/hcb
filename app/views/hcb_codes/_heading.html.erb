@@ -14,6 +14,7 @@
 
     <%= render "hcb_codes/memo_stream", hcb_code: %>
     <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: } %>
+    <div class="flex-1"></div>
     <%= pop_icon_to "edit",
         edit_hcb_code_path(hcb_code),
         class: "align-middle tooltipped tooltipped--s", "aria-label": "Rename",
