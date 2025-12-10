@@ -19,7 +19,7 @@ export default function Users({ data }) {
     <ResponsiveContainer
       width="100%"
       height={420}
-      padding={{ top: 32, left: 32 }}
+      padding={{ top: 32, left: 40 }}
     >
       <BarChart data={data} layout="vertical">
         <XAxis
