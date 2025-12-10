@@ -40,7 +40,7 @@ module Referral
     private
 
     def set_default_slug!
-      update!(slug: self.hashid)
+      update!(slug: self.hashid) unless self.slug.present?
     end
 
   end
