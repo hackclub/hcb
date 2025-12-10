@@ -96,11 +96,6 @@
   min-width: 0;
   min-height: 0;
 }
-@media (min-width: 32em) {
-  .md-right {
-    float: right;
-  }
-}
 .border {
   border-style: solid;
   border-width: 1px;
