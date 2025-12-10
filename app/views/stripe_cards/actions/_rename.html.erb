@@ -2,7 +2,7 @@
 
 <% if stripe_card.stripe_status == "active" && policy(stripe_card).update? %>
   <%= link_to edit_stripe_card_path(stripe_card),
-              class: "btn bg-success btn--list-item",
+              class: "btn btn--list-item",
               data: { behavior: "modal_trigger", modal: "name_card" } do %>
     <%= inline_icon "edit" %>
     Rename
