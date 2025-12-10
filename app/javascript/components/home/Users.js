@@ -45,7 +45,7 @@ export default function Users({ data }) {
           verticalAnchor="start"
           interval={0}
           height={80}
-          width={120}
+          width={90}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
