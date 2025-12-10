@@ -16,15 +16,9 @@
     <%= render "application/callout", title: "Questions about the HCB contract?", type: "info", class: "mt-0", footer: :questions do %>
       <p>
         <span class="font-bold">Why do I need to sign this contract?</span><br>
-        This contract is lorem ipsum
+        it's a mystery!
       </p>
-      <br>
-      <p>
-        <span class="font-bold">What does x mean?</span><br>
-        X means that lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum lorem ipsum
-      </p>
-      <br>
     <% end %>
-    <%= link_to "Done", @advance_path, class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
+    <%= link_to "Next", @advance_path, class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
   </div>
 </div>
