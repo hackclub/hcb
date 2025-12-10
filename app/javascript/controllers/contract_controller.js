@@ -1,10 +1,10 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ["doneButton"]
+  static targets = ['doneButton']
 
   completed() {
-    this.doneButtonTarget.removeAttribute("disabled")
+    this.doneButtonTarget.removeAttribute('disabled')
   }
 
   void() {
