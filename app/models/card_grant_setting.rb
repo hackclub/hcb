@@ -18,7 +18,7 @@
 #
 # Indexes
 #
-#  index_card_grant_settings_on_event_id  (event_id)
+#  index_card_grant_settings_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -28,6 +28,7 @@ class CardGrantSetting < ApplicationRecord
   has_paper_trail
 
   belongs_to :event
+  validates :event, uniqueness: true
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
