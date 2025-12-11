@@ -38,7 +38,7 @@
       <%= format_datetime @hcb_code.wise_transfer.created_at %>
     </div>
     <% if @hcb_code.wise_transfer.pending? || @hcb_code.wise_transfer.approved? %>
-        <% admin_tool "w-fit" do %>
+        <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
           <%= link_to "Process", wise_transfer_process_admin_path(@hcb_code.wise_transfer), class: "btn", target: "_blank" %>
         <% end %>
       <% end %>
