@@ -4,7 +4,7 @@
 
 <h1 class="heading flex">
   <span class="flex-grow">Contractors</span>
-  <% if EmployeePolicy.new(current_user, @event).new? %>
+  <% if policy(@event.employees.build).new? %>
     <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
       <%= inline_icon "plus" %>
       Invite a contractor
