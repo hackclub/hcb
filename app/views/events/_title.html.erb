@@ -43,7 +43,7 @@
           <% elsif events.all? { |e| !e.logo.attached? } %>
             <%# Show no placeholder %>
           <% else %>
-                <%= image_tag "logo-production.svg", height: 24, width: 24, class: "rounded grayscale opacity-30" %>
+            <%= image_tag "logo-production.svg", height: 24, width: 24, class: "rounded grayscale opacity-30" %>
           <% end %>
           <span class="truncate"><%= event.name %></span>
         <% end %>
