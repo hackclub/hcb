@@ -6,12 +6,12 @@ module Referral
     skip_before_action :signed_in_user, only: :show
 
     def show
-      unless signed_in?
-        skip_authorization
-        return redirect_to auth_users_path(referral: @link.slug)
-      end
-
       if @link
+        unless signed_in?
+          skip_authorization
+          return redirect_to auth_users_path(referral: @link.slug)
+        end
+
         authorize(@link)
 
         Rails.error.handle do
