@@ -8,7 +8,7 @@ module Referral
     def show
       unless signed_in?
         skip_authorization
-        return redirect_to auth_users_path(referral: @link)
+        return redirect_to auth_users_path(referral: @link.slug)
       end
 
       if @link
@@ -29,7 +29,7 @@ module Referral
     private
 
     def set_link
-      @link = Referral::Link.find_by(slug: params[:id]).presence || Referral::Link.find_by_hashid(params[:id])
+      @link = Referral::Link.find_by(slug: params[:id]).presence
     end
 
   end

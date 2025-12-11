@@ -1420,7 +1420,7 @@ class AdminController < Admin::BaseController
 
   def referral_link_create
     @referral_program = Referral::Program.find(params[:program_id])
-    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug], creator: current_user)
+    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
 
     if @referral_link.save
       flash[:success] = "Referral link created successfully."
@@ -1432,6 +1432,10 @@ class AdminController < Admin::BaseController
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private
