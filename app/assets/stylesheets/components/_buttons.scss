@@ -17,7 +17,9 @@ input[type='submit'],
   justify-content: center;
   align-items: center;
   height: 36px;
-  min-height: 36px;
+  &:not(.menu__content *) {
+    min-height: 36px;
+  }
   letter-spacing: 0;
   overflow: hidden;
   padding: 0 1rem;
