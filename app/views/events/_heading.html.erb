@@ -2,11 +2,11 @@
 
 <h1 class="flex items-center gap-4">
   <%= yield %>
-  <% admin_tool("badge", "span") do %>
-    <span class="m0 badge bg-muted">
+  <% admin_tool("badge p-1 gap-1", "span") do %>
+    <span class="badge m-0 bg-muted">
       #<%= event.id %>
     </span>
-    <span class="m0 badge bg-muted ml1">
+    <span class="badge m-0 bg-muted ml1">
       SL<%= event.service_level %>
     </span>
   <% end %>
