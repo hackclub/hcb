@@ -119,7 +119,7 @@ export function KBarInput(props) {
       placeholder ||
       (currentRootActionId && actions[currentRootActionId]
         ? actions[currentRootActionId].label ||
-          actions[currentRootActionId].name
+        actions[currentRootActionId].name
         : defaultText)
     )
   }, [actions, currentRootActionId, defaultPlaceholder, placeholder])
@@ -133,7 +133,6 @@ export function KBarInput(props) {
         style={{
           padding: '10px 20px',
           paddingBottom: '5px',
-          fontSize: '20px',
           width: '100%',
           boxSizing: 'border-box',
           outline: 'none',
