@@ -31,13 +31,13 @@
     <span class="stat__label">Already received</span>
     <span class="stat__value"><%= render_money_amount @stats[:paid] %></span>
   </div>
-  <div class="stat stat--small">
-    <span class="stat__label">On the way</span>
-    <span class="stat__value"><%= render_money_amount @stats[:pending] %></span>
-  </div>
   <div class="stat stat--small tooltipped tooltipped--s" aria-label="This excludes archived invoices">
     <span class="stat__label">Unpaid</span>
     <span class="stat__value"><%= render_money_amount @stats[:unpaid] %></span>
+  </div>
+  <div class="stat stat--small">
+    <span class="stat__label">On the way</span>
+    <span class="stat__value"><%= render_money_amount @stats[:pending] %></span>
   </div>
 </div>
 
