@@ -521,6 +521,7 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  # Total new teens via referrals links created by this user (admin)
   def new_teenagers_from_referrals_count
     self.referral_links.sum { |link| link.new_teenagers.size }
   end
