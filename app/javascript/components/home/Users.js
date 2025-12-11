@@ -45,7 +45,7 @@ export default function Users({ data }) {
           verticalAnchor="start"
           interval={0}
           height={80}
-          tickFormatter={(v) => ` ${v}`}
+          tickFormatter={v => ` ${v}`}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
