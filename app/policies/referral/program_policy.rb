@@ -3,7 +3,7 @@
 module Referral
   class ProgramPolicy < ApplicationPolicy
     def create?
-      true
+      user.admin?
     end
 
   end
