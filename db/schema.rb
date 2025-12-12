@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_12_213342) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -622,6 +622,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["username"], name: "index_console1984_users_on_username"
+  end
+
+  create_table "contract_parties", force: :cascade do |t|
+    t.bigint "contract_id", null: false
+    t.datetime "created_at", null: false
+    t.string "external_email"
+    t.integer "role", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["contract_id"], name: "index_contract_parties_on_contract_id"
+    t.index ["user_id"], name: "index_contract_parties_on_user_id"
   end
 
   create_table "contracts", force: :cascade do |t|
