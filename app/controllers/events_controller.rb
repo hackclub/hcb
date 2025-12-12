@@ -1188,7 +1188,7 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
-    @grant_recipients = User.where(id: CardGrant.where(event_id: @event.id).select(:user_id).map(&:user_id).uniq)
+    @grant_recipients = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq)
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
