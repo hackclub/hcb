@@ -10,7 +10,7 @@
 
 <div class="tooltipped tooltipped--w" aria-label="Manage this grant">
   <%= link_to edit_card_grant_path(card_grant),
-              class: "btn",
+              class: "btn whitespace-nowrap",
               data: { behavior: "modal_trigger", modal: "edit_card_grant" } do %>
     <% if policy(card_grant).edit? %>
       <%= inline_icon "settings" %>

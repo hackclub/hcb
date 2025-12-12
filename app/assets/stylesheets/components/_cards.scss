@@ -79,6 +79,14 @@
   box-shadow: var(--shadow-sm);
 }
 
+.hcb-code--info {
+  @extend .details;
+  padding: 0.75rem 0;
+  gap: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
 .hcb-code--details {
   @extend .details-horiz;
   border-top: 1px solid;
@@ -102,6 +110,10 @@
 
   & p {
     flex-direction: column;
+  }
+
+  @media (max-width: 640px) {
+    gap: 10px;
   }
 }
 
