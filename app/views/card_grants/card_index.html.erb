@@ -16,7 +16,7 @@
             <th>For</th>
             <th>Amount</th>
             <th class="text-right">Balance</th>
-            <th></th>
+            <% if organizer_signed_in?(as: :manager) %><th></th><% end %>
           </tr>
         </thead>
         <tbody>
@@ -40,9 +40,11 @@
               <td class="text-right">
                 <%= render_money card_grant.balance %>
               </td>
-              <td>
-                <%= render "events/card_grant_actions", card_grant: %>
-              </td>
+              <% if organizer_signed_in?(as: :manager) %>
+                <td>
+                  <%= render "events/card_grant_actions", card_grant: %>
+                </td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>
