@@ -32,7 +32,7 @@
 <% end %>
 <hr class="mt-0.5 mb-4 opacity-50" />
 
-<div class="flex flex-col gap-[20px] -mt-3" data-controller="event-home">
+<div class="flex flex-col gap-4 -mt-3" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
     <div class="flex max-w-full overflow-auto whitespace-nowrap scrollbar-hidden mt-3">
       <%= link_to event_transfers_new_path(@event), class: "list-badge quick-action ml-0", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>

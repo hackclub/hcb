@@ -246,7 +246,7 @@ html[data-dark='true'] {
   }
 
   .card__darker {
-    background: lighten($darkless, 5%);
+    background: lighten($darkless, 7%);
     color: map-get($palette, muted) !important;
   }
 

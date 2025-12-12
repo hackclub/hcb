@@ -141,7 +141,7 @@
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
   <% width_css_class = @invoice.deposited? ? @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 : @invoice.event.revenue_fee != 0 ? "w-64" : "w-8" %>
-  <section class="card__banner card__darker details details--wide border-top md-pl0 md-pr0 -mx-[16px]">
+  <section class="card__banner card__darker details details--wide border-top p-0 -mx-[16px]">
     <table>
     <thead>
       <tr>

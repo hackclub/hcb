@@ -12,6 +12,11 @@
   transition: 0.125s ease-in-out;
   transition-property: transform, box-shadow;
 
+  &.card--breakdown {
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(200, 200, 200, 0.3);
+  }
+
   &.card--sunken {
     box-shadow: none;
     background-color: rgba(map-get($palette, smoke), 0.75);
@@ -158,7 +163,7 @@ a.card {
 }
 
 .card__darker {
-  background: darken(map-get($palette, snow), 2%);
+  background: darken(map-get($palette, snow), 1%);
 }
 
 .card__banner {
