@@ -553,6 +553,22 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="share" size={16} />,
       perform: navigate('/admin/referral_programs'),
     },
+    {
+      id: 'admin_tool_32',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Active teenagers leaderboard',
+      icon: <Icon glyph="leader" size={16} />,
+      perform: navigate('/admin/active_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_33',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'New teenagers leaderboard',
+      icon: <Icon glyph="member-add" size={16} />,
+      perform: navigate('/admin/new_teenagers_leaderboard'),
+    },
   ]
 }
 
