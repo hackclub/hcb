@@ -38,13 +38,13 @@
           </div>
         <% end %>
         <div data-tabs-target="tab" id="user">
-          <% @organizers.each do |position| %>
+          <% @grant_recipients.each do |user| %>
             <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(user: position.user.friendly_id)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.friendly_id == position.user.friendly_id}", data: { turbo_prefetch: "false" }) do %>
+              <%= link_to(event_ledger_path(@event, upsert_query_params(user: user.friendly_id)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.friendly_id == user.friendly_id}", data: { turbo_prefetch: "false" }) do %>
                 <div class="avatar-grow line-height-0 mr1">
-                  <%= avatar_for position.user, size: 18 %>
+                  <%= avatar_for user, size: 18 %>
                 </div>
-                <%= position.user.name %>
+                <%= user.name %>
               <% end %>
             </div>
           <% end %>
