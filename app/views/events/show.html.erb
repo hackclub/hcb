@@ -30,6 +30,7 @@
 <%= render "events/heading", event: @event, event_follow: @event_follow do %>
   <span class="flex-grow">Home</span>
 <% end %>
+<hr class="mt-0.5 mb-4 opacity-50" />
 
 <div class="flex flex-col gap-[20px] -mt-3" data-controller="event-home">
   <% if organizer_signed_in?(as: :member) %>
