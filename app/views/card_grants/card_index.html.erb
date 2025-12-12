@@ -16,7 +16,9 @@
             <th>For</th>
             <th>Amount</th>
             <th class="text-right">Balance</th>
-            <% if organizer_signed_in?(as: :manager) %><th></th><% end %>
+            <% if organizer_signed_in?(as: :manager) %>
+              <th></th>
+            <% end %>
           </tr>
         </thead>
         <tbody>
