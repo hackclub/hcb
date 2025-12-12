@@ -93,7 +93,7 @@
 
   <div
       class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only managers can make transfers!" : nil) %>">
+      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only owners or managers can make transfers!" : nil) %>">
     <%= form.submit "Make transfer", class: "btn", disabled: %>
   </div>
 <% end %>

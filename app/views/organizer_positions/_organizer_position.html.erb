@@ -17,9 +17,14 @@
                 <%= inline_icon "down-caret", class: "info menu__toggle" %>
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                <% OrganizerPosition.roles.keys.each do |role| %>
+                <% OrganizerPosition.roles.keys.excluding("owner").each do |role| %>
                   <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == role } do %>
                     <%= role.humanize %><%= " ✔" if organizer_position.role == role %>
+                  <% end %>
+                <% end %>
+                <% if admin_signed_in? %>
+                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: "owner"), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == "owner" }, class: "admin-tools" do %>
+                    Owner <%= " ✔" if organizer_position.role == "owner" %>
                   <% end %>
                 <% end %>
                 <div class="menu__divider"></div>
@@ -104,7 +109,6 @@
     <p class="m0">
       Invited
       <%= relative_timestamp(organizer_position.organizer_position_invite.created_at) %>
-      <%= "as a contract signee" if organizer_position.signee? || organizer_position.organizer_position_invite&.contract.present? %>
       by <%= organizer_position.organizer_position_invite.sender.name %>
     </p>
     <% user_mention organizer_position.organizer_position_invite.sender %>

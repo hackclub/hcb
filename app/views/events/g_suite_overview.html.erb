@@ -11,7 +11,7 @@
     <%= link_to (@waitlist_form_submitted ? "You're on the waitlist!" : "Join the waitlist"),
     (@waitlist_form_submitted ? "#" : fillout_form("52bVNmqdeQus", { "OrgName" => @event.name, "OrgURL" => event_url(@event), "UserEmail" => current_user.email, "OrgID" => @event.id, "OrgBal" => @event.balance_available_v2_cents / 100 })),
     class: "btn mr1 #{'disabled' if @waitlist_form_submitted || !policy(@event).g_suite_create?}",
-    tooltip: (@waitlist_form_submitted ? "You're already on the waitlist." : !policy(@event).g_suite_create? ? "Only managers can sign up for this." : "Join the waitlist.") %>
+    tooltip: (@waitlist_form_submitted ? "You're already on the waitlist." : !policy(@event).g_suite_create? ? "Only owners or managers can sign up for this." : "Join the waitlist.") %>
   </div>
 <% else %>
   <h1 class="heading">

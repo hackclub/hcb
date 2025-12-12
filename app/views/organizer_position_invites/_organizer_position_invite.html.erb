@@ -83,7 +83,7 @@
 
   <div class="inline muted h6 m0">
     Invited <%= relative_timestamp(organizer_position_invite.created_at) %>
-    as a
+    as <%= organizer_position_invite.role == "owner" ? "an" : "a" %>
     <div class="inline" data-controller="menu" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">
       <% can_change_role = policy(organizer_position_invite).change_position_role? %>
 
@@ -91,9 +91,14 @@
 
       <% if can_change_role %>
         <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-          <% OrganizerPositionInvite.roles.keys.each do |role| %>
+          <% OrganizerPositionInvite.roles.keys.excluding("owner").each do |role| %>
             <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
               <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
+            <% end %>
+          <% end %>
+          <% if admin_signed_in? %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: "owner"), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == "owner" } do %>
+              Owner<%= " ✔" if organizer_position_invite.role == "owner" %>
             <% end %>
           <% end %>
           <div class="menu__divider"></div>
@@ -104,7 +109,6 @@
     <% if organizer_position_invite.initial_control_allowance_amount_cents.present? && !organizer_position_invite.initial_control_allowance_amount_cents.zero? %>
       with a <%= render_money organizer_position_invite.initial_control_allowance_amount_cents %> allowance
     <% end %>
-    <%= "and contract signee" if organizer_position_invite.signee? && organizer_position_invite.event.organizer_positions.where(is_signee: nil).none? %>
     by <%= organizer_position_invite.sender.name %>
   </div>
 </div>
