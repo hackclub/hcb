@@ -16,7 +16,9 @@
           <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
         <% end %>
         <button id="user" data-tabs-target="btn" data-action="click->tabs#select">User</button>
-        <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
+        <% unless @subledger %>
+          <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
+        <% end %>
         <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
         <button id="amount" data-tabs-target="btn" data-action="click->tabs#select">Amount</button>
         <button id="category" data-tabs-target="btn" data-action="click->tabs#select">Category</button>
@@ -49,15 +51,17 @@
             </div>
           <% end %>
         </div>
-        <div data-tabs-target="tab" id="type">
-          <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire"].each do |type| %>
-            <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(type:)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
-                <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
+        <% unless @subledger %>
+          <div data-tabs-target="tab" id="type">
+            <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire"].each do |type| %>
+              <div class="flex items-center">
+                <%= link_to(event_ledger_path(@event, upsert_query_params(type:)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
+                  <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
         <div data-tabs-target="tab" id="date">
           <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
             <p class="bold mb0 mt0">Transactions after...</p>
@@ -98,22 +102,24 @@
               <%= form.submit "Filter transactions" %>
             </div>
 
-            <hr class="!border-muted !my-3">
-            <div class="m-2">
-              <p class="bold mb-0 mt-2">Revenue or expenses?</p>
-            </div>
-            <% ["expenses", "revenue"].each do |direction| %>
+            <% unless @subledger %>
+              <hr class="!border-muted !my-3">
+              <div class="m-2">
+                <p class="bold mb-0 mt-2">Revenue or expenses?</p>
+              </div>
+              <% ["expenses", "revenue"].each do |direction| %>
+                <div class="flex items-center">
+                  <%= link_to(event_ledger_path(@event, upsert_query_params(direction:)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                    <%= direction.humanize %>
+                  <% end %>
+                </div>
+              <% end %>
               <div class="flex items-center">
-                <%= link_to(event_ledger_path(@event, upsert_query_params(direction:)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
-                  <%= direction.humanize %>
+                <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
+                Both
                 <% end %>
               </div>
             <% end %>
-            <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
-              Both
-              <% end %>
-            </div>
           <% end %>
         </div>
         <div data-tabs-target="tab" id="category">
