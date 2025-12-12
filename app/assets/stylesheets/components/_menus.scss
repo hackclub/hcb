@@ -97,10 +97,13 @@
       right: 0;
       bottom: 0;
     }
+  }
 
-    @media screen and (max-width: 32em) {
+  @media screen and (max-width: 32em) {
+    padding: 0.5rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    &:not(.menu__content--2) {
       padding: 1rem 0.5rem 3rem;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
       position: fixed;
       top: auto;
       bottom: 0;
@@ -110,7 +113,6 @@
       border: 0;
       font-size: 1rem;
       z-index: 999;
-
       @supports (padding: calc(env(safe-area-inset-bottom))) {
         padding-bottom: calc(2rem + env(safe-area-inset-bottom));
       }

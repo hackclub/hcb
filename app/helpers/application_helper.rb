@@ -122,7 +122,7 @@ module ApplicationHelper
   end
 
   def modal_header(text, external_link: nil)
-    content_tag :header, class: "pb2" do
+    content_tag :header, class: "pb2 rounded-t-lg" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
         content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
