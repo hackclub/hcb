@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
 module Referral
-  class LinkPolicy < ApplicationPolicy
-    def show?
-      user.present?
-    end
-
+  class ProgramPolicy < ApplicationPolicy
     def create?
       user.auditor?
     end
