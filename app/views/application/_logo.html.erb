@@ -11,13 +11,13 @@
 
     <% logo_env = Rails.env.local? ? "development" : Rails.env %>
 
-    <%= image_tag user_birthday? ? "logo-party-dark.gif" : by_season("logo-#{logo_env}-dark.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+    <%= image_tag user_birthday? ? "logo-party-dark.gif" : by_season("logo-#{logo_env}-dark.png", fall: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png"),
         name: "header-logo",
         class: "logo-dark",
         width: @home_size || 36,
         height: @home_size || 36,
         alt: "HCB logo" %>
-    <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+    <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png"),
         name: "header-logo",
         class: "logo",
         width: @home_size || 36,
@@ -27,8 +27,8 @@
 
   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact z-50">
     <% if fall? %>
-      <a href="https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png" download class="flex">
-        <%= image_tag "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png", height: 24 %>
+      <a href="https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png" download class="flex">
+        <%= image_tag "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png", height: 24 %>
         Download spooky icon
       </a>
     <% end %>

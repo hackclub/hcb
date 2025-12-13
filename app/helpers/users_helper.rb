@@ -72,7 +72,7 @@ module UsersHelper
   end
 
   def profile_picture_for(user, size = 24, default_image: nil)
-    default_image ||= "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+    default_image ||= "https://hc-cdn.hel1.your-objectstorage.com/s/v3/1e41035b85ccb92f_image.png"
 
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
@@ -266,45 +266,45 @@ module UsersHelper
   def onboarding_gallery
     [
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/0image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/f00f504836b546b6_image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#802434",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/1image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/8e36b998e8f8a014_image.png",
         url: "https://hcb.hackclub.com/the-charlotte-bridge",
         overlay_color: "#805b24",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/2image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/c2b21fc2bac8fe37_image.png",
         url: "https://hcb.hackclub.com/windyhacks",
         overlay_color: "#807f0a",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/3image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/3693a52722bd453d_image.png",
         url: "https://hcb.hackclub.com/the-innovation-circuit",
         overlay_color: "#22806c",
         object_position: "center"
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/4image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/0dd4665e1f416fe0_image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#3c7d80",
         object_position: "center"
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/5image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/014152a92bec1ca3_image.png",
         url: "https://hcb.hackclub.com/hackpenn",
         overlay_color: "#225c80",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/6image.png",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/17c73dbb7921ea42_image.png",
         url: "https://hcb.hackclub.com/wild-wild-west",
         overlay_color: "#6c2280",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/7image.png",
-        url: "https://hcb.hackclub.com/hq",
+        image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/395d07060854ce95_image.png",
+        url: "https://hcb.hackclub.com/assemble",
         overlay_color: "#802434",
       }
     ]
