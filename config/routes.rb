@@ -341,8 +341,15 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
-      post "resend_to_user"
-      post "resend_to_cosigner"
+    end
+  end
+
+  namespace :contract, path: "contracts" do
+    resources :parties, only: [:show] do
+      member do
+        post "resend"
+        get "completed"
+      end
     end
   end
 
