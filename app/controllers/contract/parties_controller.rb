@@ -43,7 +43,7 @@ class Contract
     private
 
     def set_party
-      @party = Contract::Party.find(params[:id])
+      @party = Contract::Party.find_by_hashid(params[:id])
       @contract = @party.contract
     end
 

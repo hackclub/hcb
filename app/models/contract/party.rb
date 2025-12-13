@@ -69,6 +69,8 @@ class Contract
         "Contract Signee"
       when "cosigner"
         "Cosigner"
+      when "hcb"
+        "HCB"
       else
         raise "Unexpected role"
       end

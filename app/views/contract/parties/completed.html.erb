@@ -11,7 +11,7 @@
     Questions? <%= help_message %>
   </p>
 <% elsif @party.signee? %>
-  <% if @contract.party(:cosigner).signed? %>
+  <% if @contract.party(:cosigner).nil? || @contract.party(:cosigner).signed? %>
     <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
   <% else %>
     <p>

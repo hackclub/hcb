@@ -344,7 +344,7 @@ Rails.application.routes.draw do
     end
   end
 
-  namespace :contracts, as: :contract do
+  namespace :contract, path: "contracts" do
     resources :parties, only: [:show] do
       member do
         post "resend"
@@ -352,7 +352,6 @@ Rails.application.routes.draw do
       end
     end
   end
-
 
   resources :organizer_positions, only: [:destroy], as: "organizers" do
     member do

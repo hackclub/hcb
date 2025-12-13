@@ -150,7 +150,7 @@ class Contract < ApplicationRecord
   end
 
   def party(role)
-    parties.find_by!(role:)
+    parties.find_by(role:)
   end
 
   private

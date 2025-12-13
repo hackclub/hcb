@@ -52,7 +52,7 @@ export default class extends Controller {
         docusealForm.setAttribute('data-background-color', '#15151a')
         docusealForm.setAttribute(
           'data-custom-css',
-          'label, svg { color: white; }'
+          'label, .completed-form-message-title, .tabler-icon-arrows-diagonal-minimize-2 { color: white; }'
         )
       } else {
         docusealForm.removeAttribute('data-background-color')

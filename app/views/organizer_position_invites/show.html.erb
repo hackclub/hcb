@@ -31,7 +31,7 @@
 <div class="flex justify-center items-center flex-wrap mt3">
   <%= link_to "Reject", organizer_position_invite_reject_path(@invite), method: :post, class: "btn bg-error m1" %>
   <% if @invite.contract && !@invite.contract.signed? %>
-    <%= link_to "View pending contract", contract_party_path(@invite.contract), class: "btn bg-accent h2 m1" %>
+    <%= link_to "View pending contract", contract_party_path(@invite.contract.party(:signee)), class: "btn bg-accent h2 m1" %>
   <% else %>
     <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success h2 m1" %>
   <% end %>

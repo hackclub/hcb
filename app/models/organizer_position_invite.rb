@@ -210,7 +210,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def send_contract(cosigner_email: nil, include_videos: false)
     ActiveRecord::Base.transaction do
-      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => "oog" })
       contract.parties.create!(user:, role: :signee)
       contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       contract.send!
@@ -218,7 +218,7 @@ class OrganizerPositionInvite < ApplicationRecord
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
 
-      event.set_airtable_status("Documents sent")
+      # event.set_airtable_status("Documents sent")
     end
   end
 
