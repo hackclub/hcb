@@ -53,7 +53,7 @@ RSpec.describe("session expiry", type: :controller) do
     freeze_time do
       user = create(:user, session_validity_preference: SessionsHelper::SESSION_DURATION_OPTIONS.fetch("2 weeks"))
       session = sign_in(user)
-      max_expiry = UserSession::MAX_SESSION_DURATION.from_now
+      max_expiry = User::Session::MAX_SESSION_DURATION.from_now
 
       travel(2.weeks - 1.day)
       get(:index)
