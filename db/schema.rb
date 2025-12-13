@@ -625,6 +625,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_213342) do
   end
 
   create_table "contract_parties", force: :cascade do |t|
+    t.string "aasm_state"
     t.bigint "contract_id", null: false
     t.datetime "created_at", null: false
     t.string "external_email"

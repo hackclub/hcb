@@ -2,7 +2,7 @@
 
 <h2>Thank you for signing the HCB agreement!</h2>
 
-<% if @role == :cosigner %>
+<% if @party.cosigner? %>
   <p>
     You've signed your part! Your child will hear back from us soon once we process the agreement.
   </p>
@@ -10,12 +10,12 @@
   <p>
     Questions? <%= help_message %>
   </p>
-<% elsif @role == :signee %>
-  <% if @contract.cosigner_signed? %>
+<% elsif @party.signee? %>
+  <% if @contract.party(:cosigner).signed? %>
     <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
   <% else %>
     <p>
-      Your cosigner (<%= @contract.cosigner_email %>) still needs to sign - we just sent them a reminder email.
+      Your cosigner (<%= @contract.party(:cosigner).email %>) still needs to sign - we just sent them a reminder email.
       Once they sign, you'll be able to start your new project!
     </p>
   <% end %>

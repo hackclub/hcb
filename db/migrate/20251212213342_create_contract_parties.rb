@@ -5,7 +5,9 @@ class CreateContractParties < ActiveRecord::Migration[8.0]
       t.references :contract, null: false
       t.integer :role, null: false
       t.string :external_email
+      t.string :aasm_state
 
+      t.datetime :signed_at
       t.timestamps
     end
   end

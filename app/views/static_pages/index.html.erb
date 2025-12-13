@@ -161,7 +161,7 @@
       <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
       <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
         <% current_user.contracts.sent.each do |contract| %>
-          <%= link_to contract_path(contract), target: "_blank" do %>
+          <%= link_to contract_party_path(contract), target: "_blank" do %>
             <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
               <%= status_badge "info" %>
               <strong>Fiscal sponsorship agreement for <%= contract.event.name %></strong>

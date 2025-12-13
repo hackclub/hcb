@@ -338,15 +338,21 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :contracts, only: [:show] do
+  resources :contracts, only: [] do
     member do
       post "void"
-      post "resend_to_user"
-      post "resend_to_cosigner"
-
-      get "contract_signed"
     end
   end
+
+  namespace :contracts, as: :contract do
+    resources :parties, only: [:show] do
+      member do
+        post "resend"
+        get "completed"
+      end
+    end
+  end
+
 
   resources :organizer_positions, only: [:destroy], as: "organizers" do
     member do

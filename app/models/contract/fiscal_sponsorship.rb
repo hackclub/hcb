@@ -34,7 +34,32 @@
 
 class Contract
   class FiscalSponsorship < Contract
+    after_update_commit if: ->{ sent_with_docuseal? && aasm_state_previously_changed? && signed? } do
+      document = Document.new(
+        event:,
+        name: "Fiscal sponsorship agreement with #{party(:signee).user.name}"
+      )
+      contract_document = docuseal_document["documents"][0]
+
+      response = Faraday.get(contract_document["url"]) do |req|
+        req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
+      end
+
+      document.file.attach(
+        io: StringIO.new(response.body),
+        filename: "#{contract_document["name"]}.pdf"
+      )
+
+      document.user = party(:hcb).user
+      document.save!
+      update!(document:)
+    end
+
     def payload
+      signee = party :signee
+      cosigner = party :cosigner
+      hcb = party :hcb
+
       {
         template_id: external_template_id,
         send_email: false,
@@ -42,21 +67,21 @@ class Contract
         submitters: [
           {
             role: "Contract Signee",
-            email: user.email,
+            email: signee.email,
             fields: [
               {
                 name: "Contact Name",
-                default_value: user.full_name,
+                default_value: signee.user.full_name,
                 readonly: false
               },
               {
                 name: "Telephone",
-                default_value: user.phone_number,
+                default_value: signee.user.phone_number,
                 readonly: false
               },
               {
                 name: "Email",
-                default_value: user.email,
+                default_value: signee.email,
                 readonly: false
               },
               {
@@ -66,15 +91,15 @@ class Contract
               }
             ]
           },
-          if cosigner_email.present?
+          if cosigner.present?
             {
               role: "Cosigner",
-              email: cosigner_email
+              email: cosigner.email
             }
           end,
           {
             role: "HCB",
-            email: creator&.email || "hcb@hackclub.com",
+            email: hcb.email,
             send_email: true,
             fields: [
               {
@@ -96,6 +121,26 @@ class Contract
           }
         ].compact
       }
+    end
+
+    def required_roles
+      ["hcb", "signee"]
+    end
+
+    def pending_signee_information
+      signee = party :signee
+      cosigner = party :cosigner
+      hcb = party :hcb
+
+      if signee && !signee.signed?
+        { label: "You", email: signee.email }
+      elsif cosigner && !cosigner.signed?
+        { label: "Your parent/legal guardian", email: cosigner.email }
+      elsif hcb && !hcb.signed?
+        { label: "HCB point of contact", email: hcb.email }
+      else
+        nil
+      end
     end
 
   end

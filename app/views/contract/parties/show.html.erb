@@ -8,7 +8,7 @@
   <div class="max-h-[75vh] overflow-scroll md:col-span-3">
     <docuseal-form
       id="docusealForm"
-      data-src="<%= @docuseal_url %>"
+      data-src="<%= @party.docuseal_signature_url %>"
       data-action="completed->contract#completed declined->contract#void">
     </docuseal-form>
   </div>
@@ -19,6 +19,6 @@
         it's a mystery!
       </p>
     <% end %>
-    <%= link_to "Next", contract_signed_contract_path(s: @secret), class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
+    <%= link_to "Next", completed_contract_party_path(@party), class: "btn", data: { "contract-target": "doneButton" }, disabled: true %>
   </div>
 </div>
