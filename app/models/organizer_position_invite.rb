@@ -77,6 +77,8 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
+  has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
+
   belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
@@ -105,7 +107,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def deliver
-    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
+    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later unless organizer_position_invite_request.present?
   end
 
   def accept(show_onboarding: true)
@@ -147,7 +149,7 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     # Don't send mailer if this is the first organizer
-    if self.event.users.size > 1
+    if self.event.users.size > 1 || organizer_position_invite_request.present?
       OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
     end
 
