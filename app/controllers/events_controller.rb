@@ -97,7 +97,7 @@ class EventsController < ApplicationController
     canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
     all_transactions = [*pending_transactions, *canonical_transactions]
 
-    @recent_transactions = all_transactions.first(5)
+    @recent_transactions = all_transactions.first(6)
 
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
@@ -126,7 +126,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(5)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -315,9 +315,13 @@ class EventsController < ApplicationController
 
   # GET /events/1/edit
   def edit
+    authorize @event
+    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
+      return redirect_to edit_event_path(@event.slug, tab: "details")
+    end
+
     @settings_tab = params[:tab]
     @frame = params[:frame]
-    authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"

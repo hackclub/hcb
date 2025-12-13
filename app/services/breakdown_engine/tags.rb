@@ -16,9 +16,8 @@ module BreakdownEngine
 
           true
         end
-        amount_cents_sum = transactions.sum do |hcb_code|
-          hcb_code.amount_cents.abs
-        end
+
+        amount_cents_sum = transactions.sum { |hcb_code| hcb_code.amount_cents.abs }
         next if amount_cents_sum == 0
 
         array << {
@@ -28,34 +27,47 @@ module BreakdownEngine
         }
       end
 
-      tags.sort_by! { |tag| tag[:value] }.reverse!
+      # largest first
+      tags.sort_by! { |tag| -tag[:value] }
 
       total_amount = tags.sum { |tag| tag[:value] }
+      return [] if total_amount.zero?
+
       threshold = total_amount * 0.05
 
+      # if you do not care about threshold when there are very few tags,
+      # you can early return here:
+      # return tags if tags.size < 10
+
       if threshold > 0
-        # Update tags to apply the threshold condition
-        tags = tags.map do |tag|
-          {
-            name: tag[:name],
-            truncated: tag[:truncated],
-            value: (tag[:value] >= threshold ? tag[:value] : 0)
-          }
+        big_tags, small_tags = tags.partition { |tag| tag[:value] >= threshold }
+
+        # ensure at least 10 slices total (9 tags + "Other") if there are enough tags
+        min_visible_tags = 9
+        if tags.size >= 10 && (big_tags.size + 1) < 10
+          needed = min_visible_tags - big_tags.size
+          # take largest "small" tags to show individually
+          small_tags.sort_by! { |tag| -tag[:value] }
+          big_tags.concat(small_tags.shift([needed, small_tags.size].min))
         end
 
-        # Calculate "Other" amount
-        other_amount = total_amount - tags.sum { |tag| tag[:value] }
-        if other_amount > 0
-          tags << {
+        visible_tags = big_tags
+        other_amount = total_amount - visible_tags.sum { |tag| tag[:value] }
+
+        if other_amount > 0 && small_tags.any?
+          visible_tags << {
             name: "Other",
             truncated: "Other",
             value: other_amount
           }
         end
+
+        return visible_tags
       end
 
       tags
     end
+
 
   end
 end

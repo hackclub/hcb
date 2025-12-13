@@ -1,0 +1,29 @@
+<div class="mobile-nav">
+  <div class="mobile-nav--trigger" data-behavior="modal_trigger" data-modal="mobile_nav">
+    <%= inline_icon events_nav(@event, selected: local_assigns[:selected]).find { |e| e[:selected] }&.[](:icon) || "settings", class: "muted" %>
+    <span class="text-lg truncate"><%= events_nav(@event, selected: local_assigns[:selected]).find { |e| e[:selected] }&.[](:name) || "Settings" %></span>
+    <%= inline_icon "up-caret", class: "ml-auto muted" %>
+  </div>
+</div>
+<section class="mobile-nav--modal !bg-transparent md:!shadow-none" data-behavior="modal" role="dialog" id="mobile_nav" style="height: 100vh!important;padding-bottom:40px;width:100%;max-width:100%;margin:0">
+  <div class="mobile-nav--popover h-full">
+    <div class="h-full overflow-y-auto overflow-x-hidden p-4">
+      <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>
+        <% if item[:section] %>
+          <span class="dock__section mb-0"><%= item[:section] %></span>
+          <hr class="mt-1 mb-2 opacity-20">
+        <% else %>
+          <div>
+            <%= dock_item item[:name],
+              item[:path],
+              tooltip: item[:tooltip],
+              icon: item[:icon],
+              async_badge: item[:async_badge],
+              selected: item[:selected] %>
+          </div>
+        <% end %>
+      <% end %>
+      <%= render partial: "events/settings_dropdown" %>
+    </div>
+  </div>
+</section>

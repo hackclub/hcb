@@ -2,13 +2,10 @@
 <% page_md %>
 <% disabled = !policy(@user).update? %>
 
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_security %>
 
-<h1>
-  Settings
-</h1>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "users/settings_nav", active: "security" %>
+  <%= render "settings_header", active: "security" %>
   <fieldset>
     <% unless @user.phone_number.blank? %>
       <%= turbo_frame_tag :sms_auth_card do %>

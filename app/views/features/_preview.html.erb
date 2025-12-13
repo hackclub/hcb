@@ -8,7 +8,7 @@
       <% if local_assigns[:fully_shipped] || Flipper.enabled?(local_assigns[:feature_flag]) %>
         <%# Feature is enabled for all users, don't include a choice %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
-          <span class="btn bg-accent disabled">Shipped!</span>
+          <span class="btn bg-success btn-small disabled">Shipped!</span>
         </div>
       <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
         <%= button_to(
@@ -36,12 +36,12 @@
             ) %>
       <% end %>
     </div>
-    <p>
+    <p class="m-0 mb-4">
       <%= sanitize(local_assigns[:description]) %>
     </p>
     <% if local_assigns[:footer].present? %>
-      <section class="card__banner card__darker secondary border-top">
-        <p class="my0">
+      <section class="card__banner card__darker secondary border-top mt-4">
+        <p class="m-0">
           <%= sanitize(local_assigns[:footer], attributes: %w(href data-turbo-action)) %>
         </p>
       </section>

@@ -15,8 +15,8 @@
   <%= render partial: "stripe_cards/canceled_warning", locals: { stripe_card: @card } %>
 
   <turbo-frame id="details">
-    <article class="check--form flex <%= "flex-col" if @frame %> items-start justify-center mt3 mb3 gap-4">
-      <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
+    <article class="check--form <%= @frame ? "flex-col" : "sm:flex" %> items-start justify-center mt-2 mb3 gap-2">
+      <section class="center mt0" style="<%= "width: 300px;max-width: 100%;min-width:300px;" unless @frame %>">
         <% if @card.card_grant.present? %>
           <% admin_tool do %>
             This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
@@ -26,7 +26,6 @@
         <% end %>
 
         <%= render "stripe_cards/stripe_card", stripe_card: @card, headless: true %>
-
         <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card } %>
       </section>
 

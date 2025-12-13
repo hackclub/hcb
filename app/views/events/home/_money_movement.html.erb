@@ -18,7 +18,7 @@
       <% @money_in.each do |transaction| %>
         <% rendered_transaction = capture do %>
           <div style="min-width:0;flex:1">
-            <span class="truncate block"><%= transaction_memo(transaction) %></span>
+            <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
             <div class="text-sm text-gray-500">
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
@@ -35,9 +35,8 @@
 
         <% if organizer_signed_in? %>
           <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-          <% css_classes = popover_enabled ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>
           <a
-            class="homepage-transaction <%= css_classes %>"
+            class="homepage-transaction <%= "clickable" if popover_enabled %>"
             href="<%= url_for(transaction.local_hcb_code) %>"
             data-behavior="modal_trigger"
             data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
@@ -77,7 +76,7 @@
       <% @money_out.each do |transaction| %>
         <% rendered_transaction = capture do %>
           <div style="min-width:0;flex:1">
-            <span class="truncate block"><%= transaction_memo(transaction) %></span>
+            <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
             <div class="text-sm text-gray-500">
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
@@ -94,9 +93,8 @@
 
         <% if organizer_signed_in? %>
           <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-          <% css_classes = popover_enabled ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>
           <a
-            class="homepage-transaction <%= css_classes %>"
+            class="homepage-transaction <%= "clickable" if popover_enabled %>"
             href="<%= url_for(transaction.local_hcb_code) %>"
             data-behavior="modal_trigger"
             data-modal="money_movement_tx_details_<%= transaction.local_hcb_code.__id__ %>">
