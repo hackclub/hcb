@@ -191,8 +191,8 @@ module UsersHelper
                                  onclick: "window.open('mailto:#{user.email}'); return false;",
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                ),
-                              #  copy to clipboard
-                              content_tag(
+                               #  copy to clipboard
+                               content_tag(
                                  :span,
                                  safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
                                  onclick: "navigator.clipboard.writeText('#{user.email}');alert('Copied!'); return false;",
