@@ -261,3 +261,9 @@ a.card {
 #card-pin {
   width: 64px;
 }
+.hcb-code--details-admin-tool p {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}

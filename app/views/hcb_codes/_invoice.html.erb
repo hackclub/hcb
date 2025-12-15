@@ -234,7 +234,7 @@
           <%= format_datetime @invoice.payout_creation_queued_at %>
         <% end %>
       </div>
-      <% admin_tool do %>
+      <% admin_tool("hcb-code--details-admin-tool") do %>
         <%= invoice_payout_datetime %>
       <% end %>
     </section>
@@ -252,7 +252,7 @@
           <% end %>
         </div>
         <div class="details">
-        <%= invoice_payout_datetime %>
+          <%= invoice_payout_datetime %>
         </div>
       </section>
     <% elsif @invoice.payout %>
