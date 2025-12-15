@@ -100,7 +100,7 @@ class Contract
           {
             role: "HCB",
             email: hcb.email,
-            send_email: true,
+            send_email: false,
             fields: [
               {
                 name: "HCB ID",
