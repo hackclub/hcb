@@ -3,6 +3,7 @@
 class Contract
   class PartiesController < ApplicationController
     before_action :set_party
+    skip_before_action :signed_in_user, only: [:show, :completed]
 
     def show
       authorize @party
