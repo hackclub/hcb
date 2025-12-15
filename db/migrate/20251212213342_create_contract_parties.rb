@@ -8,6 +8,7 @@ class CreateContractParties < ActiveRecord::Migration[8.0]
       t.string :aasm_state
 
       t.datetime :signed_at
+      t.datetime :deleted_at
       t.timestamps
     end
   end

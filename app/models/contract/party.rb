@@ -6,8 +6,10 @@
 #
 #  id             :bigint           not null, primary key
 #  aasm_state     :string
+#  deleted_at     :datetime
 #  external_email :string
 #  role           :integer          not null
+#  signed_at      :datetime
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  contract_id    :bigint           not null
