@@ -314,7 +314,7 @@
 
 <% if @invoice.payment_method_type == 'card' %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
-    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(@invoice, class: "h3 font-sans slate regular") %>
+    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + invoice_payment_method_mention(@invoice, class: "h3 font-sans slate dark:text-white regular") %>
 
     <article class="details-horiz">
       <div class="details">
