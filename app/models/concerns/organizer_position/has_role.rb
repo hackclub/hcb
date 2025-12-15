@@ -24,7 +24,9 @@ class OrganizerPosition
     private
 
     def at_least_one_manager
-      event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
+      unless event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
+        errors.add(:event, "must have at least one manager")
+      end
     end
   end
 
