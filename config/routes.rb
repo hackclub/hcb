@@ -257,9 +257,11 @@ Rails.application.routes.draw do
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
       post "referral_program_create", to: "admin#referral_program_create"
+      post "referral_link_create", to: "admin#referral_link_create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
+      get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
     end
 
     member do
@@ -579,6 +581,7 @@ Rails.application.routes.draw do
   end
 
   get "brand_guidelines", to: redirect("branding")
+  get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
   get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
@@ -674,7 +677,10 @@ Rails.application.routes.draw do
           resources :donations, path: "donations", only: [:create]
 
           member do
-            get "transactions"
+            get "sub_organizations"
+            post "sub_organizations", to: "events#create_sub_organization"
+
+            get "transactions", to: "transactions#index"
             get :followers
           end
         end
@@ -982,9 +988,9 @@ Rails.application.routes.draw do
     get "balance_by_date"
   end
 
-  scope module: "referral" do
-    resources :programs, only: [:show], path: "referrals"
-    resources :programs, only: [:show], path: "from/*slug"
+  scope as: "referral", module: "referral" do
+    resources :links, only: [:show], path: "referrals"
+    resources :links, only: [:show], path: "from/*slug"
   end
 
   # rewrite old event urls to the new ones not prefixed by /events/

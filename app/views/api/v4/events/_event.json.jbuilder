@@ -2,6 +2,7 @@
 
 json.created_at event.created_at
 json.id event.public_id
+json.parent_id event.parent&.public_id
 json.name event.name
 json.country event.country
 json.slug event.slug
