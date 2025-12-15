@@ -6,7 +6,7 @@ module LoginsHelper
       name: "Assemble",
       time: "Summer 2022",
       slug: "assemble",
-      background: "linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, rgba(0 0 0 / 40%) 100%), url('https://cloud-cuely0z02-hack-club-bot.vercel.app/0assemble__2_.jpg')"
+      background: "linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, rgba(0 0 0 / 40%) 100%), url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d58273e5fbfd30f_image.png')"
     }
   ].map do |hackathon|
     hackathon[:url] = "/#{hackathon[:slug]}"

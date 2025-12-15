@@ -50,6 +50,8 @@ module Users
           cardGrantAmount: Metric::User::CardGrantAmount.from(@user).metric,
           reimbursementCount: Metric::User::ReimbursementCount.from(@user).metric,
           reimbursementAmount: Metric::User::ReimbursementAmount.from(@user).metric,
+          wiseTransferCount: Metric::User::WiseTransferCount.from(@user).metric,
+          wiseTransferAmount: Metric::User::WiseTransferAmount.from(@user).metric,
           bestFriend: Metric::User::MostInteractedWith.from(@user).metric
         },
         organizations: @user.events.to_h do |event|

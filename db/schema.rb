@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1983,7 +1983,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
 
   create_table "referral_attributions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "referral_link_id"
+    t.bigint "referral_link_id", null: false
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -1997,7 +1997,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
     t.bigint "creator_id", null: false
     t.string "name", null: false
     t.bigint "program_id", null: false
-    t.string "slug", null: false
+    t.string "slug"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_links_on_creator_id"
     t.index ["program_id"], name: "index_referral_links_on_program_id"
@@ -2007,7 +2007,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_035167) do
   create_table "referral_programs", force: :cascade do |t|
     t.string "background_image_url"
     t.datetime "created_at", null: false
-    t.bigint "creator_id"
+    t.bigint "creator_id", null: false
     t.text "login_body_text"
     t.string "login_header_text"
     t.string "login_text_color"
