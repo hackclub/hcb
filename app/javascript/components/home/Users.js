@@ -19,9 +19,9 @@ export default function Users({ data }) {
     <ResponsiveContainer
       width="100%"
       height={420}
-      padding={{ top: 32, left: 50 }}
+      padding={{ top: 32, left: 40 }}
     >
-      <BarChart data={data} layout="vertical">
+      <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
         <XAxis
           type="number"
           tickFormatter={n => {
