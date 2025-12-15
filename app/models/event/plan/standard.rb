@@ -83,10 +83,6 @@ class Event
         true
       end
 
-      def contract_docuseal_template_id
-        2117499
-      end
-
     end
 
   end
