@@ -64,8 +64,7 @@
   flex-direction: column;
 
   > p,
-  > div,
-  .details-horiz__col {
+  > div {
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -91,21 +90,9 @@
     margin-right: -16px;
     @media (min-width: 32em) {
       flex-direction: row;
-
       > p,
-      > div,
-      .details-horiz__col {
-        margin-top: 0;
-        margin-bottom: 0;
-
-        &:not(:first-child) {
-          padding-left: 1rem;
-        }
-
-        &:not(:last-child) {
-          border-right: 1px solid map-get($palette, smoke);
-          padding-right: 1.25rem;
-        }
+      > div {
+        @extend .details-horiz;
       }
     }
   }

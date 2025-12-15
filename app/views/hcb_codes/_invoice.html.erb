@@ -110,11 +110,11 @@
       <strong>Payment methods</strong>
       <span class="flex">
         <% unless @invoice.item_amount >= Invoice::MAX_CARD_AMOUNT %>
-          <span class="bg-smoke slate tooltipped tooltipped--s inline-flex rounded mr2" aria-label="Credit or debit cards" style="padding: 4px;">
+          <span class="bg-smoke dark:bg-neutral-700 slate tooltipped tooltipped--s inline-flex rounded mr2" aria-label="Credit or debit cards" style="padding: 4px;">
             <%= inline_icon "card", size: 24 %>
           </span>
         <% end %>
-        <span class="bg-smoke slate tooltipped tooltipped--s inline-flex rounded" aria-label="ACH credit transfers and domestic wires">
+        <span class="bg-smoke dark:bg-neutral-700 slate tooltipped tooltipped--s inline-flex rounded" aria-label="ACH credit transfers and domestic wires">
           <%= inline_icon "bank-account", size: 32 %>
         </span>
       </span>
@@ -206,7 +206,7 @@
     </h2>
     <section class="hcb-code--details">
       <% if @invoice.payment_method_type == 'card' %>
-        <action data-behavior="modal_trigger" data-modal="payment_details" class="details-horiz__col pointer" tabindex="0">
+        <div data-behavior="modal_trigger" data-modal="payment_details" class="flex flex-col pointer" tabindex="0">
           <strong>
             <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
             <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -217,7 +217,7 @@
           <span class="inline-flex">
             <%= invoice_payment_method_mention %>
           </span>
-        </action>
+        </div>
       <% else %>
         <div>
           <strong>Payment method</strong>
