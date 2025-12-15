@@ -133,16 +133,6 @@ class Contract < ApplicationRecord
     contractable.contract_event
   end
 
-  def signee_signed?
-    signee = docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }&.first
-    signee["status"] == "completed"
-  end
-
-  def cosigner_signed?
-    cosigner = docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }&.first
-    cosigner.nil? || cosigner["status"] == "completed"
-  end
-
   def party(role)
     parties.find_by(role:)
   end
