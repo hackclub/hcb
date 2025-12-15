@@ -4,7 +4,7 @@ module OneTimeJobs
   class BackfillOwners
     def self.perform
       OrganizerPosition.find_each do |op|
-        if op.is_signee
+        if op.is_signee && op.fiscal_sponsorship_contract&.signed?
           op.update!(role: :owner)
         end
       end
