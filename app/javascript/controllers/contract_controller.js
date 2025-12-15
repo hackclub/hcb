@@ -1,13 +1,13 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['doneButton']
+  static values = { advancePath: String }
 
   completed() {
-    this.doneButtonTarget.removeAttribute('disabled')
+    window.location.href = this.advancePathValue
   }
 
   void() {
-    window.location.path = '/'
+    window.location.href = '/'
   }
 }
