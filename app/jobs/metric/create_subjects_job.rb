@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Metric
-  class CalculateSubjectsJob < ApplicationJob
+  class CreateSubjectsJob < ApplicationJob
     queue_as :low
     # Don't retry job, reattempt at next cron scheduled run
     discard_on(StandardError) do |job, error|
@@ -18,7 +18,7 @@ class Metric
 
     def queue_calculations_for(metric_class)
       metric_class.subject_model.all.find_each do |record|
-        Metric::CalculateSingleJob.perform_later(metric_class, record)
+        metric_class.from(record)
       end
     end
 

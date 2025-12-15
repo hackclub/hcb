@@ -25,7 +25,6 @@ class Metric < ApplicationRecord
     raise "Cannot directly instantiate a Metric" if self.instance_of? Metric
   end
 
-  before_create :populate
   belongs_to :subject, polymorphic: true, optional: true # if missing, it's an application-wide metric
 
   include AASM
@@ -36,11 +35,35 @@ class Metric < ApplicationRecord
     state :completed
     state :failed
     state :canceled
+
+    event :mark_processing do
+      transitions to: :processing
+    end
+
+    event :mark_completed do
+      transitions from: :processing, to: :completed
+    end
+
+    event :mark_failed do
+      transitions from: :processing, to: :failed
+    end
+
+    event :mark_canceled do
+      transitions from: :queued, to: :canceled
+    end
   end
 
-  def populate
-    self.metric = calculate
-    touch if persisted? # Shows that the metric is update to date; even if value hasn't changed
+  def populate!
+    mark_processing!
+    begin
+      self.metric = calculate
+      mark_completed!
+    rescue => e
+      Rails.error.report e
+      mark_failed!
+    end
+
+    self
   end
 
   def calculate
@@ -66,26 +89,18 @@ class Metric < ApplicationRecord
     return loc_array[0, loc_array.length - 1].join(" - ")
   end
 
-  def self.from(subject, repopulate: false)
-    metric = self.where(subject:).order(updated_at: :desc).first_or_initialize(subject:)
+  def self.queue_for_later_from(subject)
+    metric = self.where(subject:, year: Metric.year).order(updated_at: :desc).create_or_find_by!(subject:, year: Metric.year)
 
-    # If creating, save and return the new record
-    if metric.new_record?
-      unless metric.save
-        Rails.error.unexpected "Failed to save metric #{metric.inspect}"
-        return nil
-      end
-      return metric
-    end
+    Metric::PerformJob.perform_later(metric)
+  end
 
-    if repopulate
-      metric.populate
-      metric.updated_at = Time.now # force touch even if no changes
-      unless metric.save
-        Rails.error.unexpected "Failed to save metric #{metric.inspect}"
-        metric.reload
-      end
-    end
+  def self.from(subject)
+    metric = self.where(subject:, year: Metric.year).order(updated_at: :desc).first_or_initialize(subject:, year: Metric.year)
+
+    return metric if metric.persisted? && metric.completed?
+
+    metric.populate!
 
     metric
   end
@@ -95,3 +110,4 @@ class Metric < ApplicationRecord
   end
 
 end
+
