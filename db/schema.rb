@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_180637) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_220502) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1548,6 +1548,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_180637) do
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
+    t.integer "year"
     t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
