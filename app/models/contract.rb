@@ -62,12 +62,6 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
-  after_update do
-    if !party(:hcb).signed? && parties.where.not(role: :hcb).all?(&:signed?)
-      ContractMailer.with(contract: self).pending_hcb.deliver_later
-    end
-  end
-
   aasm timestamps: true do
     state :pending, initial: true
     state :sent
@@ -151,6 +145,14 @@ class Contract < ApplicationRecord
 
   def party(role)
     parties.find_by(role:)
+  end
+
+  def on_party_signed
+    if contract.parties.all?(&:signed?)
+      contract.mark_signed!
+    elsif !party(:hcb).signed? && parties.where.not(role: :hcb).all?(&:signed?)
+      ContractMailer.with(contract: self).pending_hcb.deliver_later
+    end
   end
 
   private

@@ -48,9 +48,7 @@ class Contract
       event :mark_signed do
         transitions from: :pending, to: :signed
         after do
-          if contract.parties.all?(&:signed?)
-            contract.mark_signed!
-          end
+          contract.on_party_signed
         end
 
       end
