@@ -12,7 +12,11 @@ class DocusealController < ActionController::Base
 
       if params[:event_type] == "form.completed"
         party = contract.parties.detect { |party| party.docuseal_role == params[:data][:role] }
-        party.mark_signed!
+        if party.present?
+          party.mark_signed!
+        else
+          Rails.error.unexpected("Unexpected docuseal party #{params[:data][:role]}")
+        end
       elsif params[:event_type] == "form.declined"
         contract.mark_voided!
       end
