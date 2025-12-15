@@ -183,7 +183,7 @@ def invoice_payout_datetime(invoice = @invoice)
   strong_tag = content_tag :strong, title
   date_tag = format_date date
 
-  content_tag(:p, class: "flex flex-col m-0 p-0") { strong_tag + date_tag }
+  content_tag(:p) { strong_tag + date_tag }
 end
 
 def invoice_fee_type(invoice = @invoice)
