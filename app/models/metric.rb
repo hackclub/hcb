@@ -5,6 +5,7 @@
 # Table name: metrics
 #
 #  id           :bigint           not null, primary key
+#  aasm_state   :string
 #  metric       :jsonb
 #  subject_type :string
 #  type         :string           not null
@@ -25,6 +26,16 @@ class Metric < ApplicationRecord
 
   before_create :populate
   belongs_to :subject, polymorphic: true, optional: true # if missing, it's an application-wide metric
+
+  include AASM
+
+  aasm do
+    state :queued, initial: true
+    state :processing
+    state :completed
+    state :failed
+    state :canceled
+  end
 
   def populate
     self.metric = calculate

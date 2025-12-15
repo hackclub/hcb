@@ -5,6 +5,7 @@
 # Table name: metrics
 #
 #  id           :bigint           not null, primary key
+#  aasm_state   :string
 #  metric       :jsonb
 #  subject_type :string
 #  type         :string           not null

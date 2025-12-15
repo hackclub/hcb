@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_180637) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1541,6 +1541,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
   end
 
   create_table "metrics", force: :cascade do |t|
+    t.string "aasm_state"
     t.datetime "created_at", null: false
     t.jsonb "metric"
     t.bigint "subject_id"
