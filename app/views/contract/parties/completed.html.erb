@@ -15,7 +15,7 @@
     <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
   <% else %>
     <p>
-      Your cosigner (<%= @contract.party(:cosigner).email %>) still needs to sign - we just sent them a reminder email.
+      Your cosigner still needs to sign the agreement that we sent to their email (<%= @contract.party(:cosigner).email %>).
       Once they sign, you'll be able to start your new project!
     </p>
   <% end %>
