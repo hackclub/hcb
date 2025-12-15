@@ -21,7 +21,7 @@ export default function Users({ data }) {
       height={420}
       padding={{ top: 32, left: 40 }}
     >
-      <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
+      <BarChart data={data} layout="vertical" margin={{ left: 15 }}>
         <XAxis
           type="number"
           tickFormatter={n => {
