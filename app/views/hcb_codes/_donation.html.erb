@@ -103,7 +103,7 @@
         <%= user_mention @donation.collected_by %>
       </div>
     <% end %>
-    <% admin_tool do %>
+    <% admin_tool("hcb-code--details-admin-tool") do %>
       <%= donation_payout_datetime %>
     <% end %>
   </section>
