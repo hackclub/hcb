@@ -24,6 +24,9 @@ class Contract
     include Hashid::Rails
     hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
+    acts_as_paranoid
+    has_paper_trail
+
     belongs_to :user, optional: true
     belongs_to :contract, optional: false
 
