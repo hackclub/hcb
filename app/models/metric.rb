@@ -110,4 +110,3 @@ class Metric < ApplicationRecord
   end
 
 end
-

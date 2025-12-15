@@ -10,7 +10,7 @@ class Metric
 
     def perform
       metric_classes.each do |metric_class|
-        metric_class.from(nil)
+        metric_class.queue_for_later_from(nil)
       end
     end
 

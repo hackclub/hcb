@@ -18,7 +18,7 @@ class Metric
 
     def queue_calculations_for(metric_class)
       metric_class.subject_model.all.find_each do |record|
-        metric_class.from(record)
+        metric_class.queue_for_later_from(record)
       end
     end
 
