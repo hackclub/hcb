@@ -88,13 +88,6 @@
   &:not(.details-horiz--lg) {
     margin-left: -16px;
     margin-right: -16px;
-    @media (min-width: 32em) {
-      flex-direction: row;
-      > p,
-      > div {
-        @extend .details-horiz;
-      }
-    }
   }
 
   @media (min-width: 45em) {
