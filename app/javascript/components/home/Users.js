@@ -45,7 +45,8 @@ export default function Users({ data }) {
           verticalAnchor="start"
           interval={0}
           height={80}
-          dx={5}
+          dx={7}
+          tickMargin={16}
           tickFormatter={v => ` ${v}`}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
