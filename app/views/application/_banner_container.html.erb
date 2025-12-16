@@ -1,9 +1,4 @@
 <div class="banner-container">
-  <%= render "application/maintenance_banner",
-              datetime: "2025-05-07T00:00:00-08:00",
-              duration: 30.minutes,
-              learn_more_url: "https://blog.hcb.hackclub.com/posts/7th-may-maintenance" %>
-
   <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
     <div class="w-100 px4 !bg-red transparency-banner">
       <p class="h5 medium center py-2 my-0 text-white text-xl">
