@@ -35,9 +35,9 @@ module OneTimeJobs
           party = nil
           begin
             party = if user.present? && role != "cosigner"
-                      contract.parties.find_or_create_by!(role:, user:, skip_pending_validation: true)
+                      contract.parties.create!(role:, user:, skip_pending_validation: true) unless contract.party(role).present?
                     else
-                      contract.parties.find_or_create_by!(role:, external_email: email, skip_pending_validation: true)
+                      contract.parties.create!(role:, external_email: email, skip_pending_validation: true) unless contract.party(role).present?
                     end
           rescue => e
             Rails.error.report(e)
