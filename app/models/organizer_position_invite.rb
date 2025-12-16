@@ -213,13 +213,14 @@ class OrganizerPositionInvite < ApplicationRecord
       contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
       contract.parties.create!(user:, role: :signee)
       contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
-      contract.send!
 
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
 
       event.set_airtable_status("Documents sent")
     end
+
+    contract.send!
   end
 
   def on_contract_signed(contract)
