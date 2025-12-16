@@ -6,7 +6,14 @@ class Contract
     skip_before_action :signed_in_user, only: [:show, :completed]
 
     def show
-      authorize @party
+      begin
+        authorize @party
+      rescue Pundit::NotAuthorizedError
+        unless signed_in?
+          skip_authorization
+          return redirect_to auth_users_path(return_to: contract_party_path(@party)), flash: { info: "To continue, please sign in with the email that you received the invitation with." }
+        end
+      end
 
       if @party.signed?
         redirect_to completed_contract_party_path(@party)
