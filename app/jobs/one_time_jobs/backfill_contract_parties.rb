@@ -7,7 +7,7 @@ module OneTimeJobs
         submitters = nil
         begin
           submitters = contract.docuseal_document["submitters"]
-        rescue e
+        rescue => e
           Rails.error.report(e)
         end
         next if submitters.nil?
