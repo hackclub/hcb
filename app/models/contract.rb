@@ -157,25 +157,6 @@ class Contract < ApplicationRecord
     end
   end
 
-  def docuseal_pending_signee_information
-    return nil unless sent_with_docuseal?
-
-    submitters = docuseal_document["submitters"]
-    signee = submitters.find { |s| s["role"] == "Contract Signee" }
-    cosigner = submitters.find { |s| s["role"] == "Cosigner" }
-    hcb_signer = submitters.find { |s| s["role"] == "HCB" }
-
-    if signee && signee["status"] != "completed"
-      { role: "Contract Signee", label: "You", email: signee["email"] }
-    elsif cosigner && cosigner["status"] != "completed"
-      { role: "Cosigner", label: "Your parent/legal guardian", email: cosigner["email"] }
-    elsif hcb_signer && hcb_signer["status"] != "completed"
-      { role: "HCB", label: "HCB point of contact", email: hcb_signer["email"] }
-    else
-      nil
-    end
-  end
-
   def send_using_docuseal!
     response = docuseal_client.post("/submissions") do |req|
       req.body = payload.to_json
