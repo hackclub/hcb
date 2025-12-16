@@ -9,7 +9,9 @@ class Contract
       begin
         authorize @party
       rescue Pundit::NotAuthorizedError
-        unless signed_in?
+        if signed_in?
+          raise
+        else
           skip_authorization
           return redirect_to auth_users_path(return_to: contract_party_path(@party)), flash: { info: "To continue, please sign in with the email that you received the invitation with." }
         end
