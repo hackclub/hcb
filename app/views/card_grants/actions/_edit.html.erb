@@ -2,7 +2,7 @@
 
 <% if card_grant.pre_authorization&.unauthorized? %>
   <%= link_to card_grant_pre_authorizations_path(card_grant),
-              class: "btn btn--list-item" do %>
+              class: "btn whitespace-nowrap" do %>
     <%= inline_icon "pre-authorization" %>
     <p><strong>View pre-authorization</strong></p>
   <% end %>
