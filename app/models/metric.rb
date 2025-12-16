@@ -94,13 +94,13 @@ class Metric < ApplicationRecord
   end
 
   def self.queue_for_later_from(subject)
-    metric = self.where(subject:, year: Metric.year).order(updated_at: :desc).find_or_create_by!(subject:, year: Metric.year)
+    metric = self.order(completed_at: :desc, updated_at: :desc).find_or_create_by!(subject:, year: Metric.year)
 
-    Metric::PerformJob.perform_later(metric)
+    Metric::PopulateJob.perform_later(metric)
   end
 
   def self.from(subject)
-    metric = self.order(updated_at: :desc).find_or_initialize_by(subject:, year: Metric.year)
+    metric = self.order(completed_at: :desc, updated_at: :desc).find_or_initialize_by(subject:, year: Metric.year)
 
     return metric if metric.persisted? && metric.completed?
 
