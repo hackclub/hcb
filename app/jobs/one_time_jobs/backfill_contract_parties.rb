@@ -7,6 +7,10 @@ module OneTimeJobs
         submitters = contract.docuseal_document["submitters"]
         next if submitters.nil?
 
+        # Collect all emails from submitters in this contract
+        emails = submitters.map { |s| s["email"] }.compact.uniq
+        users_by_email = User.where(email: emails).index_by(&:email)
+
         submitters.each do |submitter|
           role = case submitter["role"]
                  when "Contract Signee"
@@ -21,7 +25,7 @@ module OneTimeJobs
           next unless role.present?
 
           email = submitter["email"]
-          user = User.find_by(email:)
+          user = users_by_email[email]
 
           party = nil
           begin
