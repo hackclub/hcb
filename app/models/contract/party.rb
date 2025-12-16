@@ -34,9 +34,11 @@ class Contract
 
     enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
 
+    attr_accessor :skip_pending_validation
+
     validates :role, uniqueness: { scope: :contract }
     validate :signee_is_user
-    validate :contract_is_pending, on: :create
+    validate :contract_is_pending, on: :create, unless: :skip_pending_validation
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
     normalizes :external_email, with: ->(external_email) { external_email.strip.downcase }
