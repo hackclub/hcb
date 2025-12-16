@@ -37,7 +37,7 @@ class Contract
     after_update_commit if: ->{ sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") } do
       document = Document.new(
         event:,
-        name: "Fiscal sponsorship agreement with #{party(:signee).user.name}"
+        name: "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
       )
       contract_document = docuseal_document["documents"][0]
 
