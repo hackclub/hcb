@@ -45,7 +45,7 @@ class Contract
 
     def set_party
       @party = Contract::Party.find_by_hashid(params[:id])
-      @contract = @party.contract
+      @contract = @party.contract if @party.present?
     end
 
   end
