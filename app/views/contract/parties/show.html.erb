@@ -9,6 +9,7 @@
     <docuseal-form
       id="docusealForm"
       data-src="<%= @party.docuseal_signature_url %>"
+      data-with-title="false"
       data-action="completed->contract#completed declined->contract#void">
     </docuseal-form>
   </div>
