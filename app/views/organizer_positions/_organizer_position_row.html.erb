@@ -51,7 +51,7 @@
                 <%= link_to void_contract_path(organizer_position.organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
                   Void this contract
                 <% end %>
-                <% organizer_position.organizer_position_invite.contract.parties.reject {|party| party.role == "hcb"}.each do |party| %>
+                <% organizer_position.organizer_position_invite.contract.parties.reject { |party| party.role == "hcb" }.each do |party| %>
                   <%= link_to resend_contract_party_path(party), data: { turbo_method: :post } do %>
                     Resend to the <%= party.role %>
                   <% end %>
