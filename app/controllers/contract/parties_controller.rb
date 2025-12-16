@@ -17,6 +17,7 @@ class Contract
         return
       elsif @contract.pending?
         flash[:error] = "This contract has not been sent yet. Try again later."
+        Rails.error.unexpected("Contract not sent, but user is trying to sign it. Party ID: #{@party.id}")
         redirect_to root_path
         return
       end
