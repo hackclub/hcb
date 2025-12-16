@@ -20,8 +20,8 @@
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module User
