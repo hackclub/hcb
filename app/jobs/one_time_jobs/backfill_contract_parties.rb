@@ -4,7 +4,12 @@ module OneTimeJobs
   class BackfillContractParties < ApplicationJob
     def perform
       Contract.sent_with_docuseal.find_each do |contract|
-        submitters = contract.docuseal_document["submitters"]
+        submitters = nil
+        begin
+          submitters = contract.docuseal_document["submitters"]
+        rescue e
+          Rails.error.report(e)
+        end
         next if submitters.nil?
 
         # Collect all emails from submitters in this contract
