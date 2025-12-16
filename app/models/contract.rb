@@ -138,8 +138,6 @@ class Contract < ApplicationRecord
   def on_party_signed
     if parties.all?(&:signed?)
       mark_signed!
-    elsif !party(:hcb).signed? && parties.where.not(role: :hcb).all?(&:signed?)
-      ContractMailer.with(contract: self).pending_hcb.deliver_later
     end
   end
 
