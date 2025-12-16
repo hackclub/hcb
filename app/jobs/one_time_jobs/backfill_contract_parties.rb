@@ -35,9 +35,9 @@ module OneTimeJobs
           party = nil
           begin
             party = if user.present? && role != "cosigner"
-                      contract.parties.create!(role:, user:, skip_pending_validation: true)
+                      contract.parties.find_or_create_by!(role:, user:, skip_pending_validation: true)
                     else
-                      contract.parties.create!(role:, external_email: email, skip_pending_validation: true)
+                      contract.parties.find_or_create_by!(role:, external_email: email, skip_pending_validation: true)
                     end
           rescue => e
             Rails.error.report(e)
@@ -45,7 +45,7 @@ module OneTimeJobs
 
           next if party.nil?
 
-          if submitter["status"] == "completed"
+          if !party.signed? && submitter["status"] == "completed"
             party.update!(aasm_state: "signed", signed_at: submitter["completed_at"])
           end
         end
