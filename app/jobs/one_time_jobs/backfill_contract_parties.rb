@@ -29,7 +29,7 @@ module OneTimeJobs
 
           party = nil
           begin
-            party = if user.present?
+            party = if user.present? && role != "cosigner"
                       contract.parties.create!(role:, user:, skip_pending_validation: true)
                     else
                       contract.parties.create!(role:, external_email: email, skip_pending_validation: true)
