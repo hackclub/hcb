@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_12_213342) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1555,13 +1555,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_213342) do
   end
 
   create_table "metrics", force: :cascade do |t|
+    t.string "aasm_state"
+    t.datetime "canceled_at"
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.datetime "failed_at"
     t.jsonb "metric"
+    t.datetime "processing_at"
     t.bigint "subject_id"
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
+    t.integer "year"
+    t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
