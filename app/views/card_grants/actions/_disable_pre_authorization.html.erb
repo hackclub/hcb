@@ -1,6 +1,8 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, label: "") %>
 
-<% pre_authorization_tooltip = if policy(card_grant).disable_pre_authorization?
+<% pre_authorization_tooltip = if label.presence
+                                 label
+                               elsif policy(card_grant).disable_pre_authorization?
                                  "Disable pre-authorizations for this grant"
                                else
                                  "You don't have permission to perform this action"
