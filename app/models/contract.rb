@@ -71,9 +71,7 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        parties.each do |party|
-          party.notify
-        end
+        parties.each(&:notify)
       end
     end
 
