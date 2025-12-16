@@ -1,7 +1,7 @@
 <%# locals: (card_grant:, label: "") %>
 
 <% totu_tooltip = if label.presence
-                    label 
+                    label
                   elsif policy(card_grant).toggle_one_time_use?
                     if card_grant.one_time_use
                       "Allow for unlimited authorizations on this card"
