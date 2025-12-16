@@ -46,7 +46,12 @@ class Contract
 
     def set_party
       @party = Contract::Party.find_by_hashid(params[:id])
-      @contract = @party.contract if @party.present?
+
+      if @party.nil?
+        raise ActionController::RoutingError.new("Not Found")
+      end
+
+      @contract = @party.contract
     end
 
   end
