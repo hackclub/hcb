@@ -992,6 +992,10 @@ class EventsController < ApplicationController
       "paypal_transfer"        => {
         "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
         "pending" => ->(t) { t.paypal_transfer_id }
+      },
+      "wise_transfer"          => {
+        "settled" => ->(t) { t.local_hcb_code.wise_transfer? },
+        "pending" => ->(t) { t.wise_transfer_id }
       }
     }
 
