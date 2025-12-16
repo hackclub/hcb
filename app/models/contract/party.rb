@@ -8,7 +8,7 @@
 #  aasm_state     :string
 #  deleted_at     :datetime
 #  external_email :string
-#  role           :integer          not null
+#  role           :string           not null
 #  signed_at      :datetime
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
@@ -32,7 +32,7 @@ class Contract
     belongs_to :user, optional: true
     belongs_to :contract, optional: false
 
-    enum :role, { signee: 0, cosigner: 1, hcb: 2 }
+    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
 
     validates :role, uniqueness: { scope: :contract }
     validate :signee_is_user

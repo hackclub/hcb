@@ -630,7 +630,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_12_213342) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
-    t.integer "role", null: false
+    t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id"

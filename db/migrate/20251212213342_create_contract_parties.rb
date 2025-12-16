@@ -3,7 +3,7 @@ class CreateContractParties < ActiveRecord::Migration[8.0]
     create_table :contract_parties do |t|
       t.references :user
       t.references :contract, null: false
-      t.integer :role, null: false
+      t.string :role, null: false
       t.string :external_email
       t.string :aasm_state
 
