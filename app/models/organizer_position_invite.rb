@@ -101,7 +101,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def pending_signature?
-    is_signee && contracts.where(aasm_state: :signed).none?
+    role == "owner" && contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -128,7 +128,6 @@ class OrganizerPositionInvite < ApplicationRecord
       event:,
       user:,
       role:,
-      is_signee:,
       first_time: show_onboarding,
     )
 
@@ -205,15 +204,9 @@ class OrganizerPositionInvite < ApplicationRecord
     [slug, "#{slug} #{sequence}"]
   end
 
-  def signee?
-    is_signee
-  end
-
   def send_contract(cosigner_email: nil, include_videos: false)
     ActiveRecord::Base.transaction do
       Contract::FiscalSponsorship.create!(contractable: self, cosigner_email:, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
-      update!(is_signee: true)
-      organizer_position&.update(is_signee: true)
 
       event.set_airtable_status("Documents sent")
     end
@@ -223,19 +216,21 @@ class OrganizerPositionInvite < ApplicationRecord
     if contract.is_a?(Contract::FiscalSponsorship)
       deliver if organizer_position.nil?
 
-      # Unfreeze the event if this is the first signed contract
-      if event.contracts.signed.count == 1
-        event.update!(financially_frozen: false)
-      end
+      ActiveRecord::Base.transaction do
+        # Unfreeze the event if this is the first signed contract
+        if event.contracts.signed.count == 1
+          event.update!(financially_frozen: false)
+        end
 
-      organizer_position&.update!(fiscal_sponsorship_contract: contract)
+        organizer_position&.update!(role: :owner, fiscal_sponsorship_contract: contract)
+        update!(role: :owner)
+      end
     end
   end
 
   def on_contract_voided(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      update(is_signee: false)
-      organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
+      organizer_position&.update(fiscal_sponsorship_contract: nil)
     end
   end
 

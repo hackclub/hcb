@@ -439,6 +439,29 @@
       "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
     },
     {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "d2a47e20528c2c6e0351aae7660323fd537a18e88baad206e772a68450af3db1",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/concerns/organizer_position/has_role.rb",
+      "line": 27,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "event.organizer_positions.where(\"role >= #{self.class.roles[:manager]}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OrganizerPosition",
+        "method": "at_least_one_manager"
+      },
+      "user_input": "self.class.roles[:manager]",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "Interpolated value is a constant integer defined in the same file"
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "d481458455ae77c564012369a37ac50d170afa950b5198b725be27503c08a432",

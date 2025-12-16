@@ -10,7 +10,8 @@ class OrganizerPosition
       enum :role, {
         reader: 5,
         member: 25,
-        manager: 100
+        manager: 100,
+        owner: 1000
       }
 
       roles.each do |role_name, role_value|
@@ -18,20 +19,14 @@ class OrganizerPosition
       end
 
       validate :at_least_one_manager
-
-      validate :signee_is_manager
     end
 
     private
 
     def at_least_one_manager
-      event&.organizer_positions&.where(role: :manager)&.any?
-    end
-
-    def signee_is_manager
-      return unless is_signee && role != "manager"
-
-      errors.add(:role, "must be a manager because the user is a legal owner.")
+      unless event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
+        errors.add(:event, "must have at least one manager")
+      end
     end
   end
 

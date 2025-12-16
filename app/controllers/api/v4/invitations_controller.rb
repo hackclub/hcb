@@ -32,7 +32,7 @@ module Api
           return render json: { error: "User already has a pending invitation" }, status: :unprocessable_entity
         end
 
-        service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email: params[:email], is_signee: false, role: params[:role], enable_spending_controls: params[:enable_spending_controls], initial_control_allowance_amount: params[:initial_control_allowance_amount])
+        service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email: params[:email], role: params[:role], enable_spending_controls: params[:enable_spending_controls], initial_control_allowance_amount: params[:initial_control_allowance_amount])
 
         @invitation = service.model
 

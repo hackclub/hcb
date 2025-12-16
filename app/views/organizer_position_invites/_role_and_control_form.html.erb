@@ -24,8 +24,9 @@
       <p class="muted mb1"><span class="bold info">Readers</span> have read-only access to the organization.</p>
     </div>
   </div>
+  <% roles = OrganizerPositionInvite.roles.keys.select { |role| admin_signed_in? || role != "owner" } %>
   <%= form.select :role,
-                  OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
+                  roles.map { |role| [role.titleize, role] },
                   {},
                   style: "max-width:120px !important",
                   "x-model": "role" %>

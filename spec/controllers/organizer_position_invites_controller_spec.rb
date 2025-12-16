@@ -64,11 +64,10 @@ RSpec.describe OrganizerPositionInvitesController do
           event_id: event.friendly_id,
           organizer_position_invite: {
             email: "orpheus@hackclub.com",
-            role: "manager",
+            role: "owner",
             enable_controls: "false",
             cosigner_email: "cosigner@hackclub.com",
             include_videos: "true",
-            is_signee: "true",
           }
         }
       )
@@ -79,7 +78,7 @@ RSpec.describe OrganizerPositionInvitesController do
       expect(flash[:success]).to eq("Invite successfully sent to orpheus@hackclub.com")
 
       invite = event.organizer_position_invites.last
-      expect(invite.is_signee).to eq(true)
+      expect(invite.role).to eq("owner")
 
       contract = invite.contracts.sole
       expect(contract.cosigner_email).to eq("cosigner@hackclub.com")
