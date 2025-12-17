@@ -1,7 +1,7 @@
 <p>Hi there! 👋</p>
 
 <p>
-  We can't wait to have your project on HCB! You've been invited to sign a fiscal sponsorship contract for <%= @contract.event.name %> on HCB.
+  We can't wait to have your project on HCB! You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event.name %> on HCB.
 </p>
 
 <% if @contract.include_videos? %>
@@ -23,7 +23,7 @@
 <% end %>
 
 <p>
-  <%= link_to "Click here", @contract.user_signature_url %> to sign the contract and get running on HCB!
+  <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement and get running on HCB!
 </p>
 
 <p>
