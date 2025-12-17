@@ -1177,9 +1177,6 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
-    @ledger_filters_disabled = !organizer_signed_in? && @event.slug == "hq"
-    return if @ledger_filters_disabled
-
     if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
@@ -1203,6 +1200,12 @@ class EventsController < ApplicationController
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
+    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?) && @event.slug == "hq"
+    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
+    if @ledger_filters_disabled && has_filters
+      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 
