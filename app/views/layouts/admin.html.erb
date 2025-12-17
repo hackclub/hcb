@@ -70,7 +70,7 @@
                 data-menu-target="toggle"
                 data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
                 <%= section.name %>
-                <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
+                <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
                   <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
                 </span>
               </button>
@@ -78,7 +78,7 @@
                 <% section.items.each do |item| %>
                   <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
                     <%= item.name %>
-                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content ml-auto">
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit ml-auto">
                       <%= item.count %>
                     </span>
                   <% end %>

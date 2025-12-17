@@ -33,7 +33,7 @@
       </div>
     </div>
     <% if organizer_signed_in? %>
-      <div class="flex flex-wrap g1 h-fit-content justify-end">
+      <div class="flex flex-wrap g1 h-fit justify-end">
         <% if admin_signed_in? %>
           <div class="tooltipped tooltipped--s" aria-label="Edit user's settings">
             <%= pop_icon_to "controls", edit_user_path(organizer_position.user.slug), data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
