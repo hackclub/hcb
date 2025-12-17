@@ -5,7 +5,6 @@
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
   <% current_month = Date.current.strftime("%B") %>
-  <% next_month = Date.current.next_month.strftime("%B") %>
 
   <% @raffle_card = capture do %>
     <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
