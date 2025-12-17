@@ -78,14 +78,14 @@
 
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
-        <p class="h5 medium center mt1 mb1">
+        <p class="h5 medium center py-2 my-0">
           <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
         </p>
       </div>
     <% end %>
     <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
       <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
-        <p class="h5 font-medium text-center text-balance mt1 mb1">
+        <p class="h5 font-medium text-center text-balance py-2 my-0">
           This HCB organization has made their finances public.
           Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
         </p>
@@ -99,8 +99,8 @@
 
     <%# ghosts and ghouls %>
     <% if fall? %>
-      <img src="https://cloud-iuqyduosh-hack-club-bot.vercel.app/0image.png" alt="oOoOoOoOo" class="flying-spook ghost">
-      <img src="https://cloud-fy14iajlp-hack-club-bot.vercel.app/0image__50_-removebg-preview.png" alt="witch orpheus" class="flying-spook">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7e4929972e5eee4c_image.png" alt="oOoOoOoOo" class="flying-spook ghost">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/1106e43a5e5219cf_image.png" alt="witch orpheus" class="flying-spook">
     <% end %>
 
     <% if content_for?(:nav) %>
@@ -149,8 +149,6 @@
         <%= render "application/footer" unless @no_app_shell || @hide_footer %>
       </main>
     <% end %>
-
-    <%= render "application/support_button" unless @no_app_shell %>
 
     <%= render "application/fullstory" %>
 

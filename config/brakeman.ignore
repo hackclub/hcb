@@ -196,13 +196,13 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "735bbf85ca21b70bf3b08f8ad5615ad3f037fe183b1f7801d13df4fdf761f66d",
+      "fingerprint": "842304376abd28273945166e54498133accb7cdfb9c731061649ff771c4c3a18",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
       "line": 14,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0\", :target => \"_blank\")",
+      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0\", :target => \"_blank\")",
       "render_path": [
         {
           "type": "controller",
@@ -225,7 +225,7 @@
       "cwe_id": [
         79
       ],
-      "note": "This parameter is validated to match a specific format"
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",

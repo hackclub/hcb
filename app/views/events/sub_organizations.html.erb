@@ -6,15 +6,17 @@
   <%= turbo_stream_from @event, :scoped_tags %>
 <% end %>
 
-<h1 class="heading flex">
+<h1 class="heading flex items-center gap-2 flex-col sm:flex-row">
   <span class="flex-grow">Sub-organizations</span>
-  <%= pop_icon_to "download",
-                  { format: :csv },
-                  class: "align-middle tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
-  <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
-    <%= inline_icon "plus" %>
-    Create a subsidiary
-  <% end %>
+  <div class="flex items-center gap-2">
+    <%= pop_icon_to "download",
+                    { format: :csv },
+                    class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+    <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+      <%= inline_icon "plus" %>
+      Create a subsidiary
+    <% end %>
+  </div>
 </h1>
 
 <div class="flex items-center details-horiz details-horiz--lg mb-2" style="gap: 8px; pointer-events: none;">
@@ -30,7 +32,7 @@
     </div>
 </div>
 
-<div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
+<div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/search", form: %>
   <% end %>
@@ -40,7 +42,7 @@
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @sub_organizations.any? %>
-  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+  <ul class="grid grid--medium-narrow text-left w-100 mt0">
     <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
   </ul>
 <% else %>

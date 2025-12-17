@@ -5,7 +5,7 @@
   <%= form.submit "Search", class: "ml1" %>
 <% end %>
 
-<div class="flex items-center mb2">
+<div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @bank_fees, entry_name: "HCB fees" %>
     (<%= render_money @sum %>)

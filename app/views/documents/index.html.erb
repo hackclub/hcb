@@ -2,9 +2,17 @@
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1>Documents</h1>
+<h1 class="flex">
+  Documents
+  <% admin_tool "w-fit ml-auto p-0 -mt-1" do %>
+    <%= link_to "Upload a document",
+    new_document_path(event_id: @event.slug),
+    class: "btn bg-success -mt-2 -translate-y-[2px]",
+    disabled: !admin_signed_in? %>
+  <% end %>
+</h1>
 
-<ul class="tab-container">
+<ul class="tab-container -mt-3">
   <%= settings_tab active: true do %>
     <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
@@ -12,13 +20,6 @@
       <%= link_to "Financial statements", event_statements_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
 </ul>
-
-<% admin_tool "w-fit mx-auto" do %>
-  <%= link_to "Upload a document",
-  new_document_path(event_id: @event.slug),
-  class: "btn bg-success",
-  disabled: !admin_signed_in? %>
-<% end %>
 
 <ul class="grid">
   <div class="grid-row text">
@@ -31,7 +32,7 @@
               <%= image_tag event_verification_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
             </div>
 
-            <strong class="h3 block mt1 line-height-2">Verification Letter</strong>
+            <strong class="h3 block mt1 leading-[1.125]">Verification Letter</strong>
             <%= user_mention @event.point_of_contact %>
           </li>
         <% end if @event.account_number %>
@@ -40,7 +41,7 @@
               <div class="overflow-hidden" style="max-height: 250px;">
                 <%= image_tag event_fiscal_sponsorship_letter_url(event_id: @event.slug, format: "png"), width: 330, style: "max-width: 100%;" %>
               </div>
-              <strong class="h3 block mt1 line-height-2">Fiscal Sponsorship Confirmation</strong>
+              <strong class="h3 block mt1 leading-[1.125]">Fiscal Sponsorship Confirmation</strong>
               <%= user_mention @event.point_of_contact %>
             </li>
           <% end %>
@@ -73,8 +74,8 @@
   <ul class="list-reset">
     <li class="mb3">
       <details>
-        <summary class="cursor-pointer relative mb2">
-          <h3 class="inline mb1">Archived Documents</h3>
+        <summary class="relative mb2">
+          <h3 class="inline mb1">Archived documents</h3>
         </summary>
         <article>
           <ul class="grid">

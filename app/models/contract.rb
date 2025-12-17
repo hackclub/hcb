@@ -33,6 +33,8 @@
 #
 class Contract < ApplicationRecord
   include AASM
+  include Hashid::Rails
+
   acts_as_paranoid
   has_paper_trail
 
@@ -40,13 +42,25 @@ class Contract < ApplicationRecord
   belongs_to :contractable, polymorphic: true
 
   has_one :organizer_position, required: false
+  has_many :parties
 
   validate :one_non_void_contract
 
-  after_create_commit :send_using_docuseal!, unless: :sent_with_manual?
-
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+
+  # Always create HCB's party on all contracts
+  # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
+  after_create do
+    whodunnit = PaperTrail.request.whodunnit
+    whodunnit_user = whodunnit.present? ? User.find(whodunnit) : nil
+
+    user = User.system_user
+    if whodunnit_user&.admin?
+      user = whodunnit_user
+    end
+    parties.create!(user:, role: :hcb)
+  end
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -57,8 +71,7 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        ContractMailer.with(contract: self).notify.deliver_later
-        ContractMailer.with(contract: self).notify_cosigner.deliver_later if cosigner_email.present?
+        parties.each(&:notify)
       end
     end
 
@@ -87,28 +100,9 @@ class Contract < ApplicationRecord
     docuseal_client.get("submissions/#{external_id}").body
   end
 
-  def user_signature_url
-    docuseal_user_signature_url if sent_with_docuseal?
-  end
-
-  def docuseal_user_signature_url
-    "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
-  end
-
-  def cosigner_signature_url
-    docuseal_cosigner_signature_url if sent_with_docuseal?
-  end
-
-  def docuseal_cosigner_signature_url
-    return nil unless cosigner_email.presence
-
-    "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Cosigner" }[0]["slug"]}"
-  end
-
   def pending_signee_information
-    return docuseal_pending_signee_information if sent_with_docuseal?
-
-    nil
+    # This method should be overwritten in subclasses of Contract
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own pending signee information."
   end
 
   def payload
@@ -116,39 +110,35 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own contract payload data."
   end
 
-  def send_using_docuseal!
+  def required_roles
+    # This method should be overwritten in subclasses of Contract
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
+  end
+
+  def send!
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
-    response = docuseal_client.post("/submissions") do |req|
-      req.body = payload.to_json
-    end
-    update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+    existing_roles = parties.map(&:role)
+    missing_roles = required_roles.select { |role| existing_roles.exclude? role }
+    raise ArgumentError, "contract missing required roles: #{missing_roles.join ", "}" unless missing_roles.empty?
+
+    send_using_docuseal! unless sent_with_manual?
+
     mark_sent!
-  end
-
-  def archive_on_docuseal!
-    docuseal_client.delete("/submissions/#{external_id}")
-  end
-
-  def one_non_void_contract
-    if contractable.contracts.where.not(aasm_state: :voided).excluding(self).any?
-      self.errors.add(:base, "source already has a contract!")
-    end
-  end
-
-  def creator
-    user_id = versions.first&.whodunnit
-    return nil unless user_id
-
-    User.find_by_id(user_id)
-  end
-
-  def user
-    contractable.contract_user
   end
 
   def event
     contractable.contract_event
+  end
+
+  def party(role)
+    parties.find_by(role:)
+  end
+
+  def on_party_signed
+    if parties.all?(&:signed?)
+      mark_signed!
+    end
   end
 
   private
@@ -165,22 +155,21 @@ class Contract < ApplicationRecord
     end
   end
 
-  def docuseal_pending_signee_information
-    return nil unless sent_with_docuseal?
+  def send_using_docuseal!
+    response = docuseal_client.post("/submissions") do |req|
+      req.body = payload.to_json
+    end
 
-    submitters = docuseal_document["submitters"]
-    signee = submitters.find { |s| s["role"] == "Contract Signee" }
-    cosigner = submitters.find { |s| s["role"] == "Cosigner" }
-    hcb_signer = submitters.find { |s| s["role"] == "HCB" }
+    update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+  end
 
-    if signee && signee["status"] != "completed"
-      { role: "Contract Signee", label: "You", email: signee["email"] }
-    elsif cosigner && cosigner["status"] != "completed"
-      { role: "Cosigner", label: "Your parent/legal guardian", email: cosigner["email"] }
-    elsif hcb_signer && hcb_signer["status"] != "completed"
-      { role: "HCB", label: "HCB point of contact", email: hcb_signer["email"] }
-    else
-      nil
+  def archive_on_docuseal!
+    docuseal_client.delete("/submissions/#{external_id}")
+  end
+
+  def one_non_void_contract
+    if contractable.contracts.where.not(aasm_state: :voided).excluding(self).any?
+      self.errors.add(:base, "source already has a contract!")
     end
   end
 
