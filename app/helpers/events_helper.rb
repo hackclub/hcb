@@ -221,8 +221,6 @@ module EventsHelper
       return ""
     end
 
-    puts badge_tag
-
     link_to children, (disabled ? "javascript:" : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
