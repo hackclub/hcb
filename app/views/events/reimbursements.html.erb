@@ -67,8 +67,8 @@
         <th>Status</th>
         <th>Report</th>
         <th>From</th>
-        <th class="right-align">Amount</th>
-        <th class="right-align">Created</th>
+        <th class="text-right">Amount</th>
+        <th class="text-right">Created</th>
       </tr>
       </thead>
       <tbody>
@@ -90,10 +90,10 @@
             <td style="width: 200px; overflow: hidden; text-overflow: ellipsis;">
                <%= user_mention report.user %>
             </td>
-            <td class="right-align">
+            <td class="text-right">
                <%= report.amount.format %>
             </td>
-            <td class="right-align">
+            <td class="text-right">
                <%= format_date report.created_at %>
             </td>
           </tr>

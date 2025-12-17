@@ -6,10 +6,10 @@
       <%= inline_icon "info", size: 32, class: "mr1" %>
       <p class="bold mt0 mb0">Heads up:</p>
     </div>
-    <p class="mt1 left-align">
+    <p class="mt1 text-left">
       Since this card is a replacement, activating it will permanently deactivate <%= stripe_card_mention stripe_card.replacement_for %>.
     </p>
-    <p class="mt1 left-align">
+    <p class="mt1 text-left">
       You'll need to update billing information for any subscriptions that use <%= stripe_card_mention stripe_card.replacement_for %>.
     </p>
     <div class="field field--checkbox">

@@ -61,7 +61,7 @@
 
     <% if @events.any? %>
       <ul
-        class="grid grid--medium-narrow left-align w-100 mt0"
+        class="grid grid--medium-narrow text-left w-100 mt0"
         data-controller="sortable event-sort"
         data-sortable-append-to-value="body"
         data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"

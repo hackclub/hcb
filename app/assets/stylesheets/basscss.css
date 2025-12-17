@@ -24,8 +24,7 @@
 .text-decoration-none {
   text-decoration: none;
 }
-.bold,
-.semibold {
+.bold {
   font-weight: 600;
 }
 .medium {
@@ -34,14 +33,8 @@
 .regular {
   font-weight: 400;
 }
-.left-align {
-  text-align: left;
-}
 .center {
   text-align: center;
-}
-.right-align {
-  text-align: right;
 }
 .justify {
   text-align: justify;

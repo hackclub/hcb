@@ -155,7 +155,7 @@
         <td class="<%= width_css_class %>"><%= render_money @invoice.item_amount %></td>
       </tr>
       <tr class="border-none">
-        <td class="right-align pr1"><strong>Total</strong></td>
+        <td class="text-right pr1"><strong>Total</strong></td>
         <td class="<%= width_css_class %>">
           <strong><%= render_money @invoice.item_amount %></strong>
           <% if @invoice.deposited? && @invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 %>

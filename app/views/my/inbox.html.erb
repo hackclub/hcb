@@ -67,7 +67,7 @@
 
 <%= render partial: "receipts/blankslate", locals: { count: @receipts.size } %>
 
-<ul class="grid grid--medium-narrow left-align w-100 mt0" id="receipts_list">
+<ul class="grid grid--medium-narrow text-left w-100 mt0" id="receipts_list">
   <% @receipts.each do |receipt| %>
     <li class="flex grid flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
       <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true } %>
