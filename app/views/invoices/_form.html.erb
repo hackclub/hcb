@@ -57,7 +57,7 @@
           </summary>
           <%= form.fields_for :sponsor_attributes do |form| %>
             <div data-invoice-form-target="sponsorForm">
-              <p id="sponsor-warning" class="flex items-center info line-height-3" hidden>
+              <p id="sponsor-warning" class="flex items-center info leading-[1.25]" hidden>
                 <%= inline_icon "important", size: 32, class: "mr1" %>
                 You're currently updating a previous sponsor. This will also update all past invoices to them.
               </p>

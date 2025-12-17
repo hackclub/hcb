@@ -1,4 +1,8 @@
 /*! Basscss | http://basscss.com | MIT License */
+/**
+  * DO NOT add new classes here. The goal is to deprecate using BassCSS. 
+  * See https://github.com/hackclub/hcb/issues/5623
+  */
 .h1 {
   font-size: 2rem;
 }
@@ -44,18 +48,6 @@
 }
 .nowrap {
   white-space: nowrap;
-}
-.line-height-1 {
-  line-height: 1;
-}
-.line-height-2 {
-  line-height: 1.125;
-}
-.line-height-3 {
-  line-height: 1.25;
-}
-.line-height-4 {
-  line-height: 1.5;
 }
 .truncate {
   max-width: 100%;

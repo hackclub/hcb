@@ -55,7 +55,7 @@
         <% @recurring_donations.each do |recurring_donation| %>
           <tr>
             <td style="width: 1%"><span class="ml0 mr1 badge bg-success"><%= recurring_donation.stripe_status.humanize %></span></td>
-            <td class="line-height-3">
+            <td class="leading-[1.25]">
               <% if recurring_donation.is_a? RecurringDonation %>
                 <%= recurring_donation.name(show_anonymous: organizer_signed_in?) %><br>
               <% else %>
