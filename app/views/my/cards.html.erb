@@ -53,7 +53,9 @@
   <% else %>
     <%= blankslate "No cards found!" %>
   <% end %>
-  <%= turbo_frame_tag :my_missing_receipts_list, src: my_missing_receipts_list_path, target: "_top" %>
+
+  <%= turbo_frame_tag :subscriptions_list, src: my_subscriptions_list_path, target: "_top" %>
+
   <% if @emburse_cards.any? %>
     <details class="mt3">
       <summary>
