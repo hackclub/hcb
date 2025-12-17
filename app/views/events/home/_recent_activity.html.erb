@@ -2,7 +2,7 @@
   <% if @activities.length > 0 %>
     <div class="card card--breakdown relative flex-1 flex flex-col p-0" style="min-height: <%= 67.7 * 7 %>px;max-height: <%= 67.7 * 7 %>px">
       <div style="position: absolute; bottom: 0; left: 0; height: 100px; width: 100%; background: linear-gradient(transparent, var(--card-bg)); pointer-events: none; z-index: 1"></div>
-      <div class="flex items-center p-2 pl-0 pt-4 sm:p-4 mt-auto justify-between">
+      <div class="flex items-center p-4 mt-auto justify-between">
         <h3 class="m-0">Recent activity</h3>
         <%= link_to edit_event_path(@event, tab: "audit_log"), class: "flex items-center shrink-0 no-underline" do %>
           See all
