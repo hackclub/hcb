@@ -73,13 +73,6 @@ class DonationJwtService
 
   # Constant-time string comparison to prevent timing attacks
   private_class_method def self.secure_compare(a, b)
-    return false if a.bytesize != b.bytesize
-
-    l = a.unpack("C*")
-    r = b.unpack("C*")
-
-    result = 0
-    l.zip(r) { |x, y| result |= x ^ y }
-    result == 0
+    ActiveSupport::SecurityUtils.secure_compare(a, b)
   end
 end
