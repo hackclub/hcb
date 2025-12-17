@@ -3,7 +3,7 @@
     <div id="merchants-chart">
       <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top merchants</h3>
       <div style="width: calc(100% + 20px)">
-        <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false, ssr: false } %>
+        <%= react_component "home/Merchants", { data: @merchants }, { camelize_props: false } %>
       </div>
     </div>
    <% else %>

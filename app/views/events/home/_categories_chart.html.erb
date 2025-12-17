@@ -2,7 +2,7 @@
   <% if !@categories.empty? %>
     <div id="categories-chart">
       <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top categories</h3>
-      <%= react_component "home/Categories", { data: @categories }, { camelize_props: false, ssr: false } %>
+      <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
     </div>
     <%# Only shown if merchants chart is visible to prevent awkward gap %>
   <% else %>
