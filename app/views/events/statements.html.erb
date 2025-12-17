@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1 class="flex">
+<h1 class="flex mb-0 border-0">
   Documents
   <% admin_tool "w-fit ml-auto p-0 -mt-1" do %>
     <%= link_to "Upload a document",
@@ -12,7 +12,7 @@
   <% end %>
 </h1>
 
-<ul class="tab-container -mt-3">
+<ul class="tab-container mt-0">
   <%= settings_tab do %>
     <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
