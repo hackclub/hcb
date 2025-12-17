@@ -13,7 +13,7 @@
       </div>
     <% else %>
       <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top tags</h3>
-      <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+      <%= react_component "home/Tags", { data: tags }, { camelize_props: false, ssr: false } %>
     <% end %>
   </div>
 <% end %>

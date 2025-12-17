@@ -11,7 +11,7 @@
         <% end %>
       </ol>
     <% else %>
-      <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
+      <%= react_component "home/Tags", { data: tags }, { camelize_props: false, ssr: false } %>
     <% end %>
   <% end %>
 <% end %>
