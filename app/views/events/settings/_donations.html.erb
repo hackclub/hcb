@@ -48,6 +48,16 @@
                 <%= config.label :cover_donation_fees, "Allow donors to cover your donation fees" %>
               </div>
             <% end %>
+            <div class="field">
+              <%= config.label :post_donation_redirect_url, "Post-donation redirect URL" %>
+              <%= config.text_field :post_donation_redirect_url, placeholder: "https://example.com/thank-you", class: "w-100 fit", disabled: %>
+              <span class="muted block mt-2">Redirect donors to this URL after completing their donation (optional)</span>
+            </div>
+            <div class="field field--checkbox">
+              <%= config.check_box :post_donation_include_details, disabled:, switch: true %>
+              <%= config.label :post_donation_include_details, "Include donation details in redirect" %>
+              <span class="muted block mt-2">Add a signed JWT token with donation details (ID, name, amount) as a URL parameter</span>
+            </div>
           <% end %>
         </div>
         <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>

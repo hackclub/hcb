@@ -1103,7 +1103,9 @@ class EventsController < ApplicationController
           :cover_donation_fees,
           :contact_email,
           :generate_monthly_announcement,
-          :subevent_plan
+          :subevent_plan,
+          :post_donation_redirect_url,
+          :post_donation_include_details
         ]
       }
     ]
@@ -1162,7 +1164,9 @@ class EventsController < ApplicationController
         :anonymous_donations,
         :cover_donation_fees,
         :contact_email,
-        :generate_monthly_announcement
+        :generate_monthly_announcement,
+        :post_donation_redirect_url,
+        :post_donation_include_details
       ]
     )
 
