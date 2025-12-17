@@ -61,18 +61,6 @@
 .fit {
   max-width: 100%;
 }
-.max-width-1 {
-  max-width: 24rem;
-}
-.max-width-2 {
-  max-width: 32rem;
-}
-.max-width-3 {
-  max-width: 48rem;
-}
-.max-width-4 {
-  max-width: 64rem;
-}
 .flex-auto {
   -webkit-box-flex: 1;
   -webkit-flex: 1 1 auto;

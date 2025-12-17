@@ -31,7 +31,7 @@
 
       <%= render partial: "stripe_cards/details", locals: { stripe_card: @card } if @card.initially_activated? %>
       <% if @card.physical? && !@card.initially_activated? && !@card.canceled? %>
-        <div class="mt2 max-width-2 w-100 mx-auto">
+        <div class="mt2 max-w-lg w-100 mx-auto">
           <div class="grid mb3" style="max-width: 36rem; margin: 0px auto; width: 100%;">
             <%= render partial: "stripe_cards/shipping", locals: { stripe_card: @card } %>
           </div>
