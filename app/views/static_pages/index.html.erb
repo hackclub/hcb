@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading border-b-0 sm:border-b flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
     <% if current_user.hack_clubber? || current_user.teenager? %>
       <a
@@ -20,7 +20,7 @@
   <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<div class="card my-6 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+<div class="card mb-6 mt-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
   <div class="flex-1">
     <p class="my-0 text-lg font-[700]">HCB has gotten a visual refresh!</p>
     <p class="my-0 text-md max-w-2xl">The HCB you know and love has a fresh new look. We're hoping it makes HCB easier to use and navigate, and we'd love to hear your feedback.</p>

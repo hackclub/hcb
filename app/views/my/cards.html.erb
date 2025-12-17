@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "users/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
-<h1 class="heading flex items-center flex-col sm:flex-row mb-2">
+<h1 class="heading flex items-center flex-col sm:flex-row border-0 mb-0">
   <span class="flex items-center">
     Cards
     <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
