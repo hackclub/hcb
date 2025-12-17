@@ -32,10 +32,7 @@
     <%= form.hidden_field :credential, data: { "webauthn-register-target" => "credentialInput" } %>
 
     <div class="actions">
-      <%# TODO: DELETE AND UNCOMMENT THE ORIGINAL CODE BEFORE MERGING UI3 %>
-      <%= form.submit "CONFIGURE WEBAUTHN ON THE MAIN SITE; NOT ON UI3", data: { "webauthn-register-target" => "submitButton" }, disabled: true %>
-
-      <%#= form.submit "Next", data: { "webauthn-register-target" => "submitButton" } %>
+      <%= form.submit "Next", data: { "webauthn-register-target" => "submitButton" } %>
     </div>
   <% end %>
 </section>
