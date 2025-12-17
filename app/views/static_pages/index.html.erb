@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
+<h1 class="heading border-b-0 sm:border-b flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
     <% if current_user.hack_clubber? || current_user.teenager? %>
       <a
