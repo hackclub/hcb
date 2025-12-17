@@ -569,7 +569,7 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   .user-home-section {
     @extend .heading;
     @extend .h2;
-    @apply leading-[1.5] my-2 mr-auto py-2 px-4 border-none ml-0 pl-0 text-left;
+    @apply leading-[1.5] my-2 mr-auto py-2 px-4 border-none ml-0 pl-0 pb-0 mb-0 text-left;
   }
 }
 
