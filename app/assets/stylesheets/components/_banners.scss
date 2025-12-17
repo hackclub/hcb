@@ -5,10 +5,9 @@
   $col2: rgba(map-get($palette, info), 0.2);
 
   width: 100%;
+  text-align: center;
   // background-color: rgba(map-get($palette, primary), 0.2);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.125);
   backdrop-filter: blur(2rem);
-  border: 1px solid map-get($palette, primary);
 
   background-image: linear-gradient(
     135deg,
