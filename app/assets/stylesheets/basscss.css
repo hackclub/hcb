@@ -48,10 +48,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.list-reset {
-  list-style: none;
-  padding-left: 0;
-}
 .left {
   float: left;
 }
