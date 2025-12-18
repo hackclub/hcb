@@ -129,7 +129,7 @@ module Api
       end
 
       def transactions
-        authorize @card_grant, :show?
+        authorize @card_grant
 
         @hcb_codes = @card_grant.visible_hcb_codes
 

@@ -13,6 +13,10 @@ class CardGrantPolicy < ApplicationPolicy
     user&.auditor? || record.user == user || user_in_event?
   end
 
+  def transactions?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || cardholder?
+  end
+
   def spending?
     record.event.is_public? || user&.auditor? || user_in_event?
   end
@@ -46,15 +50,15 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    user&.admin? || (record.user == user && authorized_to_activate?)
+    user&.admin? || (cardholder? && authorized_to_activate?)
   end
 
   def cancel?
-    (admin_or_manager? || record.user == user) && record.active?
+    (admin_or_manager? || cardholder?) && record.active?
   end
 
   def convert_to_reimbursement_report?
-    (admin_or_manager? || record.user == user) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+    (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
   def edit?
@@ -103,6 +107,10 @@ class CardGrantPolicy < ApplicationPolicy
 
   def authorized_to_activate?
     record.pre_authorization.nil? || record.pre_authorization.approved? || record.pre_authorization.fraudulent?
+  end
+
+  def cardholder?
+    record.user == user
   end
 
 end
