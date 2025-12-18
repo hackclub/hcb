@@ -12,13 +12,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
-  enable_extension "pg_stat_statements"
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state"
@@ -622,6 +622,41 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["username"], name: "index_console1984_users_on_username"
+  end
+
+  create_table "contract_parties", force: :cascade do |t|
+    t.string "aasm_state"
+    t.bigint "contract_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_email"
+    t.string "role", null: false
+    t.datetime "signed_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["contract_id"], name: "index_contract_parties_on_contract_id"
+    t.index ["user_id"], name: "index_contract_parties_on_user_id"
+  end
+
+  create_table "contracts", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.bigint "contractable_id"
+    t.string "contractable_type"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at", precision: nil
+    t.bigint "document_id"
+    t.string "external_id"
+    t.integer "external_service"
+    t.string "external_template_id"
+    t.boolean "include_videos"
+    t.jsonb "prefills"
+    t.datetime "signed_at"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "void_at"
+    t.index ["contractable_type", "contractable_id"], name: "index_contracts_on_contractable"
+    t.index ["document_id"], name: "index_contracts_on_document_id"
   end
 
   create_table "disbursements", force: :cascade do |t|
@@ -1497,10 +1532,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.text "browser_token_ciphertext"
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
+    t.bigint "referral_link_id"
     t.bigint "referral_program_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
+    t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
@@ -1518,13 +1555,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   end
 
   create_table "metrics", force: :cascade do |t|
+    t.string "aasm_state"
+    t.datetime "canceled_at"
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.datetime "failed_at"
     t.jsonb "metric"
+    t.datetime "processing_at"
     t.bigint "subject_id"
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
+    t.integer "year"
+    t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
@@ -1678,12 +1721,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
     t.datetime "deleted_at", precision: nil
     t.bigint "event_id"
     t.boolean "first_time", default: true
+    t.bigint "fiscal_sponsorship_contract_id"
     t.boolean "is_signee", default: false
     t.integer "role", default: 100, null: false
     t.integer "sort_index"
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id"
     t.index ["event_id"], name: "index_organizer_positions_on_event_id"
+    t.index ["fiscal_sponsorship_contract_id"], name: "index_organizer_positions_on_fiscal_sponsorship_contract_id"
     t.index ["user_id"], name: "index_organizer_positions_on_user_id"
   end
 
@@ -1956,21 +2001,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
 
   create_table "referral_attributions", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "referral_link_id", null: false
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+  end
+
+  create_table "referral_links", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.string "name", null: false
+    t.bigint "program_id", null: false
+    t.string "slug"
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_links_on_creator_id"
+    t.index ["program_id"], name: "index_referral_links_on_program_id"
+    t.index ["slug"], name: "index_referral_links_on_slug", unique: true
   end
 
   create_table "referral_programs", force: :cascade do |t|
     t.string "background_image_url"
     t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
     t.text "login_body_text"
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
@@ -2620,6 +2681,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   add_foreign_key "column_account_numbers", "events"
   add_foreign_key "comment_reactions", "comments"
   add_foreign_key "comment_reactions", "users", column: "reactor_id"
+  add_foreign_key "contracts", "documents"
   add_foreign_key "disbursements", "events"
   add_foreign_key "disbursements", "events", column: "source_event_id"
   add_foreign_key "disbursements", "transaction_categories", column: "destination_transaction_category_id"
@@ -2715,6 +2777,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   add_foreign_key "organizer_position_spending_control_allowances", "organizer_position_spending_controls"
   add_foreign_key "organizer_position_spending_control_allowances", "users", column: "authorized_by_id"
   add_foreign_key "organizer_position_spending_controls", "organizer_positions"
+  add_foreign_key "organizer_positions", "contracts", column: "fiscal_sponsorship_contract_id"
   add_foreign_key "organizer_positions", "events"
   add_foreign_key "organizer_positions", "users"
   add_foreign_key "payment_recipients", "events"
@@ -2725,8 +2788,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_104532) do
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
+  add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
   add_foreign_key "referral_attributions", "users"
+  add_foreign_key "referral_links", "referral_programs", column: "program_id"
+  add_foreign_key "referral_links", "users", column: "creator_id"
+  add_foreign_key "referral_programs", "users", column: "creator_id"
   add_foreign_key "reimbursement_expense_payouts", "events"
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"

@@ -4,9 +4,6 @@
       <%= yield(:title) if content_for?(:title) %>
     </h1>
     <header class="header flex items-center justify-end">
-      <div style="height: 28px;">
-        <%= render partial: "application/theme_toggle" %>
-      </div>
       <%= render partial: "application/blog_widget" %>
 
       <% if signed_in? %>
@@ -26,7 +23,7 @@
         <% end %>
       <% end %>
 
-      <%= render partial: "logo" %>
+      <%= render partial: "application/logo" %>
 
       <%= render "application/command_bar" %>
 

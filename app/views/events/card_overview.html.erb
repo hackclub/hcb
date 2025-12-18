@@ -1,6 +1,6 @@
 <% title "Cards for #{@event.name}" %>
 <% page_md %>
-<%= render "nav", selected: :cards %>
+<%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
 <% if current_user.try(:full_name).try(:blank?) %>
 
@@ -13,28 +13,30 @@
   <%= render "cards/name_required" %>
 <% else %>
 
-  <h1 class="flex heading items-center">
+  <h1 class="heading flex-col sm:flex-row mb-0 border-0 gap-2 mt-3">
     <span class="flex-grow flex items-center flex-1">
       Cards
       <%= badge_for @event.stripe_cards.active.on_main_ledger.count, class: "bg-muted" %>
     </span>
 
-    <%= render "filter_cards_menu" unless @has_filter %>
-    <%= pop_icon_to @view == "list" ? "grid" : "list",
-                    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
-    <% if organizer_signed_in?(as: :member) %>
-      <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
-        <%= inline_icon "card-add" %>
-        Order a card
+    <div class="flex items-center gap-2">
+      <%= render "events/filter_cards_menu" unless @has_filter %>
+      <%= pop_icon_to @view == "list" ? "grid" : "list",
+                      "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+      <% if organizer_signed_in?(as: :member) %>
+        <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
+          <%= inline_icon "card-add" %>
+          Order a card
+        <% end %>
       <% end %>
-    <% end %>
+    </div>
   </h1>
 
-  <%= render "filter_cards" if @has_filter %>
+  <%= render "events/filter_cards" if @has_filter %>
 
   <% if control = @organizer_position&.active_spending_control %>
     <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
-    <%= render "callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
+    <%= render "application/callout", type: control.balance_cents.zero? ? "warning" : "info", title: do %>
       <ul class="m0">
         <li>Spending controls are enabled for this organization.</li>
         <li>Since you're a <%= @organizer_position.role %>, you must request allowances to spend money.</li>
@@ -62,9 +64,9 @@
 
     <% if @paginated_stripe_cards.blank? %>
       <% if organizer_signed_in? %>
-        <%= blankslate "You don't have any #{@status} cards yet." %>
+        <%= blankslate "You don’t have any #{@status} cards yet" %>
       <% else %>
-        <%= blankslate "This organization doesn't have any #{@status} cards" %>
+        <%= blankslate "This organization doesn’t have any #{@status} cards" %>
       <% end %>
     <% end %>
 
@@ -73,23 +75,20 @@
   <%= paginate @paginated_stripe_cards %>
 
   <% if organizer_signed_in? || @event.used_emburse? %>
-    <div class="flex flex-col justify-center mt4">
-      <section class="grid">
-        <% if organizer_signed_in? %>
-          <div class="text-center">
-            <div class="menu__divider mb3"></div>
-            <%= link_to my_cards_path, class: "btn bg-accent" do %>
-              All your cards →
+    <section class="grid mt3">
+      <% if organizer_signed_in? %>
+        <div class="text-center">
+          <%= link_to my_cards_path, class: "btn bg-accent" do %>
+            All your cards →
+          <% end %>
+          <% if @event.used_emburse? %>
+            <%= link_to event_emburse_cards_overview_path(event_id: @event.slug), class: "mt-3 block no-underline" do %>
+              See previous Emburse cards
             <% end %>
-            <% if @event.used_emburse? %>
-              <%= link_to event_emburse_cards_overview_path(event_id: @event.slug), class: "mt-3 block no-underline" do %>
-                See previous Emburse cards
-              <% end %>
-            <% end %>
-          </div>
-        <% end %>
-      </section>
-    </div>
+          <% end %>
+        </div>
+      <% end %>
+    </section>
   <% end %>
 
 <% end %>
