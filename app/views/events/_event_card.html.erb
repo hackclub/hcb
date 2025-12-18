@@ -6,12 +6,12 @@
       <% if event.logo.attached? %>
         <div class="flex gap-2 items-center">
           <%= image_tag event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
-          <strong class="text-xl leading-tight">
+          <strong class="text-xl leading-tight text-balance">
             <%= event.name %>
           </strong>
         </div>
       <% else %>
-        <strong class="text-xl leading-tight">
+        <strong class="text-xl leading-tight text-balance">
           <%= event.name %>
         </strong>
       <% end %>
@@ -75,7 +75,7 @@
 
               <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
                 <%= inline_icon "plus", size: 15 %>
-                  Create tag
+                Create tag
               </button>
             </div>
           </div>
@@ -83,7 +83,7 @@
       </div>
     <% end %>
 
-    <div class="h4 line-height-2 mb2 mt-1 flex justify-between item-center">
+    <div class="h4 leading-[1.125] mb2 mt-1 flex justify-between item-center">
       <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
         <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>

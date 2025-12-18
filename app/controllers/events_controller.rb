@@ -97,7 +97,7 @@ class EventsController < ApplicationController
     canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
     all_transactions = [*pending_transactions, *canonical_transactions]
 
-    @recent_transactions = all_transactions.first(5)
+    @recent_transactions = all_transactions.first(6)
 
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
@@ -126,7 +126,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(5)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -315,9 +315,13 @@ class EventsController < ApplicationController
 
   # GET /events/1/edit
   def edit
+    authorize @event
+    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
+      return redirect_to edit_event_path(@event.slug, tab: "details")
+    end
+
     @settings_tab = params[:tab]
     @frame = params[:frame]
-    authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
@@ -786,12 +790,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cloud-b01qqxaux.vercel.app/barking_dog_turned_into_wood_meme.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_transforms_after_seeing_chair.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cloud-b01qqxaux.vercel.app/run_now_meme.mp4",
-        "https://cloud-3qup26j81.vercel.app/bonk_sound_effect.mp4",
-        "https://cloud-is6jebpbb.vercel.app/disappearing_doge_meme.mp4"
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -988,6 +992,10 @@ class EventsController < ApplicationController
       "paypal_transfer"        => {
         "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
         "pending" => ->(t) { t.paypal_transfer_id }
+      },
+      "wise_transfer"          => {
+        "settled" => ->(t) { t.local_hcb_code.wise_transfer? },
+        "pending" => ->(t) { t.wise_transfer_id }
       }
     }
 
@@ -1192,6 +1200,12 @@ class EventsController < ApplicationController
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
+    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?) && @event.slug == "hq"
+    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
+    if @ledger_filters_disabled && has_filters
+      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 

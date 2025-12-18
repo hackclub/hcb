@@ -449,7 +449,7 @@ class FlavorTextService
       "I was gonna tell a Bank joke, but ran out of interest",
       "If money talks, why do we need bank tellers?",
       "We’ll be here all week",
-      "Honk club <img src='https://hc-cdn.hel1.your-objectstorage.com/s/v3/fa2b994d89d7af5e_image.png' style='height:1.25em;margin-left:0.5em;'/>".html_safe,
+      "Honk club <img src='https://hc-cdn.hel1.your-objectstorage.com/s/v3/eb0858637571153f_goose-honk-right-intensifies.gif' style='height:1.25em;margin-left:0.5em;'/>".html_safe,
       "Handle with care",
       "This side up",
       "if it makes sense it’ll make dollars",

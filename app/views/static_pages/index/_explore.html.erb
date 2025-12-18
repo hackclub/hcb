@@ -2,7 +2,7 @@
 
 <% if current_user.teenager? %>
   <div class="flex flex-row w-full justify-between items-center">
-    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+    <h2 class="heading h2 leading-[1.5] my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
       Explore Hack Club
     </h2>
     <%= link_to "https://hackclub.com?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
@@ -11,7 +11,7 @@
     <% end %>
   </div>
 
-  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+  <ul class="grid grid--medium-narrow text-left w-100 mt0">
     <%= link_to "https://campfire.hackclub.com/?ref=hcb", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
       <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/ceb2d2a5233f2ec844d4524312d21e0ccd89dbf5_campfire.png')">
         <div class="flex gap-2 items-center">
@@ -98,7 +98,7 @@
 <%# EXPLORE HCB %>
 <% unless @featured_events.none? %>
   <div class="flex flex-row w-full justify-between items-center">
-    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+    <h2 class="heading h2 leading-[1.5] my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
       Explore HCB
     </h2>
     <%= link_to "https://hackclub.com/fiscal-sponsorship/directory?utm_source=hcb&utm_medium=web&utm_campaign=explore", class: "muted", target: :_blank do %>
@@ -107,7 +107,7 @@
     <% end %>
   </div>
 
-  <ul class="grid grid--medium-narrow left-align w-100 mt0">
+  <ul class="grid grid--medium-narrow text-left w-100 mt0">
     <%= render partial: "events/event_card", collection: @featured_events, as: :event, locals: { show_category_badge: true, show_date_stat: true } %>
   </ul>
 <% end %>

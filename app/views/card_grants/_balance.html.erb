@@ -1,6 +1,8 @@
 <%# locals: (card_grant:) %>
 
-<div class="stat mt3 mx-auto <%= "muted" if card_grant.balance == 0 %>" style="width: fit-content">
-  <span class="stat__label">Balance remaining</span>
-  <span class="stat__value"><%= card_grant.balance.format(symbol: false) %></span>
+<div class="statset mb-2">
+  <div class="stat">
+    <span class="stat__label">Balance remaining</span>
+    <span class="stat__value"><%= card_grant.balance.format(symbol: false) %></span>
+  </div>
 </div>
