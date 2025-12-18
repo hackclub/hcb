@@ -12,7 +12,9 @@
         It's quiet here...
       </h3>
       <p class="text-gray-500 my-1 mb-8">
-        Merchants will appear here<br>as you spend more money
+        Merchants will appear here<br>as
+        <%= organizer_signed_in? ? "you" : "they" %>
+        spend more money
       </p>
     </div>
   <% end %>
