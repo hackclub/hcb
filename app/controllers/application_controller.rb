@@ -31,8 +31,8 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    # Disallow indexing
-    response.set_header("X-Robots-Tag", "noindex")
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
   end
 
   before_action do
