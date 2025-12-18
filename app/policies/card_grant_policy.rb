@@ -85,6 +85,8 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  private
+
   def admin_or_user?
     user&.admin? || record.event.users.include?(user)
   end
@@ -98,8 +100,6 @@ class CardGrantPolicy < ApplicationPolicy
 
     record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
   end
-
-  private
 
   def user_in_event?
     record.event.users.include?(user)
