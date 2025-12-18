@@ -6,6 +6,18 @@ module EventsHelper
   def events_nav(event = @event, selected: nil)
     items = []
 
+    if policy(event).activation_flow?
+      items <<
+        {
+          name: "Activate",
+          path: event_activation_flow_path(event_id: event.slug),
+          tooltip: "Activate this organization",
+          icon: "checkmark",
+          selected: selected == :activation_flow,
+          adminTool: true,
+        }
+    end
+
     if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
       items << {
         name: "Home",
@@ -38,17 +50,6 @@ module EventsHelper
       items << { section: "Receive" }
     end
 
-    if policy(event).activation_flow?
-      items <<
-        {
-          name: "Activate",
-          path: event_activation_flow_path(event_id: event.slug),
-          tooltip: "Activate this organization",
-          icon: "checkmark",
-          selected: selected == :activation_flow,
-          adminTool: true,
-        }
-    end
     if policy(event).donation_overview?
       items <<
         {
