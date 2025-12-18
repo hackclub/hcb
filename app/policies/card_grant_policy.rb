@@ -10,11 +10,11 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || record.user == user || user_in_event?
+    user&.auditor? || cardholder? || user_in_event?
   end
 
   def transactions?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || cardholder?
+    user&.auditor? || cardholder? || user_in_event?
   end
 
   def spending?
