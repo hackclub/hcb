@@ -21,7 +21,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this.handleResize = this.handleResize?.bind(this) || this.handleResize.bind(this)
+    this.handleResize = this.handleResize.bind(this)
 
     const getDates = (start, end) => {
       const arr = []
