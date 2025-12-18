@@ -18,15 +18,13 @@ module EventsHelper
         }
     end
 
-    if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
-      items << {
-        name: "Home",
-        path: event_path(id: event.slug),
-        tooltip: "See everything at-a-glance",
-        icon: "home",
-        selected: selected == :home,
-      }
-    end
+    items << {
+      name: "Home",
+      path: event_path(id: event.slug),
+      tooltip: "See everything at-a-glance",
+      icon: "home",
+      selected: selected == :home,
+    }
 
     if policy(@event).announcement_overview?
       items << {
@@ -68,24 +66,6 @@ module EventsHelper
         tooltip: "Collect sponsor payments",
         icon: "payment-docs",
         selected: selected == :invoices,
-      }
-    end
-    if policy(event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
-      items << {
-        name: "Account numbers",
-        path: account_number_event_path(event),
-        tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
-        icon: "account-numbers",
-        selected: selected == :account_number
-      }
-    end
-    if policy(event.check_deposits.build).index? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event)
-      items << {
-        name: "Check deposits",
-        path: event_check_deposits_path(event),
-        tooltip: "Deposit checks",
-        icon: "cheque",
-        selected: selected == :deposit_check,
       }
     end
     if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview?
