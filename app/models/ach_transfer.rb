@@ -271,6 +271,12 @@ class AchTransfer < ApplicationRecord
   end
 
   def approve!(processed_by = nil, send_realtime: false)
+    GovernanceService::Admin::Transfer::Approval.new(
+      transfer: self,
+      amount_cents: amount,
+      user: processed_by,
+    ).ensure_may_approve!
+
     if scheduled_on.present?
       mark_scheduled!
     elsif send_realtime

@@ -2,11 +2,11 @@
 
 source "https://rubygems.org"
 
-ruby File.read(File.join(File.dirname(__FILE__), ".ruby-version")).strip
+ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", "~> 8.0"
 
 gem "puma", "~> 6.6" # app server
 
@@ -16,6 +16,8 @@ gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
 gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
+gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
+# explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
 
 gem "image_processing", "~> 1.2"
 gem "mini_magick"
@@ -35,7 +37,7 @@ gem "country_select", "~> 8.0"
 gem "faraday" # web requests
 
 gem "stripe", "11.7.0"
-gem "plaid", "~> 34.0"
+gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
 gem "aws-sdk-s3", require: false
@@ -101,13 +103,12 @@ gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
 gem "loofah" # html email parsing
+gem "reverse_markdown" # public activity to discord
 
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations", "~> 1" # protects against risky migrations
-# [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
-#               2.x is incompatible with Postgres 11.
+gem "strong_migrations", "~> 2" # protects against risky migrations
 gem "xxhash" # fast hashing
 gem "memo_wise"
 
@@ -225,3 +226,9 @@ gem "pstore"
 gem "bcrypt", "~> 3.1.7"
 
 gem "prosemirror_to_html"
+
+gem "ed25519"
+gem "discordrb"
+
+gem "pghero", "~> 3.7"
+gem "pg_query", ">= 2"

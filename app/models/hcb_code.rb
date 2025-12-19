@@ -176,6 +176,22 @@ class HcbCode < ApplicationRecord
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
 
+  def subledgers
+    @subledgers ||=
+      begin
+        ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
+                .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
+                .compact
+                .uniq
+
+        Subledger.where(id: ids)
+      end
+  end
+
+  def subledger
+    subledgers.first
+  end
+
   def event
     events.first
   end
@@ -419,6 +435,8 @@ class HcbCode < ApplicationRecord
       paypal_transfer
     elsif wire? && wire&.reimbursement_payout_holding.present?
       wire
+    elsif wise_transfer? && wise_transfer&.reimbursement_payout_holding.present?
+      wise_transfer
     else
       nil
     end
@@ -497,20 +515,34 @@ class HcbCode < ApplicationRecord
               ")
   }
 
-  def receipt_required?
+  # we optionally take an event parameter here. this
+  # is a performance optimisation because it allows us to
+  # load the event once on the ledger and never again
+  def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
-    (type == :card_charge) ||
-      # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire, :wise_transfer].include?(type) && created_at > Time.utc(2024, 2, 1))
+    return false unless event&.plan&.receipts_required?
+
+    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
+    return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
+
+    return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
+
+    # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
+    false
   end
 
-  def receipt_optional?
-    !receipt_required?
+  def receipt_optional?(event = self.event, type = self.type)
+    !receipt_required?(event, type)
+  end
+
+  # we have a custom implementation here for caching
+  def missing_receipt?(event = self.event, type = self.type)
+    receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
   end
 
   def receipts
-    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
   end

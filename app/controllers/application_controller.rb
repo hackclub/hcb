@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
 
   protect_from_forgery
 
@@ -30,12 +31,8 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
-    @hide_promotional_banner = cookies[:hide_robotics_raffle_banner] == "1"
-  end
-
-  before_action do
-    # Disallow indexing
-    response.set_header("X-Robots-Tag", "noindex")
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
   end
 
   before_action do
@@ -44,9 +41,9 @@ class ApplicationController < ActionController::Base
     params[:return_to] = url_from(params[:return_to])
   end
 
-  # Enable Rack::MiniProfiler for admins
+  # Enable Rack::MiniProfiler for auditors
   before_action do
-    if current_user&.admin?
+    if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
     end
   end

@@ -4,7 +4,7 @@ class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
   include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :resend]
+  before_action :set_opi, except: [:new, :create]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -33,7 +33,7 @@ class OrganizerPositionInvitesController < ApplicationController
 
     if service.run
       if @invite.is_signee
-        OrganizerPosition::Contract.create!(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+        @invite.send_contract(cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
       end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
@@ -59,6 +59,13 @@ class OrganizerPositionInvitesController < ApplicationController
     elsif @invite.rejected?
       redirect_to root_path, flash: { error: "You’ve already rejected this invitation." }
     end
+  rescue Pundit::NotAuthorizedError
+    if @invite.user != current_user
+      flash[:error] = "This invitation was sent to #{@invite.user.redacted_email}, but you are currently logged in as #{current_user.email }."
+      redirect_to root_path and return
+    end
+
+    raise
   end
 
   def accept
@@ -102,6 +109,15 @@ class OrganizerPositionInvitesController < ApplicationController
     @invite.deliver
 
     flash[:success] = "Invite successfully resent to #{@invite.user.email}"
+    redirect_to event_team_path @invite.event
+  end
+
+  def send_contract
+    authorize @invite
+
+    @invite.send_contract(cosigner_email: params[:cosigner_email].presence, include_videos: params[:include_videos])
+
+    flash[:success] = "Contract successfully sent"
     redirect_to event_team_path @invite.event
   end
 

@@ -29,8 +29,9 @@
 .border-top,
 .border-right,
 .border-bottom,
-.border-left {
-  border-color: map-get($palette, smoke);
+.border-left,
+.border-color {
+  border-color: map-get($palette, divider);
 }
 
 .px0 {
@@ -153,7 +154,7 @@ $shades: (
 }
 
 .b--muted {
-  border-color: map-get($palette, muted);
+  border-color: lighten(map-get($palette, muted), 20%);
 }
 
 .b--success {
@@ -231,6 +232,10 @@ tr.strikethrough td:before {
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
 }
 
 // https://piccalil.li/blog/link-button/

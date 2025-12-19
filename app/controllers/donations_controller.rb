@@ -55,6 +55,19 @@ class DonationsController < ApplicationController
       redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." } and return
     end
 
+    @monthly = params[:monthly].present? || params[:tier_id].present?
+
+    if @monthly
+      @recurring_donation = @event.recurring_donations.build(
+        name: params[:name],
+        email: params[:email],
+        amount: params[:amount],
+        message: params[:message],
+        fee_covered: params[:fee_covered],
+        tax_deductible:
+      )
+    end
+
     render "donations/start_donation"
   end
 
@@ -66,7 +79,7 @@ class DonationsController < ApplicationController
       d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
     end
 
-    if d_params[:name] == "aser ras"
+    if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
       skip_authorization
       redirect_to root_url and return
     end

@@ -159,6 +159,10 @@ module Reimbursement
 
       event :mark_draft do
         transitions from: [:submitted, :reimbursement_requested, :rejected], to: :draft
+        after do
+          # Once a report becomes unlocked, any changes would render existing fees outdated
+          expenses.where(type: Reimbursement::Expense::Fee.name).destroy_all
+        end
       end
 
       event :mark_reimbursed do
@@ -409,7 +413,7 @@ module Reimbursement
       expense_payouts = []
 
       expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents * expense.conversion_rate, event: expense.report.event, expense:)
+        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -(expense.amount_cents * expense.conversion_rate).floor, event: expense.report.event, expense:)
       end
 
       return if expense_payouts.empty?

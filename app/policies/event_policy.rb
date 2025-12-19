@@ -69,6 +69,8 @@ class EventPolicy < ApplicationPolicy
 
   alias disable_feature? update?
 
+  alias toggle_fee_waiver_eligible? update?
+
   def validate_slug?
     admin_or_member?
   end
@@ -121,6 +123,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def async_sub_organization_balance?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
@@ -145,8 +151,12 @@ class EventPolicy < ApplicationPolicy
     show? && record.plan.transfers_enabled?
   end
 
+  def card_grant_overview?
+    (is_public || auditor_or_reader?) && (record.plan.card_grants_enabled? || record.card_grants.any?)
+  end
+
   def promotions?
-    auditor_or_reader? && record.plan.promotions_enabled?
+    auditor_or_reader?
   end
 
   def reimbursements_pending_review_icon?
@@ -211,6 +221,10 @@ class EventPolicy < ApplicationPolicy
 
   def activate?
     user&.admin? && record.demo_mode?
+  end
+
+  def toggle_scoped_tag?
+    admin_or_manager?
   end
 
   private

@@ -4,18 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  subject_type  :string
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module Event
@@ -31,7 +37,7 @@ class Metric
               LEFT JOIN canonical_transactions ct ON raw_stripe_transactions.id = ct.transaction_source_id AND ct.transaction_source_type = 'RawStripeTransaction'
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
               LEFT JOIN "stripe_cardholders" on stripe_cardholders.stripe_id = raw_stripe_transactions.stripe_transaction->>'cardholder'
-              WHERE EXTRACT(YEAR FROM raw_stripe_transactions.date_posted) = 2024
+              WHERE EXTRACT(YEAR FROM raw_stripe_transactions.date_posted) = #{Metric.year}
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -40,7 +46,7 @@ class Metric
               FROM "ach_transfers"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-300-', ach_transfers.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM ach_transfers.created_at) = 2024
+              WHERE EXTRACT(YEAR FROM ach_transfers.created_at) = #{Metric.year}
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -49,7 +55,7 @@ class Metric
               FROM "disbursements"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-500-', disbursements.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM disbursements.created_at) = 2024
+              WHERE EXTRACT(YEAR FROM disbursements.created_at) = #{Metric.year}
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -58,7 +64,7 @@ class Metric
               FROM "increase_checks"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-401-', increase_checks.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM increase_checks.created_at) = 2024
+              WHERE EXTRACT(YEAR FROM increase_checks.created_at) = #{Metric.year}
               AND event_mapping.event_id = :event_id
           ) results
           group by user_id

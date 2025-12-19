@@ -313,6 +313,9 @@ class AdminController < Admin::BaseController
       end
     end
 
+    # Auto mapp the transactions
+    ::EventMappingEngine::Nightly.new.run
+
     duplicates = transactions.count - raw_intrafi_transactions.count
 
     redirect_to raw_intrafi_transactions_admin_index_path, flash: {
@@ -484,9 +487,16 @@ class AdminController < Admin::BaseController
 
     relation = relation.reimbursement_requested if @pending
 
+    @unprocessed_wise_report_ids = Reimbursement::Report
+                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .select(:id)
+                                   .pluck(:id)
+
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'reimbursement_requested' DESC"),
+      @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
+      Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       # Arel.sql("aasm_state = 'draft' ASC"),
       "reimbursement_reports.created_at desc"
     )
@@ -713,15 +723,18 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @event_id = params[:event_id].presence
+    @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
 
     @wise_transfers = WiseTransfer.all
 
     @wise_transfers = @wise_transfers.search_recipient(@q) if @q
 
-    @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
@@ -1298,6 +1311,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1320,7 +1337,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants
@@ -1387,21 +1403,39 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc)
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name])
+    @referral_program = Referral::Program.new(name: params[:name], creator: current_user)
 
     if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+      flash[:success] = "Referral program created successfully."
     else
       flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
     end
+
+    redirect_to referral_programs_admin_index_path
+  end
+
+  def referral_link_create
+    @referral_program = Referral::Program.find(params[:program_id])
+    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
+
+    if @referral_link.save
+      flash[:success] = "Referral link created successfully."
+    else
+      flash[:error] = @referral_link.errors.full_messages.to_sentence
+    end
+
+    redirect_to referral_programs_admin_index_path
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private

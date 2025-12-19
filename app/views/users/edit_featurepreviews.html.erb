@@ -1,12 +1,19 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_feature_previews %>
+
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "previews" %>
+  <%= render "settings_header", active: "previews" %>
   <section>
+    <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @user), "mb3") do %>
+      <%= render partial: "features/preview", locals: {
+            id: "minimalistic-ledger",
+            feature_flag: :transactions_background_2024_06_05,
+            name: "Minimalistic Ledger",
+            description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions.",
+            user: @user
+          } %>
+    <% end %>
 
     <%= render partial: "features/preview", locals: {
           id: "transaction-popovers",
@@ -17,17 +24,9 @@
         } %>
 
     <%= render partial: "features/preview", locals: {
-          id: "minimalistic-ledger",
-          feature_flag: :transactions_background_2024_06_05,
-          name: "Minimalistic Ledger",
-          description: "This feature flag makes the ledger more minimalistic by removing the colored backgrounds from transactions.",
-          user: @user
-        } if Flipper.enabled?(:transactions_background_2024_06_05, @user) %>
-
-    <%= render partial: "features/preview", locals: {
           id: "sudo-mode",
           feature_flag: :sudo_mode_2015_07_21,
-          name: "Sudo mode",
+          name: "Sudo Mode",
           description: "This feature flag improves the security of your account by requiring
             you to confirm access before performing a potentially sensitive
             action.",
@@ -41,7 +40,7 @@
             id: "two-factor-authentication",
             feature_flag: :two_factor_authentication_2024_05_22,
             fully_shipped: true,
-            name: "Two factor authentication",
+            name: "Two Factor Authentication",
             classes: ["feature-two-factor-authentication"],
             description: "Looking to keep your account secure? This feature flag will require you to log in with two authentication factors (eg. a code from your email as well as your fingerprint) every time.",
             footer: ("⚠️ This feature will only work if you have a verified phone number on file. Please update your #{link_to "settings", @user == current_user ? my_settings_path : edit_user_path(@user), data: { turbo_action: "advance" }} to add one." if !@user.phone_number_verified?),
@@ -52,7 +51,7 @@
             id: "totp",
             feature_flag: :totp_2024_06_13,
             fully_shipped: true,
-            name: "Time-based one time passwords",
+            name: "Time-Based One Time Passwords",
             classes: ["feature-totp"],
             description: "Loving 2FA? Here's an additional authentication factor for you! This feature let's you use Google Authenticator, Authy or a similar app to sign into HCB.",
             user: @user
@@ -70,6 +69,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "turbo",
+            feature_flag: :turbo_2023_01_23,
             classes: ["feature-turbo"],
             fully_shipped: true,
             name: "Turbo Async Pages",
@@ -85,6 +85,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "weekly-receipt-email",
+            feature_flag: :receipt_report_2023_04_19,
             classes: ["feature-weekly-receipt-email", "feature-generic"],
             fully_shipped: true,
             name: "Receipt Report",
@@ -95,6 +96,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "receipt-email-upload",
+            feature_flag: :receipt_email_upload_2022_05_10,
             classes: ["feature-receipt-upload"],
             fully_shipped: true,
             name: "Email Receipt Upload",
@@ -108,6 +110,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "internal-transfers",
+            feature_flag: :transfers_2022_04_21,
             classes: ["feature-disbursements"],
             fully_shipped: true,
             name: "Internal Transfers",
@@ -123,7 +126,7 @@
 
       <%= render partial: "features/preview", locals: {
             id: "suggested-memos",
-            classes: ["feature-disbursements"],
+            feature_flag: :ai_memos_2024_06_20,
             fully_shipped: true,
             name: "Transaction Memo Suggestions",
             description: "Renaming transactions is a great way for donors and team members to
@@ -168,8 +171,8 @@
 
       <%= render partial: "features/preview", locals: {
             id: "sms-receipt-notification",
-            classes: ["feature-sms-receipt-notification"],
             feature_flag: :sms_receipt_notifications_2022_11_23,
+            classes: ["feature-sms-receipt-notification"],
             fully_shipped: true,
             name: "SMS Charge Notifications",
             description: "We're experimenting with new ways to alert people that they need to

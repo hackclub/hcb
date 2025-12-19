@@ -18,7 +18,8 @@ module EventService
                    demo_mode: false,
                    risk_level: 0,
                    parent_event: nil,
-                   invited_by: nil)
+                   invited_by: nil,
+                   scoped_tags: [])
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -36,6 +37,7 @@ module EventService
       @invited_by = invited_by
       @cosigner_email = cosigner_email
       @include_onboarding_videos = include_onboarding_videos
+      @scoped_tags = scoped_tags || []
     end
 
     def run
@@ -59,7 +61,7 @@ module EventService
           invite_service.run!
 
           if @is_signee
-            OrganizerPosition::Contract.create(organizer_position_invite: invite_service.model, cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
           end
         end
 
@@ -81,7 +83,8 @@ module EventService
         demo_mode: @demo_mode,
         financially_frozen: true,
         parent: @parent_event,
-        plan: Event::Plan.new(type: @plan)
+        plan: Event::Plan.new(type: @plan),
+        event_scoped_tags_events_attributes: @scoped_tags.map { |scoped_tag_id| { event_scoped_tag_id: scoped_tag_id } }
       }.tap do |hash|
         hash[:risk_level] = @risk_level if @risk_level.present?
       end
