@@ -83,6 +83,14 @@ class Contract
       end
     end
 
+    def notify_email_subject
+      if hcb?
+        "Sign the agreement as HCB Operations for #{contract.event.name}"
+      else
+        "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
+      end
+    end
+
     private
 
     def signee_is_user
