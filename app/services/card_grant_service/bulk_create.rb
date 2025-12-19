@@ -4,6 +4,15 @@ require "csv"
 
 module CardGrantService
   class BulkCreate
+    # Contract:
+    # - Returns Result for CSV/validation errors.
+    # - Raises DisbursementService::Create::UserError for business-level disbursement failures
+    #   (e.g., insufficient funds).
+    # - Propagates any other unexpected errors.
+    #
+    # NOTE: This service assumes it is NOT called inside a broader DB transaction.
+    # Emails are sent immediately after the internal transaction commits.
+
     class ValidationError < StandardError
       attr_reader :errors
 
@@ -26,9 +35,9 @@ module CardGrantService
     end
 
     def run
-      rows = parse_csv
-      validate_rows!(rows)
-      card_grants = create_grants_atomically(rows)
+      rows, header_mapping = parse_csv
+      validate_rows!(rows, header_mapping)
+      card_grants = create_grants_atomically(rows, header_mapping)
       send_emails(card_grants)
 
       Result.new(success?: true, card_grants:, errors: [])
@@ -36,25 +45,43 @@ module CardGrantService
       Result.new(success?: false, card_grants: [], errors: e.errors)
     rescue CSV::MalformedCSVError => e
       Result.new(success?: false, card_grants: [], errors: ["Invalid CSV format: #{e.message}"])
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError, ArgumentError => e
+      if e.message.include?("invalid byte sequence") || e.is_a?(Encoding::UndefinedConversionError) || e.is_a?(Encoding::InvalidByteSequenceError)
+        Result.new(success?: false, card_grants: [], errors: ["File encoding error: please ensure the file is UTF-8 encoded"])
+      else
+        raise
+      end
     end
 
     private
 
     def parse_csv
       content = @csv_file.read.force_encoding("UTF-8")
+      # Strip BOM (Byte Order Mark) that Excel may add
+      content = content.sub(/\A\xEF\xBB\xBF/, "").sub(/\A\uFEFF/, "")
+
       rows = CSV.parse(content, headers: true, skip_blanks: true)
 
-      if rows.headers.empty?
+      if rows.headers.empty? || rows.headers.all?(&:nil?)
         raise ValidationError.new(["CSV file is empty or has no headers"])
       end
 
-      rows
+      # Build a mapping from normalized (lowercase) header names to original header names
+      header_mapping = {}
+      rows.headers.each do |original|
+        next if original.nil?
+
+        normalized = original.to_s.strip.downcase
+        header_mapping[normalized] = original
+      end
+
+      [rows, header_mapping]
     end
 
-    def validate_rows!(rows)
+    def validate_rows!(rows, header_mapping)
       errors = []
 
-      missing_headers = REQUIRED_HEADERS - rows.headers.map(&:to_s).map(&:strip).map(&:downcase)
+      missing_headers = REQUIRED_HEADERS - header_mapping.keys
       if missing_headers.any?
         errors << "Missing required headers: #{missing_headers.join(", ")}"
       end
@@ -64,36 +91,43 @@ module CardGrantService
       end
 
       rows.each.with_index(2) do |row, line_number|
-        row_errors = validate_row(row, line_number)
+        row_errors = validate_row(row, header_mapping, line_number)
         errors.concat(row_errors)
       end
 
       raise ValidationError.new(errors) if errors.any?
     end
 
-    def validate_row(row, line_number)
+    def validate_row(row, header_mapping, line_number)
       errors = []
 
-      email = row["email"]&.strip
+      email = get_field(row, header_mapping, "email")&.strip
       if email.blank?
         errors << "Row #{line_number}: email is required"
       elsif !email.match?(URI::MailTo::EMAIL_REGEXP)
         errors << "Row #{line_number}: '#{email}' is not a valid email address"
       end
 
-      amount_cents = parse_amount(row["amount_cents"])
+      amount_cents = parse_amount(get_field(row, header_mapping, "amount_cents"))
       if amount_cents.nil?
         errors << "Row #{line_number}: amount_cents is required"
       elsif amount_cents <= 0
         errors << "Row #{line_number}: amount_cents must be greater than 0"
       end
 
-      purpose = row["purpose"]&.strip
+      purpose = get_field(row, header_mapping, "purpose")&.strip
       if purpose.present? && purpose.length > CardGrant::MAXIMUM_PURPOSE_LENGTH
         errors << "Row #{line_number}: purpose exceeds maximum length of #{CardGrant::MAXIMUM_PURPOSE_LENGTH} characters"
       end
 
       errors
+    end
+
+    def get_field(row, header_mapping, field_name)
+      original_header = header_mapping[field_name]
+      return nil unless original_header
+
+      row[original_header]
     end
 
     def parse_amount(value)
@@ -108,12 +142,12 @@ module CardGrantService
       end
     end
 
-    def create_grants_atomically(rows)
+    def create_grants_atomically(rows, header_mapping)
       card_grants = []
 
       ActiveRecord::Base.transaction do
         rows.each do |row|
-          card_grant = build_card_grant(row)
+          card_grant = build_card_grant(row, header_mapping)
           card_grant.save!
           card_grants << card_grant
         end
@@ -122,13 +156,13 @@ module CardGrantService
       card_grants
     end
 
-    def build_card_grant(row)
+    def build_card_grant(row, header_mapping)
       @event.card_grants.build(
-        email: row["email"]&.strip,
-        amount_cents: parse_amount(row["amount_cents"]),
-        purpose: row["purpose"]&.strip.presence,
-        one_time_use: parse_boolean(row["one_time_use"]),
-        invite_message: row["invite_message"]&.strip.presence,
+        email: get_field(row, header_mapping, "email")&.strip,
+        amount_cents: parse_amount(get_field(row, header_mapping, "amount_cents")),
+        purpose: get_field(row, header_mapping, "purpose")&.strip.presence,
+        one_time_use: parse_boolean(get_field(row, header_mapping, "one_time_use")),
+        invite_message: get_field(row, header_mapping, "invite_message")&.strip.presence,
         sent_by: @sent_by,
         skip_send_email: true
       )

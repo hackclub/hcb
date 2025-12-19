@@ -217,5 +217,54 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(result.errors).to include("CSV file has no data rows")
       end
     end
+
+    context "with case-insensitive headers" do
+      it "accepts headers with different casing" do
+        csv_content = <<~CSV
+          Email,Amount_Cents,Purpose
+          alice@example.com,1000,Test purpose
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(1)
+        expect(result.card_grants.first.email).to eq("alice@example.com")
+      end
+    end
+
+    context "with BOM in CSV" do
+      it "handles UTF-8 BOM correctly" do
+        csv_content = "\xEF\xBB\xBFemail,amount_cents\nalice@example.com,1000\n"
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(1)
+      end
+    end
+
+    context "with encoding errors" do
+      it "returns friendly error for invalid encoding" do
+        csv_content = "email,amount_cents\n\xFF\xFE invalid\n"
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("encoding")
+      end
+    end
   end
 end
