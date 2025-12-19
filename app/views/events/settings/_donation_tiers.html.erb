@@ -44,9 +44,9 @@
                 <div class="flex-1">
                   <div class="flex gap-2 w-full">
                     <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, data: { "donation-tier-form-target": "field" } %>
-                    <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
+                    <div class="flex items-center gap-2 rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
                       $
-                      <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !px-0", style: "width: 50px", placeholder: "Cost", data: { "donation-tier-form-target": "field" } %>
+                      <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !shadow-none !px-0", style: "width: 50px", placeholder: "Cost", data: { "donation-tier-form-target": "field" } %>
                       /month
                     </div>
                   </div>
