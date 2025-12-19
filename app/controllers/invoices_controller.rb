@@ -89,6 +89,8 @@ class InvoicesController < ApplicationController
     @filter_options = filter_options
     helpers.validate_filter_options(@filter_options, params)
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
