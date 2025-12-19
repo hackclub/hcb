@@ -41,7 +41,7 @@
 .blog-menu {
   animation: blog-menu 0.15s ease forwards;
 
-  @media (max-width: 32em) {
+  @media (max-width: 1024px) {
     animation: blog-menu-mobile 0.15s ease forwards;
   }
 }
