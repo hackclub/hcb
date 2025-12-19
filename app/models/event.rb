@@ -214,6 +214,7 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+  scope :financially_frozen, -> { where(financially_frozen: true) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -292,7 +293,7 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -451,7 +452,6 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
-  before_save :enable_monthly_announcements
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -647,7 +647,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -932,7 +932,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+    return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -966,13 +966,6 @@ class Event < ApplicationRecord
 
     unless eligible_for_indexing?
       self.is_indexable = false
-    end
-  end
-
-  def enable_monthly_announcements
-    # We'll enable monthly announcements when transparency mode is turned on
-    if is_public_changed?(to: true)
-      config.update(generate_monthly_announcement: true)
     end
   end
 
