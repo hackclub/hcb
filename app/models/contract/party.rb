@@ -34,6 +34,8 @@ class Contract
 
     enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
 
+    scope :not_hcb, -> { where.not(role: :hcb) }
+
     attr_accessor :skip_pending_validation
 
     validates :role, uniqueness: { scope: :contract }
