@@ -1,6 +1,6 @@
 <% title "Transfer to #{@disbursement.event.name}" %>
 <% page_sm %>
-<% render "events/nav" %>
+<%= render "events/nav" %>
 
 <% admin_tool("mt3") do %>
   <%= link_to "All disbursements", disbursements_admin_index_path, class: "breadcrumb" %>
@@ -48,11 +48,11 @@
   </ul>
 <% end %>
 
-<article class="card max-width-2 mx-auto mt3">
+<article class="card max-w-lg mx-auto mt3">
   <section class="mb2">
     <h2 class="mt0 mb0 heading">
       <span class="flex-auto mb1">Transfer to <%= @disbursement.event.name %></span>
-      <span class="badge h4 md-right ml0 mb1 bg-<%= @disbursement.state %>">
+      <span class="badge h4 ml0 mb1 bg-<%= @disbursement.state %>">
         <%= @disbursement.state_text %>
       </span>
     </h2>

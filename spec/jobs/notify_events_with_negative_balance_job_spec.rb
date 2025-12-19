@@ -7,6 +7,7 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
 
   it "sends an email to events with a negative balance" do
     admin = create(:user, :make_admin)
+    create(:governance_admin_transfer_limit, user: admin)
 
     # A standard event with a positive balance
     event1 = create(:event, :with_positive_balance, name: "Event with positive balance")
@@ -26,7 +27,7 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
     event3_user = create(:user, full_name: "Internal User", email: "internal@example.com")
     create(:organizer_position, event: event3, user: event3_user)
     # Create a card grant with an admin user that makes the balance negative
-    create(:card_grant, amount_cents: 56_78, event: event3, sent_by: admin)
+    create(:card_grant, amount_cents: 56_78, invite_message: "This will make your balance negative", event: event3, sent_by: admin)
     expect(event3.balance).to eq(-56_78)
 
     sent_emails = capture_emails do
@@ -43,12 +44,13 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
 
   it "includes the point of contact if present" do
     admin = create(:user, :make_admin, full_name: "Admin User", email: "admin@example.com")
+    create(:governance_admin_transfer_limit, user: admin)
 
     event = create(:event, name: "Event with negative balance", point_of_contact: admin)
     user = create(:user, full_name: "Event Organizer", email: "organizer@example.com")
     create(:organizer_position, event:, user:)
     # Create a card grant with an admin user that makes the balance negative
-    create(:card_grant, amount_cents: 12_34, event:, sent_by: admin)
+    create(:card_grant, amount_cents: 12_34, invite_message: "This will make your balance negative", event:, sent_by: admin)
     expect(event.balance).to eq(-12_34)
 
     sent_emails = capture_emails do

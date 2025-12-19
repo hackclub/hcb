@@ -9,7 +9,7 @@
   <% end %>
   <fieldset>
     <legend class="heading h2 pt2 pb2">What type of card?</legend>
-    <div class="field field--options">
+    <div class="field field--options max-w-none">
       <%= form.radio_button :card_type, "virtual" %>
       <%= form.label :card_type, value: "virtual" do %>
         <%= inline_icon "rep", size: 28 %>

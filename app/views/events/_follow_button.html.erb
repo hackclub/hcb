@@ -2,14 +2,14 @@
 
 <% if event_follow.nil? %>
   <% if event.is_public || Announcement.where(event:).published.any? %>
-    <%= button_to event_follows_path(event), method: :post, class: "btn bg-blue flex items-center" do %>
-      <%= inline_icon "event-check" %>
-      Follow
+    <%= button_to event_follows_path(event), method: :post, class: "btn bg-success flex items-center gap-1.5" do %>
+      <%= inline_icon "notification-add" %>
+      Subscribe
     <% end %>
   <% end %>
 <% else %>
-  <%= button_to follow_path(event_follow), method: :delete, class: "btn bg-blue flex items-center" do %>
-    <%= inline_icon "reply" %>
-    Unfollow
+  <%= button_to follow_path(event_follow), method: :delete, class: "btn bg-muted flex items-center", "aria-label": "Unfollow" do %>
+    <%= inline_icon "notification", style: "width: 24px; height: 24px;" %>
+    Subscribed
   <% end %>
 <% end %>

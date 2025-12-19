@@ -1,21 +1,21 @@
 <%# locals: (klass: "") -%>
 
 <div id="flash-container">
-  <% flash.to_h.except("confetti", "confetti_emojis", "popover").each do |key, value| %>
+  <% flash.to_h.except("confetti", "confetti_emojis", "popover").each_with_index do |(key, value), index| %>
     <article
       role="alertdialog"
-      class="flash flex items-center mt3 mb2 mx-auto shrink-none <%= key %> <%= klass %>"
+      class="flash flex items-center <%= "mt2" unless index == 0 %> mb1 shrink-none <%= key %> <%= klass %>"
       data-behavior="flash"
       data-turbo-temporary>
-      <span style="flex-grow: 1">
+      <div class="min-w-0 overflow-hidden break-words hyphens-auto">
         <% if value.is_a? Hash %>
           <%= value["text"] %>
           <%= link_to value["link_text"], value["link"] if value["link"] %>
         <% else %>
           <%= value %>
         <% end %>
-      </span>
-      <%= inline_icon "view-close", size: 32, class: "pointer" %>
+      </div>
+      <%= inline_icon "view-close", size: 32, class: "pointer shrink-0 ml-auto" %>
     </article>
   <% end %>
 </div>

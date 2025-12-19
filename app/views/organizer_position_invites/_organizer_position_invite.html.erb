@@ -16,7 +16,7 @@
 
     <div class="flex g1 items-center">
       <% if admin_signed_in? %>
-        <% if organizer_position_invite.organizer_position_contract&.pending? || organizer_position_invite.organizer_position_contract&.sent? %>
+        <% if organizer_position_invite.contract&.pending? || organizer_position_invite.contract&.sent? %>
           <div class="flex">
             <div class="line-height-0 tooltipped tooltipped--w" aria-label="Pending signature, click to manage this contract.">
               <div class="warning">
@@ -25,15 +25,12 @@
                     <%= inline_icon("clock", size: 24) %>
                   </div>
                   <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                    <%= link_to void_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
+                    <%= link_to void_contract_path(organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
                       Void this contract
                     <% end %>
-                    <%= link_to resend_to_user_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
-                      Resend to the user
-                    <% end %>
-                    <% if organizer_position_invite.organizer_position_contract.cosigner_email.present? %>
-                      <%= link_to resend_to_cosigner_organizer_position_contract_path(organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
-                        Resend to the cosigner
+                    <% organizer_position_invite.contract.parties.reject { |party| party.role == "hcb" }.each do |party| %>
+                      <%= link_to resend_contract_party_path(party), data: { turbo_method: :post } do %>
+                        Resend to the <%= party.role %>
                       <% end %>
                     <% end %>
                   </div>
@@ -42,10 +39,10 @@
             </div>
           </div>
         <% else %>
-          <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position_invite.organizer_position_contract&.signed? ? "Contract signee, click to view the contract." : "No contract signature, click to send a contract.") %>">
+          <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position_invite.contract&.signed? ? "Contract signee, click to view the contract." : "No contract signature, click to send a contract.") %>">
             <div class="warning">
-              <% if organizer_position_invite.organizer_position_contract&.signed? %>
-                <%= link_to organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position_invite.event), class: "success" do %>
+              <% if organizer_position_invite.contract&.signed? %>
+                <%= link_to organizer_position_invite.contract.document || event_documents_path(event: organizer_position_invite.event), class: "success" do %>
                   <%= inline_icon("docs-positive", size: 24) %>
                 <% end %>
               <% else %>
@@ -54,7 +51,7 @@
                 <% end %>
                 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position_invite.id %>">
                   <%= modal_header "Send a contract" %>
-                  <%= render "organizer_position_contract/form", organizer_position_contract: OrganizerPosition::Contract.new(organizer_position_invite_id: organizer_position_invite.id) %>
+                  <%= render "organizer_position_invites/contract_form", opi: organizer_position_invite %>
                 </section>
               <% end %>
             </div>
@@ -92,8 +89,8 @@
       <% if can_change_role %>
         <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
           <% OrganizerPositionInvite.roles.keys.each do |role| %>
-            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
-              <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), class: ("menu__action--active" if organizer_position_invite.role == role).to_s, data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
+              <%= role.humanize %>
             <% end %>
           <% end %>
           <div class="menu__divider"></div>

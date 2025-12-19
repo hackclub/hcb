@@ -40,7 +40,7 @@ module DonationsHelper
     strong_tag = content_tag :strong, title
     date_tag = format_date date
 
-    content_tag(:p) { strong_tag + date_tag }
+    content_tag(:div) { strong_tag + date_tag }
   end
 
   def donation_payment_method_mention(donation = @donation, **options)
@@ -131,5 +131,9 @@ module DonationsHelper
 
     tag = inline_icon icon_name, size: 24
     content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
+  end
+
+  def donations_embed_html_code(event = @event)
+    html_escape "<iframe src='#{start_donation_donations_url event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='640px' allowfullscreen></iframe>".gsub("'", '"')
   end
 end

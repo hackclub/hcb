@@ -2,7 +2,7 @@
   <button
     type="button"
     class="pop my-2 cursor-pointer tooltipped tooltipped--s"
-    aria-label="Add filter..."
+    aria-label="Add filter"
     data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
@@ -13,20 +13,16 @@
       <button id="users" data-tabs-target="btn" data-action="tabs#select">User</button>
 
       <div data-tabs-target="tab" id="type">
-        <% unless show_mock_data? %>
-          <div class="menu__divider"></div>
-          <% %w[virtual physical].each do |type| %>
-            <%= link_to type.humanize, upsert_query_params(type:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" } %>
-          <% end %>
+        <div class="menu__divider"></div>
+        <% %w[virtual physical].each do |type| %>
+          <%= link_to type.humanize, upsert_query_params(type:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" } %>
         <% end %>
       </div>
 
       <div data-tabs-target="tab" id="status">
-        <% unless show_mock_data? %>
-          <div class="menu__divider"></div>
-          <% %w[active inactive frozen canceled].each do |status| %>
-            <%= link_to status.humanize, upsert_query_params(status:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
-          <% end %>
+        <div class="menu__divider"></div>
+        <% %w[active inactive frozen canceled].each do |status| %>
+          <%= link_to status.humanize, upsert_query_params(status:, page: 1), class: "flex-auto menu__action !border-t-0 #{"menu__action--active" if @status == status}", data: { turbo_prefetch: "false" } %>
         <% end %>
       </div>
 

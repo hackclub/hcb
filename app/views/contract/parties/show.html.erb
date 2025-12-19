@@ -1,0 +1,24 @@
+<% title "Sign your HCB agreement" %>
+
+<script src="https://cdn.docuseal.com/js/form.js"></script>
+
+<h2>Sign your HCB agreement</h2>
+
+<div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) %>">
+  <div class="max-h-[75vh] overflow-scroll md:col-span-3">
+    <docuseal-form
+      id="docusealForm"
+      data-src="<%= @party.docuseal_signature_url %>"
+      data-with-title="false"
+      data-action="completed->contract#completed declined->contract#void">
+    </docuseal-form>
+  </div>
+  <div class="md:col-span-2">
+    <%= render "application/callout", title: "Questions about the HCB agreement?", type: "info", class: "mt-0", footer: :questions do %>
+      <p>
+        <span class="font-bold">Why do I need to sign this agreement?</span><br>
+        This Fiscal Sponsorship Agreement sets the terms and conditions of your usage of HCB. It allows your project to use HCB's 501(c)(3) nonprofit status and defines a restricted fund for your project.
+      </p>
+    <% end %>
+  </div>
+</div>

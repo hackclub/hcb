@@ -26,12 +26,10 @@ module Discord
         node.set_attribute(:href, "https://hcb.hackclub.com#{node[:href]}") if node[:href].present?
       end
 
-      locals = { activity: @activity, p: { current_user: @user } }
-
       begin
         key = @activity.key.gsub(".", "/")
         partial = "public_activity/#{key}_discord"
-        text = ApplicationController.renderer.render(partial:, locals:)
+        text = ApplicationController.renderer.render(partial:, locals: { activity: @activity, p: { current_user: @user } })
         json = JSON.parse(text)
 
         embed = {
@@ -42,8 +40,8 @@ module Discord
         }.merge(json["embed"] || {})
 
         components = format_components(json["components"])
-      rescue ActionView::MissingTemplate # fallback to HTML (which already exists for all activities)
-        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals:)
+      rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
+        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, current_user: User.system_user })
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 
         text = ReverseMarkdown.convert(html)[0..4000]
