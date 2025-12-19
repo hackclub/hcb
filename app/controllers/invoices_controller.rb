@@ -81,7 +81,7 @@ class InvoicesController < ApplicationController
         "created_at"
       end
 
-    relation = relation.order("#{sort_column} #{sort_direction}")
+    @invoices = relation.order("#{sort_column} #{sort_direction}")
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
