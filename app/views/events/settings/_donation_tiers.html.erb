@@ -40,7 +40,7 @@
             data-donation-tier-sort-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
             data-action="sortable:stop->donation-tier-sort#sort">
             <% event.donation_tiers.each do |tier| %>
-              <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
+              <div class="draggable card shadow-none border border-gray-200 dark:border-gray-700 bg-gray-50 flex items-start gap-2 mb-2 transition-none">
                 <div class="flex-1">
                   <div class="flex gap-2 w-full">
                     <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, data: { "donation-tier-form-target": "field" } %>
