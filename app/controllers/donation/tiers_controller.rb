@@ -16,6 +16,7 @@ class Donation
       authorize @event, :show?
 
       @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
+      @monthly = true # Donation tiers are always monthly
       build_donation_page!(event: @event, params:, request:)
       
       if params[:tier_id].present? && @tier.nil? && params[:tier_id] != "custom"
