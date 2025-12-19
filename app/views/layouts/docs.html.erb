@@ -38,7 +38,7 @@
 
 <% content_for :skip_fullstory %>
 
-<%= render template: "layouts/base" do %>
+<%= render layout: "base" do %>
   <% if content_for?(:nav) %>
     <main class="container app">
       <% if @event && @first_time %>

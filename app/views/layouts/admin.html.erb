@@ -15,7 +15,7 @@
 
 <% content_for :body_class, "bg-snow" %>
 
-<%= render template: "layouts/base" do %>
+<%= render layout: "base" do %>
   <a class="skip-to-main" href="#main">Skip to main content</a>
 
   <% title = yield(:title) if content_for?(:title) %>

@@ -37,7 +37,7 @@
   <meta name="description" content="Sign in to HCB.">
 <% end %>
 
-<%= render template: "layouts/base" do %>
+<%= render layout: "base" do %>
   <%= yield(:header) %>
   <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
     <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">
