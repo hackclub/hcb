@@ -6,15 +6,9 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
-  INVOICE_FILTERS = [
-    { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
-    { key_base: "created", label: "Date", type: "date_range" },
-    { key_base: "amount", label: "Amount", type: "amount_range" }
-  ].freeze
-
   INVOICE_COLUMNS = [
     { key: "status" },
-    { key: "date", default: true },
+    { key: "created_at", default: true, display: "Date" },
     { key: "sponsors.name", display: "To" },
     { key: "amount_due", right: true, display: "Amount" },
   ].freeze
@@ -75,13 +69,17 @@ class InvoicesController < ApplicationController
       case params[:sort]
       when "created_at", "status", "amount_due"
         params[:sort]
-      when "sponsor_name"
+      when "sponsors.name"
         "sponsors.name"
       else
         "created_at"
       end
 
-    @invoices = relation.order("#{sort_column} #{sort_direction}")
+    # Join with sponsors table if sorting by sponsor name to avoid SQL errors
+    relation = relation.left_joins(:sponsor) if sort_column == "sponsors.name"
+
+    # Preload sponsors to avoid N+1 queries when displaying sponsor names
+    @invoices = relation.includes(:sponsor).order("#{sort_column} #{sort_direction}")
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
