@@ -1,0 +1,221 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+require "csv"
+
+RSpec.describe CardGrantService::BulkCreate do
+  let(:event) { create(:event, :with_positive_balance) }
+  let(:sent_by) { create(:user) }
+
+  before do
+    create(:organizer_position, :manager, event:, user: sent_by)
+    create(:card_grant_setting, event:)
+  end
+
+  def csv_file_from_content(content)
+    file = StringIO.new(content)
+    file.define_singleton_method(:read) { string }
+    file
+  end
+
+  describe "#run" do
+    context "with valid CSV" do
+      it "creates card grants for each row" do
+        csv_content = <<~CSV
+          email,amount_cents,purpose,one_time_use,invite_message
+          alice@example.com,1000,Pizza party,false,Welcome!
+          bob@example.com,2000,Supplies,true,Thanks for joining
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(2)
+        expect(result.errors).to be_empty
+
+        alice_grant = result.card_grants.find { |g| g.email == "alice@example.com" }
+        expect(alice_grant.amount_cents).to eq(1000)
+        expect(alice_grant.purpose).to eq("Pizza party")
+        expect(alice_grant.one_time_use).to be false
+
+        bob_grant = result.card_grants.find { |g| g.email == "bob@example.com" }
+        expect(bob_grant.amount_cents).to eq(2000)
+        expect(bob_grant.purpose).to eq("Supplies")
+        expect(bob_grant.one_time_use).to be true
+      end
+
+      it "supports dollar amounts (with decimal)" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,10.50
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.first.amount_cents).to eq(1050)
+      end
+
+      it "sends emails after successful creation" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,1000
+          bob@example.com,2000
+        CSV
+
+        expect {
+          described_class.new(
+            event:,
+            csv_file: csv_file_from_content(csv_content),
+            sent_by:
+          ).run
+        }.to have_enqueued_mail(CardGrantMailer, :card_grant_notification).exactly(2).times
+      end
+    end
+
+    context "with validation errors" do
+      it "returns errors for missing required headers" do
+        csv_content = <<~CSV
+          email,purpose
+          alice@example.com,Pizza
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors).to include("Missing required headers: amount_cents")
+      end
+
+      it "returns errors for invalid email" do
+        csv_content = <<~CSV
+          email,amount_cents
+          not-an-email,1000
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("not a valid email")
+      end
+
+      it "returns errors for zero amount" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,0
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("must be greater than 0")
+      end
+
+      it "returns errors for purpose exceeding max length" do
+        csv_content = <<~CSV
+          email,amount_cents,purpose
+          alice@example.com,1000,#{"a" * (CardGrant::MAXIMUM_PURPOSE_LENGTH + 1)}
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("exceeds maximum length")
+      end
+
+      it "does not create any grants when validation fails" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,1000
+          invalid-email,2000
+        CSV
+
+        expect {
+          described_class.new(
+            event:,
+            csv_file: csv_file_from_content(csv_content),
+            sent_by:
+          ).run
+        }.not_to change(CardGrant, :count)
+      end
+
+      it "does not send emails when validation fails" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,1000
+          invalid-email,2000
+        CSV
+
+        expect {
+          described_class.new(
+            event:,
+            csv_file: csv_file_from_content(csv_content),
+            sent_by:
+          ).run
+        }.not_to have_enqueued_mail(CardGrantMailer, :card_grant_notification)
+      end
+    end
+
+    context "with atomic transaction behavior" do
+      it "rolls back all grants if one fails during creation" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,1000
+          bob@example.com,999999999999
+        CSV
+
+        initial_count = CardGrant.count
+
+        expect {
+          described_class.new(
+            event:,
+            csv_file: csv_file_from_content(csv_content),
+            sent_by:
+          ).run
+        }.to raise_error(DisbursementService::Create::UserError)
+
+        expect(CardGrant.count).to eq(initial_count)
+      end
+    end
+
+    context "with empty CSV" do
+      it "returns error for empty data" do
+        csv_content = <<~CSV
+          email,amount_cents
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors).to include("CSV file has no data rows")
+      end
+    end
+  end
+end

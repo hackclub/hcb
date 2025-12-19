@@ -940,6 +940,12 @@ Rails.application.routes.draw do
     end
 
     resources :card_grants, only: [:new, :create], path: "card-grants" do
+      collection do
+        get "bulk_upload", to: "card_grants#bulk_upload_form"
+        post "bulk_upload", to: "card_grants#bulk_upload"
+        get "bulk_upload_template", to: "card_grants#bulk_upload_template"
+      end
+
       member do
         post "topup"
         post "withdraw"

@@ -1,0 +1,76 @@
+<% page_sm %>
+<%= render "events/nav", selected: :transfers %>
+
+<% title "Bulk send card grants" %>
+<h1>Bulk send card grants</h1>
+
+<p class="muted">
+  Upload a CSV file to send multiple card grants at once. All grants will be created atomically&mdash;if any grant fails validation, none will be created.
+</p>
+
+<div class="card p3 mb3">
+  <h3 class="mt0">CSV Template</h3>
+  <p class="muted">
+    Download our template to get started. The CSV must include the following columns:
+  </p>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-0 mb2">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>email</code></td>
+          <td><span class="badge bg-error">Required</span></td>
+          <td>Recipient's email address</td>
+        </tr>
+        <tr>
+          <td><code>amount_cents</code></td>
+          <td><span class="badge bg-error">Required</span></td>
+          <td>Amount in cents (e.g., 1000 for $10.00) or dollars (e.g., 10.00)</td>
+        </tr>
+        <tr>
+          <td><code>purpose</code></td>
+          <td><span class="badge bg-muted">Optional</span></td>
+          <td>Purpose shown to recipient (max <%= CardGrant::MAXIMUM_PURPOSE_LENGTH %> characters)</td>
+        </tr>
+        <tr>
+          <td><code>one_time_use</code></td>
+          <td><span class="badge bg-muted">Optional</span></td>
+          <td>Set to <code>true</code> or <code>1</code> to freeze card after first charge</td>
+        </tr>
+        <tr>
+          <td><code>invite_message</code></td>
+          <td><span class="badge bg-muted">Optional</span></td>
+          <td>Custom message included in the invitation email</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%= link_to bulk_upload_template_event_card_grants_path(@event), class: "btn btn--primary" do %>
+    <%= inline_icon "download" %>
+    Download CSV template
+  <% end %>
+</div>
+
+<div class="card p3">
+  <h3 class="mt0">Upload CSV</h3>
+
+  <%= form_with url: bulk_upload_event_card_grants_path(@event), method: :post, local: true, multipart: true do |form| %>
+    <div class="field">
+      <%= form.label :csv_file, "Select CSV file" %>
+      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full" %>
+    </div>
+
+    <div class="flex items-center justify-between mt3">
+      <%= link_to "Cancel", event_card_grant_overview_path(@event), class: "btn" %>
+      <%= form.submit "Upload and send grants", class: "btn bg-success" %>
+    </div>
+  <% end %>
+</div>
