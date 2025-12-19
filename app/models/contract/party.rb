@@ -83,7 +83,7 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the agreement as HCB Operations for #{contract.event.name}"
+        "Sign the #{contract.event.name}'s agreement as HCB Operations"
       else
         "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
       end
