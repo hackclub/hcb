@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
   <head>
-    <%= render "layouts/shared_head" %>
+    <%= render "layouts/head" %>
     <style>
       html,
       body {
@@ -32,7 +32,7 @@
     <meta name="description" content="Sign in to HCB.">
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
-    <%= render "layouts/shared_seasonal", snow_style: "height:0px" %>
+    <%= render "layouts/seasonal", snow_style: "height:0px" %>
     <%= yield(:header) %>
     <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
       <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">

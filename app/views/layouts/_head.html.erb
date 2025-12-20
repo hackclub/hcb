@@ -1,9 +1,10 @@
+<%# locals: (title_suffix: "HCB", skip_dark_js: false, custom_stylesheet: false, custom_application_js: false, skip_plausible: false, skip_console_art: false, console_art_url: nil) %>
 <% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 
 <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
 <title>
   <%= yield(:title).concat(" –") if content_for?(:title) %>
-  <%= local_assigns[:title_suffix] || "HCB" %>
+  <%= title_suffix %>
 </title>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
@@ -12,16 +13,16 @@
 
 <%= yield(:before_assets) if content_for?(:before_assets) %>
 
-<%= javascript_include_tag "dark", 'data-turbo-track': "reload" unless local_assigns[:skip_dark_js] %>
-<%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" unless local_assigns[:custom_stylesheet] %>
+<%= javascript_include_tag "dark", 'data-turbo-track': "reload" unless skip_dark_js %>
+<%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" unless custom_stylesheet %>
 <%= yield(:custom_stylesheet) if content_for?(:custom_stylesheet) %>
-<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless local_assigns[:custom_application_js] %>
+<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless custom_application_js %>
 <%= yield(:custom_application_js) if content_for?(:custom_application_js) %>
 <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
 <%= yield(:additional_scripts) if content_for?(:additional_scripts) %>
 
-<% if Rails.env.production? && !local_assigns[:skip_plausible] %>
+<% if Rails.env.production? && !skip_plausible %>
   <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
 <% end %>
 
@@ -29,7 +30,7 @@
   <meta name="turbo-prefetch" content="false">
 <% end %>
 
-<% if Rails.env.production? && !local_assigns[:skip_console_art] %>
+<% if Rails.env.production? && !skip_console_art %>
   <script>
     console.log(`%c                -*%@@%*-
               .=#@@@@@@@@@@#=.
@@ -52,7 +53,7 @@
     *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
           Come hack on HCB with us!
-  <%= local_assigns[:console_art_url] || Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
+  <%= console_art_url || Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
   `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
   </script>
 <% end %>
