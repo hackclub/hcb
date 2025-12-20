@@ -144,9 +144,9 @@ module CardGrantService
       elsif amount_cents == :negative
         errors << "Row #{line_number}: amount_cents cannot be negative"
       elsif amount_cents == :invalid
-        errors << "Row #{line_number}: amount_cents must be a positive integer (in cents)"
+        errors << "Row #{line_number}: amount_cents must be an integer greater than 0 (in cents)"
       elsif amount_cents <= 0
-        errors << "Row #{line_number}: amount_cents must be greater than 0"
+        errors << "Row #{line_number}: amount_cents must be an integer greater than 0 (in cents)"
       end
 
       purpose = get_field(row, header_mapping, "purpose")&.strip
