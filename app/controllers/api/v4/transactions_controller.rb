@@ -77,6 +77,19 @@ module Api
         @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
       end
 
+      def mark_no_receipt
+        @hcb_code = HcbCode.find_by_public_id!(params[:id])
+        authorize @hcb_code, :mark_no_or_lost?, policy_class: ReceiptablePolicy
+
+        begin
+          @hcb_code.no_or_lost_receipt!
+        rescue
+          return render json: { error: "invalid_operation", messages: "Failed to mark transaction as no/lost receipt" }, status: :unprocessable_entity
+        end
+
+        render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
+      end
+
       private
 
       def paginate_transactions(transactions)

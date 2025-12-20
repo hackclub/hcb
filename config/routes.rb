@@ -675,6 +675,7 @@ Rails.application.routes.draw do
 
             member do
               get "memo_suggestions"
+              post "mark_no_receipt"
             end
           end
 
@@ -692,7 +693,11 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :transactions, only: [:show]
+        resources :transactions, only: [:show] do
+          member do
+            post "mark_no_receipt"
+          end
+        end
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
