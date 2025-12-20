@@ -6,7 +6,7 @@ module CardGrantService
   class BulkCreate
     # Contract:
     # - Returns Result for CSV/validation errors.
-    # - Raises DisbursementService::Create::UserError for business-level disbursement failures
+    # - Raises DisbursementService::Create::UserError for disbursement failures
     #   (e.g., insufficient funds).
     # - Propagates any other unexpected errors.
     #
