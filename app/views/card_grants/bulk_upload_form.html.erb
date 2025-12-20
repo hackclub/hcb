@@ -53,7 +53,7 @@
     </table>
   </div>
 
-  <%= link_to bulk_upload_template_event_card_grants_path(@event), class: "btn btn--primary" do %>
+  <%= link_to card_grants_bulk_upload_template_path(@event), class: "btn btn--primary" do %>
     <%= inline_icon "download" %>
     Download CSV template
   <% end %>
@@ -62,7 +62,7 @@
 <div class="card p3">
   <h3 class="mt0">Upload CSV</h3>
 
-  <%= form_with url: bulk_upload_event_card_grants_path(@event), method: :post, local: true, multipart: true do |form| %>
+  <%= form_with url: card_grants_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
     <div class="field">
       <%= form.label :csv_file, "Select CSV file" %>
       <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full" %>

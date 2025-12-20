@@ -872,6 +872,9 @@ Rails.application.routes.draw do
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
+    get "card_grants/bulk_upload", to: "card_grants#bulk_upload_form", as: :card_grants_bulk_upload
+    post "card_grants/bulk_upload", to: "card_grants#bulk_upload"
+    get "card_grants/bulk_upload_template", to: "card_grants#bulk_upload_template", as: :card_grants_bulk_upload_template
 
     resources :follows, only: [:create], controller: "event/follows"
 
@@ -940,12 +943,6 @@ Rails.application.routes.draw do
     end
 
     resources :card_grants, only: [:new, :create], path: "card-grants" do
-      collection do
-        get "bulk_upload", to: "card_grants#bulk_upload_form"
-        post "bulk_upload", to: "card_grants#bulk_upload"
-        get "bulk_upload_template", to: "card_grants#bulk_upload_template"
-      end
-
       member do
         post "topup"
         post "withdraw"

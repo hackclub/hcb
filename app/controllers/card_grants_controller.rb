@@ -9,6 +9,9 @@ class CardGrantsController < ApplicationController
   before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
   before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
 
+  # Note: bulk_upload routes are now directly under events (e.g., /:event_id/card_grants/bulk_upload)
+  # instead of nested under the card_grants resource
+
   def index
     authorize @event, :card_grant_overview?
   end
