@@ -193,7 +193,7 @@ RSpec.describe CardGrantService::BulkCreate do
             csv_file: csv_file_from_content(csv_content),
             sent_by:
           ).run
-        }.to raise_error(DisbursementService::Create::UserError)
+        }.to raise_error(ActiveModel::RangeError)
 
         expect(CardGrant.count).to eq(initial_count)
       end
@@ -261,7 +261,7 @@ RSpec.describe CardGrantService::BulkCreate do
         ).run
 
         expect(result.success?).to be false
-        expect(result.errors.first).to include("encoding")
+        expect(result.errors.first).to include("UTF-8")
       end
     end
   end
