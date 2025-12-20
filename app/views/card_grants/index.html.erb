@@ -13,7 +13,7 @@
     <div class="flex gap-2 items-center">
       <% if policy(@event).bulk_upload_card_grants? %>
         <%= link_to bulk_upload_event_card_grants_path(@event), class: "btn btn--primary" do %>
-          <%= inline_icon "upload" %>
+          <%= inline_icon "share" %>
           Bulk send via CSV
         <% end %>
       <% end %>
