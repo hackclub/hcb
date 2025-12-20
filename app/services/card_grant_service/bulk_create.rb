@@ -27,6 +27,7 @@ module CardGrantService
     OPTIONAL_HEADERS = %w[purpose one_time_use invite_message].freeze
     ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
     MAX_ERRORS_TO_DISPLAY = 10
+    MAX_FILE_SIZE_BYTES = 1.megabyte
 
     Result = Struct.new(:success?, :card_grants, :errors, keyword_init: true)
 
@@ -60,6 +61,8 @@ module CardGrantService
     private
 
     def parse_csv
+      validate_file_size!
+
       content = @csv_file.read.force_encoding("UTF-8")
       # Strip BOM (Byte Order Mark) that Excel may add
       content = content.sub(/\A\xEF\xBB\xBF/, "").sub(/\A\uFEFF/, "")
@@ -80,6 +83,14 @@ module CardGrantService
       end
 
       [rows, header_mapping]
+    end
+
+    def validate_file_size!
+      return unless @csv_file.respond_to?(:size)
+
+      if @csv_file.size > MAX_FILE_SIZE_BYTES
+        raise ValidationError.new(["File is too large. Maximum size is 1 MB."])
+      end
     end
 
     def validate_rows!(rows, header_mapping)

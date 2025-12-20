@@ -279,5 +279,22 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(result.errors.first).to include("Invalid CSV format")
       end
     end
+
+    context "with file size limit" do
+      it "returns error for files exceeding size limit" do
+        large_content = "email,amount_cents\n" + ("alice@example.com,1000\n" * 50_000)
+        file = csv_file_from_content(large_content)
+        allow(file).to receive(:size).and_return(2.megabytes)
+
+        result = described_class.new(
+          event:,
+          csv_file: file,
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("too large")
+      end
+    end
   end
 end
