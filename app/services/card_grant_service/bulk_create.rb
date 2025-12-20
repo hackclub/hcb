@@ -20,6 +20,7 @@ module CardGrantService
         @errors = errors
         super("CSV validation failed")
       end
+
     end
 
     REQUIRED_HEADERS = %w[email amount_cents].freeze
@@ -181,5 +182,6 @@ module CardGrantService
         CardGrantMailer.with(card_grant:).card_grant_notification.deliver_later
       end
     end
+
   end
 end
