@@ -1049,7 +1049,7 @@ class EventsController < ApplicationController
     { settled_transactions:, pending_transactions: }
   end
 
-  def merchants_filter
+  def merchant_select
     authorize @event
 
     @merchant = params[:merchant]
@@ -1071,6 +1071,8 @@ class EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || 20).to_i
     @merchants = Kaminari.paginate_array(@merchants).page(page).per(per_page)
+    
+    render partial: "events/filters/merchant_select", locals: { merchants: @merchants }
   end
 
   private

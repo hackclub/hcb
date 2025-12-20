@@ -1,6 +1,6 @@
 <%= turbo_frame_tag :merchants_filter do %>
-  <%= form_with url: event_merchants_filter_path, method: :get, local: true, class: "mb-2 flex gap-2 input" do |f| %>
-    <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10", data: { action: "input->form#submit", form_target: "input" } %>
+  <%= form_with url: event_merchant_select_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
+    <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10 shadow-none", data: { action: "input->form#submit", form_target: "input" } %>
       <button type="submit" class="pop muted">
         <%= inline_icon "search" %>
       </button>

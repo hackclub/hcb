@@ -81,9 +81,9 @@
                 Loading...
               <% end %>
             <% when "merchant_select" %>
-              <%= turbo_frame_tag "merchants_filter",
+              <%= turbo_frame_tag "merchant_select",
                   loading: "lazy",
-                  src: event_merchants_filter_path(
+                  src: event_merchant_select_path(
                     @event,
                     filter_key: filter[:key],
                     selected: params[filter[:key]],
