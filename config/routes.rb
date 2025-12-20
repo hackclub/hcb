@@ -675,7 +675,6 @@ Rails.application.routes.draw do
 
             member do
               get "memo_suggestions"
-              post "mark_no_receipt"
             end
           end
 
