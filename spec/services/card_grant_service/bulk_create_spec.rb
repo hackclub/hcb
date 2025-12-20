@@ -314,7 +314,7 @@ RSpec.describe CardGrantService::BulkCreate do
 
     context "with file size limit" do
       it "returns error for files exceeding size limit" do
-        large_content = "email,amount_cents\n" + ("alice@example.com,1000\n" * 50_000)
+        large_content = "email,amount_cents\n#{"alice@example.com,1000\n" * 50_000}"
         file = csv_file_from_content(large_content)
         allow(file).to receive(:size).and_return(2.megabytes)
 
