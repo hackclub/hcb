@@ -16,7 +16,7 @@
         <% end %>
 
         <%= render "stripe_cards/stripe_card", stripe_card: @card, headless: true %>
-        <% admin_tool("card card--breakdown flex flex-col gap-2 p-1") do %>
+        <% admin_tool("card card--breakdown flex flex-col gap-2 p-1 -mb-1") do %>
           <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn btn--list-item" %>
           <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn btn--list-item" %>
           <% if @card.cash_withdrawal_enabled? %>
