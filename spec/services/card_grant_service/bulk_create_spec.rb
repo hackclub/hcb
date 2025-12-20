@@ -13,9 +13,7 @@ RSpec.describe CardGrantService::BulkCreate do
   end
 
   def csv_file_from_content(content)
-    file = StringIO.new(content)
-    file.define_singleton_method(:read) { string }
-    file
+    StringIO.new(content)
   end
 
   describe "#run" do
