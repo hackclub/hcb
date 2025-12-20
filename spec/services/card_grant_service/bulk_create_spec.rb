@@ -264,5 +264,20 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(result.errors.first).to include("UTF-8")
       end
     end
+
+    context "with malformed CSV" do
+      it "returns error for unclosed quotes" do
+        csv_content = "email,amount_cents\n\"alice@example.com,1000\n"
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("Invalid CSV format")
+      end
+    end
   end
 end
