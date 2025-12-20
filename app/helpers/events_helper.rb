@@ -51,7 +51,7 @@ module EventsHelper
       icon: "hashtag",
       selected: selected == :account_number,
     }
-
+    
     if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index?
       items << { section: "Receive" }
     end
@@ -76,6 +76,15 @@ module EventsHelper
         selected: selected == :invoices,
       }
     end
+
+    items << {
+      name: "Check deposits",
+      path: event_check_deposits_path(@event),
+      tooltip: "Deposit a check",
+      icon: "cheque",
+      selected: selected == :check_deposits,
+    }
+
     if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview?
       items << { section: "Spend" }
     end
