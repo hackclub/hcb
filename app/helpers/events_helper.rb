@@ -82,7 +82,7 @@ module EventsHelper
       path: event_check_deposits_path(@event),
       tooltip: "Deposit a check",
       icon: "cheque",
-      selected: selected == :check_deposits,
+      selected: selected == :deposit_check,
     }
 
     if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview?
