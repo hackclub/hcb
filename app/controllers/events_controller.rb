@@ -19,12 +19,18 @@ class EventsController < ApplicationController
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
   def ledger_filters
+    range = if @event.canonical_transactions.exists?
+              [@event.canonical_transactions.minimum(:amount_cents), @event.canonical_transactions.maximum(:amount_cents)]
+            else
+              [0, 0]
+            end
+
     filters = []
     filters << { key: "tag", label: "Tags", type: "tag_select" } if @event.tags.size > 0
     filters << { key: "user", label: "User", type: "user_select" }
     filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
     filters << { key_base: "date", label: "Date", type: "date_range" }
-    filters << { key_base: "amount", label: "Amount", type: "amount_range" }
+    filters << { key_base: "amount", label: "Amount", type: "amount_range", range: }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
     filters << { key: "merchant", label: "Merchant", type: "merchant_select" }
     filters << { key: "receipts", label: "Receipts", type: "select", options: %w[all missing] }
@@ -181,8 +187,6 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
-
-    @filters = ledger_filters
   end
 
   def user_select
@@ -266,6 +270,8 @@ class EventsController < ApplicationController
         transaction.running_balance = running_total + transaction.amount
       end
     end
+
+    @filters = ledger_filters
 
     render layout: !turbo_frame_request? && auditor_signed_in?
   end
