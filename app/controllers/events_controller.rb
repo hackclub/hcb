@@ -1071,7 +1071,7 @@ class EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || 20).to_i
     @merchants = Kaminari.paginate_array(@merchants).page(page).per(per_page)
-    
+
     render partial: "events/filters/merchant_select", locals: { merchants: @merchants }
   end
 
