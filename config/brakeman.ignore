@@ -47,40 +47,6 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "18d9a7883755596ad9b083cfbd00e3fc19fdf296e396510648066dc43b432b27",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/stripe_cards/show.html.erb",
-      "line": 20,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "StripeCardsController",
-          "method": "show",
-          "line": 89,
-          "file": "app/controllers/stripe_cards_controller.rb",
-          "rendered": {
-            "name": "stripe_cards/show",
-            "file": "app/views/stripe_cards/show.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "stripe_cards/show"
-      },
-      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": "this is already validated"
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
       "fingerprint": "331898aa15adc3446b48aada00d2cc1f56eb60f26b56ff486da0c5d596773837",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -172,40 +138,6 @@
     },
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "842304376abd28273945166e54498133accb7cdfb9c731061649ff771c4c3a18",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/admin/wise_transfer_process.html.erb",
-      "line": 14,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0\", :target => \"_blank\")",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "AdminController",
-          "method": "wise_transfer_process",
-          "line": 748,
-          "file": "app/controllers/admin_controller.rb",
-          "rendered": {
-            "name": "admin/wise_transfer_process",
-            "file": "app/views/admin/wise_transfer_process.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "admin/wise_transfer_process"
-      },
-      "user_input": "WiseTransfer.find(params[:id]).wise_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": ""
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "7c9ae4f5245c156ca383daec57b3c0a7cf88681a787ff39a54a4026486f3d929",
       "check_name": "CrossSiteScripting",
@@ -262,6 +194,40 @@
         "template": "application/_admin_viewer"
       },
       "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "842304376abd28273945166e54498133accb7cdfb9c731061649ff771c4c3a18",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/wise_transfer_process.html.erb",
+      "line": 14,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0\", :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "wise_transfer_process",
+          "line": 748,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/wise_transfer_process",
+            "file": "app/views/admin/wise_transfer_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/wise_transfer_process"
+      },
+      "user_input": "WiseTransfer.find(params[:id]).wise_url",
       "confidence": "Weak",
       "cwe_id": [
         79
@@ -407,6 +373,40 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "bbf21d4fdb41d31cd94878652023aa011919d97f6df8c3043d8dd03ebc082e6b",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 20,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn btn--list-item\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "show",
+          "line": 89,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "bdc62cbde9149ebea74063a4d9163076b449ce86fc22403ddeb7da6622f2363a",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -513,7 +513,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/metric/hcb/total_raised.rb",
-      "line": 34,
+      "line": 40,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"SELECT SUM(amount_cents) as amount_cents FROM \\\"canonical_transactions\\\"\\nLEFT JOIN \\\"canonical_event_mappings\\\" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id\\nLEFT JOIN \\\"events\\\" ON canonical_event_mappings.event_id = events.id\\nLEFT JOIN \\\"event_plans\\\" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'\\nLEFT JOIN \\\"disbursements\\\" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)\\nWHERE amount_cents > 0\\nAND date_part('year', date) = #{2025}\\n#{::Event::Plan.that(:omit_stats).map(&:name).map do\n \"AND event_plans.type != '#{p}'\"\n end.join(\" \")}\\nAND (disbursements.id IS NULL or disbursements.should_charge_fee = true)\\nAND NOT (\\n  canonical_transactions.hcb_code ILIKE 'HCB-300%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-310%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-350%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-400%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-401%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-600%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-601%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-710%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-712%'\\n)\\n\")",
       "render_path": null,
@@ -530,6 +530,6 @@
       "note": ""
     }
   ],
-  "updated": "2025-11-25 20:32:35 +0000",
+  "updated": "2025-12-20 19:50:32 +0000",
   "brakeman_version": "6.2.2"
 }
