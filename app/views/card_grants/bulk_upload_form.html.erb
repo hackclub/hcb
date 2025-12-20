@@ -63,9 +63,9 @@
   <h3 class="mt0">Upload CSV</h3>
 
   <%= form_with url: bulk_upload_event_card_grants_path(@event), method: :post, local: true, multipart: true do |form| %>
-    <div class="field">
-      <%= form.label :csv_file, "Select CSV file" %>
-      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full" %>
+    <div class="field--fileupload">
+      <%= form.label :csv_file, "Select CSV file", class: "field--fileupload__label" %>
+      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full field--fileupload__field" %>
     </div>
 
     <div class="flex items-center justify-between mt3">
