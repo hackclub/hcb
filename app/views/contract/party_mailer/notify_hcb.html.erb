@@ -1,0 +1,14 @@
+<p>Hi there! 👋</p>
+
+<p>
+  <%= @contract.party(:signee).email %> from <%= @contract.event.name %> is ready for you to sign the fiscal sponsorship agreement!
+</p>
+
+<p>
+  <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement.
+</p>
+
+<p>
+  Best,<br>
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> Team
+</p>

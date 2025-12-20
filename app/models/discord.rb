@@ -2,6 +2,11 @@
 
 module Discord
   MESSAGE_EXPIRATION = 15.minutes
+  extend Discord::Support
+
+  def self.table_name_prefix
+    "discord_"
+  end
 
   def self.generate_signed(content, **kwargs)
     options = { expires_in: MESSAGE_EXPIRATION }.merge(kwargs)

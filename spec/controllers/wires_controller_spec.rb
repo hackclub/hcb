@@ -87,7 +87,7 @@ RSpec.describe WiresController do
       )
 
       expect(event.wires).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       stub_request(:get, "https://api.column.com/institutions/NOSCCATT")

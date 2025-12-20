@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, merchant: nil, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -15,8 +15,10 @@ module PendingTransactionEngine
         @expenses = expenses
         @user = user
         @missing_receipts = missing_receipts
+        @category = category
         @merchant = merchant
         @order_by = order_by
+        @subledger = subledger
       end
 
       def run
@@ -30,7 +32,7 @@ module PendingTransactionEngine
       end
 
       def canonical_pending_event_mappings
-        @canonical_pending_event_mappings ||= CanonicalPendingEventMapping.where(event_id: event.id, subledger_id: nil)
+        @canonical_pending_event_mappings ||= (@subledger ? CanonicalPendingEventMapping.where(event_id: event.id).where.not(subledger_id: nil) : CanonicalPendingEventMapping.where(event_id: event.id, subledger_id: nil))
       end
 
       def canonical_pending_transactions
@@ -92,6 +94,11 @@ module PendingTransactionEngine
 
             if @end_date
               cpts = cpts.where("canonical_pending_transactions.date <= cast(? as date)", @end_date)
+            end
+
+            if @category
+              cpts = cpts.joins("LEFT JOIN transaction_category_mappings tcm on canonical_pending_transactions.id = tcm.categorizable_id AND tcm.categorizable_type = 'CanonicalPendingTransaction'")
+                         .where("tcm.transaction_category_id = ?", @category.id)
             end
 
             if @merchant

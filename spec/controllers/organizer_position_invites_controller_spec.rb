@@ -7,6 +7,11 @@ RSpec.describe OrganizerPositionInvitesController do
   render_views
 
   describe "#create" do
+    before do
+      # This is required since sending contracts defaults to the system user email for HCB's party
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
     it "creates an invitation" do
       user = create(:user)
       event = create(:event, organizers: [user])
@@ -40,7 +45,7 @@ RSpec.describe OrganizerPositionInvitesController do
       user = create(:user, :make_admin)
       event = create(:event, organizers: [user])
 
-      # `OrganizerPosition::Contract` makes external requests to Airtable and
+      # `Contract` makes external requests to Airtable and
       # Docuseal which we don't want to perform in this context.
       expect(ApplicationsTable).to(
         receive(:all)
@@ -81,8 +86,9 @@ RSpec.describe OrganizerPositionInvitesController do
       invite = event.organizer_position_invites.last
       expect(invite.is_signee).to eq(true)
 
-      contract = invite.organizer_position_contracts.sole
-      expect(contract.cosigner_email).to eq("cosigner@hackclub.com")
+      contract = invite.contracts.sole
+
+      expect(contract.party(:cosigner)&.email).to eq("cosigner@hackclub.com")
       expect(contract.include_videos).to eq(true)
       expect(contract.external_service).to eq("docuseal")
       expect(contract.external_id).to eq("STUBBED")

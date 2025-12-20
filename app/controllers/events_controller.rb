@@ -7,13 +7,12 @@ class EventsController < ApplicationController
   include SetEvent
 
   include Rails::Pagination
-  before_action :set_event, except: [:index, :new, :create]
+  before_action :set_event, except: [:index]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
   skip_before_action :signed_in_user
-  before_action :set_mock_data
   before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
@@ -71,10 +70,6 @@ class EventsController < ApplicationController
     rescue Pundit::NotAuthorizedError
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
-
-    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && auditor_signed_in?) || @event.demo_mode?
-      redirect_to event_transactions_path(@event.slug)
-    end
   end
 
   def transaction_heatmap
@@ -112,7 +107,7 @@ class EventsController < ApplicationController
     canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
     all_transactions = [*pending_transactions, *canonical_transactions]
 
-    @recent_transactions = all_transactions.first(5)
+    @recent_transactions = all_transactions.first(6)
 
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
@@ -141,7 +136,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(5)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -235,8 +230,10 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
-      order_by: @order_by.to_sym
+      order_by: @order_by.to_sym,
+      subledger: params[:subledger]
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -270,16 +267,7 @@ class EventsController < ApplicationController
       end
     end
 
-    if helpers.show_mock_data?
-      @transactions = MockTransactionEngineService::GenerateMockTransaction.new.run
-
-      @transactions = Kaminari.paginate_array(@transactions).page(params[:page]).per(params[:per] || 75)
-      @mock_total = @transactions.sum(&:amount_cents)
-    end
-
-    @filters = ledger_filters
-
-    render layout: false
+    render layout: !turbo_frame_request? && auditor_signed_in?
   end
 
   def balance_by_date
@@ -353,14 +341,20 @@ class EventsController < ApplicationController
       @indirect_access = access_levels
     end
 
-    @pending = @event.organizer_position_invites.pending.includes(:sender)
+    @invites = @event.organizer_position_invites.pending.includes(:sender)
+    @invite_requests = @event.organizer_position_invite_requests.pending
+    @invite_links = @event.organizer_position_invite_links.active
   end
 
   # GET /events/1/edit
   def edit
+    authorize @event
+    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
+      return redirect_to edit_event_path(@event.slug, tab: "details")
+    end
+
     @settings_tab = params[:tab]
     @frame = params[:frame]
-    authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
@@ -531,53 +525,15 @@ class EventsController < ApplicationController
 
     authorize @event
 
-    # Generate mock data
-    if helpers.show_mock_data?
-      @user_stripe_cards = []
-
-      if organizer_signed_in?
-        # The user's cards
-        2.times.each_with_index do |_, i|
-          state = i > 0
-          virtual = rand > 0.5
-          card = OpenStruct.new(
-            id: Faker::Number.number(digits: 1),
-            virtual?: virtual,
-            physical?: !virtual,
-            remote_shipping_status: rand > 0.5 ? "PENDING" : "SHIPPED",
-            created_at: Faker::Time.between(from: 1.year.ago, to: Time.now),
-            state: state ? "success" : "muted",
-            state_text: state ? "Active" : "Frozen",
-            status_text: state ? "Active" : "Frozen",
-            stripe_name: current_user.name,
-            user: current_user,
-            formatted_card_number: Faker::Finance.credit_card(:mastercard),
-            hidden_card_number: "•••• •••• •••• ••••",
-            hidden_card_number_with_last_four: "•••• •••• •••• #{Faker::Number.number(digits: 4)}",
-            to_partial_path: "stripe_cards/stripe_card",
-          )
-          @user_stripe_cards << card
-        end
-      end
-      # Sort by date issued
-      @user_stripe_cards.sort_by! { |card| card.created_at }.reverse!
-    end
-
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || 20).to_i
 
-    display_cards = if helpers.show_mock_data? && organizer_signed_in?
-                      @user_stripe_cards
-                    elsif helpers.show_mock_data?
-                      []
-                    else
-                      [
-                        @user_stripe_cards.active,
-                        @stripe_cards.active,
-                        @user_stripe_cards.deactivated,
-                        @stripe_cards.deactivated
-                      ].flatten
-                    end
+    display_cards = [
+      @user_stripe_cards.active,
+      @stripe_cards.active,
+      @user_stripe_cards.deactivated,
+      @stripe_cards.deactivated
+    ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
@@ -593,6 +549,14 @@ class EventsController < ApplicationController
     authorize @event
 
     render :async_balance, layout: false
+  end
+
+  def async_sub_organization_balance
+    authorize @event
+
+    @sub_organizations = filtered_sub_organizations
+
+    render :async_sub_organization_balance, layout: false
   end
 
   def account_number
@@ -676,43 +640,6 @@ class EventsController < ApplicationController
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
-    if helpers.show_mock_data?
-      @all_donations = []
-      @recurring_donations = []
-      @stats = { deposited: 0, in_transit: 0, refunded: 0 }
-
-      (0..rand(20..50)).each do |_|
-        refunded = rand > 0.9
-        amount = rand(1..100) * 100
-        started_on = Faker::Date.backward(days: 365 * 2)
-
-        donation = OpenStruct.new(
-          amount:,
-          total_donated: amount * rand(1..5),
-          stripe_status: "active",
-          state: refunded ? "warning" : "success",
-          state_text: refunded ? "Refunded" : "Deposited",
-          filter: refunded ? "refunded" : "deposited",
-          created_at: started_on,
-          name: Faker::Name.name,
-          recurring: rand > 0.9,
-          local_hcb_code: OpenStruct.new(hashid: ""),
-          hcb_code: "",
-        )
-        @stats[:deposited] += amount unless refunded
-        @stats[:refunded] += amount if refunded
-        @all_donations << donation
-      end
-      @all_donations.each do |donation|
-        if donation[:recurring]
-          @recurring_donations << donation
-        end
-      end
-      # Sort by date descending
-      @recurring_donations.sort_by! { |invoice| invoice[:created_at] }.reverse!
-      @all_donations.sort_by! { |invoice| invoice[:created_at] }.reverse!
-    end
-
     @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
 
     @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
@@ -733,12 +660,11 @@ class EventsController < ApplicationController
     @checks = @event.checks.includes(:lob_address)
     @increase_checks = @event.increase_checks
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
-    @card_grants = @event.card_grants.includes(:user, :subledger, :stripe_card)
 
-    @disbursements = @disbursements.not_card_grant_related if @event.plan.card_grants_enabled?
+    @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents) + @card_grants.sum(:amount_cents),
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
       in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).sum(&:usd_amount_cents),
       canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.sum(&:usd_amount_cents)
     }
@@ -757,8 +683,6 @@ class EventsController < ApplicationController
     @increase_checks = @increase_checks.increase_deposited if params[:filter] == "deposited"
     @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
     @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
-
-    @card_grants = @card_grants.search_recipient(params[:q]) if params[:q].present?
 
     @disbursements = @disbursements.reviewing_or_processing if params[:filter] == "in_transit"
     @disbursements = @disbursements.fulfilled if params[:filter] == "deposited"
@@ -780,37 +704,7 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @card_grants + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
-
-    # Generate mock data
-    if helpers.show_mock_data?
-      @transfers = []
-      @stats = { deposited: 0, in_transit: 0, canceled: 0 }
-
-      (0..rand(20..100)).each do |_|
-        transfer = OpenStruct.new(
-          state: "success",
-          state_text: rand > 0.5 ? "Fufilled" : "Deposited",
-          created_at: Faker::Date.backward(days: 365 * 2),
-          amount: rand(1000..10000),
-          name: Faker::Name.name,
-          hcb_code: "",
-        )
-        @stats[:deposited] += transfer.amount
-        @transfers << transfer
-      end
-      # Sort by date
-      @transfers = @transfers.sort_by { |o| o.created_at }.reverse!
-
-      # Set the most recent 0-3 invoices to be pending
-      (0..rand(-1..2)).each do |i|
-        @transfers[i].state = "muted"
-        @transfers[i].state_text = "Pending"
-        @stats[:in_transit] += @transfers[i].amount
-      end
-
-      @transfers = Kaminari.paginate_array(@transfers).page(params[:page]).per(100)
-    end
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
   end
 
   def new_transfer
@@ -872,13 +766,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        search = params[:q] || params[:search]
-
-        relation = @event.subevents
-        relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
-        relation = relation.order(created_at: :desc)
-
-        @sub_organizations = relation
+        @sub_organizations = filtered_sub_organizations
       end
 
       # CSV export intentionally does not consider filters
@@ -919,7 +807,8 @@ class EventsController < ApplicationController
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
-      parent_event: @event
+      parent_event: @event,
+      scoped_tags: params[:scoped_tags]
     ).run
 
     redirect_to subevent
@@ -934,12 +823,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cloud-b01qqxaux.vercel.app/barking_dog_turned_into_wood_meme.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_transforms_after_seeing_chair.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cloud-b01qqxaux.vercel.app/run_now_meme.mp4",
-        "https://cloud-3qup26j81.vercel.app/bonk_sound_effect.mp4",
-        "https://cloud-is6jebpbb.vercel.app/disappearing_doge_meme.mp4"
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
+        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -1136,6 +1025,10 @@ class EventsController < ApplicationController
       "paypal_transfer"        => {
         "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
         "pending" => ->(t) { t.paypal_transfer_id }
+      },
+      "wise_transfer"          => {
+        "settled" => ->(t) { t.local_hcb_code.wise_transfer? },
+        "pending" => ->(t) { t.wise_transfer_id }
       }
     }
 
@@ -1175,6 +1068,23 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def filtered_sub_organizations(sub_organizations = @event.subevents)
+    search = params[:q] || params[:search]
+    scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
+
+    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
+    relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
+    relation = relation.order(created_at: :desc)
+
+    @filter_options = [
+      { key: "tag", label: "Tag", type: "select", options: @event.subevent_scoped_tags.map(&:name) }
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
+
+    relation
+  end
 
   # Only allow a trusted parameter "white list" through.
   def event_params
@@ -1320,14 +1230,21 @@ class EventsController < ApplicationController
     @missing_receipts = params[:missing_receipts].present?
     @merchant = params[:merchant]
     @direction = params[:direction]
+    @category = TransactionCategory.find_by(slug: params[:category])
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
+    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?)
+    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
+    if @ledger_filters_disabled && has_filters
+      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 
@@ -1347,8 +1264,10 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      category: @category,
       merchant: @merchant,
-      order_by: @order_by&.to_sym || "date"
+      order_by: @order_by&.to_sym || "date",
+      subledger: params[:subledger]
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
@@ -1364,26 +1283,24 @@ class EventsController < ApplicationController
   end
 
   def set_cacheable
-    return false unless params[:q].blank? &&
-                        params[:page].blank? &&
-                        params[:per].blank? &&
-                        @user.nil? &&
-                        @tag.blank? &&
-                        @type.blank? &&
-                        @start_date.blank? &&
-                        @end_date.blank? &&
-                        @minimum_amount.nil? &&
-                        @maximum_amount.nil? &&
-                        !@missing_receipts
-    return false if organizer_signed_in?
+    has_filters = !(
+      params[:q].blank? &&
+        params[:page].blank? &&
+        params[:per].blank? &&
+        @user.nil? &&
+        @tag.blank? &&
+        @type.blank? &&
+        @start_date.blank? &&
+        @end_date.blank? &&
+        @minimum_amount.nil? &&
+        @maximum_amount.nil? &&
+        @direction.nil? &&
+        @category.nil? &&
+        @merchant.nil? &&
+        !@missing_receipts
+    )
 
-    true
-  end
-
-  def set_mock_data
-    if params[:show_mock_data].present?
-      helpers.set_mock_data!(params[:show_mock_data] == "true")
-    end
+    @cacheable = !(organizer_signed_in? || has_filters)
   end
 
   def set_timeframe

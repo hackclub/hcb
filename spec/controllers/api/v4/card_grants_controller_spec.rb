@@ -41,6 +41,7 @@ RSpec.describe Api::V4::CardGrantsController do
 
       serialized_event = {
         "id"                                => event.public_id,
+        "parent_id"                         => nil,
         "name"                              => "Test Event",
         "slug"                              => "test-event",
         "background_image"                  => nil,
@@ -48,6 +49,7 @@ RSpec.describe Api::V4::CardGrantsController do
         "created_at"                        => event.created_at.iso8601(3),
         "fee_percentage"                    => 0.0,
         "icon"                              => nil,
+        "donation_page_available"           => true,
         "playground_mode"                   => false,
         "playground_mode_meeting_requested" => false,
         "transparent"                       => true
@@ -65,6 +67,7 @@ RSpec.describe Api::V4::CardGrantsController do
           "allowed_merchants"          => [],
           "category_lock"              => [],
           "merchant_lock"              => [],
+          "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
           "disbursements"              => [

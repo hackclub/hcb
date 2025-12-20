@@ -1,12 +1,12 @@
 <% title "Deposit a check to #{@event.name}" %>
-<% page_md %>
+<% page_sm %>
 <%= render "events/nav", selected: :deposit_check %>
 
 <h1 class="heading">Deposit a check</h1>
 
-<div class="grid grid--spacious lg:grid-columns-[3fr_2fr]">
-  <%= render "new", event: @event %>
-  <%= render "callout", type: "info", title: "Check deposit basics", footer: :questions do %>
+<div class="grid">
+  <%= render "check_deposits/new", event: @event %>
+  <%= render "application/callout", type: "info", title: "Check deposit basics", footer: :questions do %>
     <ul class="pl-4">
       <li>
         The check must be made out to
@@ -35,12 +35,12 @@
     <table>
       <thead>
         <% if (can_view_any_check_images = @check_deposits.any? { |cd| policy(cd).view_image? }) %>
-          <th></th>
+          <th><%# image %></th>
         <% end %>
         <th>Status</th>
         <th>Date</th>
         <th>Amount</th>
-        <th></th>
+        <th><%# details button %></th>
       </thead>
 
       <tbody>

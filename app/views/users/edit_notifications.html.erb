@@ -1,11 +1,10 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<% disabled = !policy(@user).update? %>
+
+<%= render "users/nav", selected: :settings_notifications %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "notifications" %>
+  <%= render "settings_header", active: "notifications" %>
   <section>
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
       <fieldset class="field">
@@ -15,7 +14,9 @@
         </p>
         <%= form.select(
               :receipt_report_option,
-              User.receipt_report_options.map { |k, v| [k.humanize, k] }
+              User.receipt_report_options.map { |k, v| [k.humanize, k] },
+              {},
+              disabled:
             ) %>
       </fieldset>
       <fieldset class="field">
@@ -24,17 +25,17 @@
           Get an email when someone comments on a transaction or reimbursement report.
         </p>
         <div class="field field--options field--green trio">
-          <%= form.radio_button :comment_notifications, :all_threads %>
+          <%= form.radio_button :comment_notifications, :all_threads, disabled: %>
           <%= form.label :comment_notifications, value: :all_threads do %>
             <%= inline_icon "notification", size: 28 %>
             <strong>All transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :my_threads %>
+          <%= form.radio_button :comment_notifications, :my_threads, disabled: %>
           <%= form.label :comment_notifications, value: :my_threads do %>
             <%= inline_icon "person", size: 32 %>
             <strong>My transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :no_threads %>
+          <%= form.radio_button :comment_notifications, :no_threads, disabled: %>
           <%= form.label :comment_notifications, value: :no_threads do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>
@@ -46,30 +47,30 @@
         <p class="h5 muted mt-0 mb-3">
           Get a notification when there’s a charge on any of your cards.
         </p>
-        <div class="field field--options max-width-3 grid grid--narrow">
-          <%= form.radio_button :charge_notifications, :email_and_sms %>
+        <div class="field field--options max-w-3xl grid grid--narrow">
+          <%= form.radio_button :charge_notifications, :email_and_sms, disabled: %>
           <%= form.label :charge_notifications, value: :email_and_sms do %>
             <%= inline_icon "announcement", size: 28 %>
             <strong>Email & SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :email %>
+          <%= form.radio_button :charge_notifications, :email, disabled: %>
           <%= form.label :charge_notifications, value: :email do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Email</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :sms %>
+          <%= form.radio_button :charge_notifications, :sms, disabled: %>
           <%= form.label :charge_notifications, value: :sms do %>
             <%= inline_icon "message", size: 28 %>
             <strong>SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :nothing %>
+          <%= form.radio_button :charge_notifications, :nothing, disabled: %>
           <%= form.label :charge_notifications, value: :nothing do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>
           <% end %>
         </div>
       </fieldset>
-      <%= form.submit "Save settings", class: "mt2" %>
+      <%= form.submit "Save settings", class: "mt2", disabled: %>
     <% end %>
   </section>
 </turbo-frame>

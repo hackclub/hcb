@@ -6,14 +6,6 @@ module Discord
       @bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
     end
 
-    def self.color
-      if Rails.env.development?
-        0x33d6a6
-      else
-        0xec3750
-      end
-    end
-
     def self.faraday_connection
       @faraday_connection ||= Faraday.new url: "https://discord.com" do |c|
         c.request :json

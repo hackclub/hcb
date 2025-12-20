@@ -188,6 +188,16 @@ class Disbursement < ApplicationRecord
   end
 
   def approve_by_admin(user)
+    # Don't check admin transfer limits for card grants. This method is also
+    # used to auto-approve card grants; even ones NOT sent by admins.
+    unless source_event == destination_event
+      GovernanceService::Admin::Transfer::Approval.new(
+        transfer: self,
+        amount_cents: amount,
+        user:,
+      ).ensure_may_approve!
+    end
+
     if scheduled_on.present?
       mark_scheduled!(user)
     else

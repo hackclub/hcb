@@ -41,7 +41,7 @@ class DiscordController < ApplicationController
       ephemeral = ::Discord::RegisterCommandsJob.command(params.dig(:data, :name))&.dig(:meta, :ephemeral) || false
       render json: { type: 5, data: { flags: ephemeral ? 1 << 6 : 0 } } # Acknowledge interaction & will edit response later
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h, responded: true)
-    when 3 # message component
+    when 3, 5 # message component, modal submit
       render json: ::Discord::HandleInteractionJob.perform_now(params.to_unsafe_h, responded: false)
     else
       Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"
@@ -123,6 +123,27 @@ class DiscordController < ApplicationController
     end
   end
 
+  def unlink_user
+    @user = Discord::Bot.bot.user(current_user.discord_id)
+
+    authorize nil, policy_class: DiscordPolicy
+  end
+
+  def unlink_user_action
+    authorize nil, policy_class: DiscordPolicy
+
+    if current_user.update(discord_id: nil)
+      flash[:success] = "Successfully unlinked your Discord user"
+    else
+      flash[:error] = event.errors.full_messages.to_sentence
+    end
+  rescue => e
+    Rails.error.unexpected("Exception unlinking discord user: #{e.message}")
+    flash[:error] = "We could not unlink your Discord user"
+  ensure
+    redirect_to root_path
+  end
+
   def unlink_server
     @signed_guild_id = params[:signed_guild_id]
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
@@ -148,7 +169,7 @@ class DiscordController < ApplicationController
       flash[:error] = event.errors.full_messages.to_sentence
     end
   rescue => e
-    Rails.error.unexpected("Exception linking discord server: #{e.message}")
+    Rails.error.unexpected("Exception unlinking discord server: #{e.message}")
     flash[:error] = "We could not unlink your organization from your Discord server"
   ensure
     if event.present?

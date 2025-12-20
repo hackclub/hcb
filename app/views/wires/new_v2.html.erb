@@ -10,7 +10,7 @@
 
 <h1>Send a wire</h1>
 
-<%= render partial: "requirements", locals: { event: @event } %>
+<%= render partial: "wires/requirements", locals: { event: @event } %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
       "x-data" => "wire(#{({
@@ -41,7 +41,7 @@
                         required: true,
                         disabled: disabled,
                         role: "combobox",
-                        "aria-controls": "payment-recipient-search",
+                        "aria-controls": "#payment-recipient-search",
                         data: {
                           action: "
                             keydown.enter->text-filter#selectFirst
@@ -98,7 +98,7 @@
         <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
       </div>
 
-      <%= render partial: "recipient_details", locals: { form:, disabled:, required: true } %>
+      <%= render partial: "wires/recipient_details", locals: { form:, disabled:, required: true } %>
     </div>
   </template>
 
@@ -136,12 +136,12 @@
 
   <template x-if="!payment_recipient || editing">
     <div>
-      <%= render partial: "account_details", locals: { form:, disabled:, required: true } %>
-      <%= render partial: "country_specific_details", locals: { form:, disabled:, required: true } %>
+      <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
+      <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
     </div>
   </template>
 
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
     <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
           action: "

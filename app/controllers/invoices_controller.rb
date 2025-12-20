@@ -6,12 +6,6 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
-  INVOICE_FILTERS = [
-    { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
-    { key_base: "created", label: "Date", type: "date_range" },
-    { key_base: "amount", label: "Amount", type: "amount_range" }
-  ].freeze
-
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -66,45 +60,9 @@ class InvoicesController < ApplicationController
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
 
-    # @ma1ted: I have no clue how to use the above methods here.
-    # Reimplementing logic is okay if you apolgise to every
-    # future contributor. You can hold me to that.
-    if helpers.show_mock_data?
-      @invoices = []
-      @stats = { total: 0, paid: 0, pending: 0, unpaid: 0 }
-
-      # Generate mock invoices data
-      (0..rand(10..30)).each do |_|
-        # State is either sent, deposited, or overdue
-        # Here, we'll only set deposited or overdue
-        deposited = rand > 0.25
-        invoice = OpenStruct.new(
-          state: deposited ? "success" : "error",
-          state_text: deposited ? "Deposited" : "Overdue",
-          created_at: Faker::Date.between(from: 30.days.ago, to: Date.today),
-          sponsor: OpenStruct.new(name: Faker::Name.name),
-          item_amount: rand(1..100) * 100,
-          local_hcb_code: OpenStruct.new(hashid: "")
-        )
-        @stats[:paid] += invoice.item_amount if deposited
-        @stats[:unpaid] += invoice.item_amount unless deposited
-        @stats[:total] += invoice.item_amount
-        @invoices << invoice
-      end
-      # Sort by date descending
-      @invoices.sort_by! { |invoice| invoice[:created_at] }.reverse!
-
-      # Set the most recent 0-3 invoices to be sent
-      (0..rand(-1..2)).each do |i|
-        @invoices[i].state = "muted"
-        @invoices[i].state_text = "Sent"
-        @stats[:pending] += @invoices[i].item_amount
-      end
-    end
-
-    @filter_options = INVOICE_FILTERS
-    helpers.validate_filter_options(INVOICE_FILTERS, params)
-    @has_filter = helpers.check_filters?(INVOICE_FILTERS, params)
+    @filter_options = filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new
@@ -263,6 +221,17 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def filter_options
+    min_amount = @event.invoices.minimum(:item_amount) || 0
+    max_amount = @event.invoices.maximum(:item_amount) || 0
+
+    [
+      { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+      { key_base: "created", label: "Date", type: "date_range" },
+      { key_base: "amount", label: "Amount", type: "amount_range", range: [min_amount / 100, max_amount / 100] }
+    ]
   end
 
 end

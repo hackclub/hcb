@@ -7,5 +7,8 @@ module Admin
 
     layout "admin"
 
+    include SetGovernanceRequestContext
+    include Admin::TransferApprovable
+
   end
 end
