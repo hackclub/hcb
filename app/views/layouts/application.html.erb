@@ -2,13 +2,9 @@
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
     <%= render "layouts/shared_head" %>
-
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
-
     <%= render "application/helpscout_beacon" %>
-
-    <meta name="apple-itunes-app" content="app-id=6465424810">
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <div id="tooltip-container"></div>
