@@ -46,7 +46,7 @@ module CardGrantService
       Result.new(success?: false, card_grants: [], errors: e.errors)
     rescue CSV::MalformedCSVError => e
       Result.new(success?: false, card_grants: [], errors: ["Invalid CSV format: #{e.message}"])
-    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError => e
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
       Result.new(success?: false, card_grants: [], errors: ["Invalid file: please upload a valid UTF-8 encoded CSV file"])
     rescue ArgumentError => e
       if e.message.include?("invalid byte sequence")
