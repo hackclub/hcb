@@ -1,88 +1,95 @@
-<% content_for :additional_scripts do %>
-  <%# Web component used for TOTP / donation QR codes %>
-  <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 
-  <%= render "application/helpscout_beacon" %>
-<% end %>
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
+  <head>
+    <%= render "layouts/shared_head" %>
 
-<% content_for :additional_head_tags do %>
-  <meta name="apple-itunes-app" content="app-id=6465424810">
-<% end %>
+    <%# Web component used for TOTP / donation QR codes %>
+    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 
-<% content_for :body_prefix do %>
-  <div id="tooltip-container"></div>
-  <%= react_component "tour/TourOverlay",
-                      tour: @tour&.name,
-                      id: @tour&.id,
-                      step: @tour&.step || 0,
-                      options: @tour&.tourable&.try(:tourable_options) || {},
-                      back_to_tour: @back_to_tour %>
-<% end %>
+    <%= render "application/helpscout_beacon" %>
 
-<%= render layout: "base" do %>
-  <% if content_for?(:nav) %>
-    <main class="app flex flex-col lg:flex-row gap-0 w-full">
-      <% if @event && @first_time %>
-        <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
-          <div class="welcome__image mb3">
-            <div class="welcome__shine"></div>
-            <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
-            <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
+    <meta name="apple-itunes-app" content="app-id=6465424810">
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <div id="tooltip-container"></div>
+    <%= react_component "tour/TourOverlay",
+                        tour: @tour&.name,
+                        id: @tour&.id,
+                        step: @tour&.step || 0,
+                        options: @tour&.tourable&.try(:tourable_options) || {},
+                        back_to_tour: @back_to_tour %>
+
+    <%= render "layouts/shared_seasonal" %>
+
+    <% if content_for?(:nav) %>
+      <main class="app flex flex-col lg:flex-row gap-0 w-full">
+        <% if @event && @first_time %>
+          <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
+            <div class="welcome__image mb3">
+              <div class="welcome__shine"></div>
+              <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
+              <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
+            </div>
+            <div class="mb2">
+              <button class="btn" data-action="welcome#tour">Show me around</button>
+            </div>
+            <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
           </div>
-          <div class="mb2">
-            <button class="btn" data-action="welcome#tour">Show me around</button>
+        <% end %>
+
+        <%= render "application/native_changelog" if @latest_changelog_post %>
+        <%= render "application/the_bin" if @the_bin %>
+
+        <aside class="sidebar select-none">
+          <div class="sidebar--scroll-container">
+            <%= yield(:header) %>
+            <div class="hidden lg:block">
+              <%= render "application/flash", klass: "mt2" %>
+            </div>
+            <div class="hidden lg:block flex-1">
+              <%= yield(:nav) %>
+            </div>
           </div>
-          <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
+          <% if content_for?(:nav_footer) %>
+            <div class="mt-auto max-h-[30%] overflow-visible hidden lg:flex">
+              <%= yield(:nav_footer) %>
+            </div>
+          <% else %>
+            <div class="hidden lg:flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
+          <% end %>
+          <%= render "application/user_menu" %>
+        </aside>
+
+        <%= yield(:mobile_nav) %>
+        <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0">
+          <%= render "application/banner_container" %>
+          <div class="container p-4 md:p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">
+            <div class="lg:hidden">
+              <%= render "application/flash" unless @hide_flash %>
+            </div>
+            <%= yield(:container) %>
+            <%= yield %>
+            <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+          </div>
+        </article>
+      </main>
+    <% else %>
+      <%= render "application/banner_container" %>
+      <% unless @no_app_shell %>
+        <div class="flex justify-center mt-8">
+          <%= render "application/logo" %>
         </div>
       <% end %>
-
-      <%= render "application/native_changelog" if @latest_changelog_post %>
-      <%= render "application/the_bin" if @the_bin %>
-
-      <aside class="sidebar select-none">
-        <div class="sidebar--scroll-container">
-          <%= yield(:header) %>
-          <div class="hidden lg:block">
-            <%= render "application/flash", klass: "mt2" %>
-          </div>
-          <div class="hidden lg:block flex-1">
-            <%= yield(:nav) %>
-          </div>
-        </div>
-        <% if content_for?(:nav_footer) %>
-          <div class="mt-auto max-h-[30%] overflow-visible hidden lg:flex">
-            <%= yield(:nav_footer) %>
-          </div>
-        <% else %>
-          <div class="hidden lg:flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
-        <% end %>
-        <%= render "application/user_menu" %>
-      </aside>
-
-      <%= yield(:mobile_nav) %>
-      <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0">
-        <%= render "application/banner_container" %>
-        <div class="container p-4 md:p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">
-          <div class="lg:hidden">
-            <%= render "application/flash" unless @hide_flash %>
-          </div>
-          <%= yield(:container) %>
-          <%= yield %>
-          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
-        </div>
-      </article>
-    </main>
-  <% else %>
-    <%= render "application/banner_container" %>
-    <% unless @no_app_shell %>
-      <div class="flex justify-center mt-8">
-        <%= render "application/logo" %>
-      </div>
+      <%= yield(:header) %>
+      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+        <%= render "application/flash" unless @hide_flash %>
+        <%= yield %>
+      </main>
     <% end %>
-    <%= yield(:header) %>
-    <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-      <%= render "application/flash" unless @hide_flash %>
-      <%= yield %>
-    </main>
-  <% end %>
-<% end %>
+
+    <%= render "layouts/shared_body_suffix" %>
+  </body>
+</html>

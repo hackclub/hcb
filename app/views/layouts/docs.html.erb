@@ -1,90 +1,88 @@
-<% content_for :github_url, Rails.configuration.constants.hack_on_hcb_form_url %>
-<% content_for :console_art_url, Rails.configuration.constants.hack_on_hcb_form_url %>
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 
-<% content_for :custom_application_js do %>
-  <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-  <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
-<% end %>
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <head>
+    <%= render "layouts/shared_head", console_art_url: Rails.configuration.constants.hack_on_hcb_form_url %>
 
-<% content_for :additional_scripts do %>
-  <%# Web component used for TOTP / donation QR codes %>
-  <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
-<% end %>
+    <%# Web component used for TOTP / donation QR codes %>
+    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <%= react_component "tour/TourOverlay",
+                        tour: @tour&.name,
+                        id: @tour&.id,
+                        step: @tour&.step || 0,
+                        options: @tour&.tourable&.try(:tourable_options) || {},
+                        back_to_tour: @back_to_tour %>
 
-<% content_for :body_prefix do %>
-  <%= react_component "tour/TourOverlay",
-                      tour: @tour&.name,
-                      id: @tour&.id,
-                      step: @tour&.step || 0,
-                      options: @tour&.tourable&.try(:tourable_options) || {},
-                      back_to_tour: @back_to_tour %>
+    <% if current_session&.impersonated? %>
+      <div class="w-100 px4 bg-white transparency-banner">
+        <p class="h5 medium center py-2 my-0">
+          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+        </p>
+      </div>
+    <% end %>
+    <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
+      <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
+        <p class="h5 font-medium text-center text-balance py-2 my-0">
+          This HCB organization has made their finances public.
+          Hey, <%= link_to "what's HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
+        </p>
+      </div>
+    <% end %>
 
-  <% if current_session&.impersonated? %>
-    <div class="w-100 px4 bg-white transparency-banner">
-      <p class="h5 medium center py-2 my-0">
-        <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
-      </p>
-    </div>
-  <% end %>
-  <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
-    <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
-      <p class="h5 font-medium text-center text-balance py-2 my-0">
-        This HCB organization has made their finances public.
-        Hey, <%= link_to "what's HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
-      </p>
-    </div>
-  <% end %>
-<% end %>
+    <%= render "layouts/shared_seasonal" %>
 
-<% content_for :skip_fullstory %>
-
-<%= render layout: "base" do %>
-  <% if content_for?(:nav) %>
-    <main class="container app">
-      <% if @event && @first_time %>
-        <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
-          <div class="welcome__image mb3">
-            <div class="welcome__shine"></div>
-            <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
-            <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
-          </div>
-
-          <div class="welcome__content">
-            <div class="center">
-              <h3 class="h3 caps secondary block my-0">Welcome to</h3>
-              <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
+    <% if content_for?(:nav) %>
+      <main class="container app">
+        <% if @event && @first_time %>
+          <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
+            <div class="welcome__image mb3">
+              <div class="welcome__shine"></div>
+              <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
+              <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
             </div>
 
-            <div class="mb2">
-              <button class="btn" data-action="welcome#tour">Show me around</button>
+            <div class="welcome__content">
+              <div class="center">
+                <h3 class="h3 caps secondary block my-0">Welcome to</h3>
+                <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
+              </div>
+
+              <div class="mb2">
+                <button class="btn" data-action="welcome#tour">Show me around</button>
+              </div>
+              <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
             </div>
-            <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
           </div>
-        </div>
-      <% end %>
+        <% end %>
 
-      <%= render "application/native_changelog" if @latest_changelog_post %>
+        <%= render "application/native_changelog" if @latest_changelog_post %>
 
-      <aside class="app__sidebar">
-        <%= render "application/docs_header" %>
-        <%= render "application/flash" %>
-        <%= yield(:nav) %>
-      </aside>
-      <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-        <%= yield(:container) %>
+        <aside class="app__sidebar">
+          <%= render "application/docs_header" %>
+          <%= render "application/flash" %>
+          <%= yield(:nav) %>
+        </aside>
+        <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+          <%= yield(:container) %>
+          <%= yield %>
+          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+        </article>
+      </main>
+    <% else %>
+      <%= render "application/docs_header" unless @no_app_shell %>
+      <%= yield(:header) %>
+      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+        <%= render "application/flash" unless @hide_flash %>
         <%= yield %>
         <%= render "application/footer" unless @no_app_shell || @hide_footer %>
-      </article>
-    </main>
-  <% else %>
-    <%= render "application/docs_header" unless @no_app_shell %>
-    <%= yield(:header) %>
-    <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-      <%= render "application/flash" unless @hide_flash %>
-      <%= yield %>
-      <%= render "application/footer" unless @no_app_shell || @hide_footer %>
-    </main>
-  <% end %>
+      </main>
+    <% end %>
 
-  <%= render "application/fullstory" %>
-<% end %>
+    <%= render "application/fullstory" %>
+    <%= render "layouts/shared_body_suffix" %>
+  </body>
+</html>

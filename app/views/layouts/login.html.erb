@@ -1,83 +1,82 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 <% @home_size = 50 %>
 <% page_full %>
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
+  <head>
+    <%= render "layouts/shared_head" %>
+    <style>
+      html,
+      body {
+          overflow-x: hidden
+      }
 
-<% content_for :html_attributes do %>data-dark="<%= @is_dark %>" class="overscroll-none"<% end %>
+      @media (min-width: 640px) {
 
-<% content_for :snow_style, "height:0px" %>
-
-<% content_for :skip_fullstory %>
-
-<% content_for :head do %>
-  <style>
-    html,
-    body {
-        overflow-x: hidden
-    }
-
-    @media (min-width: 640px) {
-
-        html,
-        body {
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-    }
-  </style>
-  <% img = "/brand/hcb-icon-icon-original.png" %>
-  <meta name="twitter:card" content="summary">
-  <meta property="og:image" content="<%= img %>">
-  <meta name="twitter:image" content="<%= img %>">
-  <meta property="og:site_name" content="HCB">
-  <meta property="og:url" content="https://hcb.hackclub.com">
-  <meta property="og:title" content="Sign in">
-  <meta name="twitter:title" content="Sign in">
-  <meta property="og:description" content="Sign in to HCB.">
-  <meta name="twitter:description" content="Sign in to HCB.">
-  <meta name="description" content="Sign in to HCB.">
-<% end %>
-
-<%= render layout: "base" do %>
-  <%= yield(:header) %>
-  <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-    <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">
-      <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
-        <div class="flex flex-row gap-4 items-start">
-          <%= render partial: "application/logo" %>
-        </div>
-        <div class="mt-4">
-          <%= render "application/flash" unless @hide_flash %>
-        </div>
-        <%= yield %>
-      </div>
-      <% hackathon = sample_hackathon %>
-
-      <div class="overflow-hidden max-h-none p-3 grid h-screen relative hidden lg:block flex-grow">
-        <div class="relative bg-cover bg-center text-white w-full h-full rounded-xl" style="background: <%= @referral_program&.background_image_css.presence || hackathon[:background] %>; background-size: cover; background-position: <%= @referral_program&.background_image_css.present? ? "right" : "center" %>; color: <%= @referral_program&.login_text_color.presence %>">
-          <div class="max-w-xl px-16 mx-auto flex flex-col items-center justify-center h-full select-none">
-            <h5 class="text-4xl lg:text-5xl mb-0 text-center mt-0 sm:mt-3 md:mt-5 font-medium">
-              <%= @referral_program&.login_header_text.presence || capture do %>
-                The&nbsp;<span class="font-bold">foundation</span><br>
-                for&nbsp;your&nbsp;nonprofit
-              <% end %>
-            </h5>
-            <p class="my-5 text-sm lg:text-md text-center font-medium hidden sm:block text-balance">
-              <%= @referral_program&.login_body_text.presence || capture do %>
-                Start your nonprofit with our fiscal sponsorship program,
-                HCB: a 501(c)(3) legal entity, bank account, automatic
-                taxes & accounting, and best-in-class software.
-              <% end %>
-            </p>
-            <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" unless @referral_program&.login_body_text.present? %>
+          html,
+          body {
+              height: 100vh;
+              margin: 0;
+              padding: 0;
+          }
+      }
+    </style>
+    <% img = "/brand/hcb-icon-icon-original.png" %>
+    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="<%= img %>">
+    <meta name="twitter:image" content="<%= img %>">
+    <meta property="og:site_name" content="HCB">
+    <meta property="og:url" content="https://hcb.hackclub.com">
+    <meta property="og:title" content="Sign in">
+    <meta name="twitter:title" content="Sign in">
+    <meta property="og:description" content="Sign in to HCB.">
+    <meta name="twitter:description" content="Sign in to HCB.">
+    <meta name="description" content="Sign in to HCB.">
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <%= render "layouts/shared_seasonal", snow_style: "height:0px" %>
+    <%= yield(:header) %>
+    <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+      <div class="flex flex-col-reverse lg:flex-row lg:w-screen lg:h-screen lg:dark:bg-neutral-900 w-full max-w-[500px] sm:max-w-[600px] mx-auto lg:max-w-full">
+        <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
+          <div class="flex flex-row gap-4 items-start">
+            <%= render partial: "application/logo" %>
           </div>
-          <div class="absolute bottom-0 left-0 m-0 p-5 w-full opacity-75 text-center">
-            <% unless @referral_program&.background_image_url.present? %>
-              <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
-            <% end %>
+          <div class="mt-4">
+            <%= render "application/flash" unless @hide_flash %>
+          </div>
+          <%= yield %>
+        </div>
+        <% hackathon = sample_hackathon %>
+
+        <div class="overflow-hidden max-h-none p-3 grid h-screen relative hidden lg:block flex-grow">
+          <div class="relative bg-cover bg-center text-white w-full h-full rounded-xl" style="background: <%= @referral_program&.background_image_css.presence || hackathon[:background] %>; background-size: cover; background-position: <%= @referral_program&.background_image_css.present? ? "right" : "center" %>; color: <%= @referral_program&.login_text_color.presence %>">
+            <div class="max-w-xl px-16 mx-auto flex flex-col items-center justify-center h-full select-none">
+              <h5 class="text-4xl lg:text-5xl mb-0 text-center mt-0 sm:mt-3 md:mt-5 font-medium">
+                <%= @referral_program&.login_header_text.presence || capture do %>
+                  The&nbsp;<span class="font-bold">foundation</span><br>
+                  for&nbsp;your&nbsp;nonprofit
+                <% end %>
+              </h5>
+              <p class="my-5 text-sm lg:text-md text-center font-medium hidden sm:block text-balance">
+                <%= @referral_program&.login_body_text.presence || capture do %>
+                  Start your nonprofit with our fiscal sponsorship program,
+                  HCB: a 501(c)(3) legal entity, bank account, automatic
+                  taxes & accounting, and best-in-class software.
+                <% end %>
+              </p>
+              <%= link_to "Learn more", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", class: "border-2 border-solid border-white px-4 py-2 rounded-xl !text-white no-underline hover:bg-[rgba(255,255,255,.1)] active:bg-[rgba(255,255,255,.2)] flex", target: "_blank" unless @referral_program&.login_body_text.present? %>
+            </div>
+            <div class="absolute bottom-0 left-0 m-0 p-5 w-full opacity-75 text-center">
+              <% unless @referral_program&.background_image_url.present? %>
+                <p class="text-xs mb-0 mt-1"><%= link_to "#{hackathon[:name]} • #{hackathon[:time]}", hackathon[:url] || "#", class: "!text-white no-underline", target: "_blank" %></p>
+              <% end %>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </main>
-  <%= render "application/fullstory" %>
-<% end %>
+    </main>
+    <%= render "application/fullstory" %>
+  </body>
+</html>
