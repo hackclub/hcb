@@ -26,6 +26,7 @@ module CardGrantService
     REQUIRED_HEADERS = %w[email amount_cents].freeze
     OPTIONAL_HEADERS = %w[purpose one_time_use invite_message].freeze
     ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
+    MAX_ERRORS_TO_DISPLAY = 10
 
     Result = Struct.new(:success?, :card_grants, :errors, keyword_init: true)
 
@@ -98,7 +99,14 @@ module CardGrantService
         errors.concat(row_errors)
       end
 
-      raise ValidationError.new(errors) if errors.any?
+      if errors.any?
+        total_errors = errors.count
+        if total_errors > MAX_ERRORS_TO_DISPLAY
+          errors = errors.first(MAX_ERRORS_TO_DISPLAY)
+          errors << "...and #{total_errors - MAX_ERRORS_TO_DISPLAY} more errors"
+        end
+        raise ValidationError.new(errors)
+      end
     end
 
     def validate_row(row, header_mapping, line_number)
