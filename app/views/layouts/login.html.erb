@@ -1,9 +1,7 @@
-<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 <% @home_size = 50 %>
 <% page_full %>
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
-  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
   <head>
     <%= render "layouts/shared_head" %>
     <style>
@@ -13,7 +11,6 @@
       }
 
       @media (min-width: 640px) {
-
           html,
           body {
               height: 100vh;
