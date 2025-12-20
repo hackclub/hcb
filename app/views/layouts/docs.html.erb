@@ -2,7 +2,7 @@
 <html lang="en" data-dark="<%= @is_dark %>">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
   <head>
-    <%= render "layouts/shared_head", console_art_url: Rails.configuration.constants.hack_on_hcb_form_url %>
+    <%= render "layouts/head", console_art_url: Rails.configuration.constants.hack_on_hcb_form_url %>
 
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
@@ -31,7 +31,7 @@
       </div>
     <% end %>
 
-    <%= render "layouts/shared_seasonal" %>
+    <%= render "layouts/seasonal" %>
 
     <% if content_for?(:nav) %>
       <main class="container app">
@@ -81,6 +81,6 @@
     <% end %>
 
     <%= render "application/fullstory" %>
-    <%= render "layouts/shared_body_suffix" %>
+    <%= render "layouts/body_suffix" %>
   </body>
 </html>

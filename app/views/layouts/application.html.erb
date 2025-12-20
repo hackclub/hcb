@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
-    <%= render "layouts/shared_head" %>
+    <%= render "layouts/head" %>
     <%# Web component used for TOTP / donation QR codes %>
     <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
     <%= render "application/helpscout_beacon" %>
@@ -15,7 +15,7 @@
                         options: @tour&.tourable&.try(:tourable_options) || {},
                         back_to_tour: @back_to_tour %>
 
-    <%= render "layouts/shared_seasonal" %>
+    <%= render "layouts/seasonal" %>
 
     <% if content_for?(:nav) %>
       <main class="app flex flex-col lg:flex-row gap-0 w-full">
@@ -83,6 +83,6 @@
       </main>
     <% end %>
 
-    <%= render "layouts/shared_body_suffix" %>
+    <%= render "layouts/body_suffix" %>
   </body>
 </html>
