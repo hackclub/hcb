@@ -38,6 +38,8 @@ module CardGrantService
     end
 
     def run
+      ensure_not_in_transaction!
+
       rows, header_mapping = parse_csv
       validate_rows!(rows, header_mapping)
       card_grants = create_grants_atomically(rows, header_mapping)
@@ -59,6 +61,12 @@ module CardGrantService
     end
 
     private
+
+    def ensure_not_in_transaction!
+      if ActiveRecord::Base.connection.transaction_open?
+        raise "BulkCreate cannot be called within an existing database transaction"
+      end
+    end
 
     def parse_csv
       validate_file_size!
@@ -133,6 +141,10 @@ module CardGrantService
       amount_cents = parse_amount(get_field(row, header_mapping, "amount_cents"))
       if amount_cents.nil?
         errors << "Row #{line_number}: amount_cents is required"
+      elsif amount_cents == :negative
+        errors << "Row #{line_number}: amount_cents cannot be negative"
+      elsif amount_cents == :invalid
+        errors << "Row #{line_number}: amount_cents must be a positive integer (in cents)"
       elsif amount_cents <= 0
         errors << "Row #{line_number}: amount_cents must be greater than 0"
       end
@@ -155,13 +167,13 @@ module CardGrantService
     def parse_amount(value)
       return nil if value.blank?
 
-      cleaned = value.to_s.strip.gsub(/[$,]/, "")
+      cleaned = value.to_s.strip
 
-      if cleaned.include?(".")
-        (cleaned.to_f * 100).to_i
-      else
-        cleaned.to_i
-      end
+      # Only accept positive integers (cents)
+      return :negative if cleaned.start_with?("-")
+      return :invalid unless cleaned.match?(/\A\d+\z/)
+
+      cleaned.to_i
     end
 
     def create_grants_atomically(rows, header_mapping)

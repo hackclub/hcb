@@ -46,22 +46,6 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(bob_grant.one_time_use).to be true
       end
 
-      it "supports dollar amounts (with decimal)" do
-        csv_content = <<~CSV
-          email,amount_cents
-          alice@example.com,10.50
-        CSV
-
-        result = described_class.new(
-          event:,
-          csv_file: csv_file_from_content(csv_content),
-          sent_by:
-        ).run
-
-        expect(result.success?).to be true
-        expect(result.card_grants.first.amount_cents).to eq(1050)
-      end
-
       it "sends emails after successful creation" do
         csv_content = <<~CSV
           email,amount_cents
@@ -126,6 +110,54 @@ RSpec.describe CardGrantService::BulkCreate do
 
         expect(result.success?).to be false
         expect(result.errors.first).to include("must be greater than 0")
+      end
+
+      it "returns errors for non-integer amount" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,10.50
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("must be a positive integer")
+      end
+
+      it "returns errors for non-numeric amount" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,abc
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("must be a positive integer")
+      end
+
+      it "returns errors for negative amount" do
+        csv_content = <<~CSV
+          email,amount_cents
+          alice@example.com,-1000
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors.first).to include("cannot be negative")
       end
 
       it "returns errors for purpose exceeding max length" do
