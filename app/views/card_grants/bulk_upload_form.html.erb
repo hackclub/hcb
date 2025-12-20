@@ -1,17 +1,17 @@
 <% page_sm %>
-<%= render "events/nav", selected: :transfers %>
+<%= render "events/nav" %>
 
 <% title "Bulk send card grants" %>
 <h1>Bulk send card grants</h1>
 
 <p class="muted">
-  Upload a CSV file to send multiple card grants at once. All grants will be created atomically&mdash;if any grant fails validation, none will be created.
+  Upload a CSV file to send multiple card grants at once. All grants will be created atomically so if any grant fails validation, none will be created.
 </p>
 
 <div class="card p3 mb3">
   <h3 class="mt0">CSV Template</h3>
   <p class="muted">
-    Download our template to get started. The CSV must include the following columns:
+    Download the template to get started. The CSV must include the following columns:
   </p>
 
   <div class="overflow-x-auto">
@@ -32,7 +32,7 @@
         <tr>
           <td><code>amount_cents</code></td>
           <td><span class="badge bg-error">Required</span></td>
-          <td>Amount in cents (e.g., 1000 for $10.00) or dollars (e.g., 10.00)</td>
+          <td>Amount in cents (ex. 1000 = $10.00)</td>
         </tr>
         <tr>
           <td><code>purpose</code></td>
@@ -63,9 +63,9 @@
   <h3 class="mt0">Upload CSV</h3>
 
   <%= form_with url: card_grants_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
-    <div class="field">
-      <%= form.label :csv_file, "Select CSV file" %>
-      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full" %>
+    <div class="field--fileupload">
+      <%= form.label :csv_file, "Select CSV file", class: "field--fileupload__label" %>
+      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full field--fileupload__field" %>
     </div>
 
     <div class="flex items-center justify-between mt3">
