@@ -51,7 +51,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/stripe_cards/show.html.erb",
-      "line": 6,
+      "line": 20,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
       "render_path": [
