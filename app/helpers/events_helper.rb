@@ -44,6 +44,14 @@ module EventsHelper
       selected: selected == :transactions,
     }
 
+    items << {
+      name: "Account numbers",
+      path: account_number_event_path(@event),
+      tooltip: "View account numbers",
+      icon: "hashtag",
+      selected: selected == :account_number,
+    }
+
     if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index?
       items << { section: "Receive" }
     end
