@@ -51,7 +51,7 @@ module Api
 
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
-        user_hcb_codes = HcbCode.where(id: user_hcb_code_ids).includes(:events)
+        user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
         hcb_codes_missing_ids = user_hcb_codes.select do |hcb_code|
           hcb_code.events.any? { |event| hcb_code.missing_receipt?(event) }
         end.map(&:id)
