@@ -42,7 +42,7 @@
               <% filter[:options].each do |option| %>
                 <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
                 <%= link_to label,
-                            upsert_query_params(filter[:key] => value),
+                            defined?(base_url) && base_url ? upsert_query_params_from_url(base_url, filter[:key] => value) : upsert_query_params(filter[:key] => value),
                             class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
               <% end %>
 
@@ -65,7 +65,7 @@
                     @event,
                     filter_key: filter[:key],
                     selected: params[filter[:key]],
-                    url: request.url
+                    url: defined?(base_url) && base_url ? base_url : request.url
                   ) do %>
                 Loading...
               <% end %>
@@ -76,7 +76,7 @@
                     @event,
                     filter_key: filter[:key],
                     selected: params[filter[:key]],
-                    url: request.url
+                    url: defined?(base_url) && base_url ? base_url : request.url
                   ) do %>
                 Loading...
               <% end %>
@@ -87,7 +87,7 @@
                     @event,
                     filter_key: filter[:key],
                     selected: params[filter[:key]],
-                    url: request.url
+                    url: defined?(base_url) && base_url ? base_url : request.url
                   ) do %>
                 Loading...
               <% end %>

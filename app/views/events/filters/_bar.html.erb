@@ -1,5 +1,5 @@
 <div class="flex items-center filter-menu">
-  <%= render "events/filters/menu", vertical: defined?(vertical) ? vertical : false, filters: %>
+  <%= render "events/filters/menu", base_url: defined?(base_url) ? base_url : nil, vertical: defined?(vertical) ? vertical : false, filters: %>
   <%= link_to nil,
               class: "-ml-2 pop muted tooltipped tooltipped--s",
               aria: { label: "Clear filters" },
