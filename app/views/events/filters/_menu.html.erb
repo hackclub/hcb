@@ -33,7 +33,7 @@
       <% end %>
 
       <% filters.each do |filter| %>
-        <div data-tabs-target="tab" id="<%= filter[:label] %>" class="col-span-2 p-2">
+        <div data-tabs-target="tab" id="<%= filter[:label] %>" class="col-span-2 <%= "p-2" if vertical_style %>">
           <% case filter[:type] %>
             <% when "select" %>
               <% if filter[:options].empty? %>
