@@ -17,3 +17,23 @@ html[data-dark='true'] {
     background-color: #363a44;
   }
 }
+
+.integration-api {
+  color: white;
+
+  background: #1F2D3D;
+  background: linear-gradient(
+    33deg,
+    #121216 0%,
+    #1F2D3D 50%
+  );
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+html[data-dark='true'] {
+  .integration-api {
+    background-color: #1F2D3D;
+  }
+}
