@@ -221,8 +221,10 @@ module Reimbursement
 
     def admin_approve
       authorize @report
-      # TODO: This does NOT consider currency
-      ensure_admin_may_approve!(@report, amount_cents: @report.amount_to_reimburse_cents)
+      # For Wise, the amount stored on the report is not in USD. By using the passed in :wise_total_including_fees parameter,
+      # we're able to track admin transfer amounts based on the amounts used in the reimbursement processing flow.
+      wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
+      ensure_admin_may_approve!(@report, amount_cents: wise_amount_cents || @report.amount_to_reimburse_cents)
 
       begin
         @report.with_lock do
@@ -235,12 +237,12 @@ module Reimbursement
             wise_total_including_fees_cents = params[:wise_total_including_fees].to_f * 100
             wise_total_without_fees_cents = params[:wise_total_without_fees].to_f * 100
 
-            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents, @report.event)
+            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents.to_i, @report.event)
               flash[:error] = "This organization does not have sufficient funds to cover the transfer."
               return redirect_to @report
             end
 
-            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents > @report.maximum_amount_cents
+            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents.to_i > @report.maximum_amount_cents
               flash[:error] = "This amount is above the maximum amount set by the organizers."
               return redirect_to @report
             end

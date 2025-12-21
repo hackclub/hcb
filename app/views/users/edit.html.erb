@@ -88,7 +88,7 @@
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
 
           <div class="actions flex">
-            <button type="submit" class="btn w-full gap-2">
+            <button type="submit" class="btn bg-info w-full gap-2">
               Start using HCB
               <%= inline_icon "enter", size: 40 %>
             </button>
@@ -119,14 +119,12 @@
     </div>
   </div>
 <% else %>
-  <% title "Account Settings" %>
+  <% title "Account settings" %>
   <% page_md %>
+  <%= render "users/nav", selected: :settings_home %>
   <% disabled = !policy(@user).update? %>
-
-  <%= render "users/nav", selected: :settings %>
-  <h1>Settings</h1>
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-    <%= render "settings_nav", active: "general" unless @onboarding %>
+    <%= render "settings_header", active: "general" unless @onboarding %>
     <section>
       <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>
@@ -179,7 +177,7 @@
                                  prompt: @user.birthday.nil?,
                                  disabled: %>
             <% unless @user.birthday.nil? %>
-              <% admin_tool do %>
+              <% admin_tool("p-1.5 !ml-2") do %>
                 <%= @user.teenager? ? "✅ Teenager" : "Not a teenager" %>
               <% end %>
             <% end %>
@@ -220,7 +218,7 @@
         </div>
 
         <% if @user.has_discord_account? %>
-          <div class="card max-w-6xl">
+          <div class="card field">
             <p class="medium">Connected Discord account</p>
             <p class="h5 muted mt-0 mb-3">
               You've set up the HCB discord bot

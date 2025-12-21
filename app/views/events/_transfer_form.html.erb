@@ -50,11 +50,11 @@
       <a class="w-full text-center block no-underline -mb-2" href="javascript:void(0)" data-action="click->transfer-form#showWizard">Which method should I use? <strong>Help me decide &rarr;</a>
     </div>
     <div data-transfer-form-target="wizard" hidden>
-      <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
         Exit
       </a>
-      <p class="homepage-eyebrow pt-2 mb-0">Help me decide</p>
+      <p class="eyebrow mb-0">Help me decide</p>
       <h3 class="mt-2 font-bold mb-4" data-transfer-form-target="question"></h3>
       <div class="flex gap-2">
         <button type="button" class="btn shadow-none" data-transfer-form-target="yes" data-action="click->transfer-form#yesClickHandler">
@@ -68,15 +68,15 @@
       </div>
     </div>
     <div data-transfer-form-target="answer" hidden>
-      <a class="no-underline text-xs inline-flex items-center -ml-2 mb-4" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->transfer-form#hideWizard">
         <%= inline_icon "view-back" %>
         Exit
       </a>
-      <p class="homepage-eyebrow pt-2 mb-0">Our recommendation</p>
+      <p class="eyebrow pt-0 mb-0">Our recommendation</p>
       <h3 class="mt-2 font-bold mb-2 capitalize" data-transfer-form-target="answerText"></h3>
-      <a href="#" data-transfer-form-target="learnMore" class="mb-6 inline-block no-underline" target="_blank">Learn more &rarr;</a>
+      <a href="#" data-transfer-form-target="learnMore" class="mb-3 inline-block no-underline" target="_blank">Learn more &rarr;</a>
       <div class="flex gap-2">
-        <button type="button" class="btn bg-secondary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
+        <button type="button" class="btn bg-primary shadow-none" data-transfer-form-target="answerCTA" data-action="click->transfer-form#showAnswer">
           Let's do it!
           <%= inline_icon "view-forward", style: "margin-right: -5px;margin-left: 5px" %>
         </button>
