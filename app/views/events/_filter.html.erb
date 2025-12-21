@@ -98,4 +98,45 @@
   <% end %>
 </div>
 
-<%= render "events/filters/bar", base_url: request.url.gsub("ledger", "transactions"), vertical: true, filters: filters if filter_applied %>
+<% if filter_applied %>
+  <%= render "events/filters/bar", base_url: request.url.gsub("ledger", "transactions"), vertical: true, filters: filters do %>
+    <% if @user %>
+      <div class="badge badge-large bg-muted">
+        <%= avatar_for @user, size: 18 %>
+        <%= @user.name %>
+
+        <%= link_to event_ledger_path(@event, upsert_query_params(user: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 20 %>
+        <% end %>
+      </div>
+    <% end %>
+    <% if @category %>
+      <div class="badge badge-large bg-muted">
+        <%= @category.definition.label %>
+        <%= link_to event_ledger_path(@event, upsert_query_params(category: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 20 %>
+        <% end %>
+      </div>
+    <% end %>
+    <% if @merchant %>
+      <div class="badge badge-large bg-muted">
+        <%= @merchant_name %>
+        <%= link_to event_ledger_path(@event, upsert_query_params(merchant: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 20 %>
+        <% end %>
+      </div>
+    <% end %>
+    <% if @tag %>
+      <div class="badge badge-large bg-muted h-8">
+        <div class="-mr-2 -ml-3 scale-95">
+          <%= render partial: "canonical_transactions/tag_icon", locals: { tag: @tag } %>
+        </div>
+        <%= @tag.label %>
+
+        <%= link_to event_ledger_path(@event, upsert_query_params(tag: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 20 %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

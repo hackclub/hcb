@@ -852,6 +852,7 @@ Rails.application.routes.draw do
     get :user_select
     get :tag_select
     get :merchant_select
+    get :category_select
 
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"

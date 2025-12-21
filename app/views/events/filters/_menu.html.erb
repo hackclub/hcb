@@ -75,6 +75,17 @@
                   ) do %>
                 Loading...
               <% end %>
+            <% when "category_select" %>
+              <%= turbo_frame_tag "category_select",
+                  loading: "lazy",
+                  src: event_category_select_path(
+                    @event,
+                    filter_key: filter[:key],
+                    selected: params[filter[:key]],
+                    url: defined?(base_url) && base_url ? base_url : request.url
+                  ) do %>
+                Loading...
+              <% end %>
             <% when "tag_select" %>
               <%= turbo_frame_tag "tag_select",
                   loading: "lazy",

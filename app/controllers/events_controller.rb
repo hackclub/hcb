@@ -31,6 +31,7 @@ class EventsController < ApplicationController
     filters << { key: "type", label: "Type", type: "select", options: [["ACH transfer", "ach_transfer"], "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", ["HCB transfer", "hcb_transfer"], "invoice", "mailed_check", ["PayPal transfer", "paypal_transfer"], "refund", "reimbursement", "wire"] }
     filters << { key_base: "date", label: "Date", type: "date_range" }
     filters << { key_base: "amount", label: "Amount", type: "amount_range", range: }
+    filters << { key: "category", label: "Category", type: "category_select" }
     filters << { key: "direction", label: "Flow", type: "select", options: %w[revenue expenses] }
     filters << { key: "merchant", label: "Merchant", type: "merchant_select" }
     filters << { key: "receipts", label: "Receipts", type: "select", options: %w[all missing] }
@@ -208,6 +209,15 @@ class EventsController < ApplicationController
     @tags = Kaminari.paginate_array(tags_relation.to_a).page(page).per(20)
 
     render partial: "events/filters/tag_select", locals: { tags: @tags }
+  end
+
+  def category_select
+    authorize @event
+    page = (params[:page] || 1).to_i
+    @search = params[:search] || ""
+    @categories = Kaminari.paginate_array(TransactionCategory.order(slug: :asc).to_a).page(page).per(20)
+
+    render partial: "events/filters/category_select", locals: { categories: @categories }
   end
 
   def ledger
