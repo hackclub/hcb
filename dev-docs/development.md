@@ -14,6 +14,9 @@ We recommend using Docker to get an instance running locally. It should work out
 
 Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use [Letter Opener](https://github.com/ryanb/letter_opener) to access the development email outbox and retrieve the login code. Letter Opener can be accessed at [`localhost:3000/letter_opener`](localhost:3000/letter_opener).
 
+## Code style
+Thank you for contributing! Please make sure to follow the code style guide [here](/dev-docs/code_style.md).
+
 ### Quickstart with GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=135250235&skip_quickstart=true&machine=premiumLinux&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsWest)
