@@ -215,7 +215,8 @@ class EventsController < ApplicationController
     authorize @event
     page = (params[:page] || 1).to_i
     @search = params[:search] || ""
-    @categories = Kaminari.paginate_array(TransactionCategory.order(slug: :asc).to_a).page(page).per(20)
+    categories_relation = TransactionCategory.where("slug ILIKE ?", "%#{@search}%").order("slug ASC")
+    @categories = Kaminari.paginate_array(categories_relation.to_a).page(page).per(20)
 
     render partial: "events/filters/category_select", locals: { categories: @categories }
   end
