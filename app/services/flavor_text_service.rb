@@ -82,6 +82,10 @@ class FlavorTextService
       "Dear Santa...",
       "where's my gingerbread house",
       "makin' that money snow",
+      "hack the halls",
+      "sudo snow",
+      "404: santa not found",
+      "Is this list checked twice?",
       "Merry Fourth Of July and have a jolly halloween!"
     ]
   end
