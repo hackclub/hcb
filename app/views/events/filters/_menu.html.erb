@@ -47,7 +47,13 @@
               <% end %>
 
             <% when "date_range" %>
-              <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
+                <%= form_with(
+                  model: false,
+                  local: true,
+                  method: :get,
+                  url: (defined?(base_url) && base_url ? base_url : request.url),
+                  class: "flex-auto"
+                  ) do |form| %>
                 <div
                   data-controller="date-range-picker"
                   data-date-range-picker-initial-start-value="<%= params["#{filter[:key_base]}_after"] %>"
@@ -92,7 +98,7 @@
                 Loading...
               <% end %>
             <% when "amount_range" %>
-              <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
+              <%= form_with(model: false, url: defined?(base_url) && base_url ? base_url : request.url, local: true, method: :get, class: "flex-auto p1") do |form| %>
                 <div
                   data-controller="range-slider"
                   data-range-slider-min-value="<%= filter[:range][0] %>"
