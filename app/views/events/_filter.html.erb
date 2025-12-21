@@ -110,14 +110,6 @@
         <% end %>
       </div>
     <% end %>
-    <% if @category %>
-      <div class="badge badge-large bg-muted">
-        <%= @category.definition.label %>
-        <%= link_to event_ledger_path(@event, upsert_query_params(category: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-          <%= inline_icon "view-close", size: 20 %>
-        <% end %>
-      </div>
-    <% end %>
     <% if @merchant %>
       <div class="badge badge-large bg-muted">
         <%= @merchant_name %>

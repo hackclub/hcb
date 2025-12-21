@@ -10,7 +10,7 @@
   <% end %>
   <% @categories.each do |category| %>
     <div class="flex items-center">
-      <%= link_to(category.definition.label, event_ledger_path(@event, upsert_query_params_from_url(params[:url], category: category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
+      <%= link_to(category.definition.label, upsert_query_params_from_url(params[:url], category: category.slug), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_frame: "_top" }) %>
     </div>
   <% end %>
   <% if @categories.empty? %>
