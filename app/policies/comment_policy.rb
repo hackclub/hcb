@@ -45,15 +45,27 @@ class CommentPolicy < ApplicationPolicy
   private
 
   def users
+    user_list = []
+
     if record.commentable.respond_to?(:events)
-      record.commentable.events.collect(&:users).flatten
+      user_list = record.commentable.events.collect(&:users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
-      [record.commentable.user] + (record.commentable.event&.users || [])
+      user_list = [record.commentable.user]
+
+      unless record.commentable.event&.users&.empty?
+        user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
+      end
     elsif record.commentable.is_a?(Event)
-      record.commentable.users
+      user_list = record.commentable.users
     else
-      record.commentable.event.users
+      user_list = record.commentable.event.users
     end
+
+    if record.commentable.respond_to?(:author) && record.commentable.author.present?
+      user_list += [record.commentable.author]
+    end
+
+    user_list
   end
 
 end

@@ -100,6 +100,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
   has_one :event, through: :canonical_event_mapping
+  has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
@@ -349,7 +350,12 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_account_verification_related?
-    hcb_code.starts_with?("HCB-000-") && memo.downcase.include?("acctverify") && amount_cents.abs < 100
+    # Substring match (case-insensitive) for any of these identifiers in the
+    # memo indicating an account verification transaction. The majority use
+    # "ACCTVERIFY", however, it appears a few companies use other variants.
+    memo_matches = %w[acctverify verify validation sdv-vrfy amts:].any? { |s| memo.downcase.include?(s) }
+
+    hcb_code.starts_with?("HCB-000-") && amount_cents.abs < 100 && memo_matches
   end
 
   def short_code

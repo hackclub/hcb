@@ -97,4 +97,4 @@ HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for
 
 ***
 
-![Laser cutting the HCB logo](https://cloud-kubwce40n-hack-club-bot.vercel.app/0hack_club_bank_laser.gif)
+![Laser cutting the HCB logo](/hcb_laser.gif)

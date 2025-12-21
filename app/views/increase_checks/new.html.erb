@@ -18,7 +18,7 @@
           editable: true,
           class: "hidden xl:block" %>
 
-    <%= render "callout", type: "info", title: "Information about check transfers", footer: :questions, class: "mb-0" do %>
+    <%= render "application/callout", type: "info", title: "Information about check transfers", footer: :questions, class: "mb-0" do %>
       <ul class="m0">
         <li>
           Need to reimburse someone? Checks are not intended for that purpose.
@@ -187,7 +187,7 @@
         <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
       </div>
 
-      <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+      <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
       <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
         <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
               action: "

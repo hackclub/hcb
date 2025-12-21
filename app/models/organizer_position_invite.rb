@@ -62,6 +62,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   include FriendlyId
   include OrganizerPosition::HasRole
+  include Contractable
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, recipient: proc { |controller, record| record.user }, only: [:create]
@@ -76,10 +77,11 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
-  belongs_to :organizer_position, optional: true
-  has_many :organizer_position_contracts, class_name: "OrganizerPosition::Contract", dependent: :destroy
+  belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
-  validate :not_already_organizer
+  belongs_to :organizer_position, optional: true
+
+  validate :not_already_organizer, if: -> { event_changed? || user_changed? }
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
@@ -93,12 +95,12 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
-  def organizer_position_contract
-    organizer_position_contracts.where.not(aasm_state: :voided).last
+  def contract
+    contracts.where.not(aasm_state: :voided).last
   end
 
   def pending_signature?
-    is_signee && organizer_position_contracts.where(aasm_state: :signed).none?
+    is_signee && contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -204,6 +206,41 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def signee?
     is_signee
+  end
+
+  def send_contract(cosigner_email: nil, include_videos: false)
+    ActiveRecord::Base.transaction do
+      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      contract.parties.create!(user:, role: :signee)
+      contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+
+      update!(is_signee: true)
+      organizer_position&.update(is_signee: true)
+
+      event.set_airtable_status("Documents sent")
+    end
+
+    contract.send!
+  end
+
+  def on_contract_signed(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      deliver if organizer_position.nil?
+
+      # Unfreeze the event if this is the first signed contract
+      if event.contracts.signed.count == 1
+        event.update!(financially_frozen: false)
+      end
+
+      organizer_position&.update!(fiscal_sponsorship_contract: contract)
+    end
+  end
+
+  def on_contract_voided(contract)
+    if contract.is_a?(Contract::FiscalSponsorship)
+      update(is_signee: false)
+      organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
+    end
   end
 
   private

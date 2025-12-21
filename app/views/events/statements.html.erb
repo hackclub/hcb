@@ -1,10 +1,18 @@
-<% title "Statements" %>
+<% title "Statements for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :documentation %>
 
-<h1>Documents</h1>
+<h1 class="flex mb-0 border-0">
+  Documents
+  <% admin_tool "w-fit ml-auto p-0 -mt-1" do %>
+    <%= link_to "Upload a document",
+    new_document_path(event_id: @event.slug),
+    class: "btn bg-success -mt-2 -translate-y-[2px]",
+    disabled: !admin_signed_in? %>
+  <% end %>
+</h1>
 
-<ul class="tab-container">
+<ul class="tab-container mt-0">
   <%= settings_tab do %>
     <%= link_to "Legal documents", event_documents_path(@event), data: { turbo: true, turbo_action: "advance" } %>
   <% end %>
@@ -20,12 +28,9 @@
 <% else %>
   <div class="grid">
     <% months.group_by(&:year).each do |year, months| %>
-      <div style="grid-column: 1 / span 3">
-        <h3 class="mb0" id="<%= year %>">
-          Statements from <%= year %>
-        </h3>
-        <hr class="mb1 mt1">
-      </div>
+      <h3 class="mb0" id="<%= year %>" style="grid-column: 1 / span 3">
+        Statements from <%= year %>
+      </h3>
       <% months.each do |day| %>
         <div data-controller="menu" class="card flex items-center">
           <span class="grow"><%= day.strftime("%B %Y") %></span>

@@ -9,7 +9,7 @@
         <button type="button" class="bg-muted ml2" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
     <% end %>
-    <%= render partial: "events_filter", locals: { form:, action_buttons: export_button } %>
+    <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button } %>
   </div>
 <% end %>
 
@@ -28,7 +28,7 @@
   <% end %>
 </details>
 
-<div class="flex items-center mb2">
+<div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @events, entry_name: "organizations" %>.
     <%= link_to "Create a new organization", event_new_admin_index_path %>.

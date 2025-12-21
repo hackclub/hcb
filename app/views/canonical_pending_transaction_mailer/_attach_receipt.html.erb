@@ -1,7 +1,7 @@
 <% if hcb_code.receipt_required? %>
 
   <%= link_to upload_url do %>
-    <img style="display: block; margin-top: 10px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: @cpt.local_hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Click to upload your receipt">
+    <img height="43" style="display: block; margin-top: 10px; height: 43px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: @cpt.local_hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Click to upload your receipt">
   <% end %>
   <p><em>This link can be used by anyone for two weeks to upload a receipt for this charge.</em></p>
 

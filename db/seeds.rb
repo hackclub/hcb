@@ -13,8 +13,10 @@ puts "Continuing with #{user.email}..."
 
 user.make_admin! unless user.admin?
 
-admin = User.create_with(email: User::SYSTEM_USER_EMAIL).find_or_create_by!(id: User::SYSTEM_USER_ID)
-admin.make_admin!
+Governance::Admin::Transfer::Limit.create(user_id: user.id, amount_cents: 1000000000)
+
+system_user = User.create_with(email: User::SYSTEM_USER_EMAIL).create_or_find_by!(id: User::SYSTEM_USER_ID)
+system_user.make_admin! unless system_user.admin?
 
 # DEMO
 demo_event = Event.create_with(
@@ -24,9 +26,9 @@ demo_event = Event.create_with(
   point_of_contact: user,
   demo_mode: true,
   created_at: 7.days.ago
-).find_or_create_by!(slug: "devhacks")
+).create_or_find_by!(slug: "devhacks")
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: demo_event,
   user:,
   sender: user,
@@ -40,9 +42,9 @@ non_transparent_event = Event.create_with(
   point_of_contact: user,
   created_at: 10.days.ago,
   is_public: false
-).find_or_create_by!(slug: "expensicon23")
+).create_or_find_by!(slug: "expensicon23")
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: non_transparent_event,
   user:,
   sender: user,
@@ -56,9 +58,9 @@ transparent_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(slug: "hack_the_seas")
+).create_or_find_by!(slug: "hack_the_seas")
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: transparent_event,
   user:,
   sender: user,
@@ -72,11 +74,11 @@ incoming_fees_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
-).find_or_create_by!(id: EventMappingEngine::EventIds::INCOMING_FEES)
+).create_or_find_by!(id: EventMappingEngine::EventIds::INCOMING_FEES)
 
 incoming_fees_event.plan.update(type: Event::Plan::Internal)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: incoming_fees_event,
   user:,
   sender: user,
@@ -90,11 +92,11 @@ hack_club_bank_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+).create_or_find_by!(id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
 
 hack_club_bank_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: hack_club_bank_event,
   user:,
   sender: user,
@@ -108,11 +110,11 @@ noevent_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
-).find_or_create_by!(id: EventMappingEngine::EventIds::NOEVENT)
+).create_or_find_by!(id: EventMappingEngine::EventIds::NOEVENT)
 
 noevent_event.plan.update(type: Event::Plan::Internal)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: noevent_event,
   user:,
   sender: user,
@@ -126,11 +128,11 @@ hackathon_grant_fund_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+).create_or_find_by!(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
 
 hackathon_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: hackathon_grant_fund_event,
   user:,
   sender: user,
@@ -144,11 +146,11 @@ winter_hardware_wonderland_grant_fund_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
+).create_or_find_by!(id: EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
 
 winter_hardware_wonderland_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: winter_hardware_wonderland_grant_fund_event,
   user:,
   sender: user,
@@ -162,9 +164,9 @@ argosy_grant_fund_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND)
+).create_or_find_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: argosy_grant_fund_event,
   user:,
   sender: user,
@@ -178,11 +180,11 @@ argosy_grant_fund_2025_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
+).create_or_find_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
 
 argosy_grant_fund_2025_event.plan.update(type: Event::Plan::FeeWaived)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: argosy_grant_fund_2025_event,
   user:,
   sender: user,
@@ -196,11 +198,11 @@ first_transparency_grant_fund_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
+).create_or_find_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
 
 first_transparency_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: first_transparency_grant_fund_event,
   user:,
   sender: user,
@@ -214,11 +216,11 @@ hack_foundation_interest_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+).create_or_find_by!(id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
 
 hack_foundation_interest_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: hack_foundation_interest_event,
   user:,
   sender: user,
@@ -232,11 +234,11 @@ reimbursement_clearing_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+).create_or_find_by!(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
 
 reimbursement_clearing_event.plan.update(type: Event::Plan::Internal)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: reimbursement_clearing_event,
   user:,
   sender: user,
@@ -250,11 +252,11 @@ svb_sweeps_event = Event.create_with(
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
-).find_or_create_by!(id: EventMappingEngine::EventIds::SVB_SWEEPS)
+).create_or_find_by!(id: EventMappingEngine::EventIds::SVB_SWEEPS)
 
 svb_sweeps_event.plan.update(type: Event::Plan::Internal)
 
-OrganizerPositionInvite.find_or_create_by!(
+OrganizerPositionInvite.create_or_find_by!(
   event: svb_sweeps_event,
   user:,
   sender: user,
