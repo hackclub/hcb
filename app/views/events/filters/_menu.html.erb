@@ -48,12 +48,12 @@
 
             <% when "date_range" %>
                 <%= form_with(
-                  model: false,
-                  local: true,
-                  method: :get,
-                  url: (defined?(base_url) && base_url ? base_url : request.url),
-                  class: "flex-auto"
-                  ) do |form| %>
+                      model: false,
+                      local: true,
+                      method: :get,
+                      url: (defined?(base_url) && base_url ? base_url : request.url),
+                      class: "flex-auto"
+                    ) do |form| %>
                 <div
                   data-controller="date-range-picker"
                   data-date-range-picker-initial-start-value="<%= params["#{filter[:key_base]}_after"] %>"
