@@ -38,7 +38,10 @@
         <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
         <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
       </div>
-      <%= link_to "Activate my grant", grant, class: "btn" %>
+      <div class="flex flex-col items-center gap-1">
+        <%= link_to "Activate my grant", grant, class: "btn" %>
+        <p class="my-0 text-sm italic text-muted">Expires in <%= distance_of_time_in_words(Time.current, grant.expires_on) %></p>
+      </div>
     </div>
   <% end %>
 <% end %>
