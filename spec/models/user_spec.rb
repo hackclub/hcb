@@ -252,7 +252,7 @@ RSpec.describe User, type: :model do
     end
 
     it "can be enabled with SMS auth" do
-      user = create(:user, use_sms_auth: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, use_sms_auth: true, phone_number: "+18556254225", phone_number_verified: true)
 
       expect(user.update(use_two_factor_authentication: true)).to eq(true)
     end
