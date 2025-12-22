@@ -4,6 +4,7 @@ Geocoder.configure(
   timeout: 15,
 
   ip_lookup: :ipinfo_io,
+  nominatim: { http_headers: { "User-Agent": "HCB/1.0" } },
   ipinfo_io: { api_key: Credentials.fetch(:IP_INFO) },
 
   cache: Redis.new(url: Rails.env.production? ? ENV["REDIS_CACHE_URL"] : ENV["REDIS_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE }),
