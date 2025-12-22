@@ -232,27 +232,27 @@ RSpec.describe User, type: :model do
 
   describe "#use_two_factor_authentication" do
     it "cannot be disabled by admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true)
+      user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "cannot be disabled by admins pretending not to be admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true)
+      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "can be disabled by regular users" do
-      user = create(:user, use_two_factor_authentication: true)
+      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
 
     it "can be enabled with SMS auth" do
-      user = create(:user, use_sms_auth: true)
+      user = create(:user, use_sms_auth: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
 
       expect(user.update(use_two_factor_authentication: true)).to eq(true)
     end
