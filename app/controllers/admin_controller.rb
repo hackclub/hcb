@@ -809,6 +809,16 @@ class AdminController < Admin::BaseController
 
   end
 
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
+  end
+
   def disbursements
     @page = params[:page] || 1
     @per = params[:per] || 20

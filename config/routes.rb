@@ -213,6 +213,7 @@ Rails.application.routes.draw do
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
+      get "fee_revenues", to: "admin#fee_revenues"
       get "users", to: "admin#users"
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
