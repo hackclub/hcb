@@ -1,3 +1,5 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
 <li class="mb1 text-sm">
   <div class="flex flex-row gap-2">
     <% if defined?(icon) && defined?(color) %>
