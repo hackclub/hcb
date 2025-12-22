@@ -1,3 +1,4 @@
+import 'intl/locale-data/jsonp/en-US'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {
