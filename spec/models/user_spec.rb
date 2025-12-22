@@ -250,5 +250,18 @@ RSpec.describe User, type: :model do
 
       expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
+
+    it "can be enabled with SMS auth" do
+      user = create(:user, use_sms_auth: true)
+
+      expect(user.update(use_two_factor_authentication: true)).to eq(true)
+    end
+
+    it "cannot be enabled without any second factor" do
+      user = create(:user)
+
+      expect(user.update(use_two_factor_authentication: true)).to eq(false)
+      expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
+    end
   end
 end
