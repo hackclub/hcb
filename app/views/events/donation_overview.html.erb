@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :donations %>
 
+<% if @donations.any? %>
 <h1 class="heading gap-2 border-0 mb-2" data-controller="walkthrough" data-walkthrough-key-value="donations">
   <span class="flex items-center flex-grow">
     Donations
@@ -187,3 +188,33 @@
   </section>
 <% end %>
 </div>
+<% else %>
+  <div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-2 px-5">
+    <div class="flex flex-col justify-center col-span-2">
+      <h1 class="heading border-0 mb-0">
+        Donations
+      </h1>
+
+      <ul class="pl-4 mt-0">
+        <li class="mb-3">
+          <strong>Turn supporters into funders</strong><br>
+          Create a custom donation page in minutes. Share the link on social media, your website, or anywhere your community gathers
+        </li>
+        <li class="mb-3">
+          <strong>Make giving effortless</strong><br>
+          Donors enter their amount, pay securely, and they're done. You can suggest donation tiers or let people contribute whatever feels right
+        </li>
+        <li class="mb-3">
+          <strong>Grow sustainable funding</strong><br>
+          Track who's supporting your work, send thank-you messages, and enable recurring donations so supporters can contribute monthly
+        </li>
+      </ul>
+
+      
+    </div>
+    <div class="col-span-3 flex items-center justify-center">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/33164680447ddf83_image.png" alt="sad dino having no donations" />
+    </div>
+  </div>
+
+<% end %>
