@@ -1,5 +1,32 @@
 <% title "Fee Revenues" %>
 
+<div class="mb3">
+  <h3>Uncharged Fee Balance: <%= render_money @total_pending_fees %></h3>
+
+  <details>
+    <summary>View breakdown by organization (<%= @uncharged_fees_events.count %> organizations)</summary>
+
+    <table class="mt2">
+      <thead>
+        <tr>
+          <th>Organization</th>
+          <th>Fee Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @uncharged_fees_events.each do |item| %>
+          <tr>
+            <td><%= link_to item[:event].name, event_path(item[:event]) %></td>
+            <td><%= render_money item[:balance] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </details>
+</div>
+
+<hr class="mb3">
+
 <div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @fee_revenues, entry_name: "fee revenues" %>
