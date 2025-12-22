@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :invoices %>
 
+<% if @invoices.size > 0 %>
 <h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
   <span class="flex items-center">
     Invoices
@@ -51,7 +52,7 @@
 
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
-<% if @invoices.size > 0 %>
+
 <article class="table-container">
 <table>
   <thead>
@@ -93,5 +94,41 @@
 </table>
 </article>
 <% else %>
-  <%= blankslate "No invoices yet" %>
+  <div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-2 px-5">
+    <div class="flex flex-col justify-center col-span-2">
+      <h1 class="heading border-0 mb-0">
+        Invoices
+      </h1>
+      
+      <ul class="pl-4 mt-0">
+        <li class="mb-3">
+          <strong>Send professional payment requests</strong><br>
+          Bill someone for an event sponsorship, workshop fee, or project work.
+        </li>
+        <li class="mb-3">
+          <strong>Accept payments seamlessly</strong><br>
+          Include a payment link where people can pay with a card or bank account. Money flows directly into your HCB balance, and you'll see exactly when it arrives.
+        </li>
+        <li class="mb-3">
+          <strong>Keep financial records clean</strong><br>
+          Track every invoice you've sent, monitor payment status, stay organized as your organization grows
+        </li>
+      </ul>
+  
+      <% if organizer_signed_in?(as: :member) %>
+        <%= link_to new_event_invoice_path(event_id: @event.slug),
+            class: "btn btn--icon bg-success",
+            data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+          <%= inline_icon "send" %>
+          Send an invoice
+        <% end %>
+      <% end %>
+    </div>
+    <div class="col-span-3">
+      
+    </div>
+  </div>
+  <% if organizer_signed_in? %>
+    <%= render "invoices/modal" %>
+  <% end %>
 <% end %>
