@@ -57,7 +57,6 @@ RSpec.describe UsersController do
         phone_number_verified: true,
         use_sms_auth: true
       )
-      user.update!(phone_number_verified: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
       sign_in(user)
@@ -101,7 +100,6 @@ RSpec.describe UsersController do
         phone_number_verified: true,
         use_sms_auth: true
       )
-      user.update!(phone_number_verified: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
       sign_in(user)
 
