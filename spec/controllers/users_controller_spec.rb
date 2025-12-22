@@ -54,6 +54,8 @@ RSpec.describe UsersController do
         :user,
         use_two_factor_authentication: true,
         phone_number: "+18556254225",
+        phone_number_verified: true,
+        use_sms_auth: true
       )
       user.update!(phone_number_verified: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
@@ -96,6 +98,8 @@ RSpec.describe UsersController do
         :user,
         use_two_factor_authentication: true,
         phone_number: "+18556254225",
+        phone_number_verified: true,
+        use_sms_auth: true
       )
       user.update!(phone_number_verified: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
