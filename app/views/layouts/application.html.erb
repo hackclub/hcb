@@ -86,7 +86,7 @@
 
 <%# LET THERE BE SNOW %>
 <% if winter? %>
-  <%= react_component "holiday/Snow", {}, { style: "height:100%;position:fixed;top:0;left:0;width:100%;pointer-events:none" } %>
+  <%= react_component "holiday/Snow", {}, { style: "height:100%;position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:99999" } %>
 <% end %>
 
 <%# ghosts and ghouls %>
