@@ -97,20 +97,6 @@
 
 <% if content_for?(:nav) %>
   <main class="app flex flex-col lg:flex-row gap-0 w-full">
-    <% if @event && @first_time %>
-      <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
-        <div class="welcome__image mb3">
-          <div class="welcome__shine"></div>
-          <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
-          <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
-        </div>
-        <div class="mb2">
-          <button class="btn" data-action="welcome#tour">Show me around</button>
-        </div>
-        <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
-      </div>
-    <% end %>
-
     <%= render "application/native_changelog" if @latest_changelog_post %>
     <%= render "application/the_bin" if @the_bin %>
 
