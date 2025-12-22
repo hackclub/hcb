@@ -605,8 +605,8 @@ class User < ApplicationRecord
     end
   end
 
-  def second_factor_present_for_2fa  
-    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && !webauthn_credentials.any?
+  def second_factor_present_for_2fa
+    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end
