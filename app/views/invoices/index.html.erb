@@ -52,7 +52,6 @@
 
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
-
 <article class="table-container">
 <table>
   <thead>
@@ -99,7 +98,7 @@
       <h1 class="heading border-0 mb-0">
         Invoices
       </h1>
-      
+
       <ul class="pl-4 mt-0">
         <li class="mb-3">
           <strong>Send professional payment requests</strong><br>
@@ -114,7 +113,7 @@
           Track every invoice you've sent, monitor payment status, stay organized as your organization grows
         </li>
       </ul>
-  
+
       <% if organizer_signed_in?(as: :member) %>
         <%= link_to new_event_invoice_path(event_id: @event.slug),
             class: "btn btn--icon bg-success",
@@ -125,7 +124,7 @@
       <% end %>
     </div>
     <div class="col-span-3">
-      
+
     </div>
   </div>
   <% if organizer_signed_in? %>
