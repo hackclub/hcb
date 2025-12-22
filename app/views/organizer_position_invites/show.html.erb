@@ -1,4 +1,4 @@
-<% title "You've been invited to #{@invite.event.name}" %>
+<% title "You’ve been invited to #{@invite.event.name}" %>
 
 <% if @invite.contract && !@invite.contract.signed? %>
   <% pending_signee = @invite.contract.pending_signee_information %>
