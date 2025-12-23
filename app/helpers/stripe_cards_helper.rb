@@ -71,10 +71,10 @@ module StripeCardsHelper
     geo = Geocoder.search(address)&.first
     return nil unless geo
 
-    lat = geo.data["lat"]
+    lat = geo.data.dig("geometry", "coordinates", 1)
     return nil unless lat
 
-    lng = geo.data["lon"]
+    lng = geo.data.dig("geometry", "coordinates", 0)
 
     # this uses our own wrapper for Apple's Map Web Snapshots API
     # https://developer.apple.com/documentation/snapshots

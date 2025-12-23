@@ -1,0 +1,14 @@
+<p>Hi there! 👋</p>
+
+<p>
+  <%= @contract.party(:signee).email %> from <%= @contract.event.name %> is ready for you (HCB Operations) to sign the fiscal sponsorship agreement!
+</p>
+
+<p>
+  <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement.
+</p>
+
+<p>
+  Thanks!<br>
+  Here's a cookie 🍪
+</p>

@@ -809,6 +809,25 @@ class AdminController < Admin::BaseController
 
   end
 
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    # Pending fees that haven't been converted to FeeRevenue yet
+    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
+    events_with_balances = Event.pending_fees_v2.map do |event|
+      { event: event, balance: event.fee_balance_v2_cents }
+    end
+
+    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
+  end
+
   def disbursements
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1403,21 +1422,39 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc)
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name])
+    @referral_program = Referral::Program.new(name: params[:name], creator: current_user)
 
     if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
+      flash[:success] = "Referral program created successfully."
     else
       flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
     end
+
+    redirect_to referral_programs_admin_index_path
+  end
+
+  def referral_link_create
+    @referral_program = Referral::Program.find(params[:program_id])
+    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
+
+    if @referral_link.save
+      flash[:success] = "Referral link created successfully."
+    else
+      flash[:error] = @referral_link.errors.full_messages.to_sentence
+    end
+
+    redirect_to referral_programs_admin_index_path
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private

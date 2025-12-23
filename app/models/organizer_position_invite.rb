@@ -77,7 +77,6 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
-  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true
@@ -211,12 +210,17 @@ class OrganizerPositionInvite < ApplicationRecord
 
   def send_contract(cosigner_email: nil, include_videos: false)
     ActiveRecord::Base.transaction do
-      Contract::FiscalSponsorship.create!(contractable: self, cosigner_email:, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      contract.parties.create!(user:, role: :signee)
+      contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
 
       event.set_airtable_status("Documents sent")
     end
+
+    contract.send!
   end
 
   def on_contract_signed(contract)
@@ -228,7 +232,7 @@ class OrganizerPositionInvite < ApplicationRecord
         event.update!(financially_frozen: false)
       end
 
-      organizer_position&.update!(fiscal_sponsorship_contract:)
+      organizer_position&.update!(fiscal_sponsorship_contract: contract)
     end
   end
 

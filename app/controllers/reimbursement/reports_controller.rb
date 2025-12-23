@@ -234,15 +234,20 @@ module Reimbursement
               return redirect_to @report
             end
 
+            unless params[:wise_total_including_fees].to_f <= 50_000.00
+              flash[:error] = "The total including fees must be less than $50,000."
+              return redirect_to @report
+            end
+
             wise_total_including_fees_cents = params[:wise_total_including_fees].to_f * 100
             wise_total_without_fees_cents = params[:wise_total_without_fees].to_f * 100
 
-            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents, @report.event)
+            unless ::Shared::AmpleBalance.ample_balance?(wise_total_including_fees_cents.to_i, @report.event)
               flash[:error] = "This organization does not have sufficient funds to cover the transfer."
               return redirect_to @report
             end
 
-            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents > @report.maximum_amount_cents
+            if @report.maximum_amount_cents.present? && wise_total_including_fees_cents.to_i > @report.maximum_amount_cents
               flash[:error] = "This amount is above the maximum amount set by the organizers."
               return redirect_to @report
             end

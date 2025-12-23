@@ -89,7 +89,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !pt.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
@@ -184,7 +184,7 @@
         <% end %>
       <% else %>
         <div class="btn bg-success disabled" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem; width: 100%">
-          <%= inline_icon "attachment", size: 14 %>
+          <%= inline_icon "receipt", size: 14 %>
           <span>Uploaded!</span>
         </div>
       <% end %>
@@ -229,7 +229,7 @@
               </span>
             </h2>
 
-            <section class="card__banner card__darker details-horiz border-top border-bottom">
+            <section class="hcb-code--details">
               <p>
                 <strong>Card</strong> -
               </p>

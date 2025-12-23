@@ -103,7 +103,7 @@
 <% end %>
 
 <% if @active_control %>
-  <div class="m-auto text-center mb-5">
+  <div class="m-auto text-center mb-5 filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["allowances", "transactions"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Allowances", "?filter=allowances", class: "filterbar__item", "aria-selected": params[:filter] == "allowances", role: "tab" %>
     <%= link_to "Transactions", "?filter=transactions", class: "filterbar__item", "aria-selected": params[:filter] == "transactions", role: "tab" %>

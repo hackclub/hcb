@@ -95,13 +95,12 @@
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
       <%= react_component "holiday/Snow", {}, { style: "height:0px" } %>
     <% end %>
     <%# ghosts and ghouls %>
     <% if fall? %>
-      <img src="https://cloud-iuqyduosh-hack-club-bot.vercel.app/0image.png" alt="oOoOoOoOo" class="flying-spook ghost">
-      <img src="https://cloud-fy14iajlp-hack-club-bot.vercel.app/0image__50_-removebg-preview.png" alt="witch orpheus" class="flying-spook">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7e4929972e5eee4c_image.png" alt="oOoOoOoOo" class="flying-spook ghost">
+      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/1106e43a5e5219cf_image.png" alt="witch orpheus" class="flying-spook">
     <% end %>
     <%= yield(:header) %>
     <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
@@ -109,6 +108,8 @@
         <div class="relative sm:flex-1 md:min-w-[50vw] lg:min-w-[540px] max-w-[1000px] p-6 pt-10 sm:p-16 sm:overflow-y-auto sm:h-screen max-w-screen flex flex-col">
           <div class="flex flex-row gap-4 items-start">
             <%= render partial: "application/logo" %>
+          </div>
+          <div class="mt-4">
             <%= render "application/flash" unless @hide_flash %>
           </div>
           <%= yield %>
