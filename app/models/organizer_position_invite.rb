@@ -107,7 +107,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def deliver
-    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later unless organizer_position_invite_request.present?
+    OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
   end
 
   def accept(show_onboarding: true)
