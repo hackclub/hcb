@@ -1,20 +1,35 @@
 <% title "Send an ACH transfer" %>
-<% page_sm %>
-<%= render "events/nav", selected: :transfers %>
+<% page_full %>
+<% @no_app_shell = true %>
+<nav class="border-b p-8 pb-4 flex items-center gap-4 fixed top-0 bg-snow w-full z-10">
+  <%= link_to inline_icon("view-back"), event_transfers_path, class: "pop" %>
+  <div>
+    <h1 class="border-0 m-0 p-0 h2">ACH transfer</h1>
+    <p class="text-sm text-muted m-0">From <%= @event.name %></p>
+  </div>
+</nav>
 
-<h1>Send an ACH transfer</h1>
 
-<%= render "application/callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
-  <ul>
-    <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
-    <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
-    <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
-    <li>ACHs can only be sent to U.S. bank accounts.</li>
-  </ul>
-<% end %>
-
- <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
-<% end %>
-
-<%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
+<div class="grid grid-cols-5 max-w-5xl mx-auto w-full mt-20">
+  <div class="col-span-2">
+    <ol>
+      <li>Recipient details</li>
+      <li>Payment details</li>
+      <li>Admin</li>
+    </ol>
+    <%= render "application/callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
+      <ul>
+        <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
+        <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
+        <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
+        <li>ACHs can only be sent to U.S. bank accounts.</li>
+      </ul>
+    <% end %>
+    <% if @event.present? && !policy(@event).create_transfer? %>
+      <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
+    <% end %>
+  </div>
+  <div class="col-span-3">
+    <%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
+  </div>
+</div>
