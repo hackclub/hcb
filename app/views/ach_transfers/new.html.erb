@@ -10,9 +10,9 @@
 </nav>
 
 
-<div class="grid grid-cols-5 max-w-5xl mx-auto w-full mt-20">
+<div class="grid grid-cols-5 max-w-5xl mx-auto w-full mt-20 px-8">
   <div class="col-span-2">
-    <ol>
+    <ol class="pl-0">
       <li>Recipient details</li>
       <li>Payment details</li>
       <li>Admin</li>
@@ -29,7 +29,7 @@
       <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
     <% end %>
   </div>
-  <div class="col-span-3">
+  <div class="col-span-3 pt-3">
     <%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
   </div>
 </div>
