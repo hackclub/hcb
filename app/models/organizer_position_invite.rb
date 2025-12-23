@@ -149,7 +149,7 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     # Don't send mailer if this is the first organizer
-    if self.event.users.size > 1 || organizer_position_invite_request.present?
+    if self.event.users.size > 1
       OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
     end
 

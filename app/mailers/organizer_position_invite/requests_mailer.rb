@@ -10,19 +10,6 @@ class OrganizerPositionInvite
       mail to: @emails, subject: "#{@request.requester.name} has requested to join #{@request.link.event.name}"
     end
 
-    def approved
-      @invite = @request.organizer_position_invite
-      @emails = (@invite.event.users.map(&:email_address_with_name) + [@invite.event.config.contact_email]).compact
-
-      @announcement = Announcement::Templates::NewTeamMember.new(
-        invite: @invite,
-        author: User.system_user
-      ).create
-
-      # should we make a different email for the one whose request was approved?
-      mail to: @emails, subject: "#{@invite.user.possessive_name} request to join #{@invite.event.name} has been approved"
-    end
-
     def denied
       @email = @request.requester.email
 

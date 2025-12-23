@@ -15,7 +15,11 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
       author: User.system_user
     ).create
 
-    mail to: @emails, subject: "#{@invite.user.name} has accepted their invitation to join #{@invite.event.name}"
+    if @invite.organizer_position_invite_request.present?
+      mail to: @emails, subject: "#{@invite.user.possessive_name} request to join #{@invite.event.name} has been approved"
+    else
+      mail to: @emails, subject: "#{@invite.user.name} has accepted their invitation to join #{@invite.event.name}"
+    end
   end
 
   private
