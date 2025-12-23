@@ -3,6 +3,7 @@
 # This partial is capable of rendering `HcbCode`, `CanonicalPendingTransaction`, and `CanonicalTransactionGrouped` instances
 
 hcb_code = tx.is_a?(HcbCode) ? tx : tx.local_hcb_code
+is_cpt = tx.is_a?(CanonicalPendingTransaction)
 amount = transaction_amount(tx, event: @event)
 
 json.id hcb_code.public_id
@@ -10,8 +11,9 @@ json.date tx.date
 json.amount_cents amount
 json.memo hcb_code.memo(event: @event)
 json.has_custom_memo hcb_code.custom_memo.present?
-json.pending (tx.is_a?(CanonicalPendingTransaction) && tx.unsettled?) || (tx.is_a?(HcbCode) && !tx.pt&.fronted? && tx.pt&.unsettled?)
-json.declined (tx.is_a?(CanonicalPendingTransaction) && tx.declined?) || (tx.is_a?(HcbCode) && tx.pt&.declined?)
+json.pending (is_cpt && tx.unsettled?) || (tx.is_a?(HcbCode) && !tx.pt&.fronted? && tx.pt&.unsettled?)
+json.declined (is_cpt && tx.declined?) || (tx.is_a?(HcbCode) && tx.pt&.declined?)
+json.reversed (is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (tx.is_a?(HcbCode) && tx.stripe_reversed_by_merchant?)
 json.tags hcb_code.tags do |tag|
   json.id tag.public_id
   json.label tag.label
