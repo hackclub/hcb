@@ -13,27 +13,30 @@
 <% end %>
 
 <main class="center max-w-3xl card mt4 md-p3 mx-auto">
+  <h1 class="mt0 border-0 mb-0"><%= @invite.event.name %></h1>
 
-<h1 class="mt0"><%= @invite.event.name %></h1>
+  <p class="muted caps bold mt-2">You've been invited to join</p>
 
-<p class="muted caps bold mt3">You’ve been invited to join</p>
+  <% if @organizers.any? %>
+    <div class="flex justify-center flex-wrap">
+      <% @organizers.each do |position| %>
+        <div class="tooltipped tooltipped--s mr1" aria-label="<%= position.user.name %>">
+          <%= avatar_for position.user, size: 64 %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 
-<% if @organizers.any? %>
-  <div class="flex justify-center flex-wrap">
-    <% @organizers.each do |position| %>
-      <div class="tooltipped tooltipped--s mr1" aria-label="<%= position.user.name %>">
-        <%= avatar_for position.user, size: 64 %>
-      </div>
+  <div class="flex justify-center items-center flex-wrap mt-3 gap-2">
+    <%= link_to "Reject", organizer_position_invite_reject_path(@invite), method: :post, class: "btn bg-error" %>
+    <% if @invite.contract && !@invite.contract.signed? %>
+      <% if @invite.contract.party(:signee).present? %>
+        <%= link_to "View pending contract", contract_party_path(@invite.contract.party(:signee)), class: "btn bg-accent" %>
+      <% else %>
+        <%= link_to "View pending contract", @invite.contract.signee_docuseal_url, class: "btn bg-accent" %>
+      <% end %>
+    <% else %>
+      <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success" %>
     <% end %>
   </div>
-<% end %>
-
-<div class="flex justify-center items-center flex-wrap mt3">
-  <%= link_to "Reject", organizer_position_invite_reject_path(@invite), method: :post, class: "btn bg-error m1" %>
-  <% if @invite.contract && !@invite.contract.signed? %>
-    <%= link_to "View pending contract", contract_party_path(@invite.contract.party(:signee)), class: "btn bg-accent h2 m1" %>
-  <% else %>
-    <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success h2 m1" %>
-  <% end %>
-</div>
 </main>
