@@ -28,12 +28,17 @@ module TransactionGroupingEngine
       def running_balance_by_date
         query = <<~SQL
           WITH rbt AS (#{running_balance_sql})
-          SELECT GREATEST(0, AVG(running_balance)) as running_balance, date FROM rbt
+          SELECT
+            GREATEST(0, MAX(running_balance)) AS running_balance,
+            date
+          FROM rbt
           GROUP BY date
           ORDER BY date
         SQL
 
-        ActiveRecord::Base.connection.execute(query).map { |entry| [entry["date"].to_date, entry["running_balance"]] }.to_h
+        ActiveRecord::Base.connection.execute(query).map { |entry|
+          [entry["date"].to_date, entry["running_balance"]]
+        }.to_h
       end
 
       def running_balance_sql

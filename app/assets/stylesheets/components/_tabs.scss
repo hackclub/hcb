@@ -5,6 +5,7 @@
   gap: 1.25rem;
   border-bottom: 0.5px solid map-get($palette, smoke);
   background-color: $snow;
+  font-weight: 500;
   z-index: 5;
 
   transition: background-color 0.125s ease-in-out 0s;

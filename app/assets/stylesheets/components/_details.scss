@@ -8,7 +8,7 @@
 .details > div,
 .details__row {
   display: grid;
-  align-items: center;
+  align-items: baseline;
   margin: 0;
   padding-bottom: 0.25rem;
   padding-top: 0.25rem;
@@ -16,7 +16,7 @@
 
   strong {
     font-weight: 400;
-    color: map-get($palette, slate);
+    color: map-get($palette, muted);
   }
 
   @media (min-width: 32em) {
@@ -64,8 +64,7 @@
   flex-direction: column;
 
   > p,
-  > div,
-  .details-horiz__col {
+  > div {
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -87,25 +86,8 @@
   }
 
   &:not(.details-horiz--lg) {
-    @media (min-width: 32em) {
-      flex-direction: row;
-
-      > p,
-      > div,
-      .details-horiz__col {
-        margin-top: 0;
-        margin-bottom: 0;
-
-        &:not(:first-child) {
-          padding-left: 1rem;
-        }
-
-        &:not(:last-child) {
-          border-right: 1px solid map-get($palette, smoke);
-          padding-right: 1.25rem;
-        }
-      }
-    }
+    margin-left: -16px;
+    margin-right: -16px;
   }
 
   @media (min-width: 45em) {
