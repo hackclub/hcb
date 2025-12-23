@@ -79,15 +79,20 @@ class Metric < ApplicationRecord
     zip = loc_array.last
     unless zip == "000000"
       geocode = Geocoder.search(location)[0]
-      if geocode.present? && (address = Geocoder.search(location)[0]&.data&.[]("address"))
-        if address["town"]
-          return "#{loc_array[0, loc_array.length - 1].join(" - ")} - #{address["town"]}"
-        elsif address["city"]
-          return "#{loc_array[0, loc_array.length - 1].join(" - ")} - #{address["city"]}"
-        elsif address["county"]
-          return "#{loc_array[0, loc_array.length - 1].join(" - ")} - #{address["county"]}"
-        end
+      if geocode&.data.present? && (context = geocode.data["context"]).present?
+        place = context.find { |c| c["id"]&.start_with?("place") }&.[]("text")
+        region = context.find { |c| c["id"]&.start_with?("region") }&.[]("text")
+        country = context.find { |c| c["id"]&.start_with?("country") }&.[]("short_code")&.upcase
 
+        if place.present? && region.present?
+          return [region, place].compact.join(" - ")
+        else
+          return [country, region, place].compact.join(" - ")
+        end
+      elsif geocode&.data.present? && (place_name = geocode.data["matching_place_name"]).present?
+        return place_name
+      else
+        return loc_array[0, loc_array.length - 1].join(" - ")
       end
     end
     return loc_array[0, loc_array.length - 1].join(" - ")

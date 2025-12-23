@@ -1,3 +1,1 @@
-<li>
-  <%= link_to_unless current_page.first?, raw(t("views.pagination.first")), url, { remote:, class: "btn" } %>
-</li>
+<%= link_to_unless current_page.first?, inline_icon("first-page"), url, { remote:, class: "pop" } %>

@@ -718,6 +718,15 @@ video {
     min-width: unset;
     width: unset;
   }
+  & .menu__divider {
+    background-color: rgba(190, 190, 190, 0.3);
+  }
+  & a:hover {
+    background-color: rgba(200, 200, 200, 0.3);
+  }
+  & a:active {
+    background-color: rgba(200, 200, 200, 0.4) !important;
+  }
 }
 
 nav {
