@@ -1,7 +1,7 @@
-<%# locals: (snow_style: "height:100%") %>
+<%# locals: (render_snow: true) %>
 <%# LET THERE BE SNOW %>
-<% if winter? %>
-  <%= react_component "holiday/Snow", {}, { style: snow_style } %>
+<% if winter? && render_snow %>
+  <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
 <% end %>
 
 <%# ghosts and ghouls %>
