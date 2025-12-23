@@ -1,0 +1,7 @@
+<nav class="border-b p-8 pb-4 flex items-center gap-4 fixed top-0 bg-snow w-full z-10">
+  <%= link_to inline_icon("view-back"), event_transfers_path, class: "pop" %>
+  <div>
+    <h1 class="border-0 m-0 p-0 h2"><%= heading %></h1>
+    <p class="text-sm text-muted m-0">From <%= @event.name %></p>
+  </div>
+</nav>

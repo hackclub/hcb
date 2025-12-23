@@ -22,61 +22,55 @@
     <pre x-text="'Debug info:\n\n' + JSON.stringify(payment_recipient || {}, null, 2)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
   <% end %>
 
- <h3 class="mb-2">Recipient details</h3>
+  <h3 class="mb-2">Recipient details</h3>
   <div class="card mb-4 relative">
-  <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name, "Legal name" %>
-    <%= form.text_field :recipient_name,
-                        placeholder: "Max Kern",
-                        required: true,
-                        disabled:,
-                        role: "combobox",
-                        "aria-controls": "#payment-recipient-search",
-                        data: {
-                          extraction_field: "seller_name",
-                          action: "
-                            keydown.enter->text-filter#selectFirst
+    <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
+      <%= form.label :recipient_name, "Legal name" %>
+      <%= form.text_field :recipient_name,
+                          placeholder: "Max Kern",
+                          required: true,
+                          disabled:,
+                          role: "combobox",
+                          "aria-controls": "#payment-recipient-search",
+                          data: {
+                            extraction_field: "seller_name",
+                            action: "
+                              keydown.enter->text-filter#selectFirst
+                              click->menu#open
+                              focus->menu#open
+                              click@document->menu#close
+                              keydown@document->menu#keydown
+                              input->text-filter#query
+                            ",
+                            menu_target: "toggle",
+                          },
+                          "x-ref" => "name_input",
+                          "@input" => "payment_recipient = null" %>
+      <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
 
-                            click->menu#open
-                            focus->menu#open
-                            click@document->menu#close
-                            keydown@document->menu#keydown
+      <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
+        <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
+          <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
+            <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
+              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close" data-recipient="<%= payment_recipient.to_safe_json %>" @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+                <span class="truncate"><%= payment_recipient.name %></span>
+                <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
+              </button>
+              <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
+                <%= inline_icon "view-close", size: 24, class: "align-middle" %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
 
-                            input->text-filter#query
-                          ",
-                          menu_target: "toggle",
-                        },
-                        "x-ref" => "name_input",
-                        "@input" => "payment_recipient = null" %>
-    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
-    <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
-      <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-        <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
-          <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
-            <button
-              type="button"
-              class="menu__action flex justify-between flex-auto mr1"
-              data-action="input#focus menu#close"
-              data-recipient="<%= payment_recipient.to_safe_json %>"
-              @click="payment_recipient = JSON.parse($el.dataset.recipient)">
-              <span class="truncate"><%= payment_recipient.name %></span>
-              <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
-            </button>
-            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
-              <%= inline_icon "view-close", size: 24, class: "align-middle" %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
+    <div class="field">
+      <%= form.label :payment_for, "What's this payment for?" %>
+      <%= form.text_field :payment_for, placeholder: "Shipment of potions", required: true, disabled:, data: { input_target: "input" } %>
+      <span class="muted">This is to help HCB keep record of our transactions.</span>
+    </div>
   </div>
-
-  <div class="field">
-    <%= form.label :payment_for, "What's this payment for?" %>
-    <%= form.text_field :payment_for, placeholder: "Shipment of potions", required: true, disabled:, data: { input_target: "input" } %>
-    <span class="muted">This is to help HCB keep record of our transactions.</span>
-  </div>
-</div>
 
   <h3 class="mb-2">Payment details</h3>
   <div class="card mb-4 relative">
@@ -92,11 +86,7 @@
           <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
-        <div
-          class="field"
-          data-controller="external-validation"
-          data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>"
-        >
+        <div class="field" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
           <%= form.label :routing_number %>
           <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
           <span class="muted" data-external-validation-target="hint"></span>
@@ -108,6 +98,7 @@
         </div>
       </div>
     </template>
+
     <template x-if="payment_recipient && !editing">
       <div>
         <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
@@ -118,71 +109,72 @@
         <div class="field"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
         <div class="field"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.routing_number"></div>
         <div class="field"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
-      </div>                                                                                             
+      </div>
     </template>
   </div>
 
   <div class="card mb-4 relative">
-  <%= form.label :amount_money, "Amount" %>
-  <div class="field">
-    <div class="flex items-center">
-      <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
-    </div>
-  </div>
-
-  <div class="field">
-    <%= form.label :invoiced_at, "Invoice date" %>
-    <%= form.date_field :invoiced_at, disabled:, max: Date.current %>
-    <span class="muted">When were you invoiced for this payment?</span>
-  </div>
-
-  <div class="field field--checkbox w-full">
-    <span style="font-weight: 700">Notify recipient?</span>
-    <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-      <%= form.label :send_email_notification do %>
-        <%= form.check_box :send_email_notification, disabled:, switch: true %>
-        <span class="slider"></span>
-      <% end %>
-    </div>
-  </div>
-
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-          action: "
-        dragover@window->file-drop#dragover
-        drop@window->file-drop#drop
-        dragenter@window->file-drop#dragenter
-        dragleave@window->file-drop#dragleave
-      "
-        } %>
-    <%= form.file_field :file,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        style: "margin: 8px 0px",
-        class: "field--fileupload__field",
-        data: {
-          "file-drop-target" => "fileInput",
-          "action" => "change->extraction#upload"
-        },
-        disabled: %>
-    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-  </div>
-  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-  </div>
-
-  <h3 class="mb-2">Admin</h3>
-  <% admin_tool do %>
+    <%= form.label :amount_money, "Amount" %>
     <div class="field">
-      <%= form.label :scheduled_on, "Schedule for" %>
-      <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
-      <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
+      <div class="flex items-center">
+        <span class="bold muted" style="width: 1rem;">$</span>
+        <%= form.number_field :amount_money, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
+      </div>
     </div>
 
-    <p class="h5 muted mt0 mb1">See <%= link_to "this page", "https://column.com/docs/ach/timing", target: "_blank" %> for ACH timing details.</p>
+    <div class="field">
+      <%= form.label :invoiced_at, "Invoice date" %>
+      <%= form.date_field :invoiced_at, disabled:, max: Date.current %>
+      <span class="muted">When were you invoiced for this payment?</span>
+    </div>
+
+    <div class="field field--checkbox w-full">
+      <span style="font-weight: 700">Notify recipient?</span>
+      <div class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+        <%= form.label :send_email_notification do %>
+          <%= form.check_box :send_email_notification, disabled:, switch: true %>
+          <span class="slider"></span>
+        <% end %>
+      </div>
+    </div>
+
+    <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
+    <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+      <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
+            action: "
+              dragover@window->file-drop#dragover
+              drop@window->file-drop#drop
+              dragenter@window->file-drop#dragenter
+              dragleave@window->file-drop#dragleave
+            "
+          } %>
+      <%= form.file_field :file,
+          multiple: true,
+          include_hidden: false,
+          required: false,
+          accept: "image/*,image/heic,.pdf",
+          style: "margin: 8px 0px",
+          class: "field--fileupload__field",
+          data: {
+            "file-drop-target" => "fileInput",
+            "action" => "change->extraction#upload"
+          },
+          disabled: %>
+      <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
+    </div>
+    <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+  </div>
+
+  <% admin_tool do %>
+    <h3 class="mb-2">Admin</h3>
+    <div class="card mb-4 relative">
+      <div class="field">
+        <%= form.label :scheduled_on, "Schedule for" %>
+        <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
+        <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
+      </div>
+      <p class="h5 muted mt0 mb1">See <%= link_to "this page", "https://column.com/docs/ach/timing", target: "_blank" %> for ACH timing details.</p>
+    </div>
   <% end %>
 
   <div class="actions tooltipped tooltipped--n inline-block" aria-label="ACH transfers can't be canceled">

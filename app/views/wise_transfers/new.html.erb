@@ -1,8 +1,10 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Send a Wise transfer" %>
-<%= render "events/nav", selected: :transfers %>
-<% page_sm %>
+<% page_full %>
+<% @no_app_shell = true %>
+
+<%= render "events/transfer_nav", heading: "Wise transfer" %>
 
 <% if @event.present? && !policy(@event).create_transfer? %>
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>

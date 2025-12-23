@@ -1,13 +1,8 @@
 <% title "Send an ACH transfer" %>
 <% page_full %>
 <% @no_app_shell = true %>
-<nav class="border-b p-8 pb-4 flex items-center gap-4 fixed top-0 bg-snow w-full z-10">
-  <%= link_to inline_icon("view-back"), event_transfers_path, class: "pop" %>
-  <div>
-    <h1 class="border-0 m-0 p-0 h2">ACH transfer</h1>
-    <p class="text-sm text-muted m-0">From <%= @event.name %></p>
-  </div>
-</nav>
+
+<%= render "events/transfer_nav", heading: "ACH transfer" %>
 
 
 <div class="grid grid-cols-5 max-w-5xl mx-auto w-full mt-20 px-8">
