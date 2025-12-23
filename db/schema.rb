@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_23_064358) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -550,8 +550,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.bigint "event_id", null: false
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
-    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx"
-    t.index ["event_id"], name: "index_column_account_numbers_on_event_id"
+    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
   create_table "column_statements", force: :cascade do |t|
