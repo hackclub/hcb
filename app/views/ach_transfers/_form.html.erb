@@ -22,8 +22,10 @@
     <pre x-text="'Debug info:\n\n' + JSON.stringify(payment_recipient || {}, null, 2)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
   <% end %>
 
+ <h3 class="mb-2">Recipient details</h3>
+  <div class="card mb-4 relative">
   <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name, "Recipient's legal name" %>
+    <%= form.label :recipient_name, "Legal name" %>
     <%= form.text_field :recipient_name,
                         placeholder: "Max Kern",
                         required: true,
@@ -70,10 +72,11 @@
   </div>
 
   <div class="field">
-    <%= form.label :payment_for, "What are you paying for with this deposit?" %>
+    <%= form.label :payment_for, "What's this payment for?" %>
     <%= form.text_field :payment_for, placeholder: "Shipment of potions", required: true, disabled:, data: { input_target: "input" } %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
+</div>
 
   <h3 class="mb-2">Payment details</h3>
   <div class="card mb-4 relative">
@@ -119,6 +122,7 @@
     </template>
   </div>
 
+  <div class="card mb-4 relative">
   <%= form.label :amount_money, "Amount" %>
   <div class="field">
     <div class="flex items-center">
@@ -133,9 +137,14 @@
     <span class="muted">When were you invoiced for this payment?</span>
   </div>
 
-  <div class="field field--checkbox">
-    <%= form.check_box :send_email_notification, disabled: %>
-    <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
+  <div class="field field--checkbox w-full">
+    <span style="font-weight: 700">Notify recipient?</span>
+    <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+      <%= form.label :send_email_notification do %>
+        <%= form.check_box :send_email_notification, disabled:, switch: true %>
+        <span class="slider"></span>
+      <% end %>
+    </div>
   </div>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
@@ -163,7 +172,9 @@
     <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+  </div>
 
+  <h3 class="mb-2">Admin</h3>
   <% admin_tool do %>
     <div class="field">
       <%= form.label :scheduled_on, "Schedule for" %>
