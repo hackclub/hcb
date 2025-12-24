@@ -28,6 +28,7 @@ module Referral
     include Hashid::Rails
 
     validates :name, presence: true
+    validates :redirect_to, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { redirect_to.present? }
 
     belongs_to :creator, class_name: "User"
 
