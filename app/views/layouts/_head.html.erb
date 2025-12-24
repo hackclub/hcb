@@ -1,5 +1,4 @@
 <%# locals: (title_suffix: "HCB", skip_dark_js: false, custom_stylesheet: false, custom_application_js: false, skip_plausible: false, skip_console_art: false, console_art_url: nil) %>
-<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 
 <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
 <title>
@@ -13,7 +12,7 @@
 
 <%= yield(:before_assets) if content_for?(:before_assets) %>
 
-<%= javascript_include_tag "dark", 'data-turbo-track': "reload" unless skip_dark_js %>
+<%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
 <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" unless custom_stylesheet %>
 <%= yield(:custom_stylesheet) if content_for?(:custom_stylesheet) %>
 <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless custom_application_js %>
