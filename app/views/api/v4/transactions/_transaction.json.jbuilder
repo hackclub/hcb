@@ -11,9 +11,9 @@ json.date tx.date
 json.amount_cents amount
 json.memo hcb_code.memo(event: @event)
 json.has_custom_memo hcb_code.custom_memo.present?
-json.pending (is_cpt && tx.unsettled?) || (tx.is_a?(HcbCode) && !tx.pt&.fronted? && tx.pt&.unsettled?)
-json.declined (is_cpt && tx.declined?) || (tx.is_a?(HcbCode) && tx.pt&.declined?)
-json.reversed (is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (tx.is_a?(HcbCode) && tx.stripe_reversed_by_merchant?)
+json.pending (is_cpt && tx.unsettled?) || (is_hcb_code && !tx.pt&.fronted? && tx.pt&.unsettled?)
+json.declined (is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?)
+json.reversed (is_cpt && tx.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed") || (is_hcb_code && tx.stripe_reversed_by_merchant?)
 json.tags hcb_code.tags do |tag|
   json.id tag.public_id
   json.label tag.label
