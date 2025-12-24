@@ -19,7 +19,7 @@ json.tags hcb_code.tags do |tag|
   json.emoji tag.emoji
 end
 json.code hcb_code.hcb_i1
-json.missing_receipt hcb_code.missing_receipt?
+json.missing_receipt hcb_code.missing_receipt?(@event)
 json.lost_receipt hcb_code.no_or_lost_receipt?
 json.appearance hcb_code.disbursement.special_appearance_name if hcb_code.disbursement&.special_appearance? && amount.positive?
 

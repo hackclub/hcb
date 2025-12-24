@@ -1,7 +1,7 @@
 <%= turbo_frame_tag :my_missing_receipts_list do %>
   <% if @missing %>
     <section class="card p0 mt3 mb3">
-      <h2 class="heading h2 line-height-3 mt0 ml0 pt1 pb1 pl2 pr2">
+      <h2 class="heading h2 leading-[1.25] mt0 ml0 pt1 pb1 pl2 pr2">
         Charges missing receipts
         <%= link_to my_inbox_path, class: "btn" do %>
           <%= inline_icon "view" %>

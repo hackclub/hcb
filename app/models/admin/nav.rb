@@ -123,6 +123,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "Fee Revenues",
+            path: fee_revenues_admin_index_path,
+            count: FeeRevenue.count,
+            count_type: :records
+          ),
+          make_item(
             name: "Column Statements",
             path: admin_column_statements_path,
             count: Column::Statement.count,

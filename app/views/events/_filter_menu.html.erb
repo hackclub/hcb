@@ -1,17 +1,17 @@
 <% ledger_turbo_frame_id = "#{dom_id(@event)}_ledger" %>
 <% tags = @event.tags.order(label: :asc) %>
 
-<div data-controller="menu" data-menu-append-to-value="turbo-frame#<%= ledger_turbo_frame_id %>" data-menu-placement-value="bottom-start">
+<div data-controller="menu" data-menu-append-to-value="turbo-frame#<%= ledger_turbo_frame_id %>" data-menu-placement-value="bottom-start" class="-mb-1">
   <button
     type="button"
-    aria-label="Add filter..."
+    aria-label="Add filter"
     class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
     data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
   </button>
   <div class="menu__content menu__content--2 menu__content--compact h5 w-[350px] h-[400px] p-0" data-menu-target="content" data-controller="filter">
     <div class="grid grid-cols-3 h-full gap-0" data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tags" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : tags.length > 0 ? "tags" : "user" %>">
-      <div class="bg-smoke dark:bg-dark flex flex-col items-start gap-1 p-3">
+      <div class="bg-[rgba(200,200,200,0.2)] flex flex-col items-start gap-1 p-3">
         <% if tags.length > 0 %>
           <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
         <% end %>
@@ -50,7 +50,7 @@
           <% end %>
         </div>
         <div data-tabs-target="tab" id="type">
-          <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire"].each do |type| %>
+          <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire", "wise_transfer"].each do |type| %>
             <div class="flex items-center">
               <%= link_to(event_ledger_path(@event, upsert_query_params(type:)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
                 <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>

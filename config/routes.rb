@@ -213,6 +213,7 @@ Rails.application.routes.draw do
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
+      get "fee_revenues", to: "admin#fee_revenues"
       get "users", to: "admin#users"
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
@@ -341,8 +342,15 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
-      post "resend_to_user"
-      post "resend_to_cosigner"
+    end
+  end
+
+  namespace :contract, path: "contracts" do
+    resources :parties, only: [:show] do
+      member do
+        post "resend"
+        get "completed"
+      end
     end
   end
 
@@ -685,7 +693,11 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :transactions, only: [:show]
+        resources :transactions, only: [:show] do
+          member do
+            post "mark_no_receipt"
+          end
+        end
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do

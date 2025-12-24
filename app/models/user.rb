@@ -359,16 +359,17 @@ class User < ApplicationRecord
     end
   end
 
-  memo_wise def transactions_missing_receipt(since: nil)
+  memo_wise def transactions_missing_receipt(from: nil, to: nil)
     return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
     user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", since) if since
+    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
+    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
     user_hcb_codes.order(created_at: :desc)
   end
 
-  memo_wise def transactions_missing_receipt_count(since: nil)
-    transactions_missing_receipt(since:).size
+  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
+    transactions_missing_receipt(from:, to:).size
   end
 
   def build_payout_method(params)
