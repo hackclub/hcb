@@ -99,24 +99,33 @@
         Invoices
       </h1>
 
-      <ul class="pl-4 mt-0">
-        <li class="mb-3">
-          <strong>Send professional payment requests</strong><br>
-          Bill someone for an event sponsorship, workshop fee, or project work.
-        </li>
-        <li class="mb-3">
-          <strong>Accept payments seamlessly</strong><br>
-          Include a payment link where people can pay with a card or bank account. Money flows directly into your HCB balance, and you'll see exactly when it arrives.
-        </li>
-        <li class="mb-3">
-          <strong>Keep financial records clean</strong><br>
-          Track every invoice you've sent, monitor payment status, stay organized as your organization grows
-        </li>
-      </ul>
+      <div class="-mx-4">
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "send", class: "mt-1" %>
+            <div>
+              <strong>Request payments professionally</strong>
+              <p class="text-sm opacity-60">Bill someone for an event sponsorship, workshop fee, or project work.</p>
+            </div>
+        </div>
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "payment", class: "mt-1" %>
+            <div>
+              <strong>Seamlessly accept payments</strong>
+              <p class="text-sm opacity-60">Include a payment link where people can pay with a card or bank account. Money flows directly into your HCB balance, and you'll see exactly when it arrives.</p>
+            </div>
+        </div>
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "copy", class: "mt-1" %>
+            <div>
+              <strong>Keep financial records clean</strong>
+              <p class="text-sm opacity-60">Track every invoice you've sent, monitor payment status, stay organized as your organization grows</p>
+            </div>
+        </div>
+      </div>
 
       <% if organizer_signed_in?(as: :member) %>
         <%= link_to new_event_invoice_path(event_id: @event.slug),
-            class: "btn btn--icon bg-success",
+            class: "btn btn--icon bg-success mt-3",
             data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
           <%= inline_icon "send" %>
           Send an invoice
@@ -125,7 +134,8 @@
     </div>
     <div class="col-span-3 flex items-center justify-center">
       <div class="card p-0 card--breakdown">
-        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/c86bc936175fa0fb_image.png" alt="Invoice illustration" class="w-full h-auto">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/c86bc936175fa0fb_image.png" alt="Invoice illustration" class="w-full h-auto dark:hidden">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/6f874666a21bab84_image.png" alt="Invoice illustration" class="w-full h-auto hidden dark:block">
         <div class="p-2 pt-0 text-center">
           <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
         </div>
