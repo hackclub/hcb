@@ -10,7 +10,13 @@ module Api
       before_action :set_api_event, only: [:create]
 
       def index
-        @invitations = current_user.organizer_position_invites.pending
+        if params[:event_id]
+          set_api_event
+          authorize @event
+          @invitations = @event.organizer_position_invites.pending
+        else
+          @invitations = current_user.organizer_position_invites.pending
+        end
       end
 
       def show
@@ -61,12 +67,22 @@ module Api
         render :show
       end
 
+      def destroy
+        authorize @invitation
+
+        unless @invitation.cancel
+          raise ActiveRecord::RecordInvalid.new(@invitation)
+        end
+
+        render json: { message: "Invitation successfully deleted" }, status: :ok
+      end
+
       private
 
       def set_invitation
         @invitation = authorize OrganizerPositionInvite.find_by_public_id(params[:id]) || OrganizerPositionInvite.friendly.find(params[:id])
 
-        if @invitation.cancelled? || @invitation.rejected? || @invitation.user != current_user
+        if @invitation.cancelled? || @invitation.rejected? || (@invitation.user != current_user && action_name != "destroy")
           raise ActiveRecord::RecordNotFound
         end
       end
