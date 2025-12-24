@@ -85,9 +85,9 @@ class Metric < ApplicationRecord
         country = context.find { |c| c["id"]&.start_with?("country") }&.[]("short_code")&.upcase
 
         if place.present? && region.present?
-          return [place, region].compact.join(" - ")
+          return [region, place].compact.join(" - ")
         else
-          return [place, region, country].compact.join(" - ")
+          return [country, region, place].compact.join(" - ")
         end
       elsif geocode&.data.present? && (place_name = geocode.data["matching_place_name"]).present?
         return place_name

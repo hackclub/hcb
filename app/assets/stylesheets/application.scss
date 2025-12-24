@@ -672,10 +672,15 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 // Tiptap menu bar formatting styles
 .format-button {
   @extend .pop;
-  @apply bg-white dark:bg-neutral-700 text-black dark:text-white text-lg;
+  width: auto;
+  min-width: 36px;
+  @apply text-black dark:text-white text-lg;
+  background: transparent !important;
+  transition: background 0.2s;
 
   &:hover {
-    @apply bg-smoke dark:bg-darkless;
+    background: rgba(200, 200, 200, 0.25) !important;
+    transition-duration: 0s;
   }
 
   &.is-active {
