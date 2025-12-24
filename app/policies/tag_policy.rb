@@ -1,19 +1,37 @@
 # frozen_string_literal: true
 
 class TagPolicy < ApplicationPolicy
+  def index?
+    auditor? || reader?
+  end
+
   def create?
-    OrganizerPosition.role_at_least?(user, record, :member)
+    member?
   end
 
   def update?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
+    member?
   end
 
   def destroy?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
+    member?
   end
 
   def toggle_tag?
+    member?
+  end
+
+  private
+
+  def auditor?
+    user&.auditor?
+  end
+
+  def reader?
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
+  end
+
+  def member?
     OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
