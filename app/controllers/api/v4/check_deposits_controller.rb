@@ -5,7 +5,7 @@ module Api
     class CheckDepositsController < ApplicationController
       include SetEvent
 
-      before_action :set_api_event, only: [:create]
+      before_action :set_api_event
 
       def create
         check_deposit_params = params.permit(:front, :back, :amount_cents).merge(created_by: current_user)
