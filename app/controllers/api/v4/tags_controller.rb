@@ -5,7 +5,7 @@ module Api
     class TagsController < ApplicationController
       include SetEvent
 
-      before_action :set_api_event, only: [:index]
+      before_action :set_api_event
 
       def index
         authorize @event, :show_in_v4?
