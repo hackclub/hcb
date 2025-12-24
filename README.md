@@ -22,7 +22,7 @@ provide high schoolers with a 501(c)(3) status-backed restricted fund for their
 organization. Behind the scenes, HCB is a Ruby on Rails application (learn more
 by reading [our documentation](/dev-docs)).
 
-<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/hackclub/hcb/assets/39828164/b19a83b2-ba81-46b0-9f6f-2772f4249071">
+<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/user-attachments/assets/2d3e23b7-265a-4ba2-9d0d-f8bef2435557">
 
 ## Table of Contents
 

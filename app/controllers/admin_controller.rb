@@ -809,6 +809,25 @@ class AdminController < Admin::BaseController
 
   end
 
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    # Pending fees that haven't been converted to FeeRevenue yet
+    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
+    events_with_balances = Event.pending_fees_v2.map do |event|
+      { event: event, balance: event.fee_balance_v2_cents }
+    end
+
+    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
+  end
+
   def disbursements
     @page = params[:page] || 1
     @per = params[:per] || 20

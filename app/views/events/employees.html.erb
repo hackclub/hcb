@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :payroll %>
 
-<h1 class="heading flex">
+<h1 class="heading flex mb-0 border-0">
   <span class="flex-grow">Contractors</span>
   <% if policy(@event.employees.build).new? %>
     <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>

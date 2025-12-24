@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "users/nav", selected: :reimbursements %>
 
-<h1 class="heading flex-col sm:flex-row">
+<h1 class="heading flex-col sm:flex-row border-0 mb-0">
   <span>
     Reimbursements
   </span>
@@ -32,7 +32,7 @@
 <%= render partial: "reimbursement/reports/create_form" %>
 
 <% if current_user.events.not_demo_mode.any? %>
-  <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+  <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
     <div>
       <label for="sms_number">Start a report via SMS</label>
       <p class="h5 muted mt0 mb1">

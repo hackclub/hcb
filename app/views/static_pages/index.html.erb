@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
     <% if current_user.hack_clubber? || current_user.teenager? %>
       <a
@@ -20,6 +20,17 @@
   <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
+<div class="card mb-6 mt-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+  <div class="flex-1">
+    <p class="my-0 text-lg font-[700]">HCB has gotten a visual refresh!</p>
+    <p class="my-0 text-md max-w-2xl">The HCB you know and love has a fresh new look. We're hoping it makes HCB easier to use and navigate, and we'd love to hear your feedback.</p>
+  </div>
+  <%= link_to "https://forms.hackclub.com/hcb-feedback", class: "btn" do %>
+    <%= inline_icon "message-new", size: 16, class: "mr-1" %>
+    Share feedback
+  <% end %>
+</div>
+
 <% if current_user.card_grants.not_activated.size > 0 %>
   <% current_user.card_grants.not_activated.each do |grant| %>
     <div class="card container--sm mx-auto mb-12 mt-6 text-center sm:text-left flex items-center flex-col sm:flex-row">
@@ -27,7 +38,16 @@
         <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
         <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
       </div>
-      <%= link_to "Activate my grant", grant, class: "btn" %>
+      <div class="flex flex-col items-center gap-1">
+        <%= link_to "Activate my grant", grant, class: "btn" %>
+        <p class="my-0 text-sm italic text-muted">
+          <% if grant.expires_on.future? %>
+            Expires in <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
+          <% else %>
+            Expired <%= time_ago_in_words(grant.expires_on) %> ago
+          <% end %>
+        </p>
+      </div>
     </div>
   <% end %>
 <% end %>
@@ -48,7 +68,7 @@
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
 
-    <h2 class="user-home-section flex items-center w-full">
+    <h2 class="user-home-section mb-2 flex items-center w-full">
       <span>Your organizations</span>
       <% if @show_event_reorder_tip && @events.any? %>
         <% if @events.size > 1 %>
@@ -163,11 +183,12 @@
 
     <%= render "static_pages/index/explore" %>
 
-    <% if current_user.contracts.sent.any? %>
+    <% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
+    <% if valid_contracts.any? %>
       <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending forms</h2>
       <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
       <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
-        <% current_user.contracts.sent.each do |contract| %>
+        <% valid_contracts.each do |contract| %>
           <%= link_to contract_party_path(contract.party(:signee)), target: "_blank" do %>
             <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
               <%= status_badge "info" %>

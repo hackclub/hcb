@@ -71,7 +71,7 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        parties.each(&:notify)
+        parties.not_hcb.each(&:notify)
       end
     end
 
@@ -138,7 +138,14 @@ class Contract < ApplicationRecord
   def on_party_signed
     if parties.all?(&:signed?)
       mark_signed!
+    elsif parties.not_hcb.all?(&:signed?)
+      party(:hcb).notify
     end
+  end
+
+  # Adding this back temporarily while we work on fixing missing parties
+  def signee_docuseal_url
+    "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
   end
 
   private

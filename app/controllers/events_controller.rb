@@ -56,10 +56,6 @@ class EventsController < ApplicationController
     rescue Pundit::NotAuthorizedError
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
-
-    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && auditor_signed_in?) || @event.demo_mode?
-      redirect_to event_transactions_path(@event.slug)
-    end
   end
 
   def transaction_heatmap
@@ -1200,6 +1196,12 @@ class EventsController < ApplicationController
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
+    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?)
+    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
+    if @ledger_filters_disabled && has_filters
+      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 

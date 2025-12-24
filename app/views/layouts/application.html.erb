@@ -86,7 +86,7 @@
 
 <%# LET THERE BE SNOW %>
 <% if winter? %>
-  <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
+  <%= react_component "holiday/Snow", {}, { style: "height:100%;position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:99999" } %>
 <% end %>
 
 <%# ghosts and ghouls %>
@@ -104,21 +104,13 @@
           <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
           <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
         </div>
-      <% elsif @event&.contracts&.any? && @event&.contracts&.signed&.none? %>
-        <div class="w-full dev-banner dev-banner--info rounded-b no-underline">
-          <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
-            <p class="font-bold text-xl m0">
-              <%= @event.name %> is currently inactive on HCB; to activate the organization, a fiscal sponsorship agreement must be signed.
-            </p>
-          </div>
-          <div class="mb2">
-            <button class="btn" data-action="welcome#tour">Show me around</button>
-          </div>
-          <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
+        <h1 class="border-0 mt-0">Welcome to <%= @event.name %></h1>
+        <div class="mb2">
+          <button class="btn" data-action="welcome#tour">Show me around</button>
         </div>
+        <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
       </div>
     <% end %>
-
     <%= render "application/native_changelog" if @latest_changelog_post %>
     <%= render "application/the_bin" if @the_bin %>
 
