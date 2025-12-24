@@ -16,11 +16,8 @@ module Api
 
         begin
           @check_deposit.save!
-        rescue ActiveRecord::RecordInvalid => e
+        rescue ActiveRecord::RecordInvalid
           return render json: { error: "invalid_operation", messages: @check_deposit.errors.full_messages }, status: :unprocessable_entity
-        rescue => e
-          Rails.error.report(e)
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
         end
 
         render :show, status: :created
