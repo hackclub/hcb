@@ -25,7 +25,7 @@
     <% filters.select { |f| f[:type] == "amount_range" }.each do |filter| %>
       <% if params[:direction] %>
         <div class="badge badge-large bg-muted">
-          Direction: <%= params[:direction].humanize %>
+          <%= params[:direction].humanize %>
           <%= link_to upsert_query_params("direction" => nil),
             class: "flex items-center",
             data: { turbo_prefetch: "false" } do %>
