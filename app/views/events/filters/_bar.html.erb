@@ -23,6 +23,16 @@
     <% end %>
 
     <% filters.select { |f| f[:type] == "amount_range" }.each do |filter| %>
+      <% if params[:direction] %>
+        <div class="badge badge-large bg-muted">
+          Direction: <%= params[:direction].humanize %>
+          <%= link_to upsert_query_params("direction" => nil),
+            class: "flex items-center",
+            data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
       <% ["less_than", "greater_than"].each do |suffix| %>
         <% param_key = "#{filter[:key_base]}_#{suffix}" %>
         <% if params[param_key].present? %>
