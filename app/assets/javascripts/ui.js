@@ -150,6 +150,32 @@ window.attachTooltipListener = () => {
     Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
   }
 
+  const showTooltip = (trigger) => {
+    const label = trigger.getAttribute("aria-label").trim();
+    if (!label) return;
+
+    tooltip.className = "active";
+    tooltip.textContent = label;
+
+    // Sync size classes
+    ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+      if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+    });
+
+    updateTooltipPosition(trigger);
+
+    // Observe trigger for aria-label changes
+    if (mutationObserver) mutationObserver.disconnect();
+    mutationObserver = new MutationObserver(() => {
+      const updatedLabel = trigger.getAttribute("aria-label").trim();
+      if (updatedLabel) {
+        tooltip.textContent = updatedLabel;
+        updateTooltipPosition(trigger);
+      }
+    });
+    mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+  };
+
   $(".tooltipped").on({
     mouseenter(event) {
       if (window.innerWidth < 768) return;
@@ -157,36 +183,42 @@ window.attachTooltipListener = () => {
       const trigger = event.currentTarget;
       if (!trigger.classList.contains("tooltipped")) return;
 
-      const label = trigger.getAttribute("aria-label").trim();
-      if (!label) return;
+      // Don't show on hover if it's a clickable tooltip that's already active
+      if (trigger.classList.contains("tooltipped--clickable") && trigger.dataset.tooltipActive === "true") return;
 
-      tooltip.className = "active";
-      tooltip.textContent = label;
-
-      // Sync size classes
-      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
-        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
-      });
-
-      updateTooltipPosition(trigger);
-
-      // Observe trigger for aria-label changes
-      if (mutationObserver) mutationObserver.disconnect();
-      mutationObserver = new MutationObserver(() => {
-        const updatedLabel = trigger.getAttribute("aria-label").trim();
-        if (updatedLabel) {
-          tooltip.textContent = updatedLabel;
-          updateTooltipPosition(trigger);
-        }
-      });
-      mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+      showTooltip(trigger);
     },
 
-    mouseleave() {
+    mouseleave(event) {
+      const trigger = event.currentTarget;
+      // Don't hide on mouseleave if it's a clickable tooltip that's been clicked
+      if (trigger.classList.contains("tooltipped--clickable") && trigger.dataset.tooltipActive === "true") return;
+
       removeTooltips()
     }
   });
-  // on unload turbo
+
+  $(".tooltipped--clickable").on("click", function (event) {
+    event.stopPropagation();
+    const trigger = event.currentTarget;
+
+    if (trigger.dataset.tooltipActive === "true") {
+      trigger.dataset.tooltipActive = "false";
+      removeTooltips();
+    } else {
+      trigger.dataset.tooltipActive = "true";
+      showTooltip(trigger);
+    }
+  });
+
+  $(document).on("click", function (event) {
+    if (!$(event.target).closest(".tooltipped--clickable").length && !$(event.target).closest("#tooltip-container").length) {
+      $(".tooltipped--clickable[data-tooltip-active='true']").each(function () {
+        this.dataset.tooltipActive = "false";
+        removeTooltips();
+      });
+    }
+  });
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
 }
