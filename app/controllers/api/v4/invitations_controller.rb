@@ -6,7 +6,7 @@ module Api
       include SetEvent
 
       skip_after_action :verify_authorized, only: [:index]
-      before_action :set_invitation, except: [:index]
+      before_action :set_invitation, except: [:index, :create]
       before_action :set_api_event, only: [:create]
 
       def index
@@ -28,7 +28,7 @@ module Api
           return render json: { error: "User is already an organizer" }, status: :unprocessable_entity
         end
 
-        if @event.organizer_position_invites.pending.exists?(email: params[:email])
+        if @event.organizer_position_invites.pending.joins(:user).where(users: { email: params[:email] }).exists?
           return render json: { error: "User already has a pending invitation" }, status: :unprocessable_entity
         end
 
