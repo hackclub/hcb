@@ -149,6 +149,23 @@ class DonationsController < ApplicationController
   def finished
     @donation = Donation.find_by!(url_hash: params[:donation])
     @event = @donation.event
+
+    # Handle post-donation redirect if configured
+    if @event.config.post_donation_redirect_url.present?
+      redirect_url = @event.config.post_donation_redirect_url
+
+      # Add JWT token if include_details is enabled
+      if @event.config.post_donation_include_details
+        jwt_token = DonationJwtService.generate_token(@donation)
+        uri = URI.parse(redirect_url)
+        params = URI.decode_www_form(uri.query || "")
+        params << ["hcb_donation", jwt_token]
+        uri.query = URI.encode_www_form(params)
+        redirect_url = uri.to_s
+      end
+
+      redirect_to redirect_url, allow_other_host: true
+    end
   end
 
   def qr_code
