@@ -4,6 +4,7 @@
 
 hcb_code = tx.is_a?(HcbCode) ? tx : tx.local_hcb_code
 is_cpt = tx.is_a?(CanonicalPendingTransaction)
+is_hcb_code = tx.is_a?(HcbCode)
 amount = transaction_amount(tx, event: @event)
 
 json.id hcb_code.public_id
