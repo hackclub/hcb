@@ -22,4 +22,5 @@ ActiveSupport::Inflector.inflections(:en) do |inflect|
   inflect.irregular "has", "have"
   inflect.irregular "hasn't", "haven't"
   inflect.acronym "HQ"
+  inflect.acronym "USPS"
 end
