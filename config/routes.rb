@@ -701,7 +701,6 @@ Rails.application.routes.draw do
           end
         end
         resources :receipts, only: [:create, :index, :destroy]
-        resources :check_deposits, path: "check-deposits", only: [:show]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
