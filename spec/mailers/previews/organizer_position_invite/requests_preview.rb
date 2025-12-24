@@ -6,10 +6,6 @@ class OrganizerPositionInvite
       OrganizerPositionInvite::RequestsMailer.with(request: OrganizerPositionInvite::Request.pending.last).created
     end
 
-    def approved
-      OrganizerPositionInvite::RequestsMailer.with(request: OrganizerPositionInvite::Request.approved.last).approved
-    end
-
     def denied
       OrganizerPositionInvite::RequestsMailer.with(request: OrganizerPositionInvite::Request.denied.last).denied
     end
