@@ -123,7 +123,6 @@ window.attachTooltipListener = () => {
   let mutationObserver = null;
 
   const removeTooltips = () => {
-    if (window.innerWidth < 768) return;
     tooltip.className = "";
     // Stop observing when tooltip is closed
     if (mutationObserver) {
@@ -198,19 +197,23 @@ window.attachTooltipListener = () => {
     }
   });
 
+  // Handle click events for clickable tooltips
   $(".tooltipped--clickable").on("click", function (event) {
     event.stopPropagation();
     const trigger = event.currentTarget;
 
     if (trigger.dataset.tooltipActive === "true") {
+      // Hide tooltip
       trigger.dataset.tooltipActive = "false";
       removeTooltips();
     } else {
+      // Show tooltip
       trigger.dataset.tooltipActive = "true";
       showTooltip(trigger);
     }
   });
 
+  // Close clickable tooltips when clicking outside
   $(document).on("click", function (event) {
     if (!$(event.target).closest(".tooltipped--clickable").length && !$(event.target).closest("#tooltip-container").length) {
       $(".tooltipped--clickable[data-tooltip-active='true']").each(function () {
@@ -219,6 +222,7 @@ window.attachTooltipListener = () => {
       });
     }
   });
+  // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
 }
