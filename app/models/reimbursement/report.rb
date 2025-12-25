@@ -410,21 +410,23 @@ module Reimbursement
     end
 
     def reimburse!
-      expense_payouts = []
+        ActiveRecord::Base.transaction do
+        expense_payouts = []
 
-      expenses.approved.each do |expense|
-        expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -(expense.amount_cents * expense.conversion_rate).floor, event: expense.report.event, expense:)
+        expenses.approved.each do |expense|
+          expense_payouts << Reimbursement::ExpensePayout.create!(amount_cents: -(expense.amount_cents * expense.conversion_rate).floor, event: expense.report.event, expense:)
+        end
+
+        return if expense_payouts.empty?
+
+        Reimbursement::PayoutHolding.create!(
+          expense_payouts:,
+          amount_cents: expense_payouts.sum { |payout| -payout.amount_cents },
+          report: self
+        )
+
+        mark_reimbursed!
       end
-
-      return if expense_payouts.empty?
-
-      Reimbursement::PayoutHolding.create!(
-        expense_payouts:,
-        amount_cents: expense_payouts.sum { |payout| -payout.amount_cents },
-        report: self
-      )
-
-      mark_reimbursed!
     end
 
     def payout_method_allowed?
