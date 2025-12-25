@@ -410,7 +410,7 @@ module Reimbursement
     end
 
     def reimburse!
-        ActiveRecord::Base.transaction do
+      ActiveRecord::Base.transaction do
         expense_payouts = []
 
         expenses.approved.each do |expense|
