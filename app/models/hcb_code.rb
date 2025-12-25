@@ -502,7 +502,7 @@ class HcbCode < ApplicationRecord
   # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
   # @sampoder
-  
+
   # receipt_required (the scope) diverges from receipt_required?
   # in a couple of ways:
   #
