@@ -477,6 +477,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "expiration_at"
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
