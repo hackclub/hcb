@@ -166,7 +166,16 @@ class LoginsController < ApplicationController
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        redirect_to(params[:return_to] || root_path)
+        return_path = params[:return_to]
+        if return_path.present?
+          begin
+            route = Rails.application.routes.recognize_path(return_path)
+            return_path = root_path if route[:controller] == "logins"
+          rescue ActionController::RoutingError
+            return_path = root_path
+          end
+        end
+        redirect_to(return_path || root_path)
       end
     else
       if @login.sms_available? || @login.email_available?
