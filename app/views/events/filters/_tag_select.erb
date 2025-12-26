@@ -1,0 +1,26 @@
+<%= turbo_frame_tag :tag_select do %>
+<%= form_with url: event_tag_select_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
+  <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10", data: { action: "input->form#submit", form_target: "input" } %>
+    <button type="submit" class="pop muted">
+      <%= inline_icon "search" %>
+    </button>
+    <% request.query_parameters.except(:search).each do |key, value| %>
+      <%= hidden_field_tag key, value %>
+    <% end %>
+  <% end %>
+  <% @tags.each do |tag| %>
+    <div class="flex items-center" data-tag="<%= tag.id %>">
+      <%= link_to(upsert_query_params_from_url(params[:url], params[:filter_key] => tag.label), class: "flex-auto menu__action #{"menu__action--active" if params[:selected] == tag.label}", data: { turbo_frame: "_top" }) do %>
+        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+        <%= tag.label %>
+      <% end %>
+    </div>
+  <% end %>
+  <% if @tags.empty? %>
+    <p class="muted italic p-1 pr-10">
+      <%= @search ? "We couldn't find any tags with your search term" : "No tags found" %>
+    </p>
+  <% end %>
+
+  <%= paginate @tags %>
+<% end %>
