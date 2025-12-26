@@ -164,6 +164,7 @@ class User < ApplicationRecord
 
   before_create :format_number
   before_save :on_phone_number_update
+  validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
@@ -602,6 +603,12 @@ class User < ApplicationRecord
 
     if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
       errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
+    end
+  end
+
+  def second_factor_present_for_2fa
+    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+      errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end
 
