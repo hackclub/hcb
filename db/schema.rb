@@ -972,7 +972,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_event_configurations_on_event_id"
+    t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
   end
 
   create_table "event_follows", force: :cascade do |t|
