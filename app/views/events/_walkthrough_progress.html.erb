@@ -1,0 +1,65 @@
+<% steps = local_assigns[:steps] || [
+     { name: "Home", completed: true },
+     { name: "Announcements", completed: false },
+     { name: "Donations", completed: false },
+     { name: "Check deposits", completed: false },
+     { name: "Check deposits", completed: false }
+   ] %>
+<div data-behavior="modal_trigger" data-modal="walkthrough_modal" style="border-width:2px;border-style:solid" class="cursor-pointer flex border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 p-0 pr-3 rounded-xl mb-2">
+  <div class="flex items-center w-full">
+    <svg width="77" height="77" viewBox="-9.625 -9.625 96.25 96.25" version="1.1" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-90deg)">
+      <circle r="28.5" cx="38.5" cy="38.5" fill="transparent" class="stroke-[#e0e0e0] dark:stroke-gray-600" stroke-width="10"></circle>
+      <circle r="28.5" cx="38.5" cy="38.5" stroke="#76e5b1" stroke-width="10" stroke-linecap="round" stroke-dashoffset="<%= 180 * (steps.any? ? steps.count { |s| !s[:completed] }.fdiv(steps.count).round(1) : 0) %>px" fill="transparent" stroke-dasharray="178.98000000000002px"></circle>
+    </svg>
+    <div class="flex-1">
+      <p class="my-0 font-bold" style="line-height:1.2">
+        Make the most of HCB's features
+      </p>
+      <p class="my-0 text-sm muted">
+        <%= steps.select { |s| s[:completed] }.count %>/<%= steps.count %> completed
+      </p>
+    </div>
+      <%= inline_icon "view-forward", class: "opacity-60" %>
+  </div>
+</div>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="walkthrough_modal">
+  <header>
+    <h3 class="text-center my-0">Welcome to <%= @event.name %>!</h3>
+    <p class="muted text-center mt-1">Select four or more features you're interested in</p>
+  </header>
+  <div>
+    <% options = [
+         { id: "walkthrough_steps_transactions", value: "transactions", title: "Dashboard", icon: "home" },
+         { id: "walkthrough_steps_announcements", value: "announcements", title: "Announcements", icon: "announcement" },
+         { id: "walkthrough_steps_donations", value: "donations", title: "Donations", icon: "support" },
+         { id: "walkthrough_steps_reimbursements", value: "reimbursements", title: "Reimbursements", desc: "Pay people back for out of pocket expenses", icon: "attachment" },
+         { id: "walkthrough_steps_invoices", value: "invoices", title: "Invoices", desc: "Collect payments from sponsors and vendors", icon: "briefcase" },
+         { id: "walkthrough_steps_transfers", value: "transfers", title: "Transfers", desc: "Send money to other bank accounts", icon: "payment-transfer" },
+         { id: "walkthrough_steps_cards", value: "cards", title: "Cards", icon: "card" },
+         { id: "walkthrough_steps_team", value: "team", title: "Team", icon: "leader" },
+         { id: "walkthrough_steps_perks", value: "perks", title: "Perks", icon: "shirt" }
+       ] %>
+
+    <div class="field field--options trio">
+      <% options.each do |opt| %>
+        <div class="option-wrapper">
+          <input id="<%= opt[:id] %>" type="checkbox" name="walkthrough[steps][]" value="<%= opt[:value] %>">
+          <label for="<%= opt[:id] %>" class="option option--checkbox">
+            <%= inline_icon opt[:icon], class: "mb-1.5" %>
+            <span class="font-bold"><%= opt[:title] %></span>
+            <span class="text-xs mt-1"><%= opt[:desc] %></span>
+          </label>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="flex mt-5 items-center justify-between">
+      <a href="#">Skip tutorial</a>
+      <button type="submit" class="btn pr-2 gap-3 btn--primary" data-behavior="walkthrough_submit">
+        Continue
+        <%= inline_icon "view-forward" %>
+      </button>
+    </div>
+  </div>
+</section>
