@@ -3,7 +3,7 @@
     <span class="bold flex items-center">
       <span><%= authorization.application.name %></span> <span class="badge bg-info ml1">App</span>
     </span>
-    <%= link_to revoke_oauth_application_users_path(authorization.application.id), method: :delete, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app", disabled: do %>
+    <%= link_to revoke_oauth_application_users_path(authorization.application.id), method: :delete, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app", disabled: disabled do %>
       <%= inline_icon "door-leave", size: home_action_size %>
     <% end %>
   </span>
@@ -49,7 +49,7 @@
       </tbody>
     </table>
   <% end %>
-  <% latest_token_with_ip = authorization.tokens.where.not(ip_address: nil).order(created_at: :desc).first %>
+  <% latest_token_with_ip = authorization.tokens.select { |t| t.ip_address.present? }.max_by(&:created_at) %>
   <% if latest_token_with_ip.present? %>
     <% if latest_token_with_ip.latitude.present? && latest_token_with_ip.longitude.present? %>
       <img class="w-full rounded mt-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= latest_token_with_ip.latitude %>&longitude=<%= latest_token_with_ip.longitude %>">
@@ -63,7 +63,8 @@
         <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= latest_token_with_ip.ip_address %>"><%= latest_token_with_ip.ip_address %></code>
       </div>
     <% end %>
-  <p class="regular italic muted text-sm m-0 mt-1">
-    <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago authorization.created_at %>
-  </p>
+    <p class="regular italic muted text-sm m-0 mt-1">
+      <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago latest_token_with_ip.created_at %>
+    </p>
+  <% end %>
 </div>

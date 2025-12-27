@@ -357,7 +357,7 @@ Doorkeeper.configure do
   # tokens, you can check that the requested data belongs to the specified tenant.
   #
   # Default value is an empty Array: []
-  custom_access_token_attributes [:ip_address]
+  # custom_access_token_attributes [:tenant_id]
 
   # Hook into the strategies' request & response life-cycle in case your
   # application needs advanced customization or logging:
@@ -366,11 +366,12 @@ Doorkeeper.configure do
   #   puts "BEFORE HOOK FIRED! #{request}"
   # end
   #
-  after_successful_strategy_response do |request, response|
-    if response.respond_to?(:token) && response.token.is_a?(ApiToken)
-      ip = request.remote_ip
-      response.token.update(ip_address: ip) if ip.present?
-    end
+  # after_successful_strategy_response do |request, response|
+  #   puts "AFTER HOOK FIRED!"
+  # end
+
+  after_successful_strategy_response do |_request, response|
+    response.token&.update_column(:ip_address, Current.request_ip)
   end
 
   # Hook into Authorization flow in order to implement Single Sign Out
@@ -460,4 +461,11 @@ Doorkeeper.configure do
   # WWW-Authenticate Realm (default: "Doorkeeper").
   #
   # realm "Doorkeeper"
+end
+
+# Captures request IP on token creation
+Rails.application.config.to_prepare do
+  Doorkeeper::TokensController.prepend_before_action(
+    -> { Current.request_ip = request.remote_ip }, only: :create
+  )
 end
