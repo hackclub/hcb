@@ -1,16 +1,17 @@
 <%# locals: (event:) %>
 
-<%= render partial: "features/preview", locals: {
-      id: "home-page-redesign",
-      classes: ["feature-home-page-redesign"],
-      feature_flag: :event_home_page_redesign_2024_09_21,
-      name: "Home Page Redesign",
-      description: "A fresh new look for your event's home page!",
-      event:
-    } if Flipper.enabled?(:event_home_page_redesign_2024_09_21, event) %>
-
 <details>
   <summary class="mb2">Past feature previews</summary>
+
+  <%= render partial: "features/preview", locals: {
+        id: "home-page-redesign",
+        classes: ["feature-home-page-redesign"],
+        feature_flag: :event_home_page_redesign_2024_09_21,
+        fully_shipped: true,
+        name: "Home Page Redesign",
+        description: "A fresh new look for your organization's home page!",
+        event:
+      } %>
 
   <%= render partial: "features/preview", locals: {
         id: "donation-tiers",

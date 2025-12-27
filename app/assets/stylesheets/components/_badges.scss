@@ -15,6 +15,10 @@
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
 
+  &.bg-success {
+    background-color: rgba(map-get($palette, success), 0.125);
+    color: map-get($palette, success-dark);
+  }
   &.badge--corner {
     position: absolute;
     top: 0;
@@ -31,41 +35,31 @@
     }
   }
 
-  &.success {
-    background-color: rgba(map-get($palette, success), 0.2);
-    color: darken(map-get($palette, success), 10%);
-
-    [data-dark='true'] & {
-      background-color: rgba(map-get($palette, success), 0.125);
-      color: map-get($palette, success);
-    }
+  &.bg-success {
+    background-color: rgba(map-get($palette, success), 0.125);
+    color: map-get($palette, success-dark);
   }
-  &.pending {
+  &.bg-pending {
     background-color: rgba(map-get($palette, pending), 0.125);
     color: map-get($palette, pending);
   }
-  &.warning {
+  &.bg-warning {
     background-color: rgba(map-get($palette, warning), 0.125);
     color: map-get($palette, warning);
   }
-  &.purple {
+  &.bg-purple {
     background-color: rgba(map-get($palette, purple), 0.125);
     color: map-get($palette, purple);
   }
-  &.ai {
+  &.bg-ai {
     background-color: rgba(map-get($palette, ai), 0.125);
     color: map-get($palette, ai);
   }
-  &.error {
+  &.bg-error {
     background-color: rgba(map-get($palette, error), 0.125);
     color: map-get($palette, error);
-
-    [data-dark='true'] & {
-      background-color: rgba(map-get($palette, error), 0.3);
-      color: lighten(saturate(map-get($palette, error), 20%), 40%);
-    }
   }
-  &.info {
+  &.bg-info {
     background-color: rgba(map-get($palette, info), 0.125);
     color: map-get($palette, info);
   }
@@ -122,27 +116,17 @@
   margin-left: 0.5rem;
 }
 
-.list-badge.quick-action {
-  font-size: 16px;
-  padding: 0.25rem 0.675rem;
-  gap: 4px;
-  text-decoration: none;
-}
-
-.list-badge.quick-action:hover {
-  color: map-get($palette, info);
-}
-
 // Circular button
 .pop {
-  border-radius: 9999px;
-  color: map-get($palette, info);
-  background-color: rgba(map-get($palette, info), 0.125);
+  border-radius: var(--radius-lg);
+  color: darken(map-get($palette, muted), 20%);
+  background-color: rgba(map-get($palette, muted), 0.125);
   flex-shrink: 0;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   font-size: 0.875rem;
   height: 36px;
   width: 36px;
@@ -157,7 +141,13 @@
 
   &:hover,
   &:focus {
-    box-shadow: 0 0 0 2px currentColor;
+    background-color: rgba(map-get($palette, muted), 0.2);
+    transition-duration: 0s;
+
+    &:active {
+      background-color: rgba(map-get($palette, muted), 0.25);
+      transition-duration: 0.125s;
+    }
   }
 
   &.no_hover:hover,

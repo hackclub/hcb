@@ -5,16 +5,16 @@
 <h1>Send an Invoice</h1>
 
 <% if @event.demo_mode? %>
-  <p class="flex items-center info line-height-3">
+  <p class="flex items-center info leading-[1.25]">
     <%= inline_icon "important", size: 32, class: "mr1" %>
     While in Playground Mode, invoices can't be created or sent.
   </p>
 <% end %>
 
 <% if @event.invoices.none? %>
-  <%= render "callout", type: "info", title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
+  <%= render "application/callout", type: "info", title: "We recommend sending yourself an invoice for $1 to understand what your sponsors will see." %>
 <% else %>
-  <p class="h5 line-height-3 muted mt0 mb2">
+  <p class="h5 leading-[1.25] muted mt0 mb2">
     Invoices can be paid with a card or bank transfer (ACH / Wire). If your
     sponsor wants to pay via a mailed check instead, please reach out to the
     HCB team and we'll help you coordinate the receival of the check.
@@ -22,4 +22,4 @@
   </p>
 <% end %>
 
-<%= render "form", invoice: @invoice, sponsor: @sponsor %>
+<%= render "invoices/form", invoice: @invoice, sponsor: @sponsor %>

@@ -7,12 +7,13 @@
             It's quiet here...
           </h3>
           <p class="text-gray-500 my-1 max-w-sm">
-            Either you don't have any tags, or you haven't categorized any transactions yet.
+            <%= organizer_signed_in? ? "You" : "They" %>
+            haven't tagged any transactions yet.
           </p>
         </div>
       </div>
     <% else %>
-      <h3 class="mt2 mb2">Top tags</h3>
+      <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top tags</h3>
       <%= react_component "home/Tags", { data: tags }, { camelize_props: false } %>
     <% end %>
   </div>

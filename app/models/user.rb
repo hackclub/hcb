@@ -85,7 +85,7 @@ class User < ApplicationRecord
   has_many :user_sessions, dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
   has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
@@ -95,6 +95,9 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+
+  has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
+  has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
 
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
@@ -291,6 +294,20 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # gary@hackclub.com → g***y@hackclub.com
+  # gt@hackclub.com → g*@hackclub.com
+  # g@hackclub.com → g@hackclub.com
+  def redacted_email
+    handle, domain = email.split("@")
+    redacted_handle =
+      if handle.length <= 2
+        handle[0] + "*" * (handle.length - 1)
+      else
+        "#{handle[0]}***#{handle[-1]}"
+      end
+    "#{redacted_handle}@#{domain}"
+  end
+
   def pretty_phone_number
     Phonelib.parse(self.phone_number).national
   end
@@ -338,20 +355,21 @@ class User < ApplicationRecord
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
       user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
-      user_cards.flat_map { |card| card.hcb_codes.missing_receipt.receipt_required.pluck(:id) }
+      user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
     end
   end
 
-  memo_wise def transactions_missing_receipt(since: nil)
+  memo_wise def transactions_missing_receipt(from: nil, to: nil)
     return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
     user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", since) if since
+    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
+    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
     user_hcb_codes.order(created_at: :desc)
   end
 
-  memo_wise def transactions_missing_receipt_count(since: nil)
-    transactions_missing_receipt(since:).size
+  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
+    transactions_missing_receipt(from:, to:).size
   end
 
   def build_payout_method(params)
@@ -504,6 +522,10 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  def new_teenagers_from_referrals_count
+    self.referral_links.sum { |link| link.new_teenagers.size }
+  end
+
   def has_discord_account?
     discord_id.present?
   end
@@ -576,6 +598,10 @@ class User < ApplicationRecord
       else
         errors.add(:payout_method, "is invalid. Please choose another option.")
       end
+    end
+
+    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
+      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 

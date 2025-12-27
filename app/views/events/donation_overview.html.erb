@@ -2,12 +2,12 @@
 <% page_md %>
 <%= render "events/nav", selected: :donations %>
 
-<h1 class="heading">
+<h1 class="heading gap-2 border-0 mb-2">
   <span class="flex items-center flex-grow">
     Donations
     <%= badge_for @donations.count, class: "bg-muted" %>
   </span>
-  <% if organizer_signed_in? && !show_mock_data? %>
+  <% if organizer_signed_in? %>
     <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="<%= @all_donations.not_pending.any? ? "Email all donors" : "You can't email donors when you don't have any donations!" %>">
       <%= pop_icon_to "email",
         "mailto:?bcc=#{@all_donations.pluck(:email).uniq.compact.join(',')}",
@@ -16,17 +16,7 @@
     </div>
   <% end %>
   <% if @event.donation_page_available? %>
-    <%= render partial: "share_donation_page" %>
-  <% end %>
-  <%= pop_icon_to "settings",
-      edit_event_path(@event, tab: "donations"),
-      data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "donation_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Donations settings" if organizer_signed_in?(as: :member) %>
-  <% if @event.donation_page_available? %>
-    <%= link_to start_donation_donations_path(@event), target: "_blank", class: "btn" do %>
-      <%= inline_icon "external" %>
-      Donate page
-    <% end %>
+    <%= render partial: "events/share_donation_page" %>
   <% end %>
 </h1>
 
@@ -35,7 +25,7 @@
   <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
 <% end %>
 
-<div class="mt3 mb2 statset">
+<div class="statset">
   <div class="stat">
     <span class="stat__label">Total</span>
     <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
@@ -65,7 +55,7 @@
         <% @recurring_donations.each do |recurring_donation| %>
           <tr>
             <td style="width: 1%"><span class="ml0 mr1 badge bg-success"><%= recurring_donation.stripe_status.humanize %></span></td>
-            <td class="line-height-3">
+            <td class="leading-[1.25]">
               <% if recurring_donation.is_a? RecurringDonation %>
                 <%= recurring_donation.name(show_anonymous: organizer_signed_in?) %><br>
               <% else %>
@@ -94,13 +84,13 @@
   </div>
 <% end %>
 
-<h2 class="heading mt3 pb1 w-full inline-flex justify-between" style="margin-bottom: 16px;">
+<h2 class="heading mt3 justify-between">
   Past donations
 
     <div data-controller="menu" data-menu-placement-value="bottom-end">
       <button
         type="button"
-        class="btn bg-info menu__toggle menu__toggle--arrowless overflow-visible z1"
+        class="btn menu__toggle overflow-visible"
         data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
         data-menu-target="toggle">
           <%= inline_icon "download", size: 16 %>
@@ -115,11 +105,11 @@
 
 </h2>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "search", form: %>
+    <%= render "events/search", form: %>
   <% end %>
-  <div>
+  <div class="filterbar">
     <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Refunded", "?filter=refunded", class: "filterbar__item", "aria-selected": params[:filter] == "refunded", role: "tab" %>
   </div>
@@ -134,13 +124,12 @@
         <th>Date</th>
         <th>From</th>
         <th class="text-right">Amount</th>
-        <th></th>
       </tr>
     </thead>
 
     <tbody>
       <% @donations.each do |d| %>
-        <tr>
+        <tr class="clickable">
           <td>
             <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
           </td>
@@ -165,10 +154,7 @@
           </td>
           <td style="text-align: right;">
             <%= render_money(d.amount) %>
-          </td>
-          <td>
-            <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-            <%= link_to "Details", hcb_code_url(d.hcb_code), data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
+            <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
           </td>
         </tr>
         <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>

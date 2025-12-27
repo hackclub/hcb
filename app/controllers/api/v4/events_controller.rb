@@ -3,11 +3,48 @@
 module Api
   module V4
     class EventsController < ApplicationController
-      before_action :set_event, except: [:index]
+      before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
       def index
         @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+      end
+
+      def sub_organizations
+        authorize @event, :sub_organizations?
+
+        @events = @event.subevents.includes(:users).order("organizer_positions.created_at DESC")
+      end
+
+      require_oauth2_scope "organizations:read", :sub_organizations
+
+      def create_sub_organization
+        parent_event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
+        authorize parent_event, :create_sub_organization?
+
+        if params[:email].blank? || params[:name].blank?
+          messages = []
+          messages << "Organizer email is required" if params[:email].blank?
+          messages << "Organization name is required" if params[:name].blank?
+          render json: { error: "invalid_operation", messages: }, status: :bad_request and return
+        end
+
+        @event = ::EventService::Create.new(
+          name: params[:name],
+          emails: [params[:email]],
+          cosigner_email: params[:cosigner_email],
+          is_signee: true,
+          country: params[:country],
+          point_of_contact_id: parent_event.point_of_contact_id,
+          invited_by: current_user,
+          is_public: parent_event.is_public,
+          plan: parent_event.config.subevent_plan.presence,
+          risk_level: parent_event.risk_level,
+          parent_event: parent_event,
+          scoped_tags: params[:scoped_tags]
+        ).run
+
+        render :show, status: :created, location: api_v4_event_path(@event)
       end
 
       def show
@@ -15,34 +52,6 @@ module Api
       end
 
       require_oauth2_scope "organizations:read", :show
-
-      def transactions
-        authorize @event, :show_in_v4?
-
-        @settled_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-        @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(event_id: @event.id).run
-
-        type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
-        @settled_transactions = type_results[:settled_transactions]
-        @pending_transactions = type_results[:pending_transactions]
-
-        @total_count = @pending_transactions.count + @settled_transactions.count
-        @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
-
-        if @transactions.any?
-
-          page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
-          page_pending = @transactions.select { |tx| tx.is_a?(CanonicalPendingTransaction) }
-
-          if page_settled.any?
-            TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: page_settled, event: @event).run!
-          end
-
-          if page_pending.any?
-            PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions: page_pending, event: @event).run!
-          end
-        end
-      end
 
       def followers
         authorize @event, :show_in_v4?
@@ -54,19 +63,7 @@ module Api
       private
 
       def set_event
-        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
-      end
-
-      def paginate_transactions(transactions)
-        limit = params[:limit]&.to_i || 25
-        start_index = if params[:after]
-                        transactions.index { |tx| tx.local_hcb_code.public_id == params[:after] } + 1
-                      else
-                        0
-                      end
-        @has_more = transactions.length > start_index + limit
-
-        transactions.slice(start_index, limit)
+        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id]) # we don't use set_api_event here because it is passed as id in the url
       end
 
     end

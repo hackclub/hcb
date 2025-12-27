@@ -61,7 +61,7 @@ class WiseTransfer < ApplicationRecord
 
   has_one :canonical_pending_transaction
 
-  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
+  has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wise_transfer, required: false
 
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
@@ -102,6 +102,7 @@ class WiseTransfer < ApplicationRecord
   validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
+  # Flowchart: https://www.figma.com/board/Hf3wy2qhR8rH9OAYUCrkoQ/Wise-transfer-flowchart?node-id=0-1&t=nBQqJBuASTxeCObj-1
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
@@ -147,6 +148,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 

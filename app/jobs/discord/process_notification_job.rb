@@ -6,7 +6,7 @@ module Discord
     include Discord::Support
 
     queue_as :low
-
+    sidekiq_options retry: false
 
     def perform(public_activity_id)
       @activity = PublicActivity::Activity.find(public_activity_id)
@@ -29,7 +29,7 @@ module Discord
       begin
         key = @activity.key.gsub(".", "/")
         partial = "public_activity/#{key}_discord"
-        text = ApplicationController.renderer.render(partial:, locals: { activity: @activity, p: { current_user: @user } })
+        text = ApplicationController.renderer.render(partial:, locals: { activity: @activity, p: { current_user: @user || User.system_user } })
         json = JSON.parse(text)
 
         embed = {
@@ -41,7 +41,7 @@ module Discord
 
         components = format_components(json["components"])
       rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
-        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, current_user: User.system_user })
+        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, p: { current_user: User.system_user } })
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 
         text = ReverseMarkdown.convert(html)[0..4000]
