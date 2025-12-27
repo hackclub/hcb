@@ -6,7 +6,7 @@ module Api
       include SetEvent
 
       skip_after_action :verify_authorized, only: [:index]
-      before_action :set_invitation, except: [:index, :create]
+      before_action :set_invitation, only: [:show, :destroy]
       before_action :set_api_event, only: [:create]
 
       def index
