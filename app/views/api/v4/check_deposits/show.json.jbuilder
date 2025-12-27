@@ -1,3 +1,3 @@
 # frozen_string_literal: true
 
-json.partial! "api/v4/transactions/check_deposit", check_deposit: @check_deposit
+json.partial! "api/v4/check_deposits/check_deposit", check_deposit: @check_deposit
