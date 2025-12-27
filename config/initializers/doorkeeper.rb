@@ -367,7 +367,7 @@ Doorkeeper.configure do
   # end
   #
   # after_successful_strategy_response do |request, response|
-  #   puts "AFTER HOOK FIRED!" #{request}, #{response}"
+  #   puts "AFTER HOOK FIRED! #{request}, #{response}"
   # end
 
   after_successful_strategy_response do |_request, response|
