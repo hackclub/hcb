@@ -8,6 +8,17 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
+  def upsert_query_params_from_url(url, **new_params)
+    uri = URI.parse(url)
+    existing_params = Rack::Utils.parse_nested_query(uri.query) || {}
+    updated_params = existing_params.merge(new_params)
+    uri.query = updated_params.to_query
+    uri.to_s
+  rescue URI::InvalidURIError
+    Rails.error.unexpected("Invalid URL passed to upsert_query_params_from_url: #{url}")
+    "#"
+  end
+
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 
