@@ -681,6 +681,7 @@ Rails.application.routes.draw do
 
           resources :disbursements, path: "transfers", only: [:create]
           resources :ach_transfers, only: [:create]
+          resources :checks, only: [:index, :create]
 
           resources :donations, path: "donations", only: [:create]
 
@@ -722,7 +723,7 @@ Rails.application.routes.draw do
         end
 
         resources :invoices, only: [:show, :create]
-
+        resources :checks, only: [:show]
         resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
