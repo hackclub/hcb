@@ -3,7 +3,7 @@
 module Referral
   class ProgramsController < ApplicationController
     def create
-      @program = Referral::Program.new(name: params[:name], creator: current_user)
+      @program = Referral::Program.new(name: params[:name], redirect_to: params[:redirect_to].presence || root_url, creator: current_user)
 
       authorize(@program)
 
