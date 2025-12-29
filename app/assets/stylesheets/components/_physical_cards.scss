@@ -1,6 +1,8 @@
 .canceled-card-wrapper {
   margin: 0 auto;
-  height: #{8 * 1.75}rem;
+  width: 100%;
+  aspect-ratio: 364 / 224;
+  max-width: 20rem;
   position: relative;
 }
 

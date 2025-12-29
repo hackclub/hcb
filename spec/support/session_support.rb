@@ -5,7 +5,7 @@ module SessionSupport
   # easier to make authenticated requests in controller tests.
   #
   # @param user [User]
-  # @return [UserSession]
+  # @return [User::Session]
   def sign_in(user)
     expiration_at = user.session_validity_preference.seconds.from_now
 
@@ -25,7 +25,7 @@ module SessionSupport
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
-      expires: UserSession::MAX_SESSION_DURATION.from_now,
+      expires: User::Session::MAX_SESSION_DURATION.from_now,
       httponly: true,
       secure: true,
     }
@@ -34,12 +34,12 @@ module SessionSupport
   end
 
   # Mimics the logic in `SessionHelper#current_session` so the active
-  # `UserSession` record can easily be retrieved in tests.
+  # `User::Session` record can easily be retrieved in tests.
   #
-  # @return [UserSession]
+  # @return [User::Session]
   # @raise [ActiveRecord::RecordNotFound]
   def current_session!
     session_token = cookies.encrypted[:session_token]
-    UserSession.find_by!(session_token:)
+    User::Session.find_by!(session_token:)
   end
 end

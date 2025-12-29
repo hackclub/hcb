@@ -1,7 +1,7 @@
 <%# locals: (event:, invite_links:) %>
 
 <% if invite_links.empty? %>
-  <div class="banner border shadow-none">
+  <div class="banner border border-gray-200 dark:border-neutral-700 shadow-none">
     <p><%= event.name %> does not currently have any active invite links</p>
   </div>
 <% else %>

@@ -6,7 +6,6 @@
       <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details, side: "left" %>
       <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details, side: "right" %>
     </div>
-
   <% else %>
     <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details %>
   <% end %>
