@@ -303,7 +303,14 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
-    self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
+    # On ~2024-03-26, Stripe introduced personalization designs for physical cards
+    # This resulted in older cards not having a personalization design ID.
+    # This fix checks if its an old card without a personalization design ID and sets it to the default black design ID (311).
+    if self.created_at < Time.utc(2024, 3, 26) && stripe_obj[:personalization_design].nil?
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: 311)&.id
+    else
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
+    end
 
     if stripe_obj[:status] == "active"
       self.initially_activated = true
