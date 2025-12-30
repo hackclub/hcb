@@ -201,6 +201,10 @@ column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Column::SweepJob"
 
+column_operating_balance_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Column::OperatingBalanceJob"
+
 stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes
   class: "StripeMissedWebhooksJob"
