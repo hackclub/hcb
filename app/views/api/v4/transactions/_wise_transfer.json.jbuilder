@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-json.public_id wise_transfer.public_id
+json.id wise_transfer.public_id
 
 json.recipient_name wise_transfer.recipient_name
 json.recipient_email wise_transfer.recipient_email
