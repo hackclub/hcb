@@ -56,7 +56,7 @@ class WiseTransfer < ApplicationRecord
   include HasWiseRecipient
 
   include PublicIdentifiable
-  set_public_id_prefix :wise
+  set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user
