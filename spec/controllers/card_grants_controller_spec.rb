@@ -55,6 +55,7 @@ RSpec.describe CardGrantsController do
     it "creates a card grant" do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
       sign_in(user)
 
