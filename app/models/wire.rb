@@ -59,6 +59,8 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
   include Payment
+  include HasTransferRecord
+  transfer_record_statuses deposited: :deposited, canceled: [:rejected, :failed], amount: :usd_amount_cents
 
   include HasWireRecipient
 

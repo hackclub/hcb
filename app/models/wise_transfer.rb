@@ -52,6 +52,8 @@ class WiseTransfer < ApplicationRecord
 
   include AASM
   include Freezable
+  include HasTransferRecord
+  transfer_record_statuses deposited: :deposited, canceled: [:rejected, :failed], amount: -> { usd_amount_cents || quoted_usd_amount_cents || 0 }
 
   include HasWiseRecipient
 

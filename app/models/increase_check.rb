@@ -56,6 +56,10 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include Payment
+  include HasTransferRecord
+  transfer_record_statuses deposited: [:increase_deposited, :column_deposited, :column_settled],
+                           canceled: [:rejected, :increase_canceled, :increase_stopped,
+                                      :increase_returned, :increase_rejected, :column_stopped, :column_returned]
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
