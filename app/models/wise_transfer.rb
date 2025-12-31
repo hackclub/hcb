@@ -239,6 +239,7 @@ class WiseTransfer < ApplicationRecord
 
   def usd_amount_cents_or_quoted
     @usd_amount_cents_or_quoted = usd_amount_cents || quoted_usd_amount_cents
+  end
 
   def generate_quote!
     update!(quoted_usd_amount_cents: estimated_usd_amount_cents) unless quoted_usd_amount_cents.present?
