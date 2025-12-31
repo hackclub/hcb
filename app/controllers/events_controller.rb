@@ -1191,8 +1191,11 @@ class EventsController < ApplicationController
     @subledger = params[:subledger]
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
-    @grant_recipients = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq)
+    unless @subledger
+      @users = @event.users.includes(profile_picture_attachment: :blob).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    else
+      @users = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq)
+    end
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }

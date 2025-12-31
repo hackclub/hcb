@@ -40,7 +40,7 @@
           </div>
         <% end %>
         <div data-tabs-target="tab" id="user">
-          <% @grant_recipients.each do |user| %>
+          <% @users.each do |user| %>
             <div class="flex items-center">
               <%= link_to(event_ledger_path(@event, upsert_query_params(user: user.friendly_id)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.friendly_id == user.friendly_id}", data: { turbo_prefetch: "false" }) do %>
                 <div class="avatar-grow line-height-0 mr1">
