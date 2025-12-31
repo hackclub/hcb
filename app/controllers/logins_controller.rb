@@ -20,7 +20,7 @@ class LoginsController < ApplicationController
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
-    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence || Referral::Link.find_by_hashid(params[:referral]) if params[:referral].present?
+    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence if params[:referral].present?
 
     @signup = params[:signup] == "true"
   end
@@ -30,7 +30,7 @@ class LoginsController < ApplicationController
     user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
 
     if params[:referral_link_id].present?
-      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence || Referral::Link.find_by_hashid(params[:referral_link_id])
+      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
       login = user.logins.create(referral_program: referral_link&.program, referral_link:)
     else
       login = user.logins.create
@@ -166,7 +166,16 @@ class LoginsController < ApplicationController
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        redirect_to(params[:return_to] || root_path)
+        return_path = params[:return_to]
+        if return_path.present?
+          begin
+            route = Rails.application.routes.recognize_path(return_path)
+            return_path = root_path if route[:controller] == "logins"
+          rescue ActionController::RoutingError
+            return_path = root_path
+          end
+        end
+        redirect_to(return_path || root_path)
       end
     else
       if @login.sms_available? || @login.email_available?

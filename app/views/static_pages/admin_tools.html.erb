@@ -34,10 +34,10 @@
       </p>
       <div x-show="pinned_cards.length > 0" x-transition>
         <h2>Pinned Cards</h2>
-        <ul class="grid left-align w-100 mt0" x-ref="pinnedGrid" x-init="$nextTick(teleport_mass_cards())" />
+        <ul class="grid text-left w-100 mt0" x-ref="pinnedGrid" x-init="$nextTick(teleport_mass_cards())" />
       </div>
       <h2>Tasks</h2>
-      <ul class="grid left-align w-100 mt0" id="task-grid">
+      <ul class="grid text-left w-100 mt0" id="task-grid">
         <%= card_to "Applications", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
         <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
         <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
@@ -54,7 +54,7 @@
         <%= card_to "Identity verifications", "https://identity.hackclub.com/backend/verifications/pending", async_badge: :pending_identity_vault_verifications %>
       </ul>
       <h2>Info</h2>
-      <ul class="grid left-align w-100 mt0" id="info-grid">
+      <ul class="grid text-left w-100 mt0" id="info-grid">
         <%= card_to "Organizations", events_admin_index_path, badge: Event.approved.count, subtle_badge: true %>
         <%= card_to "Users", users_admin_index_path %>
         <%= card_to "Donations", donations_admin_index_path %>
@@ -65,7 +65,7 @@
         <%= card_to "Emails", emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true %>
       </ul>
       <h2>Perks</h2>
-      <ul class="grid left-align w-100 mt0" id="perks-grid">
+      <ul class="grid text-left w-100 mt0" id="perks-grid">
         <%= card_to "Google Workspaces", google_workspaces_admin_index_path, badge: GSuite.needs_ops_review.count %>
         <%= card_to "Stickers", link_to_airtable_task(:stickers), async_badge: :pending_stickers_airtable %>
         <%= card_to "Hackathons", "https://dash.hackathons.hackclub.com/sign_in", async_badge: :pending_hackathons_airtable %>
@@ -75,15 +75,16 @@
         <%= card_to "Google Workspace waitlist", link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable %>
       </ul>
       <h2>Accounting</h2>
-      <ul class="grid left-align w-100 mt0" id="accounting-grid">
+      <ul class="grid text-left w-100 mt0" id="accounting-grid">
         <%= card_to "Bank fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
+        <%= card_to "Fee revenues", fee_revenues_admin_index_path %>
         <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
         <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization balances" } %>
         <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "Blazer" } %>
         <%= card_to "Column statements", admin_column_statements_path %>
       </ul>
       <h2>Other</h2>
-      <ul class="grid left-align w-100 mt0" id="other-grid">
+      <ul class="grid text-left w-100 mt0" id="other-grid">
         <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
         <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
         <%= card_to "Pending ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
@@ -92,7 +93,7 @@
       </ul>
       <details>
         <summary>Old cards</summary>
-        <ul class="grid left-align w-100 mt0" id="old-card-grid">
+        <ul class="grid text-left w-100 pt-2" id="old-card-grid">
           <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
           <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
           <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>

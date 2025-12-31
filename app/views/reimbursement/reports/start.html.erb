@@ -30,7 +30,7 @@
   </div>
 <% end %>
 
-<%= form_with(model: Reimbursement::Report.new, class: "card mx-auto max-width-1 mb3", data: { turbo: false }) do |form| %>
+<%= form_with(model: Reimbursement::Report.new, class: "card mx-auto max-w-96 mb3", data: { turbo: false }) do |form| %>
 
   <div class="field mb2">
     <%= form.label :report_name, "Purpose of reimbursement" %>

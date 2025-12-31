@@ -2,7 +2,7 @@
 
 <div class="card pb0 mb3 <%= "muted" unless event.country_US? && perks_available %>" id="event-helper">
   <div class="card__banner card__banner--top flex justify-between items-center promo-event-helper">
-    <%= image_tag "https://cloud-fz66hmje0-hack-club-bot.vercel.app/0theeventhelperbutbetter.png", width: 60 %>
+    <%= image_tag "https://hc-cdn.hel1.your-objectstorage.com/s/v3/baffa0dac282f754_image.png", width: 60 %>
     <%= link_to perks_available ? (event.country_US? ? "Purchase" : "Ineligible") : "Purchase",
       perks_available ? fillout_form("hDJYyLd7qNus", { "Event Name" => event.name, "Bank URL" => event_url(event), "Submitter Name" => current_user.name, "Submitter Email" => current_user.email }, prefix: "prefill_") : root_path,
       class: "btn #{"disabled" unless perks_available && event.country_US?}",

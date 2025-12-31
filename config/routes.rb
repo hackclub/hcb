@@ -213,6 +213,7 @@ Rails.application.routes.draw do
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
+      get "fee_revenues", to: "admin#fee_revenues"
       get "users", to: "admin#users"
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
@@ -261,6 +262,7 @@ Rails.application.routes.draw do
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
+      get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
     end
 
     member do
@@ -340,8 +342,15 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
-      post "resend_to_user"
-      post "resend_to_cosigner"
+    end
+  end
+
+  namespace :contract, path: "contracts" do
+    resources :parties, only: [:show] do
+      member do
+        post "resend"
+        get "completed"
+      end
     end
   end
 
@@ -635,6 +644,7 @@ Rails.application.routes.draw do
       defaults format: :json do
         resource :user, only: [] do
           get "/", to: "users#me", as: "user"
+          post :revoke
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
@@ -679,12 +689,16 @@ Rails.application.routes.draw do
             get "sub_organizations"
             post "sub_organizations", to: "events#create_sub_organization"
 
-            get "transactions"
+            get "transactions", to: "transactions#index"
             get :followers
           end
         end
 
-        resources :transactions, only: [:show]
+        resources :transactions, only: [:show] do
+          member do
+            post "mark_no_receipt"
+          end
+        end
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do

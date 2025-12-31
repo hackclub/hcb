@@ -1,11 +1,9 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_reimbursement_payouts %>
+
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "users/settings_nav", active: "payouts" %>
+  <%= render "settings_header", active: "payouts" %>
   <section>
     <p class="muted mt0 mb2">
       When a <%= link_to "reimbursement report of yours", my_reimbursements_path %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time.
