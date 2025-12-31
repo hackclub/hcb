@@ -148,6 +148,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 

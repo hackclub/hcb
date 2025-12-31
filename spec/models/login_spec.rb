@@ -14,7 +14,7 @@ RSpec.describe Login do
     end
 
     it "is false when 2fa is enabled and one factor was used" do
-      user = create(:user, use_two_factor_authentication: true)
+      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
       login = create(:login, user:)
 
       login.update!(authenticated_with_email: true)
@@ -23,7 +23,7 @@ RSpec.describe Login do
     end
 
     it "is true when 2fa is enabled and two factors were used" do
-      user = create(:user, use_two_factor_authentication: true)
+      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
       login = create(:login, user:)
 
       login.update!(authenticated_with_email: true)
@@ -33,7 +33,7 @@ RSpec.describe Login do
     end
 
     it "is true when the login is a reauthentication and one factor was used regardless of 2fa" do
-      user = create(:user, use_two_factor_authentication: true)
+      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
       login = create(:login, user:, is_reauthentication: true)
 
       login.update!(authenticated_with_email: true)

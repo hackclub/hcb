@@ -65,7 +65,7 @@ module Api
           return
         end
 
-        render :show, status: :created, location: api_v4_card_grant_path(@card_grant)
+        render :create, status: :created, location: api_v4_card_grant_path(@card_grant)
       end
 
       require_oauth2_scope "card_grants:write", :create
