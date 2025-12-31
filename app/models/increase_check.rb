@@ -160,37 +160,33 @@ class IncreaseCheck < ApplicationRecord
   enum :column_status, %w[
     initiated
     issued
-    manual_review
-    rejected
     pending_deposit
-    pending_stop
-    deposited
-    stopped
+    settled
     pending_first_return
-    pending_second_return
     first_return
     pending_reclear
-    recleared
+    pending_second_return
     second_return
-    settled
-    returned
-    pending_user_initiated_return
     user_initiated_return_submitted
     user_initiated_returned
-    pending_user_initiated_return_dishonored
+    user_initiated_return_dishonored
+    pending_stop
+    stopped
+    manual_review
+    rejected
   ].index_with(&:itself), prefix: :column
 
   enum :column_delivery_status, %w[
     created
-    mailed
     rendered_pdf
+    mailed
     in_transit
     in_local_area
     processed_for_delivery
     delivered
-    failed
     rerouted
     returned_to_sender
+    failed
   ].index_with(&:itself), prefix: :column_delivery
 
   VALID_DURATION = 180.days
