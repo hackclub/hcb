@@ -529,7 +529,7 @@ class HcbCode < ApplicationRecord
   def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
-    return false if amount_cents_by_event(event) >= 0
+    return false if amount_cents >= 0
 
     return false unless event&.plan&.receipts_required?
 
