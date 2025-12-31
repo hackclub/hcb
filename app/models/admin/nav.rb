@@ -169,6 +169,18 @@ module Admin
             path: admin_event_groups_path,
             count: Event::Group.count,
             count_type: :records,
+          ),
+          make_item(
+            name: "Active Teenagers Leaderboard",
+            path: active_teenagers_leaderboard_admin_index_path,
+            count: User.active_teenager.count,
+            count_type: :records,
+          ),
+          make_item(
+            name: "New Teenagers Leaderboard",
+            path: new_teenagers_leaderboard_admin_index_path,
+            count: Referral::Attribution.where(user: User.where(teenager: true)).count,
+            count_type: :records,
           )
         ]
       )
