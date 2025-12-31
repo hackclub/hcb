@@ -139,6 +139,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   # there might be more column statuses we want here? this is just to start with the ones that seemed obvious to me
+  scope :deposited, -> { where(increase_status: :deposited).or(where(column_status: :settled)) }
   scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]).or(where(column_status: [:initiated, :issued, :pending_deposit])) }
   scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)).or(where(column_status: [:pending_stop, :stopped, :returned])) }
 
