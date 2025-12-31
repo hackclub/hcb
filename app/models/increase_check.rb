@@ -158,8 +158,41 @@ class IncreaseCheck < ApplicationRecord
     requires_attention: "requires_attention"
   }, prefix: :increase
 
-  enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed rendered_pdf in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  enum :column_status, %w[
+    initiated
+    issued
+    manual_review
+    rejected
+    pending_deposit
+    pending_stop
+    deposited
+    stopped
+    pending_first_return
+    pending_second_return
+    first_return
+    pending_reclear
+    recleared
+    second_return
+    settled
+    returned
+    pending_user_initiated_return
+    user_initiated_return_submitted
+    user_initiated_returned
+    pending_user_initiated_return_dishonored
+  ].index_with(&:itself), prefix: :column
+
+  enum :column_delivery_status, %w[
+    created
+    mailed
+    rendered_pdf
+    in_transit
+    in_local_area
+    processed_for_delivery
+    delivered
+    failed
+    rerouted
+    returned_to_sender
+  ].index_with(&:itself), prefix: :column_delivery
 
   VALID_DURATION = 180.days
 
