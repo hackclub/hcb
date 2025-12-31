@@ -1,5 +1,5 @@
 <%= turbo_frame_tag :card_grant_card_overview do %>
-  <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2">
+  <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/search", form: %>
     <% end %>
@@ -55,21 +55,6 @@
       <%= paginate @paginated_card_grants %>
     </div>
   <% else %>
-    <div class="table-container mb2">
-      <table>
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Date</th>
-            <th>To</th>
-            <th>For</th>
-            <th>Amount</th>
-            <th class="text-right">Balance</th>
-            <th></th>
-          </tr>
-        </thead>
-      </table>
-    </div>
     <%= blankslate "No card grants yet" %>
   <% end %>
 <% end %>

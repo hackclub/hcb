@@ -56,7 +56,7 @@
 
   <% case default_factor %>
   <% when :email %>
-    <p>
+    <p class="mt-0">
       For additional security, we've just sent a login code to <%= mail_to(current_user.email, target: "_blank") %>
     </p>
 
@@ -64,19 +64,19 @@
 
     <p class="h5 muted"><em>Make sure to check your spam folder</em></p>
   <% when :sms %>
-    <p>
+    <p class="mt-0">
       For additional security, we've just sent a login code to your phone number ending in <%= current_user.phone_number.last(4) %>
     </p>
 
     <%= code_field.call(placeholder: "Enter your login code") %>
   <% when :totp %>
-    <p>
+    <p class="mt-0">
       For additional security, please enter the code from your authenticator app.
     </p>
 
     <%= code_field.call(placeholder: "Enter your one-time password") %>
   <% when :webauthn %>
-    <p>
+    <p class="mt-0">
       For additional security, please authenticate with your security key.
     </p>
 

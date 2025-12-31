@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -622,6 +622,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["username"], name: "index_console1984_users_on_username"
+  end
+
+  create_table "contract_parties", force: :cascade do |t|
+    t.string "aasm_state"
+    t.bigint "contract_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_email"
+    t.string "role", null: false
+    t.datetime "signed_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["contract_id"], name: "index_contract_parties_on_contract_id"
+    t.index ["user_id"], name: "index_contract_parties_on_user_id"
   end
 
   create_table "contracts", force: :cascade do |t|
@@ -1541,13 +1555,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
   end
 
   create_table "metrics", force: :cascade do |t|
+    t.string "aasm_state"
+    t.datetime "canceled_at"
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.datetime "failed_at"
     t.jsonb "metric"
+    t.datetime "processing_at"
     t.bigint "subject_id"
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
+    t.integer "year"
+    t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
@@ -2010,6 +2030,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_08_060441) do
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
+    t.string "redirect_to"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
