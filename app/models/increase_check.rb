@@ -157,6 +157,7 @@ class IncreaseCheck < ApplicationRecord
     requires_attention: "requires_attention"
   }, prefix: :increase
 
+  # https://column.com/docs/checks/notifications-and-states#states-and-events
   enum :column_status, %w[
     initiated
     issued
