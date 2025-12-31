@@ -63,6 +63,8 @@ class StripeCard < ApplicationRecord
 
   has_paper_trail
 
+  DEFAULT_BLACK_PERSONALIZATION_DESIGN_ID = 311
+
   validate :within_card_limit, on: :create
 
   after_create_commit :notify_user, unless: :skip_notify_user
@@ -306,8 +308,8 @@ class StripeCard < ApplicationRecord
     # On ~2024-03-26, Stripe introduced personalization designs for physical cards
     # This resulted in older cards not having a personalization design ID.
     # This fix checks if its an old card without a personalization design ID and sets it to the default black design ID (311).
-    if self.created_at < Time.utc(2024, 3, 26) && stripe_obj[:personalization_design].nil?
-      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: 311)&.id
+    if self.created_at < Time.utc(2024, 3, 27) && stripe_obj[:personalization_design].nil?
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: DEFAULT_BLACK_PERSONALIZATION_DESIGN_ID)&.id
     else
       self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
     end
