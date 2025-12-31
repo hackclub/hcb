@@ -179,7 +179,7 @@ module Admin
           make_item(
             name: "New Teenagers Leaderboard",
             path: new_teenagers_leaderboard_admin_index_path,
-            count: Referral::Attribution.where(user: User.where(teenager: true)).count,
+            count: 0, # I think this would be expensive to calculate
             count_type: :records,
           )
         ]
