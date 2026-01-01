@@ -683,6 +683,8 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
           resources :ach_transfers, only: [:create]
 
+          resources :check_deposits, path: "check-deposits", only: [:index, :show, :create]
+
           resources :donations, path: "donations", only: [:create]
 
           member do

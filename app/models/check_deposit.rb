@@ -31,6 +31,9 @@ class CheckDeposit < ApplicationRecord
   include Freezable
   has_paper_trail
 
+  include PublicIdentifiable
+  set_public_id_prefix :chkdep
+
   REJECTION_DESCRIPTIONS = {
     "incomplete_image"                => "This check was rejected because the photo was incomplete.",
     "duplicate"                       => "This check was rejected as a duplicate.",
