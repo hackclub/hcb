@@ -644,6 +644,7 @@ Rails.application.routes.draw do
       defaults format: :json do
         resource :user, only: [] do
           get "/", to: "users#me", as: "user"
+          post :revoke
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]

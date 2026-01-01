@@ -82,7 +82,7 @@ class User < ApplicationRecord
   has_many :logins
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :user_sessions, dependent: :destroy
+  has_many :user_sessions, class_name: "User::Session", dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
   has_many :contracts, through: :organizer_position_invites
@@ -164,6 +164,7 @@ class User < ApplicationRecord
 
   before_create :format_number
   before_save :on_phone_number_update
+  validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
@@ -522,6 +523,7 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  # Total new teens via referrals links created by this user (admin)
   def new_teenagers_from_referrals_count
     self.referral_links.sum { |link| link.new_teenagers.size }
   end
@@ -602,6 +604,12 @@ class User < ApplicationRecord
 
     if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
       errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
+    end
+  end
+
+  def second_factor_present_for_2fa
+    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+      errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
     end
   end
 
