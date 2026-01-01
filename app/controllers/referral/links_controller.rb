@@ -6,22 +6,25 @@ module Referral
     skip_before_action :signed_in_user, only: :show
 
     def show
-      unless signed_in?
-        skip_authorization
-        return redirect_to auth_users_path(referral: @link.slug)
-      end
-
       if @link
+        unless signed_in?
+          skip_authorization
+          return redirect_to auth_users_path(referral: @link.slug)
+        end
+
         authorize(@link)
 
         Rails.error.handle do
           Referral::Attribution.create!(user: current_user, program: @link.program, link: @link)
         end
+
+        # This is only configurable by admins
+        redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
       else
         skip_authorization
-      end
 
-      redirect_to params[:return_to] || root_path
+        redirect_to params[:return_to] || root_path
+      end
     end
 
     private

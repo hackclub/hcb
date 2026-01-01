@@ -90,7 +90,7 @@ class UsersController < ApplicationController
 
   def logout_session
     begin
-      session = UserSession.find(params[:id])
+      session = User::Session.find(params[:id])
       authorize session.user
 
       session.update(signed_out_at: Time.now, expiration_at: Time.now)
