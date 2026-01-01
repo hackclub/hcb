@@ -48,22 +48,18 @@ module Api
           }, status: :bad_request
         end
 
-        begin
-          @check.save!
+        @check.save!
 
-          if check_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: check_params[:file],
-              upload_method: :check_api,
-              receiptable: @check.local_hcb_code
-            ).run!
-          end
-
-          render :show, status: :created
-        rescue ArgumentError => e
-          render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+        if check_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: check_params[:file],
+            upload_method: :check_api,
+            receiptable: @check.local_hcb_code
+          ).run!
         end
+
+        render :show, status: :created
       end
 
     end

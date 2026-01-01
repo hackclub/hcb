@@ -77,21 +77,13 @@ module Api
       def topup
         authorize @card_grant
 
-        begin
-          @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
+        @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
       end
 
       def withdraw
         authorize @card_grant
 
-        begin
-          @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
+        @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
       end
 
       def update
@@ -105,12 +97,7 @@ module Api
       def cancel
         authorize @card_grant
 
-        begin
-          @card_grant.cancel!(current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
-
+        @card_grant.cancel!(current_user)
         render :show
       end
 
@@ -118,13 +105,7 @@ module Api
         authorize @card_grant
 
         @card_grant.create_stripe_card(request.remote_ip)
-
         render :show
-
-      rescue Stripe::InvalidRequestError => e
-        return render json: { error: "invalid_operation", messages: ["This card could not be activated: #{e.message}"] }, status: :bad_request
-      rescue Errors::StripeInvalidNameError => e
-        return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
       end
 
       private
