@@ -4,6 +4,7 @@ module Api
   module V4
     class CardGrantsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       before_action :set_api_event, only: [:create]
       before_action :set_card_grant, except: [:index, :create]
@@ -125,6 +126,15 @@ module Api
         return render json: { error: "invalid_operation", messages: ["This card could not be activated: #{e.message}"] }, status: :bad_request
       rescue Errors::StripeInvalidNameError => e
         return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
+      end
+
+      def transactions
+        authorize @card_grant
+
+        @hcb_codes = @card_grant.visible_hcb_codes
+
+        @total_count = @hcb_codes.size
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       private
