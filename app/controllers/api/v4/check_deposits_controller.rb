@@ -15,7 +15,7 @@ module Api
       end
 
       def show
-        @check_deposit = @event.check_deposits.find_by_public_id!(params[:id])
+        @check_deposit = CheckDeposit.find_by_public_id!(params[:id])
         authorize @check_deposit
 
         render :show, status: :ok
