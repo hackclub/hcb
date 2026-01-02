@@ -303,7 +303,7 @@ class CardGrant < ApplicationRecord
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
       invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}.",
-      invited_by: sent_by
+      inviter: sent_by
     )
   end
 
