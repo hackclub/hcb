@@ -40,6 +40,12 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
+    end
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
