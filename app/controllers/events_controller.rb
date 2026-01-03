@@ -196,7 +196,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym,
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -1191,9 +1191,14 @@ class EventsController < ApplicationController
     @merchant = params[:merchant]
     @direction = params[:direction]
     @category = TransactionCategory.find_by(slug: params[:category])
+    @subledger = params[:subledger]
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    if @subledger
+      @users = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq)
+    else
+      @users = @event.users.includes(profile_picture_attachment: :blob).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    end
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
