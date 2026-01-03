@@ -159,10 +159,6 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    if !signed_in? && !@event.holiday_features
-      @hide_seasonal_decorations = true
-    end
-
     if flash[:popover]
       @popover = flash[:popover]
       flash.delete(:popover)
