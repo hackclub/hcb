@@ -57,21 +57,27 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def auditor_or_reader?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :reader)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.sponsor&.event, :manager)
+    user&.admin? || OrganizerPosition.role_at_least?(user, event, :manager)
   end
 
   private
 
+  def event
+    return record.event if record.respond_to?(:event)
+
+    record&.sponsor&.event
+  end
+
   def is_public
-    record&.sponsor&.event&.is_public?
+    event&.is_public?
   end
 
   def unapproved?
-    record&.sponsor&.event&.unapproved?
+    event&.unapproved?
   end
 
 end

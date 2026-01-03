@@ -25,20 +25,21 @@
       margin-left: unset;
     }
   }
-
-  .menu__content {
-    font-size: 1rem;
-  }
 }
 
 h2.heading,
 h3.heading {
-  margin-bottom: 0;
-
   .btn {
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.75;
-    padding: 0.25rem 1rem;
+    @extend .btn-small;
   }
+}
+
+.eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+  opacity: 0.8;
 }

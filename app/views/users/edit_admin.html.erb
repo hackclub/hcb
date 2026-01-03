@@ -1,11 +1,10 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
+<%= render "users/nav", selected: :settings_admin %>
 
-<h1>Settings</h1>
+<%= render "settings_header", active: "admin" %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
-  <%= render "settings_nav", active: "admin" %>
-  <% admin_tool do %>
+  <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
       Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
@@ -18,7 +17,7 @@
     </section>
   <% end %>
 
-  <% admin_tool override_pretend: true do %>
+  <% admin_tool "p-3", override_pretend: true do %>
     <h3 id="admin" class="mb2 mt1">Admin configurations</h3>
       <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user %>
@@ -69,12 +68,12 @@
   <% end %>
 
   <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
-    <% admin_tool do %>
+    <% admin_tool "p-3" do %>
       <p>Loading user details</p>
     <% end %>
   <% end %>
 
-  <% admin_tool do %>
+  <% admin_tool "p-3" do %>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user, admin_only: true %>
   <% end %>

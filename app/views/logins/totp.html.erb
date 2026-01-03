@@ -8,7 +8,7 @@
     <% end %>
     <%= render "logins/badge", user: @login.user %>
   </div>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>
@@ -31,7 +31,7 @@
             "",
             placeholder: "Enter your one time password code",
             autocomplete: "one-time-code",
-            class: "left-align mb2 !max-w-full w-max",
+            class: "text-left mb2 !max-w-full w-max",
             required: true,
             autofocus: true
           ) %>
