@@ -405,9 +405,9 @@ class StripeCard < ApplicationRecord
   end
 
   def notify_user
-    if virtual?
+    if virtual? && card_grant.nil?
       StripeCardMailer.with(card_id: self.id).virtual_card_ordered.deliver_later
-    else
+    elsif physical?
       StripeCardMailer.with(card_id: self.id).physical_card_ordered.deliver_later
     end
   end
