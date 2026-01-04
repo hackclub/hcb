@@ -628,7 +628,7 @@ class User < ApplicationRecord
     return unless birthday_changed?
     # Skip if user ever updated their seasonal_themes_enabled setting
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
-    
+
     self.seasonal_themes_enabled = teenager?
   end
 
