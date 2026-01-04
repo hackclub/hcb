@@ -41,7 +41,7 @@ module Discord
 
         components = format_components(json["components"])
       rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
-        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, p: { current_user: User.system_user } })
+        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, current_user: User.system_user })
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 
         text = ReverseMarkdown.convert(html)[0..4000]
