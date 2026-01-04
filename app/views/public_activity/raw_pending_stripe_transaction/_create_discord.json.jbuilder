@@ -22,6 +22,6 @@ json.embed do
 end
 
 json.components [
-  Discord.button_to("View transaction", hcb_code_url("HCB-600-#{activity.trackable.stripe_transaction_id}")),
+  Discord.button_to("View transaction", hcb_code_url("#{TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE}-#{TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-#{activity.trackable.stripe_transaction_id}")),
   Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))
 ]
