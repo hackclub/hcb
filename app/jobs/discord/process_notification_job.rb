@@ -69,4 +69,3 @@ module Discord
   end
 
 end
-
