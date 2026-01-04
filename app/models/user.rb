@@ -170,6 +170,8 @@ class User < ApplicationRecord
 
   after_update :queue_sync_with_loops_job
 
+  before_update :set_default_seasonal_theme
+
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
@@ -620,6 +622,14 @@ class User < ApplicationRecord
     if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
+  end
+
+  def set_default_seasonal_theme
+    return unless birthday_changed?
+    # Skip if user ever updated their seasonal_themes_enabled setting
+    return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
+    
+    self.seasonal_themes_enabled = teenager?
   end
 
 end
