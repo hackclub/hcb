@@ -4,6 +4,7 @@ module Api
   module V4
     class CardGrantsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       before_action :set_api_event, only: [:create]
       before_action :set_card_grant, except: [:index, :create]
@@ -11,7 +12,7 @@ module Api
       def index
         if params[:event_id].present?
           set_api_event
-          authorize @event, :transfers?
+          authorize @event, :transfers_in_v4?
           @card_grants = @event.card_grants.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -106,6 +107,15 @@ module Api
 
         @card_grant.create_stripe_card(request.remote_ip)
         render :show
+      end
+
+      def transactions
+        authorize @card_grant
+
+        @hcb_codes = @card_grant.visible_hcb_codes
+
+        @total_count = @hcb_codes.size
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       private

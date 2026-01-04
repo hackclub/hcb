@@ -216,9 +216,20 @@ class User < ApplicationRecord
     if use_sms_auth_previously_changed?
       if use_sms_auth
         create_activity(key: "user.enabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
       else
         create_activity(key: "user.disabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
       end
+    end
+
+    if use_two_factor_authentication_previously_changed?
+      change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
+      User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
+    end
+
+    if phone_number_previously_changed? && phone_number.present?
+      User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
 

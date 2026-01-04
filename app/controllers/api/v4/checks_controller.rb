@@ -8,7 +8,7 @@ module Api
       before_action :set_api_event, only: [:index, :create]
 
       def index
-        authorize @event
+        authorize @event, :transfers_in_v4?
         @checks = @event.increase_checks.order(created_at: :desc)
       end
 

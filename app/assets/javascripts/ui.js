@@ -621,10 +621,6 @@ $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
   }
 })
 
-window.hidePWAPrompt = () => {
-  document.body.classList.add('hide__pwa__prompt')
-}
-
 $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   const controlOrCommandClick = e.ctrlKey || e.metaKey
   if ($(this).attr('href') || $(e.target).attr('href')) {
