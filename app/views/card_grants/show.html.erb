@@ -1,5 +1,5 @@
 <% title "Grant to #{@card_grant.user.name}" %>
-<% if organizer_signed_in? || @card_grant.event.is_public %>
+<% if organizer_signed_in? %>
   <%= render "events/nav", selected: :transfers %>
 <% else %>
   <%= render "users/nav", selected: :cards %>
