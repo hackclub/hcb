@@ -69,9 +69,7 @@ module UserService
 
         JSON[resp.body][0]
       rescue => e
-        Rails.error.unexpected(
-          "Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.",
-        )
+        Rails.error.unexpected "Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops."
         raise e
       end
     end
