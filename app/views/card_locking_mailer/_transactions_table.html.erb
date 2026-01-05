@@ -1,0 +1,24 @@
+<table>
+  <thead>
+    <tr>
+      <th>Amount</th>
+      <th>Merchant</th>
+      <th>Time</th>
+      <% if show_org %>
+        <th>Organization</th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody>
+    <% hcb_codes.order(created_at: :desc).each do |hcb| %>
+      <tr>
+        <td><%= link_to render_money(hcb.amount_cents.abs.to_s), hcb_code_url(hcb) %></td>
+        <td><%= hcb.stripe_merchant["name"] %></td>
+        <td><%= time_ago_in_words(hcb.created_at) %> ago</td>
+        <% if show_org %>
+          <td><%= hcb.event.name %></td>
+        <% end %>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

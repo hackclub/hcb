@@ -156,7 +156,7 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required">
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" <%= "disabled" if disabled %>>
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
             <p class="h5 mt1 m0 warning flex items-center">
               <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>

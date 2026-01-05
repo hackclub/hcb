@@ -1425,31 +1425,6 @@ class AdminController < Admin::BaseController
     @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
-  def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name], redirect_to: params[:redirect_to].presence || root_url, creator: current_user)
-
-    if @referral_program.save
-      flash[:success] = "Referral program created successfully."
-    else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-    end
-
-    redirect_to referral_programs_admin_index_path
-  end
-
-  def referral_link_create
-    @referral_program = Referral::Program.find(params[:program_id])
-    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
-
-    if @referral_link.save
-      flash[:success] = "Referral link created successfully."
-    else
-      flash[:error] = @referral_link.errors.full_messages.to_sentence
-    end
-
-    redirect_to referral_programs_admin_index_path
-  end
-
   def active_teenagers_leaderboard
   end
 

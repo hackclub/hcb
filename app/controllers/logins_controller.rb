@@ -157,8 +157,13 @@ class LoginsController < ApplicationController
 
     # Only create a user session if authentication factors are met AND this login
     # has not created a user session before
-    if @login.complete? && @login.user_session.nil?
-      @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+    @login.with_lock do
+      if @login.complete? && @login.user_session.nil?
+        @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+      end
+    end
+
+    if @login.complete? && @login.user_session.present?
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif @user.full_name.blank? || @user.phone_number.blank?
