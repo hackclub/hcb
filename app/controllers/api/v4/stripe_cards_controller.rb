@@ -9,7 +9,7 @@ module Api
       def index
         if params[:event_id].present?
           set_api_event
-          authorize @event, :card_overview?
+          authorize @event, :card_overview_in_v4?
           @stripe_cards = @event.stripe_cards.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -63,7 +63,7 @@ module Api
           stripe_shipping_address_line2: card[:shipping_address_line2],
           stripe_shipping_address_postal_code: card[:shipping_address_postal_code],
           stripe_shipping_address_country: card[:shipping_address_country],
-          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
         ).run
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?

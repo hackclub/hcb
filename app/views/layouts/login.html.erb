@@ -30,6 +30,8 @@
     <meta property="og:description" content="Sign in to HCB.">
     <meta name="twitter:description" content="Sign in to HCB.">
     <meta name="description" content="Sign in to HCB.">
+    <%= yield(:head) if content_for?(:head) %>
+    <%= render "application/seo_meta_tags" %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%= render "layouts/seasonal", render_snow: false %>

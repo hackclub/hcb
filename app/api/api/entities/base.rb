@@ -50,10 +50,17 @@ module Api
 
       private
 
-      def url_for_attached(attachment)
+      def url_for_attached(attachment, transformations = nil)
         return nil unless attachment&.attached?
 
-        Rails.application.routes.url_helpers.url_for attachment
+        if transformations.nil? || !attachment.variable?
+          # Serve original attachment
+          return Rails.application.routes.url_helpers.url_for attachment
+        end
+
+        Rails.application.routes.url_helpers.url_for(
+          attachment.variant(transformations)
+        )
       end
 
     end

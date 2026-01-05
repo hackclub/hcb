@@ -55,6 +55,9 @@ class WiseTransfer < ApplicationRecord
 
   include HasWiseRecipient
 
+  include PublicIdentifiable
+  set_public_id_prefix :wse
+
   belongs_to :event
   belongs_to :user
   has_paper_trail
@@ -148,7 +151,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
-  validates :amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 
