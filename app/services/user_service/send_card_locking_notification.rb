@@ -13,7 +13,7 @@ module UserService
       future_count = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE).count
 
       if current_count.in?([5, 7, 9])
-        CardLockingMailer.warning(email: @user.email, missing_receipts: current_count).deliver_later
+        CardLockingMailer.warning(user: @user).deliver_later
 
         if @user.phone_number.present? && @user.phone_number_verified?
           message = "You now have #{current_count} transactions missing receipts from more than a day ago. If you have ten or more missing receipts, your cards will be locked. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."

@@ -163,14 +163,6 @@
       (<%= signee_count_after_removal %> <%= "signee".pluralize(signee_count_after_removal) %> will remain)
     </p>
   <% end %>
-
-  <% if @opdr.organizer_position.deleted_at.nil? %>
-    <%= link_to "Delete organizer ⚠️☣☠",
-      organizer_path(@opdr.organizer_position.id),
-      method: :delete,
-      data: { confirm: "You are about to remove #{@opdr.organizer_position.user.initial_name} from #{@opdr.event.name}. This has PERMANENT consequences (e.g. canceled cards). #{"⚠️ They are the last signee for this organization! This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}Are you sure you want to do this?" },
-      class: "btn bg-error mr1" %>
-  <% else %>
-    <p><strong>Organizer is marked as deleted</strong></p>
-  <% end %>
 </div>
+
+<%= render "comments/comments" %>
