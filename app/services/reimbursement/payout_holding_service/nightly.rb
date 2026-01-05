@@ -75,7 +75,8 @@ module Reimbursement
                   payout_holding.mark_sent!
                 rescue Faraday::Error => e
                   check.mark_rejected!
-                  Rails.error.unexpected "[reimbursements / check issuing] #{e.response_body["message"]}. report ID: #{payout_holding.report.id}"
+                  message = e.response_body&.dig("message") || e.message
+                  Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
                 end
               end
             when User::PayoutMethod::AchTransfer
