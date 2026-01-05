@@ -50,7 +50,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    user&.admin? || (cardholder? && authorized_to_activate?)
+    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
   end
 
   def cancel?
