@@ -34,18 +34,6 @@
     <div>
       <%= render "users/settings_dropdown", local_assigns: %>
     </div>
-    <% if @first_visit %>
-      <div class="pwa__prompt" style="position: relative">
-        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
-          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
-        </div>
-        <b>Looking for a mobile app?</b>
-        <br>
-        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
-        and then <%= inline_icon "plus-box", size: 18, class: "pwa__prompt__icon" %>
-        <i>Add to Home Screen</i>.
-      </div>
-    <% end %>
   </nav>
 
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>

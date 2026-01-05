@@ -137,6 +137,29 @@
       "note": "It generates a https link that is based on 'stripe_transaction_id' which should be safe."
     },
     {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "5846154b6e719cd6a5d126ccba81f03e6ef5bf30e485edfa4bbd89bd6a49cdc7",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/referral/links_controller.rb",
+      "line": 22,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to((Referral::Link.find_by(:slug => params[:id]).program.redirect_to or root_path), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Referral::LinksController",
+        "method": "show"
+      },
+      "user_input": "Referral::Link.find_by(:slug => params[:id]).program.redirect_to",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "only admins can set this"
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "7c9ae4f5245c156ca383daec57b3c0a7cf88681a787ff39a54a4026486f3d929",

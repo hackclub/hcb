@@ -26,7 +26,7 @@ class SponsorPolicy < ApplicationPolicy
     admin_or_member?
   end
 
-  def destroy
+  def destroy?
     admin_or_member?
   end
 

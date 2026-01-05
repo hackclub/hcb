@@ -79,4 +79,13 @@ class OrganizerPosition < ApplicationRecord
     end
   end
 
+  def autofollow_event
+    if event.announcements.any? && !event.followers.include?(user:)
+      event.event_follows.create!(user:)
+    end
+
+  rescue ActiveRecord::RecordNotUnique
+    # Do nothing. The user already follows this event.
+  end
+
 end

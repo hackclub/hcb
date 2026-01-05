@@ -6,7 +6,7 @@ json.type stripe_card.card_type
 json.status stripe_card.status_text.parameterize(separator: "_")
 json.name stripe_card.name
 
-if stripe_card.user == @current_user && stripe_card.initially_activated?
+if stripe_card.initially_activated?
   json.last4 stripe_card.last4
   json.exp_month stripe_card.stripe_exp_month
   json.exp_year stripe_card.stripe_exp_year
@@ -21,7 +21,7 @@ json.organization stripe_card.event, partial: "api/v4/events/event", as: :event 
 json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)
 
 if stripe_card.physical?
-  json.personalization if stripe_card.personalization_design.present? do
+  json.personalization do
     json.color stripe_card.personalization_design.color
     json.logo_url rails_blob_url(stripe_card.personalization_design.logo)
   end
