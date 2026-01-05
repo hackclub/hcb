@@ -43,6 +43,7 @@ module Discord
 
         components = format_components(json["components"])
       rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
+        @user = User.system_user # this templates may use "you" if current user == owner which doesn't make sense in a team context
         html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, current_user: @user })
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 
