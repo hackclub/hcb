@@ -11,6 +11,8 @@ module Discord
     def perform(public_activity_id)
       @activity = PublicActivity::Activity.find(public_activity_id)
       @event = @activity.event
+      return if @event.discord_channel_id.blank?
+
       @user = @activity.owner || User.system_user
 
       discord_scrubber = Loofah::Scrubber.new do |node|
