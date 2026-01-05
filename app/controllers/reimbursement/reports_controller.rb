@@ -221,6 +221,8 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      return unless enforce_sudo_mode
+
       # For Wise, the amount stored on the report is not in USD. By using the passed in :wise_total_including_fees parameter,
       # we're able to track admin transfer amounts based on the amounts used in the reimbursement processing flow.
       wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
