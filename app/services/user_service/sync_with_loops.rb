@@ -71,8 +71,6 @@ module UserService
       rescue => e
         Rails.error.unexpected(
           "Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops.",
-          handled: false,
-          severity: :error
         )
         raise e
       end
