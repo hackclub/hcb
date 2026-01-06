@@ -38,7 +38,6 @@ module CardGrantService
       rows, header_mapping = parse_csv
       validate_rows!(rows, header_mapping)
       card_grants = create_grants_atomically(rows, header_mapping)
-      send_emails(card_grants)
 
       Result.new(success?: true, card_grants:, errors: [])
     rescue ValidationError => e
@@ -194,12 +193,6 @@ module CardGrantService
       return false if value.blank?
 
       %w[true 1 yes].include?(value.to_s.strip.downcase)
-    end
-
-    def send_emails(card_grants)
-      card_grants.each do |card_grant|
-        CardGrantMailer.with(card_grant:).card_grant_notification.deliver_later
-      end
     end
 
   end

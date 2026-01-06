@@ -109,7 +109,7 @@ RSpec.describe CardGrantService::BulkCreate do
         ).run
 
         expect(result.success?).to be false
-        expect(result.errors.first).to include("must be greater than 0")
+        expect(result.errors.first).to include("must be an integer greater than 0")
       end
 
       it "returns errors for non-integer amount" do
@@ -125,7 +125,7 @@ RSpec.describe CardGrantService::BulkCreate do
         ).run
 
         expect(result.success?).to be false
-        expect(result.errors.first).to include("must be a positive integer")
+        expect(result.errors.first).to include("must be an integer greater than 0")
       end
 
       it "returns errors for non-numeric amount" do
@@ -141,7 +141,7 @@ RSpec.describe CardGrantService::BulkCreate do
         ).run
 
         expect(result.success?).to be false
-        expect(result.errors.first).to include("must be a positive integer")
+        expect(result.errors.first).to include("must be an integer greater than 0")
       end
 
       it "returns errors for negative amount" do
