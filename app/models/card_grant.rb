@@ -74,7 +74,9 @@ class CardGrant < ApplicationRecord
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
-  after_create_commit :send_email
+  after_create_commit :send_email, unless: :skip_send_email
+
+  attr_accessor :skip_send_email
 
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }

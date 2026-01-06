@@ -167,6 +167,10 @@ class EventPolicy < ApplicationPolicy
     (is_public || auditor_or_reader?) && (record.plan.card_grants_enabled? || record.card_grants.any?)
   end
 
+  def bulk_upload_card_grants?
+    admin_or_manager? && record.plan.card_grants_enabled?
+  end
+
   def promotions?
     auditor_or_reader?
   end
