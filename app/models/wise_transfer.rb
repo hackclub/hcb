@@ -48,8 +48,6 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
