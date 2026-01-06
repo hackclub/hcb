@@ -4,25 +4,38 @@
 
 <%= render "events/transfer_nav", heading: "ACH transfer" %>
 
-
-<div class="grid grid-cols-5 max-w-5xl mx-auto w-full mt-20 px-8">
+<div class="grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5">
   <div class="col-span-2">
-    <ol class="pl-0">
-      <li>Recipient details</li>
-      <li>Payment details</li>
-      <li>Admin</li>
-    </ol>
-    <%= render "application/callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
-      <ul>
-        <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
-        <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
-        <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
-        <li>ACHs can only be sent to U.S. bank accounts.</li>
-      </ul>
-    <% end %>
-    <% if @event.present? && !policy(@event).create_transfer? %>
-      <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
-    <% end %>
+    <div class="sticky top-28">
+      <div class="border-gray-200 rounded-xl px-4 py-2 text-gray-500" style="border-width:1px; border-style:solid">
+        <div
+          class="invoice-tab justify-start py-1">
+          <div class="invoice-tab__number">1</div>
+          <span>Recipient details</span>
+        </div>
+        <div
+          class="invoice-tab justify-start py-1">
+          <div class="invoice-tab__number">2</div>
+          <span>Payment details</span>
+        </div>
+        <div
+          class="invoice-tab justify-start py-1">
+          <div class="invoice-tab__number">3</div>
+          <span>Admin</span>
+        </div>
+      </div>
+      <%= render "application/callout", type: "warning", title: "Important info about ACH transfers", class: "mt-2 !shadow-none", footer: :questions do %>
+        <ul>
+          <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
+          <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
+          <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
+          <li>ACHs can only be sent to U.S. bank accounts.</li>
+        </ul>
+      <% end %>
+      <% if @event.present? && !policy(@event).create_transfer? %>
+        <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
+      <% end %>
+    </div>
   </div>
   <div class="col-span-3 pt-3">
     <%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
