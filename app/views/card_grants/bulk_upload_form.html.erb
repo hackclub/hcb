@@ -26,34 +26,34 @@
       <tbody>
         <tr>
           <td><code>email</code></td>
-          <td><span class="badge bg-error">Required</span></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
           <td>Recipient's email address</td>
         </tr>
         <tr>
           <td><code>amount_cents</code></td>
-          <td><span class="badge bg-error">Required</span></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
           <td>Amount in cents as a whole number (e.g., 1000 for $10.00)</td>
         </tr>
         <tr>
           <td><code>purpose</code></td>
-          <td><span class="badge bg-muted">Optional</span></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
           <td>Purpose shown to recipient (max <%= CardGrant::MAXIMUM_PURPOSE_LENGTH %> characters)</td>
         </tr>
         <tr>
           <td><code>one_time_use</code></td>
-          <td><span class="badge bg-muted">Optional</span></td>
-          <td>Set to <code>true</code>, <code>1</code>, or <code>yes</code> to freeze card after first charge</td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Set to <code>true</code> to freeze card after first charge</td>
         </tr>
         <tr>
           <td><code>invite_message</code></td>
-          <td><span class="badge bg-muted">Optional</span></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
           <td>Custom message included in the invitation email</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <%= link_to card_grants_bulk_upload_template_path(@event), class: "btn btn--primary" do %>
+  <%= link_to event_card_grants_bulk_upload_template_path(@event), class: "btn btn--primary" do %>
     <%= inline_icon "download" %>
     Download CSV template
   <% end %>
@@ -62,7 +62,7 @@
 <div class="card p3">
   <h3 class="mt0">Upload CSV</h3>
 
-  <%= form_with url: card_grants_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
+  <%= form_with url: event_card_grants_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
     <div class="field--fileupload">
       <%= form.label :csv_file, "Select CSV file", class: "field--fileupload__label" %>
       <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full field--fileupload__field" %>

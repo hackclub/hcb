@@ -12,9 +12,9 @@
     <%= render "card_grants/create_modal" %>
     <div class="flex gap-2 items-center">
       <% if policy(@event).bulk_upload_card_grants? %>
-        <%= link_to card_grants_bulk_upload_path(@event), class: "btn btn--primary" do %>
+        <%= link_to event_card_grants_bulk_upload_path(@event), class: "btn btn--primary" do %>
           <%= inline_icon "share" %>
-          Bulk send via CSV
+          Upload a CSV
         <% end %>
       <% end %>
       <%= link_to new_event_card_grant_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>

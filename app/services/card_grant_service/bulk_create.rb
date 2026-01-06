@@ -9,9 +9,6 @@ module CardGrantService
     # - Raises DisbursementService::Create::UserError for disbursement failures
     #   (e.g., insufficient funds).
     # - Propagates any other unexpected errors.
-    #
-    # NOTE: This service assumes it is NOT called inside a broader DB transaction.
-    # Emails are sent immediately after the internal transaction commits.
 
     class ValidationError < StandardError
       attr_reader :errors
@@ -38,8 +35,6 @@ module CardGrantService
     end
 
     def run
-      ensure_not_in_transaction!
-
       rows, header_mapping = parse_csv
       validate_rows!(rows, header_mapping)
       card_grants = create_grants_atomically(rows, header_mapping)
@@ -61,12 +56,6 @@ module CardGrantService
     end
 
     private
-
-    def ensure_not_in_transaction!
-      if ActiveRecord::Base.connection.transaction_open?
-        raise "BulkCreate cannot be called within an existing database transaction"
-      end
-    end
 
     def parse_csv
       validate_file_size!
@@ -198,7 +187,6 @@ module CardGrantService
         one_time_use: parse_boolean(get_field(row, header_mapping, "one_time_use")),
         invite_message: get_field(row, header_mapping, "invite_message")&.strip.presence,
         sent_by: @sent_by,
-        skip_send_email: true
       )
     end
 
