@@ -8,7 +8,7 @@
   .invoice-tab__number {
     @apply w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold;
     border: 2px solid;
-    border-color: $smoke;
+    border-color: rgba(0, 0, 0, 0.1);
 
     html[data-dark='true'] & {
       border-color: darken(map-get($palette, muted), 30%);
@@ -22,15 +22,19 @@
   &.invoice-tab--full {
     cursor: pointer;
     white-space: nowrap;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.375rem;
     color: $muted;
+    transition: all 0.2s ease-in-out;
   }
 
   &:hover {
-    filter: brightness(90%);
+    background: rgba(0, 0, 0, 0.03);
+    transition-duration: 0s;
   }
 
   &:active {
-    filter: brightness(80%);
+    background: rgba(0, 0, 0, 0.05);
   }
 
   &.active.invoice-tab--full {

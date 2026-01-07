@@ -38,8 +38,8 @@ export default class extends Controller {
   handleTabClick(index) {
     this.activateTab(index)
     this.sectionTargets[index]?.scrollIntoView({
-      block: 'start',
-      inline: 'nearest',
+      block: 'center',
+      inline: 'start',
     })
     window.scrollBy(0, -100)
   }
@@ -79,7 +79,7 @@ export default class extends Controller {
 
     if (window.innerWidth < 768 && this.tabTargets[index]) {
       this.tabTargets[index].scrollIntoView({
-        block: 'nearest',
+        block: 'start',
         inline: 'nearest',
       })
     }

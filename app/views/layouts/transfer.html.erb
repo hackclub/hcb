@@ -3,17 +3,19 @@
 
 <nav class="border-b p-8 pb-4 flex items-center gap-4 fixed top-0 bg-snow h-24 w-full z-10">
   <%= link_to inline_icon("view-back"), event_transfers_path, class: "pop" %>
-  <div>
-    <h1 class="border-0 m-0 p-0 h2"><%= @nav_title %></h1>
-    <p class="text-sm text-muted m-0">From <%= @event.name %></p>
+  <div class="min-w-0">
+    <h1 class="border-0 m-0 p-0 h2 truncate"><%= @nav_title %></h1>
+    <p class="text-sm text-muted m-0 truncate">From <%= @event.name %></p>
   </div>
 </nav>
 
 <div class="flex flex-col sm:grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5" data-controller="scroll-seek">
   <div class="col-span-2">
     <div class="sm:sticky top-28">
-      <div class="fixed z-10 w-full backdrop-blur-xl scrollbar-hidden flex sm:flex-col left-0 top-24 sm:static border-gray-200 sm:rounded-xl px-4 py-2 border-solid border-[1px] border-x-0 sm:border-x-[1px] gap-4 sm:gap-0 overflow-x-auto">
-        <%= yield :table_of_contents %>
+      <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-24 sm:static border-gray-200 sm:rounded-xl p-2 border-solid border-[1px] border-x-0 sm:border-x-[1px] overflow-x-auto">
+        <div class="inline-flex sm:flex sm:w-full sm:flex-col mx-auto sm:mx-0 gap-4 sm:gap-0 px-5 sm:px-0">
+          <%= yield :table_of_contents %>
+        </div>
       </div>
       <% if content_for?(:sidebar_footer) %>
         <%= yield :sidebar_footer %>
