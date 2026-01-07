@@ -1,0 +1,28 @@
+<% page_full %>
+<% @no_app_shell = true %>
+
+<nav class="border-b p-8 pb-4 flex items-center gap-4 fixed top-0 bg-snow w-full z-10">
+  <%= link_to inline_icon("view-back"), event_transfers_path, class: "pop" %>
+  <div>
+    <h1 class="border-0 m-0 p-0 h2"><%= @nav_title %></h1>
+    <p class="text-sm text-muted m-0">From <%= @event.name %></p>
+  </div>
+</nav>
+
+<div class="grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5" data-controller="scroll-seek">
+  <div class="col-span-2">
+    <div class="sticky top-28">
+      <div class="border-gray-200 rounded-xl px-4 py-2" style="border-width:1px; border-style:solid">
+        <%= yield :table_of_contents %>
+      </div>
+      <% if content_for?(:sidebar_footer) %>
+        <%= yield :sidebar_footer %>
+      <% end %>
+    </div>
+  </div>
+  <div class="col-span-3 pt-3 mb-24">
+    <%= yield %>
+  </div>
+</div>
+
+<% parent_layout "application" %>
