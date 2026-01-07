@@ -21,6 +21,7 @@
 
   &.invoice-tab--full {
     cursor: pointer;
+    white-space: nowrap;
     color: $muted;
   }
 

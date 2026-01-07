@@ -5,10 +5,10 @@ export default class extends Controller {
 
   connect() {
     this.observer = new IntersectionObserver(
-      (entries) => this.handleIntersection(entries),
+      entries => this.handleIntersection(entries),
       {
         threshold: 0,
-        rootMargin: '-100px 0px -66% 0px'
+        rootMargin: '-100px 0px -66% 0px',
       }
     )
 
@@ -37,12 +37,17 @@ export default class extends Controller {
 
   handleTabClick(index) {
     this.activateTab(index)
-    this.sectionTargets[index]?.scrollIntoView({ block: 'start', inline: 'nearest' })
+    this.sectionTargets[index]?.scrollIntoView({
+      block: 'start',
+      inline: 'nearest',
+    })
     window.scrollBy(0, -100)
   }
 
   handleScroll() {
-    const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10
+    const isAtBottom =
+      window.innerHeight + window.scrollY >=
+      document.documentElement.scrollHeight - 10
     if (isAtBottom) {
       this.activateTab(this.sectionTargets.length - 1)
     }
@@ -51,7 +56,9 @@ export default class extends Controller {
   handleIntersection(entries) {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const section = entry.target.closest('[data-scroll-seek-target="section"]')
+        const section = entry.target.closest(
+          '[data-scroll-seek-target="section"]'
+        )
         const index = this.sectionTargets.indexOf(section)
         this.activateTab(index)
       }
@@ -68,6 +75,13 @@ export default class extends Controller {
 
     if (this.tabTargets[index]) {
       this.tabTargets[index].classList.add('active')
+    }
+
+    if (window.innerWidth < 768 && this.tabTargets[index]) {
+      this.tabTargets[index].scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+      })
     }
   }
 }
