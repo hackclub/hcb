@@ -21,6 +21,10 @@ export default class extends Controller {
       section.addEventListener('focusin', () => this.handleFocusIn(section))
     })
 
+    this.tabTargets.forEach((tab, index) => {
+      tab.addEventListener('click', () => this.handleTabClick(index))
+    })
+
     window.addEventListener('scroll', () => this.handleScroll())
   }
 
@@ -29,6 +33,11 @@ export default class extends Controller {
       this.observer.disconnect()
     }
     window.removeEventListener('scroll', () => this.handleScroll())
+  }
+
+  handleTabClick(index) {
+    this.activateTab(index)
+    this.sectionTargets[index]?.scrollIntoView({ block: 'start', inline: 'nearest' })
   }
 
   handleScroll() {

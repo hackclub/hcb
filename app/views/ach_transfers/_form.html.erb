@@ -22,7 +22,7 @@
     <pre x-text="'Debug info:\n\n' + JSON.stringify(payment_recipient || {}, null, 2)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
   <% end %>
 
-  <div data-scroll-seek-target="section">
+  <div data-scroll-seek-target="section" id="recipient-details">
   <h3 class="mb-2">Recipient details</h3>
   <div class="card mb-4 relative">
     <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
@@ -74,7 +74,7 @@
   </div>
   </div>
 
-  <div data-scroll-seek-target="section">
+  <div data-scroll-seek-target="section" id="payment-details">
   <h3 class="mb-2">Payment details</h3>
   <div class="card mb-4 relative">
     <template x-if="!payment_recipient || editing">
@@ -170,7 +170,7 @@
   </div>
 
   <% admin_tool do %>
-    <div data-scroll-seek-target="section">
+    <div data-scroll-seek-target="section" id="admin">
     <h3 class="mb-2">Admin</h3>
     <div class="card mb-4 relative">
       <div class="field">
