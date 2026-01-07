@@ -37,9 +37,11 @@
   <div class="stat">
     <span class="stat__label">
       Total
-      <a class="tooltipped tooltipped--w link--ignore flex" aria-label='This figure excludes foreign currency reimbursement reports that have not yet settled to USD.' tabindex="0">
-        <%= inline_icon "info", width: 24 %>
-      </a>
+      <% if @event.reimbursement_reports.reimbursed.where.not(currency: "USD").exists? %>
+        <a class="tooltipped tooltipped--w link--ignore flex" aria-label='This figure excludes foreign currency reimbursement reports that have not yet settled to USD.' tabindex="0">
+          <%= inline_icon "info", width: 24 %>
+        </a>
+      <% end %>
     </span>
     <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@total) %></span>
   </div>
