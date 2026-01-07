@@ -18,4 +18,8 @@
   &.active .invoice-tab__number {
     border-color: $blue !important;
   }
+
+  &.active.invoice-tab--full {
+    color: $blue !important;
+  }
 }

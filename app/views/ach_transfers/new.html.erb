@@ -4,25 +4,30 @@
 
 <%= render "events/transfer_nav", heading: "ACH transfer" %>
 
-<div class="grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5">
+<div class="grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5" data-controller="scroll-seek">
   <div class="col-span-2">
     <div class="sticky top-28">
       <div class="border-gray-200 rounded-xl px-4 py-2 text-gray-500" style="border-width:1px; border-style:solid">
         <div
-          class="invoice-tab justify-start py-1">
+          class="invoice-tab invoice-tab--full justify-start py-1"
+          data-scroll-seek-target="tab">
           <div class="invoice-tab__number">1</div>
           <span>Recipient details</span>
         </div>
         <div
-          class="invoice-tab justify-start py-1">
+          class="invoice-tab invoice-tab--full justify-start py-1"
+          data-scroll-seek-target="tab">
           <div class="invoice-tab__number">2</div>
           <span>Payment details</span>
         </div>
-        <div
-          class="invoice-tab justify-start py-1">
-          <div class="invoice-tab__number">3</div>
-          <span>Admin</span>
-        </div>
+        <% admin_tool do %>
+          <div
+            class="invoice-tab invoice-tab--full justify-start py-1"
+            data-scroll-seek-target="tab">
+            <div class="invoice-tab__number">3</div>
+            <span>Admin</span>
+          </div>
+        <% end %>
       </div>
       <%= render "application/callout", type: "warning", title: "Important info about ACH transfers", class: "mt-2 !shadow-none", footer: :questions do %>
         <ul>
@@ -37,7 +42,7 @@
       <% end %>
     </div>
   </div>
-  <div class="col-span-3 pt-3">
+  <div class="col-span-3 pt-3 mb-24">
     <%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
   </div>
 </div>
