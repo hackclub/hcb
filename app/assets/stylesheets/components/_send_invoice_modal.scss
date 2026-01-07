@@ -19,6 +19,19 @@
     border-color: $blue !important;
   }
 
+  &.invoice-tab--full {
+    cursor: pointer;
+    color: $muted;
+  }
+
+  &:hover {
+    filter: brightness(90%);
+  }
+
+  &:active {
+    filter: brightness(80%);
+  }
+
   &.active.invoice-tab--full {
     color: $blue !important;
   }
