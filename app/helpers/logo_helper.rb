@@ -17,7 +17,7 @@ module LogoHelper
   end
 
   def create_hcb_logo_blob
-    logo_path = Rails.root.join("public", "brand", "hcb-icon-icon-original.png")
+    logo_path = Rails.root.join("public/brand/hcb-icon-icon-original.png")
 
     ActiveStorage::Blob.create_and_upload!(
       key: HCB_LOGO_BLOB_KEY,
