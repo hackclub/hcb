@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
 
   protect_from_forgery
 
@@ -19,19 +20,11 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
-
-  # This cookie is used for Safari PWA prompts
-  before_action do
-    next if current_user.nil?
-
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
-  end
+  before_action { current_session&.update_session_timestamps }
 
   before_action do
-    # Disallow indexing
-    response.set_header("X-Robots-Tag", "noindex")
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
   end
 
   before_action do
@@ -40,10 +33,16 @@ class ApplicationController < ActionController::Base
     params[:return_to] = url_from(params[:return_to])
   end
 
-  # Enable Rack::MiniProfiler for admins
+  # Enable Rack::MiniProfiler for auditors
   before_action do
-    if current_user&.admin?
+    if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
     end
   end
 
@@ -52,10 +51,12 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
   rescue_from Rack::Timeout::RequestTimeoutException do
     respond_to do |format|
       format.html { render "errors/timeout" }
-      format.all { render text: "This request timed out, sorry." }
+      format.all { render plain: "This request timed out, sorry." }
     end
   end
 
@@ -100,11 +101,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end

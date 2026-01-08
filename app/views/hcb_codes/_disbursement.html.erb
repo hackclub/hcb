@@ -1,11 +1,9 @@
-<% title "Transfer of #{render_money(@hcb_code.disbursement.amount)}" %>
-
 <% @destination = @hcb_code.disbursement.destination_event %>
 <% @source = @hcb_code.disbursement.source_event %>
 <% @subledger = @hcb_code.disbursement.destination_subledger || @hcb_code.disbursement.source_subledger %>
 
-<article class="card pb0 mt3 mb1">
-  <h2 class="h2 mt0 border-none flex items-center justify-between" style="gap: 8px">
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span style="flex-grow: 1">
       <%= @source.name %>
       <span class="regular muted">
@@ -21,55 +19,56 @@
       <span class="regular muted">to</span>
       <%= @destination.name %>
     </span>
-    <span class="badge h4 md-right ml0 bg-<%= @hcb_code.disbursement.state %>">
+    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %>">
       <%= @hcb_code.disbursement.state_text.humanize %>
       <%= inline_icon @hcb_code.disbursement.state_icon, size: 20 if @hcb_code.disbursement.state_icon %>
     </span>
-    <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
-  </h2>
+  <% end %>
 
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
+  <section class="hcb-code--details">
     <% unless @hcb_code.disbursement.requested_by.nil? %>
-      <p>
+      <div>
         <% if @hcb_code.disbursement.reviewing? || @hcb_code.disbursement.rejected? %>
           <strong>Requested by</strong>
         <% else %>
           <strong>Sent by</strong>
         <% end %>
         <%= user_mention @hcb_code.disbursement.requested_by %>
-      </p>
+      </div>
     <% end %>
 
     <% unless @hcb_code.disbursement.fulfilled_by.nil? %>
-      <% admin_tool("", "p") do %>
+      <% admin_tool("", "div") do %>
         <strong>Fulfilled by</strong>
         <%= user_mention @hcb_code.disbursement.fulfilled_by %>
       <% end %>
     <% end %>
 
-    <p>
-      <% if @hcb_code.disbursement.processed? %>
+    <% if @hcb_code.disbursement.processed? %>
+      <div>
         <strong>Transferred at</strong>
         <%= format_datetime @hcb_code.disbursement.transferred_at %>
-      <% else %>
+      </div>
+    <% else %>
+      <div>
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.disbursement.created_at %>
-        <% admin_tool("", "p") do %>
-          <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
+        <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
+          <% admin_tool("", "div") do %>
             <strong>Scheduled at</strong>
             <%= @hcb_code.disbursement.scheduled_on.strftime("%B %e, %Y") %>
           <% end %>
         <% end %>
-      <% end %>
-      <% admin_tool("", "p") do %>
-        <strong>Disbursement ID</strong>
-        <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
-      <% end %>
-    </p>
+      </div>
+    <% end %>
+    <% admin_tool("", "div") do %>
+      <strong>Disbursement ID</strong>
+      <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
+    <% end %>
 
   </section>
 
-  <section class="details pt2 pb2">
+  <section class="hcb-code--info">
     <% if @subledger&.card_grant.present? %>
       <p>
         <strong>Event</strong>
@@ -77,7 +76,7 @@
       </p>
       <p>
         <strong>Grant</strong>
-        <%= link_to_if @subledger.card_grant.stripe_card.present?, "Grant to #{@subledger.card_grant.user.name}", @subledger.card_grant.stripe_card %>
+        <%= link_to "Grant to #{@subledger.card_grant.user.name}", card_grant_path(@subledger.card_grant) %>
       </p>
     <% else %>
       <p>
@@ -92,21 +91,9 @@
     <% end %>
 
     <p>
-      <strong>Amount</strong>
-      <%= render_money @hcb_code.disbursement.amount %>
-    </p>
-
-    <p>
       <strong>Reason</strong>
       <%= @hcb_code.disbursement.name %>
     </p>
-
-    <p>
-      <strong>Transaction memo</strong>
-      <%= render "hcb_codes/memo", hcb_code: @hcb_code %>
-    </p>
-
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
     <% if @hcb_code.disbursement.fulfilled? %>
       <p>
@@ -119,10 +106,12 @@
       </p>
     <% end %>
 
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+
   </section>
 
   <% if @event.can_front_balance? %>
-    <section class="card__banner card__darker secondary border-top flex items-center g2">
+    <section class="hcb-code--footer">
       <% if @hcb_code.disbursement.may_mark_rejected? %>
         <% admin_tool "w-fit" do %>
           <%= button_to "Process", disbursement_process_admin_path(@hcb_code.disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>

@@ -1,0 +1,33 @@
+<% title "Enter backup code" %>
+<% content_for(:page_class) { "bg-snow" } %>
+
+<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+  <%= render "logins/header", label: "Sign in to HCB" do %>
+    Backup code
+  <% end %>
+  <%= render "logins/badge", user: @login.user %>
+  <p>
+    Please enter one of the backup codes you generated previously.
+  </p>
+  <%= form_tag complete_login_path(@login) do %>
+    <%= text_field :backup_code, "", placeholder: "Enter your backup code", name: "backup_code", class: "!max-w-full w-max", required: true, autofocus: true %>
+    <%= hidden_field_tag :method, :backup_code %>
+    <%= hidden_field_tag :fingerprint %>
+    <%= hidden_field_tag :device_info %>
+    <%= hidden_field_tag :os_info %>
+    <%= hidden_field_tag :timezone %>
+    <%= hidden_field_tag :return_to, @return_to if @return_to %>
+    <div class="flex flex-row justify-between items-center mt-4 gap-2">
+      <% if @webauthn_available || @totp_available || @email_available || @sms_available %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
+      <% end %>
+      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn">
+        Continue
+      </button>
+    </div>
+  <% end %>
+  <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
+  <%= javascript_include_tag "fingerprint.js" %>
+</div>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>

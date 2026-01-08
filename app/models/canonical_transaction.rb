@@ -26,6 +26,7 @@ class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
   include Receiptable
+  include Categorizable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -99,6 +100,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
   has_one :event, through: :canonical_event_mapping
+  has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
@@ -327,6 +329,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(Wire)
   end
 
+  def wise_transfer
+    return linked_object if linked_object.is_a?(WiseTransfer)
+  end
+
   def check_deposit
     return linked_object if linked_object.is_a?(CheckDeposit)
 
@@ -344,7 +350,12 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_account_verification_related?
-    hcb_code.starts_with?("HCB-000-") && memo.downcase.include?("acctverify") && amount_cents.abs < 100
+    # Substring match (case-insensitive) for any of these identifiers in the
+    # memo indicating an account verification transaction. The majority use
+    # "ACCTVERIFY", however, it appears a few companies use other variants.
+    memo_matches = %w[acctverify verify validation sdv-vrfy amts:].any? { |s| memo.downcase.include?(s) }
+
+    hcb_code.starts_with?("HCB-000-") && amount_cents.abs < 100 && memo_matches
   end
 
   def short_code
@@ -401,8 +412,8 @@ class CanonicalTransaction < ApplicationRecord
 
   def hashed_transaction
     @hashed_transaction ||= begin
-      Airbrake.notify("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
-      Airbrake.notify("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
+      Rails.error.unexpected("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
+      Rails.error.unexpected("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
 
       hashed_transactions.first
     end

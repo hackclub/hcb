@@ -7,8 +7,8 @@ class InvoicesController < ApplicationController
   skip_before_action :signed_in_user
 
   def index
+    authorize @event, :invoices?
     relation = @event.invoices
-    authorize relation
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
@@ -35,7 +35,7 @@ class InvoicesController < ApplicationController
       unpaid: relation.unpaid.sum(:item_amount) - archived_unpaid,
     }
 
-    case params[:filter]
+    case params[:status]
     when "paid"
       relation = relation.paid_v2
     when "unpaid"
@@ -48,6 +48,11 @@ class InvoicesController < ApplicationController
       relation = relation.unarchived
     end
 
+    relation = relation.where("item_amount >= ?", params[:amount_greater_than].to_i * 100) if params[:amount_greater_than].present?
+    relation = relation.where("item_amount <= ?", params[:amount_less_than].to_i * 100) if params[:amount_less_than].present?
+    relation = relation.where("invoices.created_at >= ?", params[:created_after]) if params[:created_after].present?
+    relation = relation.where("invoices.created_at <= ?", params[:created_before]) if params[:created_before].present?
+
     relation = relation.search_description(params[:q]) if params[:q].present?
 
     @invoices = relation.order(created_at: :desc)
@@ -55,41 +60,9 @@ class InvoicesController < ApplicationController
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
 
-    # @ma1ted: I have no clue how to use the above methods here.
-    # Reimplementing logic is okay if you apolgise to every
-    # future contributor. You can hold me to that.
-    if helpers.show_mock_data?
-      @invoices = []
-      @stats = { total: 0, paid: 0, pending: 0, unpaid: 0 }
-
-      # Generate mock invoices data
-      (0..rand(10..30)).each do |_|
-        # State is either sent, deposited, or overdue
-        # Here, we'll only set deposited or overdue
-        deposited = rand > 0.25
-        invoice = OpenStruct.new(
-          state: deposited ? "success" : "error",
-          state_text: deposited ? "Deposited" : "Overdue",
-          created_at: Faker::Date.between(from: 30.days.ago, to: Date.today),
-          sponsor: OpenStruct.new(name: Faker::Name.name),
-          item_amount: rand(1..100) * 100,
-          local_hcb_code: OpenStruct.new(hashid: "")
-        )
-        @stats[:paid] += invoice.item_amount if deposited
-        @stats[:unpaid] += invoice.item_amount unless deposited
-        @stats[:total] += invoice.item_amount
-        @invoices << invoice
-      end
-      # Sort by date descending
-      @invoices.sort_by! { |invoice| invoice[:created_at] }.reverse!
-
-      # Set the most recent 0-3 invoices to be sent
-      (0..rand(-1..2)).each do |i|
-        @invoices[i].state = "muted"
-        @invoices[i].state_text = "Sent"
-        @stats[:pending] += @invoices[i].item_amount
-      end
-    end
+    @filter_options = filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new
@@ -125,10 +98,6 @@ class InvoicesController < ApplicationController
     ).run
 
     flash[:success] = "Invoice successfully created and emailed to #{@invoice.sponsor.contact_email}."
-
-    unless OrganizerPosition.find_by(user: @invoice.creator, event: @event)&.manager?
-      InvoiceMailer.with(invoice: @invoice).notify_organizers_sent.deliver_later
-    end
 
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
@@ -252,6 +221,17 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def filter_options
+    min_amount = @event.invoices.minimum(:item_amount) || 0
+    max_amount = @event.invoices.maximum(:item_amount) || 0
+
+    [
+      { key: "status", label: "Status", type: "select", options: %w[paid unpaid archived voided] },
+      { key_base: "created", label: "Date", type: "date_range" },
+      { key_base: "amount", label: "Amount", type: "amount_range", range: [min_amount / 100, max_amount / 100] }
+    ]
   end
 
 end

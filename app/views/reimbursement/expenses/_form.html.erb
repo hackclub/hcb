@@ -1,35 +1,41 @@
 <%# locals: (expense:, new: false) -%>
 
-<%= form_with(model: expense.becomes(Reimbursement::Expense), url: reimbursement_expense_path(expense), class: "h-100 flex flex-col", style: "max-width: 600px;", local: true, data: { "expense-form-target": "form", turbo: true }) do |form| %>
+<%= form_with(model: expense.becomes(Reimbursement::Expense), url: reimbursement_expense_path(expense), class: "h-100 flex flex-col mb-3", style: "max-width: 600px;", local: true, data: { "expense-form-target": "form", turbo: true }) do |form| %>
   <div class="flex flex-row items-center">
     <div style="flex-grow: 1;">
       <%= form.label :memo, "Memo", class: "bold" %>
       <%= form.text_field :memo, placeholder: "Lunch during layover at SFO", required: true, data: { "expense-form-target": "field memoField", "action": "dblclick->expense-form#edit", "behavior": "ctrl_enter_submit" }, id: "reimbursement_expense_memo_#{expense.id}" %>
     </div>
 
-    <% if expense.is_standard? %>
-      <span class="bold muted flex self-end items-center justify-center ml1" style="width: 1rem; height: 48px;">$</span>
+    <% if expense.is_standard? || expense.is_fee? %>
+      <span class="bold muted flex self-end items-center justify-center ml1" style="width: 1rem; height: 48px;"><%= expense.amount.currency.symbol %></span>
     <% end %>
     <div class="ml1">
       <%= form.label :value, expense.value_label, class: "bold" %>
-      <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, value: number_with_precision(expense.value, precision: 2), data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% if expense.rate == 100 %>
+        <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, value: number_with_precision(expense.value, precision: 2), data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% else %>
+        <%= form.number_field :value, placeholder: "500", step: 1, min: 1, value: number_with_precision(expense.value, precision: 0), data: { controller: "truncate-decimal", "truncate-decimal-places-value": "0", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
+      <% end %>
     </div>
   </div>
-  <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? %>
+  <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? && !expense.is_fee? %>
     <div class="field mt1 mb1 flex flex-col w-100">
       <%= form.label :category, "Category", class: "bold" %>
       <%= form.select :category, Reimbursement::Expense.categories.keys, { include_blank: "Uncategorized" }, { style: "max-width: 100vw;", data: { "expense-form-target": "field" } } %>
     </div>
   <% end %>
-  <div class="field mt1 flex flex-col flex-grow">
-    <div class="flex flex-row items-center justify-between mb1 flex-wrap gap-x-3">
-      <%= form.label :description, "Description", class: "bold" %>
-      <span class="h5 muted mt0 mb0 flex items-center">
-        <%= inline_icon "markdown", size: 32 %> Additional context for this expense
-      </span>
+  <% unless expense.is_fee? %>
+    <div class="field mt1 flex flex-col flex-grow">
+      <div class="flex flex-row items-center justify-between flex-wrap gap-x-3">
+        <%= form.label :description, "Description", class: "bold" %>
+        <span class="h5 muted mt0 mb0 flex items-center">
+          <%= inline_icon "markdown", size: 32 %> Additional context for this expense
+        </span>
+      </div>
+      <%= form.text_area :description, placeholder: "This was for...", class: "w-100 fit flex-grow min-h-[96px]", data: { "expense-form-target": "field", behavior: "ctrl_enter_submit" } %>
     </div>
-    <%= form.text_area :description, placeholder: "This was for...", class: "w-100 fit flex-grow", data: { "expense-form-target": "field", behavior: "ctrl_enter_submit" } %>
-  </div>
+  <% end %>
   <% if policy(expense).approve? %>
     <% if !expense.approved? && expense.report.submitted? %>
       <%= link_to reimbursement_expense_approve_path(expense_id: expense.id), class: "btn bg-success", data: { turbo: true, "turbo-method": "post" } do %>

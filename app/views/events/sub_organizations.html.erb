@@ -1,0 +1,71 @@
+<% title "Subsidiaries of #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :sub_organizations %>
+
+<% if organizer_signed_in? %>
+  <%= turbo_stream_from @event, :scoped_tags %>
+<% end %>
+
+<h1 class="heading flex items-center gap-2 flex-col sm:flex-row border-0 mb-0">
+  <span class="flex-grow">Sub-organizations</span>
+  <div class="flex items-center gap-2">
+    <%= pop_icon_to "download",
+                    { format: :csv },
+                    class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+    <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+      <%= inline_icon "plus" %>
+      Create a subsidiary
+    <% end %>
+  </div>
+</h1>
+
+<div class="statset">
+  <div class="stat statset__wide" data-tour-step="balance">
+    <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
+    <span class="stat__value">
+      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, request.query_parameters), loading: :lazy do %>
+        <strong>-</strong>
+      <% end %>
+    </span>
+  </div>
+</div>
+
+<div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb-2">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/search", form: %>
+  <% end %>
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+</div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+
+<% if @sub_organizations.any? %>
+  <ul class="grid grid--medium-narrow text-left w-100 mt0">
+    <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+  </ul>
+<% else %>
+  <%= blankslate "No sub-organizations yet" %>
+<% end %>
+
+<% if policy(@event).create_sub_organization? %>
+  <section data-behavior="modal" role="dialog" id="create" class="modal modal--scroll bg-snow">
+    <%= modal_header "Create a sub-organization" %>
+    <%= render "suborganizations/form", event: @event %>
+  </section>
+<% end %>
+
+<% if policy(@event).toggle_scoped_tag? %>
+  <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="create_scoped_tag">
+    <%= modal_header("Create sub-organization tag") %>
+    <%= form_with url: event_scoped_tags_path(@event), id: "create_scoped_tag_form", data: { turbo: false } do |form| %>
+      <%= form.hidden_field :subevent_id, value: "", id: "create_scoped_tag_subevent_id" %>
+
+      <div class="field">
+        <%= form.label :name, "Tag name" %>
+        <%= form.text_field :name, autofocus: true, style: "max-width: 100%", autocomplete: "off", data: { turbo: true }, required: true %>
+      </div>
+
+      <%= form.submit "Create", class: "btn bg-info mt-2 float-right" %>
+    <% end %>
+  </section>
+<% end %>

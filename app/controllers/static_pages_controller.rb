@@ -4,8 +4,8 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :roles, :security]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+  skip_before_action :signed_in_user, only: [:mobile, :branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
 
   after_action only: [:index, :branding, :security] do
     # Allow indexing home and branding pages
@@ -28,6 +28,7 @@ class StaticPagesController < ApplicationController
 
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
+      @invite_requests = @service.invite_requests
 
       if auditor_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
@@ -40,8 +41,24 @@ class StaticPagesController < ApplicationController
       @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
 
     end
-    if auditor_signed_in?
-      @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def admin_tools
+    unless auditor_signed_in?
+      redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
+      return
+    end
+
+    @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def mobile
+    if request.user_agent&.match("iPhone")
+      redirect_to "https://apps.apple.com/us/app/hcb-by-hack-club/id6465424810", allow_other_host: true
+    elsif request.user_agent&.match("Android")
+      redirect_to "https://play.google.com/store/apps/details?id=com.hackclub.hcb", allow_other_host: true
+    else
+      redirect_to "https://hackclub.com/hcb", allow_other_host: true
     end
   end
 
@@ -78,22 +95,22 @@ class StaticPagesController < ApplicationController
           "Send a mailed check": :manager,
           "View a mailed check": :reader,
         },
-        "Check Deposit": {
+        "Check deposits": {
           "Deposit a check": :member,
           "View a check deposit": :reader,
           "View images of a check deposit": :manager,
           _preface: "For depositing a check by taking a picture of it"
         },
-        "ACH Transfers": {
+        "ACH transfers": {
           "Send an ACH Transfer": :manager,
           "Cancel an ACH Transfer": :manager,
           "View an ACH Transfer": :reader,
           "View recipient's payment details": :manager,
         },
-        "Account & Routing numbers": {
+        "Account & routing numbers": {
           "View the organization's account & routing numbers": :manager
         },
-        "HCB Transfers": {
+        "HCB transfers": {
           "Create a HCB Transfer": :manager,
           "Cancel a HCB Transfer": :manager,
           "View a HCB Transfer": :reader
@@ -115,10 +132,20 @@ class StaticPagesController < ApplicationController
         "View reimbursement reports": :reader,
         "Review, approve, and reject reports": :manager,
       },
+      Announcements: {
+        "Create or delete an announcement": :manager,
+        "Publish an announcement": :manager,
+        "View announcements": :reader,
+        "View followers": :reader,
+        "Remove followers": :manager
+      },
       "Google Workspace": {
         "Create an account": :manager,
         "Suspend an account": :manager,
         "Reset an account's password": :manager,
+      },
+      Documents: {
+        "View documents": :reader
       },
       "Settings": {
         "View settings": :reader,

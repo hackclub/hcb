@@ -18,13 +18,25 @@ class RawColumnTransaction < ApplicationRecord
   has_one :canonical_transaction, as: :transaction_source
 
   after_create :canonize, if: -> { canonical_transaction.nil? }
+  after_create if: -> { transaction_id&.start_with?("admt_") } do
+    Rails.error.unexpected("Manual Column transfer (admt_) imported", context: { raw_column_transaction_id: id, transaction_id: })
+  end
 
   def canonize
-    create_canonical_transaction!(
+    ct = create_canonical_transaction!(
       amount_cents:,
       memo:,
       date: date_posted,
     )
+
+    raw_pending_column_transaction = RawPendingColumnTransaction.find_by(column_id: column_transaction["transaction_id"])
+
+    if raw_pending_column_transaction&.canonical_pending_transaction
+      CanonicalPendingTransactionService::Settle.new(
+        canonical_transaction: ct,
+        canonical_pending_transaction: raw_pending_column_transaction.canonical_pending_transaction
+      ).run!
+    end
   end
 
   def memo

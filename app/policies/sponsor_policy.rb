@@ -2,31 +2,32 @@
 
 class SponsorPolicy < ApplicationPolicy
   def index?
-    user.auditor?
+    auditor_or_reader?
   end
 
+  # sponsors can never be seen in transparency mode
   def show?
-    user.auditor?
+    auditor_or_reader?
   end
 
   def new?
-    user.admin?
+    admin_or_member?
   end
 
   def create?
-    user.admin?
+    admin_or_member?
   end
 
   def edit?
-    user.admin?
+    admin_or_member?
   end
 
   def update?
-    user.admin?
+    admin_or_member?
   end
 
-  def destroy
-    user.admin?
+  def destroy?
+    admin_or_member?
   end
 
   def permitted_attributes
@@ -42,15 +43,19 @@ class SponsorPolicy < ApplicationPolicy
       :id
     ]
 
-    attrs << :event_id if user.admin?
+    attrs << :event_id if user&.admin?
 
     attrs
   end
 
   private
 
-  def user_has_position?
-    record.event&.users&.include?(user)
+  def auditor_or_reader?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
+  end
+
+  def admin_or_member?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record&.event, :member)
   end
 
 end

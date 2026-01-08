@@ -11,6 +11,10 @@
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #
+# Indexes
+#
+#  index_event_tags_on_name_and_purpose  (name,purpose) UNIQUE
+#
 class EventTag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
 
@@ -38,15 +42,18 @@ class EventTag < ApplicationRecord
   end
 
   module Tags
-    ORGANIZED_BY_HACK_CLUBBERS = "Organized by Hack Clubbers"
-    ORGANIZED_BY_TEENAGERS = "Organized by Teenagers"
-    CLIMATE = "Climate"
-    PARTNER_128_COLLECTIVE_FUNDED = "128 Collective Funded"
-    PARTNER_128_COLLECTIVE_RECOMMENDED = "128 Collective Recommended"
-    VERMONT_BASED = "Vermont-based"
-    ROBOTICS_TEAM = "Robotics Team"
-    HACKATHON = "Hackathon"
-    HACK_CLUB = "Hack Club"
+    ALL = [
+      ORGANIZED_BY_HACK_CLUBBERS = "Organized by Hack Clubbers",
+      ORGANIZED_BY_TEENAGERS = "Organized by Teenagers",
+      CLIMATE = "Climate",
+      PARTNER_128_COLLECTIVE_FUNDED = "128 Collective Funded",
+      PARTNER_128_COLLECTIVE_RECOMMENDED = "128 Collective Recommended",
+      VERMONT_BASED = "Vermont-based",
+      ROBOTICS_TEAM = "Robotics Team",
+      HACKATHON = "Hackathon",
+      HACK_CLUB = "Hack Club",
+      YSWS = "YSWS"
+    ].to_set
   end
 
 end

@@ -4,23 +4,28 @@
 #
 # Table name: card_grants
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer
-#  category_lock   :string
-#  email           :string           not null
-#  keyword_lock    :string
-#  merchant_lock   :string
-#  one_time_use    :boolean
-#  purpose         :string
-#  status          :integer          default("active"), not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint
-#  event_id        :bigint           not null
-#  sent_by_id      :bigint           not null
-#  stripe_card_id  :bigint
-#  subledger_id    :bigint
-#  user_id         :bigint           not null
+#  id                         :bigint           not null, primary key
+#  amount_cents               :integer
+#  banned_categories          :string
+#  banned_merchants           :string
+#  category_lock              :string
+#  email                      :string           not null
+#  instructions               :text
+#  invite_message             :string
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
@@ -61,9 +66,13 @@ class CardGrant < ApplicationRecord
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
+  has_one :pre_authorization
+  after_create :create_pre_authorization!, if: :pre_authorization_required?
+
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
+  before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
@@ -74,14 +83,18 @@ class CardGrant < ApplicationRecord
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
+  serialize :banned_merchants, coder: CommaSeparatedCoder
+  serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :purpose, length: { maximum: 30 }
+
+  MAXIMUM_PURPOSE_LENGTH = 30
+  validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_recipient, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
   scope :expires_on, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') = ?", date) }
 
@@ -95,7 +108,7 @@ class CardGrant < ApplicationRecord
     elsif pending_invite?
       "info"
     elsif stripe_card.frozen? || stripe_card.inactive?
-      "info"
+      "warning"
     else
       "success"
     end
@@ -113,6 +126,15 @@ class CardGrant < ApplicationRecord
     else
       "Active"
     end
+  end
+
+  def status_badge_type
+    s = state.to_sym
+    return :success if s == :success
+    return :error if s == :muted
+    return :warning if s == :info
+
+    :muted
   end
 
   def pending_invite?
@@ -171,7 +193,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
   end
 
   def expire!
@@ -208,14 +230,14 @@ class CardGrant < ApplicationRecord
     stripe_card&.cancel!
   end
 
-  def create_stripe_card(session)
+  def create_stripe_card(ip_address)
     return if stripe_card.present?
 
     self.stripe_card = StripeCardService::Create.new(
       card_type: "virtual",
       event_id:,
       current_user: user,
-      current_session: session,
+      ip_address:,
       subledger:,
     ).run
 
@@ -226,12 +248,20 @@ class CardGrant < ApplicationRecord
     (merchant_lock + (setting&.merchant_lock || [])).uniq
   end
 
+  def disallowed_merchants
+    (banned_merchants + (setting&.banned_merchants || [])).uniq
+  end
+
   def allowed_merchant_names
     allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
   end
 
   def allowed_categories
     (category_lock + (setting&.category_lock || [])).uniq
+  end
+
+  def disallowed_categories
+    (banned_categories + (setting&.banned_categories || [])).uniq
   end
 
   def allowed_category_names
@@ -272,7 +302,8 @@ class CardGrant < ApplicationRecord
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
-      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}."
+      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}.",
+      inviter: sent_by
     )
   end
 
@@ -304,6 +335,16 @@ class CardGrant < ApplicationRecord
 
   def send_email
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
+  end
+
+  def set_defaults
+    # If it's blank, allow it to continue being blank. This likely means the
+    # user explicitly cleared the field in the UI.
+    # However, if it's `nil`, then use the default from the setting. The field
+    # was likely left unset via the API.
+    if self.invite_message.nil?
+      self.invite_message = setting.invite_message
+    end
   end
 
 end

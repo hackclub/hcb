@@ -16,11 +16,20 @@ import { RenderResults } from './results'
 import { generateResultActions } from './search/results'
 import Icon from '@hackclub/icons'
 
-export default function CommandBar({ admin = false, adminUrls = {} }) {
+export default function CommandBar({
+  admin = false,
+  admin_override_pretend = false,
+  adminUrls = {},
+}) {
   return (
-    <div style={{ position: 'relative', zIndex: '1000' }}>
+    <div style={{ position: 'relative', zIndex: '100000000' }}>
       <KBarProvider
-        actions={[...initalActions, ...(admin ? adminActions(adminUrls) : [])]}
+        actions={[
+          ...initalActions,
+          ...(admin || admin_override_pretend
+            ? adminActions(adminUrls, !admin && admin_override_pretend)
+            : []),
+        ]}
         options={{
           disableScrollbarManagement: true,
           disableDocumentLock: true,
@@ -55,12 +64,9 @@ const animatorStyle = {
   width: '100%',
   background: 'var(--kbar-background)',
   color: 'var(--kbar-foreground)',
-  borderRadius: '6px',
+  borderRadius: 'var(--radius-xl)',
   overflow: 'hidden',
-  boxShadow: '0px 6px 20px rgb(0 0 0 / 20%)',
-  fontFamily: `ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
-               Roboto, 'Fira Sans', Oxygen, Ubuntu, 'Helvetica Neue', sans-serif`,
-  border: '1px solid var(--kbar-border)',
+  boxShadow: 'var(--shadow-modal)',
 }
 
 function SearchAndResults() {
@@ -202,7 +208,7 @@ function SearchAndResults() {
   return (
     <KBarAnimator style={animatorStyle}>
       <KBarInput
-        defaultPlaceholder={'How can I help?'}
+        defaultPlaceholder={'Search for organizations, pages, actions...'}
         placeholder={
           searched && actions.filter(x => x.id == 'result').length > 0
             ? `Successfully found ${

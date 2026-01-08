@@ -1,0 +1,257 @@
+# frozen_string_literal: true
+
+class SudoModeHandler
+  # The default rank for authentication factors (lower is better)
+  # - 0 is deliberately left available so we can use it for the user's preference
+  # - `:backup_code` is explicitly omitted as we don't want to use that for
+  #   reauthentication
+  FACTOR_PREFERENCES = {
+    webauthn: 1,
+    totp: 2,
+    sms: 3,
+    email: 4,
+  }.freeze
+
+  THRESHOLD_CENTS = 500_00
+
+  Params = Struct.new(
+    # When the form is submitted, `submit_method` determines which
+    # authentication method the user selected, which in turn determines whether
+    # `login_code` or webauthn_response` is relevant
+    :submit_method,
+    :login_code,
+    :webauthn_response,
+    # When the user first sees the reauthentication page we create a login for
+    # them whose ID is passed around over subsequent operations. It is required
+    # when completing the form.
+    :login_id,
+    # When the user clicks on an alternate authentication method, the form will be
+    # submitted with this param indicating which method they chose.
+    :switch_method,
+    keyword_init: true
+  )
+
+  # @param controller_instance [ApplicationController]
+  def initialize(controller_instance:)
+    @controller_instance = controller_instance
+  end
+
+  # @return [Boolean] whether sudo mode was obtained and sensitive actions can proceed
+  def call
+    unless sudo_params.submit_method.present?
+      render_reauthentication_page
+      return false
+    end
+
+    login =
+      Login
+      .incomplete
+      .active
+      .reauthentication
+      .find_by_hashid(sudo_params.login_id)
+
+    # If the login doesn't exist, was completed, or has expired, treat this as a
+    # new request
+    unless login
+      flash.now[:error] = "Login has expired. Please try again."
+      render_reauthentication_page
+      return false
+    end
+
+    service = ProcessLoginService.new(login:)
+
+    ok =
+      case sudo_params.submit_method
+      when "email", "sms"
+        service.process_login_code(
+          code: sudo_params.login_code,
+          sms: sudo_params.submit_method == "sms"
+        )
+      when "totp"
+        service.process_totp(
+          code: sudo_params.login_code
+        )
+      when "webauthn"
+        service.process_webauthn(
+          raw_credential: sudo_params.webauthn_response,
+          challenge: session[:webauthn_challenge]
+        )
+      else
+        raise ActionController::ParameterMissing.new(:submit_method)
+      end
+
+    unless ok
+      flash.now[:error] = service.errors.full_messages.to_sentence
+      render_reauthentication_page(login:)
+      return false
+    end
+
+    login.update!(user_session: current_session)
+    current_session.reload
+
+    true
+  end
+
+  private
+
+  attr_reader(:controller_instance)
+
+  delegate(
+    :current_user,
+    :current_session,
+    :params,
+    :session,
+    :request,
+    :flash,
+    to: :controller_instance,
+    private: true
+  )
+
+  def sudo_params
+    @sudo_params ||= begin
+      nested = params[:_sudo]
+
+      if nested.is_a?(ActionController::Parameters)
+        Params.new(
+          **nested.permit(
+            :submit_method,
+            :switch_method,
+            :login_id,
+            :login_code,
+            :webauthn_response,
+          )
+        )
+      else
+        Params.new
+      end
+    end
+  end
+
+  def sorted_factors(login)
+    factor_preference = FACTOR_PREFERENCES
+
+    # Put the user's preference first
+    user_preference = sudo_params.switch_method.presence || session[:login_preference].presence
+    if user_preference.present? && factor_preference.key?(user_preference.to_sym)
+      factor_preference = factor_preference.merge(user_preference.to_sym => 0)
+    end
+
+    # Filter available factors down to only those present in
+    # `FACTOR_PREFERENCES` and sort based on their associated ranks.
+    (login.available_factors & FACTOR_PREFERENCES.keys)
+      .sort_by { |factor| factor_preference.fetch(factor) }
+  end
+
+  # Extracts the request parameters as a flat list of key-value pairs (instead
+  # of following Rack's nesting conventions) so that we can re-submit them along
+  # with the sudo credentials.
+  #
+  # @return [Hash<String, Array<String>>]
+  def forwarded_params
+    # Mimic the behaviour of `ActionDispatch::Http::Parameters#parameters` to
+    # obtain a single hash of both request and query parameters.
+    # https://github.com/rails/rails/blob/3235827585d87661942c91bc81f64f56d710f0b2/actionpack/lib/action_dispatch/http/parameters.rb#L57
+    all_params = request.request_parameters.merge(request.query_parameters)
+
+    Rack::Utils
+      # Re-encoding params to immediately parse them may seem wasteful, but it
+      # means we don't have to re-implement Rack's nested param encoding logic
+      .parse_query(all_params.to_query)
+      .reject do |name, _value_or_values|
+        case name
+        # Both of these fields will be regenerated by `form_tag`
+        when "authenticity_token", "_method"
+          true
+        else
+          # Skip anything that is part of the sudo functionality
+          name.start_with?("_sudo")
+        end
+      end
+      .transform_values do |value_or_values|
+        # `Rack::Utils.parse_query` returns a hash of param names to values but
+        # returns an array of values for repeated params (as is the convention
+        # params like `tags[]`). Rather than dealing with both cases we just
+        # make everything an array.
+        if value_or_values.is_a?(Array)
+          value_or_values
+        else
+          [value_or_values]
+        end
+      end
+  end
+
+  def find_or_create_login!
+    existing =
+      if sudo_params.login_id.present?
+        Login.incomplete.active.find_by_hashid(sudo_params.login_id)
+      end
+
+    return existing if existing
+
+    Login.create!(user: current_user, is_reauthentication: true)
+  end
+
+  def form_locals
+    if request.request_method_symbol == :get
+      {
+        # In the case where we get a GET request, we want to avoid submitting the
+        # reauthentication form to the same endpoint as
+        # 1. We'd end up with sudo params in the query string
+        # 2. We would be altering server state on a safe request, which breaks HTTP
+        #    semantics (https://developer.mozilla.org/en-US/docs/Glossary/Safe/HTTP)
+        # Instead, we submit the request to a different endpoint and redirect back to
+        # where we were going.
+        form_action: Rails.application.routes.url_helpers.reauthenticate_logins_path,
+        form_method: :post,
+        # All necessary params should already be contained in `request.fullpath`
+        # (path + query string), so the only thing we need to set and
+        # subsequently preserve is `return_to`.
+        forwarded_params: { return_to: [params[:return_to].presence || request.fullpath], },
+      }
+    else
+      {
+        form_action: request.path,
+        form_method: request.request_method_symbol,
+        forwarded_params:,
+      }
+    end
+  end
+
+  def render_reauthentication_page(login: find_or_create_login!)
+    default_factor, *additional_factors = sorted_factors(login)
+
+    # In the case where we know we're going to ask for an SMS or email code,
+    # send it ahead of time so the user doesn't have to perform an additional
+    # step
+    if [:sms, :email].include?(default_factor)
+      LoginCodeService::Request.new(
+        email: current_user.email,
+        sms: default_factor == :sms,
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent
+      ).run
+    end
+
+    # Remove extra content from the layout so we only have the
+    # reauthentication form on the page.
+    controller_instance.instance_variable_set(:@no_app_shell, true)
+
+    controller_instance.render(
+      template: "sudo_mode/reauthenticate",
+      layout: "application",
+      locals: {
+        login:,
+        additional_factors:,
+        default_factor:,
+        break_out_of_turbo_frame:,
+        **form_locals,
+      },
+      status: :unauthorized
+    )
+  end
+
+  def break_out_of_turbo_frame
+    request.get? && controller_instance.send(:turbo_frame_request?)
+  end
+
+end

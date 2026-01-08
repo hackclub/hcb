@@ -29,7 +29,7 @@
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
   <div class="receipts_wrapper_mobile">
-    <%= render "receipts/list_v2" %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
   <div class="event_wrapper">
     <%= link_to event, style: "max-width: 90vw", class: "draggable text-decoration-none" do %>
@@ -38,12 +38,12 @@
           <% if event.logo.attached? %>
             <div style="display: flex; gap: 8px; align-items: center;">
               <%= image_tag event.logo, height: 24, width: 24, class: "rounded display-inline align-bottom" %>
-              <strong class="h3 line-height-2 display-inline">
+              <strong class="h3 leading-[1.125] display-inline">
                 <%= event.name %>
               </strong>
             </div>
           <% else %>
-            <strong class="h3 line-height-2 display-inline">
+            <strong class="h3 leading-[1.125] display-inline">
               <%= event.name %>
             </strong>
           <% end %>
@@ -54,7 +54,7 @@
         <% if event.demo_mode? %>
           <div class="badge bg-info ml0 mb2" style="width: fit-content;">Playground Mode</div>
         <% end %>
-        <div class="h4 line-height-2 mb2 flex justify-between item-center">
+        <div class="h4 leading-[1.125] mb2 flex justify-between item-center">
           <span style="white-space: nowrap; gap: 4px;" class="flex items-center">
             <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
             <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
@@ -98,7 +98,7 @@
             <p>
               <strong>
                 <a
-                  href="https://changelog.hcb.hackclub.com/bank-now-provides-free-durian-241524">Fee waiver</a> expiration
+                  href="https://blog.hcb.hackclub.com/posts/hackathon-grants-and-0-fee-241524">Fee waiver</a> expiration
               </strong>
               <span>December 31st, 2023</span>
             </p>
@@ -113,13 +113,13 @@
     <% end %>
   </div>
   <div class="receipts_wrapper_desktop">
-    <%= render "receipts/list_v2" %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
   </div>
 </div>
 
 <div class="action_row">
-  <%= link_to "Looks good! 🌈 ✨", admin_ledger_audits_task_reviewed_path(@task), class: "btn", method: :POST %>
-  <%= link_to "Looks fishy... 🐡", admin_ledger_audits_task_flagged_path(@task), class: "btn bg-error", method: :POST %>
+  <%= link_to "Looks good! 🌈 ✨", admin_ledger_audits_task_reviewed_path(@task), class: "btn", method: :post %>
+  <%= link_to "Looks fishy... 🐡", admin_ledger_audits_task_flagged_path(@task), class: "btn bg-error", method: :post %>
 </div>
 
 <div style="max-width: 600px; margin-left: auto; margin-right: auto;" class="mt4">

@@ -53,6 +53,13 @@ class DonationsController < ApplicationController
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
+    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
+    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
+    if params[:tier_id] && @tier.nil?
+      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
+    end
+
+
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
       email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
@@ -73,7 +80,7 @@ class DonationsController < ApplicationController
 
     authorize @donation
 
-    @monthly = params[:monthly].present?
+    @monthly = params[:monthly].present? || params[:tier_id].present?
 
     if @monthly
       @recurring_donation = @event.recurring_donations.build(
@@ -99,7 +106,7 @@ class DonationsController < ApplicationController
       d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
     end
 
-    if d_params[:name] == "aser ras"
+    if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
       skip_authorization
       redirect_to root_url and return
     end

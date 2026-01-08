@@ -94,7 +94,7 @@ class TwilioController < ActionController::Base
 
   # if we are inheriting a recently created report
   def set_reimbursement_report
-    @report = @user.reimbursement_reports.where(event_id: nil, updated_at: 24.hours.ago..).order(created_at: :desc)&.first
+    @report = @user&.reimbursement_reports&.where(event_id: nil, updated_at: 24.hours.ago..)&.order(created_at: :desc)&.first
   end
 
   def reimbursement?

@@ -1,0 +1,24 @@
+<%# locals: (hcb_code:, render_memo: false) %>
+
+<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading" style="gap: 1ch">
+  <%= turbo_frame_tag hcb_code, class: "flex items-start gap-2 flex-grow" do %>
+    <% if hcb_code.custom_memo.nil? && !render_memo %>
+      <%= yield %>
+    <% else %>
+      <span>
+        <span data-memo-for="<%= dom_id(hcb_code) %>"><%= hcb_code.memo %></span>
+        <span class="regular muted"> for </span>
+        <span class="regular"><%= render_money hcb_code.amount_cents_by_event(hcb_code.event).abs %></span>
+      </span>
+    <% end %>
+
+    <%= render "hcb_codes/memo_stream", hcb_code: %>
+    <%= render partial: "hcb_codes/ai_memo", locals: { hcb_code: } %>
+    <div class="flex-1"></div>
+    <%= pop_icon_to "edit",
+        edit_hcb_code_path(hcb_code),
+        class: "align-middle tooltipped tooltipped--s", "aria-label": "Rename",
+        data: { turbo: true } if organizer_signed_in?(as: :member) %>
+    <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: } %>
+  <% end %>
+</h2>

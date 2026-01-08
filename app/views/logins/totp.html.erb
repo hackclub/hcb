@@ -3,19 +3,39 @@
 
 <div class="flex flex-col flex-1 justify-center">
   <div class="flex flex-col justify-between items-start">
-    <%= render "header", label: "Sign in to HCB" do %>
+    <%= render "logins/header", label: "Sign in to HCB" do %>
       One-time code
     <% end %>
-    <%= render "badge", user: @login.user %>
+    <%= render "logins/badge", user: @login.user %>
   </div>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>
   <%= form_tag complete_login_path(@login) do %>
-    <%= text_field :code, "", name: "code", placeholder: "Enter your one time password code", class: "left-align mb2 !max-w-full w-max", required: true, autofocus: true unless Flipper.enabled?(:otp_single_input, @login.user) %>
-
-    <%= text_field :code, "", name: "code", class: "otp_code", autocomplete: "one-time-code", required: true, autofocus: true, inputmode: "numeric", maxlength: "6", data: { behavior: "otp_input" } if Flipper.enabled?(:otp_single_input, @login.user) %>
+    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
+      <%= text_field_tag(
+            :code,
+            "",
+            class: "otp_code",
+            autocomplete: "one-time-code",
+            required: true,
+            autofocus: true,
+            inputmode: "numeric",
+            maxlength: "6",
+            data: { behavior: "otp_input" }
+          ) %>
+    <% else %>
+      <%= text_field_tag(
+            :code,
+            "",
+            placeholder: "Enter your one time password code",
+            autocomplete: "one-time-code",
+            class: "text-left mb2 !max-w-full w-max",
+            required: true,
+            autofocus: true
+          ) %>
+    <% end %>
 
     <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
@@ -35,5 +55,5 @@
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>

@@ -4,7 +4,7 @@ class OrganizerPositionInvitesController < ApplicationController
   include SetEvent
   include ChangePositionRole
 
-  before_action :set_opi, only: [:show, :accept, :reject, :cancel, :toggle_signee_status, :resend]
+  before_action :set_opi, except: [:new, :create]
   before_action :set_event, only: [:new, :create]
   before_action :hide_footer, only: :show
 
@@ -32,7 +32,9 @@ class OrganizerPositionInvitesController < ApplicationController
     authorize @invite
 
     if service.run
-      OrganizerPosition::Contract.create(organizer_position_invite: @invite, cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos]) if @invite.is_signee
+      if @invite.is_signee
+        @invite.send_contract(cosigner_email: invite_params[:cosigner_email].presence, include_videos: invite_params[:include_videos])
+      end
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
@@ -57,6 +59,13 @@ class OrganizerPositionInvitesController < ApplicationController
     elsif @invite.rejected?
       redirect_to root_path, flash: { error: "You’ve already rejected this invitation." }
     end
+  rescue Pundit::NotAuthorizedError
+    if @invite.user != current_user
+      flash[:error] = "This invitation was sent to #{@invite.user.redacted_email}, but you are currently logged in as #{current_user.email }."
+      redirect_to root_path and return
+    end
+
+    raise
   end
 
   def accept
@@ -103,12 +112,13 @@ class OrganizerPositionInvitesController < ApplicationController
     redirect_to event_team_path @invite.event
   end
 
-  def toggle_signee_status
+  def send_contract
     authorize @invite
-    unless @invite.update(is_signee: !@invite.is_signee?)
-      flash[:error] = @invite.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(@invite.event))
+
+    @invite.send_contract(cosigner_email: params[:cosigner_email].presence, include_videos: params[:include_videos])
+
+    flash[:success] = "Contract successfully sent"
+    redirect_to event_team_path @invite.event
   end
 
   private
@@ -119,9 +129,10 @@ class OrganizerPositionInvitesController < ApplicationController
 
   def invite_params
     permitted_params = [:email, :role, :enable_controls, :initial_control_allowance_amount]
-    permitted_params << :cosigner_email if admin_signed_in?
-    permitted_params << :include_videos if admin_signed_in?
-    permitted_params << :is_signee if admin_signed_in?
+
+    if admin_signed_in?
+      permitted_params.push(:cosigner_email, :include_videos, :is_signee)
+    end
     params.require(:organizer_position_invite).permit(permitted_params)
   end
 

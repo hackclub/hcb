@@ -44,14 +44,14 @@ IntraFi is the one exception. IntraFi unfortunately doesn't play well with Plaid
 Therefore, we sync IntraFi's transactions into this HCB manually. IntraFi
 provides a CSV export with the following headings: `Date`, `Account Activity`,
 `Amount`, and `Balance`. Each row represents a transaction and should be
-imported as a `RawIntrafiTransaction`:
+imported as a [`RawIntrafiTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/raw_intrafi_transaction.rb):
 
 ```ruby
 RawIntrafiTransaction.create(date_posted: tx[:Date], memo: tx[:"Account Activity"], amount_cents: tx[:Amount] * 100)
 ```
 
-All IntraFi transactions should be mapped to the HCB Sweeps organisation; *
-*except** for Interest Capitalization transactions. These are auto-mapped to
+All IntraFi transactions should be mapped to the HCB Sweeps organisation;
+**except** for Interest Capitalization transactions. These are auto-mapped to
 **Hack Foundation Interest Earnings**.
 
 After a batch of transactions has imported, HCB Sweep's balance should be

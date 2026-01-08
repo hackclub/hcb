@@ -16,6 +16,7 @@ export default class extends Controller {
     appendTo: String,
     placement: { type: String, default: 'bottom-start' },
     contentId: String,
+    updateOnResize: { type: Boolean, default: false }, // See https://github.com/hackclub/hcb/issues/8588
   }
 
   initialize() {
@@ -60,7 +61,7 @@ export default class extends Controller {
       this.content,
       this.computePosition.bind(this, false),
       {
-        elementResize: false, // See https://github.com/hackclub/hcb/issues/8588
+        elementResize: this.updateOnResizeValue,
       }
     )
   }
@@ -111,13 +112,14 @@ export default class extends Controller {
     computePosition(this.toggleTarget, this.content, {
       placement: this.placementValue,
       middleware: [
-        offset(5),
-        flip({ padding: 5 }),
+        offset(this.placementValue.includes('top') ? 0 : 10),
+        flip({ padding: 4 }),
         size({
           padding: 5,
-          apply({ availableHeight, elements }) {
+          apply({ availableHeight, availableWidth, elements }) {
             Object.assign(elements.floating.style, {
               maxHeight: `${availableHeight}px`,
+              maxWidth: `${availableWidth}px`,
             })
           },
         }),
@@ -130,9 +132,9 @@ export default class extends Controller {
       if (firstTime) {
         // Animate!
         gsap.from(this.content, {
-          y: placement.includes('top') ? -15 : 15,
-          opacity: 0,
-          duration: 0.25,
+          y: placement.includes('top') ? -12 : 12,
+          opacity: 0.75,
+          duration: 0.15,
         })
       }
 

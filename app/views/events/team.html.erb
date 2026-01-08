@@ -1,8 +1,8 @@
 <% title "Team overview" %>
 <% page_md %>
-<%= render "nav", selected: :team %>
+<%= render "events/nav", selected: :team %>
 
-<h1 class="heading">
+<h1 class="heading gap-2 mb-0 border-0">
   <span class="flex flex-grow items-center">
     Team
     <%= badge_for @all_positions.size, class: "bg-muted" %>
@@ -15,8 +15,8 @@
    "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{params[:q]}" if params[:q]}#{"&filter=#{params[:filter]}" if params[:filter]}" %>
 
   <% if auditor_signed_in? && @event.config.contact_email.present? %>
-    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 36px; width: 36px;" do %>
-      <%= link_to "mailto:#{@event.config.contact_email}", class: "flex items-center justify-center", style: "transform: translateY(1px) scale(0.8)" do %>
+    <% admin_tool "!p-0 w-9 h-9 relative", style: "box-sizing: content-box" do %>
+      <%= link_to "mailto:#{@event.config.contact_email}", class: "absolute top-0 left-0 w-9 h-9 flex items-center justify-center" do %>
         <%= inline_icon "email", color: "#ff8c37" %>
       <% end %>
     <% end %>
@@ -32,37 +32,60 @@
   <% end %>
 </h1>
 
-<div class="filterbar flex flex-row justify-between items-center width-100" style="gap: 16px">
-  <%= form_with(model: nil, local: true, method: :get, class: "flex-auto md-mr2") do |form| %>
-    <%= render "search", form: %>
+<% if @event.parent.present? %>
+  <%= render "application/callout", title: "The team behind #{@event.parent.name} also has access to #{@event.name}", type: "info", icon: "leader" do %>
+    <p>Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, all team members of <%= @event.parent.name %> can access and view this organization.</p>
+
+    <% if @indirect_access.present? %>
+      <p>These team members can access this organization:</p>
+
+      <div class="grid">
+        <% @indirect_access.each do |user, role| %>
+          <span class="flex">
+            <%= user_mention(user) %><%= role == "manager" ? "can manage" : "can view" %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>
+
+<div class="mb-4 flex flex-row justify-between items-center width-100 gap-2">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
+    <%= render "events/search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
-  <div style="text-align: center;">
+  <div class="filterbar">
     <% ["all", "readers", "members", "managers"].each do |filter| %>
       <%= link_to filter.capitalize, "?filter=#{filter}#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == filter || !params[:filter] && filter == "all", role: "tab" %>
+    <% end %>
+    <% if auditor_signed_in? %>
+      <%= link_to "Active teenagers", "?filter=active_teenagers#{'&view=list' if @view == 'list'}#{"&q=#{params[:q]}" if params[:q]}", class: "filterbar__item", "aria-selected": params[:filter] == "active_teenagers", role: "tab" %>
     <% end %>
   </div>
 </div>
 <% if @view == "list" %>
   <% if @all_positions.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>Date invited</th>
-        <th>Name</th>
-        <th>Role</th>
-        <th>Contact</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-    <% if @all_positions.any? %>
-      <%= turbo_frame_tag "team_position" do %>
-        <%= render partial: "organizer_positions/organizer_position_row", collection: @positions, as: :organizer_position %>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date invited</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Contact</th>
+          <th><%# spending controls and remove buttons %></th>
+        </tr>
+      </thead>
+      <tbody>
+      <% if @all_positions.any? %>
+        <%= turbo_frame_tag "team_position" do %>
+          <%= render partial: "organizer_positions/organizer_position_row", collection: @positions, as: :organizer_position %>
+        <% end %>
       <% end %>
-    <% end %>
-  </table>
+    </table>
+  </article>
   <%= paginate @positions %>
   <% else %>
     <%= blankslate @event.organizer_positions.none? ? "No team members" : "No team members found" %>
@@ -81,19 +104,59 @@
   <% end %>
 <% end %>
 
-<% if @pending.any? %>
+<% if @invite_requests.any? %>
+  <h2 class="flex items-center mt3 mb2">
+    Pending join requests
+    <%= badge_for @invite_requests.size, class: "bg-muted" %>
+  </h2>
+  <ul class="grid grid--narrow text-left w-full mt-2">
+    <% @invite_requests.each do |invite_request| %>
+      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="approve_invite_request_<%= invite_request.hashid %>">
+        <%= modal_header "Approve invite request" %>
+
+        <%= render "organizer_position_invite/requests/approval_form", invite_request: %>
+      </section>
+      <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+        <span class="w-full flex gap-2 items-center align-middle">
+          <%= user_mention invite_request.requester %>
+          <div class="flex-grow"></div>
+          <%= pop_icon_to "checkmark",
+                          approve_request_path(invite_request),
+                          class: "success tooltipped tooltipped--w h-8 w-8",
+                          data: {
+                            behavior: "modal_trigger",
+                            modal: "approve_invite_request_#{invite_request.hashid}",
+                          },
+                          'aria-label': "Approve",
+                          disabled: !policy(invite_request).approve? %>
+          <%= pop_icon_to "forbidden",
+                          deny_request_path(invite_request),
+                          class: "error tooltipped tooltipped--w h-8 w-8",
+                          data: {
+                            turbo_method: :post,
+                            turbo_confirm: "Are you sure you want to deny this join request?",
+                          },
+                          'aria-label': "Deny",
+                          disabled: !policy(invite_request).deny? %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @invites.any? %>
   <h2 class="flex items-center mt3 mb2">
     Pending invitations
-    <%= badge_for @pending.size, class: "bg-muted" %>
+    <%= badge_for @invites.size, class: "bg-muted" %>
   </h2>
 
   <div class="flex flex-col" style="gap: 0.5rem">
-    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @pending %>
+    <%= render partial: "organizer_position_invites/organizer_position_invite", collection: @invites %>
   </div>
 <% end %>
 
-<% admin_tool("mt2") do %>
-  <h2 class="flex items-center mt3 mb2">
+<% admin_tool("mt2 p-3") do %>
+  <h2 class="flex items-center mt1 mb2">
     Previous members
     <%= badge_for @event.organizer_positions.with_deleted.where.not(deleted_at: nil).count, class: "bg-muted" %>
   </h2>
@@ -115,5 +178,6 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="invite_member">
     <%= modal_header "Invite a team member" %>
     <%= render "organizer_position_invites/form", invite: OrganizerPositionInviteService::Create.new(event: @event).model %>
+    <%= render "events/invite_links_section", event: @event, invite_links: @invite_links %>
   </section>
 <% end %>

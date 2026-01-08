@@ -30,6 +30,7 @@
 #  created_at                            :datetime         not null
 #  updated_at                            :datetime         not null
 #  event_id                              :bigint           not null
+#  last_frozen_by_id                     :bigint
 #  replacement_for_id                    :bigint
 #  stripe_card_personalization_design_id :integer
 #  stripe_cardholder_id                  :bigint           not null
@@ -39,6 +40,7 @@
 # Indexes
 #
 #  index_stripe_cards_on_event_id              (event_id)
+#  index_stripe_cards_on_last_frozen_by_id     (last_frozen_by_id)
 #  index_stripe_cards_on_replacement_for_id    (replacement_for_id)
 #  index_stripe_cards_on_stripe_cardholder_id  (stripe_cardholder_id)
 #  index_stripe_cards_on_stripe_id             (stripe_id) UNIQUE
@@ -47,6 +49,7 @@
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (last_frozen_by_id => users.id)
 #  fk_rails_...  (stripe_cardholder_id => stripe_cardholders.id)
 #
 class StripeCard < ApplicationRecord
@@ -71,7 +74,6 @@ class StripeCard < ApplicationRecord
   scope :frozen, -> { where(stripe_status: "inactive", initially_activated: true) }
   scope :active, -> { where(stripe_status: "active") }
   scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
-  scope :physical_shipping, -> { physical.includes(:user, :event).reject { |c| c.stripe_obj[:shipping][:status] == "delivered" } }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
@@ -79,8 +81,10 @@ class StripeCard < ApplicationRecord
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
+  belongs_to :last_frozen_by, class_name: "User", optional: true
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
+  validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }, on: :create
   has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
@@ -126,6 +130,13 @@ class StripeCard < ApplicationRecord
     self.canceled_at = Time.now if stripe_status_changed?(to: "canceled")
   end
 
+  def self.cards_in_shipping
+    physical.where.not(stripe_status: "canceled")
+            .where(initially_activated: false)
+            .includes(:user, :event)
+            .reject { |c| c.stripe_obj[:shipping][:status] == "delivered" || c.shipping_eta&.past? }
+  end
+
   def full_card_number
     secret_details[:number]
   end
@@ -135,7 +146,7 @@ class StripeCard < ApplicationRecord
   end
 
   def url
-    Airbrake.notify("StripeCard#url used")
+    Rails.error.unexpected "StripeCard#url used"
     "/stripe_cards/#{hashid}"
   end
 
@@ -192,9 +203,10 @@ class StripeCard < ApplicationRecord
     status_badge_type
   end
 
-  def freeze!
+  def freeze!(frozen_by: User.system_user)
     StripeService::Issuing::Card.update(self.stripe_id, status: :inactive)
     sync_from_stripe!
+    self.last_frozen_by = frozen_by
     save!
   end
 
@@ -214,13 +226,6 @@ class StripeCard < ApplicationRecord
 
   def frozen?
     initially_activated? && stripe_status == "inactive"
-  end
-
-  def last_frozen_by
-    user_id = versions.where_object_changes_to(stripe_status: "inactive").last&.whodunnit
-    return nil unless user_id
-
-    User.find_by_id(user_id)
   end
 
   def active?
@@ -246,7 +251,17 @@ class StripeCard < ApplicationRecord
   def stripe_obj
     @stripe_obj ||= ::Stripe::Issuing::Card.retrieve(id: stripe_id)
   rescue => e
-    RecursiveOpenStruct.new({ number: "XXXX", cvc: "XXX", created: Time.now.utc.to_i, shipping: { status: "delivered", carrier: "USPS", eta: 2.weeks.ago, tracking_number: "12345678s9" } })
+    OpenStruct.new(
+      number: "XXXX",
+      cvc: "XXX",
+      created: Time.now.utc.to_i,
+      shipping: OpenStruct.new(
+        status: "delivered",
+        carrier: "USPS",
+        eta: 2.weeks.ago,
+        tracking_number: "12345678s9"
+      )
+    )
   end
 
   def secret_details
@@ -288,7 +303,14 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
-    self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
+    # On ~2024-03-26, Stripe introduced personalization designs for physical cards
+    # This resulted in older cards not having a personalization design ID.
+    # This fix checks if its an old card without a personalization design ID and sets it to the default black design.
+    if self.created_at < Time.utc(2024, 3, 27) && stripe_obj[:personalization_design].nil?
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.default&.id
+    else
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
+    end
 
     if stripe_obj[:status] == "active"
       self.initially_activated = true
@@ -335,13 +357,12 @@ class StripeCard < ApplicationRecord
     @canonical_transactions ||= CanonicalTransaction.stripe_transaction.where("raw_stripe_transactions.stripe_transaction->>'card' = ?", stripe_id)
   end
 
-  def hcb_codes
-    all_hcb_codes = canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
-    if Flipper.enabled?(:transaction_tags_2022_07_29, self.event)
-      @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
-    else
-      @hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes)
-    end
+  def all_hcb_codes
+    canonical_transaction_hcb_codes + canonical_pending_transaction_hcb_codes
+  end
+
+  def local_hcb_codes
+    @local_hcb_codes ||= ::HcbCode.where(hcb_code: all_hcb_codes).includes(:tags)
   end
 
   def remote_shipping_status
@@ -376,8 +397,8 @@ class StripeCard < ApplicationRecord
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
   end
 
-  def ephemeral_key(nonce:)
-    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: "2020-03-02" })
+  def ephemeral_key(nonce:, stripe_version: "2020-03-02")
+    Stripe::EphemeralKey.create({ nonce:, issuing_card: stripe_id }, { stripe_version: })
   end
 
   private
@@ -391,9 +412,9 @@ class StripeCard < ApplicationRecord
   end
 
   def notify_user
-    if virtual?
+    if virtual? && card_grant.nil?
       StripeCardMailer.with(card_id: self.id).virtual_card_ordered.deliver_later
-    else
+    elsif physical?
       StripeCardMailer.with(card_id: self.id).physical_card_ordered.deliver_later
     end
   end

@@ -3,23 +3,33 @@
 module Api
   module V4
     class DonationsController < ApplicationController
+      include SetEvent
+
+      before_action :set_api_event, only: [:create]
+
       def create
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
+        amount = params[:amount_cents]
+        if params[:fee_covered] && @event.config.cover_donation_fees
+          amount /= (1 - @event.revenue_fee).ceil
+        end
 
         @donation = Donation.new({
-                                   amount: params[:amount_cents],
+                                   amount:,
                                    event_id: @event.id,
                                    collected_by_id: current_user.id,
                                    in_person: true,
-                                   name: params[:name] || nil,
-                                   email: params[:email] || nil
+                                   name: params[:name].presence,
+                                   email: params[:email].presence,
+                                   anonymous: !!params[:anonymous],
+                                   tax_deductible: params[:tax_deductible].nil? || params[:tax_deductible],
+                                   fee_covered: !!params[:fee_covered] && @event.config.cover_donation_fees
                                  })
 
         authorize @donation
 
         @donation.save!
 
-        render "show"
+        render "show", status: :created
       end
 
     end

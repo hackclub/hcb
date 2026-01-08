@@ -1,7 +1,7 @@
 <% instance = local_assigns.__id__ %>
-<div id="receipt_upload_form">
+<div id="<%= defined?(receiptable) ? "#{receiptable.id}_" : "" %>receipt_upload_form">
   <div class="<%= "mb3" if defined?(include_spacing) %>" style="position: relative;">
-    <%= form_with model: nil, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
+    <%= form_with model: false, url: receipts_path, method: :post, remote: true, class: "flex flex-col justify-center#{" my-inbox-dropzone" if defined?(restricted_dropzone)}", data: {
           turbo: defined?(turbo) ? turbo : "false",
           controller: "file-drop form",
           action: "
@@ -21,7 +21,7 @@
           "
         } do |form| %>
 
-      <div class="card <%= "mt2" if defined?(include_spacing) %> flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
+      <div class="card flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
         <% if defined?(show_banner) %>
           <% if defined?(receiptable) && receiptable.receipts.any? %>
             <p class="card__banner bg-success white bold flex items-center mt0 mb2">
@@ -43,14 +43,15 @@
           <% end %>
           <%= (form.hidden_field :receiptable_type, value: receiptable.class) if defined?(receiptable) %>
           <%= (form.hidden_field :receiptable_id, value: receiptable.id) if defined?(receiptable) %>
-          <%= (form.hidden_field :popover, value: local_assigns[:popover]) %>
+          <%= form.hidden_field :popover, value: local_assigns[:popover] %>
           <%= (form.hidden_field :show_link, value: true) if defined?(inline_linking) %>
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
-          <%= (form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button]) %>
-          <%= (form.hidden_field :show_author_img, value: local_assigns[:show_author_img]) %>
-          <%= (form.hidden_field :s, value: local_assigns[:secret]) %>
+          <%= form.hidden_field :show_receipt_button, value: local_assigns[:show_receipt_button] %>
+          <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_img] %>
+          <%= form.hidden_field :ledger_instance, value: @ledger_instance %>
+          <%= form.hidden_field :s, value: local_assigns[:secret] %>
 
-          <%= form.file_field :file,
+          <%= form.file_field @ledger_instance.present? ? "file_#{@ledger_instance}" : "file",
                               multiple: true,
                               include_hidden: false,
                               required: true,
@@ -61,8 +62,13 @@
                                 "file-drop-target" => "fileInput",
                                 "action"           => "change->form#submit"
                               } %>
-          <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :file, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-receipt-button" do %>
+          <span class="flex items-center justify-center flex-row flex-wrap gap-2">
+            <% additional_classes = [].tap do |array|
+                 array << "bg-success" if local_assigns[:success]
+                 array << "bg-error" if local_assigns[:error]
+                 array << "disabled" if defined?(receiptable) && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
+               end.join(", ") %>
+            <%= form.label @ledger_instance.present? ? "file_#{@ledger_instance}" : "file", class: "btn #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
                 <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
@@ -80,7 +86,7 @@
               <% end %>
             <% end %>
             <% if defined?(enable_linking) %>
-              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
+              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
                 <%= inline_icon "payment-docs" %>
                 <span>Select from Receipt Bin</span>
               <% end %>
@@ -99,7 +105,7 @@
           <%= pop_icon_to "view-close", nil, class: "modal__close muted m1", tabindex: 0, onclick: "event.preventDefault(); $('#link_receipt_#{instance.to_json}_select').hide(); $('#link_receipt_#{instance.to_json}_form').show();" %>
           <h2 class="h1 mt0 mb0 pb0 border-none">Select receipt</h2>
         </header>
-        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: true) do %>
+        <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, popover: local_assigns[:popover], streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
           <strong>Loading...</strong>
         <% end %>
       </section>
@@ -120,7 +126,7 @@
   <% if defined?(enable_linking) && defined?(receiptable) && !defined?(inline_linking) %>
     <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
       <%= modal_header "Select receipt" %>
-      <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false") do %>
+      <%= turbo_frame_tag "link_modal_#{receiptable.id}", src: link_modal_receipts_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, streams: defined?(turbo) ? turbo : "false", show_author_img: local_assigns[:show_author_img], show_receipt_button: local_assigns[:show_receipt_button]) do %>
         <strong>Loading...</strong>
       <% end %>
     </section>

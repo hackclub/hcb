@@ -1,61 +1,50 @@
 <% expense = @hcb_code.reimbursement_expense_payout.expense %>
 
-<div class="mt4 mb2">
-  <article class="card pb0 mb1">
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
-    <h2 class="h2 mt0 mx0 border-none flex items-center justify-between">
-      <div class="flex-auto">
-        <%= turbo_frame_tag @hcb_code do %>
-          <%= pop_icon_to "edit",
-              edit_hcb_code_path(@hcb_code),
-              class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
-              data: { turbo: true } %>
+  <section class="hcb-code--details">
+    <div>
+      <strong>Date</strong>
+      <%= format_date @hcb_code.date %>
+    </div>
+    <div>
+      <strong>Type</strong>
+      <% if expense.is_fee? %>
+        Wise transfer fee
+      <% else %>
+        Reimbursed expense
+      <% end %>
+    </div>
+  </section>
+  <section class="hcb-code--info">
+    <p>
+      <strong>Associated report</strong>
+      <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
+    </p>
+    <% if expense.description.present? %>
+      <p>
+        <strong>Description</strong>
+        <%= expense.description %>
+      </p>
+    <% end %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
 
-          <span class="align-middle"
-                data-controller="navigation"
-                data-action="dblclick->navigation#navigate"
-                data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
-                data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-            <span class="regular muted"> for </span>
-            <%= number_to_currency(@hcb_code.amount) %>
-          </span>
-
-          <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
-        <% end %>
+  <% if expense.is_fee? %>
+    <section class="card__banner relative bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
+      <%= inline_icon "wise", size: 16 %>
+      <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
+        Wise imposes fees for processing reimbursements
+        <span class="md:flex-grow"></span>
+        <%= link_to "Learn more about Wise transfers on HCB →", "https://help.hcb.hackclub.com/article/65-wise", class: "dark:!text-[#9FE870] !text-[#163300] bold no-underline after:content-[''] after:top-0 after:left-0 after:bottom-0 after:right-0 after:z-index-1 after:absolute", target: "_blank" %>
       </div>
-    </h2>
-
-    <section class="card__banner card__darker details-horiz border-top">
-      <p>
-        <strong>Date</strong>
-        <%= format_date @hcb_code.date %>
-      </p>
-      <p>
-        <strong>Type</strong>
-        Reimbursed Expense
-      </p>
     </section>
-    <section class='details pt2 pb2'>
-      <% if Flipper.enabled?(:transaction_tags_2022_07_29, (@event || @hcb_code.event)) %>
-        <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
-      <% end %>
-      <p>
-        <strong>Associated Report</strong>
-        <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
-      </p>
-      <% if expense.description.present? %>
-        <p>
-          <strong>Description</strong>
-          <%= expense.description %>
-        </p>
-      <% end %>
-    </section>
+  <% end %>
+</article>
 
-  </article>
-  <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
-    <%= render partial: "hcb_codes/pin", locals: { hcb_code: @hcb_code } %>
-  </div>
+<div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
+  <%= render partial: "hcb_codes/pin", locals: { hcb_code: @hcb_code } %>
 </div>
 
 <div class="mb4">

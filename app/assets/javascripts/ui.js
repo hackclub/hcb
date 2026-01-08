@@ -14,6 +14,8 @@ const loadModals = element => {
       e.stopPropagation()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
+      fadeDuration: 200,
+      fadeDelay: 0.75,
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
@@ -116,13 +118,90 @@ $(document).keydown(function (e) {
   }
 })
 
+window.attachTooltipListener = () => {
+  const tooltip = document.getElementById("tooltip-container");
+  let mutationObserver = null;
+
+  const removeTooltips = () => {
+    if (window.innerWidth < 768) return;
+    tooltip.className = "";
+    // Stop observing when tooltip is closed
+    if (mutationObserver) {
+      mutationObserver.disconnect();
+      mutationObserver = null;
+    }
+  }
+
+  const updateTooltipPosition = (trigger) => {
+    const triggerRect = trigger.getBoundingClientRect();
+    const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+    const offset = 5;
+    const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+    const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+    const positions = {
+      s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+      n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+      e: () => [triggerRect.right + window.scrollX + offset, centerY],
+      w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+    };
+
+    const [left, top] = (positions[placement] || positions.n)();
+    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+  }
+
+  $(".tooltipped").on({
+    mouseenter(event) {
+      if (window.innerWidth < 768) return;
+
+      const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped")) return;
+
+      const label = trigger.getAttribute("aria-label").trim();
+      if (!label) return;
+
+      tooltip.className = "active";
+      tooltip.textContent = label;
+
+      // Sync size classes
+      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+      });
+
+      updateTooltipPosition(trigger);
+
+      // Observe trigger for aria-label changes
+      if (mutationObserver) mutationObserver.disconnect();
+      mutationObserver = new MutationObserver(() => {
+        const updatedLabel = trigger.getAttribute("aria-label").trim();
+        if (updatedLabel) {
+          tooltip.textContent = updatedLabel;
+          updateTooltipPosition(trigger);
+        }
+      });
+      mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+    },
+
+    mouseleave() {
+      removeTooltips()
+    }
+  });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
+}
+
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
+
 $(document).on('turbo:load', function () {
+  window.attachTooltipListener();
+
   if (window.location !== window.parent.location) {
     $('[data-behavior~=hide_iframe]').hide()
   }
 
   $('[data-behavior~=select_content]').on('click', e => e.target.select())
-
   BK.s('autohide').hide()
 
   if (BK.thereIs('login')) {
@@ -215,7 +294,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -315,6 +394,7 @@ $(document).on('turbo:load', function () {
     const forExternalInput = $('#reimbursement_report_for_external')
 
     const externalInputWrapper = $('#external_contributor_wrapper')
+    const currencyWrapper = $('#currency_wrapper')
 
     const hideAllInputs = () =>
       [
@@ -334,6 +414,7 @@ $(document).on('turbo:load', function () {
         externalInputWrapper.slideUp({
           complete: hideAllInputs,
         })
+        currencyWrapper.slideDown()
         emailInput.val(emailInput[0].attributes['value'].value)
       }
     })
@@ -352,6 +433,7 @@ $(document).on('turbo:load', function () {
             externalInputWrapper.slideDown()
           },
         })
+        currencyWrapper.slideUp()
       }
     })
 
@@ -369,6 +451,7 @@ $(document).on('turbo:load', function () {
             externalInputWrapper.slideDown()
           },
         })
+        currencyWrapper.slideUp()
       }
     })
 
@@ -418,7 +501,6 @@ $(document).on('turbo:load', function () {
       perspective: 1500,
       glare: true,
       maxGlare: 0.25,
-      scale: 1.0625,
     })
   const disableTilt = () => tiltElement.tilt.destroy.call(tiltElement)
   const setTilt = function () {
@@ -435,12 +517,13 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-$(document).on('turbo:frame-load', function () {
+const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
     BK.thereIs('paypal_transfer_payout_method_inputs') &&
-    BK.thereIs('wire_payout_method_inputs')
+    BK.thereIs('wire_payout_method_inputs') &&
+    BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
     const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
     const achTransferPayoutMethodInputs = BK.s(
@@ -450,6 +533,7 @@ $(document).on('turbo:frame-load', function () {
       'paypal_transfer_payout_method_inputs'
     )
     const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
+    const wiseTransferPayoutMethodInputs = BK.s('wise_transfer_payout_method_inputs')
     $(document).on(
       'change',
       '#user_payout_method_type_userpayoutmethodcheck',
@@ -458,7 +542,8 @@ $(document).on('turbo:frame-load', function () {
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
             paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -469,7 +554,8 @@ $(document).on('turbo:frame-load', function () {
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             paypalTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -480,7 +566,8 @@ $(document).on('turbo:frame-load', function () {
           paypalTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp() &&
+            wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
@@ -491,11 +578,27 @@ $(document).on('turbo:frame-load', function () {
           paypalTransferPayoutMethodInputs.slideUp() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown()
+            wirePayoutMethodInputs.slideDown() &&
+            wiseTransferPayoutMethodInputs.slideUp()
+      }
+    )
+    $(document).on(
+      'change',
+      '#user_payout_method_type_userpayoutmethodwisetransfer',
+      e => {
+        if (e.target.checked)
+          wiseTransferPayoutMethodInputs.slideDown() &&
+            checkPayoutMethodInputs.slideUp() &&
+            achTransferPayoutMethodInputs.slideUp() &&
+            wirePayoutMethodInputs.slideUp() &&
+            paypalTransferPayoutMethodInputs.slideUp()
       }
     )
   }
-})
+}
+
+$(document).on('turbo:load', initPayoutMethodToggles)
+$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',
@@ -518,10 +621,6 @@ $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
   }
 })
 
-window.hidePWAPrompt = () => {
-  document.body.classList.add('hide__pwa__prompt')
-}
-
 $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   const controlOrCommandClick = e.ctrlKey || e.metaKey
   if ($(this).attr('href') || $(e.target).attr('href')) {
@@ -541,6 +640,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
 })
 
 window.unexpandReceipt = () => {
+  document
+    .querySelectorAll(`.receipt--expanded`)[0]
+    ?.style?.setProperty('--receipt-size', '256px')
   document
     .querySelectorAll(`.receipt--expanded`)[0]
     ?.classList?.remove('receipt--expanded')

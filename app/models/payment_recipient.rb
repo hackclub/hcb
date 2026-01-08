@@ -36,7 +36,7 @@ class PaymentRecipient < ApplicationRecord
   normalizes :email, with: ->(email) { email.strip.downcase }
 
   has_encrypted :information, type: :json
-  store :information, accessors: [:account_number, :routing_number, :bank_name]
+  store :information, accessors: [:account_number, :routing_number, :bank_name, :address_line1, :address_line2, :address_city, :address_state, :address_zip, :address_postal_code, :recipient_country, :bic_code, :recipient_information]
 
   def masked_account_number
     return account_number if account_number.length <= 4
@@ -45,14 +45,41 @@ class PaymentRecipient < ApplicationRecord
   end
 
   def to_safe_hash
-    {
+    base = {
       id:,
       name:,
       email:,
-      masked_account_number:,
-      bank_name:,
-      routing_number:,
     }
+
+    case payment_model
+    when AchTransfer.name
+      base.merge({
+                   masked_account_number:,
+                   bank_name:,
+                   routing_number:,
+                 })
+    when IncreaseCheck.name
+      base.merge({
+                   address_line1:,
+                   address_line2:,
+                   address_city:,
+                   address_state:,
+                   address_zip:,
+                 })
+    when Wire.name
+      base.merge({
+                   masked_account_number:,
+                   bic_code:,
+                   address_line1:,
+                   address_line2:,
+                   address_city:,
+                   address_state:,
+                   address_postal_code:,
+                   recipient_country:
+                 })
+    else
+      base
+    end
   end
 
   def to_safe_json

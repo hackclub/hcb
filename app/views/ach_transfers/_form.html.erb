@@ -1,18 +1,20 @@
-<% disabled = !policy(@event).create_transfer? %>
+<%# locals: (ach_transfer:) %>
+
+<% disabled = !policy(ach_transfer.event).create_transfer? %>
 
 <%= form_with(
-  model: @ach_transfer,
+  model: ach_transfer,
   local: true,
-  url: event_ach_transfers_path(@event),
+  url: event_ach_transfers_path(ach_transfer.event),
   data: { controller: "input extraction", extraction_target: "form" },
   html: {
     "x-data" => "ach(#{{
-      payment_recipient: (@ach_transfer.payment_recipient.to_safe_hash if @ach_transfer.payment_recipient&.event&.== @event),
-      editing: @ach_transfer.account_number.present?,
+      payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
+      editing: ach_transfer.account_number.present?,
     }.to_json})"
   }) do |form| %>
 
-  <%= form_errors(@ach_transfer, "ACH transfer", "We couldn't send this") %>
+  <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
@@ -21,13 +23,13 @@
   <% end %>
 
   <div class="field" id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name %>
+    <%= form.label :recipient_name, "Recipient's legal name" %>
     <%= form.text_field :recipient_name,
                         placeholder: "Max Kern",
                         required: true,
                         disabled:,
                         role: "combobox",
-                        "aria-controls": "payment-recipient-search",
+                        "aria-controls": "#payment-recipient-search",
                         data: {
                           extraction_field: "seller_name",
                           action: "
@@ -44,10 +46,10 @@
                         },
                         "x-ref" => "name_input",
                         "@input" => "payment_recipient = null" %>
-    <span class="muted">This is only for your reference— it doesn't need to match the name on the recipient's bank account.</span>
-    <% if organizer_signed_in? && @event.payment_recipients.any? %>
+    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
+    <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
       <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-        <% @event.payment_recipients.each do |payment_recipient| %>
+        <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
           <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
             <button
               type="button"
@@ -58,7 +60,7 @@
               <span class="truncate"><%= payment_recipient.name %></span>
               <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
             </button>
-            <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: "delete", turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
+            <%= link_to event_payment_recipient_path(ach_transfer.event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this ACH recipient?" } do %>
               <%= inline_icon "view-close", size: 24, class: "align-middle" %>
             <% end %>
           </div>
@@ -136,7 +138,7 @@
     <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
   </div>
 
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 semibold" %>
+  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
     <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
           action: "

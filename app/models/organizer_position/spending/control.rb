@@ -47,7 +47,7 @@ class OrganizerPosition
       end
 
       def transactions
-        card_ids = organizer_position.stripe_cards.pluck(:stripe_id)
+        card_ids = organizer_position.stripe_cards.on_main_ledger.pluck(:stripe_id)
         canonical_pending_transactions_hcb_codes = CanonicalPendingTransaction
                                                    .not_declined
                                                    .joins(:raw_pending_stripe_transaction)

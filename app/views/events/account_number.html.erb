@@ -65,17 +65,19 @@
             </div>
           <% else %>
             <div class="badge bg-success mb1 ml0 tooltipped tooltipped--n pointer" aria-label="This account number can be used to deposit and withdraw from your account.">
-              <%= inline_icon "info", size: 20, style: "margin-left: 0; margin-right: 0.25rem" %> Receive + Send
+              <%= inline_icon "info", size: 20, style: "margin-left: 0;" %> Receive + Send
             </div>
           <% end %>
 
-          <% admin_tool "mb-3" do %>
-            <%= button_to @event.column_account_number.deposit_only? ? "Enable debits" : "Make deposit-only",
-                          event_column_account_number_path(@event),
-                          method: :patch,
-                          params: { column_account_number: { deposit_only: !@event.column_account_number.deposit_only } },
-                          class: "btn bg-muted text-sm py-1 px-3",
-                          data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+          <% if admin_signed_in? %>
+            <% admin_tool "mb-3" do %>
+              <%= button_to @event.column_account_number.deposit_only? ? "Enable debits" : "Make deposit-only",
+                            event_column_account_number_path(@event),
+                            method: :patch,
+                            params: { column_account_number: { deposit_only: !@event.column_account_number.deposit_only } },
+                            class: "btn bg-muted text-sm py-1 px-3",
+                            data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+            <% end %>
           <% end %>
 
           <div class="flex items-start justify-around h2 mb2" style="gap: 1rem">
@@ -107,7 +109,7 @@
 
           <section class="card__banner card__darker border-top overflow-hidden info flex items-start" style="border-radius: 0 0 0.5rem 0.5rem">
             <%= inline_icon "info", class: "mr1", size: 24 %>
-            <p class="m0 left-align">You may need to tap "Verify bank manually" or similar when linking your account to apps like Venmo.</p>
+            <p class="m0 text-left">You may need to tap "Verify bank manually" or similar when linking your account to apps like Venmo.</p>
           </section>
         </div>
       <% else %>
@@ -115,14 +117,14 @@
           <table>
             <thead>
               <tr>
-                <th></th>
+                <th><%# icon %></th>
                 <th>Date</th>
                 <th>Description</th>
-                <th class="right-align">Amount</th>
+                <th class="text-right">Amount</th>
               </tr>
             </thead>
             <tbody data-behavior="transactions">
-              <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: false } %>
+              <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: false, show_tags: true } %>
             </tbody>
           </table>
           <%= paginate @transactions %>
@@ -135,46 +137,47 @@
     <% end %>
 
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="ach_form">
-      <%= modal_header "Account details" %>
+      <%= modal_header "Bank account details" %>
 
       <div class="flex gap-3 items-center mb-4">
-        <div class="bg-info rounded-full pl-2 pr-3 py-1 text-white h5 w-fit inline-flex gap-1 items-center">
+        <div class="badge bg-info ml0 pl-2 w-fit inline-flex gap-1 items-center">
           <%= inline_icon "info", size: 18 %>
           Deposit<%= @event.column_account_number&.deposit_only? ? "-only" : " + send" %>
         </div>
 
-        <% admin_tool "flex-col justify-center w-fit" do %>
-          <%= button_to @event.column_account_number&.deposit_only? ? "Enable debits" : "Make deposit-only",
-                        event_column_account_number_path(@event),
-                        method: :patch,
-                        params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
-                        class: "btn bg-muted text-sm py-1 px-3",
-                        data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+        <% if admin_signed_in? %>
+          <% admin_tool "flex-col justify-center w-fit" do %>
+            <%= button_to @event.column_account_number&.deposit_only? ? "Enable debits" : "Make deposit-only",
+                          event_column_account_number_path(@event),
+                          method: :patch,
+                          params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
+                          class: "btn bg-muted text-sm py-1 px-3",
+                          data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+          <% end %>
         <% end %>
       </div>
 
-      <div class="flex flex-col md:flex-row items-start justify-start gap-2 md:gap-12 h2 mb-2 md:mb-4">
-        <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
-          <span class="h4 muted font-medium">Account </span>
-          <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
+      <div class="details-horiz mb-2 md:mb-4">
+        <div data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
+          <span class="muted">Account </span>
+          <span class="h2 font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
             <% if organizer_signed_in? %>
               <%= @event.account_number %>
             <% else %>
               <%= "•" * @event.account_number.length %>
             <% end %>
           </span>
-        </span>
-        <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.routing_number if organizer_signed_in? %>">
-          <span class="h4 muted font-medium">Routing</span>
-          <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
+        </div>
+        <div data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.routing_number if organizer_signed_in? %>">
+          <span class="muted">Routing</span>
+          <span class="h2 font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy">
             <% if organizer_signed_in? %>
               <%= @event.routing_number %>
             <% else %>
               <%= "•" * @event.routing_number.length %>
             <% end %>
           </span>
-        </span>
-        <span class="flex-grow"></span>
+        </div>
       </div>
 
       <div class="details">

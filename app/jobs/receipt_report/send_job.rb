@@ -2,7 +2,7 @@
 
 module ReceiptReport
   class SendJob < ApplicationJob
-    queue_as :default
+    queue_as :low
     def perform(user_id, force_send: false)
       @user = User.includes(:stripe_cards).find user_id
 
@@ -20,7 +20,7 @@ module ReceiptReport
     def hcb_ids
       @hcb_ids ||= begin
         @user.stripe_cards.flat_map do |card|
-          card.hcb_codes.missing_receipt.receipt_required.pluck(:id)
+          card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id)
         end
       end
     end

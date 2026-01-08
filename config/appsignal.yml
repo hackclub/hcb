@@ -4,17 +4,21 @@ default: &defaults
   push_api_key: <%= Credentials.fetch(:APPSIGNAL) %>
 
   ignore_errors:
+    - ActionController::BadRequest
+    - ActionController::InvalidAuthenticityToken
+    - ActionController::InvalidCrossOriginRequest
+    - ActionController::MethodNotAllowed
+    - ActionController::ParameterMissing
+    - ActionController::RoutingError
+    - ActionController::UnknownFormat
+    - ActionController::UnknownHttpMethod
     - ActionDispatch::Http::MimeNegotiation::InvalidType
     - ActionDispatch::Http::Parameters::ParseError
-    - ActionController::BadRequest
-    - ActionController::UnknownHttpMethod
-    - ActionController::MethodNotAllowed
-    - ActionController::UnknownFormat
-    - ActionController::ParameterMissing
-    - ActionController::InvalidCrossOriginRequest
-    - ActionController::InvalidAuthenticityToken
     - ActiveRecord::RecordNotFound
+    - RTesseract::Error
+    - UserService::EnrollSmsAuth::SMSEnrollmentError
 
 production:
   <<: *defaults
   active: true
+  revision: "<%= ENV["HATCHBOX_REVISION"] %>"

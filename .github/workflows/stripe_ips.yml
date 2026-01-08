@@ -1,0 +1,22 @@
+name: Update Stripe IP addresses
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *" # https://crontab.guru/#0_0_*_*_*
+
+jobs:
+  update-and-commit:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - name: "Sync with Stripe"
+        run: |
+          curl -o config/stripe_ips_webhooks.txt https://stripe.com/files/ips/ips_webhooks.txt
+      - uses: "peter-evans/create-pull-request@v7"
+        with:
+          add-paths: "config/stripe_ips_webhooks.txt"
+          commit-message: "[Automated] Update `config/stripe_ips_webhooks.txt`"
+          title: "[Automated] Update `config/stripe_ips_webhooks.txt`"
+          body: "This is an automated pull request created by the `strip_ips` workflow to keep our `Rack::Attack` rules up to date."
+          branch: "gh-actions/stripe-ips-webhooks"
+          sign-commits: "true"

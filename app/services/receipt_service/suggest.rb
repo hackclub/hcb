@@ -41,7 +41,8 @@ module ReceiptService
                                                            .select { |pairing| pairing.hcb_code.missing_receipt? }
                                                            .first
             pair.mark_accepted!
-            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+
+            return pair
           end
         end
 
@@ -57,6 +58,65 @@ module ReceiptService
                       @extracted.extracted_card_last4.nil?
 
       distance = 0
+      return if @extracted.nil?
+
+      merchant_amount = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("merchant_amount")
+
+      distances = {
+        amount_cents: {
+          value: @extracted.extracted_total_amount_cents && ((merchant_amount || hcb_code.amount_cents).abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
+          weight: 200,
+        },
+        card_last_four: {
+          value: @extracted.extracted_card_last4 == hcb_code.card&.last4 ? 0 : 1,
+          weight: 200,
+        },
+        date: {
+          value: begin
+            if @extracted.extracted_date.present?
+              distance = ((hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date - @extracted.extracted_date.to_date).abs
+
+              if distance <= 1
+                0
+              elsif distance <= 5
+                0.2 + 0.8 * (distance / 5)
+              else
+                1
+              end
+            else
+              1
+            end
+          end,
+          weight: 100,
+        },
+        merchant_zip_code: {
+          value: begin
+            stripe_zip = hcb_code.stripe_merchant["postal_code"]
+            if stripe_zip == "00000"
+              nil
+              # https://mapofzipcodes.com/blog/00000-zip-code
+              # many postal codes are reported as 000000, and we don't
+              # want a lack of information to hurt pairing suggestions
+            else
+              stripe_zip = stripe_zip.to_i
+              receipt_zip = @extracted.extracted_merchant_zip_code.to_i
+              distance = (stripe_zip - receipt_zip).abs
+              if distance.zero?
+                0
+              elsif distance < 75
+                0.5
+              else
+                1
+              end
+            end
+          end,
+          weight: 50,
+        },
+        merchant_name: {
+          value: @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_merchant["name"]&.downcase) ? 0 : 1,
+          weight: 50,
+        }
+      }
 
       unless (@extracted.extracted_total_amount_cents.abs - hcb_code.amount_cents.abs).abs == 0
         distance += 200 # Automatically disqualify suggestion if not matching

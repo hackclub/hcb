@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
-import airbrake from '../airbrake'
+import { appsignal } from '../appsignal'
 
 let dropzone
 
@@ -12,7 +12,6 @@ function extractId(dataTransfer) {
     receiptId = elementId.split('_')[1]
   } catch (err) {
     console.error(err)
-    // airbrake?.notify(err)
   }
 
   if (!receiptId) {
@@ -28,7 +27,7 @@ function extractId(dataTransfer) {
       receiptId = imageElement.getAttribute('data-receipt-id')
     } catch (err) {
       console.error(err)
-      airbrake?.notify(err)
+      appsignal.sendError(err)
     }
   }
 

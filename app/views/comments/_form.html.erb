@@ -10,7 +10,7 @@
   </div>
 
   <text-expander keys="@">
-    <%= form.text_area :content, class: "card mb2 overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
+    <%= form.text_area :content, class: "card overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
   </text-expander>
 
   <ul role="listbox" class="mention-suggestions card" hidden popover>
@@ -58,7 +58,7 @@
 
   </div>
 
-  <%= form.submit "Add comment", disabled: !organizer_signed_in? && current_user != commentable&.try(:user) %>
+  <%= form.submit "Add comment", disabled: !policy(commentable.comments.build).create? %>
 <% end %>
 
 <% unless @popover %>

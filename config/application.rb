@@ -4,6 +4,7 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../app/lib/credentials"
+require_relative "../lib/active_storage/previewer/document_previewer"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -46,7 +47,10 @@ module Bank
 
     config.active_support.cache_format_version = 7.1
 
-    config.autoload_lib(ignore: %w(assets tasks))
+    # Please, add to the `ignore` list any other `lib` subdirectories that do
+    # not contain `.rb` files, or that should not be reloaded or eager loaded.
+    # Common ones are `templates`, `generators`, or `middleware`, for example.
+    config.autoload_lib(ignore: %w[assets tasks])
     config.eager_load_paths << "#{config.root}/spec/mailers/previews"
 
     config.action_view.form_with_generates_remote_forms = false
@@ -92,6 +96,27 @@ module Bank
     config.active_record.encryption.primary_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :PRIMARY_KEY)
     config.active_record.encryption.deterministic_key = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :DETERMINISTIC_KEY)
     config.active_record.encryption.key_derivation_salt = Credentials.fetch(:ACTIVE_RECORD, :ENCRYPTION, :KEY_DERIVATION_SALT)
+
+    if Rails.env.test? && config.active_record.encryption.values_at(:primary_key, :deterministic_key, :key_derivation_salt).none?
+      # https://github.com/rails/rails/blob/8174a486bc3d2a720aaa4adb95028f5d03857d1e/activerecord/lib/active_record/railties/databases.rake#L527-L531
+      primary_key = SecureRandom.alphanumeric(32)
+      deterministic_key = SecureRandom.alphanumeric(32)
+      key_derivation_salt = SecureRandom.alphanumeric(32)
+
+      warn(<<~LOG)
+        ⚠️ Using temporary ActiveRecord::Encryption credentials
+        \tprimary_key: #{primary_key.inspect}
+        \tdeterministic_key: #{deterministic_key.inspect}
+        \tkey_derivation_salt: #{key_derivation_salt.inspect}
+      LOG
+
+      config.active_record.encryption.primary_key = primary_key
+      config.active_record.encryption.deterministic_key = deterministic_key
+      config.active_record.encryption.key_derivation_salt = key_derivation_salt
+    end
+
+    # CSV previews
+    config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
 
   end
 end

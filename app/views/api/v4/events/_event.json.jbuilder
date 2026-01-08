@@ -2,10 +2,12 @@
 
 json.created_at event.created_at
 json.id event.public_id
+json.parent_id event.parent&.public_id
 json.name event.name
 json.country event.country
 json.slug event.slug
 json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
+json.donation_page_available event.donation_page_available?
 json.playground_mode event.demo_mode?
 json.playground_mode_meeting_requested event.demo_mode_request_meeting_at.present?
 json.transparent event.is_public?

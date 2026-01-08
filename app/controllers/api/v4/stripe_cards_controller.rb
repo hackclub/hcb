@@ -3,9 +3,13 @@
 module Api
   module V4
     class StripeCardsController < ApplicationController
+      include SetEvent
+      include ApplicationHelper
+
       def index
         if params[:event_id].present?
-          @event = authorize(Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id]), :card_overview?)
+          set_api_event
+          authorize @event, :card_overview_in_v4?
           @stripe_cards = @event.stripe_cards.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -20,15 +24,15 @@ module Api
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        @hcb_codes = @stripe_card.hcb_codes.order(created_at: :desc)
+        @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
         @total_count = @hcb_codes.size
-        @has_more = false # TODO: implement pagination
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def create
-        event = authorize(Event.find(params[:card][:organization_id]))
+        event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
         authorize event, :create_stripe_card?, policy_class: EventPolicy
 
         card = params.require(:card).permit(
@@ -41,16 +45,15 @@ module Api
           :shipping_address_line2,
           :shipping_address_state,
           :shipping_address_country,
-          :card_personalization_design_id,
-          :birthday
+          :card_personalization_design_id
         )
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request unless card[:shipping_address_country] == "US"
+        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
-          current_session: { ip: request.remote_ip },
+          ip_address: request.remote_ip,
           event_id: event.id,
           card_type: card[:card_type],
           stripe_shipping_name: card[:shipping_name],
@@ -60,16 +63,12 @@ module Api
           stripe_shipping_address_line2: card[:shipping_address_line2],
           stripe_shipping_address_postal_code: card[:shipping_address_postal_code],
           stripe_shipping_address_country: card[:shipping_address_country],
-          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
         ).run
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
 
-        render :show
-
-      rescue => e
-        notify_airbrake(e)
-        render json: { error: "internal_server_error" }, status: :internal_server_error
+        render :show, status: :created, location: api_v4_stripe_card_path(@stripe_card)
       end
 
       def update
@@ -82,7 +81,7 @@ module Api
             return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
-          @stripe_card.freeze!
+          @stripe_card.freeze!(frozen_by: current_user)
         elsif params[:status] == "active"
           if @stripe_card.initially_activated?
             return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?
@@ -125,13 +124,28 @@ module Api
         end
       end
 
+      def cancel
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if @stripe_card.canceled?
+          return render json: { error: "Card is already cancelled" }, status: :unprocessable_entity
+        end
+
+        begin
+          @stripe_card.cancel!
+          render json: { success: "Card cancelled successfully" }
+        rescue => e
+          render json: { error: "Failed to cancel card", message: e.message }, status: :internal_server_error
+        end
+      end
+
       def ephemeral_keys
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         return render json: { error: "not_authorized" }, status: :forbidden unless current_token.application&.trusted?
         return render json: { error: "invalid_operation", messages: ["card must be virtual"] }, status: :bad_request unless @stripe_card.virtual?
 
-        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce])
+        @ephemeral_key = @stripe_card.ephemeral_key(nonce: params[:nonce], stripe_version: params[:stripe_version] || "2020-03-02")
 
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
@@ -140,6 +154,20 @@ module Api
       rescue Stripe::InvalidRequestError
         return render json: { error: "internal_server_error" }, status: :internal_server_error
 
+      end
+
+      def card_designs
+        if params[:event_id].present?
+          set_api_event
+          authorize @event, :create_stripe_card?, policy_class: EventPolicy
+
+          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
+        else
+          skip_authorization
+          @designs = StripeCard::PersonalizationDesign.common.available
+        end
+
+        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
       end
 
     end

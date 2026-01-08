@@ -1,0 +1,25 @@
+<%# locals: (block:, type:, is_email: false, title: nil) %>
+
+<div id="block_<%= block.id %>" class="<%= type %> relative card shadow-none border flex flex-col py-2 my-2">
+  <% if is_email %>
+    <% if title.present? %>
+      <p class="my-0"><strong><%= title %></strong></p>
+    <% end %>
+    <%= yield %>
+  <% else %>
+    <% if title.nil? %>
+      <div class="absolute top-2 right-2">
+        <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
+      </div>
+    <% else %>
+      <div class="flex justify-between items-center gap-5">
+        <p class="my-0"><strong><%= title %></strong></p>
+        <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
+      </div>
+    <% end %>
+
+    <div class="flex flex-col">
+      <%= yield %>
+    </div>
+  <% end %>
+</div>

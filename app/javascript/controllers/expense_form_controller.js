@@ -171,6 +171,8 @@ export default class extends Controller {
     fieldWrapper.appendChild(field)
     fieldWrapper.classList.add('tooltipped', 'tooltipped--n')
     fieldWrapper.setAttribute('aria-label', label)
+
+    window.attachTooltipListener()
   }
 
   #removeTooltip(field) {
@@ -183,8 +185,7 @@ export default class extends Controller {
     if (this.enabledValue && !this.lockedValue) {
       this.lightboxTarget.style.display = 'block'
       this.cardTarget.style.position = 'relative'
-      this.cardTarget.style.zIndex = '2001'
-      document.querySelector('.app__sidebar').style.zIndex = '1'
+      this.cardTarget.style.zIndex = '11'
       this.lightboxTarget.addEventListener('click', e => {
         e.preventDefault()
         this.formTarget.requestSubmit()
@@ -193,7 +194,6 @@ export default class extends Controller {
       this.lightboxTarget.style.display = 'none'
       this.cardTarget.style.position = 'relative'
       this.cardTarget.style.zIndex = 'auto'
-      document.querySelector('.app__sidebar').style.zIndex = 'auto'
     }
   }
 }

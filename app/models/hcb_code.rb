@@ -66,7 +66,8 @@ class HcbCode < ApplicationRecord
   def popover_path(**params)
     author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
     receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
-    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}"
+    ledger_instance_param = "&ledger_instance=#{params[:ledger_instance]}" if params[:ledger_instance]
+    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}#{ledger_instance_param}"
   end
 
   def receipt_upload_email
@@ -101,25 +102,35 @@ class HcbCode < ApplicationRecord
     return :donation if donation?
     return :ach if ach_transfer?
     return :check if check? || increase_check?
+    return :card_grant if card_grant?
     return :disbursement if disbursement?
     return :card_charge if stripe_card?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
     return :wire if wire?
+    return :wise_transfer if wise_transfer?
 
     nil
   end
 
   def humanized_type
     return "ACH" if ach_transfer?
-    return "Bank Fee" if bank_fee?
+    return "Bank fee" if bank_fee?
+    return "Card grant" if card_grant?
     return "Transfer" if disbursement?
 
     t = type || :transaction
     t = :transaction if unknown?
 
     t.to_s.humanize
+  end
+
+  def humanized_type_sentence_case
+    return "ACH" if ach_transfer?
+    return "Wise transfer" if wise_transfer?
+
+    humanized_type.downcase
   end
 
   def amount_cents
@@ -134,10 +145,14 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents_by_event(event)
+    return amount_cents unless event
+    return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
+    return invoice.item_amount if invoice?
+
     if canonical_transactions.any?
       return canonical_transactions
              .includes(:canonical_event_mapping)
-             .where(canonical_event_mapping: { event_id: event.id })
+             .where(canonical_event_mapping: { event_id: event.id, subledger_id: nil })
              .sum(:amount_cents)
     end
 
@@ -146,7 +161,7 @@ class HcbCode < ApplicationRecord
 
     canonical_pending_transactions
       .includes(:canonical_pending_event_mapping)
-      .where(canonical_pending_event_mapping: { event_id: event.id })
+      .where(canonical_pending_event_mapping: { event_id: event.id, subledger_id: nil })
       .sum(:amount_cents)
   end
 
@@ -160,6 +175,22 @@ class HcbCode < ApplicationRecord
            foreign_key: "hcb_code",
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
+
+  def subledgers
+    @subledgers ||=
+      begin
+        ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
+                .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
+                .compact
+                .uniq
+
+        Subledger.where(id: ids)
+      end
+  end
+
+  def subledger
+    subledgers.first
+  end
 
   def event
     events.first
@@ -194,15 +225,15 @@ class HcbCode < ApplicationRecord
       end
   end
 
-  def pretty_title(show_event_name: true, show_amount: false, event_name: event.name, amount_cents: self.amount_cents)
-    event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee].include?(type || :unknown) ? "in" : "to"
-    amount_preposition = [:transaction, :donation, :disbursement, :card_charge, :bank_fee].include?(type || :unknown) ? "of" : "for"
+  def pretty_title(show_event_name: true, show_amount: false, event: self.event)
+    event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "in" : "to"
+    amount_preposition = [:transaction, :donation, :disbursement, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "of" : "for"
 
     amount_preposition = "refunded" if stripe_refund?
 
     title = [humanized_type]
-    title << amount_preposition << ApplicationController.helpers.render_money(stripe_card? ? amount_cents.abs : amount_cents) if show_amount
-    title << event_preposition << event_name if show_event_name && event_name
+    title << amount_preposition << ApplicationController.helpers.render_money(amount_cents_by_event(event).abs) if show_amount
+    title << event_preposition << event.name if show_event_name && event
 
     title.join(" ")
   end
@@ -291,6 +322,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE
   end
 
+  def wise_transfer?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE
+  end
+
   def check?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
   end
@@ -343,6 +378,10 @@ class HcbCode < ApplicationRecord
     @wire ||= Wire.find_by(id: hcb_i2) if wire?
   end
 
+  def wise_transfer
+    @wise_transfer ||= WiseTransfer.find_by(id: hcb_i2) if wise_transfer?
+  end
+
   def check
     @check ||= Check.find_by(id: hcb_i2) if check?
   end
@@ -353,6 +392,10 @@ class HcbCode < ApplicationRecord
 
   def disbursement
     @disbursement ||= Disbursement.find_by(id: hcb_i2) if disbursement?
+  end
+
+  def card_grant
+    @card_grant ||= CardGrant.find_by(disbursement_id: hcb_i2) if card_grant?
   end
 
   def bank_fee
@@ -392,6 +435,8 @@ class HcbCode < ApplicationRecord
       paypal_transfer
     elsif wire? && wire&.reimbursement_payout_holding.present?
       wire
+    elsif wise_transfer? && wise_transfer&.reimbursement_payout_holding.present?
+      wise_transfer
     else
       nil
     end
@@ -458,6 +503,14 @@ class HcbCode < ApplicationRecord
   # HCB-600: Stripe card charges (always required)
   # @sampoder
 
+  # receipt_required (the scope) diverges from receipt_required?
+  # in a couple of ways:
+  #
+  # 1) it doesn't consider event plan
+  # 2) it doesn't consider the amount of the HCB code
+  #
+  # this is because these two things are expensive to compute on a HCB code.
+
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
@@ -470,20 +523,36 @@ class HcbCode < ApplicationRecord
               ")
   }
 
-  def receipt_required?
+  # we optionally take an event parameter here. this
+  # is a performance optimisation because it allows us to
+  # load the event once on the ledger and never again
+  def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
-    (type == :card_charge) ||
-      # starting from Feb. 2024, receipts have been required for ACHs & checks
-      ([:ach, :check, :paypal_transfer, :wire].include?(type) && created_at > Time.utc(2024, 2, 1))
+    return false if amount_cents >= 0
+
+    return false unless event&.plan&.receipts_required?
+
+    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
+    return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
+
+    return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
+
+    # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
+    false
   end
 
-  def receipt_optional?
-    !receipt_required?
+  def receipt_optional?(event = self.event, type = self.type)
+    !receipt_required?(event, type)
+  end
+
+  # we have a custom implementation here for caching
+  def missing_receipt?(event = self.event, type = self.type)
+    receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
   end
 
   def receipts
-    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
   end
@@ -561,6 +630,7 @@ class HcbCode < ApplicationRecord
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
     return donation&.collected_by if donation? && donation&.in_person?
+    return wise_transfer&.user if wise_transfer?
   end
 
   def fallback_avatar

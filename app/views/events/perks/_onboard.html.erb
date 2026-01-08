@@ -1,0 +1,22 @@
+<%# locals: (event:) %>
+
+<% if event.robotics_team? || event.affiliations.robotics.any? %>
+  <div class="card pb0 mb3 promo-onboard" id="bin">
+    <div class="card__banner card__banner--top flex justify-between items-center">
+      <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/b93bbe00935d45e1_image.png" height="36px" class="mr2">
+        OnBoard Grant for PCB Fabrication
+      </h3>
+      <%= link_to "Expired",
+        root_path,
+        class: "btn disabled",
+        target: :_blank %>
+    </div>
+    <p>
+      Use the OnBoard grant to master PCB design with free  resources, community support, and manufacturing grants.
+    </p>
+    <p>
+      Get up to $100 to cover the  costs of creating your custom circuit boards. Enhance your off-season R&D with hands-on experience and collaborate with fellow high schoolers in the Hack Club Slack community.
+    </p>
+  </div>
+<% end %>

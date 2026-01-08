@@ -14,7 +14,7 @@ class HcbCode
       private
 
       def admin_or_user?
-        user&.admin? || record.tag.event.users.include?(user)
+        user&.admin? || OrganizerPosition.role_at_least?(user, record.tag.event, :member)
       end
 
     end

@@ -1,20 +1,15 @@
 <%# locals: (card_grant:) %>
 
 <% if card_grant.active? %>
-  <div class="mt3 flex flex-wrap align-items-center justify-start g1 justify-center">
+  <div class="card card--breakdown flex flex-col gap-2">
     <% if organizer_signed_in?(as: :member) %>
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
-      <%= render "card_grants/actions/toggle_one_time_use", card_grant: %>
-      <%= render "card_grants/actions/topup", card_grant: %>
-      <%= render "card_grants/actions/withdraw", card_grant: %>
       <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report" %>
-      <%= render "card_grants/actions/edit", card_grant: %>
       <% if card_grant.user == current_user %>
         <%= render "card_grants/actions/return", card_grant: %>
       <% else %>
         <%= render "card_grants/actions/cancel", card_grant: %>
       <% end %>
-      <%= render "card_grants/actions/dejigamaflip", card_grant: %>
     <% elsif card_grant.user == current_user %>
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
       <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: "Get reimbursed" %>

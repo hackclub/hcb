@@ -71,6 +71,8 @@ class CheckDeposit < ApplicationRecord
 
   has_one_attached :front
   has_one_attached :back
+  validates :front, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["front"].present? }
+  validates :back, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["back"].present? }
 
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
   validates :front, attached: true, content_type: [:png, :jpeg], on: :create
@@ -119,13 +121,12 @@ class CheckDeposit < ApplicationRecord
 
   def state
     return :muted if column_id.nil? && increase_id.nil?
+    return :error if rejected? || returned?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?
       :info
-    elsif rejected? || returned?
-      :error
-    elsif deposited? || local_hcb_code.ct.present?
+    elsif deposited?
       :success
     elsif submitted?
       :info

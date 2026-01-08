@@ -1,14 +1,12 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_reimbursement_payouts %>
+
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "payouts" %>
+  <%= render "settings_header", active: "payouts" %>
   <section>
     <p class="muted mt0 mb2">
-      When a <%= link_to "reimbursement report of yours", my_reimbursements_path %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time; <strong>we currently only support US bank accounts or international wire transfers (for reports over $500)</strong>.
+      When a <%= link_to "reimbursement report of yours", my_reimbursements_path %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time.
       <% if @user.reimbursement_reports.pending.any? %>
         <p>
           Changes made here will apply to all non-reimbursed reports of yours, including your <%= @user.reimbursement_reports.pending.count %> pending reports.
@@ -16,6 +14,18 @@
       <% end %>
     </p>
     <%= render "application/flash", klass: "max-w-full mb3" %>
-    <%= render "payout_form", user: @user %>
+    <% if @user.can_update_payout_method? %>
+      <%= render "users/payout_form", user: @user %>
+    <% else %>
+      <%= render "application/callout",
+          type: "info",
+          title: "Changing your payout method is currently disabled." do %>
+      We are currently processing a payout to you using Wise. At this time, you can not update your payout method.
+      <strong>Something wrong?</strong> <%= help_message %>
+      <% end %>
+      <% admin_tool do %>
+        <%= render "payout_form", user: @user %>
+      <% end %>
+    <% end %>
   </section>
 </turbo-frame>

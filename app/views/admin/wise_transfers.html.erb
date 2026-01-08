@@ -1,0 +1,47 @@
+<% title "Wise transfers" %>
+
+<%= form_with local: true, url: wise_transfers_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
+  <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }, { width: 250, style: "max-width: 250px" }) %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @wise_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wise_transfers %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Event</th>
+      <th>Recipient</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @wise_transfers.each do |wise_transfer| %>
+      <tr class="<%= "admin-bg-pending" if wise_transfer.pending? %> <%= "admin-bg-transit" if wise_transfer.approved? %>">
+        <td><%= wise_transfer.id %></td>
+        <td><%= wise_transfer.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= wise_transfer.event.name %></td>
+        <td><%= wise_transfer.recipient_name %></td>
+        <td><%= Money.from_cents(wise_transfer.amount_cents, wise_transfer.currency).format %></td>
+        <td><%= wise_transfer.aasm.human_state %></td>
+        <td>
+          <%= link_to "View", hcb_code_path(wise_transfer.hcb_code) %>
+          <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @wise_transfers %>

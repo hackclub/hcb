@@ -14,13 +14,22 @@ class User
           {
             user_id: u.id,
             period_start_at: period_start,
-            period_end_at: period_end
+            period_end_at: period_end,
+            teenager: u.teenager?
           }
         end
       end
 
       def users
-        ::User.joins(:user_sessions).where("user_sessions.last_seen_at between ? and ?", period_start, period_end).distinct
+        ::User
+          .joins(:user_sessions)
+          .where(
+            user_sessions: {
+              last_seen_at: period_start..period_end,
+              impersonated_by_id: nil
+            }
+          )
+          .distinct
       end
 
       def period_start

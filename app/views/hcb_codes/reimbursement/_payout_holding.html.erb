@@ -1,55 +1,32 @@
-<div class="mt4 mb3">
-  <article class="card pb0 mb2">
-    <h2 class="h2 mt0 mx0 border-none flex items-center justify-between" style="gap: 8px">
-      <div class="flex-auto" style="flex-grow: 1">
-        <%= turbo_frame_tag @hcb_code do %>
-          <%= pop_icon_to "edit",
-              edit_hcb_code_path(@hcb_code),
-              class: "mr2 align-middle tooltipped tooltipped--e", "aria-label": "Rename transaction",
-              data: { turbo: true } if organizer_signed_in?(as: :member) %>
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
-          <span class="align-middle"
-                data-controller="navigation"
-                data-action="dblclick->navigation#navigate"
-                data-navigation-location-param="<%= edit_hcb_code_path(@hcb_code) %>"
-                data-navigation-frame-param="<%= dom_id(@hcb_code) %>">
-            <span data-memo-for="<%= dom_id(@hcb_code) %>"><%= @hcb_code.memo %></span>
-            <span class="regular muted"> for </span>
-            <%= number_to_currency(@hcb_code.amount) %>
-          </span>
+  <section class="card__banner card__darker details-horiz border-top">
+    <p>
+      <strong>Date</strong>
+      <%= format_date @hcb_code.date %>
+    </p>
+    <p>
+      <strong>Type</strong>
+      Reimbursement payout transfer
+    </p>
+    <p>
+      <strong>Report</strong>
+      <%= link_to "View Report", @hcb_code.reimbursement_payout_holding.report %>
+    </p>
+    <% if @hcb_code.reimbursement_payout_holding.ach_transfer %>
+      <p>
+        <strong>ACH transfer</strong>
+        <%= link_to "View Transfer", @hcb_code.reimbursement_payout_holding.ach_transfer %>
+      </p>
+    <% end %>
+    <% if @hcb_code.reimbursement_payout_holding.increase_check %>
+      <p>
+        <strong>Check</strong>
+        <%= link_to "View", @hcb_code.reimbursement_payout_holding.increase_check.local_hcb_code %>
+      </p>
+    <% end %>
+  </section>
 
-          <%= render "hcb_codes/memo_stream", hcb_code: @hcb_code %>
-        <% end %>
-      </div>
-      <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: @hcb_code } %>
-    </h2>
-
-    <section class="card__banner card__darker details-horiz border-top">
-      <p>
-        <strong>Date</strong>
-        <%= format_date @hcb_code.date %>
-      </p>
-      <p>
-        <strong>Type</strong>
-        Reimbursement payout transfer
-      </p>
-      <p>
-        <strong>Report</strong>
-        <%= link_to "View Report", @hcb_code.reimbursement_payout_holding.report %>
-      </p>
-      <% if @hcb_code.reimbursement_payout_holding.ach_transfer %>
-        <p>
-          <strong>ACH Transfer</strong>
-          <%= link_to "View Transfer", @hcb_code.reimbursement_payout_holding.ach_transfer %>
-        </p>
-      <% end %>
-      <% if @hcb_code.reimbursement_payout_holding.increase_check %>
-        <p>
-          <strong>Check</strong>
-          <%= link_to "View", @hcb_code.reimbursement_payout_holding.increase_check.local_hcb_code %>
-        </p>
-      <% end %>
-    </section>
-  </article>
   <%= render partial: "reimbursement/reports/expenses", locals: { report: @hcb_code.reimbursement_payout_holding.report } %>
-</div>
+</article>

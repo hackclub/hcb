@@ -6,6 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  color      :text
+#  emoji      :string
 #  label      :text
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -27,6 +28,7 @@ class Tag < ApplicationRecord
   has_many :hcb_codes, through: :hcb_code_tags
 
   validates :label, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
+  validate :only_one_valid_emoji
 
   COLORS = %w[muted red orange yellow green cyan blue purple].freeze
   validates :color, inclusion: { in: COLORS }
@@ -37,8 +39,8 @@ class Tag < ApplicationRecord
   def removal_confirmation_message
     message = "Are you sure you'd like to delete this tag?"
 
-    if hcb_codes.length > 0
-      message + " It will be removed from #{pluralize(hcb_codes.length, 'transaction')}."
+    if hcb_codes.size > 0
+      message + " It will be removed from #{pluralize(hcb_codes.size, 'transaction')}."
     else
       message
     end
@@ -47,5 +49,13 @@ class Tag < ApplicationRecord
   after_create_commit {
     SuggestTagsJob.perform_later(event_id: event.id)
   }
+
+  private
+
+  def only_one_valid_emoji
+    if !emoji.present? || (emoji.grapheme_clusters.size > 1 || !emoji.match?(/\A(\p{Emoji})/))
+      errors.add(:emoji, "must be a single emoji")
+    end
+  end
 
 end

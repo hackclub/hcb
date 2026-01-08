@@ -32,7 +32,7 @@ class User
                 "usr_73tAe4" # Albert
               ],
               "daisy": [
-                "leow", "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
+                "leo", "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
                 "usr_MVt1m1", # Alex DeForrest
                 "usr_let591", # Alex Luo
               ],
@@ -95,7 +95,7 @@ class User
              end
 
       if user.nil?
-        Rails.error.report("[HQ Subordinate Summary Job] User not found for key: #{key}")
+        Rails.error.unexpected "[HQ Subordinate Summary Job] User not found for key: #{key}"
       end
 
       user

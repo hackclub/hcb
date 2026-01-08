@@ -22,8 +22,9 @@
 class User
   module PayoutMethod
     class Wire < ApplicationRecord
+      include Shared
+
       self.table_name = "user_payout_method_wires"
-      has_one :user, inverse_of: :payout_method, as: :payout_method
       after_save_commit -> { Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!) }
       has_encrypted :account_number, :bic_code
       blind_index :account_number, :bic_code
@@ -48,6 +49,10 @@ class User
 
       def title_kind
         "International Wire"
+      end
+
+      def currency
+        "USD"
       end
 
     end

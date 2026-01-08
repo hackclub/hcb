@@ -12,7 +12,7 @@
   <%= form.submit "Search" %>
 <% end %>
 
-<div class="flex items-center mb2">
+<div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @reports, entry_name: "reports" %>
   </div>
@@ -34,7 +34,7 @@
   </thead>
   <tbody>
     <% @reports.each do |report| %>
-      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %>">
+      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %> <%= "admin-bg-orange" if report.id.in?(@unprocessed_wise_report_ids) %>">
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>
@@ -46,7 +46,7 @@
             None
           <% end %>
         </td>
-        <td class="max-width-2">
+        <td class="max-w-lg">
           <%= link_to reimbursement_report_path(report) do %>
             <%= report.name %>
           <% end %>
@@ -54,7 +54,7 @@
         <td>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
-        <td class="w-24"><%= render_money(report.amount) %></td>
+        <td class="w-24"><%= report.amount.format %></td>
         <td><%= report.admin_status_text %></td>
         <td>
           <%= link_to "View", reimbursement_report_path(report) %>
