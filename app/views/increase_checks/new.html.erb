@@ -1,6 +1,7 @@
 <% disabled = !policy(@event).create_transfer? %>
 <% title "Send a check" %>
-<% sidebar_size = 3 %>
+<% @sidebar_size_class = "col-span-3" %>
+<% @container_size_class = "col-span-2" %>
 
 <% content_for :table_of_contents do %>
   <div class="invoice-tab invoice-tab--full justify-start py-1 active" data-scroll-seek-target="tab">

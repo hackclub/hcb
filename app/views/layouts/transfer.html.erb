@@ -10,7 +10,7 @@
 </nav>
 
 <div class="flex flex-col sm:grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5" data-controller="scroll-seek">
-  <div class="col-span-<%= @sidebar_size || 3 %>">
+  <div class="<%= @sidebar_size_class || "col-span-2" %>">
     <div class="sm:sticky top-28">
       <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-24 sm:static border-gray-200 dark:border-neutral-700 sm:rounded-xl p-2 border-solid border-[1px] border-x-0 sm:border-x-[1px] overflow-x-auto">
         <div class="inline-flex sm:flex sm:w-full sm:flex-col mx-auto sm:mx-0 gap-4 sm:gap-0 px-5 sm:px-0">
@@ -22,7 +22,7 @@
       <% end %>
     </div>
   </div>
-  <div class="col-span-<%= 5 - (@sidebar_size || 3) %> pt-3 mb-24">
+  <div class="<%= @container_size_class || "col-span-3" %> pt-3 mb-24">
     <%= yield %>
   </div>
 </div>
