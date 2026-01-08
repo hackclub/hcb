@@ -65,6 +65,7 @@ class DisbursementsController < ApplicationController
                                   end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
 
     authorize @disbursement
+    render layout: "transfer"
   end
 
   def create
