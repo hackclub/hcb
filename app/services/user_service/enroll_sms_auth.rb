@@ -2,6 +2,9 @@
 
 module UserService
   class EnrollSmsAuth
+    class SMSEnrollmentError < StandardError
+    end
+
     def initialize(user)
       @user = user
     end
@@ -49,9 +52,6 @@ module UserService
     end
 
     private
-
-    class SMSEnrollmentError < StandardError
-    end
 
     def disallow_fresh_users
       return if @user.created_at < 1.day.ago

@@ -558,6 +558,8 @@ class AdminController < Admin::BaseController
 
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -569,6 +571,8 @@ class AdminController < Admin::BaseController
 
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user, send_realtime: true)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
@@ -595,6 +599,7 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
@@ -1556,6 +1561,9 @@ class AdminController < Admin::BaseController
     end
 
     client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  rescue => e
+    Rails.error.report(e)
+    9999 # return something invalidly high to get the ops team to report it
   end
 
   def hackathons_task_size
