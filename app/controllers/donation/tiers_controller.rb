@@ -83,7 +83,7 @@ class Donation
           name: tier_data[:name],
           description: tier_data[:description],
           amount_cents: (tier_data[:amount_cents].to_f * 100).to_i,
-          published:  ActiveRecord::Type::Boolean.new.cast(tier_data[:published])
+          published: ActiveRecord::Type::Boolean.new.cast(tier_data[:published])
         )
       end
 
