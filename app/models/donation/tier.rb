@@ -28,7 +28,7 @@ class Donation
 
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
-    validate { errors.add(:base, "Event can only have 10 donation tiers") if event&.donation_tiers&.size.to_i > 10 }
+    validate { errors.add(:base, "Organization can only have 10 donation tiers") if event.donation_tiers.size > 10 }
 
     default_scope { order(sort_index: :asc) }
 
