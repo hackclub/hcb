@@ -1,0 +1,27 @@
+<p>
+  Hi <%= @user.first_name %>.
+</p>
+
+<p>
+  We're writing to let you know that a security setting on your HCB account was changed:
+</p>
+
+<p>
+  <b><%= @change %></b>
+</p>
+
+<p>
+  If you made this change, no further action is needed.
+</p>
+
+<p>
+  If this is unexpected, please review
+  <%= link_to "your HCB account's security settings", settings_security_url %>
+  and contact us at
+  <%= mail_to "hcb@hackclub.com" %>.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

@@ -1,3 +1,1 @@
-<li>
-  <%= link_to_unless current_page.first?, raw(t("views.pagination.previous")), url, class: "btn bg-info", rel: "prev", remote: %>
-</li>
+<%= link_to_unless current_page.first?, raw(inline_icon("view-back", style: "margin:0!important") + "Previous"), url, class: "btn bg-info pl-2 gap-1", rel: "prev", remote: %>

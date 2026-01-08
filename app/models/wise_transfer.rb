@@ -48,12 +48,13 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
   include HasWiseRecipient
+
+  include PublicIdentifiable
+  set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user
@@ -148,6 +149,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 
