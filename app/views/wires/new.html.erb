@@ -1,16 +1,14 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Send a wire" %>
-<%= render "events/nav", selected: :transfers %>
-<% page_sm %>
 
 <% if @event.present? && !policy(@event).create_transfer? %>
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a wire" } %>
 <% end %>
 
-<h1>Send a wire</h1>
-
-<%= render partial: "wires/requirements", locals: { event: @event } %>
+<% content_for :sidebar_footer do %>
+  <%= render partial: "wires/requirements", locals: { event: @event } %>
+<% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
                 "x-data": "{ country: #{@wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"} }"

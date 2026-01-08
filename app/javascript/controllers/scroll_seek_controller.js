@@ -45,10 +45,11 @@ export default class extends Controller {
   }
 
   handleScroll() {
-    const isAtBottom =
-      window.innerHeight + window.scrollY >=
-      document.documentElement.scrollHeight - 10
-    if (isAtBottom) {
+    if (window.scrollY <= 10) {
+      this.activateTab(0)
+    }
+    else if (window.innerHeight + window.scrollY >=
+      document.documentElement.scrollHeight - 10) {
       this.activateTab(this.sectionTargets.length - 1)
     }
   }
