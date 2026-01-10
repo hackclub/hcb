@@ -97,20 +97,20 @@
       <div class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <%= form.label :bank_name %>
-          <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
+          <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
         <div>
           <div class="flex items-center justify-between" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
             <%= form.label :routing_number %>
-            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
+            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
           </div>
           <span class="muted" data-external-validation-target="hint"></span>
         </div>
 
         <div class="flex items-center justify-between">
           <%= form.label :account_number %>
-          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask", data: { extraction_field: "account_number" } %>
+          <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "account_number" } %>
         </div>
       </div>
     </template>
