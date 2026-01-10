@@ -22,9 +22,11 @@
       title: "Important information about Wise transfers",
       class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
       footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
-    We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.
-    <br>
-    Sending over $500? Avoid all fees by sending an international wire.
+    <ul>
+      <li>We've integrated Wise into HCB to offer international transfers to over 100 countries.</li>
+      <li>HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.</li>
+      <li>Sending over $500? Avoid all fees by sending an international wire.</li>
+    </ul>
   <% end %>
 <% end %>
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
@@ -117,12 +119,11 @@
   </div>
 
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-
   </div>
   </div>
 
-  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your transfer will be sent out on the next business day.">
-    <button type="submit" <%= "disabled" if disabled %> class="btn">
+  <div class="actions tooltipped tooltipped--n inline-block w-full" aria-label="Your transfer will be sent out on the next business day.">
+    <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
       <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
     </button>
   </div>
