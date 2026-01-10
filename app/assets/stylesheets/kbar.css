@@ -26,7 +26,7 @@ html[data-dark='true'] {
   --command-bar-reimbursement: #33d6a6;
 }
 
-[role='combobox'] {
+[aria-controls='kbar-listbox'] {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
   border-radius: 0;
