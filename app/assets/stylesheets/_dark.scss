@@ -252,7 +252,7 @@ html[data-dark='true'] {
 
   .card.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, dark), 0.50);
+    background-color: rgba(map-get($palette, dark), 0.5);
   }
 
   .admin-tools::before {
