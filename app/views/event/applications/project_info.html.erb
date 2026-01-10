@@ -42,11 +42,11 @@
 
 <% content_for :footer do %>
   <div class="flex flex-row gap-6 items-start justify-center">
-    <%= link_to "Back", application_path(@application), class: "btn bg-muted" %>
+    <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
     <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
       <%= inline_icon "message", size: 28 %>
       Live chat support
     <% end %>
   </div>
-  <button class="btn" form="edit_application_<%= @application.id %>">Continue</button>
+  <button class="btn" form="edit_application_<%= @application.id %>">Continue →</button>
 <% end %>

@@ -13,6 +13,7 @@ class Event
     alias_method :update?, :show?
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
+    alias_method :review?, :show?
 
   end
 

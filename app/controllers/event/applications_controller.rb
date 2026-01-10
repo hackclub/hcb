@@ -33,7 +33,10 @@ class Event
 
     def project_info
       authorize @application
+    end
 
+    def review
+      authorize @application
     end
 
     def update

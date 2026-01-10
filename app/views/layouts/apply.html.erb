@@ -186,7 +186,7 @@
             <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke dark:border-slate"></div>
           <% end %>
         </div>
-        <div class="flex-grow p-6">
+        <div class="flex-1 overflow-auto p-6 relative" style="margin-left: calc(100vw - 100%)">
           <%= yield %>
         </div>
         <% if @application.present? %>
