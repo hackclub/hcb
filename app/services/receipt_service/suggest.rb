@@ -51,6 +51,13 @@ module ReceiptService
     end
 
     def distance(hcb_code)
+      # Handle cases with bad data
+      return 1_000 if @extracted.nil? ||
+                      @extracted.extracted_total_amount_cents.nil? ||
+                      @extracted.extracted_date.nil? ||
+                      @extracted.extracted_card_last4.nil?
+
+      distance = 0
       return if @extracted.nil?
 
       merchant_amount = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("merchant_amount")
@@ -111,12 +118,26 @@ module ReceiptService
         }
       }
 
-      features = distances.values.reject { |data| data[:value].nil? }
+      unless (@extracted.extracted_total_amount_cents.abs - hcb_code.amount_cents.abs).abs == 0
+        distance += 200 # Automatically disqualify suggestion if not matching
+      end
 
-      value = features.map { |data| data[:value] * data[:weight] }.sum.to_f
-      weight = features.map { |data| data[:weight] }.sum.to_f
+      unless @extracted.extracted_card_last4 == hcb_code.card&.last4
+        distance += 200 # Automatically disqualify suggestion if not matching
+      end
 
-      value / weight * 100
+      unless hcb_code.stripe_merchant["postal_code"] == @extracted.extracted_merchant_zip_code
+        distance += 10 # Weight suggestions towards those with matching zip codes
+      end
+
+      unless @extracted.extracted_merchant_name&.downcase&.in?(hcb_code.stripe_card_memo&.downcase)
+        distance += 10 # Weight suggestions towards those with matching merchant names
+      end
+
+      date = (hcb_code.pt&.raw_pending_stripe_transaction&.created_at || hcb_code.date).to_date
+      distance += (date - @extracted.extracted_date.to_date).abs.to_i * 50 / 7 # Allow 1 week of leeway before crossing the distance threshold of 50
+
+      distance
     end
 
     def sorted_transactions

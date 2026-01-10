@@ -2,66 +2,60 @@
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
 
-<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
+<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>" draggable="<%= !(defined?(selectable) && selectable) %>" data-behavior="<%= defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger" %>" data-modal="<%= defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}" %>" ondragstart="event.dataTransfer.setData('text/plain', event.target.id)">
 
-<% unless defined?(hide_info) %>
-  <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">
-    <button class="pop receipt__minimize mr1" onClick="unexpandReceipt()">
-      <%= inline_icon "view-back", size: 24 %>
-    </button>
-    <span>
-      <strong style="overflow-wrap: anywhere;">
-        <% if defined?(link_to_file) && !defined?(selectable) %>
-          <%= link_to file_path, target: "_blank", style: "text-decoration: none;" do %>
+  <div class="receipt__header">
+    <% unless defined?(hide_info) %>
+      <span class="<%= "muted" unless defined?(selectable) %> flex items-center">
+        <button class="pop receipt__minimize mr1" onClick="unexpandReceipt()">
+          <%= inline_icon "view-back", size: 24 %>
+        </button>
+        <span>
+          <strong style="overflow-wrap: anywhere;">
             <%= receipt.file.blob.filename %>
-          <% end %>
-        <% else %>
-          <%= receipt.file.blob.filename %>
-        <% end %>
-      </strong>
-      <% unless defined?(selectable) %>
-        (<%= number_to_human_size receipt.file.blob.byte_size %>)
-      <% end %>
-    </span>
-  </span>
-<% end %>
+          </strong>
+        </span>
+      </span>
+    <% end %>
+  </div>
 
   <% if defined?(selectable) %>
     <span>
       <div class="receipt__icon"></div>
       <span style="display: inline-grid; border-radius: 0.5rem;">
+        <div class="receipt__icon--check">✓</div>
         <div class="receipt__icon--star tooltipped tooltipped--n" aria-label="Suggested receipt">
           <%= inline_icon "rep", size: "36", style: "margin: -5px;" %>
         </div>
-        <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
+        <%= image_tag receipt.preview, class: "p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id
             } if receipt.preview %>
       </span>
     </span>
   <% else %>
     <% if receipt.preview && !local_assigns[:popover] %>
-      <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
-        <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
+      <span style="display: inline-grid; border-radius: 0.5rem;">
+        <%= image_tag receipt.preview, class: "p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
             } if receipt.preview %>
       </span>
     <% elsif receipt.preview && local_assigns[:popover] %>
-    <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
-      <%= image_tag receipt.preview,
-            class: "card p0 receipt--image #{receipt.file.blob.content_type == "application/pdf" ? "receipt__pdf-preview" : ""}",
-            alt: receipt.suggested_memo,
-            data: {
-              "receipt-id" => receipt.id,
-              "file_type"  => receipt.file.blob.content_type,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
-            } if receipt.preview %>
-    </span>
-    <% if receipt.file.blob.content_type == "application/pdf" %>
-      <iframe src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
-    <% end %>
+      <span style="display: inline-grid; border-radius: 0.5rem;">
+        <%= image_tag receipt.preview,
+              class: "p0 receipt--image #{receipt.file.blob.content_type == "application/pdf" ? "receipt__pdf-preview" : ""}",
+              alt: receipt.suggested_memo,
+              data: {
+                "receipt-id" => receipt.id,
+                "file_type"  => receipt.file.blob.content_type,
+              } if receipt.preview %>
+      </span>
+      <% if receipt.file.blob.content_type == "application/pdf" %>
+        <iframe src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
+      <% end %>
+    <% else %>
+      <div class="card card--sunken">
+        foo
+      </div>
     <% end %>
     <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
@@ -135,7 +129,7 @@
         <iframe src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
       <% else %>
         <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
-          <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+          <%= image_tag receipt.preview, class: "p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
         </div>
       <% end %>
 
@@ -163,7 +157,7 @@
           <iframe data-receipt-tabs-target="preview" src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
         <% else %>
           <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
-            <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
+            <%= image_tag receipt.preview, class: "p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
           </div>
         <% end %>
 

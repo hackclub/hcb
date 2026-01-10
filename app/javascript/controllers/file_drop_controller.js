@@ -8,13 +8,8 @@ function extractId(dataTransfer) {
   let receiptId
 
   try {
-    const html = dataTransfer.getData('text/html')
-
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-    const imgTag = doc.querySelector('img')
-
-    receiptId = imgTag.getAttribute('data-receipt-id')
+    const elementId = dataTransfer.getData('text/plain')
+    receiptId = elementId.split('_')[1]
   } catch (err) {
     console.error(err)
   }
