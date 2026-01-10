@@ -19,7 +19,7 @@
 
   &.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, smoke), 0.75);
+    background-color: rgba(map-get($palette, smoke), 0.50);
   }
 
   &.b--warning {
