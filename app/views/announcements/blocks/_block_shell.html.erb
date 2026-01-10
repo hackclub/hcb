@@ -1,14 +1,12 @@
 <%# locals: (block:, type:, is_email: false, title: nil) %>
 
-<% if is_email %>
-  <div id="block_<%= block.id %>" class="<%= type %> relative card shadow-none border flex flex-col py-2 my-2">
+<div id="block_<%= block.id %>" class="<%= type %> relative card shadow-none border flex flex-col py-2 my-2">
+  <% if is_email %>
     <% if title.present? %>
       <p class="my-0"><strong><%= title %></strong></p>
     <% end %>
     <%= yield %>
-  </div>
-<% else %>
-  <%= turbo_frame_tag "block_#{block.id}", class: "#{type} relative card shadow-none border min-h-[50px] flex flex-col py-2 my-2" do %>
+  <% else %>
     <% if title.nil? %>
       <div class="absolute top-2 right-2">
         <%= render partial: "announcements/blocks/block_actions", locals: { block:, is_email: } %>
@@ -24,4 +22,4 @@
       <%= yield %>
     </div>
   <% end %>
-<% end %>
+</div>

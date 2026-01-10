@@ -1,6 +1,9 @@
-<div data-controller="menu" data-menu-placement-value="<%= content_for?(:nav) || request.path.include?("auth") || request.path.include?("logins") ? "bottom-start" : "bottom-center" %>">
+<div
+  style="height: <%= @home_size || 36 %>px;"
+  data-controller="menu"
+  data-menu-placement-value="bottom-start">
   <%= link_to root_path,
-    class: "header-center text-decoration-none flex items-center #{'tooltipped tooltipped--s' if tooltipped_logo?}",
+    class: "header-center text-decoration-none flex inline-flex items-center #{'tooltipped tooltipped--e' if tooltipped_logo?}",
     'aria-label': tooltipped_logo? ?
       (user_birthday? ? "Happy birthday! #{['🎂', '🎈', '🎉', '🥳'].sample}" : "You’re in #{Rails.env} mode. #{development_mode_flavor}") :
       "",
@@ -8,37 +11,45 @@
 
     <% logo_env = Rails.env.local? ? "development" : Rails.env %>
 
-    <%= image_tag user_birthday? ? "logo-party-dark.gif" : by_season("logo-#{logo_env}-dark.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+    <%= image_tag user_birthday? ? "logo-party-dark.gif" : by_season("logo-#{logo_env}-dark.png", fall: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png", winter: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/0afd17197f50ac13_521708205-16eb549a-279f-4534-9bda-8221c3ff768b.png"),
         name: "header-logo",
         class: "logo-dark",
+        width: @home_size || 36,
         height: @home_size || 36,
         alt: "HCB logo" %>
-    <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
+    <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png", winter: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/0afd17197f50ac13_521708205-16eb549a-279f-4534-9bda-8221c3ff768b.png"),
         name: "header-logo",
         class: "logo",
+        width: @home_size || 36,
         height: @home_size || 36,
         alt: "HCB logo" %>
   <% end %>
 
-  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+  <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact z-50">
     <% if fall? %>
-      <a href="https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png" download class="flex">
-        <%= image_tag "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png", class: "mr1", height: 24 %>
+      <a href="https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png" download class="flex">
+        <%= image_tag "https://hc-cdn.hel1.your-objectstorage.com/s/v3/e7a24b43d9812d98_image.png", height: 24 %>
         Download spooky icon
       </a>
     <% end %>
+    <% if winter? %>
+      <a href="https://hc-cdn.hel1.your-objectstorage.com/s/v3/0afd17197f50ac13_521708205-16eb549a-279f-4534-9bda-8221c3ff768b.png" download class="flex">
+        <%= image_tag "https://hc-cdn.hel1.your-objectstorage.com/s/v3/0afd17197f50ac13_521708205-16eb549a-279f-4534-9bda-8221c3ff768b.png", height: 24 %>
+        Download winter icon
+      </a>
+    <% end %>
     <a href="/brand/hcb-icon-icon-original.png" download class="flex">
-      <%= image_tag "logo-production.svg", class: "mr1", size: 24 %>
-      Download PNG icon
+      <%= image_tag "logo-production.svg", size: 24 %>
+      Download light PNG
     </a>
     <a href="/brand/hcb-icon-icon-dark.png" download class="flex">
-      <%= image_tag "logo-production-dark.svg", class: "mr1", size: 24 %>
-      Download PNG icon
+      <%= image_tag "logo-production-dark.svg", size: 24 %>
+      Download dark PNG
     </a>
     <div class="menu__divider"></div>
     <a href="/branding">Brand guidelines</a>
     <div class="menu__divider"></div>
-    <a href="/" target="_blank">Open link in new tab</a>
+    <a href="/" target="_blank">Open home in new tab</a>
     <% if current_user&.admin_override_pretend? %>
       <div class="menu__divider" data-label="Admin"></div>
       <%= button_to "#{"✔ " if current_user.pretend_is_not_admin}Pretend not to be an admin", user_path(current_user), method: :patch, params: { pretend_is_not_admin: !current_user.pretend_is_not_admin }, class: "menu__action admin-tools", data: { turbo: false } %>
@@ -48,7 +59,22 @@
       <a
         href="/letter_opener"
         target="_blank"
-        class="menu__action dev-tools border-none"><%= "Open LetterOpener (#{LetterOpenerWeb::Letter.search.count})" %></a>
+        class="menu__action dev-tools border-none">
+        <%= "Open LetterOpener (#{LetterOpenerWeb::Letter.search.count})" %>
+      </a>
+      <p class="text-xs muted mt-2 mb-0">
+        <% if Build.commit_hash.present? %>
+          Build <em><%= Build.commit_name %></em>
+          <br>
+        <% end %>
+        <% unless Rails.env.production? %>
+          <% @sql_count = QueryCount::Counter.counter %>
+          <% @sql_cached_count = QueryCount::Counter.counter_cache %>
+          Used <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+<%= @sql_cached_count %> cached).
+          <br>
+          Running on Rails <%= Rails::VERSION::STRING %> with Ruby <%= RUBY_VERSION %>.
+        <% end %>
+      </p>
     <% end %>
   </div>
 </div>

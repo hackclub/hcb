@@ -52,7 +52,7 @@ class CardGrant
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
-        after do
+        after_commit do
           ::CardGrant::PreAuthorization::AnalyzeJob.perform_later(pre_authorization: self)
         end
       end

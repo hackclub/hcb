@@ -1077,10 +1077,10 @@
   resolved "https://registry.yarnpkg.com/@hackclub/icons/-/icons-0.0.15.tgz#612b9e107d9eabb44e0eeb1f8ebfcdc6b88c2e28"
   integrity sha512-IKJ5JQhRhlkYINv9pxzT//fn3aYwsGBeyNNBcw7eU+J0lfs0wGrq9lh7CGcXUUGXaKFxDPRlWhTxaAVaRdZVRA==
 
-"@hcb.gg/wrapped@^2024.0.5":
-  version "2024.0.5"
-  resolved "https://registry.yarnpkg.com/@hcb.gg/wrapped/-/wrapped-2024.0.5.tgz#eae97eb09a2d7c6da97188791d21cf5b05d72e78"
-  integrity sha512-Aj8iLgJfcH68yOTy9KuyXZHgoMsjsASpfigBVyDZsUJN2K7oi2nMLTRmQk3OcrXKSpodwRJ2+THBg3Lh6F1n5A==
+"@hcb.gg/wrapped@^2025.0.2":
+  version "2025.0.2"
+  resolved "https://registry.yarnpkg.com/@hcb.gg/wrapped/-/wrapped-2025.0.2.tgz#301962b130606cf1a6fdc11863e52902eb16eee1"
+  integrity sha512-3N0eBUUxfGUXMCgyROhUS/udXStO2ARBfnOD3trYUTd+MdeniSplsA+ehNyTlXvQHOduoqbdIvu2Yy0HAKqt7Q==
   dependencies:
     confetti-js "^0.0.18"
     fast-shuffle "^6.0.1"
@@ -1679,11 +1679,6 @@
   integrity sha512-WpxBCKWPLr4xSsHgz511rFJAM+wS28w2zEO1QDNY5zM/S8ok70NNfztH0xwhqKyaK0OHCbN98LDAZuy1ctxDkA==
   dependencies:
     "@types/yargs-parser" "*"
-
-"@use-it/event-listener@^0.1.2":
-  version "0.1.7"
-  resolved "https://registry.npmjs.org/@use-it/event-listener/-/event-listener-0.1.7.tgz"
-  integrity sha512-hgfExDzUU9uTRTPDCpw2s9jWTxcxmpJya3fK5ADpf5VDpSy8WYwY/kh28XE0tUcbsljeP8wfan48QvAQTSSa3Q==
 
 "@vue/reactivity@~3.1.1":
   version "3.1.5"
@@ -7043,13 +7038,6 @@ uri-js@^4.2.2, uri-js@^4.4.1:
   integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
   dependencies:
     punycode "^2.1.0"
-
-use-persisted-state@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.npmjs.org/use-persisted-state/-/use-persisted-state-0.3.3.tgz"
-  integrity sha512-pCNlvYC8+XjRxwnIut4teGC9f2p9aD88R8OGseQGZa2dvqG/h1vEGk1vRE1IZG0Vf161UDpn+NlW4+UGubQflQ==
-  dependencies:
-    "@use-it/event-listener" "^0.1.2"
 
 util-deprecate@^1.0.2:
   version "1.0.2"

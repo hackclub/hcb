@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
-  include RedirectToUi3
-
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
@@ -24,17 +22,9 @@ class ApplicationController < ActionController::Base
   # update the current session's last_seen_at
   before_action { current_session&.update_session_timestamps }
 
-  # This cookie is used for Safari PWA prompts
   before_action do
-    next if current_user.nil?
-
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
-  end
-
-  before_action do
-    # Disallow indexing
-    response.set_header("X-Robots-Tag", "noindex")
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
   end
 
   before_action do
@@ -47,6 +37,12 @@ class ApplicationController < ActionController::Base
   before_action do
     if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
     end
   end
 
