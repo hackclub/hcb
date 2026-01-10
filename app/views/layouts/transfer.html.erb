@@ -1,7 +1,7 @@
 <% page_full %>
 <% @no_app_shell = true %>
 
-<nav class="border-b p-8 flex items-center gap-4 sticky top-0 bg-snow dark:bg-dark h-24 w-full z-10">
+<nav class="border-b p-8 flex items-center gap-4 sticky sm:fixed top-0 bg-snow dark:bg-dark h-24 w-full z-10">
   <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
