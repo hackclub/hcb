@@ -95,20 +95,20 @@
   <div class="card mb-4 relative">
     <template x-if="!payment_recipient || editing">
       <div class="flex flex-col gap-3">
-        <div class="flex items-center justify-between">
+        <div class="sm:flex items-center justify-between">
           <%= form.label :bank_name %>
           <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
         <div>
-          <div class="flex items-center justify-between" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+          <div class="sm:flex items-center justify-between" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
             <%= form.label :routing_number %>
             <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
           </div>
           <span class="muted" data-external-validation-target="hint"></span>
         </div>
 
-        <div class="flex items-center justify-between">
+        <div class="sm:flex items-center justify-between">
           <%= form.label :account_number %>
           <%= form.text_field :account_number, placeholder: "0913338883", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "account_number" } %>
         </div>
@@ -121,9 +121,9 @@
           <%= inline_icon "pen", size: 18 %>
         </button>
 
-        <div class="flex items-center"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
-        <div class="flex items-center"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.routing_number"></div>
-        <div class="flex items-center"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
+        <div class="sm:flex items-center"><label>Bank name</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bank_name"></div>
+        <div class="sm:flex items-center"><label>Routing number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.routing_number"></div>
+        <div class="sm:flex items-center"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
       </div>
     </template>
   </div>
@@ -139,7 +139,7 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between">
+    <div class="sm:flex items-center justify-between">
       <div>
         <%= form.label :invoiced_at, "Invoice date" %>
         <span class="muted">When were you invoiced for this payment?</span>
@@ -157,7 +157,7 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between gap-4">
+    <div class="sm:flex items-center justify-between gap-4">
       <div>
         <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>
         <span class="muted">Required for reimbursements / goods & services payments.</span>
