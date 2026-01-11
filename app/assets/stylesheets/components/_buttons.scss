@@ -448,3 +448,48 @@ form .flex-auto + input[type='submit'] {
     color: map-get($palette, success) !important;
   }
 }
+
+.sort-button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: start;
+  width: 100%;
+  font-weight: 600;
+  transition: color 0.125s ease-in-out;
+  gap: 0.5rem;
+  color: inherit;
+
+  [data-dark='true'] & {
+    color: map-get($palette, white);
+  }
+
+  &.sort-button--right {
+    justify-content: end;
+    flex-direction: row-reverse;
+  }
+
+  &:hover,
+  &:focus {
+    color: map-get($palette, info);
+  }
+
+  & svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    opacity: 0;
+    transition:
+      opacity 0.125s ease-in-out,
+      transform 0.125s ease-in-out;
+  }
+
+  &:hover svg,
+  &:focus svg {
+    opacity: 1;
+  }
+
+  &.sort-button--active svg {
+    opacity: 1;
+  }
+}
