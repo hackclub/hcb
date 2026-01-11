@@ -55,7 +55,6 @@ Rails/HelperInstanceVariable:
     - 'app/helpers/invoices_helper.rb'
     - 'app/helpers/sessions_helper.rb'
     - 'app/helpers/stripe_cards_helper.rb'
-    - 'app/helpers/tours_helper.rb'
 
 # Offense count: 17
 # Configuration parameters: IgnoreScopes, Include.

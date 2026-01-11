@@ -2,7 +2,7 @@
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
     <%= render partial: "events/filter" %>
     <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
-      <div class="table-container mt-4" data-tour-step="transactions">
+      <div class="table-container" data-controller="walkthrough" data-walkthrough-key-value="transactions">
         <table>
           <thead>
           <tr>

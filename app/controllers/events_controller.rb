@@ -9,14 +9,27 @@ class EventsController < ApplicationController
   include Rails::Pagination
   before_action :set_event, except: [:index]
   before_action :set_transaction_filters, only: [:transactions, :ledger]
-  before_action except: [:show, :index] do
-    render_back_to_tour @organizer_position, :welcome, event_path(@event)
-  end
+  # before_action except: [:show, :index] do
+  #   render_back_to_tour @organizer_position, :welcome, event_path(@event)
+  # end
   skip_before_action :signed_in_user
   before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
+
+  def walkthrough_steps
+    [
+      {
+        key: "ledger",
+        page: event_transactions_path(event_id: @event.slug),
+        steps: [
+          { attachTo: "balance", intro: "This is your organization's current balance." },
+          { attachTo: "filter-bar", intro: "Search transactions and narrow results down with filters." },
+        ]
+      }
+    ]
+  end
 
   # GET /events
   def index
@@ -144,8 +157,6 @@ class EventsController < ApplicationController
   end
 
   def transactions
-    render_tour @organizer_position, :welcome
-
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
     if maybe_pending_invite.present?
