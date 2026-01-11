@@ -752,6 +752,20 @@ class AdminController < Admin::BaseController
     @wise_transfer = WiseTransfer.find(params[:id])
   end
 
+  def applications
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+
+    @applications = Event::Application.all
+
+    @applications = @applications.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'submitted' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
+      "created_at desc"
+    )
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1611,7 +1625,7 @@ class AdminController < Admin::BaseController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        pending_identity_vault_verifications_task_size
+        1
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions

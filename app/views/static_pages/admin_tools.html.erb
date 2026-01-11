@@ -38,7 +38,8 @@
       </div>
       <h2>Tasks</h2>
       <ul class="grid text-left w-100 mt0" id="task-grid">
-        <%= card_to "Applications", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
+        <%= card_to "Applications (Airtable)", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
+        <%= card_to "Applications (HCB)", applications_admin_index_path, badge: 0 %>
         <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
         <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
         <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>

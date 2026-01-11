@@ -231,6 +231,7 @@ Rails.application.routes.draw do
       post "stripe_card_personalization_design_create", to: "admin#stripe_card_personalization_design_create"
       get "checks", to: "admin#checks"
       get "increase_checks", to: "admin#increase_checks"
+      get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
       get "wise_transfers", to: "admin#wise_transfers"
