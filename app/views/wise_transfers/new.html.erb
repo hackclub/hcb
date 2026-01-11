@@ -1,50 +1,63 @@
 <% disabled = !policy(@event).create_transfer? %>
-
 <% title "Send a Wise transfer" %>
-<%= render "events/nav", selected: :transfers %>
-<% page_sm %>
 
-<% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
+<% content_for :table_of_contents do %>
+  <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
+    <div class="step-tab__number">1</div>
+    <span>Recipient details</span>
+  </div>
+  <div class="step-tab step-tab--full justify-start py-1" data-scroll-seek-target="tab">
+    <div class="step-tab__number">2</div>
+    <span>Payment information</span>
+  </div>
 <% end %>
 
-<h1>Send a Wise transfer</h1>
-
-<%= render "application/callout",
-    type: "info",
-    icon: "wise",
-    title: "Important information about Wise transfers",
-    class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
-    footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
-  We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.
-  <br>
-  Sending over $500? Avoid all fees by sending an international wire.
+<% content_for :sidebar_footer do %>
+  <% if @event.present? && !policy(@event).create_transfer? %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
+  <% end %>
+  <%= render "application/callout",
+      type: "info",
+      icon: "wise",
+      title: "Important information about Wise transfers",
+      class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
+      footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+    <ul>
+      <li>We've integrated Wise into HCB to offer international transfers to over 100 countries.</li>
+      <li>HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.</li>
+      <li>Sending over $500? Avoid all fees by sending an international wire.</li>
+    </ul>
+  <% end %>
 <% end %>
-
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
                 "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
               }) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
 
-  <h2 class="mb2 mt3">Recipient details</h2>
+  <div data-scroll-seek-target="section" id="recipient-details">
+  <h3 class="mb-2">Recipient details</h3>
+  <div class="card mb-4 relative">
+    <div class="field">
+      <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
+      <span class="muted mb-1 block">May be used for tax purposes. Match the name on the recipient's account.</span>
+      <%= form.text_field :recipient_name, placeholder: "Raviga Capital", class: "!max-w-full", required: true, maxlength: 250, disabled: %>
+    </div>
 
-  <div class="field mt2">
-    <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
-    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250, disabled: %>
-    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
+    <div class="field">
+      <%= form.label :recipient_email, "Email" %>
+      <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
+    </div>
+
+    <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
+  </div>
   </div>
 
-  <div class="field">
-    <%= form.label :recipient_email, "Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value" %>
-  </div>
+  <div data-scroll-seek-target="section" id="payment-information">
+  <h3 class="mb-1">Payment information</h3>
+  <p class="muted mt-0 mb-2">Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
 
-  <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
-
-  <h2 class="mt3">Payment information</h2>
-  <p>Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
-
+  <div class="card mb-4 relative">
   <%= form.label :amount, "Currency & amount" %>
 
   <div class="field">
@@ -75,13 +88,14 @@
 
   <div class="field">
     <%= form.label :payment_for, "What are you paying for with this transfer?" %>
-    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
   </div>
 
   <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
+  <p class="muted mt-0 mb-2">Required for reimbursements / goods & services payments.</p>
   <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
     <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
           action: "
@@ -104,11 +118,11 @@
         disabled: %>
     <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
+  </div>
+  </div>
 
-  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-
-  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your transfer will be sent out on the next business day.">
-    <button type="submit" <%= "disabled" if disabled %> class="btn">
+  <div class="actions tooltipped tooltipped--n inline-block w-full" aria-label="Your transfer will be sent out on the next business day.">
+    <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
       <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
     </button>
   </div>
