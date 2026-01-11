@@ -37,20 +37,14 @@ module Api
         end
 
 
-        begin
-          @ach_transfer.save!
-          if ach_transfer_params[:file]
-            ::ReceiptService::Create.new(
-              uploader: current_user,
-              attachments: ach_transfer_params[:file],
-              upload_method: :ach_transfer_api,
-              receiptable: @ach_transfer.local_hcb_code
-            ).run!
-          end
-        rescue ArgumentError => e
-          render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        rescue ActiveRecord::RecordInvalid => e
-          render json: { error: @ach_transfer.errors.full_message.to_sentence }, status: :unprocessable_entity
+        @ach_transfer.save!
+        if ach_transfer_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: ach_transfer_params[:file],
+            upload_method: :ach_transfer_api,
+            receiptable: @ach_transfer.local_hcb_code
+          ).run!
         end
 
         render :show, status: :created
