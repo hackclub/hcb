@@ -9,7 +9,8 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.references :event, foreign_key: true
       t.string :name
       t.text :description
-      t.boolean :political
+      t.text :political_description
+      t.string :website_url
 
       t.string :address_line1
       t.string :address_line2

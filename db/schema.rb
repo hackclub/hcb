@@ -979,11 +979,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_09_000002) do
     t.bigint "event_id"
     t.string "name"
     t.text "notes"
-    t.boolean "political"
+    t.text "political_description"
     t.string "referral_code"
     t.string "referrer"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.string "website_url"
     t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
   end

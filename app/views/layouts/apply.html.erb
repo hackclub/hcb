@@ -157,39 +157,63 @@
             <div>
               <%= render "application/flash" unless @hide_flash %>
             </div>
-            <div class="pr-3">
-              <div class="flex flex-row items-center justify-start gap-2 text-darkless dark:text-smoke" id="autosave--saving" style="display: none;">
-                <h3 class="font-medium text-lg my-0">
-                  <%= inline_icon "cloud-upload", size: 32, class: "align-top text-muted" %>
-                  Saving your application...
-                </h3>
-              </div>
-              <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--saved">
-                <%= inline_icon "checkmark", size: 32, class: "align-top text-green" %>
-                <h3 class="font-medium text-lg my-0">
-                  Application saved!
-                </h3>
-              </div>
-              <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--error" style="display: none;">
-                <%= inline_icon "important", size: 32, class: "align-top text-orange" %>
-                <h3 class="font-medium text-lg my-0">
-                  Error saving application
-                </h3>
+            <div class="pr-3 flex flex-row-reverse gap-8 items-center">
+              <div>
+                <div class="flex flex-row items-center justify-start gap-2 text-darkless dark:text-smoke" id="autosave--saving" style="display: none;">
+                  <p class="font-medium my-0 text-sm">
+                    <%= inline_icon "cloud-upload", size: 24, class: "align-top text-muted" %>
+                    Saving your application...
+                  </p>
+                </div>
+                <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--saved">
+                  <%= inline_icon "checkmark", size: 24, class: "align-top text-green" %>
+                  <p class="font-medium my-0 text-sm">
+                    Application saved
+                  </p>
+                </div>
+                <div class="flex flex-row items-center justify-start gap-1 text-darkless dark:text-smoke" id="autosave--error" style="display: none;">
+                  <%= inline_icon "important", size: 24, class: "align-top text-orange" %>
+                  <p class="font-medium my-0 text-sm">
+                    Error saving application
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-          <% if @application.present? %>
+          <% if content_for?(:progress).present? %>
             <div class="bg-smoke dark:bg-slate h-1">
-              <div class="bg-primary h-1" style="width: <%= @application&.completion_percentage || 0 %>%"></div>
+              <div class="bg-primary h-1" style="width: <%= yield(:progress) %>%"></div>
             </div>
           <% else %>
             <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke dark:border-slate"></div>
           <% end %>
         </div>
         <div class="flex-1 overflow-auto p-6 relative" style="margin-left: calc(100vw - 100%)">
-          <%= yield %>
+          <% if content_for?(:info_pane) %>
+            <div class="flex flex-col md:flex-row gap-6 lg:gap-4 h-full">
+              <div class="flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
+                <%= yield(:info_pane) %>
+
+                <div class="card flex flex-col gap-3 card--sunken mb-7">
+                  <div class="flex flex-row items-center justify-start gap-2">
+                    <%= inline_icon "help", size: 28 %>
+                    <h3 class="text-lg my-0">Need help?</h3>
+                  </div>
+                  <p class="my-0"><%= link_to "Live chat support", "#" %> is currently available.</p>
+                  <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+                </div>
+              </div>
+              <div class="flex flex-col items-center flex-grow">
+                <div class="md:max-w-[600px] w-full">
+                  <%= yield %>
+                </div>
+              </div>
+            </div>
+          <% else %>
+            <%= yield %>
+          <% end %>
         </div>
-        <% if @application.present? %>
+        <% if @application.present? || content_for?(:footer) %>
           <div class="p-6 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke dark:border-slate dark:bg-darkless">
             <%= yield(:footer) %>
           </div>

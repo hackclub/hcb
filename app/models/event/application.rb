@@ -4,27 +4,28 @@
 #
 # Table name: event_applications
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string
-#  address_city        :string
-#  address_country     :string
-#  address_line1       :string
-#  address_line2       :string
-#  address_postal_code :string
-#  address_state       :string
-#  airtable_status     :string
-#  cosigner_email      :string
-#  description         :text
-#  name                :string
-#  notes               :text
-#  political           :boolean
-#  referral_code       :string
-#  referrer            :string
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  airtable_record_id  :string
-#  event_id            :bigint
-#  user_id             :bigint           not null
+#  id                    :bigint           not null, primary key
+#  aasm_state            :string
+#  address_city          :string
+#  address_country       :string
+#  address_line1         :string
+#  address_line2         :string
+#  address_postal_code   :string
+#  address_state         :string
+#  airtable_status       :string
+#  cosigner_email        :string
+#  description           :text
+#  name                  :string
+#  notes                 :text
+#  political_description :text
+#  referral_code         :string
+#  referrer              :string
+#  website_url           :string
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  airtable_record_id    :string
+#  event_id              :bigint
+#  user_id               :bigint           not null
 #
 # Indexes
 #
@@ -51,10 +52,14 @@ class Event
       state :under_review
       state :approved
       state :rejected
+
+      event :mark_submitted do
+        transitions from: :draft, to: :submitted
+      end
     end
 
     def next_step
-      return "Tell us about your project" if name.blank? || description.blank? || political.nil?
+      return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
     end
@@ -76,6 +81,10 @@ class Event
       return 100 if submitted?
 
       0
+    end
+
+    def political?
+      political_description.present? && political_description.strip.length.positive?
     end
 
   end

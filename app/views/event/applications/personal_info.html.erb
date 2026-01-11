@@ -1,5 +1,8 @@
-<div class="flex flex-col md:flex-row gap-4 h-full">
-  <div class="flex flex-col flex-grow justify-between md:max-w-[50%] basis-0">
+<% title "Add your information" %>
+<% content_for :progress, 50 %>
+
+<div class="flex flex-col md:flex-row gap-6 lg:gap-4 h-full">
+  <div class="flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
     <div class="flex flex-col">
       <h2 class="text-4xl">
         Add your information
@@ -8,7 +11,7 @@
       <p class="mt-0 text-lg muted">Tell us a bit about yourself</p>
     </div>
 
-    <div class="max-w-lg card flex flex-col gap-3 card--sunken mb-7">
+    <div class="card flex flex-col gap-3 card--sunken mb-7">
       <div class="flex flex-row items-center justify-start gap-2">
         <%= inline_icon "help", size: 28 %>
         <h3 class="text-lg my-0">Need help?</h3>
@@ -17,70 +20,85 @@
       <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
     </div>
   </div>
-  <div class="flex flex-col flex-grow md:max-w-[50%] basis-0">
-    <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7" do |form| %>
-      <%= form.label :address_line1, "Street address" %>
-      <div class="grid grid-cols-2 w-fit">
-        <div class="field mb-0">
-          <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", class: "mb-1" %>
-          <%= form.text_field :address_line2, placeholder: "Suite 500" %>
-        </div>
-        <br>
-
-        <div class="field mb-0">
-          <%= form.label :address_city, "City" %>
-          <%= form.text_field :address_city, placeholder: "San Francisco" %>
-        </div>
-        <div class="field mb-0">
-          <%= form.label :address_state, "State" %>
-          <%= form.text_field :address_state, placeholder: "CA" %>
-        </div>
-        <div class="field mb-0">
-          <%= form.label :address_postal_code, "Zip code" %>
-          <%= form.text_field :address_postal_code, placeholder: "94129" %>
-        </div>
-        <div class="field mb-0">
-          <%= form.label :address_country, "Country" %>
-          <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country" %>
-        </div>
-
-        <hr class="col-span-2">
-
-        <div class="field mb-0">
-          <%= form.label :referrer, "How did you hear about HCB?" %>
-          <%= form.text_field :referrer %>
-        </div>
-        <br>
-
-        <div class="field mb-0">
-          <%= form.label :referral_code, "Referral code" %>
-          <%= form.text_field :referral_code %>
-        </div>
-        <br>
-
-        <div class="field mb-0">
-          <%= form.label :notes, "Accessibility needs" %>
-          <%= form.text_area :notes %>
-        </div>
-        <br>
-
-        <% if @application.user.teenager? %>
-          <div class="field col-span-2">
-            <%= form.label :cosigner_email, "Parent email" %>
-            <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to cosign the fiscal sponsorship agreement. They will not have access to your organization on HCB.</p>
-            <%= form.email_field :cosigner_email %>
+  <div class="flex flex-col items-center flex-grow">
+    <div class="md:max-w-[600px]">
+      <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7" do |form| %>
+        <div class="card card--outline mb-6">
+          <%= form.label :address_line1 do %>
+            Street address <span class="text-primary">*</span>
+          <% end %>
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <div class="field mb-0">
+              <%= form.text_field :address_line1, placeholder: "8605 Santa Monica Blvd", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.text_field :address_line2, placeholder: "Suite 86294" %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_city do %>
+                City <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_city, placeholder: "West Hollywood", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_state do %>
+                State <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_state, placeholder: "CA", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_postal_code do %>
+                Zip code <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_postal_code, placeholder: "90069", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_country do %>
+                Country <span class="text-primary">*</span>
+              <% end %>
+              <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]" } %>
+            </div>
           </div>
-        <% end %>
-      </div>
 
-      <%= form.hidden_field :return_to, value: application_review_path(@application) %>
-    <% end %>
+          <hr class="col-span-2 my-3">
+
+          <div class="field">
+            <%= form.label :referrer do %>
+              How did you hear about HCB? <span class="text-primary">*</span>
+            <% end %>
+            <%= form.text_field :referrer, class: "w-full !max-w-full", required: true %>
+          </div>
+
+          <div class="field">
+            <%= form.label :referral_code, "Referral code" %>
+            <%= form.text_field :referral_code, class: "w-full !max-w-full" %>
+          </div>
+
+          <div class="field">
+            <%= form.label :notes, "Accessibility needs" %>
+            <%= form.text_area :notes, class: "w-full max-w-full" %>
+          </div>
+
+          <% if @application.user.teenager? %>
+            <div class="field col-span-2">
+              <%= form.label :cosigner_email do %>
+                Parent email <span class="text-primary">*</span>
+              <% end %>
+              <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to cosign the fiscal sponsorship agreement. They will not have access to your organization on HCB.</p>
+              <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com" %>
+            </div>
+          <% end %>
+        </div>
+
+        <%= form.hidden_field :return_to, value: review_application_path(@application) %>
+      <% end %>
+    </div>
   </div>
 </div>
 
 <% content_for :footer do %>
   <div class="flex flex-row gap-6 items-start justify-center">
-    <%= link_to "← Back", application_project_info_path(@application), class: "btn bg-muted" %>
+    <%= link_to "← Back", project_info_application_path(@application), class: "btn bg-muted" %>
     <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
       <%= inline_icon "message", size: 28 %>
       Live chat support

@@ -838,13 +838,19 @@ Rails.application.routes.draw do
   end
 
   scope module: :event do
-    get "apply", to: "applications#new"
+    get "apply", to: "applications#apply"
 
-    resources :applications, only: [:index, :create, :show, :update] do
-      get "personal_info"
-      get "project_info"
-      get "review"
-      post "submit"
+    resources :applications, only: [:index, :create, :show, :new, :update] do
+      collection do
+        get "start", to: "applications#create"
+      end
+
+      member do
+        get "personal_info"
+        get "project_info"
+        get "review"
+        post "submit"
+      end
     end
   end
 

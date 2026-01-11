@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   handleBlur(event) {
@@ -17,7 +17,7 @@ export default class extends Controller {
     try {
       new URL(urlString)
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }

@@ -206,7 +206,7 @@ class LoginsController < ApplicationController
 
   def set_for_application
     path = URI(params[:return_to] || "").path
-    
+
     @for_application = path.starts_with?("/applications")
   rescue URI::InvalidURIError
     @for_application = false
