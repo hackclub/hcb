@@ -70,6 +70,10 @@ textarea {
   }
 }
 
+[data-dark='true'] option {
+  background-color: $darkless;
+}
+
 select {
   min-height: 2.5rem;
   padding: 0.25rem 0.5rem;

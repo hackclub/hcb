@@ -4,7 +4,7 @@
   <section class="details details--wide pb2 details--tall">
       <p>
         <strong>Grant sent to</strong>
-        <span><%= mail_to @card_grant.user.email %></span>
+        <span><%= mail_to @card_grant.user.email %> (<%= copy_to_clipboard(@card_grant.user.public_id, class: "w-fit", tooltip_direction: "e") %>)</span>
       </p>
       <p>
         <strong>Expires on</strong>

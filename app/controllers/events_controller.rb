@@ -159,10 +159,6 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    if !signed_in? && !@event.holiday_features
-      @hide_seasonal_decorations = true
-    end
-
     if flash[:popover]
       @popover = flash[:popover]
       flash.delete(:popover)
@@ -759,13 +755,16 @@ class EventsController < ApplicationController
       return redirect_back fallback_location: event_sub_organizations_path(@event)
     end
 
+    # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
+    poc_id = current_user.admin? ? current_user.id : User.system_user.id
+
     subevent = ::EventService::Create.new(
       name: params[:name],
       emails: [params[:email]],
       cosigner_email: params[:cosigner_email],
       is_signee: true,
       country: params[:country],
-      point_of_contact_id: @event.point_of_contact_id,
+      point_of_contact_id: poc_id,
       invited_by: current_user,
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,

@@ -48,12 +48,13 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
   include HasWiseRecipient
+
+  include PublicIdentifiable
+  set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user

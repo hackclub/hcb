@@ -73,6 +73,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
     <meta name="msapplication-TileColor" content="#ec3750">
     <meta name="apple-itunes-app" content="app-id=6465424810">
+    <%= render "application/seo_meta_tags" %>
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">

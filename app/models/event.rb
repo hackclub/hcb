@@ -440,6 +440,8 @@ class Event < ApplicationRecord
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
+  after_create :apply_plan_default_values
+
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
   end
@@ -967,6 +969,12 @@ class Event < ApplicationRecord
     unless eligible_for_indexing?
       self.is_indexable = false
     end
+  end
+
+  def apply_plan_default_values
+    return if plan&.default_values.blank?
+
+    update!(plan.default_values)
   end
 
   def stripe_transaction_merchant(transaction)
