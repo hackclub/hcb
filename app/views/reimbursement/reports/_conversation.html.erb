@@ -56,7 +56,7 @@
           <% unless state_change == "reimbursement_requested" && whodunnit == @report.user && !@report.team_review_required? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">
-                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white;">
+                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white; cursor: default">
                   <%= inline_icon icon, width: 30 %>
                 </div>
                 <div class="conversation_item_text">
