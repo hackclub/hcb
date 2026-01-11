@@ -60,6 +60,9 @@ class Wire < ApplicationRecord
   include Freezable
   include Payment
 
+  include PublicIdentifiable
+  set_public_id_prefix :wir
+
   include HasWireRecipient
 
   def payment_recipient_attributes
