@@ -4,10 +4,11 @@ class LoginsController < ApplicationController
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
+  before_action :set_for_application
   before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
 
-  layout "login"
+  layout ->{ @for_application ? "apply" : "login" }
 
   after_action only: [:new] do
     # Allow indexing login page
@@ -202,6 +203,14 @@ class LoginsController < ApplicationController
   end
 
   private
+
+  def set_for_application
+    path = URI(params[:return_to] || "").path
+    
+    @for_application = path.starts_with?("/applications")
+  rescue URI::InvalidURIError
+    @for_application = false
+  end
 
   def set_login
     begin
