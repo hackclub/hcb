@@ -52,6 +52,9 @@ class Disbursement < ApplicationRecord
 
   include AASM
   include Commentable
+  include HasTransferRecord
+  transfer_record_statuses deposited: :deposited, canceled: :rejected,
+                           event: :source_event, name: :name, email: nil
 
   include Freezable
 

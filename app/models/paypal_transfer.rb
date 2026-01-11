@@ -35,6 +35,8 @@ class PaypalTransfer < ApplicationRecord
 
   include AASM
   include Payoutable
+  include HasTransferRecord
+  transfer_record_statuses deposited: :deposited, canceled: [:rejected, :failed], amount: :amount_cents
 
   belongs_to :event
   belongs_to :user

@@ -67,6 +67,8 @@ class AchTransfer < ApplicationRecord
   include Payoutable
   include Payment
   include Freezable
+  include HasTransferRecord
+  transfer_record_statuses deposited: :deposited, canceled: [:rejected, :failed]
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
