@@ -257,8 +257,8 @@ Rails.application.routes.draw do
       get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
-      post "referral_program_create", to: "admin#referral_program_create"
-      post "referral_link_create", to: "admin#referral_link_create"
+      post "referral_program_create", to: "referral/programs#create"
+      post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
@@ -719,11 +719,12 @@ Rails.application.routes.draw do
             post "topup"
             post "withdraw"
             post "cancel"
+            get "transactions"
           end
         end
 
         resources :invoices, only: [:show, :create]
-
+        resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
@@ -878,6 +879,9 @@ Rails.application.routes.draw do
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
+    get "card_grants/bulk_upload", to: "card_grants#bulk_upload_form", as: :card_grants_bulk_upload
+    post "card_grants/bulk_upload", to: "card_grants#bulk_upload"
+    get "card_grants/bulk_upload_template", to: "card_grants#bulk_upload_template", as: :card_grants_bulk_upload_template
 
     resources :follows, only: [:create], controller: "event/follows"
 

@@ -6,5 +6,9 @@ module Referral
       user.present?
     end
 
+    def create?
+      user.auditor?
+    end
+
   end
 end

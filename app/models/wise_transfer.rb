@@ -48,14 +48,15 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
   include HasTransferRecord
   transfer_record_statuses deposited: :deposited, canceled: [:rejected, :failed], amount: -> { usd_amount_cents || quoted_usd_amount_cents || 0 }
 
   include HasWiseRecipient
+
+  include PublicIdentifiable
+  set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user

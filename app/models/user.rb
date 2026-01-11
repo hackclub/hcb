@@ -170,6 +170,8 @@ class User < ApplicationRecord
 
   after_update :queue_sync_with_loops_job
 
+  before_update :set_default_seasonal_theme
+
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
@@ -216,9 +218,20 @@ class User < ApplicationRecord
     if use_sms_auth_previously_changed?
       if use_sms_auth
         create_activity(key: "user.enabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
       else
         create_activity(key: "user.disabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
       end
+    end
+
+    if use_two_factor_authentication_previously_changed?
+      change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
+      User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
+    end
+
+    if phone_number_previously_changed? && phone_number.present?
+      User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
 
@@ -620,6 +633,14 @@ class User < ApplicationRecord
     if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
+  end
+
+  def set_default_seasonal_theme
+    return unless birthday_changed?
+    # Skip if user ever updated their seasonal_themes_enabled setting
+    return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
+
+    self.seasonal_themes_enabled = teenager?
   end
 
 end
