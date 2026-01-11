@@ -4,6 +4,7 @@ class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
     skip_before_action :signed_in_user, only: [:new, :apply]
+    skip_before_action :redirect_to_onboarding
 
     layout "apply"
 
@@ -55,9 +56,16 @@ class Event
     def update
       authorize @application
 
+      ap application_params
+      ap user_params
+
       @application.update!(application_params)
 
-      @return_to = url_from(params[:event_application][:return_to])
+      @return_to = url_from(params[:return_to])
+
+      if user_params.present?
+        current_user.update!(user_params)
+      end
 
       return redirect_to @return_to if @return_to.present?
 
@@ -67,6 +75,7 @@ class Event
     def submit
       authorize @application
       @application.mark_submitted!
+      confetti!
       redirect_to application_path(@application)
     end
 
@@ -87,6 +96,10 @@ class Event
 
     def application_params
       params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email)
+    end
+
+    def user_params
+      params.require(:event_application).permit(:full_name, :preferred_name, :phone_number, :birthday)
     end
 
   end

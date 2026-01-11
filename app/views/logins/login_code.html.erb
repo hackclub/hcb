@@ -19,7 +19,7 @@
     <% end %>
     <%= @use_sms_auth ? "your phone number ending in " + @phone_last_four : mail_to(@email, { target: "_blank" }) %>
   </p>
-  <%= form_tag complete_login_path(@login) do %>
+  <%= form_tag complete_login_path(@login), id: "login" do %>
     <% if Flipper.enabled?(:otp_single_input, @login.user) %>
       <%= text_field_tag(
             :login_code,
@@ -70,3 +70,10 @@
   <%= render partial: "logins/environment_banner" %>
 </div>
 <%= render partial: "logins/footer" %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", new_application_path, class: "btn bg-muted" %>
+  <button data-webauthn-auth-target="continueButton" type="submit" class="btn" form="login">
+    Continue →
+  </button>
+<% end %>

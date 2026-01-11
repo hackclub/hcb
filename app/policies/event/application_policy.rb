@@ -7,13 +7,18 @@ class Event
     end
 
     def show?
-      record.user == user
+      record.user == user || user.auditor?
     end
 
-    alias_method :update?, :show?
+    def update?
+      record.user == user || user.admin?
+    end
+
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
     alias_method :review?, :show?
+
+    alias_method :submit?, :update?
 
   end
 

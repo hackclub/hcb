@@ -167,7 +167,7 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.present?
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
-      elsif @user.full_name.blank? || @user.phone_number.blank?
+      elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@for_application
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }

@@ -141,5 +141,7 @@
   <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
     <%= form.hidden_field :return_to, value: review_application_path(@application) %>
   <% end %>
-  <button class="btn bg-blue" form="edit_application_<%= @application.id %>">Submit Application</button>
+  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue" do %>
+    Submit application
+  <% end %>
 <% end %>

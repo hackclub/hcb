@@ -23,7 +23,54 @@
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px]">
       <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7" do |form| %>
-        <div class="card card--outline mb-6">
+        <div class="card mb-6">
+
+          <div class="md:flex gap-2">
+            <div class="field flex-1">
+              <%= form.label :full_name do %>
+                Full name <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :full_name, value: current_user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+            </div>
+            <div class="field flex-1">
+              <%= form.label :preferred_name, "Preferred name (optional)" %>
+              <%= form.text_field :preferred_name, value: current_user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
+            </div>
+          </div>
+
+          <div class="md:flex items-center gap-2">
+            <div class="field flex-1">
+              <%= form.label :phone_number do %>
+                Mobile phone number <span class="text-primary">*</span>
+              <% end %>
+
+              <%= form.hidden_field :phone_number, value: current_user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+              <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" required="required">
+            </div>
+            <div class="field flex-1">
+              <div class="inline-flex items-center justify-between w-full gap-1">
+                <%= form.label :birthday do %>
+                  Birthday <span class="text-primary">*</span>
+                <% end %>
+                <div class="info tooltipped tooltipped--w h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers and need to know which users are under 18 as there are certain laws that protect them.">
+                  <%= inline_icon "info", size: 18 %>
+                </div>
+              </div>
+              <div class="flex gap-2 onboarding">
+                <%= form.date_select :birthday,
+                                     { start_year: Date.today.year,
+                                       end_year: Date.today.year - 100,
+                                       order: [:month, :day, :year],
+                                       prompt: current_user.birthday.nil?,
+                                       default: current_user.birthday.presence
+                                     },
+                                     { required: true } %>
+              </div>
+            </div>
+          </div>
+
+          <hr class="col-span-2 mt-1 invisible mb-4">
+
           <%= form.label :address_line1 do %>
             Street address <span class="text-primary">*</span>
           <% end %>
@@ -60,7 +107,7 @@
             </div>
           </div>
 
-          <hr class="col-span-2 my-3">
+          <hr class="col-span-2 mt-5 invisible mb-4">
 
           <div class="field">
             <%= form.label :referrer do %>
@@ -90,19 +137,15 @@
           <% end %>
         </div>
 
-        <%= form.hidden_field :return_to, value: review_application_path(@application) %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+        <%= javascript_include_tag "phone_input.js" %>
       <% end %>
     </div>
   </div>
 </div>
 
 <% content_for :footer do %>
-  <div class="flex flex-row gap-6 items-start justify-center">
-    <%= link_to "← Back", project_info_application_path(@application), class: "btn bg-muted" %>
-    <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
-      <%= inline_icon "message", size: 28 %>
-      Live chat support
-    <% end %>
-  </div>
-  <button class="btn" form="edit_application_<%= @application.id %>">Continue →</button>
+  <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">← Back</button>
+  <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: review_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
 <% end %>

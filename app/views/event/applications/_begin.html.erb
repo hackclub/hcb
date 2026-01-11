@@ -1,42 +1,45 @@
 <%# locals: (application: nil) %>
+<div class="flex flex-col lg:mx-6">
 
-<h2 class="text-5xl">
-  <% if application.present? && application.created_at < 1.hour.ago %>
-    Continue your application
-  <% else %>
-    Let's get started
-  <% end %>
-</h2>
+  <h2 class="text-5xl">
+    <% if application.present? && application.created_at < 1.hour.ago %>
+      Continue your application
+    <% else %>
+      Let's get started
+    <% end %>
+  </h2>
 
-<p class="mt-0 text-2xl muted">Applying for HCB is easy and quick</p>
+  <p class="mt-0 mb-8 text-2xl muted">Applying for HCB is easy and quick</p>
 
-<div class="mb-12">
-  <div class="flex flex-col gap-5">
-    <div class="flex flex-row items-start justify-start gap-4">
-      <%= inline_icon "idea" %>
-      <p class="m-0 py-1">We'll start by asking some questions about your project</p>
-    </div>
-    <div class="flex flex-row items-start justify-start gap-4">
-      <%= inline_icon "leader" %>
-      <p class="m-0 py-1">Then, we'll ask some questions about you</p>
-    </div>
-    <div class="flex flex-row items-start justify-start gap-4">
-      <%= inline_icon "clock" %>
-      <p class="m-0 py-1">The whole process takes less than 5 minutes</p>
+  <div class="mb-12">
+    <div class="flex flex-col gap-3">
+      <div class="flex flex-row items-start justify-start gap-4">
+        <%= inline_icon "idea" %>
+        <p class="m-0 py-1">We'll start by asking some questions about your project</p>
+      </div>
+      <div class="flex flex-row items-start justify-start gap-4">
+        <%= inline_icon "leader" %>
+        <p class="m-0 py-1">Then, we'll ask some questions about you</p>
+      </div>
+      <div class="flex flex-row items-start justify-start gap-4">
+        <%= inline_icon "clock" %>
+        <p class="m-0 py-1">The whole process takes less than 5 minutes</p>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="max-w-lg">
-  <h3 class="text-lg mb-0">HCB is not a bank, we're a <%= link_to "fiscal sponsor", "https://hackclub.com/fiscal-sponsorship/", class: "underline" %></h3>
-  <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects.</p>
+  <div class="max-w-lg">
+    <h3 class="text-lg mb-0">HCB is not a bank, we're a <%= link_to "fiscal sponsor", "https://hackclub.com/fiscal-sponsorship/", class: "underline" %></h3>
+    <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects.</p>
+  </div>
+
 </div>
 
 <% content_for :footer do %>
   <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
   <% if application.present? %>
-    <%= link_to "Continue application", project_info_application_path(application), class: "btn" %>
+    <%= link_to "Continue application", project_info_application_path(application), class: "btn bg-blue" %>
   <% else %>
-    <%= link_to "Start application", start_applications_path, class: "btn" %>
+    <%= link_to "Start application", start_applications_path, class: "btn bg-blue" %>
   <% end %>
 <% end %>

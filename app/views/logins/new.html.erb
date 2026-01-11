@@ -14,7 +14,7 @@
         Sign <%= @signup ? "up for" : "in to" %> HCB
       <% end %>
     <% end %>
-    <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
+    <%= form_tag logins_path, class: "mt-1", id: "login", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
       <div data-webauthn-auth-target="error" class="mb2 display-none">
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
       </div>
@@ -43,4 +43,11 @@
 
 <% unless @for_application %>
   <%= render partial: "logins/footer", locals: { whats_hcb: true } %>
+<% end %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", new_application_path, class: "btn bg-muted" %>
+  <button data-webauthn-auth-target="continueButton" type="submit" class="btn" form="login">
+    Continue →
+  </button>
 <% end %>
