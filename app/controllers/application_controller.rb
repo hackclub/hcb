@@ -41,6 +41,7 @@ class ApplicationController < ActionController::Base
   end
 
   before_action do
+    @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark")
     unless signed_in?
       @hide_seasonal_decorations = true
     end
