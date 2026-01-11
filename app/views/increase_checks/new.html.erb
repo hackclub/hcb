@@ -6,10 +6,14 @@
 <% content_for :table_of_contents do %>
   <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
     <div class="step-tab__number">1</div>
-    <span>Recipient details</span>
+    <span>Contact information</span>
+  </div>
+  <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
+    <div class="step-tab__number">2</div>
+    <span>Address</span>
   </div>
   <div class="step-tab step-tab--full justify-start py-1" data-scroll-seek-target="tab">
-    <div class="step-tab__number">2</div>
+    <div class="step-tab__number">3</div>
     <span>Payment information</span>
   </div>
 <% end %>
@@ -20,61 +24,102 @@
     <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
 
     <%= render "increase_checks/paper_check",
-          check_number: "1024",
-          date: Date.today.strftime("%b %d, %Y"),
-          recipient_name: @check.recipient_name || "　",
-          amount: @check.amount || 0,
-          memo: @check.memo || "　",
-          account_details: @event.column_account_number,
-          editable: true,
-          class: "hidden xl:block" %>
+      check_number: "1024",
+      date: Date.today.strftime("%b %d, %Y"),
+      recipient_name: @check.recipient_name || "　",
+      amount: @check.amount || 0,
+      memo: @check.memo || "　",
+      account_details: @event.column_account_number,
+      editable: true,
+      class: "hidden xl:block" %>
   </aside>
 
-  <%= render "application/callout", type: "info", title: "Information about check transfers", class: "mb-0" do %>
+  <%= render "application/callout", type: "info", 
+    title: "Information about check transfers", class: "mb-0" do %>
     <ul class="m0">
       <li>
-        Need to reimburse someone? Checks are not intended for that purpose.
-        Visit <%= link_to "reimbursements", event_reimbursements_path(@event), class: "info" %> to learn more.
+        Checks are not intended to reimburse someone.
+        Use <%= link_to "reimbursements", event_reimbursements_path(@event), 
+          class: "info" %> to do so.
       </li>
-      <li>Checks can only be sent within the US. The recipient must have a U.S. bank account to cash the check.</li>
-      <li>This check will be valid for <span class="bold">180 days</span>, until <%= format_date IncreaseCheck::VALID_DURATION.from_now %>. The recipient must deposit it before then.</li>
-      <li>HCB team needs to approve your check before it's sent out. This usually takes 1 business day.</li>
+      <li>
+        Checks can only be sent within the US. Recipients must have a US bank 
+        account to cash them.
+      </li>
+      <li>
+        Check will be valid for <span class="bold">180 days</span>, until 
+        <%= format_date IncreaseCheck::VALID_DURATION.from_now %>
+      </li>
+      <li>HCB team approval required before sending (~1 business day avg)</li>
     </ul>
   <% end %>
 
   <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send a check" } %>
+    <%= render partial: "events/unauthorized_callout", 
+      locals: { action: "send a check" } %>
   <% end %>
 <% end %>
 
 <div class="container--xs">
-  <%= form_with(model: [@event, @check], local: true, data: { controller: "extraction", extraction_target: "form" }) do |form| %>
+  <%= form_with(model: [@event, @check], local: true, 
+    data: { controller: "extraction", extraction_target: "form" }) do |form| %>
     <%= form_errors(@check, "check", "We couldn't send this") %>
 
-    <h3 class="mb-2">Recipient details</h3>
-
-    <div class="field mt2">
-      <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
-      <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, data: { 'behavior': "check_payee_name_field", extraction_field: "seller_name" }, maxlength: 250 %>
-    </div>
-
-    <div class="field">
-      <%= form.label :address_line1, "Street address (where we’re mailing it to)" %>
-      <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled:, data: { extraction_field: "seller_address_line_1" } %>
-    </div>
-
-    <div class="field">
-      <%= form.text_field :address_line2, placeholder: "Suite 500", disabled:, data: { extraction_field: "seller_address_line_2" } %>
-    </div>
-
-    <div class="flex">
-      <div class="field flex-auto mr1">
-        <%= form.label :address_city, "City" %>
-        <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled:, data: { extraction_field: "seller_address_city" } %>
+    <div data-scroll-seek-target="section" id="contact-information">
+      <h3 class="mb-2">Contact information</h3>
+      <div class="card mb-4 relative flex flex-col gap-3">
+        <div>
+          <%= form.label :recipient_name, 
+            "Legal name (use company name if applicable)" %>
+          <%= form.text_field :recipient_name, 
+            placeholder: "Raviga Capital", required: true, disabled:, 
+            data: { 'behavior': "check_payee_name_field", 
+              extraction_field: "seller_name" }, maxlength: 250 %>
+        </div>
+        <div>
+          <%= form.label :recipient_email, "Email" %>
+          <%= form.email_field :recipient_email, 
+            placeholder: "fionah@gmail.com", required: true, disabled:, 
+            data: { extraction_field: "seller_email" } %>
+        </div>
+        <div class="field--checkbox w-full">
+          <span style="font-weight: 500">Notify recipient?</span>
+          <div class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+            <%= form.label :send_email_notification do %>
+              <%= form.check_box :send_email_notification, disabled:, switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
+        </div>
       </div>
-      <div class="field flex-auto ml1">
-        <%= form.label :address_state, "State" %>
-        <%= form.select :address_state, [
+    </div>
+
+    <div data-scroll-seek-target="section" id="address-information">
+      <h3 class="mb-2">Address information</h3>
+      <div class="card mb-4 relative flex flex-col gap-3">
+        <div>
+          <%= form.label :address_line1, 
+            "Street address (where we're mailing it to)" %>
+          <div class="flex items-center gap-2">
+            <%= form.text_field :address_line1, 
+              placeholder: "1 Letterman Drive", required: true, disabled:, 
+              data: { extraction_field: "seller_address_line_1" } %>
+            <%= form.text_field :address_line2, 
+              placeholder: "Suite 500", disabled:, 
+              data: { extraction_field: "seller_address_line_2" } %>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <div class="flex-auto">
+            <%= form.label :address_city, "City" %>
+            <%= form.text_field :address_city, 
+              placeholder: "San Francisco", required: true, disabled:, 
+              data: { extraction_field: "seller_address_city" } %>
+          </div>
+          <div class="flex-auto">
+            <%= form.label :address_state, "State" %>
+            <%= form.select :address_state, [
               ["Alabama", "AL"],
               ["Alaska", "AK"],
               ["Arizona", "AZ"],
@@ -125,107 +170,132 @@
               ["Washington", "WA"],
               ["West Virginia", "WV"],
               ["Wisconsin", "WI"],
-              ["Wyoming", "WY"],
-            ], { prompt: "Select a state" }, disabled:, data: { extraction_field: "seller_address_state_code" } %>
-        <% @check.errors.messages_for(:address_state).each do |message| %>
-          <div class="primary"><%= message %></div>
-        <% end %>
-      </div>
-    </div>
+              ["Wyoming", "WY"]
+            ], { prompt: "Select a state" }, 
+            class: "min-h-0 h-9", disabled:, 
+            data: { extraction_field: "seller_address_state_code" } %>
+            <% @check.errors.messages_for(:address_state).each do |message| %>
+              <div class="primary"><%= message %></div>
+            <% end %>
+          </div>
+        </div>
 
-    <div class="field">
-      <%= form.label :address_zip, "ZIP" %>
-      <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled:, data: { extraction_field: "seller_address_zip" } %>
-      <% @check.errors.messages_for(:address_zip).each do |message| %>
-        <div class="primary"><%= message %></div>
-      <% end %>
-    </div>
+        <div class="flex items-center justify-between gap-2">
+          <%= form.label :address_zip, "ZIP" %>
+          <%= form.text_field :address_zip, class: "!max-w-[150px]", 
+            placeholder: "94129", required: true, disabled:, 
+            data: { extraction_field: "seller_address_zip" } %>
+          <% @check.errors.messages_for(:address_zip).each do |message| %>
+            <div class="primary"><%= message %></div>
+          <% end %>
+        </div>
 
-    <div class="field">
-      <%= form.label :address_country, "Country" %>
-      <%= form.text_field :address_country, value: "United States", disabled: true %>
-    </div>
-
-    <div class="field">
-      <%= form.label :recipient_email, "Recipient Email" %>
-      <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
-    </div>
-
-    <div class="field field--checkbox">
-      <%= form.check_box :send_email_notification, disabled: %>
-      <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
-    </div>
-
-    <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-    <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-      <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-            action: "
-          dragover@window->file-drop#dragover
-          drop@window->file-drop#drop
-          dragenter@window->file-drop#dragenter
-          dragleave@window->file-drop#dragleave
-        "
-          } %>
-      <%= form.file_field :file,
-          multiple: true,
-          include_hidden: false,
-          required: false,
-          accept: "image/*,image/heic,.pdf",
-          style: "margin: 8px 0px",
-          class: "field--fileupload__field",
-          data: {
-            "file-drop-target" => "fileInput",
-            "action"           => "change->extraction#upload"
-          },
-          disabled: %>
-      <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-    </div>
-    <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-
-    <h3 class="mb-2">Payment information</h3>
-    <div class="field">
-      <%= form.label :memo %>
-      <%= form.text_field :memo,
-          maxlength: 40,
-          placeholder: "for venue payment",
-          required: true,
-          'data-behavior': "check_memo_field",
-          disabled: %>
-      <span class="muted" data-behavior="check_characters_update">
-        This will appear on the physical check. You have 40 characters remaining.
-      </span>
-    </div>
-
-    <%= form.label :amount, "Amount" %>
-    <div class="field">
-      <div class="flex items-center">
-        <span class="bold muted" style="width: 1rem;">$</span>
-        <div class="flex flex-col">
-          <%= form.number_field :amount,
-            placeholder: "500.00",
-            value: (@check.amount.nil? ? nil : ("%.2f" % (@check.amount.to_f / 100))),
-            disabled: @event.balance <= 0 || disabled,
-            step: 0.01,
-            min: 1,
-            required: true,
-            data: { behavior: "check_amount_field", controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" } %>
+        <div class="flex items-center justify-between gap-2">
+          <%= form.label :address_country, "Country" %>
+          <%= form.text_field :address_country, 
+            class: "!max-w-[150px] opacity-50", value: "United States", 
+            disabled: true %>
         </div>
       </div>
-      <% @check.errors.messages_for(:amount).each do |message| %>
-        <div class="primary"><%= message %></div>
-      <% end %>
-      <% if @event.balance <= 0 %>
-        <span class="error">There are no funds to transfer.<br>
-      <% end %>
     </div>
 
-    <div class="field">
-      <%= form.label :payment_for, "What are you paying for with this check?" %>
-      <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-      <span class="muted">This is to help HCB keep record of our transactions.</span>
+    <div data-scroll-seek-target="section" id="payment-information">
+      <h3 class="mb-2">Payment information</h3>
+      <div class="card mb-4 relative flex flex-col gap-3">
+        <div>
+          <%= form.label :memo %>
+          <span class="muted mb-1 block" data-behavior="check_characters_update">
+            Appears on the physical check. 40 characters left
+          </span>
+          <%= form.text_field :memo,
+            maxlength: 40,
+            placeholder: "for venue payment",
+            required: true,
+            'data-behavior': "check_memo_field",
+            disabled: %>
+        </div>
+
+        <div>
+          <%= form.label :payment_for, 
+            "What are you paying for with this check?" %>
+          <span class="muted mb-1 block">
+            This helps HCB keep record of transactions.
+          </span>
+          <%= form.text_field :payment_for, placeholder: "Event venue", 
+            required: true, disabled: %>
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <%= form.label :amount, "Amount" %>
+            <% @check.errors.messages_for(:amount).each do |message| %>
+              <div class="primary"><%= message %></div>
+            <% end %>
+            <% if @event.balance <= 0 %>
+              <span class="error">
+                There are no funds to transfer.<br>
+              </span>
+            <% end %>
+          </div>
+          <div class="input flex gap-2 items-center py-0 max-w-[150px]">
+            <span class="bold muted" style="width: 1rem;">$</span>
+            <div class="flex flex-col">
+              <%= form.number_field :amount,
+                placeholder: "500.00",
+                class: "!p-0 !border-none !shadow-none min-h-auto",
+                value: (@check.amount.nil? ? nil : 
+                  ("%.2f" % (@check.amount.to_f / 100))),
+                disabled: @event.balance <= 0 || disabled,
+                step: 0.01,
+                min: 1,
+                required: true,
+                data: { behavior: "check_amount_field", 
+                  controller: "truncate-decimal", 
+                  action: "truncate-decimal#truncate blur->truncate-decimal#pad", 
+                  extraction_field: "total" } %>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :file, 
+            "Attach a receipt / invoice", class: "mt2 font-semibold" %>
+          <p class="muted my-0">
+            Required for reimbursements / goods & services payments.
+          </p>
+          <div class="field field--fileupload mb1 mt1" 
+            data-controller="file-drop form" 
+            data-file-drop-title-value="Drop to add a receipt.">
+            <%= form.label :file, "Choose file", 
+              class: "field--fileupload__label", data: {
+                action: "
+                  dragover@window->file-drop#dragover
+                  drop@window->file-drop#drop
+                  dragenter@window->file-drop#dragenter
+                  dragleave@window->file-drop#dragleave
+                "
+              } %>
+            <%= form.file_field :file,
+              multiple: true,
+              include_hidden: false,
+              required: false,
+              accept: "image/*,image/heic,.pdf",
+              style: "margin: 8px 0px",
+              class: "field--fileupload__field",
+              data: {
+                "file-drop-target" => "fileInput",
+                "action" => "change->extraction#upload"
+              },
+              disabled: %>
+            <%= inline_icon "view-close", size: 24, class: "muted", 
+              "data-behavior": "clear_input" %>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your check will be mailed out on the next business day.">
+    <div class="actions tooltipped tooltipped--n inline-block mt1" 
+      aria-label="Your check will be mailed out on the next business day.">
       <%= form.submit "Send check", disabled: %>
     </div>
   <% end %>
