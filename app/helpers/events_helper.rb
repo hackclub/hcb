@@ -44,13 +44,15 @@ module EventsHelper
       selected: selected == :transactions,
     }
 
-    items << {
-      name: "Account numbers",
-      path: account_number_event_path(@event),
-      tooltip: "View account numbers",
-      icon: "hashtag",
-      selected: selected == :account_number,
-    }
+    if policy(@event).account_number?
+      items << {
+        name: "Account numbers",
+        path: account_number_event_path(@event),
+        tooltip: "View account numbers",
+        icon: "hashtag",
+        selected: selected == :account_number,
+      }
+  end
 
     if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index?
       items << { section: "Receive" }
@@ -77,13 +79,15 @@ module EventsHelper
       }
     end
 
-    items << {
-      name: "Check deposits",
-      path: event_check_deposits_path(@event),
-      tooltip: "Deposit a check",
-      icon: "cheque",
-      selected: selected == :deposit_check,
-    }
+    if policy(@event.check_deposits.build).index?
+      items << {
+        name: "Check deposits",
+        path: event_check_deposits_path(@event),
+        tooltip: "Deposit a check",
+        icon: "cheque",
+        selected: selected == :deposit_check,
+      }
+    end
 
     if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview?
       items << { section: "Spend" }
@@ -127,7 +131,7 @@ module EventsHelper
         selected: selected == :reimbursements
       }
     end
-    if Flipper.enabled?(:payroll_2025_02_13, @event)
+    if Flipper.enabled?(:payroll_2025_02_13, @event) && policy(@event).employees?
       items << {
         name: "Contractors",
         path: event_employees_path(event_id: @event.slug),
@@ -147,7 +151,7 @@ module EventsHelper
         icon: "people-2",
         selected: selected == :team,
       }
-    if event.approved?
+    if event.approved? && policy(event).promotions?
       items << {
         name: "Perks",
         path: event_promotions_path(event_id: event.slug),
