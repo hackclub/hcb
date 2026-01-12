@@ -6,7 +6,7 @@
     </span>
     <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
   </summary>
-  <% use_my_path = (@user == current_user) || @user.nil? %>
+  <% use_my_path = (@user == current_user) || @user.nil? || !local_assigns[:open] %>
   <%= dock_item "Account",
                 use_my_path ? my_settings_path : edit_user_path(@user || current_user),
                 selected: local_assigns[:selected] == :settings_home && local_assigns[:open] %>
