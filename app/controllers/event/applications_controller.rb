@@ -53,7 +53,6 @@ class Event
 
     def personal_info
       authorize @application
-
     end
 
     def project_info
