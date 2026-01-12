@@ -45,7 +45,7 @@ class Event
     include PublicIdentifiable
     set_public_id_prefix :app
 
-    belongs_to :user, optional: false
+    belongs_to :user
     belongs_to :event, optional: true
 
     aasm do
