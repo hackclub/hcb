@@ -485,7 +485,7 @@ class EventsController < ApplicationController
     authorize @event
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || 20).to_i
+    per_page = (params[:per] || 18).to_i
 
     display_cards = [
       @user_stripe_cards.active,
