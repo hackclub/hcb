@@ -5,7 +5,7 @@
     <div class="p-4">
       <div class="flex flex-row items-center justify-between">
         <h3 class="heading h3 mb-2 mt-0">
-          <%= application.name || "Draft application" %>
+          <%= application.name.presence || "Draft application" %>
         </h3>
         <span class="badge bg-orange">
           <%= application.aasm_state.humanize %>
