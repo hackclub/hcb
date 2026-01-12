@@ -16,7 +16,7 @@
   </div>
 <% end %>
 
-<div class="max-h-[75vh] overflow-scroll" data-controller="contract" data-contract-advance-path-value="<%= review_application_path(@application) %>">
+<div class="max-h-[50vh] md:max-h-[75vh] overflow-scroll mb-6" data-controller="contract" data-contract-advance-path-value="<%= review_application_path(@application) %>">
   <docuseal-form
     id="docusealForm"
     data-src="<%= @party.docuseal_signature_url %>"

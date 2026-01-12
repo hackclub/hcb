@@ -2,6 +2,17 @@
 <% @home_size = 50 %>
 <% page_full %>
 
+<% help_element = capture do %>
+  <div class="card flex flex-col gap-3 card--sunken mb-7">
+    <div class="flex flex-row items-center justify-start gap-2">
+      <%= inline_icon "help", size: 28 %>
+      <h3 class="text-lg my-0">Need help?</h3>
+    </div>
+    <p class="my-0"><%= link_to "Live chat support", "#" %> is currently available.</p>
+    <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+  </div>
+<% end %>
+
 <!DOCTYPE html>
 
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
@@ -193,21 +204,20 @@
         <div class="flex-1 overflow-auto p-6 relative" style="margin-left: calc(100vw - 100%)">
           <% if content_for?(:info_pane) %>
             <div class="flex flex-col md:flex-row gap-6 lg:gap-4">
-              <div class="sticky top-0 h-[75vh] flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
+              <div class="md:sticky md:top-0 md:h-[75vh] flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
                 <%= yield(:info_pane) %>
 
-                <div class="card flex flex-col gap-3 card--sunken mb-7">
-                  <div class="flex flex-row items-center justify-start gap-2">
-                    <%= inline_icon "help", size: 28 %>
-                    <h3 class="text-lg my-0">Need help?</h3>
-                  </div>
-                  <p class="my-0"><%= link_to "Live chat support", "#" %> is currently available.</p>
-                  <p class="my-0">Additionally, you can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+                <div class="hidden md:block">
+                  <%= help_element %>
                 </div>
               </div>
               <div class="flex flex-col items-center flex-grow">
                 <div class="md:max-w-[600px] w-full">
                   <%= yield %>
+
+                  <div class="block md:hidden">
+                    <%= help_element %>
+                  </div>
                 </div>
               </div>
             </div>
