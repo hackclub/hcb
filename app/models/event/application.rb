@@ -51,6 +51,7 @@ class Event
     aasm do
       state :draft, initial: true
       state :submitted
+      # An application can be submitted but not yet under review if it is pending on a cosigner signature
       state :under_review
       state :approved
       state :rejected
