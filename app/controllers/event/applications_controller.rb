@@ -34,7 +34,7 @@ class Event
     end
 
     def create
-      authorize (@application = Event::Application.new(user: current_user))
+      authorize(@application = Event::Application.new(user: current_user))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -77,15 +77,6 @@ class Event
       @application.mark_submitted!
       confetti!
       redirect_to application_path(@application)
-    end
-
-    def step
-      authorize @application
-
-      step_number = params[:step].to_i || 0
-      step = Event::Application::APPLICATION_STEPS[step_number]
-
-      render "event/applications/steps/#{step}"
     end
 
     private

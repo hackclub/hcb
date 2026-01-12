@@ -41,8 +41,6 @@ class Event
   class Application < ApplicationRecord
     include AASM
 
-    APPLICATION_STEPS = [:project_info, :personal_info].freeze
-
     belongs_to :user, optional: false
     belongs_to :event, optional: true
 
