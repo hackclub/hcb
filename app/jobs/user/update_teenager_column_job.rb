@@ -10,11 +10,6 @@ class User
         groups.each do |value, users|
           User.where(id: users.pluck(:id)).update_all(teenager: value)
         end
-
-        groups = users_relation.select(:id, :birthday_ciphertext).group_by(&:joined_as_teenager?)
-        groups.each do |value, users|
-          User.where(id: users.pluck(:id)).update_all(joined_as_teenager?: value)
-        end
       end
     end
 
