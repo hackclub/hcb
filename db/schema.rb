@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -972,7 +972,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_event_configurations_on_event_id"
+    t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
   end
 
   create_table "event_follows", force: :cascade do |t|
@@ -2475,6 +2475,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.datetime "created_at", null: false
     t.datetime "period_end_at", null: false
     t.datetime "period_start_at", null: false
+    t.boolean "teenager"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["user_id"], name: "index_user_seen_at_histories_on_user_id"

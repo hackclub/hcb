@@ -7,6 +7,7 @@
 #  id              :bigint           not null, primary key
 #  period_end_at   :datetime         not null
 #  period_start_at :datetime         not null
+#  teenager        :boolean
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  user_id         :bigint

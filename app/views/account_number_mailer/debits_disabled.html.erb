@@ -3,7 +3,7 @@
 </p>
 
 <p>
-  A direct debit of <%= @amount_cents %> labelled '<%= @memo %>' to <%= link_to "#{@event.name}'s account number", event_column_account_number_url(@event) %> was returned because it is a deposit-only account number.
+  A direct debit of <%= render_money @amount_cents %> labelled '<%= @memo %>' to <%= link_to "#{@event.name}'s account number", event_column_account_number_url(@event) %> was returned because it is a deposit-only account number.
 </p>
 
 <p>
