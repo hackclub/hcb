@@ -132,7 +132,7 @@
 
 <% content_for :footer do %>
   <div class="flex flex-row gap-6 items-start justify-center">
-    <%= link_to "← Back", agreement_application_path(@application), class: "btn bg-muted" %>
+    <%= link_to "← Back", @contract_signed ? personal_info_application_path(@application) : agreement_application_path(@application), class: "btn bg-muted" %>
     <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
       <%= inline_icon "message", size: 28 %>
       Live chat support
