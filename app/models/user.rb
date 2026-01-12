@@ -426,7 +426,7 @@ class User < ApplicationRecord
   end
 
   def joined_as_teenager?
-    age_on(created_at) <= 18
+    age_on(created_at)&.<=(18)
   end
 
   def last_seen_at
