@@ -344,6 +344,12 @@ module Reimbursement
       Money.from_cents(0)
     end
 
+    def cached_wise_transfer_quote_amount
+      Rails.cache.fetch("cached_wise_transfer_quote_amount_#{id}", expires_in: 3.days) do
+        wise_transfer_quote_amount
+      end
+    end
+
     def wise_transfer_quote_without_fees_amount
       @wise_transfer_quote_without_fees_amount ||= WiseTransfer.generate_detailed_quote(amount)[:without_fees_usd_amount]
     rescue
