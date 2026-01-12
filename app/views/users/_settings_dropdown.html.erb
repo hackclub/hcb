@@ -1,4 +1,4 @@
-<details class="dock" <%= "open" if local_assigns[:selected].to_s.starts_with?("settings") %>>
+<details class="dock" <%= "open" if local_assigns[:open] %>>
   <summary class="dock__item tooltipped tooltipped--e" aria-label="Edit account settings">
     <%= inline_icon "settings", size: 30, style: "padding: 0" %>
     <span class="flex-grow">

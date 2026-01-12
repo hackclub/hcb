@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "WebFetch(domain:www.eecs70.org)"
+    ]
+  }
+}
