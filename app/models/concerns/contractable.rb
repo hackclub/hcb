@@ -20,5 +20,10 @@ module Contractable
       # This method can be overwritten in specific classes to disable sending emails to parties when the contract is sent
       true
     end
+
+    def contract_redirect_path
+      # This method can be overwritten in specific classes to set the path that contract-related routes should redirect to
+      "/"
+    end
   end
 end

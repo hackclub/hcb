@@ -98,6 +98,10 @@ class Event
       false
     end
 
+    def contract_redirect_path
+      Rails.application.routes.url_helpers.application_path(self)
+    end
+
     def create_contract
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{id}: missing name and/or description")

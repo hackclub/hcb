@@ -130,7 +130,15 @@ class Contract < ApplicationRecord
   end
 
   def event
-    contractable.contract_event
+    contractable.contract_event if contractable.respond_to?(:contract_event)
+  end
+
+  def event_name
+    event&.name || prefills["name"]
+  end
+
+  def redirect_path
+    contractable.contract_redirect_path
   end
 
   def party(role)
