@@ -111,7 +111,7 @@ class Event
     private
 
     def set_application
-      @application = Application.find(params[:application_id] || params[:id])
+      @application = Application.find(params[:id])
     end
 
     def application_params
