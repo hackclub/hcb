@@ -193,7 +193,7 @@
         <div class="flex-1 overflow-auto p-6 relative" style="margin-left: calc(100vw - 100%)">
           <% if content_for?(:info_pane) %>
             <div class="flex flex-col md:flex-row gap-6 lg:gap-4">
-              <div class="sticky top-0 max-h-[75vh] flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
+              <div class="sticky top-0 h-[75vh] flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
                 <%= yield(:info_pane) %>
 
                 <div class="card flex flex-col gap-3 card--sunken mb-7">
