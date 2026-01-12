@@ -58,6 +58,9 @@ class Event
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
+        after do
+          contract.party(:cosigner)&.notify
+        end
       end
     end
 
