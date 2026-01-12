@@ -34,8 +34,8 @@ class Event
     end
 
     def create
-      @application = Event::Application.create!(user: current_user)
-      authorize @application
+      authorize (@application = Event::Application.new(user: current_user))
+      @application.save!
 
       redirect_to project_info_application_path(@application)
     end
