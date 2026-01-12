@@ -62,9 +62,9 @@
 
 <% if current_user.card_grants.not_activated.size > 0 %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
-  <ul class="grid grid--spacious text-left w-full mt-2">
+  <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
-      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row">
+      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
         <div class="flex-1">
           <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
           <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
