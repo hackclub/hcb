@@ -80,7 +80,7 @@ class Event
 
       @application.update!(application_params)
 
-      if @application&.contract&.party(:signee)&.signed?
+      if @application&.contract&.party(:signee)&.signed? && @application.previous_changes.any?
         @application.contract.mark_voided!
       end
 
