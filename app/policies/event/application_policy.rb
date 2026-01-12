@@ -11,7 +11,10 @@ class Event
     end
 
     def update?
-      record.user == user || user.admin?
+      return true if user.admin?
+      return record.user == user if draft?
+
+      false
     end
 
     alias_method :personal_info?, :show?
