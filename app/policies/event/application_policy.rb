@@ -12,7 +12,7 @@ class Event
 
     def update?
       return true if user.admin?
-      return record.user == user if draft?
+      return record.user == user if record.draft?
 
       false
     end
