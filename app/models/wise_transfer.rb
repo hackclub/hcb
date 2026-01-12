@@ -240,7 +240,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   def usd_amount_cents_or_quoted
-    @usd_amount_cents_or_quoted = usd_amount_cents || quoted_usd_amount_cents
+    usd_amount_cents || quoted_usd_amount_cents
   end
 
   def generate_quote!
