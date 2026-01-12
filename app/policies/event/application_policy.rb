@@ -16,6 +16,7 @@ class Event
 
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
+    alias_method :agreement?, :show?
     alias_method :review?, :show?
 
     alias_method :submit?, :update?

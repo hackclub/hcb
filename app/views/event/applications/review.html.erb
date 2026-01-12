@@ -1,5 +1,5 @@
 <% title "Review your application" %>
-<% content_for :progress, 75 %>
+<% content_for :progress, 80 %>
 
 <% blank = capture do %>
   <em>Blank</em>
@@ -27,7 +27,7 @@
 
   <div class="flex flex-col items-center flex-grow">
 
-    <div class="md:max-w-[600px] w-full mt-7 space-y-8">
+    <div class="md:max-w-[600px] w-full mt-7 space-y-8 pb-5">
       <div>
         <div class="flex items-center justify-between gap-4 mb-4">
           <h3 class="text-2xl my-0">Project Information</h3>
@@ -126,13 +126,25 @@
           <% end %>
         </div>
       </div>
+
+      <div class="card card--breakdown p-4 mb-6 flex flex-row items-center justify-between">
+        <div class="flex justify-start gap-1">
+          <%= inline_icon "checkmark", size: 24, class: "align-top #{@contract_signed ? "text-green" : "text-red" }" %>
+          <p class="font-medium my-0">
+            Agreement <%= "not" unless @contract_signed %> signed
+          </p>
+        </div>
+        <% unless @contract_signed %>
+          <a class="btn text-sm" href=<%= agreement_application_path(@application) %>>Sign</a>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>
 
 <% content_for :footer do %>
   <div class="flex flex-row gap-6 items-start justify-center">
-    <%= link_to "← Back", personal_info_application_path(@application), class: "btn bg-muted" %>
+    <%= link_to "← Back", agreement_application_path(@application), class: "btn bg-muted" %>
     <%= link_to application_path(@application), class: "btn bg-slate hidden" do %>
       <%= inline_icon "message", size: 28 %>
       Live chat support
@@ -141,7 +153,7 @@
   <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
     <%= form.hidden_field :return_to, value: review_application_path(@application) %>
   <% end %>
-  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue" do %>
+  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.ready_to_submit?}", disabled: !@application.ready_to_submit?, "aria-label": "This application is not ready to submit" do %>
     Submit application
   <% end %>
 <% end %>

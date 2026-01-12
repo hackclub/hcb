@@ -6,19 +6,19 @@ module Contractable
   included do
     has_many :contracts, as: :contractable, dependent: :destroy
 
-    def on_contract_signed
+    def on_contract_signed(contract)
       # This method is a callback that can be overwritten in specific classes
       nil
     end
 
-    def on_contract_voided
+    def on_contract_voided(contract)
       # This method is a callback that can be overwritten in specific classes
       nil
     end
 
-    def contract_docuseal_template_id
-      # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contract_docuseal_template_id."
+    def contract_notify_when_sent
+      # This method can be overwritten in specific classes to disable sending emails to parties when the contract is sent
+      true
     end
   end
 end

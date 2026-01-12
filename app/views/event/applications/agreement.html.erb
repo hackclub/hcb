@@ -1,0 +1,30 @@
+<script src="https://cdn.docuseal.com/js/form.js"></script>
+
+<% content_for :progress, 60 %>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Sign the HCB agreement
+    </h2>
+
+    <p class="mt-0 text-lg muted">This agreement formalizes the relationship between your project and HCB</p>
+
+    <div class="max-h-[40vh]">
+      <%= render partial: "contract/parties/contract_faq", locals: { no_questions: true } %>
+    </div>
+  </div>
+<% end %>
+
+<div class="max-h-[75vh] overflow-scroll" data-controller="contract" data-contract-advance-path-value="<%= review_application_path(@application) %>">
+  <docuseal-form
+    id="docusealForm"
+    data-src="<%= @party.docuseal_signature_url %>"
+    data-with-title="false"
+    data-action="completed->contract#completed declined->contract#void">
+  </docuseal-form>
+</div>
+
+<% content_for :footer do %>
+  <a class="btn bg-muted" href=<%= personal_info_application_path(@application) %>>← Back</a>
+<% end %>

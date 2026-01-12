@@ -40,6 +40,10 @@
 class Event
   class Application < ApplicationRecord
     include AASM
+    include Contractable
+
+    include PublicIdentifiable
+    set_public_id_prefix :app
 
     belongs_to :user, optional: false
     belongs_to :event, optional: true
@@ -83,6 +87,50 @@ class Event
 
     def political?
       political_description.present? && political_description.strip.length.positive?
+    end
+
+    def contract
+      contracts.where.not(aasm_state: :voided).last
+    end
+
+    def contract_notify_when_sent
+      false
+    end
+
+    def create_contract
+      if name.nil? || description.nil?
+        raise StandardError.new("Cannot create a contract for application #{id}: missing name and/or description")
+      end
+
+      ActiveRecord::Base.transaction do
+        contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        contract.parties.create!(user:, role: :signee)
+        contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+      end
+
+      contract.send!
+
+      contract
+    end
+
+    def signee_signed?
+      # Using docuseal_submission here since this method is called right after the contract is signed,
+      # meaning we might not have processed the webhook to update the state yet
+      contract&.party(:signee)&.docuseal_submission&.[]("status") == "completed"
+    end
+
+    def ready_to_submit?
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
+
+      if user.age < 18
+        required_fields.push("cosigner_email")
+      end
+
+      missing_fields = required_fields.any? do |field|
+        self[field].nil?
+      end
+
+      !missing_fields && signee_signed? && !user.onboarding?
     end
 
   end

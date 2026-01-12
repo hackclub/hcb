@@ -849,6 +849,7 @@ Rails.application.routes.draw do
       member do
         get "personal_info"
         get "project_info"
+        get "agreement"
         get "review"
         post "submit"
       end

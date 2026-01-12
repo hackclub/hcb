@@ -9,33 +9,17 @@
   </div>
   <div class="flex flex-col mt-9 items-center justify-start">
     <div class="flex flex-col gap-3 w-full max-w-4xl">
-      <div class="flex flex-row gap-3 items-start justify-start">
-        <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
-          1
+      <% @steps.each_with_index do |step, i| %>
+        <div class="flex flex-row gap-3 items-start justify-start">
+          <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+            <%= i + 1 %>
+          </div>
+          <div>
+            <h3 class="mb-0 mt-1"><%= step[:title] %></h3>
+            <p><%= step[:description] %></p>
+          </div>
         </div>
-        <div>
-          <h3 class="mb-0 mt-1">Sign the Fiscal Sponsorship Agreement</h3>
-          <p>This agreement formalizes the relationship between your project and HCB. You don't need to wait for approval to sign the agreement.</p>
-        </div>
-      </div>
-      <div class="flex flex-row gap-3 items-start justify-start">
-        <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
-          2
-        </div>
-        <div>
-          <h3 class="mb-0 mt-1">Wait for a response from the HCB team</h3>
-          <p>Our operations team will review your application and respond within 24 hours.</p>
-        </div>
-      </div>
-      <div class="flex flex-row gap-3 items-start justify-start">
-        <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
-          3
-        </div>
-        <div>
-          <h3 class="mb-0 mt-1">Start spending</h3>
-          <p>You'll have access to your organization to begin raising and spending money.</p>
-        </div>
-      </div>
+      <% end %>
     </div>
   </div>
 <% end %>
