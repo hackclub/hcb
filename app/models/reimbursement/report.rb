@@ -440,7 +440,7 @@ module Reimbursement
     def payout_method_allowed?
       user.payout_method.present? && !user.payout_method.unsupported?
     end
-    
+
     def invalidate_cached_data
       Rails.cache.delete("cached_wise_transfer_quote_amount_#{id}")
 
