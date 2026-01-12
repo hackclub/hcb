@@ -503,6 +503,14 @@ class HcbCode < ApplicationRecord
   # HCB-600: Stripe card charges (always required)
   # @sampoder
 
+  # receipt_required (the scope) diverges from receipt_required?
+  # in a couple of ways:
+  #
+  # 1) it doesn't consider event plan
+  # 2) it doesn't consider the amount of the HCB code
+  #
+  # this is because these two things are expensive to compute on a HCB code.
+
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
@@ -520,6 +528,8 @@ class HcbCode < ApplicationRecord
   # load the event once on the ledger and never again
   def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
+
+    return false if amount_cents >= 0
 
     return false unless event&.plan&.receipts_required?
 

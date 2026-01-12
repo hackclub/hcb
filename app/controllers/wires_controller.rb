@@ -42,6 +42,7 @@ class WiresController < ApplicationController
 
   def approve
     authorize @wire
+    return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.mark_approved!

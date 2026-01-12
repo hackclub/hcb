@@ -8,7 +8,8 @@ module Api
       before_action :set_api_event, only: [:index, :create]
 
       def index
-        @sponsors = authorize(@event.sponsors.order(created_at: :desc))
+        authorize @event, :index_in_v4?
+        @sponsors = @event.sponsors.order(created_at: :desc)
       end
 
       def show
