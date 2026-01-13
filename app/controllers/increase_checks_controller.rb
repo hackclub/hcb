@@ -11,7 +11,7 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build
 
     authorize @check
-    
+
     render layout: "transfer"
   end
 
