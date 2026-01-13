@@ -82,7 +82,7 @@
             <%= avatar_for @user, size: 48, class: "mr2" %>
             <div class="field--fileupload">
               <%= form.label :profile_picture, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
+              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true %>
             </div>
           </div>
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
@@ -213,7 +213,7 @@
           </p>
           <div class="field field--fileupload">
             <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
-            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", disabled: %>
+            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
           </div>
         </div>
 
