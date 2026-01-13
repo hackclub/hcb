@@ -1,15 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
-  include Pundit::Authorization
-  include SessionsHelper
-  include ToursHelper
-  include PublicActivity::StoreController
-  include SetGovernanceRequestContext
-
-  protect_from_forgery
-
-  # set Current.session
+  # set Current.session - this should come first as
+  # a large portion of the code below this depends on this
   before_action do
     Current.session ||= begin
       # Find a valid session (not expired) using the session token
@@ -19,6 +12,14 @@ class ApplicationController < ActionController::Base
       User::Session.not_expired.find_by(session_token:)
     end
   end
+
+  include Pundit::Authorization
+  include SessionsHelper
+  include ToursHelper
+  include PublicActivity::StoreController
+  include SetGovernanceRequestContext
+
+  protect_from_forgery
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
