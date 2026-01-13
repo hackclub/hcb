@@ -48,7 +48,7 @@
   <div class="field">
     <div class="flex items-center g1">
       <div style="width: 72px">
-        <%= form.select :currency, ::EuCentralBank::CURRENCIES + ["EUR"], required: true, default: "USD", disabled: %>
+        <%= form.select :currency, Wire::AVAILABLE_CURRENCIES, required: true, default: "USD", disabled: %>
       </div>
       <div class="flex flex-col flex-grow">
         <%= form.number_field :amount,
