@@ -8,7 +8,7 @@ class ApplicationController < ActionController::Base
   include SetGovernanceRequestContext
 
   protect_from_forgery
-  
+
   # set Current.session
   before_action do
     Current.session ||= begin
