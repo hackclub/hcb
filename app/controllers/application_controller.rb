@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   # set Current.session - this should come first as
   # a large portion of the code below this depends on this
   before_action do
-    Current.session ||= begin
+    Current.session = begin
       # Find a valid session (not expired) using the session token
       session_token = cookies.encrypted[:session_token]
       return nil if session_token.nil?
