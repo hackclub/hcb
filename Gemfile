@@ -200,7 +200,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-gem "public_activity", "~> 3.0.2"
+gem "public_activity", ">= 3.0.2"
 
 gem "console1984"
 gem "audits1984"

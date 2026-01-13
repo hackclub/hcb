@@ -1005,7 +1005,7 @@ DEPENDENCIES
   pry-byebug
   pry-rails
   pstore
-  public_activity (~> 3.0.2)
+  public_activity (>= 3.0.2)
   puma (~> 6.6)
   pundit
   query_count
