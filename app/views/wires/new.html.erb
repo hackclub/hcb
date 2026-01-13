@@ -46,14 +46,19 @@
     <h3 class="mb-2">Payment information</h3>
 
     <div class="card mb-4 relative">
-      <div class="field">
+      <div class="mb-4">
+        <%= form.label :payment_for, "What are you paying for with this wire?" %>
+        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :payment_for, class: "!max-w-full", placeholder: "Event venue", required: true, disabled: %>
+      </div>
+
+      <div class="flex mb-2 items-center gap-2 justify-between">
         <%= form.label :memo %>
         <%= form.text_field :memo, placeholder: "For venue payment...", required: true, disabled: %>
       </div>
 
-      <%= form.label :amount, "Currency & amount" %>
-
-      <div class="field">
+      <div class="flex items-center gap-2 justify-between">
+        <%= form.label :amount, "Currency & amount" %>
         <div class="flex items-center g1">
           <div style="width: 72px">
             <%= form.select :currency, Wire::AVAILABLE_CURRENCIES, required: true, default: "USD", disabled: %>
@@ -70,24 +75,17 @@
         <% end %>
       </div>
 
-      <div class="field">
-        <%= form.label :payment_for, "What are you paying for with this wire?" %>
-        <span class="muted">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-      </div>
-
       <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
-
       <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
 
       <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-      <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
+      <p class="muted my-0">Required for reimbursements / goods & services payments.</p>
+
+      <div class="field field--fileupload mt-1 mb-0" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
         <%= form.label :file, "Choose file", class: "field--fileupload__label", data: { action: "dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave" } %>
         <%= form.file_field :file, multiple: true, include_hidden: false, required: false, accept: "image/*,image/heic,.pdf", style: "margin: 8px 0px", class: "field--fileupload__field", data: { "file-drop-target" => "fileInput" }, disabled: %>
         <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
       </div>
-
-      <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
     </div>
 
     <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your wire will be sent out on the next business day.">
