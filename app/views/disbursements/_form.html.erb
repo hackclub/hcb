@@ -32,11 +32,11 @@
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
       </div>
 
-      <div>
+      <div class="flex items-center justify-between">
         <%= form.label :amount, "Amount" %>
-        <div class="flex items-center">
-          <span class="bold muted" style="width: 1rem;">$</span>
-          <%= form.number_field :amount, value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+        <div class="flex items-center input py-0 max-w-[150px]">
+          <span class="bold muted">$</span>
+          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
         </div>
       </div>
     </div>
