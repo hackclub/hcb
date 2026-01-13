@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
     Current.session = begin
       # Find a valid session (not expired) using the session token
       session_token = cookies.encrypted[:session_token]
-      return nil if session_token.nil?
+      next nil if session_token.nil?
 
       User::Session.not_expired.find_by(session_token:)
     end
@@ -32,7 +32,7 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.update_session_timestamps }
+  before_action { Current.session&.update_session_timestamps }
 
   before_action do
     # Disallow indexing and following
