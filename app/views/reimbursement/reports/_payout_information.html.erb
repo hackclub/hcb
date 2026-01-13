@@ -1,0 +1,172 @@
+<%# locals: (report:) %>
+
+<% user = report.user %>
+<% payout_method = user.payout_method %>
+
+<h3 class="mt-0">Payout Information</h3>
+
+<% if payout_method.nil? %>
+  <p class="muted">No payout method configured</p>
+<% else %>
+  <table class="table--autosize">
+    <tbody>
+      <tr>
+        <td>Payout method:</td>
+        <td><%= payout_method.title_kind %></td>
+      </tr>
+      <tr>
+        <td>Recipient:</td>
+        <td><%= user.name %></td>
+      </tr>
+      <tr>
+        <td>Email:</td>
+        <td><%= user.email %></td>
+      </tr>
+
+      <% if payout_method.is_a?(User::PayoutMethod::AchTransfer) %>
+        <tr>
+          <td>Routing number:</td>
+          <td><%= payout_method.routing_number %></td>
+        </tr>
+        <tr>
+          <td>Account number:</td>
+          <td><%= payout_method.account_number %></td>
+        </tr>
+
+      <% elsif payout_method.is_a?(User::PayoutMethod::Check) %>
+        <tr>
+          <td>Address (Line 1):</td>
+          <td><%= payout_method.address_line1 %></td>
+        </tr>
+        <% if payout_method.address_line2.present? %>
+          <tr>
+            <td>Address (Line 2):</td>
+            <td><%= payout_method.address_line2 %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <td>City:</td>
+          <td><%= payout_method.address_city %></td>
+        </tr>
+        <tr>
+          <td>State:</td>
+          <td><%= payout_method.address_state %></td>
+        </tr>
+        <tr>
+          <td>Postal code:</td>
+          <td><%= payout_method.address_postal_code %></td>
+        </tr>
+        <tr>
+          <td>Country:</td>
+          <td><%= payout_method.address_country %></td>
+        </tr>
+
+      <% elsif payout_method.is_a?(User::PayoutMethod::Wire) %>
+        <tr>
+          <td>Currency:</td>
+          <td><%= payout_method.currency %></td>
+        </tr>
+        <tr>
+          <td>BIC / SWIFT Code:</td>
+          <td><%= payout_method.bic_code %></td>
+        </tr>
+        <tr>
+          <td>Account number:</td>
+          <td><%= payout_method.account_number %></td>
+        </tr>
+        <tr>
+          <td>Address (Line 1):</td>
+          <td><%= payout_method.address_line1 %></td>
+        </tr>
+        <% if payout_method.address_line2.present? %>
+          <tr>
+            <td>Address (Line 2):</td>
+            <td><%= payout_method.address_line2 %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <td>City:</td>
+          <td><%= payout_method.address_city %></td>
+        </tr>
+        <tr>
+          <td>State:</td>
+          <td><%= payout_method.address_state %></td>
+        </tr>
+        <tr>
+          <td>Postal code:</td>
+          <td><%= payout_method.address_postal_code %></td>
+        </tr>
+        <tr>
+          <td>Recipient country:</td>
+          <td><%= payout_method.recipient_country %></td>
+        </tr>
+        <% Wire.recipient_information_accessors&.each do |key| %>
+          <% if payout_method.recipient_information[key].presence != nil %>
+            <tr>
+              <td><%= key.humanize %>:</td>
+              <td><%= payout_method.recipient_information[key] %></td>
+            </tr>
+          <% end %>
+        <% end %>
+
+      <% elsif payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
+        <tr>
+          <td>Currency:</td>
+          <td><%= payout_method.currency %></td>
+        </tr>
+        <% if payout_method.recipient_information["account_holder"].present? %>
+          <tr>
+            <td>Name on account:</td>
+            <td><%= payout_method.recipient_information["account_holder"] %></td>
+          </tr>
+        <% end %>
+        <% if payout_method.bank_name.present? %>
+          <tr>
+            <td>Bank name:</td>
+            <td><%= payout_method.bank_name %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <td>Address (Line 1):</td>
+          <td><%= payout_method.address_line1 %></td>
+        </tr>
+        <% if payout_method.address_line2.present? %>
+          <tr>
+            <td>Address (Line 2):</td>
+            <td><%= payout_method.address_line2 %></td>
+          </tr>
+        <% end %>
+        <tr>
+          <td>City:</td>
+          <td><%= payout_method.address_city %></td>
+        </tr>
+        <tr>
+          <td>State:</td>
+          <td><%= payout_method.address_state %></td>
+        </tr>
+        <tr>
+          <td>Postal code:</td>
+          <td><%= payout_method.address_postal_code %></td>
+        </tr>
+        <tr>
+          <td>Recipient country:</td>
+          <td><%= payout_method.recipient_country %></td>
+        </tr>
+        <% WiseTransfer.recipient_information_accessors&.each do |key| %>
+          <% next if key == "account_holder" %>
+          <% if payout_method.recipient_information[key].presence != nil %>
+            <tr>
+              <td><%= key.humanize %>:</td>
+              <td><%= payout_method.recipient_information[key] %></td>
+            </tr>
+          <% elsif payout_method.read_attribute(key.to_sym).present? %>
+            <tr>
+              <td><%= key.humanize %>:</td>
+              <td><%= payout_method.read_attribute(key.to_sym) %></td>
+            </tr>
+          <% end %>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
