@@ -485,7 +485,7 @@ class EventsController < ApplicationController
     authorize @event
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || 20).to_i
+    per_page = (params[:per] || 18).to_i
 
     display_cards = [
       @user_stripe_cards.active,
@@ -623,9 +623,9 @@ class EventsController < ApplicationController
     @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).sum(&:usd_amount_cents),
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.sum(&:usd_amount_cents)
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
     }
 
     @ach_transfers = @ach_transfers.in_transit if params[:filter] == "in_transit"
@@ -639,7 +639,7 @@ class EventsController < ApplicationController
     @checks = @checks.search_recipient(params[:q]) if params[:q].present?
 
     @increase_checks = @increase_checks.in_transit if params[:filter] == "in_transit"
-    @increase_checks = @increase_checks.increase_deposited if params[:filter] == "deposited"
+    @increase_checks = @increase_checks.deposited if params[:filter] == "deposited"
     @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
     @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
 
@@ -658,7 +658,7 @@ class EventsController < ApplicationController
     @wires = @wires.rejected if params[:filter] == "canceled"
     @wires = @wires.search_recipient(params[:q]) if params[:q].present?
 
-    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending) if params[:filter] == "in_transit"
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:filter] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
@@ -683,6 +683,12 @@ class EventsController < ApplicationController
 
   def reimbursements
     authorize @event
+    @total = @event.reimbursement_reports.to_calculate_total.where(currency: "USD").includes(:payout_holding).sum(&:amount_cents)
+    @total += Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed.where.not(currency: "USD")).sum(&:amount_cents)
+    @total += Money.from_cents(@event.reimbursement_reports.pending.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
+    @reimbursed = Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed).sum(&:amount_cents)
+    @pending = @total - @reimbursed
+
     @reports = @event.reimbursement_reports.visible
     @reports = @reports.draft if params[:status] == "draft"
     @reports = @reports.submitted if params[:status] == "review_required"

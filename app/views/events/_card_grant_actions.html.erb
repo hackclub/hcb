@@ -8,17 +8,17 @@
     <%= link_to card_grant do %>
       <%= inline_icon "card", size: 20 %> View transactions
     <% end if card_grant.stripe_card.present? %>
-    <% if card_grant.active? && card_grant.stripe_card&.active? %>
+    <% if card_grant.active? && card_grant.stripe_card&.active? && policy(card_grant.stripe_card).freeze? %>
       <%= link_to freeze_stripe_card_path(card_grant.stripe_card), method: :post do %>
-        <%= inline_icon "freeze", size: 20 %> Freeze card
+      <%= inline_icon "freeze", size: 20 %> Freeze card
       <% end %>
-    <% elsif card_grant.active? && card_grant.stripe_card&.frozen? %>
+    <% elsif card_grant.active? && card_grant.stripe_card&.frozen? && policy(card_grant.stripe_card).defrost? %>
       <%= link_to defrost_stripe_card_path(card_grant.stripe_card), method: :post do %>
         <%= inline_icon "freeze", size: 20 %> Defrost
       <% end %>
     <% end %>
     <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug), data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." }, method: :post do %>
-      <%= inline_icon "reply", size: 20 %> Cancel grant...
-    <% end if card_grant.active? %>
+      <%= inline_icon "reply", size: 20 %> Cancel grant
+    <% end if card_grant.active? && policy(card_grant).cancel? %>
   </div>
 </div>

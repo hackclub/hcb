@@ -60,6 +60,9 @@ class Wire < ApplicationRecord
   include Freezable
   include Payment
 
+  include PublicIdentifiable
+  set_public_id_prefix :wir
+
   include HasWireRecipient
 
   def payment_recipient_attributes
@@ -177,13 +180,19 @@ class Wire < ApplicationRecord
   def usd_amount_cents
     return -1 * local_hcb_code.amount_cents unless local_hcb_code.nil? || local_hcb_code.no_transactions?
 
-    eu_bank = EuCentralBank.new
-    if Rails.env.test?
-      eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
+    if currency.in?(EuCentralBank::CURRENCIES)
+      eu_bank = EuCentralBank.new
+      if Rails.env.test?
+        eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
+      else
+        eu_bank.update_rates
+      end
+      return eu_bank.exchange(amount_cents, currency, "USD").cents
     else
-      eu_bank.update_rates
+      # we fallback to Wise for currency conversion when we can't get it from the EU Central Bank
+      money = Money.from_cents(amount_cents, currency)
+      return WiseTransfer.generate_detailed_quote(money)[:without_fees_usd_amount].cents
     end
-    eu_bank.exchange(amount_cents, currency, "USD").cents
   end
 
   def send_wire!
