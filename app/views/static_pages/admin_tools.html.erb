@@ -77,6 +77,7 @@
       <h2>Accounting</h2>
       <ul class="grid text-left w-100 mt0" id="accounting-grid">
         <%= card_to "Bank fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
+        <%= card_to "Fee revenues", fee_revenues_admin_index_path %>
         <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
         <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization balances" } %>
         <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "Blazer" } %>

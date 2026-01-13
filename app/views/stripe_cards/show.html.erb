@@ -2,16 +2,6 @@
 <%= render "events/nav", selected: :cards unless @frame %>
 
 <%= turbo_frame_tag "stripe_card_#{@card.public_id}" do %>
-  <% admin_tool("mt3") do %>
-    <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn bg-accent m1" %>
-    <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn bg-accent m1" %>
-    <% if @card.cash_withdrawal_enabled? %>
-      <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-error", disabled: !admin_signed_in? %>
-    <% elsif @card.physical? %>
-      <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn bg-success m1", disabled: !admin_signed_in? %>
-    <% end %>
-  <% end %>
-
   <%= render partial: "stripe_cards/canceled_warning", locals: { stripe_card: @card } %>
 
   <turbo-frame id="details">
@@ -21,11 +11,20 @@
           <% admin_tool do %>
             This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
             <br>
-            <%= link_to "View grant", card_grant_path(@card.card_grant), method: :post, class: "btn bg-accent m1" %>
+            <%= link_to "View grant", card_grant_path(@card.card_grant), class: "btn bg-accent m1", data: { turbo_frame: "_top" } %>
           <% end %>
         <% end %>
 
         <%= render "stripe_cards/stripe_card", stripe_card: @card, headless: true %>
+        <% admin_tool("card card--breakdown flex flex-col p-1 -mb-1") do %>
+          <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn btn--list-item" %>
+          <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn btn--list-item" %>
+          <% if @card.cash_withdrawal_enabled? %>
+            <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
+          <% elsif @card.physical? %>
+            <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
+          <% end %>
+        <% end %>
         <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card } %>
       </section>
 

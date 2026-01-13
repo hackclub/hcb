@@ -17,7 +17,7 @@
           <hr>
           <% if signed_in? %>
             <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
-            <%= link_to edit_user_path(current_user) do %>
+            <%= link_to my_settings_path do %>
               <%= inline_icon "settings", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
               Settings
             <% end %>

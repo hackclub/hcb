@@ -9,7 +9,7 @@
     Create
   </button>
   <div class="menu__content menu__content--2 menu__content--compact h5 p-3" data-menu-target="content">
-    <%= form_with(url: event_invite_links_path(event:), data: { turbo_frame: "invite_links_section" }) do |form| %>
+    <%= form_with(url: event_invite_links_path(event_id: event.slug), data: { turbo_frame: "invite_links_section" }) do |form| %>
       <div class="field">
         <%= form.label :expires_at, "Expires on" %>
         <%= form.date_field :expires_on, class: "!max-w-full w-full", value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d") %>

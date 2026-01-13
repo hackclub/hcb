@@ -94,7 +94,7 @@
 
     <%# LET THERE BE SNOW %>
     <% if winter? %>
-      <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
+      <%= react_component "holiday/Snow", {}, { style: "height:100%;position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:99999" } %>
     <% end %>
 
     <%# ghosts and ghouls %>
@@ -105,28 +105,6 @@
 
     <% if content_for?(:nav) %>
       <main class="container app">
-        <% if @event && @first_time %>
-          <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
-            <div class="welcome__image mb3">
-              <div class="welcome__shine"></div>
-              <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
-              <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
-            </div>
-
-            <div class="welcome__content">
-              <div class="center">
-                <h3 class="h3 caps secondary block my-0">Welcome to</h3>
-                <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
-              </div>
-
-              <div class="mb2">
-                <button class="btn" data-action="welcome#tour">Show me around</button>
-              </div>
-              <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
-            </div>
-          </div>
-        <% end %>
-
         <%= render "application/native_changelog" if @latest_changelog_post %>
 
         <aside class="app__sidebar">

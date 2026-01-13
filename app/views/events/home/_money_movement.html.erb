@@ -10,7 +10,7 @@
       </div>
 
       <% if @money_in.empty? %>
-        <div class="text-gray-500 text-center bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
+        <div class="text-gray-500 bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
           You haven't received any money yet.
         </div>
       <% end %>
@@ -18,7 +18,7 @@
       <% @money_in.each do |transaction| %>
         <% rendered_transaction = capture do %>
           <div style="min-width:0;flex:1">
-            <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
+            <span class="truncate block"><%= transaction_memo(transaction) %></span>
             <div class="text-sm text-gray-500">
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
@@ -43,7 +43,7 @@
             <%= rendered_transaction %>
           </a>
         <% else %>
-          <div class="homepage-transaction">
+          <div class="homepage-transaction cursor-[unset]">
             <%= rendered_transaction %>
           </div>
         <% end %>
@@ -68,7 +68,7 @@
         <% end %>
       </div>
       <% if @money_out.empty? %>
-        <div class="text-gray-500 text-center bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
+        <div class="text-gray-500 bg-zinc-100 dark:bg-zinc-700 rounded-xl mx-4 flex-1 flex items-center text-center justify-center">
           You haven't spent any money yet.
         </div>
       <% end %>
@@ -76,7 +76,7 @@
       <% @money_out.each do |transaction| %>
         <% rendered_transaction = capture do %>
           <div style="min-width:0;flex:1">
-            <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
+            <span class="truncate block"><%= transaction_memo(transaction) %></span>
             <div class="text-sm text-gray-500">
               <% if transaction.is_a?(CanonicalPendingTransaction) %>
                 Pending &bull;
@@ -101,7 +101,7 @@
             <%= rendered_transaction %>
           </a>
         <% else %>
-          <div class="homepage-transaction">
+          <div class="homepage-transaction cursor-[unset]">
             <%= rendered_transaction %>
           </div>
         <% end %>

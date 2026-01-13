@@ -31,6 +31,9 @@ class CheckDeposit < ApplicationRecord
   include Freezable
   has_paper_trail
 
+  include PublicIdentifiable
+  set_public_id_prefix :cdp
+
   REJECTION_DESCRIPTIONS = {
     "incomplete_image"                => "This check was rejected because the photo was incomplete.",
     "duplicate"                       => "This check was rejected as a duplicate.",
@@ -121,13 +124,12 @@ class CheckDeposit < ApplicationRecord
 
   def state
     return :muted if column_id.nil? && increase_id.nil?
+    return :error if rejected? || returned?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?
       :info
-    elsif rejected? || returned?
-      :error
-    elsif deposited? || local_hcb_code.ct.present?
+    elsif deposited?
       :success
     elsif submitted?
       :info

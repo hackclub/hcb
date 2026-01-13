@@ -80,17 +80,7 @@
       }
     </style>
     <%= yield(:head) if content_for?(:head) %>
-    <% img = "/brand/hcb-icon-icon-original.png" %>
-    <meta name="twitter:card" content="summary">
-    <meta property="og:image" content="<%= img %>">
-    <meta name="twitter:image" content="<%= img %>">
-    <meta property="og:site_name" content="HCB">
-    <meta property="og:url" content="https://hcb.hackclub.com">
-    <meta property="og:title" content="Sign in">
-    <meta name="twitter:title" content="Sign in">
-    <meta property="og:description" content="Sign in to HCB.">
-    <meta name="twitter:description" content="Sign in to HCB.">
-    <meta name="description" content="Sign in to HCB.">
+    <%= render "application/seo_meta_tags" %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%# LET THERE BE SNOW %>
