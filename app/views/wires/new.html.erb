@@ -30,12 +30,12 @@
       <div class="field">
         <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
       <span class="muted mb-1 block">May be used for tax purposes. Match the name on the recipient's account.</span>
-        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250, disabled: %>
+        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", class: "!max-w-full", required: true, maxlength: 250, disabled: %>
       </div>
 
       <div class="field">
         <%= form.label :recipient_email, "Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: %>
       </div>
 
       <%= render partial: "wires/recipient_details", locals: { form:, disabled:, required: true } %>
