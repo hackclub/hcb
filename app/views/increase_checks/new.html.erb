@@ -1,14 +1,12 @@
 <% disabled = !policy(@event).create_transfer? %>
 <% title "Send a check" %>
-<% @sidebar_size_class = "col-span-3" %>
-<% @container_size_class = "col-span-2" %>
 
 <% content_for :table_of_contents do %>
   <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
     <div class="step-tab__number">1</div>
     <span>Contact information</span>
   </div>
-  <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
+  <div class="step-tab step-tab--full justify-start py-1" data-scroll-seek-target="tab">
     <div class="step-tab__number">2</div>
     <span>Address</span>
   </div>
@@ -18,8 +16,8 @@
   </div>
 <% end %>
 
-<% content_for :sidebar_footer do %>
-  <aside class="min-w-0">
+<% content_for :header do %>
+  <aside class="min-w-0 max-w-2xl px-8 mt-20 w-full mx-auto -mb-20 hidden md:block">
     <link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
 
@@ -30,10 +28,11 @@
       amount: @check.amount || 0,
       memo: @check.memo || "　",
       account_details: @event.column_account_number,
-      editable: true,
-      class: "hidden xl:block" %>
+      editable: true %>
   </aside>
+<% end %>
 
+<% content_for :sidebar_footer do %>
   <%= render "application/callout", type: "info",
     title: "Information about check transfers", class: "mb-0" do %>
     <ul class="m0">
@@ -300,5 +299,6 @@
       aria-label="Your check will be mailed out on the next business day.">
       <%= form.submit "Send check", disabled: %>
     </div>
+    <a href="#" class="muted ml2 no-underline">Preview check</a>
   <% end %>
 </div>
