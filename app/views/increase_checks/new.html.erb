@@ -72,7 +72,8 @@
         <%= form.text_field :recipient_name,
           placeholder: "Raviga Capital", required: true, disabled:,
           data: { 'behavior': "check_payee_name_field",
-                  extraction_field: "seller_name" }, maxlength: 250, class: "!max-w-full" %>
+                  extraction_field: "seller_name"
+}, maxlength: 250, class: "!max-w-full" %>
       </div>
       <div>
         <%= form.label :recipient_email, "Email" %>
