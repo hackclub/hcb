@@ -8,6 +8,17 @@ class ApplicationController < ActionController::Base
   include SetGovernanceRequestContext
 
   protect_from_forgery
+  
+  # set Current.session
+  before_action do
+    Current.session ||= begin
+      # Find a valid session (not expired) using the session token
+      session_token = cookies.encrypted[:session_token]
+      return nil if session_token.nil?
+
+      User::Session.not_expired.find_by(session_token:)
+    end
+  end
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
