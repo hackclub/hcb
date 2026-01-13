@@ -2,9 +2,7 @@
 <% @back_url = event_transfers_path(@source_event) %>
 
 <% content_for :sidebar_footer do %>
-  <%= render "application/callout", type: "warning", title: "Important info about transfers", footer: :questions do %>
-    <p>Transfers are reviewed by the HCB team and process within 24 hours on weekdays.</p>
-  <% end %>
+  <%= render "application/callout", type: "warning", class: "my-4", title: "Transfers are reviewed by the HCB team and process within 24 hours on weekdays." %>
   <% if @allowed_destination_events.empty? %>
     <p class="h5 muted">It looks like you don't have any organizations to transfer to. You can transfer funds between any organizations you're a part of.</p>
   <% end %>

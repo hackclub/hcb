@@ -12,7 +12,7 @@
 <% end %>
 
 <% content_for :sidebar_footer do %>
-  <%= render partial: "wires/requirements", locals: { event: @event } %>
+  <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
 <% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
@@ -31,6 +31,7 @@
     <div class="card mb-4 relative flex flex-col gap-3">
       <div id="wire_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#wire_name_field" data-text-filter-empty-class="display-none">
         <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
+        <span class="muted block mb-1">May be used for tax purposes. Match the name on the recipient's account.</span>
         <%= form.text_field :recipient_name,
                             placeholder: "Raviga Capital",
                             required: true,
@@ -52,7 +53,6 @@
                             class: "!max-w-full",
                             "x-ref" => "name_input",
                             "@input" => "payment_recipient = null" %>
-        <span class="muted">May be used for tax purposes. Match the name on the recipient's account.</span>
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
             <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
@@ -109,7 +109,7 @@
 
       <div class="flex items-center gap-2 justify-between">
         <%= form.label :memo %>
-        <%= form.text_field :memo, placeholder: "For venue payment...", required: true, disabled: disabled, class: "!max-w-full flex-1" %>
+        <%= form.text_field :memo, placeholder: "For venue payment...", required: true, disabled: disabled, class: "!max-w-[300px] flex-1" %>
       </div>
 
       <div class="flex items-center gap-2 justify-between">

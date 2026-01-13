@@ -25,12 +25,12 @@
 <% end %>
 
 <%= form_with(
-  model: [@event, @wise_transfer],
-  local: true,
-  html: {
-    "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
-  }
-) do |form| %>
+      model: [@event, @wise_transfer],
+      local: true,
+      html: {
+        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
+      }
+    ) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
 
