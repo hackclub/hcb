@@ -7,14 +7,8 @@
 <% end %>
 
 <% content_for :table_of_contents do %>
-  <div class="step-tab step-tab--full justify-start py-1 active" data-scroll-seek-target="tab">
-    <div class="step-tab__number">1</div>
-    <span>Recipient details</span>
-  </div>
-  <div class="step-tab step-tab--full justify-start py-1" data-scroll-seek-target="tab">
-    <div class="step-tab__number">2</div>
-    <span>Payment information</span>
-  </div>
+  <%= render "events/transfer_button", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_button", number: 2, label: "Payment information" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
@@ -32,7 +26,7 @@
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
-  <div data-scroll-seek-target="section" id="recipient-details" class="-mt-8">
+  <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div id="wire_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#wire_name_field" data-text-filter-empty-class="display-none">
@@ -104,7 +98,7 @@
     </div>
   </div>
 
-  <div data-scroll-seek-target="section" id="payment-information">
+  <div data-scroll-seek-target="section">
     <h3 class="mb-2">Payment information</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div>
