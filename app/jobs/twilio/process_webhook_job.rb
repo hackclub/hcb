@@ -96,10 +96,10 @@ module Twilio
 
     def last_sent_message_hcb_code
       @last_sent_message_hcb_code ||= OutgoingTwilioMessage
-                                        .joins(:twilio_message)
-                                        .where("twilio_messages.to" => @params["From"])
-                                        .where.not(hcb_code: nil)
-                                        .last&.hcb_code
+                                      .joins(:twilio_message)
+                                      .where("twilio_messages.to" => @params["From"])
+                                      .where.not(hcb_code: nil)
+                                      .last&.hcb_code
     end
 
     def find_reimbursement_report
