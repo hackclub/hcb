@@ -72,8 +72,8 @@
 
       <div class="field">
         <%= form.label :payment_for, "What are you paying for with this wire?" %>
-        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
         <span class="muted">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
       </div>
 
       <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
