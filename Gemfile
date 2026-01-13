@@ -200,8 +200,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-# We are waiting for a new `public_activity` release that includes https://github.com/public-activity/public_activity/pull/387
-gem "public_activity", github: "public-activity/public_activity", ref: "29bbd6e788950b5528c512bb8361071f187f3230"
+gem "public_activity", "~> 3.0.2"
 
 gem "console1984"
 gem "audits1984"
