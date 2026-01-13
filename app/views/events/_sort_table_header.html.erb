@@ -1,4 +1,5 @@
-<%= link_to upsert_query_params(
+<% if organizer_signed_in? %>
+  <%= link_to upsert_query_params(
       sort: sort,
       direction: (params[:sort] == sort ? (params[:direction] == "asc" ? "desc" : "asc") : (params[:direction] || "desc"))
     ),
@@ -9,4 +10,7 @@
     ].compact.join(" ") do %>
   <%= display || sort.humanize %>
   <%= inline_icon(params[:direction] == "desc" ? "down-caret" : "up-caret", size: 16) %>
+<% end %>
+<% else %>
+  <%= display || sort.humanize %>
 <% end %>
