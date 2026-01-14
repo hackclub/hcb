@@ -24,7 +24,7 @@ class CardGrantsController < ApplicationController
     card_grants_per_page = (params[:per] || 20).to_i
 
     @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      @event.card_grant_setting.block_suspected_fraud? ? Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC") : nil,
+      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
       "card_grants.created_at DESC"
     )
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
