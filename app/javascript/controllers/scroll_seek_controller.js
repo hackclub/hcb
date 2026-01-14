@@ -79,7 +79,7 @@ export default class extends Controller {
       this.tabTargets[index].classList.add('active')
     }
 
-    if (window.innerWidth < 768 && this.tabTargets[index]) {
+    if (window.innerWidth < 640 && this.tabTargets[index]) {
       this.tabTargets[index].scrollIntoView({
         block: 'start',
         inline: 'nearest',
