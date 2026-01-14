@@ -103,7 +103,9 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
-    if canceled? || expired?
+    if suspected_fraud?
+      "error"
+    elsif suspected_fraud? || canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
@@ -115,7 +117,9 @@ class CardGrant < ApplicationRecord
   end
 
   def state_text
-    if canceled?
+    if suspected_fraud?
+      "Fraudulent"
+    elsif canceled?
       "Canceled"
     elsif expired?
       "Expired"
@@ -131,10 +135,14 @@ class CardGrant < ApplicationRecord
   def status_badge_type
     s = state.to_sym
     return :success if s == :success
-    return :error if s == :muted
+    return :error if s == :muted || s == :error
     return :warning if s == :info
 
     :muted
+  end
+
+  def suspected_fraud?
+    pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
