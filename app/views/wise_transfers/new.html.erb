@@ -125,9 +125,10 @@
     </div>
   </div>
 
-  <div class="actions tooltipped tooltipped--n inline-block w-full" aria-label="Your transfer will be sent out on the next business day.">
-    <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
-      <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
-    </button>
-  </div>
+  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
+    <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
+  </button>
+  <p class="muted mt-3 text-center text-sm">
+    Your transfer will be sent out on the next business day.
+  </p>
 <% end %>

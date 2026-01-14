@@ -157,7 +157,7 @@
       </div>
     </div>
 
-    <div class="sm:flex items-center justify-between gap-4">
+    <div class="md:flex items-center justify-between gap-4">
       <div>
         <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>
         <span class="muted">Required for reimbursements / goods & services payments.</span>
@@ -203,7 +203,9 @@
     </div>
   <% end %>
 
-  <div class="actions tooltipped tooltipped--n flex" aria-label="ACH transfers can't be canceled">
-    <%= form.submit "Transfer money now", class: "btn w-full", disabled: %>
-  </div>
+  <%= form.submit "Transfer money now", class: "btn w-full", disabled: %>
+  <p class="muted mt-3 text-center text-sm">
+    <%= inline_icon "warning", class: "align-middle mr-0.5 -mt-0.5", size: 20 %>
+    ACH transfers are <strong>irreversible</strong> and can't be canceled.
+  </p>
 <% end %>

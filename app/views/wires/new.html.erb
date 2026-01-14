@@ -163,8 +163,9 @@
       </div>
     </div>
 
-    <div class="actions tooltipped tooltipped--n inline-block w-full" aria-label="Your wire will be sent out on the next business day.">
-      <%= form.submit "Send wire", disabled: disabled, class: "w-full" %>
-    </div>
+    <%= form.submit "Send wire", disabled: disabled, class: "w-full" %>
+    <p class="muted mt-3 text-center text-sm">
+      Your wire will be sent out on the next business day.
+    </p>
   </div>
 <% end %>

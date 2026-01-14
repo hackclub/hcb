@@ -40,7 +40,6 @@
         Check will be valid for <span class="bold">180 days</span>, until
         <%= format_date IncreaseCheck::VALID_DURATION.from_now %>
       </li>
-      <li>HCB team approval required before sending (~1 business day avg)</li>
     </ul>
   <% end %>
 
@@ -62,7 +61,7 @@
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
-  <div data-scroll-seek-target="section" class="-mt-8">
+  <div data-scroll-seek-target="section" class="lg:-mt-8">
     <h3 class="mb-2">Contact information</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div id="increase_check_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#increase_check_name_field" data-text-filter-empty-class="display-none">
@@ -270,7 +269,7 @@
           required: true, disabled: disabled, class: "!max-w-full" %>
       </div>
 
-      <div class="flex gap-3 items-center">
+      <div class="md:flex gap-3 mb-3 md:mb-0 items-center">
         <div class="flex-1">
           <%= form.label :memo %>
           <span class="muted block" data-behavior="check_characters_update">
@@ -319,7 +318,7 @@
         </div>
       </div>
 
-    <div class="sm:flex items-center justify-between gap-4">
+    <div class="md:flex items-center justify-between gap-4">
       <div>
         <%= form.label :file,
           "Attach a receipt / invoice", class: "mt2 font-semibold" %>
@@ -362,7 +361,7 @@
     <%= form.submit "Send check", class: "flex-[4]", disabled: disabled %>
     <a href="#" class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">Preview</a>
   </div>
-  <p class="muted mt-2 text-sm text-center">
-    Your check will be mailed out on the next business day.
+  <p class="muted mt-3 text-sm text-center">
+    HCB team will review your transfer and mail the check on the next business day.
   </p>
 <% end %>
