@@ -356,9 +356,11 @@
     </div>
   </div>
 
-  <div class="actions tooltipped tooltipped--n inline-block mt1"
-    aria-label="Your check will be mailed out on the next business day.">
-    <%= form.submit "Send check", disabled: disabled %>
+  <div class="flex gap-2">
+    <%= form.submit "Send check", class: "flex-[4]", disabled: disabled %>
+    <a href="#" class="bg-muted flex-[2] btn no-underline">Preview</a>
   </div>
-  <a href="#" class="muted ml2 no-underline">Preview check</a>
+  <p class="muted mt-2 text-sm text-center">
+    Your check will be mailed out on the next business day.
+  </p>
 <% end %>
