@@ -319,13 +319,15 @@
         </div>
       </div>
 
+    <div class="sm:flex items-center justify-between gap-4">
       <div>
         <%= form.label :file,
           "Attach a receipt / invoice", class: "mt2 font-semibold" %>
         <p class="muted my-0">
           Required for reimbursements / goods & services payments.
         </p>
-        <div class="field field--fileupload mb1 mt1"
+      </div>
+        <div class="field field--fileupload text-right flex items-center !max-w-[300px]"
           data-controller="file-drop form"
           data-file-drop-title-value="Drop to add a receipt.">
           <%= form.label :file, "Choose file",
@@ -342,7 +344,7 @@
             include_hidden: false,
             required: false,
             accept: "image/*,image/heic,.pdf",
-            style: "margin: 8px 0px",
+            style: "margin: 8px 0px;max-width:130px;",
             class: "field--fileupload__field",
             data: {
               "file-drop-target" => "fileInput",
