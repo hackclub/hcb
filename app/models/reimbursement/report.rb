@@ -96,6 +96,8 @@ module Reimbursement
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
     end
 
+    after_commit :invalidate_cached_data # do this after commit for expense touch-ing
+
     aasm timestamps: true do
       state :draft, initial: true
       state :submitted
@@ -437,6 +439,12 @@ module Reimbursement
 
     def payout_method_allowed?
       user.payout_method.present? && !user.payout_method.unsupported?
+    end
+
+    def invalidate_cached_data
+      Rails.cache.delete("cached_wise_transfer_quote_amount_#{id}")
+
+      true
     end
 
   end
