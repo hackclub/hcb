@@ -34,6 +34,7 @@ class CardGrant
 
     belongs_to :card_grant
     has_one :event, through: :card_grant
+    has_one :card_grant_setting, through: :card_grant
     has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
@@ -195,11 +196,11 @@ class CardGrant
     end
 
     def unauthorized?
-      draft? || submitted? || rejected?
+      draft? || submitted? || rejected? || (card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
     def authorized?
-      approved? || fraudulent?
+      approved? || (!card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
   end
