@@ -30,7 +30,7 @@ class ApplicationController < ActionController::Base
   before_action do
     # Disallow all external redirects
     # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
-    params[:return_to] = url_from(params[:return_to])
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
   end
 
   # Enable Rack::MiniProfiler for auditors
