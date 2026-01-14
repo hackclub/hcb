@@ -135,7 +135,7 @@ class CardGrant < ApplicationRecord
   def status_badge_type
     s = state.to_sym
     return :success if s == :success
-    return :error if s == :muted || s == :error
+    return :error if [:muted, :error].include?(s)
     return :warning if s == :info
 
     :muted
