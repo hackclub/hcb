@@ -111,6 +111,10 @@ class ColumnService
     get("/transfers/ach/#{id}")
   end
 
+  def self.international_wire(id)
+    get("/transfers/international-wire/#{id}")
+  end
+
   def self.return_ach(id, with:)
     post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
