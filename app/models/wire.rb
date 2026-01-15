@@ -108,7 +108,7 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
-      after do
+      after_commit do
         WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
       end
       transitions from: :pending, to: :approved
