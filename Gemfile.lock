@@ -13,17 +13,6 @@ GIT
       msgpack
       redis
 
-GIT
-  remote: https://github.com/public-activity/public_activity.git
-  revision: 29bbd6e788950b5528c512bb8361071f187f3230
-  ref: 29bbd6e788950b5528c512bb8361071f187f3230
-  specs:
-    public_activity (3.0.1)
-      actionpack (>= 6.1.0)
-      activerecord (>= 6.1)
-      i18n (>= 0.5.0)
-      railties (>= 6.1.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -621,6 +610,11 @@ GEM
     psych (5.2.6)
       date
       stringio
+    public_activity (3.0.2)
+      actionpack (>= 6.1)
+      activerecord (>= 6.1)
+      i18n (>= 0.5.0)
+      railties (>= 6.1)
     public_suffix (6.0.2)
     puma (6.6.1)
       nio4r (~> 2.0)
@@ -1011,7 +1005,7 @@ DEPENDENCIES
   pry-byebug
   pry-rails
   pstore
-  public_activity!
+  public_activity (>= 3.0.2)
   puma (~> 6.6)
   pundit
   query_count
