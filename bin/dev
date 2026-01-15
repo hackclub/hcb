@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+bundle install
 if [[ $* == *--with-stripe* ]]
 then
     bundle exec foreman start -f Procfile.dev $@
