@@ -154,6 +154,23 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def permit_merchant
+    authorize @card_grant
+
+    merchant_lock = @card_grant.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: card_grant_path(@card_grant) and return
+    end
+
+    merchant_lock << params[:merchant]
+    @card_grant.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: card_grant_path(@card_grant)
+  end
+
+
   def update
     authorize @card_grant
 

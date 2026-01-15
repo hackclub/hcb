@@ -323,6 +323,22 @@ class EventsController < ApplicationController
     render :edit, layout: !@frame
   end
 
+  def permit_merchant
+    authorize @event
+
+    merchant_lock = @event.card_grant_setting.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants") and return
+    end
+
+    merchant_lock << params[:merchant]
+    @event.card_grant_setting.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants")
+  end
+
   # PATCH/PUT /events/1
   def update
     authorize @event
