@@ -11,9 +11,6 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
-    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
-      return render :new_v2
-    end
   end
 
   def create
