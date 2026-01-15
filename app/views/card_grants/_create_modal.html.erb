@@ -3,5 +3,5 @@
 
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a grant" } unless policy(@event).create_transfer? %>
 
-  <%= render "card_grants/create_form", card_grant: @event.card_grants.build %>
+  <%= render "card_grants/create_form", card_grant: @event.card_grants.build(pre_authorization_required: @event.card_grant_setting&.pre_authorization_required?) %>
 </section>
