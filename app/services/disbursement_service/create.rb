@@ -46,17 +46,17 @@ module DisbursementService
     def run
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
-      
+
       @source_event.with_lock do
         if @source_subledger_id.present?
           raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
         else
           raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
         end
-  
+
         ActiveRecord::Base.transaction do
           disbursement = Disbursement.create!(attrs)
-  
+
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
           # 2. Canonize the newly added raw pending transactions
@@ -65,10 +65,10 @@ module DisbursementService
           ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
           # 4. Front if required
           o_cpt.update(fronted: @fronted)
-  
+
           if disbursement.scheduled_on.nil?
             # We only want to import Incoming Disbursements AFTER the scheduled date
-  
+
             # 1. Create the raw pending transactions
             rpidt = ::PendingTransactionEngine::RawPendingIncomingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
             # 2. Canonize the newly added raw pending transactions
@@ -78,11 +78,11 @@ module DisbursementService
             # 4. Front if required
             i_cpt.update(fronted: @fronted)
           end
-  
+
           if requested_by_admin_with_approval_permission?(disbursement) || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event
             disbursement.approve_by_admin(requested_by)
           end
-  
+
           disbursement
         end
       end
