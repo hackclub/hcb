@@ -8,6 +8,7 @@ module Api
       before_action :set_api_event
 
       def index
+        authorize @event, :index_in_v4?
         @tags = @event.tags.order(created_at: :desc)
       end
 
