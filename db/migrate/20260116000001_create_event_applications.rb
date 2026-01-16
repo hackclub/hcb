@@ -24,6 +24,11 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
 
       t.text :notes
 
+      t.datetime :submitted_at
+      t.datetime :under_review_at
+      t.datetime :approved_at
+      t.datetime :rejected_at
+
       t.timestamps
     end
   end

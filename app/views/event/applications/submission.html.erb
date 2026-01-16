@@ -1,0 +1,25 @@
+<% title "Your application for #{@application.name}" %>
+
+<div class="w-full flex flex-grow flex-col items-center">
+  <div class="md:max-w-[800px] w-full space-y-8 pb-5">
+    <div class="flex flex-col">
+      <h2 class="text-4xl">
+        Your application for <%= @application.name %>
+      </h2>
+
+      <p class="mt-0 text-lg muted">
+        <% submitted_at = @application.submitted_at.in_time_zone(current_session.timezone || Time.zone.name) %>
+        Submitted on <%= submitted_at.strftime("%B #{submitted_at.day.ordinalize}") %> at <%= submitted_at.strftime("%l:%M%p").downcase %>
+      </p>
+    </div>
+
+    <%= render "event/applications/summary", application: @application, allow_edits: false %>
+
+    <h3 class="muted !mt-12">Questions about your application?</h3>
+    <p class="muted !mt-2">Reach out to the HCB team at <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>. We're here to help!</p>
+  </div>
+</div>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+<% end %>

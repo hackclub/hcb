@@ -44,6 +44,10 @@ class Event
       end
     end
 
+    def submission
+      authorize @application
+    end
+
     def create
       authorize(@application = Event::Application.new(user: current_user))
       @application.save!

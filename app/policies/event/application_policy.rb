@@ -21,6 +21,10 @@ class Event
     alias_method :project_info?, :show?
     alias_method :agreement?, :show?
     alias_method :review?, :show?
+    
+    def submission?
+      (record.user == user || user.auditor?) && record.submitted_at.present?
+    end
 
     alias_method :submit?, :update?
 

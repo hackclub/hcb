@@ -13,6 +13,7 @@
 #  address_postal_code   :string
 #  address_state         :string
 #  airtable_status       :string
+#  approved_at           :datetime
 #  cosigner_email        :string
 #  description           :text
 #  name                  :string
@@ -20,6 +21,9 @@
 #  political_description :text
 #  referral_code         :string
 #  referrer              :string
+#  rejected_at           :datetime
+#  submitted_at          :datetime
+#  under_review_at       :datetime
 #  website_url           :string
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
@@ -48,7 +52,7 @@ class Event
     belongs_to :user
     belongs_to :event, optional: true
 
-    aasm do
+    aasm timestamps: true do
       state :draft, initial: true
       state :submitted
       # An application can be submitted but not yet under review if it is pending on a cosigner signature

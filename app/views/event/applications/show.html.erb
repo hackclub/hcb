@@ -22,4 +22,9 @@
       <% end %>
     </div>
   </div>
+
+  <% content_for :footer do %>
+    <span></span>
+    <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
+  <% end %>
 <% end %>

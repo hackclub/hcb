@@ -852,6 +852,7 @@ Rails.application.routes.draw do
         get "project_info"
         get "agreement"
         get "review"
+        get "submission"
         post "submit"
       end
     end
@@ -977,6 +978,7 @@ Rails.application.routes.draw do
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
         post "disable_pre_authorization"
+        post "permit_merchant"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
@@ -1018,6 +1020,7 @@ Rails.application.routes.draw do
       get "audit_log"
       post "validate_slug"
       get "termination"
+      post "permit_merchant"
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end
