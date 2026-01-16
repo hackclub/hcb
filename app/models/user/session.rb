@@ -56,10 +56,10 @@ class User
     scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
     after_create_commit do
-      return if impersonated?
-      return unless user.user_sessions.size > 1
-      return unless fingerprint.present?
-      return unless user.user_sessions.excluding(self).where(fingerprint:).none?
+      next if impersonated?
+      next unless user.user_sessions.size > 1
+      next unless fingerprint.present?
+      next unless user.user_sessions.excluding(self).where(fingerprint:).none?
 
       UserSessionMailer.new_login(user_session: self).deliver_later
     end
