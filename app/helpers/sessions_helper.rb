@@ -90,7 +90,7 @@ module SessionsHelper
       required_role_num = OrganizerPosition.roles[inner_as]
       raise ArgumentError, "invalid role #{inner_as}" unless required_role_num.present?
 
-      valid_position = inner_event.ancestor_organizer_positions.find do |op|
+      valid_position = inner_event.ancestor_organizer_positions&.find do |op|
         next false unless op.user == current_user
 
         role_num = OrganizerPosition.roles[op.role]
