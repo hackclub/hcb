@@ -177,49 +177,21 @@ window.attachTooltipListener = () => {
 
   $(".tooltipped").on({
     mouseenter(event) {
-      if (window.innerWidth < 768) return;
-
       const trigger = event.currentTarget;
       if (!trigger.classList.contains("tooltipped")) return;
-
-      // Don't show on hover if it's a clickable tooltip that's already active
-      if (trigger.classList.contains("tooltipped--clickable") && trigger.dataset.tooltipActive === "true") return;
-
       showTooltip(trigger);
     },
-
-    mouseleave(event) {
+    touchstart(event) {
       const trigger = event.currentTarget;
-      // Don't hide on mouseleave if it's a clickable tooltip that's been clicked
-      if (trigger.classList.contains("tooltipped--clickable") && trigger.dataset.tooltipActive === "true") return;
-
-      removeTooltips()
-    }
-  });
-
-  // Handle click events for clickable tooltips
-  $(".tooltipped--clickable").on("click", function (event) {
-    event.stopPropagation();
-    const trigger = event.currentTarget;
-
-    if (trigger.dataset.tooltipActive === "true") {
-      // Hide tooltip
-      trigger.dataset.tooltipActive = "false";
-      removeTooltips();
-    } else {
-      // Show tooltip
-      trigger.dataset.tooltipActive = "true";
+      if (!trigger.classList.contains("tooltipped") || !trigger.classList.contains("tooltipped--clickable")) return;
       showTooltip(trigger);
-    }
+    },
+    mouseleave: removeTooltips
   });
 
-  // Close clickable tooltips when clicking outside
   $(document).on("click", function (event) {
     if (!$(event.target).closest(".tooltipped--clickable").length && !$(event.target).closest("#tooltip-container").length) {
-      $(".tooltipped--clickable[data-tooltip-active='true']").each(function () {
-        this.dataset.tooltipActive = "false";
-        removeTooltips();
-      });
+      removeTooltips();
     }
   });
   // on unload turbo
