@@ -51,21 +51,38 @@
     <% end %>
   </div>
   <div class="card card--breakdown p-4 space-y-4 mb-6">
-    <div class="grid grid-cols-3 gap-4 items-end">
+    <div class="grid grid-cols-2 gap-4">
       <div>
-        <p class="text-sm muted mb-1 mt-0">Street address</p>
-        <p class="mb-0"><%= application.address_line1.present? ? application.address_line1 : blank %></p>
+        <p class="text-sm muted mb-1 mt-0">Full name</p>
+        <p class="mb-0"><%= application.user.full_name.present? ? application.user.full_name : blank %></p>
       </div>
       <div>
-        <p class="mb-0"><%= application.address_line2.present? ? application.address_line2 : blank %></p>
+        <p class="text-sm muted mb-1 mt-0">Email</p>
+        <p class="mb-0"><%= application.user.email.present? ? application.user.email : blank %></p>
       </div>
       <div>
-        <p class="text-sm muted mb-1 mt-0">City</p>
-        <p class="mb-0"><%= application.address_city.present? ? application.address_city : blank %></p>
+        <p class="text-sm muted mb-1">Phone number</p>
+        <p class="mb-0"><%= application.user.phone_number.present? ? application.user.phone_number : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Birthday</p>
+        <p class="mb-0"><%= application.user.birthday.present? ? application.user.birthday.strftime("%B %-d, %Y") : blank %></p>
       </div>
     </div>
 
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm muted mb-1">Street address</p>
+        <p class="mb-0"><%= application.address_line1.present? ? application.address_line1 : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Line 2</p>
+        <p class="mb-0"><%= application.address_line2.present? ? application.address_line2 : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">City</p>
+        <p class="mb-0"><%= application.address_city.present? ? application.address_city : blank %></p>
+      </div>
       <div>
         <p class="text-sm muted mb-1">State</p>
         <p class="mb-0"><%= application.address_state.present? ? application.address_state : blank %></p>
