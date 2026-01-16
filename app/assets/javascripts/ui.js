@@ -192,6 +192,7 @@ window.attachTooltipListener = () => {
   // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
+  $(document).on('turbo:frame-load', removeTooltips);
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)
