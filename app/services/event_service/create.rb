@@ -42,7 +42,6 @@ module EventService
 
     def run
       raise ArgumentError, "organization name is required" unless @name.present?
-      raise ArgumentError, "at least one organizer email is required" if @emails.empty?
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
       ActiveRecord::Base.transaction do
