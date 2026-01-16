@@ -121,7 +121,7 @@
     <% else %>
       <%= render "application/docs_header" unless @no_app_shell %>
       <%= yield(:header) %>
-      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+      <main class="container px-6 lg:px-3 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash" unless @hide_flash %>
         <%= yield %>
         <%= render "application/footer" unless @no_app_shell || @hide_footer %>
