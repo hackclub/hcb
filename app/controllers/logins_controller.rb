@@ -28,7 +28,7 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
+    user = User.create_with(creation_method: @for_application ? :application_form : :login).find_or_create_by!(email: params[:email])
 
     if params[:referral_link_id].present?
       referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
