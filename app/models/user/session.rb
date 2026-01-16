@@ -61,7 +61,7 @@ class User
       next unless fingerprint.present?
       next unless user.user_sessions.excluding(self).where(fingerprint:).none?
 
-      UserSessionMailer.new_login(user_session: self).deliver_later
+      User::SessionMailer.new_login(user_session: self).deliver_later
     end
 
     extend Geocoder::Model::ActiveRecord
