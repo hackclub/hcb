@@ -4,22 +4,26 @@
       <span class="muted uppercase text-sm" style="font-weight: 700">Total revenue</span>
       <span class="stat__value -mb-2"><%= render_money_amount @event.total_raised %></span>
     </div>
-    <%= link_to event_transactions_path(@event, direction: "revenue"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
-      See transactions
-      <%= inline_icon "view-forward" %>
+    <% if organizer_signed_in? %>
+      <%= link_to event_transactions_path(@event, direction: "revenue"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
+        See transactions
+        <%= inline_icon "view-forward" %>
+      <% end %>
     <% end %>
   </div>
 
   <div class="menu__divider w-full my-2"></div>
 
-  <div class="gap-4 flex flex-1 flex-col items-center justify-center">
+  <div class="gap-4 flex flex-1 flex-col items-center justify-center pb-3">
     <div class="stat stat--small flex flex-col items-center" style="flex:unset">
       <span class="muted uppercase text-sm" style="font-weight: 700">Total expenses</span>
       <span class="stat__value -mb-2"><%= render_money_amount @event.total_spent_cents %></span>
     </div>
-    <%= link_to event_transactions_path(@event, direction: "expenses"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
-      See transactions
-      <%= inline_icon "view-forward" %>
+    <% if organizer_signed_in? %>
+      <%= link_to event_transactions_path(@event, direction: "expenses"), class: "flex items-center shrink-0 no-underline -mr-2" do %>
+        See transactions
+        <%= inline_icon "view-forward" %>
+      <% end %>
     <% end %>
   </div>
 </div>

@@ -11,7 +11,7 @@
   </button>
   <div class="menu__content menu__content--2 menu__content--compact h5 w-[350px] h-[400px] p-0" data-menu-target="content" data-controller="filter">
     <div class="grid grid-cols-3 h-full gap-0" data-controller="tabs" data-tabs-default-tab-value="<%= @tag ? "tags" : @user ? "user" : @type ? "type" : @start_date || @end_date ? "date" : @maximum_amount || @minimum_amount ? "amount" : tags.length > 0 ? "tags" : "user" %>">
-      <div class="bg-[rgba(200,200,200,0.2)] flex flex-col items-start gap-1 p-3">
+      <div class="bg-[rgba(200,200,200,0.2)] dark:bg-[rgb(30,29,34)] flex flex-col items-start gap-1 p-3">
         <% if tags.length > 0 %>
           <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
         <% end %>
@@ -29,7 +29,7 @@
           <div data-tabs-target="tab" id="tags">
             <% tags.each do |tag| %>
               <div class="flex items-center" data-tag="<%= tag.id %>">
-                <%= link_to(event_ledger_path(@event, upsert_query_params(tag: tag.label)), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(event_ledger_path(@event, upsert_query_params(tag: tag.label, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @tag == tag}", data: { turbo_prefetch: "false" }) do %>
                   <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                   <%= tag.label %>
                 <% end %>
@@ -40,7 +40,7 @@
         <div data-tabs-target="tab" id="user">
           <% @organizers.each do |position| %>
             <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(user: position.user.friendly_id)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.friendly_id == position.user.friendly_id}", data: { turbo_prefetch: "false" }) do %>
+              <%= link_to(event_ledger_path(@event, upsert_query_params(user: position.user.friendly_id, page: 1)), class: "flex-auto flex items-center menu__action #{"menu__action--active" if @user&.friendly_id == position.user.friendly_id}", data: { turbo_prefetch: "false" }) do %>
                 <div class="avatar-grow line-height-0 mr1">
                   <%= avatar_for position.user, size: 18 %>
                 </div>
@@ -52,7 +52,7 @@
         <div data-tabs-target="tab" id="type">
           <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire", "wise_transfer"].each do |type| %>
             <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(type:)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
+              <%= link_to(event_ledger_path(@event, upsert_query_params(type:, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
                 <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
               <% end %>
             </div>
@@ -104,13 +104,13 @@
             </div>
             <% ["expenses", "revenue"].each do |direction| %>
               <div class="flex items-center">
-                <%= link_to(event_ledger_path(@event, upsert_query_params(direction:)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(event_ledger_path(@event, upsert_query_params(direction:, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
                   <%= direction.humanize %>
                 <% end %>
               </div>
             <% end %>
             <div class="flex items-center">
-              <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
+              <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
               Both
               <% end %>
             </div>
@@ -119,7 +119,7 @@
         <div data-tabs-target="tab" id="category">
           <% TransactionCategory.order(slug: :asc).each do |category| %>
             <div class="flex items-center">
-              <%= link_to(category.definition.label, event_ledger_path(@event, upsert_query_params(category: category.slug)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
+              <%= link_to(category.definition.label, event_ledger_path(@event, upsert_query_params(category: category.slug, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_prefetch: "false" }) %>
             </div>
           <% end %>
         </div>
@@ -128,10 +128,10 @@
         </div>
         <div data-tabs-target="tab" id="receipts">
           <div class="flex items-center">
-            <%= link_to("Missing receipts", event_ledger_path(@event, upsert_query_params(missing_receipts: true)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("Missing receipts", event_ledger_path(@event, upsert_query_params(missing_receipts: true, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
           <div>
-            <%= link_to("All transactions", event_ledger_path(@event, upsert_query_params(missing_receipts: nil)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("All transactions", event_ledger_path(@event, upsert_query_params(missing_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ module Api
       def index
         if params[:event_id].present?
           set_api_event
-          authorize @event, :card_overview?
+          authorize @event, :card_overview_in_v4?
           @stripe_cards = @event.stripe_cards.includes(:user, :event).order(created_at: :desc)
         else
           skip_authorization
@@ -63,7 +63,7 @@ module Api
           stripe_shipping_address_line2: card[:shipping_address_line2],
           stripe_shipping_address_postal_code: card[:shipping_address_postal_code],
           stripe_shipping_address_country: card[:shipping_address_country],
-          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+          stripe_card_personalization_design_id: card[:card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
         ).run
 
         return render json: { error: "internal_server_error" }, status: :internal_server_error if @stripe_card.nil?
@@ -150,10 +150,6 @@ module Api
         ahoy.track "Card details shown", stripe_card_id: @stripe_card.id, user_id: current_user.id, oauth_token_id: current_token.id
 
         render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
-
-      rescue Stripe::InvalidRequestError
-        return render json: { error: "internal_server_error" }, status: :internal_server_error
-
       end
 
       def card_designs

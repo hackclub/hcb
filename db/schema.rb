@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -457,6 +457,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
   create_table "card_grant_settings", force: :cascade do |t|
     t.string "banned_categories"
     t.string "banned_merchants"
+    t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
@@ -550,8 +551,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.bigint "event_id", null: false
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
-    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx"
-    t.index ["event_id"], name: "index_column_account_numbers_on_event_id"
+    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
   create_table "column_statements", force: :cascade do |t|
@@ -972,7 +973,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_event_configurations_on_event_id"
+    t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
   end
 
   create_table "event_follows", force: :cascade do |t|
@@ -2030,6 +2031,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
+    t.string "redirect_to"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
@@ -2474,6 +2476,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.datetime "created_at", null: false
     t.datetime "period_end_at", null: false
     t.datetime "period_start_at", null: false
+    t.boolean "teenager"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["user_id"], name: "index_user_seen_at_histories_on_user_id"
@@ -2607,6 +2610,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_235755) do
     t.jsonb "recipient_information"
     t.string "recipient_name", null: false
     t.text "return_reason"
+    t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
