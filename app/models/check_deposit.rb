@@ -32,7 +32,7 @@ class CheckDeposit < ApplicationRecord
   has_paper_trail
 
   include PublicIdentifiable
-  set_public_id_prefix :chkdep
+  set_public_id_prefix :cdp
 
   REJECTION_DESCRIPTIONS = {
     "incomplete_image"                => "This check was rejected because the photo was incomplete.",
