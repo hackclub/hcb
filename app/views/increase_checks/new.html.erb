@@ -126,15 +126,7 @@
           placeholder: "fionah@gmail.com", required: true, disabled: disabled,
           data: { extraction_field: "seller_email" }, class: "!max-w-full" %>
       </div>
-      <div class="field--checkbox w-full">
-        <span style="font-weight: 500">Notify recipient?</span>
-        <div class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
-          <%= form.label :send_email_notification do %>
-            <%= form.check_box :send_email_notification, disabled: disabled, switch: true %>
-            <span class="slider"></span>
-          <% end %>
-        </div>
-      </div>
+      <%= render "events/notify_transfer_recipient", form:, disabled: %>
     </div>
   </div>
 

@@ -28,7 +28,6 @@
     <div id="ach_transfer_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#ach_transfer_name_field" data-text-filter-empty-class="display-none">
       <%= form.label :recipient_name, "Legal name" %>
       <span class="muted mb-1 block">May be used for tax purposes. Match the name on the recipient's account.</span>
-
       <%= form.text_field :recipient_name,
                           placeholder: "Max Kern",
                           required: true,
@@ -147,16 +146,8 @@
       <%= form.date_field :invoiced_at, disabled:, style: "max-width: 190px", max: Date.current %>
     </div>
 
-    <div class="field--checkbox w-full">
-      <span style="font-weight: 500">Notify recipient?</span>
-      <div class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
-        <%= form.label :send_email_notification do %>
-          <%= form.check_box :send_email_notification, disabled:, switch: true %>
-          <span class="slider"></span>
-        <% end %>
-      </div>
-    </div>
-
+    <%= render "events/notify_transfer_recipient", form:, disabled: %>
+    
     <div class="md:flex items-center justify-between gap-4">
       <div>
         <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>

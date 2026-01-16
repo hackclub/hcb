@@ -59,8 +59,7 @@ $(document).on('turbo:load', function () {
       let characters = $(event.currentTarget).val().length
 
       $('[data-behavior~="check_characters_update"').text(
-        `${40 - characters
-        } characters left`
+        `${40 - characters} characters left`
       )
     }
   )
