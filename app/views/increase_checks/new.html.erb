@@ -75,25 +75,30 @@
           "Legal name (use company name if applicable)" %>
         <span class="muted">This will be used for tax purposes; it should match the name on their bank account.</span>
         <%= form.text_field :recipient_name,
-          placeholder: "Raviga Capital", required: true, disabled: disabled,
-          role: "combobox",
-          "aria-controls": "#payment-recipient-search",
-          data: { 
-            'behavior': "check_payee_name_field",
-            extraction_field: "seller_name",
-            action: "
-              keydown.enter->text-filter#selectFirst
-              click->menu#open
-              focus->menu#open
-              click@document->menu#close
-              keydown@document->menu#keydown
-              input->text-filter#query
-            ",
-            menu_target: "toggle",
-          }, 
-          maxlength: 250, class: "!max-w-full",
-          "x-ref" => "name_input",
-          "@input" => "payment_recipient = null" %>
+                            placeholder: "Raviga Capital",
+                            required: true,
+                            disabled: disabled,
+                            role: "combobox",
+                            "aria-controls": "#payment-recipient-search",
+                            data: {
+                              input_target: "input",
+                              extraction_field: "seller_name",
+                              action: "
+                                keydown.enter->text-filter#selectFirst
+
+                                click->menu#open
+                                focus->menu#open
+                                click@document->menu#close
+                                keydown@document->menu#keydown
+
+                                input->text-filter#query
+                              ",
+                              menu_target: "toggle",
+                            },
+                            maxlength: 250,
+                            class: "!max-w-full",
+                            "x-ref" => "name_input",
+                            "@input" => "payment_recipient = null" %>
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
             <% @event.payment_recipients.where(payment_model: "IncreaseCheck").each do |payment_recipient| %>

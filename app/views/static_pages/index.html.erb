@@ -57,7 +57,7 @@
           <%= link_to "Activate my grant", grant, class: "btn" %>
           <p class="my-0 text-sm italic text-muted">
             <% if grant.expires_on.future? %>
-              Expires in <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
+              Spend within <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
             <% else %>
               Expired <%= time_ago_in_words(grant.expires_on) %> ago
             <% end %>

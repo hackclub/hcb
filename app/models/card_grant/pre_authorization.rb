@@ -187,6 +187,13 @@ class CardGrant
 
       broadcast_refresh_to self
     rescue Faraday::Error => e
+      # If OpenAI rejects the image as invalid, mark as fraudulent
+      if e.response_body&.include?("does not represent a valid image")
+        mark_fraudulent!
+        broadcast_refresh_to self
+        return
+      end
+
       # Modify the original exception to append the response body to the message
       # so these are easier to debug
       raise(e.exception(<<~MSG))
