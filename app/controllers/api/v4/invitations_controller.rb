@@ -10,7 +10,7 @@ module Api
       before_action :set_api_event, only: [:create]
 
       def index
-        if params[:event_id]
+        if params[:organization_id]
           set_api_event
           authorize @event
           @invitations = @event.organizer_position_invites.pending
