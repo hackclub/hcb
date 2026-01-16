@@ -6,8 +6,8 @@ class CardGrantsController < ApplicationController
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
 
-  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index]
-  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index]
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
 
   def index
     authorize @event, :card_grant_overview?
@@ -23,7 +23,10 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :subledger).order(created_at: :desc)
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
+      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+      "card_grants.created_at DESC"
+    )
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
@@ -76,6 +79,51 @@ class CardGrantsController < ApplicationController
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
     redirect_back_or_to event_transfers_path(@event)
+  end
+
+  def bulk_upload_form
+    authorize @event, :bulk_upload_card_grants?
+  end
+
+  def bulk_upload
+    authorize @event, :bulk_upload_card_grants?
+
+    unless params[:csv_file].present?
+      flash[:error] = "Please select a CSV file to upload"
+      render :bulk_upload_form, status: :unprocessable_entity
+      return
+    end
+
+    result = CardGrantService::BulkCreate.new(
+      event: @event,
+      csv_file: params[:csv_file],
+      sent_by: current_user
+    ).run
+
+    if result.success?
+      flash[:success] = "Successfully sent #{result.card_grants.count} grants!"
+      redirect_to event_card_grant_overview_path(@event)
+    else
+      flash.now[:error] = result.errors.join(". ")
+      render :bulk_upload_form, status: :unprocessable_entity
+    end
+  rescue DisbursementService::Create::UserError => e
+    flash.now[:error] = e.message
+    render :bulk_upload_form, status: :unprocessable_entity
+  end
+
+  def bulk_upload_template
+    authorize @event, :bulk_upload_card_grants?
+
+    csv_content = CSV.generate do |csv|
+      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+    end
+
+    send_data csv_content,
+              filename: "card_grants_template.csv",
+              type: "text/csv",
+              disposition: "attachment"
   end
 
   def edit_overview
