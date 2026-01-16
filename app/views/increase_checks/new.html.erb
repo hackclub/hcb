@@ -8,20 +8,51 @@
 <% end %>
 
 <% content_for :header do %>
-  <aside class="min-w-0 max-w-2xl px-8 mt-20 w-full mx-auto -mb-20 hidden md:block">
+  <aside class="min-w-0 max-w-5xl px-8 w-full hidden md:block -mb-20 mx-auto sticky top-0 z-10">
     <link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
 
-    <%= render "increase_checks/paper_check",
-      check_number: "1024",
-      date: Date.today.strftime("%b %d, %Y"),
-      recipient_name: @check.recipient_name || "　",
-      amount: @check.amount || 0,
-      memo: @check.memo || "　",
-      account_details: @event.column_account_number,
-      editable: true %>
+    <div>
+      <div style="transform-origin: top left;width: 750px;" class="pt-20 mx-auto" id="check-preview-container">
+        <%= render "increase_checks/paper_check",
+        check_number: "1024",
+        date: Date.today.strftime("%b %d, %Y"),
+        recipient_name: @check.recipient_name || "　",
+        amount: @check.amount || 0,
+        memo: @check.memo || "　",
+        account_details: @event.column_account_number,
+        editable: true %>
+      </div>
+    </div>
   </aside>
 <% end %>
+
+<%# TODO: MOVE THIS LATER %>
+<script>
+  const render = () => {
+    const scrollY = window.scrollY;
+    const checkPreview = document.getElementById("check-preview-container");
+    const tableOfContents = document.getElementById("table-of-contents");
+    const contactInformation = document.getElementById("contact-information");
+
+    if (scrollY < 200) {
+      const scale = 1 - (scrollY / 400);
+      checkPreview.style.transform = `scale(${scale}) translateY(${scrollY / 2}px)`;
+      tableOfContents.style.top = `${445 - (scrollY * 0.975)}px`;
+      contactInformation.style.paddingTop = `${scrollY / 4}px`;
+      checkPreview.parentElement.style.width = `${100 - (scrollY / 4)}%`;
+    } else {
+      checkPreview.style.transform = "scale(0.5) translateY(100px)";
+      tableOfContents.style.top = `250px`;
+      contactInformation.style.paddingTop = `50px`;
+      checkPreview.parentElement.style.width = `0%`;
+    }
+
+    checkPreview.parentElement.parentElement.style.pointerEvents = scrollY === 0 ? "auto" : "none";
+  }
+  document.addEventListener("scroll", render);
+  document.addEventListener("DOMContentLoaded", render);
+</script>
 
 <% content_for :sidebar_footer do %>
   <%= render "application/callout", type: "info",
@@ -62,7 +93,7 @@
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
   <div data-scroll-seek-target="section" class="lg:-mt-8">
-    <h3 class="mb-2">Contact information</h3>
+    <h3 class="mb-2" id="contact-information">Contact information</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div id="increase_check_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#increase_check_name_field" data-text-filter-empty-class="display-none">
         <%= form.label :recipient_name,
