@@ -283,7 +283,7 @@ jobs:
             echo "New migrations found:"
             echo "$NEW_MIGRATIONS"
             # Extract versions (timestamps) from filenames
-            VERSIONS=$(echo "$NEW_MIGRATIONS" | sed 's/.*\/\([0-9]*\)_.*/\1/' | tr '\n' ' ')
+            VERSIONS=$(echo "$NEW_MIGRATIONS" | sed 's/.*\/\([0-9]*\)_.*/\1/' | tac | tr '\n' ' ')
             echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
           fi
       - name: Setup database

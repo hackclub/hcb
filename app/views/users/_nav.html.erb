@@ -32,8 +32,15 @@
         selected: item[:selected] %>
     <% end %>
     <div>
-      <%= render "users/settings_dropdown", local_assigns: %>
+      <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
     </div>
+    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+      <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <div>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
+      </div>
+    <% end %>
   </nav>
 
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>

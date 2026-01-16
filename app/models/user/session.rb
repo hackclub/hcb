@@ -56,11 +56,12 @@ class User
     scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
 
     after_create_commit do
-      if user.user_sessions.size == 1
-        User::SessionMailer.first_login(user:).deliver_later
-      elsif fingerprint.present? && user.user_sessions.excluding(self).where(fingerprint:).none?
-        User::SessionMailer.new_login(user_session: self).deliver_later
-      end
+      next if impersonated?
+      next unless user.user_sessions.size > 1
+      next unless fingerprint.present?
+      next unless user.user_sessions.excluding(self).where(fingerprint:).none?
+
+      User::SessionMailer.new_login(user_session: self).deliver_later
     end
 
     extend Geocoder::Model::ActiveRecord

@@ -103,7 +103,9 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
-    if canceled? || expired?
+    if suspected_fraud?
+      "error"
+    elsif suspected_fraud? || canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
@@ -115,7 +117,9 @@ class CardGrant < ApplicationRecord
   end
 
   def state_text
-    if canceled?
+    if suspected_fraud?
+      "Fraudulent"
+    elsif canceled?
       "Canceled"
     elsif expired?
       "Expired"
@@ -131,10 +135,14 @@ class CardGrant < ApplicationRecord
   def status_badge_type
     s = state.to_sym
     return :success if s == :success
-    return :error if s == :muted
+    return :error if [:muted, :error].include?(s)
     return :warning if s == :info
 
     :muted
+  end
+
+  def suspected_fraud?
+    pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
@@ -193,7 +201,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -233,15 +241,19 @@ class CardGrant < ApplicationRecord
   def create_stripe_card(ip_address)
     return if stripe_card.present?
 
-    self.stripe_card = StripeCardService::Create.new(
-      card_type: "virtual",
-      event_id:,
-      current_user: user,
-      ip_address:,
-      subledger:,
-    ).run
+    begin
+      self.stripe_card = StripeCardService::Create.new(
+        card_type: "virtual",
+        event_id:,
+        current_user: user,
+        ip_address:,
+        subledger:,
+      ).run
 
-    save!
+      save!
+    rescue Stripe::InvalidRequestError, Errors::StripeInvalidNameError => e
+      raise e.class, "This card could not be activated: #{e.message}"
+    end
   end
 
   def allowed_merchants
