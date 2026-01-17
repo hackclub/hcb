@@ -3,7 +3,7 @@
     <%= help_message if current_user && local_assigns[:help_message] != false %>
   </p>
 
-  <% unless Rails.env.production? %>
+  <% if !Rails.env.production? || auditor_signed_in? %>
     <% @sql_count = QueryCount::Counter.counter %>
     <% @sql_cached_count = QueryCount::Counter.counter_cache %>
     <p class="text-center text-xs">

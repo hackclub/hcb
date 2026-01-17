@@ -41,6 +41,7 @@ RSpec.describe Api::V4::CardGrantsController do
 
       serialized_event = {
         "id"                                => event.public_id,
+        "parent_id"                         => nil,
         "name"                              => "Test Event",
         "slug"                              => "test-event",
         "background_image"                  => nil,
@@ -69,6 +70,7 @@ RSpec.describe Api::V4::CardGrantsController do
           "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
+          "expires_on"                 => card_grant.expires_on.iso8601(3),
           "disbursements"              => [
             {
               "id"             => disbursement.public_id,

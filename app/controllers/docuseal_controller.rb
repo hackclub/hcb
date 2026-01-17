@@ -5,45 +5,24 @@ class DocusealController < ActionController::Base
 
   def webhook
     ActiveRecord::Base.transaction do
-      contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
-      return render json: { success: true } unless contract # sometimes contracts are sent using Docuseal that aren't in HCB
-
       return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
 
-      signee = contract.docuseal_document["submitters"].select { |r| r["role"] == "Contract Signee" }&.first
-      cosigner = contract.docuseal_document["submitters"].select { |r| r["role"] == "Cosigner" }&.first
+      contract = Contract.find_by(external_id: params[:data][:submission_id])
+      return render json: { success: true } if contract.nil? || contract.signed? # sometimes contracts are sent using Docuseal that aren't in HCB
 
-      if params[:event_type] == "form.completed" && params[:data][:submission][:status] == "completed"
-        return render json: { success: true } if contract.signed?
-
-        document = Document.new(
-          event: contract.organizer_position_invite.event,
-          name: "Fiscal sponsorship contract with #{contract.organizer_position_invite.user.name}"
-        )
-
-        response = Faraday.get(params[:data][:documents][0][:url]) do |req|
-          req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
+      if params[:event_type] == "form.completed"
+        party = contract.parties.detect { |party| party.docuseal_role == params[:data][:role] }
+        if party.present?
+          party.mark_signed!
+        else
+          Rails.error.unexpected("Unexpected docuseal party #{params[:data][:role]}")
         end
-
-        document.file.attach(
-          io: StringIO.new(response.body),
-          filename: "#{params[:data][:documents][0][:name]}.pdf"
-        )
-
-        document.user = User.find_by(email: params[:data][:email]) || contract.organizer_position_invite.event.point_of_contact
-        document.save!
-        contract.update(document:)
-        contract.mark_signed!
       elsif params[:event_type] == "form.declined"
         contract.mark_voided!
-      elsif cosigner.present? && cosigner["status"] != "completed"
-        # send email about cosigner needing to pay
-        OrganizerPosition::ContractsMailer.with(contract:).pending_cosigner.deliver_later
-      elsif signee["status"] == "completed" && (cosigner.nil? || cosigner["status"] == "completed")
-        # send email about hcb needing to sign
-        OrganizerPosition::ContractsMailer.with(contract:).pending_hcb.deliver_later
       end
     end
+
+    return render json: { success: true }
   rescue => e
     Rails.error.report(e)
     return render json: { success: false }

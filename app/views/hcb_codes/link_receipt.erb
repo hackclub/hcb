@@ -13,7 +13,7 @@
     <%= form.hidden_field :receiptable_id, value: @hcb_code.id %>
     <%= form.hidden_field :receiptable_type, value: "HcbCode" %>
 
-    <ul class="grid grid--narrow left-align w-100 mt0 grid--spacious">
+    <ul class="grid grid--narrow text-left w-100 mt0 grid--spacious">
       <% @receipts.each do |receipt| %>
         <li class="flex grid flex-col justify-between h-100 mx4">
           <%= render partial: "receipts/receipt", locals: { receipt: receipt, select_target: true } %>

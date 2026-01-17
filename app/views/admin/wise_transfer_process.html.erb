@@ -11,9 +11,9 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") do %>
+  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0", target: "_blank") do %>
     <%= inline_icon "wise" %>
-    Open Wise
+    <%= @wise_transfer.wise_id.present? ? "Open Wise (##{@wise_transfer.wise_id})" : "Open Wise" %>
   <% end %>
 </div>
 
@@ -76,6 +76,14 @@
           <td>Payment Purpose:</td>
           <td><%= @wise_transfer.payment_for %></td>
         </tr>
+        <% if @wise_transfer.wise_id.present? %>
+          <tr>
+            <td>Wise Transfer ID:</td>
+            <td>
+              <%= link_to @wise_transfer.wise_id, @wise_transfer.wise_url, target: "_blank" %>
+            </td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
 

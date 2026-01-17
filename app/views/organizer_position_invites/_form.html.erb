@@ -1,24 +1,28 @@
-<%= form_with(model: invite, local: true, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member', spendingControls: 'true' }" }) do |form| %>
+<%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 
-  <div class="field" x-data="{ email: '' }">
-    <%= form.label :email, class: "mb1" %>
-
-    <div class="flex items-center">
-      <%= form.email_field :email, class: "mr1", "x-model": "email", placeholder: "fiona@hackclub.com" %>
-    </div>
-    <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
-      <div class="warning mt1">⚠️ For security, we discourage team emails on
-        HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+  <h3 class="mb-2 flex items-center justify-between">
+    Email address
+  </h3>
+  <div class="border border-gray-200 dark:border-neutral-700 rounded-xl overflow-hidden banner !shadow-none p-0 text-left">
+    <div class="field" x-data="{ email: '' }">
+      <div class="flex items-center !border-gray-200 dark:!border-neutral-700 pr-2 focus-within:ring-2 ring-inset rounded-t-xl" style="border-bottom:1px solid">
+        <%= form.email_field :email, class: "!max-w-full w-full !border-0 bg-transparent !shadow-none !rounded-none !h-[50px] !px-4 font-bold !text-lg", "x-model": "email", placeholder: "orpheus@hackclub.com" %>
+        <button type="submit" class="btn btn-small bg-blue">
+          Send
+          <%= inline_icon "send", class: "!ml-1 !-mr-1" %>
+        </button>
       </div>
-    </template>
+      <template x-if="/(team|webmaster|marketing|admin|info|about|support|sales|hello)/.test(email)">
+        <div class="warning mt-5 px-3 text-center">⚠️ For security, we discourage team emails on
+          HCB. We recommend individual emails such as <em>ben@hackclub.com</em>!
+        </div>
+      </template>
+    </div>
+
+    <%= render "organizer_position_invites/role_and_control_form", form: form %>
+    <% admin_tool("rounded-t-none rounded-b-xl p-3") do %>
+      <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
+    <% end %>
   </div>
-
-  <%= render "organizer_position_invites/role_and_control_form", form: form %>
-
-  <% admin_tool("mt2 mb2 flex g1") do %>
-    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: false %>
-  <% end %>
-
-  <%= form.submit "Submit" %>
 <% end %>

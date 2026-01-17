@@ -68,19 +68,19 @@
 
 <div class="flex justify-start flex-row gap-4">
   <% if @pre_authorization.draft? %>
-    <%= render partial: "screenshot_form", locals: {
+    <%= render partial: "card_grant/pre_authorizations/screenshot_form", locals: {
           upload_method: "attach_receipt_page",
           turbo: true
         } %>
   <% end %>
 
-  <%= render partial: "screenshot_list", locals: {
+  <%= render partial: "card_grant/pre_authorizations/screenshot_list", locals: {
         screenshots: @pre_authorization.screenshots.attachments,
         shimmer:
       } %>
 </div>
 
-<%= render partial: "screenshot_count", locals: {
+<%= render partial: "card_grant/pre_authorizations/screenshot_count", locals: {
       count: @pre_authorization.screenshots.count,
       card_grant: @card_grant,
       disabled: !@pre_authorization.draft?

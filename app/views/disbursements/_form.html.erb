@@ -5,11 +5,11 @@
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+  <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+  <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
 
   <% if auditor_signed_in? %>
-    <div class="admin-tools field field--checkbox">
+    <div class="admin-tools px-3 py-2 field field--checkbox">
       <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
       <%= form.label :should_charge_fee do %>
         Charge fiscal sponsorship fee?
@@ -37,7 +37,7 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
-  <% admin_tool do %>
+  <% admin_tool("px-3 py-2") do %>
       <% category_select = ->(field) {
            form.select(
              field,
@@ -83,7 +83,7 @@
     <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
   </div>
 
-  <% admin_tool do %>
+  <% admin_tool("px-3 py-2") do %>
     <div class="field">
       <%= form.label :scheduled_on, "Schedule for" %>
       <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>

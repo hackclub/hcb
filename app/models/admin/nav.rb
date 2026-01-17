@@ -123,6 +123,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "Fee Revenues",
+            path: fee_revenues_admin_index_path,
+            count: FeeRevenue.count,
+            count_type: :records
+          ),
+          make_item(
             name: "Column Statements",
             path: admin_column_statements_path,
             count: Column::Statement.count,
@@ -162,6 +168,18 @@ module Admin
             name: "Event Groups",
             path: admin_event_groups_path,
             count: Event::Group.count,
+            count_type: :records,
+          ),
+          make_item(
+            name: "Active Teenagers Leaderboard",
+            path: active_teenagers_leaderboard_admin_index_path,
+            count: User.active_teenager.count,
+            count_type: :records,
+          ),
+          make_item(
+            name: "New Teenagers Leaderboard",
+            path: new_teenagers_leaderboard_admin_index_path,
+            count: 0, # I think this would be expensive to calculate
             count_type: :records,
           )
         ]

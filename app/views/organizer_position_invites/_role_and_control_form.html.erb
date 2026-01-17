@@ -1,50 +1,52 @@
 <%# locals: (form:) %>
 
-<%= form.label :role, class: "mb1" %>
-<div class="field field--options flex">
-  <% OrganizerPositionInvite.roles.keys.map do |role| %>
-    <%= form.radio_button :role, role, "x-model": "role" %>
-    <%= form.label :role, value: role do %>
-      <strong><%= role.titleize %></strong>
-    <% end %>
-  <% end %>
+<div class="field px-4 gap-2 flex items-center mb-2">
+  <%= form.label :role, "Role" %>
+  <div data-controller="menu" data-menu-placement-value="bottom-start" class="ml-auto">
+    <button
+      type="button"
+      class="pop menu__toggle menu__toggle--arrowless overflow-visible muted w-10 h-10"
+      data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+      <%= inline_icon "question-mark", size: 18 %>
+    </button>
+    <div class="menu__content menu__content--2 menu__content--compact px-4 py-3" data-menu-target="content">
+      <p class="muted mb1 mt-0"><span class="bold info">Managers</span> can do everything
+        in the organization.</p>
+      <div class="muted mb1">
+        <p class="m0"><span class="bold info">Members</span> can:</p>
+        <ul class="m0">
+          <li>Create & use cards (with a limit if spending controls are enabled)
+          </li>
+          <li>Not transfer money</li>
+          <li>Not change the organization's settings</li>
+        </ul>
+      </div>
+      <p class="muted mb-0"><span class="bold info">Readers</span> have read-only access to the organization.</p>
+    </div>
+  </div>
+  <%= form.select :role,
+                  OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
+                  {},
+                  style: "max-width:120px !important",
+                  "x-model": "role" %>
 </div>
 
-<p class="muted mb1"><span class="bold info">Managers</span> can do everything
-  in the organization.</p>
-
-<div class="muted mb1">
-  <p class="m0"><span class="bold info">Members</span> can:</p>
-  <ul class="m0">
-    <li>Create & use cards (with a limit if spending controls are enabled)
-    </li>
-    <li>Not transfer money</li>
-    <li>Not change the organization's settings</li>
-  </ul>
-</div>
-
-<p class="muted mb1"><span class="bold info">Readers</span> have read-only access to the organization.</p>
-
-<div x-show="role === 'member'" x-cloak x-transition.duration.500ms class="my-4">
-  <%= form.label :enable_controls, class: "mb1 inline-flex flex-col" do %>
-    Enable spending controls?
-    <span class="muted h6">You can always enable & configure spending controls after, too.</span>
-  <% end %>
-
-  <div class="field field--options">
-    <%= form.radio_button :enable_controls, false, "x-model": "spendingControls" %>
-    <%= form.label :enable_controls, value: false do %>
-      <strong>No</strong>
-    <% end %>
-
-    <%= form.radio_button :enable_controls, true, "x-model": "spendingControls" %>
-    <%= form.label :enable_controls, value: true do %>
-      <strong>Yes</strong>
-    <% end %>
+<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role !== 'reader' && role !== 'manager'">
+  <div class="flex items-center gap-4 field field--checkbox">
+    <label class="flex flex-col">
+      <span>Spending controls</span>
+      <span class="muted h6">Changes can be made later</span>
+    </label>
+    <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+      <%= form.label :enable_controls do %>
+        <%= form.check_box :enable_controls, { data: { action: "change->accordion#toggle", accordion_target: "checkbox" } }, true, false %>
+        <span class="slider"></span>
+      <% end %>
+    </div>
   </div>
 
-  <div x-show="spendingControls === 'true'" x-cloak x-transition.duration.500ms class="mb1">
+  <div data-accordion-target="content" class="flex items-center gap-4 justify-between -mt-2 mb-2">
     <%= form.label :initial_control_allowance_amount, value: "Initial allowance amount" %>
-    <%= form.number_field :initial_control_allowance_amount, placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+    <%= form.number_field :initial_control_allowance_amount, placeholder: "500.00", step: 0.01, min: 0.00, style: "max-width:100px!important;text-align:right", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
   </div>
 </div>
