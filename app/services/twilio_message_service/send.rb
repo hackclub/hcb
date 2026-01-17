@@ -2,14 +2,15 @@
 
 module TwilioMessageService
   class Send
-    def initialize(user, body, hcb_code: nil)
+    def initialize(user, body, hcb_code: nil, phone_number: nil)
       @user = user
       @body = body
       @hcb_code = hcb_code
+      @phone_number = @user&.phone_number || phone_number
     end
 
     def run!
-      return if @user.phone_number.blank?
+      return if @phone_number.blank?
 
       client = Twilio::REST::Client.new(
         Credentials.fetch(:TWILIO, :ACCOUNT_SID),
@@ -18,7 +19,7 @@ module TwilioMessageService
 
       twilio_response = client.messages.create(
         from: Credentials.fetch(:TWILIO, :PHONE_NUMBER),
-        to: @user.phone_number,
+        to: @phone_number,
         body: @body
       )
 
@@ -27,7 +28,7 @@ module TwilioMessageService
       raw_data = client.http_client.last_response.body
 
       sms_message = TwilioMessage.create!(
-        to: @user.phone_number,
+        to: @phone_number,
         from: Credentials.fetch(:TWILIO, :PHONE_NUMBER),
         body: @body,
         twilio_sid: twilio_response.sid,

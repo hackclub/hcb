@@ -100,6 +100,7 @@
                             role: "combobox",
                             "aria-controls": "#payment-recipient-search",
                             data: {
+                              input_target: "input",
                               extraction_field: "seller_name",
                               action: "
                                 keydown.enter->text-filter#selectFirst
@@ -278,6 +279,7 @@
             accept: "image/*,image/heic,.pdf",
             style: "margin: 8px 0px",
             class: "field--fileupload__field",
+            direct_upload: true,
             data: {
               "file-drop-target" => "fileInput",
               "action"           => "change->extraction#upload"

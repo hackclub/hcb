@@ -201,7 +201,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -241,15 +241,19 @@ class CardGrant < ApplicationRecord
   def create_stripe_card(ip_address)
     return if stripe_card.present?
 
-    self.stripe_card = StripeCardService::Create.new(
-      card_type: "virtual",
-      event_id:,
-      current_user: user,
-      ip_address:,
-      subledger:,
-    ).run
+    begin
+      self.stripe_card = StripeCardService::Create.new(
+        card_type: "virtual",
+        event_id:,
+        current_user: user,
+        ip_address:,
+        subledger:,
+      ).run
 
-    save!
+      save!
+    rescue Stripe::InvalidRequestError, Errors::StripeInvalidNameError => e
+      raise e.class, "This card could not be activated: #{e.message}"
+    end
   end
 
   def allowed_merchants
