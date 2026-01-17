@@ -73,6 +73,7 @@ module Api
 
       def update
         @stripe_card = StripeCard.find_by_public_id!(params[:id])
+        # we authorize by show as actions are handled by their own policies (update interferes with this)
         authorize @stripe_card, :show?
 
         if params[:status] == "frozen"
