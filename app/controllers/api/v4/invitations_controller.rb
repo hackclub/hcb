@@ -12,7 +12,7 @@ module Api
       def index
         if params[:organization_id]
           set_api_event
-          authorize @event
+          authorize @event, :index_in_v4?
           @invitations = @event.organizer_position_invites.pending
         else
           @invitations = current_user.organizer_position_invites.pending
