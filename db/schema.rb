@@ -2377,21 +2377,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
     t.index ["slug"], name: "index_transactions_on_slug", unique: true
   end
 
-  create_table "transfer_records", force: :cascade do |t|
-    t.integer "amount_cents", default: 0, null: false
-    t.datetime "created_at", null: false
-    t.bigint "event_id", null: false
-    t.string "recipient_email"
-    t.string "recipient_name"
-    t.integer "status", default: 0, null: false
-    t.bigint "transferable_id", null: false
-    t.string "transferable_type", null: false
-    t.index ["event_id", "created_at"], name: "index_transfer_records_on_event_id_and_created_at"
-    t.index ["event_id", "status"], name: "index_transfer_records_on_event_id_and_status"
-    t.index ["event_id"], name: "index_transfer_records_on_event_id"
-    t.index ["transferable_type", "transferable_id"], name: "index_transfer_records_on_transferable"
-  end
-
   create_table "twilio_messages", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -2837,7 +2822,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
   add_foreign_key "transactions", "fee_reimbursements"
   add_foreign_key "transactions", "fee_relationships"
   add_foreign_key "transactions", "invoice_payouts"
-  add_foreign_key "transfer_records", "events"
   add_foreign_key "user_backup_codes", "users"
   add_foreign_key "user_email_updates", "users"
   add_foreign_key "user_email_updates", "users", column: "updated_by_id"
