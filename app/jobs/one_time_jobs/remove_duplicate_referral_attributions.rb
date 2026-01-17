@@ -4,9 +4,9 @@ module OneTimeJobs
   class RemoveDuplicateReferralAttributions < ApplicationJob
     def perform
       duplicates = Referral::Attribution
-        .select(:user_id, :referral_program_id)
-        .group(:user_id, :referral_program_id)
-        .having("COUNT(*) > 1")
+                   .select(:user_id, :referral_program_id)
+                   .group(:user_id, :referral_program_id)
+                   .having("COUNT(*) > 1")
 
       duplicates.each do |dup|
         Referral::Attribution
