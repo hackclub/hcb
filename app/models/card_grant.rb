@@ -11,7 +11,6 @@
 #  category_lock              :string
 #  email                      :string           not null
 #  instructions               :text
-#  invite_message             :string
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
@@ -67,6 +66,7 @@ class CardGrant < ApplicationRecord
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
   has_one :pre_authorization
+  has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
@@ -314,8 +314,8 @@ class CardGrant < ApplicationRecord
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
-      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}.",
-      inviter: sent_by
+      inviter: sent_by,
+      card_grant: self
     )
   end
 
