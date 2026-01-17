@@ -7,7 +7,7 @@
 #  id                  :bigint           not null, primary key
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  referral_link_id    :bigint
+#  referral_link_id    :bigint           not null
 #  referral_program_id :bigint           not null
 #  user_id             :bigint           not null
 #
