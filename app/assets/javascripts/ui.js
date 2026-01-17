@@ -153,6 +153,7 @@ window.attachTooltipListener = () => {
   }
 
   const showTooltip = (trigger) => {
+    if (!trigger.classList.contains("tooltipped")) return;
     const label = trigger.getAttribute("aria-label").trim();
     if (!label) return;
 
@@ -181,12 +182,11 @@ window.attachTooltipListener = () => {
   $(".tooltipped").on({
     mouseenter(event) {
       const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped")) return;
       showTooltip(trigger);
     },
     touchstart(event) {
       const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped") || !trigger.classList.contains("tooltipped--clickable")) return;
+      if (!trigger.classList.contains("tooltipped--clickable")) return;
       showTooltip(trigger);
     },
     mouseleave: removeTooltips
