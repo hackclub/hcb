@@ -558,6 +558,8 @@ class AdminController < Admin::BaseController
 
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -569,6 +571,8 @@ class AdminController < Admin::BaseController
 
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user, send_realtime: true)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
@@ -595,6 +599,7 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
@@ -1425,31 +1430,6 @@ class AdminController < Admin::BaseController
     @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
-  def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name], creator: current_user)
-
-    if @referral_program.save
-      flash[:success] = "Referral program created successfully."
-    else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-    end
-
-    redirect_to referral_programs_admin_index_path
-  end
-
-  def referral_link_create
-    @referral_program = Referral::Program.find(params[:program_id])
-    @referral_link = @referral_program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
-
-    if @referral_link.save
-      flash[:success] = "Referral link created successfully."
-    else
-      flash[:error] = @referral_link.errors.full_messages.to_sentence
-    end
-
-    redirect_to referral_programs_admin_index_path
-  end
-
   def active_teenagers_leaderboard
   end
 
@@ -1581,6 +1561,9 @@ class AdminController < Admin::BaseController
     end
 
     client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  rescue => e
+    Rails.error.report(e)
+    9999 # return something invalidly high to get the ops team to report it
   end
 
   def hackathons_task_size

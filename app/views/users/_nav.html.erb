@@ -32,18 +32,13 @@
         selected: item[:selected] %>
     <% end %>
     <div>
-      <%= render "users/settings_dropdown", local_assigns: %>
+      <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
     </div>
-    <% if @first_visit %>
-      <div class="pwa__prompt" style="position: relative">
-        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
-          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
-        </div>
-        <b>Looking for a mobile app?</b>
-        <br>
-        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
-        and then <%= inline_icon "plus-box", size: 18, class: "pwa__prompt__icon" %>
-        <i>Add to Home Screen</i>.
+    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+      <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <div>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
       </div>
     <% end %>
   </nav>

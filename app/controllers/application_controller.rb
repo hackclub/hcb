@@ -9,6 +9,8 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
+  around_action :attach_error_reference
+
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
@@ -22,14 +24,6 @@ class ApplicationController < ActionController::Base
   # update the current session's last_seen_at
   before_action { current_session&.update_session_timestamps }
 
-  # This cookie is used for Safari PWA prompts
-  before_action do
-    next if current_user.nil?
-
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
-  end
-
   before_action do
     # Disallow indexing and following
     response.set_header("X-Robots-Tag", "none")
@@ -38,13 +32,19 @@ class ApplicationController < ActionController::Base
   before_action do
     # Disallow all external redirects
     # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
-    params[:return_to] = url_from(params[:return_to])
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
   end
 
   # Enable Rack::MiniProfiler for auditors
   before_action do
     if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
     end
   end
 
@@ -125,6 +125,12 @@ class ApplicationController < ActionController::Base
   def confetti!(emojis: nil)
     flash[:confetti] = true
     flash[:confetti_emojis] = emojis.join(",") if emojis
+  end
+
+  def attach_error_reference
+    error_reference = ErrorReference.from_request_id(request.uuid)
+    Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
+    yield
   end
 
 end

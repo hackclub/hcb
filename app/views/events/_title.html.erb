@@ -18,7 +18,7 @@
   <span class="-mx-1.5 text-xl opacity-40">/</span>
 <% end %>
 <div data-controller="menu" class="flex-1 truncate">
-  <%= link_to @event, class: "#{"pointer-events-none" unless signed_in?} flex-1 truncate text-decoration-none gap-2 text-inherit event-title rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+  <%= link_to @event, aria: { label: @event.name }, class: "tooltipped tooltipped--s #{"pointer-events-none" unless signed_in?} flex-1 truncate text-decoration-none gap-2 text-inherit event-title rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <h3 class="my-0 flex lg:max-w-[180px] items-center p-0 pr-2 truncate">
       <span class="truncate flex-1 min-w-0">
         <%= @event.name %>
