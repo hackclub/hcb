@@ -122,8 +122,6 @@ module Api
           @stripe_card.defrost!
 
           render json: { success: "Card activated!" }
-        else
-          return render json: { error: "Invalid status parameter." }, status: :bad_request
         end
       end
 
