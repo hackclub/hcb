@@ -36,7 +36,11 @@
 </div>
 
 <% content_for :footer do %>
-  <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
+  <% if current_user.present? %>
+    <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
+  <% else %>
+    <span></span>
+  <% end %>
   <% if application.present? %>
     <%= link_to "Continue application", project_info_application_path(application), class: "btn bg-blue" %>
   <% else %>
