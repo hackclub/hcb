@@ -70,6 +70,10 @@ textarea {
   }
 }
 
+[data-dark='true'] option {
+  background-color: $darkless;
+}
+
 select {
   min-height: 2.5rem;
   padding: 0.25rem 0.5rem;
@@ -233,6 +237,7 @@ input[type='checkbox'] {
 .field--checkbox--switch {
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
   width: 60px;
   height: 34px;
 

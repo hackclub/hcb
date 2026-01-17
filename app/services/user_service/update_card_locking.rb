@@ -13,7 +13,7 @@ module UserService
 
       cards_should_lock = count >= 10
       if cards_should_lock && !@user.cards_locked?
-        CardLockingMailer.cards_locked(email: @user.email, missing_receipts: count).deliver_later
+        CardLockingMailer.cards_locked(user: @user).deliver_later
 
         message = "Urgent: Your HCB cards have been locked because you have #{count} transactions missing receipts. To unlock your cards, upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
 

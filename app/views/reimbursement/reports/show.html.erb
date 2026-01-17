@@ -237,6 +237,12 @@
 
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
+<% admin_tool("mt-4 p-3") do %>
+  <%= error_boundary fallback_text: "Failed to load payout information" do %>
+    <%= render partial: "reimbursement/reports/payout_information", locals: { report: @report } %>
+  <% end %>
+<% end %>
+
 <%= render partial: "reimbursement/reports/conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">

@@ -1,0 +1,101 @@
+<% page_sm %>
+<%= render "events/nav" %>
+
+<% title "Bulk send card grants" %>
+<h1>Bulk send card grants</h1>
+
+<p class="muted">
+  Upload a CSV file to send multiple grants at once. If there is an issue with any row, we will let you know and will not send any grants until everything looks good.
+</p>
+
+<div class="card p3 mb3">
+  <h3 class="mt0">CSV Template</h3>
+  <p class="muted">
+    Download the template to get started. The CSV must include the following columns:
+  </p>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-0 mb2">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>email</code></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
+          <td>Recipient's email address</td>
+        </tr>
+        <tr>
+          <td><code>amount_cents</code></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
+          <td>Amount in cents as a whole number (e.g., 1000 for $10.00)</td>
+        </tr>
+        <tr>
+          <td><code>purpose</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Purpose shown to recipient (max <%= CardGrant::MAXIMUM_PURPOSE_LENGTH %> characters)</td>
+        </tr>
+        <tr>
+          <td><code>one_time_use</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Set to <code>true</code> to freeze card after first charge</td>
+        </tr>
+        <tr>
+          <td><code>invite_message</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Custom message included in the invitation email</td>
+        </tr>
+        <tr>
+          <td><code>merchant_lock</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Comma-separated merchant network IDs to allow</td>
+        </tr>
+        <tr>
+          <td><code>category_lock</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Comma-separated category codes to allow (e.g., <code>grocery_stores_supermarkets,fast_food_restaurants</code>)</td>
+        </tr>
+        <tr>
+          <td><code>keyword_lock</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Regex pattern to match merchant names</td>
+        </tr>
+        <tr>
+          <td><code>banned_merchants</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Comma-separated merchant network IDs to block</td>
+        </tr>
+        <tr>
+          <td><code>banned_categories</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Comma-separated category codes to block</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%= link_to event_card_grants_bulk_upload_template_path(@event), class: "btn btn--primary" do %>
+    <%= inline_icon "download" %>
+    Download CSV template
+  <% end %>
+</div>
+
+<div class="card p3">
+  <h3 class="mt0">Upload CSV</h3>
+
+  <%= form_with url: event_card_grants_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
+    <div class="field--fileupload">
+      <%= form.label :csv_file, "Select CSV file", class: "field--fileupload__label" %>
+      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full field--fileupload__field" %>
+    </div>
+
+    <div class="flex items-center justify-between mt3">
+      <%= link_to "Cancel", event_card_grant_overview_path(@event), class: "btn" %>
+      <%= form.submit "Upload and send grants", class: "btn bg-success" %>
+    </div>
+  <% end %>
+</div>

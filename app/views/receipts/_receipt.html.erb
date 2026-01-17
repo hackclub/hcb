@@ -1,4 +1,4 @@
-<% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true) %>
+<% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true, disposition: "inline") %>
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
 
@@ -60,7 +60,7 @@
             } if receipt.preview %>
     </span>
     <% if receipt.file.blob.content_type == "application/pdf" %>
-      <iframe src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
+      <iframe data-src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
     <% end %>
     <% end %>
     <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
@@ -132,7 +132,7 @@
 
     <div class="w-100 h-100 overflow-hidden hidden md:flex flex-col md:flex-row md:min-h min-h-min">
       <% if receipt.file.blob.content_type == "application/pdf" %>
-        <iframe src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
+        <iframe data-src="<%= file_path %>#zoom=FitH" style="border: none; flex-grow: 1; min-width: 0px; border-radius: 0.75rem 0rem 0rem 0.75rem; overflow: hidden;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh]"></iframe>
       <% else %>
         <div style="min-width: 0px; flex-grow: 1; border-radius: 0.75rem 0rem 0rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless">
           <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>
@@ -160,7 +160,7 @@
       </ul>
 
         <% if receipt.file.blob.content_type == "application/pdf" %>
-          <iframe data-receipt-tabs-target="preview" src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
+          <iframe data-receipt-tabs-target="preview" data-src="<%= file_path %>#zoom=FitH" style="border: none; border-radius: 0rem 0rem 0.75rem 0.75rem; overflow: hidden; height: 100vh;" class="bg-smoke dark:bg-darkless md:h-100 md:max-h-100 h-[100vh] receipt-content-preview"></iframe>
         <% else %>
           <div data-receipt-tabs-target="preview" style="min-width: 0px; flex-grow: 1; border-radius: 0rem 0rem 0.75rem 0.75rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center;" class="bg-smoke dark:bg-darkless receipt-content-preview">
             <%= image_tag receipt.preview, class: "card p0", style: "image-rendering: crisp-edges; object-fit: contain; width: auto; height: auto; max-width: 100%; max-height: 100%; height: 100vh; min-width: 0px;", onload: "this.style.maxWidth = `${this.naturalWidth}px`; this.style.minHeight = '300px';" %>

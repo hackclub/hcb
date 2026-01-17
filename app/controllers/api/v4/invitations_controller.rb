@@ -19,30 +19,15 @@ module Api
 
       def create
         authorize @event
-
-        unless policy(@event).can_invite_user?
-          return render json: { error: "You are not authorized to invite users" }, status: :forbidden
-        end
-
-        if @event.organizer_positions.exists?(user: User.find_by(email: params[:email]))
-          return render json: { error: "User is already an organizer" }, status: :unprocessable_entity
-        end
-
-        if @event.organizer_position_invites.pending.exists?(email: params[:email])
-          return render json: { error: "User already has a pending invitation" }, status: :unprocessable_entity
-        end
+        authorize @event, :can_invite_user?
 
         service = OrganizerPositionInviteService::Create.new(event: @event, sender: current_user, user_email: params[:email], is_signee: false, role: params[:role], enable_spending_controls: params[:enable_spending_controls], initial_control_allowance_amount: params[:initial_control_allowance_amount])
 
         @invitation = service.model
-
         authorize @invitation
 
-        if service.run
-          render :show, status: :created
-        else
-          render json: { error: "Failed to create invitation" }, status: :unprocessable_entity
-        end
+        service.run!
+        render :show, status: :created
       end
 
       def accept

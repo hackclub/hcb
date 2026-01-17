@@ -63,6 +63,8 @@ module UsersHelper
   end
 
   def gravatar_url(email, name, id, size)
+    email ||= "bank@hackclub.com"
+
     name ||= begin
       temp = email.split("@").first.split(/[^a-z\d]/i).compact_blank
       temp.length == 1 ? temp.first.first(2) : temp.first(2).map(&:first).join
