@@ -15,7 +15,6 @@ json.call(
   :email,
   :expires_on
 )
-json.frozen_by card_grant.stripe_card&.last_frozen_by, partial: "api/v4/users/user", as: :user
 json.balance_cents card_grant.balance.cents if expand?(:balance_cents)
 json.status card_grant.status
 if expand?(:disbursements)
