@@ -64,8 +64,8 @@ module Api
       private
 
       def set_invitation
-        @invitation = authorize OrganizerPositionInvite.find_by_public_id(params[:id]) || OrganizerPositionInvite.friendly.find(params[:id])
-
+        @invitation = OrganizerPositionInvite.find_by_public_id(params[:id]) || OrganizerPositionInvite.friendly.find(params[:id])
+        authorize @invitation
         if @invitation.cancelled? || @invitation.rejected?
           raise ActiveRecord::RecordNotFound
         end
