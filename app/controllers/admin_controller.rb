@@ -1460,7 +1460,7 @@ class AdminController < Admin::BaseController
 
     rescue NameError
       flash.now[:error] = "Invalid resource type."
-    rescue ActiveRecord::RecordNotFound => e
+    rescue ActiveRecord::RecordNotFound
       flash.now[:error] = "Resource not found."
     ensure
       @associations = Inspector.find_relations(@resource) if @resource.present?
