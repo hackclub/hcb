@@ -32,12 +32,12 @@ module Api
       private
 
       def authenticate!
-        # @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
-        # unless @current_token&.accessible?
-        #   return render json: { error: "invalid_auth" }, status: :unauthorized
-        # end
+        @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
+        unless @current_token&.accessible?
+          return render json: { error: "invalid_auth" }, status: :unauthorized
+        end
 
-        @current_user = User.find(1)
+        @current_user = current_token&.user
       end
 
       def require_admin!
