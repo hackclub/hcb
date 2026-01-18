@@ -48,7 +48,7 @@ module TwilioMessageService
 
       sms_message
     rescue => e
-      unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
+      unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
         Rails.error.report(e)
         raise
       end
