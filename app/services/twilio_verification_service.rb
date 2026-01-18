@@ -17,7 +17,7 @@ class TwilioVerificationService
           .verifications
           .create(to: phone_number, channel: "sms")
   rescue => e
-    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
+    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
       Rails.error.report(e)
       raise
     end
@@ -30,7 +30,7 @@ class TwilioVerificationService
                          .create(to: phone_number, code:)
     verification.status == "approved"
   rescue => e
-    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
+    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
       Rails.error.report(e)
       raise
     end
