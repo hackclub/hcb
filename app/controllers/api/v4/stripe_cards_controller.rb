@@ -123,6 +123,7 @@ module Api
 
           render json: { success: "Card activated!" }
         else
+          skip_authorization
           render json: { error: "invalid_operation" }, status: :unprocessable_entity
         end
       end
