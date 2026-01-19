@@ -10,31 +10,6 @@
   }
 }
 
-.back-to-tour {
-  animation: fadeUp 0.25s 0.5s ease-out both;
-
-  position: fixed;
-  bottom: 3rem;
-  left: 3rem;
-
-  z-index: 100000;
-
-  background-color: map-get($palette, 'primary') !important;
-  color: $white;
-
-  &__arrow {
-    transition: transform 0.125s ease-out;
-  }
-
-  &:hover &__arrow {
-    transform: translateX(0.4rem);
-  }
-
-  &:hover {
-    color: $white;
-  }
-}
-
 @keyframes fadeUp {
   from {
     transform: translateY(10px) scale(0.9);

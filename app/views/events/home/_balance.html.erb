@@ -4,7 +4,7 @@
     class="flex flex-grow flex-col"
     style="gap: 8px;position: relative;">
     <div class="p-4 pt-2 flex flex-col">
-      <div data-balance-graph-target="stat" data-tour-step="balance">
+      <div data-balance-graph-target="stat">
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
           <span class="stat__value tabular-nums !text-4xl lg:!text-5xl" data-balance-graph-target="balance">$<%= render_money_amount @event.balance_v2_cents %></span>
@@ -16,7 +16,7 @@
         <% end %>
       </div>
 
-      <div data-nosnippet class="hidden" aria-hidden="true" class="" data-tour-step="balance" data-balance-graph-target="size">
+      <div data-nosnippet class="hidden" aria-hidden="true" class="" data-balance-graph-target="size">
         <span class="stat__label">&nbsp;</span>
         <% if @event.fee_balance_v2_cents < 0
              # this event has a fee credit (owes negative fees) %>
