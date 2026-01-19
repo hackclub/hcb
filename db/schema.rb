@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_16_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_173228) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2121,6 +2121,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_000002) do
 
   create_table "reimbursement_reports", force: :cascade do |t|
     t.string "aasm_state"
+    t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
@@ -2139,6 +2140,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_16_000002) do
     t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
