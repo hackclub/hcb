@@ -1,4 +1,4 @@
-<%# locals: (title_suffix: "HCB", skip_dark_js: false, custom_stylesheet: false, custom_application_js: false, skip_plausible: false, skip_console_art: false, console_art_url: nil) %>
+<%# locals: (title_suffix: "HCB", admin: false, console_art_url: nil) %>
 
 <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
 <title>
@@ -10,51 +10,44 @@
 <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
 <meta name="apple-itunes-app" content="app-id=6465424810">
 
-<%= yield(:before_assets) if content_for?(:before_assets) %>
+<% unless admin %>
+  <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
+  <% if Rails.env.production? %>
+    <script>
+      console.log(`%c                   -*%@@%*-
+                  .=#@@@@@@@@@@#=.
+              .=%@@@@@*-..-*@@@@@%=.
+            -#@@@@@+:        :+@@@@@#-
+          :*@@@@@*:              :*@@@@@*:
+        =%@@@@#-                    -#@@@@%=.
+      *@@@@@+.                        .+@@@@@*
+      *@@*-   *@@*      *@@*      *@@*   :*@@*
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              *@@*      *@@*      *@@*
+
+        *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+        *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+              Come hack on HCB with us!
+            <%= console_art_url || Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
+      `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+    </script>
+    <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+  <% end %>
+<% end %>
 
 <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
-<%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" unless custom_stylesheet %>
-<%= yield(:custom_stylesheet) if content_for?(:custom_stylesheet) %>
-<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless custom_application_js %>
-<%= yield(:custom_application_js) if content_for?(:custom_application_js) %>
+<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
 <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-
-<%= yield(:additional_scripts) if content_for?(:additional_scripts) %>
-
-<% if Rails.env.production? && !skip_plausible %>
-  <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
-<% end %>
 
 <% unless Rails.env.production? %>
   <meta name="turbo-prefetch" content="false">
-<% end %>
-
-<% if Rails.env.production? && !skip_console_art %>
-  <script>
-    console.log(`%c                -*%@@%*-
-              .=#@@@@@@@@@@#=.
-          .=%@@@@@*-..-*@@@@@%=.
-        -#@@@@@+:        :+@@@@@#-
-      :*@@@@@*:              :*@@@@@*:
-    =%@@@@#-                    -#@@@@%=.
-  *@@@@@+.                        .+@@@@@*
-  *@@*-   *@@*      *@@*      *@@*   :*@@*
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          *@@*      *@@*      *@@*
-
-    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-
-          Come hack on HCB with us!
-  <%= console_art_url || Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
-  `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
-  </script>
 <% end %>
 
 <meta name="format-detection" content="telephone=no">
@@ -74,5 +67,4 @@
 <% end %>
 
 <%= render "application/seo_meta_tags" %>
-<%= yield(:additional_head_tags) if content_for?(:additional_head_tags) %>
 <%= yield(:head) if content_for?(:head) %>
