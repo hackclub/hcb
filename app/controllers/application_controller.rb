@@ -9,6 +9,8 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
+  around_action :attach_error_reference
+
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
@@ -30,7 +32,7 @@ class ApplicationController < ActionController::Base
   before_action do
     # Disallow all external redirects
     # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
-    params[:return_to] = url_from(params[:return_to])
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
   end
 
   # Enable Rack::MiniProfiler for auditors
@@ -124,6 +126,12 @@ class ApplicationController < ActionController::Base
   def confetti!(emojis: nil)
     flash[:confetti] = true
     flash[:confetti_emojis] = emojis.join(",") if emojis
+  end
+
+  def attach_error_reference
+    error_reference = ErrorReference.from_request_id(request.uuid)
+    Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
+    yield
   end
 
 end

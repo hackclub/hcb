@@ -78,12 +78,11 @@
         </div>
       <% end %>
       <%= yield(:header) %>
-      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+      <main class="container px-6 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash" unless @hide_flash %>
         <%= yield %>
       </main>
     <% end %>
-
     <%= render "layouts/body_suffix" %>
   </body>
 </html>

@@ -20,6 +20,9 @@ const loadModals = element => {
         ? 'turbo-frame-modal'
         : undefined,
     })
+    BK.s('modal', '#' + $(this).data('modal')).find('iframe[data-src]').each((i, iframe) => {
+      iframe.src ||= iframe.dataset.src
+    })
     return this.blur()
   })
 
@@ -189,6 +192,7 @@ window.attachTooltipListener = () => {
   // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
+  $(document).on('turbo:frame-load', removeTooltips);
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)
@@ -631,6 +635,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   $(e.target)
     .parents('.modal--popover')
     .addClass('modal--popover--receipt-expanded')
+  $(e.target).parents('.receipt').find('iframe[data-src]').each((i, iframe) => {
+    iframe.src ||= iframe.dataset.src
+  })
   let selected_receipt = document.querySelectorAll(
     `.hidden_except_${e.originalEvent.target.dataset.receiptId}`
   )[0]

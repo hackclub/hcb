@@ -18,7 +18,7 @@
   </td>
   <td><%= organizer_position.role.humanize %></td>
   <td>
-    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : "user@example.com", class: "inline-flex items-center g1 line-height-0") do %>
+    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : "user@example.com", class: "#{organizer_signed_in? ? "" : "pointer-events-none"} inline-flex items-center g1 line-height-0") do %>
       <%= inline_icon("email", size: 20) %>
       <%= organizer_signed_in? ? organizer_position.user.email : "Hidden" %>
     <% end %>

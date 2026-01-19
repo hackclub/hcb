@@ -237,6 +237,7 @@ input[type='checkbox'] {
 .field--checkbox--switch {
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
   width: 60px;
   height: 34px;
 
