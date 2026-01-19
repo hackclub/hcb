@@ -1,5 +1,4 @@
-<%# locals: (skip_fullstory: false) %>
-<% if Rails.env.production? && !skip_fullstory %>
+<% if Rails.env.production? %>
   <%= render "application/fullstory" if current_user&.sessions_reported %>
 <% end %>
 
