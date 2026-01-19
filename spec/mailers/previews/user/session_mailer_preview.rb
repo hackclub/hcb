@@ -8,12 +8,6 @@ class User
       User::SessionMailer.new_login(user_session:)
     end
 
-    def first_login
-      user = User.last
-
-      User::SessionMailer.first_login(user:)
-    end
-
   end
 
 end

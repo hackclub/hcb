@@ -20,6 +20,7 @@
 #  submitted_at               :datetime
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
+#  card_grant_id              :bigint
 #  event_id                   :bigint
 #  invited_by_id              :bigint
 #  reviewer_id                :bigint
@@ -27,6 +28,7 @@
 #
 # Indexes
 #
+#  index_reimbursement_reports_on_card_grant_id  (card_grant_id)
 #  index_reimbursement_reports_on_event_id       (event_id)
 #  index_reimbursement_reports_on_invited_by_id  (invited_by_id)
 #  index_reimbursement_reports_on_reviewer_id    (reviewer_id)
@@ -59,6 +61,7 @@ module Reimbursement
 
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
+    belongs_to :card_grant, optional: true
 
     has_paper_trail ignore: :expense_number
 

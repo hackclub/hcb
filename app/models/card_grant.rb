@@ -67,6 +67,7 @@ class CardGrant < ApplicationRecord
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
   has_one :pre_authorization
+  has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
@@ -87,7 +88,7 @@ class CardGrant < ApplicationRecord
   serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
@@ -201,7 +202,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -314,8 +315,8 @@ class CardGrant < ApplicationRecord
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
-      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}.",
-      inviter: sent_by
+      inviter: sent_by,
+      card_grant: self
     )
   end
 
