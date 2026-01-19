@@ -5,6 +5,10 @@ export default class extends Controller {
     this.render()
   }
 
+  scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   render() {
     const scrollY = window.scrollY
     const checkPreview = document.getElementById('check-preview-container')
@@ -14,6 +18,8 @@ export default class extends Controller {
     if (!checkPreview || !tableOfContents || !contactInformation) {
       return
     }
+
+    checkPreview.classList[scrollY === 0 ? 'remove' : 'add']('cursor-pointer')
 
     if (scrollY < 200) {
       const scale = 1 - scrollY / 400
