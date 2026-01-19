@@ -1,7 +1,15 @@
 <% if organizer_signed_in? %>
+  <% direction =
+       if params[:sort] == sort
+         params[:direction] == "asc" ? "desc" : "asc"
+       elsif params[:sort].nil? && defined?(default) && default
+         params[:direction].present? ? params[:direction] : "desc"
+       else
+         "desc"
+       end %>
   <%= link_to upsert_query_params(
         sort: sort,
-        direction: (params[:sort] == sort ? (params[:direction] == "asc" ? "desc" : "asc") : (params[:direction] || "desc"))
+        direction: direction
       ),
     class: [
       "sort-button",
