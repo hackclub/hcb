@@ -40,6 +40,9 @@
     </script>
     <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
   <% end %>
+  
+  <%# Web component used for TOTP / donation QR codes %>
+  <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
 <% end %>
 
 <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
