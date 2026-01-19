@@ -161,7 +161,10 @@
       </div>
     </div>
 
-    <%= form.submit "Send wire", disabled: disabled, class: "w-full" %>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Send wire
+      <%= inline_icon "send" %>
+    </button>
     <p class="muted mt-3 text-center text-sm">
       Your wire will be sent out on the next business day.
     </p>

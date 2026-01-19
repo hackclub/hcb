@@ -1,7 +1,7 @@
 <% page_full %>
 <% @no_app_shell = true %>
 
-<nav class="border-b pr-8 flex items-center gap-4 sticky sm:fixed top-0 bg-snow dark:bg-dark h-20 sm:h-24 w-full z-10">
+<nav class="border-b pr-8 flex items-center gap-4 sticky md:fixed top-0 bg-snow dark:bg-dark h-20 md:h-24 w-full z-10">
   <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
@@ -10,13 +10,13 @@
 </nav>
 
 <div
-  class="flex flex-col sm:grid grid-cols-5 max-w-5xl px-8 mx-auto w-full mt-20 gap-5"
+  class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full mt-20 gap-5"
   data-controller="scroll-seek <%= "check-preview" if @check.present? %>"
   <% if @check.present? %> data-action="scroll@window->check-preview#render"<% end %>>
-  <div class="col-span-2">
-    <div class="sm:sticky top-28" id="table-of-contents">
-      <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 sm:static border-gray-200 dark:border-neutral-700 sm:rounded-xl p-2 border-solid border-[1px] border-x-0 sm:border-x-[1px] overflow-x-auto">
-        <div class="inline-flex sm:flex sm:w-full sm:flex-col mx-auto sm:mx-0 gap-4 sm:gap-0 px-5 sm:px-0">
+  <div class="md:w-[375px]">
+    <div class="md:sticky top-28" id="table-of-contents">
+      <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 md:static border-gray-200 dark:border-neutral-700 md:rounded-xl p-2 border-solid border-[1px] border-x-0 md:border-x-[1px] overflow-x-auto">
+        <div class="inline-flex md:flex md:w-full md:flex-col mx-auto md:mx-0 gap-4 md:gap-0 px-5 md:px-0">
           <%= yield :table_of_contents %>
         </div>
       </div>
@@ -25,7 +25,7 @@
       <% end %>
     </div>
   </div>
-  <div class="col-span-3 sm:pt-3 mb-24">
+  <div class="flex-1 md:pt-3 mb-24">
     <%= yield %>
   </div>
 </div>
