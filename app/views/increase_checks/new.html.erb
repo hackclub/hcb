@@ -402,7 +402,10 @@
   </div>
 
   <div class="flex gap-2">
-    <%= form.submit "Send check", class: "flex-[4]", disabled: disabled %>
+    <button type="submit" class="gap-2 btn flex-[4] w-full bg-blue" <%= "disabled" if disabled %>>
+      Send check
+      <%= inline_icon "send" %>
+    </button>
     <a href="javascript:void(0)" 
       data-action="click->check-preview#scrollToTop"
       class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">
