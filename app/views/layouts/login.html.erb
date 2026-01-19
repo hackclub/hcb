@@ -10,7 +10,6 @@
           html, body { height: 100vh; margin: 0; padding: 0 }
       }
     </style>
-    <% img = "/brand/hcb-icon-icon-original.png" %>
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
