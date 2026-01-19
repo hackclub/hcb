@@ -72,19 +72,20 @@ module Api
       end
 
       def update
-        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+        @stripe_card = StripeCard.find_by_public_id!(params[:id])
 
         if params[:status] == "frozen"
-          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).freeze?
+          authorize @stripe_card, :freeze?
 
           if @stripe_card.canceled?
             return render json: { error: "Card is canceled." }, status: :unprocessable_entity
           end
 
           @stripe_card.freeze!(frozen_by: current_user)
+          render json: { success: "Card frozen!" }
         elsif params[:status] == "active"
           if @stripe_card.initially_activated?
-            return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).defrost?
+            authorize @stripe_card, :defrost?
 
             if @stripe_card.stripe_status == "active"
               return render json: { error: "Card is already active." }, status: :unprocessable_entity
@@ -94,7 +95,7 @@ module Api
             return render json: { success: "Card defrosted!" }
           end
 
-          return render json: { error: "not_authorized" }, status: :forbidden unless policy(@stripe_card).activate?
+          authorize @stripe_card, :activate?
 
           if params[:last4].blank?
             return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
@@ -121,6 +122,9 @@ module Api
           @stripe_card.defrost!
 
           render json: { success: "Card activated!" }
+        else
+          skip_authorization
+          render json: { error: "invalid_operation" }, status: :unprocessable_entity
         end
       end
 

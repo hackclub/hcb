@@ -8,13 +8,8 @@ class ApplicationJob < ActiveJob::Base
     def self.sidekiq_options(**); end
   end
 
-  # Twilio errors we expect and don't need to report:
-  # 21408, 21612: can't send text messages to certain countries (e.g. UK)
-  # 60410: user has been flagged for fraud by Twilio
-  EXPECTED_TWILIO_ERRORS = %w[21408 21612 60410].freeze
-
   discard_on(Twilio::REST::RestError) do |job, error|
-    Rails.error.report(error) unless EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
+    Rails.error.report(error) unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
   end
 
 end
