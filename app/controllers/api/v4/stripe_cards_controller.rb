@@ -129,7 +129,7 @@ module Api
         @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
       end
 
-      def freeze 
+      def freeze
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.canceled?
