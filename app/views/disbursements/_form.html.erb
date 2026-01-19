@@ -86,9 +86,10 @@
       </div>
     <% end %>
 
-    <div class="flex <%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>" aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only managers can make transfers!" : nil) %>">
-      <%= form.submit "Make transfer", class: "btn flex-1", disabled: %>
-    </div>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Send transfer
+      <%= inline_icon "send" %>
+    </button>
     <p class="muted text-center text-sm">Transfers are reviewed by the HCB team and process within 24 hours on weekdays.</p>
   </div>
 <% end %>
