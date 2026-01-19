@@ -204,5 +204,25 @@
       }
   </style>
 <% end %>
+<% if current_user.auditor? %>
+  <div class="bg-black text-white fixed bottom-0 left-0 right-0 z-50 [&.inspector--expanded_.up-caret]:hidden [&:not(.inspector--expanded)_.down-caret]:hidden">
+    <div class="bg-black text-white p-2 flex items-center justify-between cursor-pointer hover:bg-steel hover:pb-3 transition-all transition-duration-100 border-bottom border-smoke border-b-1" data-behavior="expand_inspector">
+      <div class="flex flex-row items-center gap-4">
+        <%= inline_icon "explore", size: 20 %>
+        <p class="m-0 text-sm text-center">Inspector</p>
+        <% object = Inspector.object_for(request.path) %>
+        <% if object.present? %>
+          <p class="m-0 text-xs text-center opacity-50"><%= object.class.name %>#<%= object.id %> • Found on page</p>
+        <% end %>
+      </div>
+      <%= inline_icon "up-caret", size: 20, class: "up-caret" %>
+      <%= inline_icon "down-caret", size: 20, class: "down-caret" %>
+    </div>
+    <div class="h-[calc(100vh-200px)] p-4 overflow-y-scroll" id="inspector-container" style="display: none;">
+      <% path_arguments = object.present? ? { resource: object.class.name, id: object.id } : { resource: "User", id: current_user.id } %>
+      <%= turbo_frame_tag "inspect_frame", src: inspect_resource_admin_index_path(**path_arguments) %>
+    </div>
+  </div>
+<% end %>
 </body>
 </html>
