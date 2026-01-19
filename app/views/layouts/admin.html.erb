@@ -7,9 +7,7 @@
   </head>
   <body class="bg-snow">
     <a class="skip-to-main" href="#main">Skip to main content</a>
-
     <% title = yield(:title) if content_for?(:title) %>
-
     <% nav = Admin::Nav.new(page_title: title) %>
 
     <nav class="flex flex-col shadow-lg sticky top-0 backdrop-blur-lg z-10 bg-white/80 dark:!bg-[rgba(0,0,0,0.8)]">
