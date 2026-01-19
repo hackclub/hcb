@@ -65,7 +65,11 @@ class Contract
     end
 
     def docuseal_signature_url
-      "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]["slug"]}"
+      "https://docuseal.co/s/#{docuseal_submission["slug"]}"
+    end
+
+    def docuseal_submission
+      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
     end
 
     def docuseal_role
@@ -83,9 +87,9 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event.name}'s agreement as HCB Operations"
+        "Sign the #{contract.event_name}'s agreement as HCB Operations"
       else
-        "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
+        "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
       end
     end
 

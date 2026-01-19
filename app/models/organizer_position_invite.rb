@@ -242,6 +242,10 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
+  def contract_redirect_path
+    Rails.application.routes.url_helpers.event_team_path(event)
+  end
+
   private
 
   def not_already_organizer

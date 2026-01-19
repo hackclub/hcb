@@ -37,7 +37,7 @@ class Contract
       @party.notify
 
       flash[:success] = "Contract resent successfully."
-      redirect_back(fallback_location: event_team_path(@contract.event))
+      redirect_back(fallback_location: @contract.redirect_path)
     end
 
     def completed

@@ -76,10 +76,12 @@ class User < ApplicationRecord
     reimbursement_report: 1,
     organizer_position_invite: 2,
     card_grant: 3,
-    grant: 4
+    grant: 4,
+    application_form: 5
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, class_name: "User::Session", dependent: :destroy

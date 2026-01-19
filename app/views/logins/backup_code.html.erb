@@ -1,6 +1,10 @@
 <% title "Enter backup code" %>
 <% content_for(:page_class) { "bg-snow" } %>
 
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "logins/header", label: "Sign in to HCB" do %>
     Backup code

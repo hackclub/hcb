@@ -71,7 +71,9 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        parties.not_hcb.each(&:notify)
+        if contractable.contract_notify_when_sent
+          parties.not_hcb.each(&:notify)
+        end
       end
     end
 
@@ -128,7 +130,15 @@ class Contract < ApplicationRecord
   end
 
   def event
-    contractable.contract_event
+    contractable.contract_event if contractable.respond_to?(:contract_event)
+  end
+
+  def event_name
+    event&.name || prefills["name"]
+  end
+
+  def redirect_path
+    contractable.contract_redirect_path
   end
 
   def party(role)

@@ -1,6 +1,10 @@
 <% title "Choose login method" %>
 <% content_for(:page_class) %>
 
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "logins/header", label: "Sign in to HCB" do %>
     How would you like to sign in?
