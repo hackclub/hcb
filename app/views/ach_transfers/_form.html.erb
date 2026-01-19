@@ -195,7 +195,10 @@
     </div>
   <% end %>
 
-  <%= form.submit "Transfer money now", class: "btn w-full", disabled: %>
+  <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    Send transfer
+    <%= inline_icon "send" %>
+  </button>
   <p class="muted mt-3 text-center text-sm">
     <%= inline_icon "warning", class: "align-middle mr-0.5 -mt-0.5", size: 20 %>
     ACH transfers are <strong>irreversible</strong> and can't be canceled.
