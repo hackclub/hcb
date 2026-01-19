@@ -240,6 +240,12 @@ module ApplicationHelper
     @home_size.to_i > 48 ? 36 : 28
   end
 
+  def parent_layout(name)
+    @view_flow.set(:layout, output_buffer)
+    output = render(template: "layouts/#{name}")
+    self.output_buffer = ActionView::OutputBuffer.new(output)
+  end
+
   def page_xl
     content_for(:container_class) { "container--xl" }
   end

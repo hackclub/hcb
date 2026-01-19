@@ -1,12 +1,9 @@
 <%# locals: (form:, disabled:, required: true) %>
 
-<div class="field mb1">
-  <%= form.label :address_line1, "Street address" %>
-  <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar", required: %>
-</div>
-
-<div class="field mt0">
-  <%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
+<%= form.label :address_line1, "Street address" %>
+<div class="flex mb-2 gap-2">
+  <%= form.text_field :address_line1, class: "flex-1", placeholder: "Phase II, Udyog Vihar", required: %>
+  <%= form.text_field :address_line2, class: "flex-1", placeholder: "Sector 20", disabled: %>
 </div>
 
 <div class="grid grid--split gap-2">
@@ -27,6 +24,6 @@
 
   <div class="field flex-auto">
     <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { "@change": "country = $event.target.value" } %>
+    <%= form.collection_select :recipient_country, Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { style: "min-height:37px", "@change": "country = $event.target.value" } %>
   </div>
 </div>
