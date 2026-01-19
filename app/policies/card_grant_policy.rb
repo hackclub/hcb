@@ -81,6 +81,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  def permit_merchant?
+    admin_or_manager? && record.active?
+  end
+
   def update?
     admin_or_manager? && record.active?
   end
