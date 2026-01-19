@@ -1,0 +1,18 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (an <%= @event.ancestor_organizer_positions.map(&:user).include?(@whodunnit) ? "organization manager" : "HCB admin" %>) has disabled transparency mode for <%= @event.name %>.
+  This means your organization is now private to unauthenticated users on HCB.
+  <% if @event.announcements.published.any? %>
+    Any published announcements are still visible to the public on your <%= link_to "announcements page", event_announcement_overview_url(@event) %>.
+  <% end %>
+</p>
+
+<p>
+  Managers can re-enable transparency mode at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.
+</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
