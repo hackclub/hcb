@@ -13,7 +13,6 @@ class ApplicationController < ActionController::Base
 
   include Pundit::Authorization
   include SessionsHelper
-  include ToursHelper
   include PublicActivity::StoreController
   include SetGovernanceRequestContext
 

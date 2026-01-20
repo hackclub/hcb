@@ -69,12 +69,6 @@
     <%= yield(:head) if content_for?(:head) %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
-    <%= react_component "tour/TourOverlay",
-                        tour: @tour&.name,
-                        id: @tour&.id,
-                        step: @tour&.step || 0,
-                        options: @tour&.tourable&.try(:tourable_options) || {},
-                        back_to_tour: @back_to_tour %>
 
     <% if current_session&.impersonated? %>
       <div class="w-100 px4 bg-white transparency-banner">
