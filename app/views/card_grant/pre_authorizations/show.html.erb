@@ -31,13 +31,22 @@
   </div>
 </div>
 
-<% if @pre_authorization.approved? || @pre_authorization.fraudulent? %>
+<% if @pre_authorization.authorized? %>
   <div class="card flex flex-row gap-2 justify-between align-center mb3">
     <h3 class="flex flex-row items-center m-0">
       <%= inline_icon "checkmark", size: 24, class: "mr2 text-green" %>
       Your card grant has been approved!
     </h3>
     <%= link_to "View card details", card_grant_path(@card_grant), class: "btn bg-success" %>
+  </div>
+<% end %>
+
+<% if @pre_authorization.fraudulent? && @pre_authorization.unauthorized? %>
+  <div class="card flex flex-row gap-2 justify-between align-center mb3">
+    <p class="flex flex-row items-center m-0">
+      <%= inline_icon "important", size: 24, class: "mr2 text-orange" %>
+      Your card grant has been flagged as fraudulent because it doesn't meet the given requirements. Please reach out to <%= @card_grant.event.name %> for support.
+    </p>
   </div>
 <% end %>
 
