@@ -88,15 +88,19 @@ class Event
         @application.contract.mark_voided!
       end
 
-      @return_to = url_from(params[:return_to])
-
       if user_params.present?
         current_user.update!(user_params)
       end
 
-      return redirect_to @return_to if @return_to.present?
+      if params[:autosave] != "true"
+        @return_to = url_from(params[:return_to])
 
-      redirect_back_or_to application_path(@application)
+        return redirect_to @return_to if @return_to.present?
+
+        redirect_back_or_to application_path(@application)
+      end
+
+      head :no_content
     end
 
     def submit
