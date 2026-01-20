@@ -13,7 +13,7 @@
   <%= render "application/callout",
       type: "info",
       icon: "wise",
-      title: "Important information about Wise transfers",
+      title: "Heads up!",
       class: "my-4 !border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
       footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
     <ul>
@@ -97,32 +97,7 @@
       </div>
 
       <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
-
-      <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-      <p class="muted mt-0 mb-2">Required for reimbursements / goods & services payments.</p>
-      <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-        <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-              action: "
-            dragover@window->file-drop#dragover
-            drop@window->file-drop#drop
-            dragenter@window->file-drop#dragenter
-            dragleave@window->file-drop#dragleave
-          "
-            } %>
-        <%= form.file_field :file,
-            multiple: true,
-            include_hidden: false,
-            required: false,
-            accept: "image/*,image/heic,.pdf",
-            style: "margin: 8px 0px",
-            class: "field--fileupload__field",
-            direct_upload: true,
-            data: {
-              "file-drop-target" => "fileInput"
-            },
-            disabled: %>
-        <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-      </div>
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
   </div>
 

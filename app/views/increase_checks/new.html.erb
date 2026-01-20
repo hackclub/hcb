@@ -360,44 +360,7 @@
         </div>
       </div>
 
-      <div class="md:flex items-center justify-between gap-4">
-        <div>
-          <%= form.label :file,
-            "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-          <p class="muted my-0">
-            Required for reimbursements / goods & services payments.
-          </p>
-        </div>
-        <div class="field field--fileupload text-right flex items-center !max-w-[300px]"
-          data-controller="file-drop form"
-          data-file-drop-title-value="Drop to add a receipt.">
-          <%= form.label :file, "Choose file",
-            class: "field--fileupload__label", 
-            data: {
-              action: "
-                dragover@window->file-drop#dragover
-                drop@window->file-drop#drop
-                dragenter@window->file-drop#dragenter
-                dragleave@window->file-drop#dragleave
-              "
-            } %>
-          <%= form.file_field :file,
-            multiple: true,
-            include_hidden: false,
-            required: false,
-            accept: "image/*,image/heic,.pdf",
-            style: "margin: 8px 0px; max-width: 130px;",
-            class: "field--fileupload__field",
-            direct_upload: true,
-            data: {
-              "file-drop-target" => "fileInput",
-              "action" => "change->extraction#upload"
-            },
-            disabled: disabled %>
-          <%= inline_icon "view-close", size: 24, class: "muted",
-            data: { behavior: "clear_input" } %>
-        </div>
-      </div>
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
   </div>
 

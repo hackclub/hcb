@@ -14,12 +14,7 @@
         <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
       </div>
 
-      <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
-      <div class="field--fileupload" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-        <%= form.label :file, "Choose file", class: "field--fileupload__label", data: { action: "dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave" } %>
-        <%= form.file_field :file, multiple: true, include_hidden: false, required: false, accept: "image/*,image/heic,.pdf", style: "margin: 8px 0px", class: "field--fileupload__field", data: { "file-drop-target" => "fileInput" }, disabled: %>
-        <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-      </div>
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
   </div>
 
@@ -28,7 +23,7 @@
     <div class="card mb-4 relative">
       <div class="flex gap-2">
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
-        <%= inline_icon "view-forward", class: "self-center" %>
+        <%= inline_icon "view-forward", class: "mt-[30px]" %>
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
       </div>
 
