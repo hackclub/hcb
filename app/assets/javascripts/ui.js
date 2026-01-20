@@ -181,6 +181,7 @@ window.attachTooltipListener = () => {
 
   $(".tooltipped").on({
     mouseenter(event) {
+      if (window.innerWidth < 768) return;
       const trigger = event.currentTarget;
       showTooltip(trigger);
     },
