@@ -71,6 +71,9 @@ class Event
 
       event :mark_under_review do
         transitions from: :submitted, to: :under_review
+        after do
+          Event::ApplicationMailer.with(application: self).under_review.deliver_later
+        end
       end
     end
 
