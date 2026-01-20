@@ -9,7 +9,7 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  around_action :attach_error_reference
+  before_action :attach_error_reference
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
@@ -130,7 +130,6 @@ class ApplicationController < ActionController::Base
   def attach_error_reference
     error_reference = ErrorReference.from_request_id(request.uuid)
     Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
-    yield
   end
 
 end
