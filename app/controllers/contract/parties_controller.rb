@@ -36,7 +36,7 @@ class Contract
       authorize @party
       @party.notify
 
-      flash[:success] = "Contract resent successfully."
+      flash[:success] = "Contract successfully resent to #{@party.email}."
       redirect_back(fallback_location: @contract.redirect_path)
     end
 

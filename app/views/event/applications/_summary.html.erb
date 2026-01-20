@@ -123,17 +123,3 @@
     <% end %>
   </div>
 </div>
-
-<% if defined?(@contract_signed) %>
-  <div class="card card--breakdown p-4 mb-6 flex flex-row items-center justify-between">
-    <div class="flex justify-start gap-1">
-      <%= inline_icon "checkmark", size: 24, class: "align-top #{@contract_signed ? "text-green" : "text-red" }" %>
-      <p class="font-medium my-0">
-        Agreement <%= "not" unless @contract_signed %> signed
-      </p>
-    </div>
-    <% unless @contract_signed %>
-      <a class="btn text-sm" href="<%= agreement_application_path(application) %>">Sign</a>
-    <% end %>
-  </div>
-<% end %>

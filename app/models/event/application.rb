@@ -55,7 +55,7 @@ class Event
     aasm timestamps: true do
       state :draft, initial: true
       state :submitted
-      # An application can be submitted but not yet under review if it is pending on a cosigner signature
+      # An application can be submitted but not yet under review if it is pending on signee or cosigner signatures
       state :under_review
       state :approved
       state :rejected
@@ -63,9 +63,14 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          contract.party(:cosigner)&.notify
+          app_contract = contract || create_contract
+          app_contract.party(:cosigner)&.notify
           Event::ApplicationMailer.with(application: self).confirmation.deliver_later
         end
+      end
+
+      event :mark_under_review do
+        transitions from: :submitted, to: :under_review
       end
     end
 
@@ -126,12 +131,6 @@ class Event
       contract
     end
 
-    def signee_signed?
-      # Using docuseal_submission here since this method is called right after the contract is signed,
-      # meaning we might not have processed the webhook to update the state yet
-      contract&.party(:signee)&.docuseal_submission&.[]("status") == "completed"
-    end
-
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
@@ -143,7 +142,13 @@ class Event
         self[field].nil?
       end
 
-      !missing_fields && signee_signed? && !user.onboarding?
+      !missing_fields && !user.onboarding?
+    end
+
+    def on_contract_party_signed(party)
+      if party.contract.parties.not_hcb.all?(&:signed?)
+        mark_under_review!
+      end
     end
 
   end

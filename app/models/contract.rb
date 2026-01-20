@@ -145,12 +145,14 @@ class Contract < ApplicationRecord
     parties.find_by(role:)
   end
 
-  def on_party_signed
+  def on_party_signed(party)
     if parties.all?(&:signed?)
       mark_signed!
     elsif parties.not_hcb.all?(&:signed?)
       party(:hcb).notify
     end
+
+    contractable.on_contract_party_signed(party)
   end
 
   # Adding this back temporarily while we work on fixing missing parties

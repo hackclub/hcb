@@ -32,16 +32,8 @@ class Event
     def show
       authorize @application
 
-      unless @application.draft?
-        @steps = [
-          { title: "Wait for a response from the HCB team", description: "Our operations team will review your application and respond within 24 hours." },
-          { title: "Start spending!", description: "You'll have access to your organization to begin raising and spending money." }
-        ]
-
-        if @application.cosigner_email.present?
-          @steps.unshift({ title: "Have your parent sign the Fiscal Sponsorship Agreement", description: "Your parent or legal guardian (#{@application.cosigner_email}) needs to cosign the agreement you signed before we can review your application." })
-        end
-      end
+      # Signees are redirected to this page right after signing, so let's make sure we have updated data
+      @application.contract&.party(:signee)&.sync_with_docuseal
     end
 
     def submission
@@ -72,8 +64,6 @@ class Event
 
     def review
       authorize @application
-
-      @contract_signed = @application.signee_signed?
     end
 
     def update
@@ -83,10 +73,6 @@ class Event
       ap user_params
 
       @application.update!(application_params)
-
-      if @application&.contract&.party(:signee)&.signed? && @application.previous_changes.any?
-        @application.contract.mark_voided!
-      end
 
       if user_params.present?
         success = current_user.update(user_params)

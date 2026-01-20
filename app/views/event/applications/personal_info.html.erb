@@ -1,5 +1,5 @@
 <% title "Add your information" %>
-<% content_for :progress, 40 %>
+<% content_for :progress, 50 %>
 
 <% content_for :info_pane do %>
   <div class="flex flex-col">
@@ -140,5 +140,5 @@
 
 <% content_for :footer do %>
   <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">← Back</button>
-  <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: @application.signee_signed? ? review_application_path(@application) : agreement_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
+  <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: review_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
 <% end %>

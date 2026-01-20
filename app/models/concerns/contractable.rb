@@ -11,6 +11,11 @@ module Contractable
       nil
     end
 
+    def on_contract_party_signed(party)
+      # This method is a callback that can be overwritten in specific classes
+      nil
+    end
+
     def on_contract_voided(contract)
       # This method is a callback that can be overwritten in specific classes
       nil
