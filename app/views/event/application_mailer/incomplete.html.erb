@@ -1,0 +1,31 @@
+<p>Hi <%= @application.user.name %>,</p>
+
+<p>
+  <% if @application.name.present? %>
+    Your application for <%= @application.name %> hasn't been submitted yet.
+  <% else %>
+    Your HCB application hasn't been submitted yet.
+  <% end %>
+  <% if @application.ready_to_submit? %>
+    You've already filled out the required fields, but you still need to submit your application.
+  <% else %>
+    It only takes a few more minutes to complete your application.
+  <% end %>
+</p>
+
+<p>Head to <%= link_to "your application", application_url(@application) %> to continue.</p>
+
+<p>If you have any questions, we're here to help! Just reply to this email or reach out to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>.</p>
+
+<div style="background: rgba(224, 230, 237, 0.5); padding: 16px; border-radius: 8px; margin: 32px -16px;">
+  <h4 style="margin: 0px;">Did you know?</h4>
+  <p>HCB lets organizations raise money through an online donation page. Donors can support your organization in minutes with nothing but a credit card.</p>
+  <p style="margin-bottom: 0px;">
+    <%= link_to "Learn more about HCB's features →", "https://hackclub.com/fiscal-sponsorship?utm_source=application_incomplete&utm_medium=email&utm_campaign=application_incomplete" %>
+  </p>
+</div>
+
+<p>
+  Warmly,<br>
+  The HCB team
+</p>

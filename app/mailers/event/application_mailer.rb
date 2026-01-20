@@ -12,6 +12,10 @@ class Event
       mail to: @application.user.email_address_with_name, subject: "Your HCB application is under review"
     end
 
+    def incomplete
+      mail to: @application.user.email_address_with_name, subject: "[Action Needed] Complete your HCB application!"
+    end
+
   end
 
 end

@@ -66,6 +66,7 @@ class Event
           app_contract = contract || create_contract
           app_contract.party(:cosigner)&.notify
           Event::ApplicationMailer.with(application: self).confirmation.deliver_later
+          sync_to_airtable
         end
       end
 
@@ -148,10 +149,40 @@ class Event
       !missing_fields && !user.onboarding?
     end
 
+    def response_time
+      user.teenager? ? "48 hours" : "2 weeks"
+    end
+
     def on_contract_party_signed(party)
       if party.contract.parties.not_hcb.all?(&:signed?)
         mark_under_review!
       end
+    end
+
+    def sync_to_airtable
+      app = ApplicationsTable.new("HCB Application ID" => self.id)
+      app["First Name"] = user.first_name
+      app["Last Name"] = user.last_name
+      app["Email Address"] = user.email
+      app["Phone Number"] = user.phone_number
+      app["Date of Birth"] = user.birthday
+      app["Event Name"] = name
+      app["Event Website"] = website_url
+      app["Zip Code"] = address_postal_code
+      app["Tell us about your event"] = description
+      app["Have you used HCB for any previous events?"] = user.events.any? ? 'Yes, I have used HCB before' : 'No, first time!'
+      app["Teenager Led?"] = user.teenager?
+      app["Address Line 1"] = address_line1
+      app["City"] = address_city
+      app["State"] = address_state
+      app["Address Country"] = address_country
+      app["Event Location"] = address_country
+      app["How did you hear about HCB?"] = referrer
+      app["Accommodations"] = notes
+      app["(Adults) Political Activity"] = political_description
+      app["Referral Code"] = referral_code
+
+      app.save
     end
 
   end
