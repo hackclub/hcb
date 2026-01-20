@@ -9,6 +9,5 @@ module Admin
 
     include SetGovernanceRequestContext
     include Admin::TransferApprovable
-
   end
 end
