@@ -1,4 +1,4 @@
-<% title "Apply" %>
+<% title @application.draft? ? "Apply" : "Application status" %>
 
 <% if @application.draft? %>
   <%= render partial: "begin", locals: { application: @application } %>
