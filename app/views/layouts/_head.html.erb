@@ -1,4 +1,4 @@
-<%# locals: (title_suffix: "HCB", admin: false, console_art_url: nil, bare: false) %>
+<%# locals: (title_suffix: "HCB", admin: false, bare: false) %>
 
 <title><%= yield(:title).concat(" –") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
@@ -39,7 +39,7 @@
         *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
 
               Come hack on HCB with us!
-            <%= console_art_url || Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
+            <%= Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
       `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
     </script>
     <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
