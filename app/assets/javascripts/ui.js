@@ -187,14 +187,14 @@ window.attachTooltipListener = () => {
     },
     touchstart(event) {
       const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped--clickable")) return;
+      if (!trigger.classList.contains("tooltipped--tappable")) return;
       showTooltip(trigger);
     },
     mouseleave: removeTooltips
   });
 
   $(document).on("click", function (event) {
-    if (!$(event.target).closest(".tooltipped--clickable").length && !$(event.target).closest("#tooltip-container").length) {
+    if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
       removeTooltips();
     }
   });
