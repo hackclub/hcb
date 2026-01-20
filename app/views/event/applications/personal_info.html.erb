@@ -58,8 +58,8 @@
     </div>
 
     <% if current_user.applications.many? || current_user.events.any? %>
-      <div class="mt-[-0.25rem] mb-4 rounded-b-lg h-2 border-solid border-smoke border-t-0 w-full relative">
-        <div class="absolute max-w-full w-max bottom-0 left-1/2 bg-white px-2 muted text-sm -translate-x-1/2 translate-y-1/2">Changes made here will also update your HCB profile</div>
+      <div class="mt-[-0.25rem] mb-4 rounded-b-lg h-2 border-solid border-smoke dark:border-slate border-t-0 w-full relative">
+        <div class="absolute max-w-full w-max bottom-0 left-1/2 bg-white dark:bg-darkless px-2 muted text-sm -translate-x-1/2 translate-y-1/2">Changes made here will also update your HCB profile</div>
       </div>
     <% end %>
 
