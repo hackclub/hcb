@@ -12,7 +12,7 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6">
+  <div class="card mb-6" x-data="{ minor: <%= @application.user.teenager? %> }" >
     <div class="md:flex gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
@@ -44,7 +44,7 @@
             <%= inline_icon "info", size: 18 %>
           </div>
         </div>
-        <div class="flex gap-2 onboarding">
+        <div class="flex gap-2 onboarding" x-on:change="minor = new Date() - new Date([...$el.children].map(c => c.selectedOptions[0].label).join(' ')) < 568_025_136_000">
           <%= form.date_select :birthday,
                                 { start_year: Date.today.year,
                                   end_year: Date.today.year - 100,
@@ -121,12 +121,12 @@
     </div>
 
     <% if @application.user.teenager? %>
-      <div class="field col-span-2">
+      <div class="field col-span-2" x-show="minor">
         <%= form.label :cosigner_email do %>
           Parent email <span class="text-primary">*</span>
         <% end %>
         <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to cosign the fiscal sponsorship agreement. They will not have access to your organization on HCB.</p>
-        <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com" %>
+        <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", "x-bind:required": "minor" %>
       </div>
     <% end %>
   </div>
