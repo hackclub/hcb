@@ -1,4 +1,4 @@
-<%# locals: (title_suffix: "HCB", admin: false, console_art_url: nil) %>
+<%# locals: (title_suffix: "HCB", admin: false, console_art_url: nil, bare: false) %>
 
 <title><%= yield(:title).concat(" –") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
@@ -7,7 +7,7 @@
 <meta name="apple-itunes-app" content="app-id=6465424810">
 
 <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
-<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless bare %>
 <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 
 <% unless Rails.env.production? %>
