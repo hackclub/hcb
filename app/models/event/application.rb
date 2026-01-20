@@ -64,6 +64,7 @@ class Event
         transitions from: :draft, to: :submitted
         after do
           contract.party(:cosigner)&.notify
+          Event::ApplicationMailer.with(application: self).confirmation.deliver_later
         end
       end
     end
