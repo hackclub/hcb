@@ -83,6 +83,7 @@ module.exports = {
       colors: {
         primary: '#ec3750',
         slate: '#3c4858',
+        steel: '#273444',
         smoke: '#e0e6ed',
         muted: '#8492a6',
         snow: '#f9fafc',

@@ -482,6 +482,17 @@ $(document).on('turbo:load', function () {
     BK.s('comment')[0].scrollIntoView()
   })
 
+  $('[data-behavior~=expand_inspector]').on('click', e => {
+    const inspector = $('#inspector-container')
+    if (inspector.parent().hasClass('inspector--expanded')) {
+      inspector.parent().removeClass('inspector--expanded')
+      inspector.slideUp()
+    } else {
+      inspector.parent().addClass('inspector--expanded')
+      inspector.slideDown()
+    }
+  })
+
   $('.input-group').on('click', e => {
     // focus on the input when clicking on the input-group
     e.currentTarget.querySelector('input').focus()
