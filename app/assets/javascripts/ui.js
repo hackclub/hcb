@@ -194,6 +194,7 @@ window.attachTooltipListener = () => {
   });
 
   $(document).on("click", function (event) {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
     if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
       removeTooltips();
     }
