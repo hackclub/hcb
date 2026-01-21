@@ -41,9 +41,12 @@
 	"customizations": {
 		"vscode": {
 			// Add the IDs of extensions you want installed when the container is created.
-			"extensions": [
-				"Shopify.ruby-lsp"
-			]
+      "extensions": [
+        "Shopify.ruby-lsp",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
 		}
 	}
 
