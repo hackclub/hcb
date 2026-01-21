@@ -153,19 +153,27 @@ RSpec.describe DisbursementService::Create do
   end
 
   describe "subledger disbursements" do
-    it "creates disbursement with source_subledger when admin bypasses balance check" do
+    # Helper to fund a subledger with a positive balance
+    def fund_subledger(subledger, amount_cents:)
+      ct = create(:canonical_transaction, amount_cents: amount_cents)
+      create(:canonical_event_mapping, canonical_transaction: ct, event: subledger.event, subledger: subledger)
+    end
+
+    it "creates disbursement with source_subledger" do
       freeze_time
 
-      admin = create(:user, :make_admin)
+      requestor = create(:user)
       source_event = create(:event)
       source_subledger = create(:subledger, event: source_event)
+      fund_subledger(source_subledger, amount_cents: 10000)
+      create(:organizer_position, event: source_event, user: requestor)
 
       destination_event = create(:event)
 
       disbursement = described_class.new(
         name: "Subledger Transfer",
         amount: "50.00",
-        requested_by_id: admin.id,
+        requested_by_id: requestor.id,
         source_event_id: source_event.id,
         destination_event_id: destination_event.id,
         source_subledger_id: source_subledger.id,
@@ -200,18 +208,20 @@ RSpec.describe DisbursementService::Create do
       expect(disbursement.destination_subledger).to eq(destination_subledger)
     end
 
-    it "allows same event with different subledgers (subledger transfer) when admin" do
+    it "allows same event with different subledgers (subledger transfer)" do
       freeze_time
 
-      admin = create(:user, :make_admin)
+      requestor = create(:user)
       event = create(:event)
       source_subledger = create(:subledger, event: event)
       destination_subledger = create(:subledger, event: event)
+      fund_subledger(source_subledger, amount_cents: 10000)
+      create(:organizer_position, event: event, user: requestor)
 
       disbursement = described_class.new(
         name: "Subledger to Subledger",
         amount: "25.00",
-        requested_by_id: admin.id,
+        requested_by_id: requestor.id,
         source_event_id: event.id,
         destination_event_id: event.id,
         source_subledger_id: source_subledger.id,
@@ -225,18 +235,20 @@ RSpec.describe DisbursementService::Create do
       expect(disbursement.destination_subledger).to eq(destination_subledger)
     end
 
-    it "auto-approves same-event subledger transfers when admin" do
+    it "auto-approves same-event subledger transfers" do
       freeze_time
 
-      admin = create(:user, :make_admin)
+      requestor = create(:user)
       event = create(:event)
       source_subledger = create(:subledger, event: event)
       destination_subledger = create(:subledger, event: event)
+      fund_subledger(source_subledger, amount_cents: 10000)
+      create(:organizer_position, event: event, user: requestor)
 
       disbursement = described_class.new(
         name: "Auto-approved Subledger Transfer",
         amount: "25.00",
-        requested_by_id: admin.id,
+        requested_by_id: requestor.id,
         source_event_id: event.id,
         destination_event_id: event.id,
         source_subledger_id: source_subledger.id,
@@ -267,9 +279,9 @@ RSpec.describe DisbursementService::Create do
     end
 
     it "raises error for demo source event" do
-      # Use admin to bypass balance check so we can test the demo validation
-      admin = create(:user, :make_admin)
-      demo_event = create(:event, :demo_mode)
+      requestor = create(:user)
+      demo_event = create(:event, :demo_mode, :with_positive_balance)
+      create(:organizer_position, event: demo_event, user: requestor)
 
       destination_event = create(:event)
 
@@ -277,7 +289,7 @@ RSpec.describe DisbursementService::Create do
         described_class.new(
           name: "Demo Transfer",
           amount: "100.00",
-          requested_by_id: admin.id,
+          requested_by_id: requestor.id,
           source_event_id: demo_event.id,
           destination_event_id: destination_event.id,
         ).run
