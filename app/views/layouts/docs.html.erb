@@ -36,7 +36,7 @@
 
         <aside class="app__sidebar">
           <%= render "application/docs_header" %>
-          <%= render "application/flash" %>
+          <%= render "application/flash", klass: "mb1" %>
           <%= yield(:nav) %>
         </aside>
         <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
@@ -49,7 +49,7 @@
       <%= render "application/docs_header" unless @no_app_shell %>
       <%= yield(:header) %>
       <main class="container px-6 lg:px-3 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-        <%= render "application/flash" unless @hide_flash %>
+        <%= render "application/flash", klass: "mb1" unless @hide_flash %>
         <%= yield %>
         <%= render "application/footer" unless @no_app_shell || @hide_footer %>
       </main>

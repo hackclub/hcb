@@ -4,7 +4,7 @@
   <% flash.to_h.except("confetti", "confetti_emojis", "popover").each_with_index do |(key, value), index| %>
     <article
       role="alertdialog"
-      class="flash flex items-center <%= "mt2" unless index == 0 %> mb1 shrink-none <%= key %> <%= klass %>"
+      class="flash flex items-center <%= "mt2" unless index == 0 %> shrink-none <%= key %> <%= klass %>"
       data-behavior="flash"
       data-turbo-temporary>
       <div class="min-w-0 overflow-hidden break-words hyphens-auto">

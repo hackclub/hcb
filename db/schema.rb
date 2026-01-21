@@ -979,6 +979,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_173228) do
     t.datetime "created_at", null: false
     t.text "description"
     t.bigint "event_id"
+    t.integer "last_page_viewed"
+    t.datetime "last_viewed_at"
     t.string "name"
     t.text "notes"
     t.text "political_description"
