@@ -71,60 +71,19 @@ module Api
         render :show, status: :created, location: api_v4_stripe_card_path(@stripe_card)
       end
 
-      def update
-        @stripe_card = StripeCard.find_by_public_id!(params[:id])
-
+      def update # deprecated: use freeze, defrost, and activate instead
         if params[:status] == "frozen"
-          authorize @stripe_card, :freeze?
-
-          if @stripe_card.canceled?
-            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
-          end
-
-          @stripe_card.freeze!(frozen_by: current_user)
-          render json: { success: "Card frozen!" }
+          freeze
         elsif params[:status] == "active"
-          if @stripe_card.initially_activated?
-            authorize @stripe_card, :defrost?
-
-            if @stripe_card.stripe_status == "active"
-              return render json: { error: "Card is already active." }, status: :unprocessable_entity
-            end
-
-            @stripe_card.defrost!
-            return render json: { success: "Card defrosted!" }
+          stripe_card = StripeCard.find_by_public_id!(params[:id])
+          if stripe_card.initially_activated?
+            defrost
+          else
+            activate
           end
-
-          authorize @stripe_card, :activate?
-
-          if params[:last4].blank?
-            return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
-          end
-
-          # Find the correct card based on it's last4
-          card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
-          if card.nil? || card.id != @stripe_card.id
-            return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
-          end
-
-          if @stripe_card.canceled?
-            return render json: { error: "Card is canceled." }, status: :unprocessable_entity
-          end
-
-          # If this replaces another card, attempt to cancel the old card.
-          if @stripe_card.replacement_for
-            suppress(Stripe::InvalidRequestError) do
-              @stripe_card.replacement_for.cancel!
-            end
-          end
-
-          @stripe_card.update(initially_activated: true)
-          @stripe_card.defrost!
-
-          render json: { success: "Card activated!" }
         else
           skip_authorization
-          render json: { error: "invalid_operation" }, status: :unprocessable_entity
+          render json: { error: "Invalid status" }, status: :unprocessable_entity
         end
       end
 
@@ -168,6 +127,58 @@ module Api
         end
 
         @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
+      end
+
+      def freeze
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if @stripe_card.canceled?
+          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+        end
+
+        @stripe_card.freeze!(frozen_by: current_user)
+        return render json: { success: "Card frozen!" }
+      end
+
+      def defrost
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if @stripe_card.stripe_status == "active"
+          return render json: { error: "Card is already active." }, status: :unprocessable_entity
+        end
+
+        @stripe_card.defrost!
+        return render json: { success: "Card defrosted!" }
+      end
+
+      def activate
+        @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
+
+        if params[:last4].blank?
+          return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
+        end
+
+        # Find the correct card based on it's last4
+        card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
+        if card.nil? || card.id != @stripe_card.id
+          return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
+        end
+
+        if @stripe_card.canceled?
+          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+        end
+
+        # If this replaces another card, attempt to cancel the old card.
+        if @stripe_card.replacement_for
+          suppress(Stripe::InvalidRequestError) do
+            @stripe_card.replacement_for.cancel!
+          end
+        end
+
+        @stripe_card.update(initially_activated: true)
+        @stripe_card.defrost!
+
+        render json: { success: "Card activated!" }
       end
 
     end
