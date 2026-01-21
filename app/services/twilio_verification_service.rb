@@ -16,6 +16,11 @@ class TwilioVerificationService
           .services(VERIFY_SERVICE_ID)
           .verifications
           .create(to: phone_number, channel: "sms")
+  rescue => e
+    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
+      Rails.error.report(e)
+      raise
+    end
   end
 
   def check_verification_token(phone_number, code)
@@ -24,6 +29,11 @@ class TwilioVerificationService
                          .verification_checks
                          .create(to: phone_number, code:)
     verification.status == "approved"
+  rescue => e
+    unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
+      Rails.error.report(e)
+      raise
+    end
   end
 
 end

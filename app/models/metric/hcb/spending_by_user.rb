@@ -4,18 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  subject_type  :string
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module Hcb
@@ -32,20 +38,20 @@ class Metric
             FROM "raw_stripe_transactions"
             WHERE raw_stripe_transactions.stripe_transaction->>\'cardholder\' IN (
                 SELECT stripe_id FROM "stripe_cardholders" WHERE user_id = users.id
-            ) AND EXTRACT(YEAR FROM date_posted) = 2024
+            ) AND EXTRACT(YEAR FROM date_posted) = ' + Metric.year.to_s + '
 
             UNION ALL
 
             SELECT SUM(amount) AS dollars_spent
             FROM "ach_transfers"
-            WHERE EXTRACT(YEAR FROM created_at) = 2024
+            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
             AND creator_id = users.id
 
             UNION ALL
 
             SELECT SUM(amount) AS dollars_spent
             FROM "disbursements"
-            WHERE EXTRACT(YEAR FROM created_at) = 2024
+            WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
             AND requested_by_id = users.id
 
             UNION ALL
@@ -54,12 +60,12 @@ class Metric
             FROM (
                 SELECT amount
                 FROM "increase_checks"
-                WHERE EXTRACT(YEAR FROM created_at) = 2024
+                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
                 AND user_id IN (users.id)
                 UNION ALL
                 SELECT amount
                 FROM "checks"
-                WHERE EXTRACT(YEAR FROM created_at) = 2024
+                WHERE EXTRACT(YEAR FROM created_at) = ' + Metric.year.to_s + '
                 AND creator_id IN (users.id)
             ) AS combined_table
         ) AS combined_result)

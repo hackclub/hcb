@@ -16,7 +16,7 @@
 #
 # Indexes
 #
-#  index_event_configurations_on_event_id  (event_id)
+#  index_event_configurations_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -24,19 +24,17 @@
 #
 class Event
   class Configuration < ApplicationRecord
+    has_paper_trail
+
     belongs_to :event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
+    validates :event, uniqueness: true
 
-    before_create :set_defaults
     after_save :create_or_destroy_monthly_announcement
 
     private
-
-    def set_defaults
-      self.generate_monthly_announcement = event.is_public if self.generate_monthly_announcement.nil?
-    end
 
     def create_or_destroy_monthly_announcement
       if self.generate_monthly_announcement_previously_changed?

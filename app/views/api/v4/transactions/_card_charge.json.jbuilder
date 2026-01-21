@@ -12,6 +12,8 @@ json.merchant do
   json.network_id merchant_data["network_id"]
 end
 
+json.decline_reason hcb_code.pt&.decline_reason if hcb_code.pt&.declined?
+
 json.charge_method stripe_authorization&.dig("authorization_method")
 json.spent_at Time.at((stripe_authorization || stripe_transaction)["created"], in: "UTC")
 json.wallet stripe_authorization&.dig("wallet")

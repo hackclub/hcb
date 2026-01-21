@@ -29,12 +29,20 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
   end
 
+  def destroy?
+    cancel?
+  end
+
   def resend?
     admin_or_manager? || (record.sender == user && record.event&.users&.include?(user))
   end
 
   def change_position_role?
     admin_or_manager? && !record.signee?
+  end
+
+  def send_contract?
+    user&.admin?
   end
 
   private

@@ -341,7 +341,7 @@ class Donation < ApplicationRecord
   end
 
   def avatar(size = 128)
-    gravatar_url(email, name, email.sum, size) unless anonymous?
+    gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
   end
 
   private
@@ -366,13 +366,22 @@ class Donation < ApplicationRecord
       DonationMailer.with(donation: self).notification.deliver_later
     end
 
-    if event.donation_goal.present? && (event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents)
+    if reached_donation_goal?
       EventMailer.with(event:).donation_goal_reached.deliver_later
     end
   end
 
   def first_donation?
     self.event.donations.succeeded.size == 1
+  end
+
+  def reached_donation_goal?
+    return false unless event.donation_goal.present?
+    return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
+    # this prevents us from sending the email after the organization has already reached the goal
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
+
+    true
   end
 
   def create_payment_intent_attrs(customer)

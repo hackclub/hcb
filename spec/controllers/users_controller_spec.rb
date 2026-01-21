@@ -50,12 +50,10 @@ RSpec.describe UsersController do
     render_views
 
     it "requires sudo mode in order to change 2fa settings" do
-      user = create(
-        :user,
-        use_two_factor_authentication: true,
-        phone_number: "+18556254225",
-      )
+      user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
+      user.update!(use_sms_auth: true)
+      user.update!(use_two_factor_authentication: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
       sign_in(user)
@@ -70,7 +68,7 @@ RSpec.describe UsersController do
         }
       )
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(user.reload.use_two_factor_authentication).to eq(true)
 
@@ -92,12 +90,10 @@ RSpec.describe UsersController do
     end
 
     it "does not require sudo mode unless the feature flag is enabled" do
-      user = create(
-        :user,
-        use_two_factor_authentication: true,
-        phone_number: "+18556254225",
-      )
+      user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
+      user.update!(use_sms_auth: true)
+      user.update!(use_two_factor_authentication: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
       sign_in(user)
 

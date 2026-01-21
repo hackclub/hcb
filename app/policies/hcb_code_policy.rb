@@ -33,10 +33,6 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
-  def receipt_status?
-    user&.admin? || present_in_events? || user_made_purchase?
-  end
-
   def pin?
     gte_member_in_events?
   end
@@ -67,8 +63,11 @@ class HcbCodePolicy < ApplicationPolicy
 
   # if users have permissions greater than or equal to member in events
   def gte_member_in_events?
-    user&.admin? || record.events.any? do |e|
-      e.try(:users).try(:include?, user) && OrganizerPosition.role_at_least?(user, e, :member)
+    return false if user.nil? # dont run checks if the user isnt signed in
+    return true if user&.admin?
+
+    record.events.any? do |e|
+      OrganizerPosition.role_at_least?(user, e, :member)
     end
   end
 

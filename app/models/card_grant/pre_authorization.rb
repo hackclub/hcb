@@ -30,8 +30,11 @@
 class CardGrant
   class PreAuthorization < ApplicationRecord
     has_many_attached :screenshots, dependent: :destroy
+    validates :screenshots, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["screenshots"].present? }
+
     belongs_to :card_grant
     has_one :event, through: :card_grant
+    has_one :card_grant_setting, through: :card_grant
     has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
@@ -50,7 +53,7 @@ class CardGrant
 
       event :mark_submitted do
         transitions from: :draft, to: :submitted
-        after do
+        after_commit do
           ::CardGrant::PreAuthorization::AnalyzeJob.perform_later(pre_authorization: self)
         end
       end
@@ -81,8 +84,8 @@ class CardGrant
     def status_badge_type(organizer: false)
       return :muted if draft?
       return :pending if submitted?
-      return :success if approved? || (fraudulent? && !organizer)
-      return :error if fraudulent? && organizer
+      return :success if approved? || (fraudulent? && authorized? && !organizer)
+      return :error if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
       return :error if rejected?
 
       :muted
@@ -91,8 +94,9 @@ class CardGrant
     def status_text(organizer: false)
       return "Draft" if draft?
       return "Under review" if submitted?
-      return "Approved" if approved? || (fraudulent? && !organizer)
-      return "Flagged as fraudulent" if fraudulent? && organizer
+      return "Approved" if approved? || (fraudulent? && authorized? && !organizer)
+      return "Flagged as fraudulent" if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
+
       return "Rejected" if rejected?
 
       aasm_state.humanize
@@ -184,6 +188,13 @@ class CardGrant
 
       broadcast_refresh_to self
     rescue Faraday::Error => e
+      # If OpenAI rejects the image as invalid, mark as fraudulent
+      if e.response_body&.include?("does not represent a valid image")
+        mark_fraudulent!
+        broadcast_refresh_to self
+        return
+      end
+
       # Modify the original exception to append the response body to the message
       # so these are easier to debug
       raise(e.exception(<<~MSG))
@@ -193,11 +204,11 @@ class CardGrant
     end
 
     def unauthorized?
-      draft? || submitted? || rejected?
+      draft? || submitted? || rejected? || (card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
     def authorized?
-      approved? || fraudulent?
+      approved? || (!card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
   end

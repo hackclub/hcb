@@ -313,6 +313,9 @@ class AdminController < Admin::BaseController
       end
     end
 
+    # Auto mapp the transactions
+    ::EventMappingEngine::Nightly.new.run
+
     duplicates = transactions.count - raw_intrafi_transactions.count
 
     redirect_to raw_intrafi_transactions_admin_index_path, flash: {
@@ -484,9 +487,16 @@ class AdminController < Admin::BaseController
 
     relation = relation.reimbursement_requested if @pending
 
+    @unprocessed_wise_report_ids = Reimbursement::Report
+                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .select(:id)
+                                   .pluck(:id)
+
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'reimbursement_requested' DESC"),
+      @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
+      Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       # Arel.sql("aasm_state = 'draft' ASC"),
       "reimbursement_reports.created_at desc"
     )
@@ -548,6 +558,8 @@ class AdminController < Admin::BaseController
 
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -559,6 +571,8 @@ class AdminController < Admin::BaseController
 
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user, send_realtime: true)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
@@ -585,6 +599,7 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
@@ -713,15 +728,18 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @event_id = params[:event_id].presence
+    @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
 
     @wise_transfers = WiseTransfer.all
 
     @wise_transfers = @wise_transfers.search_recipient(@q) if @q
 
-    @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
+    @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
@@ -794,6 +812,25 @@ class AdminController < Admin::BaseController
 
     @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
 
+  end
+
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    # Pending fees that haven't been converted to FeeRevenue yet
+    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
+    events_with_balances = Event.pending_fees_v2.map do |event|
+      { event: event, balance: event.fee_balance_v2_cents }
+    end
+
+    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
   end
 
   def disbursements
@@ -1298,6 +1335,10 @@ class AdminController < Admin::BaseController
   end
 
   def email
+    @message = Ahoy::Message.find(params[:message_id])
+  end
+
+  def email_html
     @message_id = params[:message_id]
 
     respond_to do |format|
@@ -1320,7 +1361,6 @@ class AdminController < Admin::BaseController
     @count = messages.count
 
     @messages = messages.page(@page).per(@per).order(sent_at: :desc)
-
   end
 
   def unknown_merchants
@@ -1387,21 +1427,14 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc)
-  end
-
-  def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name])
-
-    if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
-    else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
-    end
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private
@@ -1528,6 +1561,9 @@ class AdminController < Admin::BaseController
     end
 
     client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  rescue => e
+    Rails.error.report(e)
+    9999 # return something invalidly high to get the ops team to report it
   end
 
   def hackathons_task_size

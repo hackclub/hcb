@@ -81,7 +81,12 @@
     </tr>
     <tr>
       <td>Balance available:</td>
-      <td><%= render_money @wire.event.balance_available_v2_cents %></td>
+      <td>
+        <%= render_money @wire.event.balance_available_v2_cents %>
+        <% if @wire.event.balance_available_v2_cents < 0 %>
+          <span class="ml1 badge bg-error">⚠️ Negative balance</span>
+        <% end %>
+      </td>
     </tr>
     <% @wire.recipient_information&.keys&.each do |key| %>
       <% if @wire.recipient_information[key].presence != nil %>

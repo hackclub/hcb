@@ -3,12 +3,22 @@
 module Api
   module V4
     class UsersController < ApplicationController
-      skip_after_action :verify_authorized, only: [:available_icons]
+      skip_after_action :verify_authorized, only: [:available_icons, :beacon_config, :revoke]
       before_action :require_admin!, only: [:show, :by_email]
+      before_action :require_trusted_oauth_app!, only: [:beacon_config]
 
       def me
         @user = authorize current_user, :show?
         render :show
+      end
+
+      def revoke
+        @current_token.update(revoked_at: Time.now)
+        render json: {
+          success: true,
+          owner_email: current_user.email,
+          key_name: @current_token.application&.name
+        }
       end
 
       def show
@@ -41,6 +51,12 @@ module Api
 
 
         render json: icons.compact_blank
+      end
+
+      def beacon_config
+        render json: {
+          signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY), current_user.email)
+        }
       end
 
     end

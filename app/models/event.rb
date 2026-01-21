@@ -40,6 +40,8 @@
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  discord_channel_id                           :string
+#  discord_guild_id                             :string
 #  emburse_department_id                        :string
 #  increase_account_id                          :string           not null
 #  parent_id                                    :bigint
@@ -47,6 +49,8 @@
 #
 # Indexes
 #
+#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
+#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
 #  index_events_on_parent_id            (parent_id)
 #  index_events_on_point_of_contact_id  (point_of_contact_id)
 #
@@ -160,10 +164,6 @@ class Event < ApplicationRecord
     Event.where(id: descendant_ids)
   end
 
-  def descendant_total_balance_cents
-    subevents.to_a.sum(&:balance_available_v2_cents)
-  end
-
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
@@ -214,6 +214,7 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+  scope :financially_frozen, -> { where(financially_frozen: true) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -284,13 +285,15 @@ class Event < ApplicationRecord
   has_many :slugs, -> { order(id: :desc) }, class_name: "FriendlyId::Slug", as: :sluggable, dependent: :destroy
 
   has_many :organizer_position_invites, dependent: :destroy
+  has_many :organizer_position_invite_links, class_name: "OrganizerPositionInvite::Link"
+  has_many :organizer_position_invite_requests, through: :organizer_position_invite_links, source: :requests
   has_many :organizer_positions, dependent: :destroy
 
   def ancestor_organizer_positions
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -370,6 +373,11 @@ class Event < ApplicationRecord
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
 
+  has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy
+  has_many :scoped_tags, through: :event_scoped_tags_events, source: :event_scoped_tag
+  has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
+  accepts_nested_attributes_for :event_scoped_tags_events
+
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -389,15 +397,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
+  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
+  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
+  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -424,7 +436,11 @@ class Event < ApplicationRecord
 
   validates :postal_code, zipcode: { country_code_attribute: :country, message: "is not valid" }, allow_blank: true
 
+  validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
+
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
+
+  after_create :apply_plan_default_values
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
@@ -438,7 +454,6 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
-  before_save :enable_monthly_announcements
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -634,7 +649,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -689,9 +704,9 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
-  def reload
+  def reload(**args)
     @total_fee_payments_v2_cents = nil
-    super
+    super(**args)
   end
 
   def total_fee_payments_v2_cents
@@ -888,6 +903,14 @@ class Event < ApplicationRecord
                                   .filter_map { |(old_id, _new_id)| User.find_by(id: old_id) }
   end
 
+  def has_discord_guild?
+    discord_guild_id.present?
+  end
+
+  def valid_scoped_tags
+    scoped_tags.where(parent_event_id: parent_id)
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -911,7 +934,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+    return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -948,11 +971,10 @@ class Event < ApplicationRecord
     end
   end
 
-  def enable_monthly_announcements
-    # We'll enable monthly announcements when transparency mode is turned on
-    if is_public_changed?(to: true)
-      config.update(generate_monthly_announcement: true)
-    end
+  def apply_plan_default_values
+    return if plan&.default_values.blank?
+
+    update!(plan.default_values)
   end
 
   def stripe_transaction_merchant(transaction)
