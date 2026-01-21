@@ -1,7 +1,7 @@
 IntercomRails.config do |config|
   # == Intercom app_id
   #
-  config.app_id = ENV["INTERCOM_APP_ID"] || "uom9k5zn"
+  config.app_id = Credentials.fetch(:INTERCOM, :APP_ID)
 
   # == Intercom session_duration
   #
@@ -116,4 +116,12 @@ IntercomRails.config do |config|
   # config.api_base = "https://#{config.app_id}.intercom-messenger.com"
   #
   config.api_base = "https://api-iam.intercom.io"
+
+  config.api_secret = Credentials.fetch(:INTERCOM, :API_SECRET)
+
+  config.jwt.enabled = true
+
+  config.jwt.signed_user_fields = ["email", "id"]
+
+  config.jwt.expiry = 1.hour
 end
