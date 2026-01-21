@@ -7,6 +7,7 @@
 #  id                                :bigint           not null, primary key
 #  banned_categories                 :string
 #  banned_merchants                  :string
+#  block_suspected_fraud             :boolean          default(TRUE), not null
 #  category_lock                     :string
 #  expiration_preference             :integer          default("1 year"), not null
 #  invite_message                    :string

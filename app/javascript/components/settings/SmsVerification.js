@@ -30,12 +30,13 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrf() },
       })
+      const json = await resp.json()
 
       if (resp.ok) {
         setErrors([])
         setValidationSent(true)
       } else {
-        setErrors(['something went wrong!'])
+        setErrors([json.error || 'something went wrong!'])
       }
     } finally {
       setLoading(false)
@@ -156,9 +157,9 @@ const SmsVerification = ({ phoneNumber, enrollSmsAuth = false }) => {
               </p>
               <button
                 onClick={handleClick}
-                className={loading ? 'bg-muted wait btn' : 'pointer btn'}
+                className={loading ? 'bg-muted wait btn' : 'bg-info btn'}
               >
-                Send Verification Code
+                Send verification code
               </button>
             </>
           )}

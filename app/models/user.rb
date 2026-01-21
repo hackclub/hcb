@@ -82,7 +82,7 @@ class User < ApplicationRecord
   has_many :logins
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :user_sessions, dependent: :destroy
+  has_many :user_sessions, class_name: "User::Session", dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
   has_many :contracts, through: :organizer_position_invites
@@ -164,10 +164,15 @@ class User < ApplicationRecord
 
   before_create :format_number
   before_save :on_phone_number_update
+  validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
+  after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
+
   after_update :queue_sync_with_loops_job
+
+  before_update :set_default_seasonal_theme
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -215,9 +220,20 @@ class User < ApplicationRecord
     if use_sms_auth_previously_changed?
       if use_sms_auth
         create_activity(key: "user.enabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
       else
         create_activity(key: "user.disabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
       end
+    end
+
+    if use_two_factor_authentication_previously_changed?
+      change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
+      User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
+    end
+
+    if phone_number_previously_changed? && phone_number.present?
+      User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
 
@@ -344,6 +360,10 @@ class User < ApplicationRecord
     full_name_in_database.blank?
   end
 
+  def was_onboarding?
+    full_name_before_last_save.blank?
+  end
+
   def active_mailbox_address
     self.mailbox_addresses.activated.first
   end
@@ -359,16 +379,17 @@ class User < ApplicationRecord
     end
   end
 
-  memo_wise def transactions_missing_receipt(since: nil)
+  memo_wise def transactions_missing_receipt(from: nil, to: nil)
     return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
     user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", since) if since
+    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
+    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
     user_hcb_codes.order(created_at: :desc)
   end
 
-  memo_wise def transactions_missing_receipt_count(since: nil)
-    transactions_missing_receipt(since:).size
+  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
+    transactions_missing_receipt(from:, to:).size
   end
 
   def build_payout_method(params)
@@ -521,6 +542,7 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  # Total new teens via referrals links created by this user (admin)
   def new_teenagers_from_referrals_count
     self.referral_links.sum { |link| link.new_teenagers.size }
   end
@@ -604,6 +626,12 @@ class User < ApplicationRecord
     end
   end
 
+  def second_factor_present_for_2fa
+    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+      errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
+    end
+  end
+
   def admins_cannot_disable_2fa
     return unless use_two_factor_authentication_changed?
     return if Rails.env.development?
@@ -611,6 +639,18 @@ class User < ApplicationRecord
     if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
+  end
+
+  def set_default_seasonal_theme
+    return unless birthday_changed?
+    # Skip if user ever updated their seasonal_themes_enabled setting
+    return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
+
+    self.seasonal_themes_enabled = teenager?
+  end
+
+  def send_onboarded_email
+    UserMailer.onboarded(user: self).deliver_later
   end
 
 end

@@ -1,5 +1,5 @@
-<%= link_to task_path, target: "_blank" do %>
-  <li class="card card--hover flex justify-between overflow-visible line-height-3">
+<%= link_to task_path, target: "_blank", class: "z-10" do %>
+  <li class="card card--hover flex justify-between overflow-visible leading-[1.25]">
     <strong><%= human_name %></strong>
     <% if defined? task_name %>
       <span class="badge <%= count > 0 ? "bg-accent" : "bg-muted" %>"><%= count %></span>

@@ -38,11 +38,7 @@ module ApplicationHelper
   end
 
   def render_transaction_amount(amount)
-    if amount > 0
-      content_tag(:span, "+#{render_money amount}", class: "success-dark medium")
-    else
-      render_money amount
-    end
+    render_money amount
   end
 
   def render_percentage(decimal, params = {})
@@ -60,7 +56,7 @@ module ApplicationHelper
 
   def blankslate(text, **options)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 muted font-medium h3 w-full rounded-lg border border-gray-200 dark:border-gray-700 #{options[:class]}", **other_options)
   end
 
   def list_badge_for(count, item, glyph, optional: false, required: false, **options)
@@ -87,7 +83,7 @@ module ApplicationHelper
   end
 
   def pop_icon_to(icon, url, icon_size: 28, **options)
-    link_to url, options.merge(class: "pop #{options[:class] || "info"}") do
+    link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
     end
   end
@@ -126,7 +122,7 @@ module ApplicationHelper
   end
 
   def modal_header(text, external_link: nil)
-    content_tag :header, class: "pb2" do
+    content_tag :header, class: "pb2 rounded-t-lg" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
         content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
@@ -179,6 +175,9 @@ module ApplicationHelper
       options[:height] ||= options[:size]
       options.delete :size
     end
+    unless options["aria-label"]
+      options["aria-hidden"] = true
+    end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
   end
@@ -213,7 +212,7 @@ module ApplicationHelper
   end
 
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or #{help_phone}.".html_safe
+    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.".html_safe
   end
 
   def help_email
@@ -392,11 +391,11 @@ module ApplicationHelper
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **options[:button_options] do
           (inline_icon options[:button_icon]) +
-          (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
+          (content_tag :span, template.call(options[:options][0][1]), class: "truncate", data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +

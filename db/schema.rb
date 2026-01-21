@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_173228) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -457,6 +457,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
   create_table "card_grant_settings", force: :cascade do |t|
     t.string "banned_categories"
     t.string "banned_merchants"
+    t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
@@ -550,8 +551,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.bigint "event_id", null: false
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
-    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx"
-    t.index ["event_id"], name: "index_column_account_numbers_on_event_id"
+    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
   create_table "column_statements", force: :cascade do |t|
@@ -622,6 +623,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.datetime "updated_at", null: false
     t.string "username", null: false
     t.index ["username"], name: "index_console1984_users_on_username"
+  end
+
+  create_table "contract_parties", force: :cascade do |t|
+    t.string "aasm_state"
+    t.bigint "contract_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_email"
+    t.string "role", null: false
+    t.datetime "signed_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.index ["contract_id"], name: "index_contract_parties_on_contract_id"
+    t.index ["user_id"], name: "index_contract_parties_on_user_id"
   end
 
   create_table "contracts", force: :cascade do |t|
@@ -958,7 +973,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_event_configurations_on_event_id"
+    t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
   end
 
   create_table "event_follows", force: :cascade do |t|
@@ -1541,13 +1556,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
   end
 
   create_table "metrics", force: :cascade do |t|
+    t.string "aasm_state"
+    t.datetime "canceled_at"
+    t.datetime "completed_at"
     t.datetime "created_at", null: false
+    t.datetime "failed_at"
     t.jsonb "metric"
+    t.datetime "processing_at"
     t.bigint "subject_id"
     t.string "subject_type"
     t.string "type", null: false
     t.datetime "updated_at", null: false
-    t.index ["subject_type", "subject_id", "type"], name: "index_metrics_on_subject_type_and_subject_id_and_type", unique: true
+    t.integer "year"
+    t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
@@ -2010,6 +2031,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.string "login_header_text"
     t.string "login_text_color"
     t.string "name", null: false
+    t.string "redirect_to"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
@@ -2069,6 +2091,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
 
   create_table "reimbursement_reports", force: :cascade do |t|
     t.string "aasm_state"
+    t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
@@ -2087,6 +2110,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2454,6 +2478,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.datetime "created_at", null: false
     t.datetime "period_end_at", null: false
     t.datetime "period_start_at", null: false
+    t.boolean "teenager"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["user_id"], name: "index_user_seen_at_histories_on_user_id"
@@ -2587,6 +2612,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_203719) do
     t.jsonb "recipient_information"
     t.string "recipient_name", null: false
     t.text "return_reason"
+    t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
