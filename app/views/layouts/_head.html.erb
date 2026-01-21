@@ -1,6 +1,6 @@
 <%# locals: (title_suffix: "HCB", admin: false, bare: false) %>
 
-<title><%= yield(:title).concat(" –") if content_for?(:title) %><%= title_suffix %></title>
+<title><%= yield(:title).concat(" – ") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
 <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">

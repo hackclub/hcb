@@ -336,7 +336,7 @@ module Reimbursement
     end
 
     def minimum_wire_amount_cents
-      event.minimum_wire_amount_cents unless card_grant.present?
+      return event.minimum_wire_amount_cents unless card_grant.present?
 
       500_00
     end
