@@ -28,9 +28,11 @@ module DisbursementService
                            sender_bank_account_id: ColumnService::Accounts::FS_OPERATING,
                            receiver_bank_account_id: ColumnService::Accounts::FS_MAIN,
                            description: memo
+
+        disbursement.mark_in_transit!
+  
       end
 
-      disbursement.mark_in_transit!
     end
 
   end
