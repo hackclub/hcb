@@ -9,7 +9,14 @@
     <% end %>
 
     <%= render "application/callout", type: "info", title: "Fraud prevention information", class: "mb-4" do %>
-    <p class="m-0">Here's some information about the fraud check process as part of this card grant's pre-authorization configuration.</p>
+        <p class="m-0">
+            Here's some information about the fraud check process as part of this card grant's pre-authorization configuration.
+            <% if pre_authorization.fraudulent? && pre_authorization.authorized? %>
+                The grant recipient will still be able to spend on this card until the pre-authorization is rejected.
+            <% elsif pre_authorization.fraudulent? && pre_authorization.unauthorized? %>
+                The grant recipient will be unable to spend on this card until the pre-authorization is approved.
+            <% end %>
+        </p>
         <section class="details details--wide details--tall mt-3">
             <p>
                 <strong>Fraud check</strong>

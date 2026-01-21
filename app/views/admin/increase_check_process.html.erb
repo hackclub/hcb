@@ -36,6 +36,15 @@
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @check.amount %></td>
     </tr>
+    <tr>
+      <td style="text-align: right;">Organization balance:</td>
+      <td>
+        <%= render_money @check.event.balance_available_v2_cents %>
+        <% if @check.event.balance_available_v2_cents < 0 %>
+          <span class="ml1 badge bg-error">⚠️ Negative balance</span>
+        <% end %>
+      </td>
+    </tr>
     <% if @check.employee_payment.present? %>
       <tr>
         <td style="text-align: right;">Employee:</td>

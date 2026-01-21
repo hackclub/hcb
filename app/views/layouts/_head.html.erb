@@ -1,0 +1,69 @@
+<%# locals: (title_suffix: "HCB", admin: false, bare: false) %>
+
+<title><%= yield(:title).concat(" – ") if content_for?(:title) %><%= title_suffix %></title>
+<%= csrf_meta_tags %>
+<%= csp_meta_tag %>
+<meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
+<meta name="apple-itunes-app" content="app-id=6465424810">
+
+<%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+<%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless bare %>
+<%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+
+<% unless Rails.env.production? %>
+  <meta name="turbo-prefetch" content="false">
+<% end %>
+
+<% unless admin %>
+  <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
+  <% if Rails.env.production? %>
+    <script>
+      console.log(`%c                   -*%@@%*-
+                  .=#@@@@@@@@@@#=.
+              .=%@@@@@*-..-*@@@@@%=.
+            -#@@@@@+:        :+@@@@@#-
+          :*@@@@@*:              :*@@@@@*:
+        =%@@@@#-                    -#@@@@%=.
+      *@@@@@+.                        .+@@@@@*
+      *@@*-   *@@*      *@@*      *@@*   :*@@*
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              @@@@      @@@@      @@@@
+              *@@*      *@@*      *@@*
+
+        *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+        *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+              Come hack on HCB with us!
+            <%= Rails.configuration.constants.github_url %> <%# erb_lint:disable ErbSafety %>
+      `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+    </script>
+    <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+  <% end %>
+
+  <%# Web component used for TOTP / donation QR codes %>
+  <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
+<% end %>
+
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
+<meta name="msapplication-TileColor" content="#ec3750">
+
+<% if content_for?(:favicon) %>
+  <%= yield :favicon %>
+<% elsif user_birthday? %>
+  <link rel="icon" type="image/png" href="/favicon-party.gif">
+<% else %>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
+<% end %>
+
+<%= render "application/seo_meta_tags" %>
+<%= yield(:head) if content_for?(:head) %>

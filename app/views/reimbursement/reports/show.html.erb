@@ -46,6 +46,14 @@
                       'aria-label': "Delete this report.",
                       disabled: !policy(@report).destroy? %>
     <% end %>
+    <% if @report.card_grant.present? %>
+      <%= pop_icon_to "card",
+                      @report.card_grant,
+                      icon_size: 26,
+                      class: "tooltipped tooltipped--w bg-info",
+                      style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
+                      'aria-label': "View the associated card grant." %>
+    <% end %>
     <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
                       "#",
@@ -236,6 +244,12 @@
 <% end %>
 
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
+
+<% admin_tool("mt-4 p-3") do %>
+  <%= error_boundary fallback_text: "Failed to load payout information" do %>
+    <%= render partial: "reimbursement/reports/payout_information", locals: { report: @report } %>
+  <% end %>
+<% end %>
 
 <%= render partial: "reimbursement/reports/conversation" %>
 
