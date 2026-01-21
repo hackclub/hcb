@@ -8,16 +8,15 @@
 <% end %>
 
 <% content_for :header do %>
-  <aside class="min-w-0 max-w-5xl px-8 w-full hidden md:block -mb-20 mx-auto sticky top-0 z-10">
+  <aside class="min-w-0 max-w-5xl px-6 lg:px-8 w-full hidden md:block pt-6 lg:pt-0 -mb-20 mx-auto sticky top-0 z-10">
     <link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
 
     <div>
       <div 
-        style="transform-origin: top left; width: 750px;" 
+        style="transform-origin: top left; width: 720px;" 
         class="pt-20 mx-auto pointer-events-auto"
-        id="check-preview-container"
-        data-action="click->check-preview#scrollToTop">
+        id="check-preview-container">
         <%= render "increase_checks/paper_check",
           check_number: "1024",
           date: Date.today.strftime("%b %d, %Y"),
