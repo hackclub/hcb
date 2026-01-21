@@ -7,7 +7,7 @@ module BankFeeService
     end
 
     def run
-      raise ArgumentError, "must be a pending bank fee only" unless bank_fee.pending?
+      raise ArgumentError, "must be a confirmed bank fee only" unless bank_fee.confirmed?
 
       ActiveRecord::Base.transaction do
         bank_fee.mark_in_transit!
@@ -42,7 +42,7 @@ module BankFeeService
     end
 
     def bank_fee
-      @bank_fee ||= BankFee.pending.find(@bank_fee_id)
+      @bank_fee ||= BankFee.confirmed.find(@bank_fee_id)
     end
 
   end

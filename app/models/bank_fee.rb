@@ -39,21 +39,29 @@ class BankFee < ApplicationRecord
   after_create :set_hcb_code
 
   scope :since_feature_launch, -> { where("created_at > ?", Time.utc(2021, 5, 20)) }
-  scope :in_transit_or_pending, -> { where("aasm_state in (?)", ["pending", "in_transit"]) }
+  scope :in_transit_or_confirmed, -> { where("aasm_state in (?)", ["confirmed", "in_transit"]) }
 
   aasm do
     state :pending, initial: true
+    state :confirmed
     state :in_transit
     state :settled
 
+    event :mark_confirmed do
+      transitions from: :pending, to: :confirmed
+    end
+
     event :mark_in_transit do
-      transitions from: :pending, to: :in_transit
+      transitions from: :confirmed, to: :in_transit
     end
 
     event :mark_settled do
       transitions from: :in_transit, to: :settled
     end
   end
+
+  after_create_commit :create_raw_pending_bank_fee_transaction_and_cpt
+  after_commit :update_canonical_pending_transaction_amount
 
   def state
     return :success if settled?
@@ -101,6 +109,30 @@ class BankFee < ApplicationRecord
 
   def raw_pending_bank_fee_transactions
     @raw_pending_bank_fee_transactions ||= ::RawPendingBankFeeTransaction.where(bank_fee_transaction_id: id)
+  end
+
+  def create_raw_pending_bank_fee_transaction_and_cpt
+    rpt = ::RawPendingBankFeeTransaction.find_or_initialize_by(bank_fee_transaction_id: id.to_s).tap do |t|
+      t.amount_cents = amount_cents
+      t.date_posted = created_at
+    end
+    rpt.save!
+
+    attrs = {
+      date: rpt.date,
+      memo: rpt.memo,
+      amount_cents: rpt.amount_cents,
+      raw_pending_bank_fee_transaction_id: rpt.id,
+      fronted: rpt.amount_cents.positive?,
+      fee_waived: true
+    }
+    ::CanonicalPendingTransaction.create!(attrs)
+  end
+
+  def update_canonical_pending_transaction_amount
+    return unless canonical_pending_transaction.present?
+
+    canonical_pending_transaction.update!(amount_cents: amount_cents)
   end
 
 end
