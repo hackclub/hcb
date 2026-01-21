@@ -84,7 +84,7 @@ class OrganizerPositionInvite < ApplicationRecord
 
   belongs_to :organizer_position, optional: true
 
-  validate :not_already_organizer, if: -> { event_changed? || user_changed? }
+  validate :not_already_organizer, on: :create
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
