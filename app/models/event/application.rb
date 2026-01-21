@@ -183,7 +183,7 @@ class Event
       app["Event Website"] = website_url
       app["Zip Code"] = address_postal_code
       app["Tell us about your event"] = description
-      app["Have you used HCB for any previous events?"] = user.events.any? ? 'Yes, I have used HCB before' : 'No, first time!'
+      app["Have you used HCB for any previous events?"] = user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
       app["Teenager Led?"] = user.teenager?
       app["Address Line 1"] = address_line1
       app["City"] = address_city
