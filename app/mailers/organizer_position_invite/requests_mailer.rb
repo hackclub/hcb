@@ -11,7 +11,7 @@ class OrganizerPositionInvite
     end
 
     def denied
-      @email = @request.requester.email
+      @email = @request.requester.email_address_with_name
 
       mail to: @email, subject: "Your request to join #{@request.link.event.name} has been denied"
     end
