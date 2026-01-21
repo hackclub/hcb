@@ -16,14 +16,6 @@
 		}
 	},
 
-	"build": {
-		"args": {
-			// Update 'VARIANT' to pick a Ruby version
-			"VARIANT": "3.4.7-bookworm",
-			"NODE_VERSION": "22"  // Node version installed by nvm (https://github.com/devcontainers/images/tree/main/src/ruby#installing-nodejs)
-		}
-	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or the host.
 	"forwardPorts": [3000, 5432],
@@ -53,7 +45,7 @@
 				"Shopify.ruby-lsp"
 			]
 		}
-	},
+	}
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
