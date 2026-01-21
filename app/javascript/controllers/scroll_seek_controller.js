@@ -80,10 +80,21 @@ export default class extends Controller {
     }
 
     if (window.innerWidth < 640 && this.tabTargets[index]) {
-      this.tabTargets[index].scrollIntoView({
-        block: 'start',
-        inline: 'nearest',
-      })
+      if (index === 0) {
+        this.tabTargets[index].parentElement.parentElement.scrollTo({ left: 0, behavior: 'smooth' })
+        return
+      }
+      else if (index === this.tabTargets.length - 1) {
+        this.tabTargets[index].parentElement.parentElement.scrollTo({ left: this.tabTargets[index].parentElement.scrollWidth, behavior: 'smooth' })
+        return
+      }
+      else {
+        this.tabTargets[index].scrollIntoView({
+          block: 'start',
+          inline: 'nearest',
+          behavior: 'smooth',
+        })
+      }
     }
   }
 }
