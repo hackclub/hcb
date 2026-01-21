@@ -24,6 +24,9 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
 
       t.text :notes
 
+      t.integer :last_page_viewed
+      t.datetime :last_viewed_at
+
       t.datetime :submitted_at
       t.datetime :under_review_at
       t.datetime :approved_at

@@ -34,10 +34,12 @@ class Event
 
       # Signees are redirected to this page right after signing, so let's make sure we have updated data
       @application.contract&.party(:signee)&.sync_with_docuseal
+      @application.record_pageview(:show)
     end
 
     def submission
       authorize @application
+      @application.record_pageview(:submission)
     end
 
     def create
@@ -49,14 +51,17 @@ class Event
 
     def personal_info
       authorize @application
+      @application.record_pageview(:personal_info)
     end
 
     def project_info
       authorize @application
+      @application.record_pageview(:project_info)
     end
 
     def agreement
       authorize @application
+      @application.record_pageview(:agreement)
 
       @contract = @application.contract || @application.create_contract
       @party = @contract.party :signee
@@ -64,6 +69,7 @@ class Event
 
     def review
       authorize @application
+      @application.record_pageview(:review)
     end
 
     def update

@@ -16,6 +16,8 @@
 #  approved_at           :datetime
 #  cosigner_email        :string
 #  description           :text
+#  last_page_viewed      :integer
+#  last_viewed_at        :datetime
 #  name                  :string
 #  notes                 :text
 #  political_description :text
@@ -43,6 +45,8 @@
 #
 class Event
   class Application < ApplicationRecord
+    has_paper_trail
+
     include AASM
     include Contractable
 
@@ -51,6 +55,15 @@ class Event
 
     belongs_to :user
     belongs_to :event, optional: true
+
+    enum :last_page_viewed, {
+      show: 0,
+      project_info: 1,
+      personal_info: 2,
+      review: 3,
+      agreement: 4,
+      submission: 5
+    }
 
     aasm timestamps: true do
       state :draft, initial: true
@@ -183,6 +196,10 @@ class Event
       app["Referral Code"] = referral_code
 
       app.save
+    end
+
+    def record_pageview(last_page_viewed)
+      update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
   end
