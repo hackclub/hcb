@@ -122,7 +122,7 @@
                 </div>
 
                 <% if filter[:display_direction] %>
-                  <div class="mt-10 uppercase opacity-75 font-bold block pl-1 pb-1">Direction</div>
+                  <div class="mt-11 uppercase opacity-50 font-bold block pl-1">Direction</div>
                   <% %w[revenue expenses].each do |value| %>
                     <%= link_to value.capitalize,
                       defined?(base_url) && base_url ? upsert_query_params_from_url(base_url, "direction" => value) : upsert_query_params(filter[:key] => value),

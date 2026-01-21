@@ -1,6 +1,6 @@
 <% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
 
-<div class="flex flex-row justify-between items-center width-100 gap-2 mb-2">
+<div class="flex flex-row justify-between items-center width-100 gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
       <%= render "events/search", form: %>
     <% if @tag %>
