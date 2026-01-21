@@ -50,8 +50,8 @@ DOCUMENT_SLUG=
 INVITEE_EMAIL=
 
 event = Event.find(EVENT_ID)
-document = Document.find_by(slug: DOCUMENT_SLUG)
-invite = event.organizer_position_invites.find_by(email: INVITEE_EMAIL)
+document = Document.find_by!(slug: DOCUMENT_SLUG)
+invite = event.organizer_position_invites.find_by!(email: INVITEE_EMAIL)
 invite.update!(is_signee: true)
 
 # external_service 999 identifies a manually-sent contract
