@@ -17,6 +17,7 @@ module Api
 
         render json: { token: token }
       end
+
     end
   end
 end

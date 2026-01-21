@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 IntercomRails.config do |config|
   # == Intercom app_id
   #
@@ -22,7 +24,7 @@ IntercomRails.config do |config|
   # If it is `current_user` or `@user`, then you can ignore this
   #
   # config.user.current = Proc.new { current_user }
-  config.user.current = [Proc.new { current_user }]
+  config.user.current = [proc { current_user }]
 
   # == Include for logged out Users
   # If set to true, include the Intercom messenger on all pages, regardless of whether
@@ -32,7 +34,7 @@ IntercomRails.config do |config|
   # == User model class
   # The class which defines your user model
   #
-  config.user.model = Proc.new { User }
+  config.user.model = proc { User }
 
   # == Lead/custom attributes for non-signed up users
   # Pass additional attributes to for potential leads or
@@ -107,7 +109,7 @@ IntercomRails.config do |config|
   # If you'd like to use your own link activator CSS selector
   # uncomment this line and clicks on any element that matches the query will
   # open the messenger
-  config.inbox.custom_activator = '#intercom-trigger'
+  config.inbox.custom_activator = "#intercom-trigger"
   #
   # If you'd like to hide default launcher button uncomment this line
   config.hide_default_launcher = true
