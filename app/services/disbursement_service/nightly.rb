@@ -30,7 +30,7 @@ module DisbursementService
                            description: memo
 
         disbursement.mark_in_transit!
-  
+
       end
 
     end
