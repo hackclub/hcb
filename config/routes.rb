@@ -707,6 +707,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do
