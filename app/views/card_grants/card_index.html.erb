@@ -32,7 +32,8 @@
                 <%= user_mention card_grant.user %>
               </td>
               <td>
-                <%= link_to card_grant.purpose.presence || card_grant.disbursement.local_hcb_code.memo, spending_card_grant_path(card_grant), data: { turbo_frame: "_top" } %>
+                <% hcb_code = card_grant.disbursement.outgoing_local_hcb_code || card_grant.disbursement.incoming_local_hcb_code %>
+                <%= link_to card_grant.purpose.presence || hcb_code&.memo, spending_card_grant_path(card_grant), data: { turbo_frame: "_top" } %>
               </td>
               <td>
                 <%= render_money card_grant.amount_cents %>

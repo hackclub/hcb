@@ -11,7 +11,7 @@ module PendingEventMappingEngine
           next unless disbursement
 
           # 2. look up canonical transactions by hcb & amount
-          cts = disbursement.local_hcb_code.canonical_transactions.where(amount_cents: cpt.amount_cents)
+          cts = disbursement.outgoing_local_hcb_code&.canonical_transactions&.where(amount_cents: cpt.amount_cents) || []
           ct = cts.first
 
           next unless ct

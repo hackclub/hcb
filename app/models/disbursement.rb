@@ -206,11 +206,8 @@ class Disbursement < ApplicationRecord
   end
 
   def pending_expired?
-    local_hcb_code.has_pending_expired?
+    (outgoing_local_hcb_code&.has_pending_expired? || incoming_local_hcb_code&.has_pending_expired?) || false
   end
-
-  # Eagerly create HcbCode object
-  after_create :local_hcb_code
 
   alias_attribute :approved_at, :pending_at
 
@@ -220,20 +217,28 @@ class Disbursement < ApplicationRecord
     approved_at || in_transit_at
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}-#{id}"
+  def outgoing_hcb_code
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{id}"
   end
 
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
+  def incoming_hcb_code
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
+  end
+
+  def outgoing_local_hcb_code
+    @outgoing_local_hcb_code ||= HcbCode.find_by(hcb_code: outgoing_hcb_code)
+  end
+
+  def incoming_local_hcb_code
+    @incoming_local_hcb_code ||= HcbCode.find_by(hcb_code: incoming_hcb_code)
   end
 
   def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
+    @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def canonical_pending_transactions
-    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def transactions_helper
@@ -332,7 +337,7 @@ class Disbursement < ApplicationRecord
   end
 
   def transaction_memo
-    "HCB-#{local_hcb_code.short_code}"
+    "HCB-#{outgoing_local_hcb_code&.short_code || incoming_local_hcb_code&.short_code}"
   end
 
   def special_appearance_name

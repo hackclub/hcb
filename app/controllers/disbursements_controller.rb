@@ -8,8 +8,10 @@ class DisbursementsController < ApplicationController
   def show
     authorize @disbursement
 
-    # Comments
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+    # Comments - use outgoing hcb_code as the primary for viewing
+    @outgoing_hcb_code = @disbursement.outgoing_local_hcb_code
+    @incoming_hcb_code = @disbursement.incoming_local_hcb_code
+    @hcb_code = @outgoing_hcb_code || @incoming_hcb_code
   end
 
   def transfer_confirmation_letter
@@ -94,12 +96,15 @@ class DisbursementsController < ApplicationController
     ).run
 
     if disbursement_params[:file]
-      ::ReceiptService::Create.new(
-        uploader: current_user,
-        attachments: disbursement_params[:file],
-        upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code
-      ).run!
+      receiptable = disbursement.outgoing_local_hcb_code || disbursement.incoming_local_hcb_code
+      if receiptable
+        ::ReceiptService::Create.new(
+          uploader: current_user,
+          attachments: disbursement_params[:file],
+          upload_method: :transfer_create_page,
+          receiptable:
+        ).run!
+      end
     end
 
     flash[:success] = "Transfer successfully requested."
@@ -131,7 +136,7 @@ class DisbursementsController < ApplicationController
     @disbursement = Disbursement.find(params[:disbursement_id])
     authorize @disbursement
     @disbursement.mark_rejected!
-    redirect_to @disbursement.local_hcb_code
+    redirect_to @disbursement.outgoing_local_hcb_code || @disbursement.incoming_local_hcb_code || @disbursement
   end
 
   def set_transaction_categories

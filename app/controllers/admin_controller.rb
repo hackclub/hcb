@@ -614,7 +614,11 @@ class AdminController < Admin::BaseController
 
     disbursement.mark_rejected!(current_user)
 
-    disbursement.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    if params[:comment]
+      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+        hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer)
+      end
+    end
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
   rescue => e

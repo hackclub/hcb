@@ -128,7 +128,8 @@
               <% if d.is_a?(Disbursement) %>
                 <%= d.name %>
               <% elsif d.is_a?(CardGrant) %>
-                <%= d.purpose.presence || d.disbursement.local_hcb_code.memo %>
+                <% hcb_code = d.disbursement.outgoing_local_hcb_code || d.disbursement.incoming_local_hcb_code %>
+                <%= d.purpose.presence || hcb_code&.memo %>
               <% else %>
                 <%= d.try(:payment_for) %>
               <% end %>

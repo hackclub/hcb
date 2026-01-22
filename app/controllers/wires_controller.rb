@@ -82,7 +82,9 @@ class WiresController < ApplicationController
         fronted: @wire.event.plan.front_disbursements_enabled?
       ).run
 
-      disbursement.local_hcb_code.comments.create(content: "Associated with #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+        hcb_code.comments.create(content: "Associated with #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+      end
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }

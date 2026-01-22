@@ -37,6 +37,8 @@ RSpec.describe Api::V4::CardGrantsController do
       expect(response).to have_http_status(:created)
       card_grant = event.card_grants.sole
       disbursement = card_grant.disbursement
+      # Create the HcbCode that would normally be created by the transaction grouping engine
+      outgoing_hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
       recipient = card_grant.user
 
       serialized_event = {
@@ -76,7 +78,7 @@ RSpec.describe Api::V4::CardGrantsController do
               "id"             => disbursement.public_id,
               "memo"           => "Grant to recipient",
               "status"         => "completed",
-              "transaction_id" => disbursement.local_hcb_code.public_id,
+              "transaction_id" => outgoing_hcb_code.public_id,
               "amount_cents"   => 123_45,
               "card_grant_id"  => card_grant.public_id,
               "from"           => serialized_event,

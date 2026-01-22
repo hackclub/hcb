@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 json.id disbursement.public_id
-json.memo disbursement.local_hcb_code.memo
+hcb_code = disbursement.outgoing_local_hcb_code || disbursement.incoming_local_hcb_code
+json.memo hcb_code&.memo
 json.status disbursement.v4_api_state
-json.transaction_id disbursement.local_hcb_code.public_id
+json.transaction_id hcb_code&.public_id
 json.amount_cents disbursement.amount
 
 json.from do

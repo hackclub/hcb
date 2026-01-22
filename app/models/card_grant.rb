@@ -166,8 +166,10 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+        hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+        hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      end
     end
   end
 
@@ -188,8 +190,10 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+        hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+        hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      end
     end
   end
 
@@ -202,7 +206,8 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
+    disbursement_hcb_codes = (topup_disbursements + withdrawal_disbursements).flat_map { |d| [d.outgoing_local_hcb_code, d.incoming_local_hcb_code] }.compact
+    ((stripe_card&.local_hcb_codes || []) + disbursement_hcb_codes).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -224,8 +229,10 @@ class CardGrant < ApplicationRecord
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
     ).run
-    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+      hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    end
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)

@@ -40,7 +40,7 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: -disbursement.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -56,8 +56,8 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: -disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: disbursement.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement.incoming_hcb_code, amount_cents: disbursement.amount)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -73,9 +73,9 @@ RSpec.describe DisbursementService::Hourly do
       let!(:disbursement) { create(:disbursement, :in_transit) }
 
       before do
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: -disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: disbursement.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement.hcb_code, amount_cents: 100)
+        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement.incoming_hcb_code, amount_cents: disbursement.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement.outgoing_hcb_code, amount_cents: 100)
         # Clear memoization on the disbursement
         disbursement.instance_variable_set(:@canonical_transactions, nil)
       end
@@ -102,11 +102,11 @@ RSpec.describe DisbursementService::Hourly do
 
       before do
         # disbursement1: 2 CTs - should be deposited
-        create_ct_with_hcb_code(hcb_code: disbursement1.hcb_code, amount_cents: -disbursement1.amount)
-        create_ct_with_hcb_code(hcb_code: disbursement1.hcb_code, amount_cents: disbursement1.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement1.outgoing_hcb_code, amount_cents: -disbursement1.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement1.incoming_hcb_code, amount_cents: disbursement1.amount)
 
         # disbursement2: 1 CT - should stay in_transit
-        create_ct_with_hcb_code(hcb_code: disbursement2.hcb_code, amount_cents: -disbursement2.amount)
+        create_ct_with_hcb_code(hcb_code: disbursement2.outgoing_hcb_code, amount_cents: -disbursement2.amount)
 
         # disbursement3: 0 CTs - should stay in_transit
       end

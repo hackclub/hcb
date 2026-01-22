@@ -1,5 +1,5 @@
 <%# locals: (card_grant:) %>
-<% hcb_code = card_grant.disbursement.local_hcb_code %>
+<% hcb_code = card_grant.disbursement.outgoing_local_hcb_code || card_grant.disbursement.incoming_local_hcb_code %>
 
 <div class="card mt2">
   <%= render "hcb_codes/heading", hcb_code: do %>
