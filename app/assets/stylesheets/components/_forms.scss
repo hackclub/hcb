@@ -84,9 +84,13 @@ select {
 }
 
 @layer components {
-  [data-controller='file-upload'] {
+  [data-controller*='file-upload'] {
     @apply my-2 cursor-pointer flex;
     user-select: none;
+
+    & input {
+      display: none !important;
+    }
 
     & [data-file-upload-target='preview'] {
       @extend .pop;
