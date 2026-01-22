@@ -19,8 +19,8 @@ export default class extends Controller {
     console.log('RENDERING!')
     this.resetPreview()
     this.previewTarget.classList.add('tooltipped')
-    this.previewTarget.addEventListener('click', () => this.inputTarget.click())
-    this.inputTarget.addEventListener('change', this.render.bind(this))
+    this.previewTarget.onclick = () => this.inputTarget.click()
+    this.inputTarget.onchange = () => this.render()
     window.addEventListener('turbo:morph', this.connect.bind(this))
   }
 
