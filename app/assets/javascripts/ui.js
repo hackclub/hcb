@@ -154,7 +154,7 @@ window.attachTooltipListener = () => {
 
   const showTooltip = (trigger) => {
     if (!trigger.classList.contains("tooltipped")) return;
-    const label = trigger.getAttribute("aria-label").trim();
+    const label = trigger.getAttribute("aria-label")?.trim();
     if (!label) return;
 
     tooltip.className = "active";

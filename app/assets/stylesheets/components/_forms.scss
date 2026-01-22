@@ -97,11 +97,11 @@ select {
     [data-file-upload-target='preview'].active {
       border-top-right-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
+      background-color: rgba(map-get($palette, muted), 0.25);
     }
 
     & [data-file-upload-target='clear'] {
       @extend .pop;
-      border-left: 1px solid rgba(200, 200, 200, 0.3);
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
       display: none;
