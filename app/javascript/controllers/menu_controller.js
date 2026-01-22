@@ -44,10 +44,10 @@ export default class extends Controller {
     this.content = this.contentTarget.cloneNode(true)
     this.content.dataset.turboTemporary = true
     if (this.hasContentIdValue) this.content.id = this.contentIdValue
-    ;(
-      (this.appendToValue && document.querySelector(this.appendToValue)) ||
-      document.body
-    ).appendChild(this.content)
+      ; (
+        (this.appendToValue && document.querySelector(this.appendToValue)) ||
+        document.body
+      ).appendChild(this.content)
     Object.assign(this.content.style, {
       position: 'absolute',
       display: 'block',
