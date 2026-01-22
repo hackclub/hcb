@@ -125,7 +125,7 @@
 
 <% if @disbursement.rejected? %>
   <p>Nothing more to do here. ✨</p>
-<% elsif @disbursement.pending?  %>
+<% elsif @disbursement.pending? %>
   <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
