@@ -8,8 +8,7 @@ class DisbursementsController < ApplicationController
   def show
     authorize @disbursement
 
-    # Comments
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+    @hcb_code = @disbursement.local_hcb_code
   end
 
   def transfer_confirmation_letter
@@ -131,7 +130,7 @@ class DisbursementsController < ApplicationController
     @disbursement = Disbursement.find(params[:disbursement_id])
     authorize @disbursement
     @disbursement.mark_rejected!
-    redirect_to @disbursement.local_hcb_code
+    redirect_to @disbursement
   end
 
   def set_transaction_categories

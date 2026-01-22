@@ -166,8 +166,8 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      disbursement.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
     end
   end
 
@@ -188,8 +188,8 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+      disbursement.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
     end
   end
 
@@ -202,7 +202,9 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
+    card_hcb_codes = stripe_card&.local_hcb_codes || []
+    disbursement_hcb_codes = (topup_disbursements + withdrawal_disbursements).map(&:local_hcb_code)
+    (card_hcb_codes + disbursement_hcb_codes).sort_by(&:created_at).reverse
   end
 
   def expire!

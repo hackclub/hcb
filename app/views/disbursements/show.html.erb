@@ -6,15 +6,13 @@
   <%= link_to "All disbursements", disbursements_admin_index_path, class: "breadcrumb" %>
 <% end %>
 
-<% if @disbursement.local_hcb_code %>
-  <% admin_tool("mt1") do %>
-    <p>
-      <strong>HCB Code:</strong>
-      <span>
-        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
-      </span>
-    </p>
-  <% end %>
+<% admin_tool("mt1") do %>
+  <p>
+    <strong>HCB Code:</strong>
+    <span>
+      <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+    </span>
+  </p>
 <% end %>
 
 <% admin_tool("mt1") do %>

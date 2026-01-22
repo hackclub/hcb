@@ -21,6 +21,8 @@ module DisbursementService
                            description: memo
 
         # FS Operating -> FS Main
+        # TODO: this should use the incoming hcb code's memo
+        # we might need to change logic in EventMappingEngine::Map::HcbCodes::Short as well
         ColumnService.post "/transfers/book",
                            idempotency_key: "#{disbursement.id}_incoming",
                            amount: amount_cents,
@@ -30,7 +32,6 @@ module DisbursementService
                            description: memo
 
         disbursement.mark_in_transit!
-
       end
 
     end

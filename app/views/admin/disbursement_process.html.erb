@@ -13,9 +13,7 @@
   <tr>
     <td class="text-right">HCB Code:</td>
     <td>
-      <% if @disbursement.local_hcb_code %>
-        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
-      <% end %>
+      <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
     </td>
   </tr>
   <tr>

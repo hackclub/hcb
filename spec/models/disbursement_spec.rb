@@ -298,6 +298,18 @@ RSpec.describe Disbursement, type: :model do
       end
     end
 
+    describe "#outgoing_hcb_code" do
+      it "returns the correct HCB code format" do
+        expect(disbursement.outgoing_hcb_code).to eq("HCB-500-#{disbursement.id}")
+      end
+    end
+
+    describe "#incoming_hcb_code" do
+      it "returns the correct HCB code format" do
+        expect(disbursement.incoming_hcb_code).to eq("HCB-550-#{disbursement.id}")
+      end
+    end
+
     describe "#canonical_transactions" do
       it "returns CTs with matching hcb_code" do
         ct1 = create(:canonical_transaction)
