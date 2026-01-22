@@ -92,12 +92,29 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: :under_review, to: :approved
+        transitions from: [:submitted, :under_review], to: :approved
       end
 
       event :mark_rejected do
-        transitions from: :under_review, to: :rejected
+        transitions from: [:submitted, :under_review], to: :rejected
+        after do |rejection_message: nil|
+          rejection_message ||= default_rejection_message
+          Event::ApplicationMailer.with(application: self, rejection_message:).rejected.deliver_later
+        end
       end
+    end
+
+    def default_rejection_message
+      <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB Team
+      MSG
     end
 
     def next_step

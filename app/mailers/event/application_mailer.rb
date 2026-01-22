@@ -16,6 +16,11 @@ class Event
       mail to: @application.user.email_address_with_name, subject: "[Action Needed] Complete your HCB application!"
     end
 
+    def rejected
+      @rejection_message = params[:rejection_message]
+      mail to: @application.user.email_address_with_name, subject: "Update on your HCB application"
+    end
+
   end
 
 end

@@ -90,6 +90,8 @@
   </div>
 
   <% content_for :footer do %>
+    <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
+
     <div class="w-full flex-grow flex items-center justify-end gap-4">
       <% admin_tool do %>
         <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
