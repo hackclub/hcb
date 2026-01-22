@@ -23,7 +23,9 @@ module TransactionGroupingEngine
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
-      DISBURSEMENT_CODE = "500"
+      DISBURSEMENT_CODE = "500" # Legacy code for backwards compatibility
+      OUTGOING_DISBURSEMENT_CODE = "501"
+      INCOMING_DISBURSEMENT_CODE = "502"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
       STRIPE_SERVICE_FEE_CODE = "610"
@@ -51,7 +53,9 @@ module TransactionGroupingEngine
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
-        return disbursement_hcb_code if disbursement
+        return outgoing_disbursement_hcb_code if outgoing_disbursement?
+        return incoming_disbursement_hcb_code if incoming_disbursement?
+        return disbursement_hcb_code if disbursement # Legacy fallback
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
@@ -201,6 +205,32 @@ module TransactionGroupingEngine
 
       def disbursement
         @disbursement ||= @ct_or_cp.disbursement
+      end
+
+      def outgoing_disbursement?
+        @ct_or_cp.respond_to?(:raw_pending_outgoing_disbursement_transaction) &&
+          @ct_or_cp.raw_pending_outgoing_disbursement_transaction.present?
+      end
+
+      def incoming_disbursement?
+        @ct_or_cp.respond_to?(:raw_pending_incoming_disbursement_transaction) &&
+          @ct_or_cp.raw_pending_incoming_disbursement_transaction.present?
+      end
+
+      def outgoing_disbursement_hcb_code
+        [
+          HCB_CODE,
+          OUTGOING_DISBURSEMENT_CODE,
+          @ct_or_cp.raw_pending_outgoing_disbursement_transaction.disbursement.id
+        ].join(SEPARATOR)
+      end
+
+      def incoming_disbursement_hcb_code
+        [
+          HCB_CODE,
+          INCOMING_DISBURSEMENT_CODE,
+          @ct_or_cp.raw_pending_incoming_disbursement_transaction.disbursement.id
+        ].join(SEPARATOR)
       end
 
       def reimbursement_expense_payout

@@ -911,6 +911,16 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
+  # Returns outgoing disbursements wrapped in OutgoingDisbursement virtual models
+  def virtual_outgoing_disbursements
+    outgoing_disbursements.map { |d| OutgoingDisbursement.new(d) }
+  end
+
+  # Returns incoming disbursements wrapped in IncomingDisbursement virtual models
+  def virtual_incoming_disbursements
+    incoming_disbursements.map { |d| IncomingDisbursement.new(d) }
+  end
+
   private
 
   def point_of_contact_is_admin
