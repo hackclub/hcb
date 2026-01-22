@@ -22,7 +22,7 @@
           </button>
 
           <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
-            <div data-controller="file-upload">
+            <div data-controller="file-upload" class="justify-center">
               <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input" } %>
               <button data-file-upload-target="preview" type="button"></button>
               <div data-file-upload-target="clear"></div>
