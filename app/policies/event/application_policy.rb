@@ -10,6 +10,22 @@ class Event
       record.user == user || user.auditor?
     end
 
+    def airtable?
+      user.auditor?
+    end
+
+    def admin_approve?
+      user.admin?
+    end
+
+    def admin_reject?
+      user.admin?
+    end
+
+    def edit?
+      user.admin?
+    end
+
     def update?
       return true if user.admin?
       return record.user == user if record.draft?

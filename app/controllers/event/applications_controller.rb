@@ -37,6 +37,33 @@ class Event
       @application.record_pageview(:show)
     end
 
+    def airtable
+      authorize @application
+
+      if @application.airtable_url.present?
+        redirect_to @application.airtable_url, allow_other_host: true
+      else
+        flash[:error] = "This application has not been synced to Airtable yet."
+        redirect_to application_path(@application)
+      end
+    end
+
+    def admin_approve
+      authorize @application
+
+      @application.mark_approved!
+      flash[:success] = "Application approved."
+      redirect_back_or_to application_path(@application)
+    end
+
+    def admin_reject
+      authorize @application
+
+      @application.mark_rejected!
+      flash[:success] = "Application rejected."
+      redirect_back_or_to application_path(@application)
+    end
+
     def submission
       authorize @application
       @application.record_pageview(:submission)
@@ -70,6 +97,10 @@ class Event
     def review
       authorize @application
       @application.record_pageview(:review)
+    end
+
+    def edit
+      authorize @application
     end
 
     def update

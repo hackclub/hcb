@@ -857,7 +857,11 @@ Rails.application.routes.draw do
         get "agreement"
         get "review"
         get "submission"
+        get "airtable"
+        get "edit"
         post "submit"
+        post "admin_approve"
+        post "admin_reject"
       end
     end
   end

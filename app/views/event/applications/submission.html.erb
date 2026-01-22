@@ -2,16 +2,45 @@
 
 <div class="w-full flex flex-grow flex-col items-center">
   <div class="md:max-w-[800px] w-full space-y-8 pb-5">
-    <div class="flex flex-col">
-      <h2 class="text-4xl">
+    <div class="flex flex-col mt-2">
+      <span class="badge bg-<%= @application.status_color %> m-0 w-max">
+        <%= @application.aasm_state.humanize %>
+      </span>
+
+      <h2 class="text-4xl mt-2">
         Your application for <%= @application.name %>
       </h2>
 
       <p class="mt-0 text-lg muted">
         <% submitted_at = @application.submitted_at.in_time_zone(current_session.timezone || Time.zone.name) %>
         Submitted on <%= submitted_at.strftime("%B #{submitted_at.day.ordinalize}") %> at <%= submitted_at.strftime("%l:%M%p").downcase %>
+
+        <% if @application.approved_at? %>
+          <% approved_at = @application.approved_at.in_time_zone(current_session.timezone || Time.zone.name) %>
+          Approved on <%= approved_at.strftime("%B #{approved_at.day.ordinalize}") %> at <%= approved_at.strftime("%l:%M%p").downcase %>
+        <% elsif @application.rejected_at? %>
+          <% rejected_at = @application.rejected_at.in_time_zone(current_session.timezone || Time.zone.name) %>
+          Rejected on <%= rejected_at.strftime("%B #{rejected_at.day.ordinalize}") %> at <%= rejected_at.strftime("%l:%M%p").downcase %>
+        <% end %>
       </p>
     </div>
+
+    <% admin_tool do %>
+      <div class="card">
+        <h2 class="mt-0"><%= user_mention @application.user, class: "align-bottom mr-0" %>'s application details</h2>
+        <hr class="my-1">
+        <section class="details details--wide">
+          <p>
+            <strong>Airtable ID</strong>
+            <code><%= @application.airtable_record_id %></code>
+          </p>
+          <p>
+            <strong>Airtable status</strong>
+            <span class="badge w-max m-0 bg-muted"><%= @application.airtable_status %></span>
+          </p>
+        </section>
+      </div>
+    <% end %>
 
     <%= render "event/applications/summary", application: @application, allow_edits: false %>
 
@@ -22,4 +51,15 @@
 
 <% content_for :footer do %>
   <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+  <div class="flex items-center justify-end gap-4">
+    <% admin_tool do %>
+      <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
+    <% end %>
+    <% admin_tool do %>
+      <%= button_to "Approve", admin_approve_application_path(@application), class: "btn bg-success", method: :post %>
+    <% end %>
+    <% admin_tool do %>
+      <%= button_to "Reject", admin_reject_application_path(@application), class: "btn bg-primary", method: :post %>
+    <% end %>
+  </div>
 <% end %>

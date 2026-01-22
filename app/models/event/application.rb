@@ -56,6 +56,8 @@ class Event
     belongs_to :user
     belongs_to :event, optional: true
 
+    after_commit :sync_to_airtable
+
     enum :last_page_viewed, {
       show: 0,
       project_info: 1,
@@ -79,7 +81,6 @@ class Event
           app_contract = contract || create_contract
           app_contract.party(:cosigner)&.notify
           Event::ApplicationMailer.with(application: self).confirmation.deliver_later
-          sync_to_airtable
         end
       end
 
@@ -88,6 +89,14 @@ class Event
         after do
           Event::ApplicationMailer.with(application: self).under_review.deliver_later
         end
+      end
+
+      event :mark_approved do
+        transitions from: :under_review, to: :approved
+      end
+
+      event :mark_rejected do
+        transitions from: :under_review, to: :rejected
       end
     end
 
@@ -166,6 +175,15 @@ class Event
       user.teenager? ? "48 hours" : "2 weeks"
     end
 
+    def status_color
+      return :muted if draft? || submitted?
+      return :blue if under_review?
+      return :green if approved?
+      return :red if rejected?
+
+      :muted
+    end
+
     def on_contract_party_signed(party)
       if party.contract.parties.not_hcb.all?(&:signed?)
         mark_under_review!
@@ -173,7 +191,12 @@ class Event
     end
 
     def sync_to_airtable
-      app = ApplicationsTable.new("HCB Application ID" => self.id)
+      return unless submitted_at.present?
+
+      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
+      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{self.id}\"").first
+      app ||= ApplicationsTable.new("HCB Application ID" => self.id)
+
       app["First Name"] = user.first_name
       app["Last Name"] = user.last_name
       app["Email Address"] = user.email
@@ -194,8 +217,18 @@ class Event
       app["Accommodations"] = notes
       app["(Adults) Political Activity"] = political_description
       app["Referral Code"] = referral_code
+      app["HCB Status"] = aasm_state.humanize if submitted_at.present?
+      app["Synced from HCB at"] = Time.current
 
       app.save
+
+      update_columns(airtable_record_id: app.id, airtable_status: app["Status"])
+    end
+
+    def airtable_url
+      return nil unless airtable_record_id.present?
+
+      "https://airtable.com/#{ApplicationsTable.base_key}/#{ApplicationsTable.table_name}/#{airtable_record_id}"
     end
 
     def record_pageview(last_page_viewed)
