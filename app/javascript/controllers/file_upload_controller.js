@@ -16,7 +16,6 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log('RENDERING!')
     this.resetPreview()
     this.previewTarget.classList.add('tooltipped')
     this.previewTarget.onclick = () => this.inputTarget.click()
@@ -25,7 +24,6 @@ export default class extends Controller {
   }
 
   render() {
-    console.log('rendering preview!')
     const input = this.inputTarget
     const fileName = input.files.length > 0 ? input.files[0].name : ''
 
