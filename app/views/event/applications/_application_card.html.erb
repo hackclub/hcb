@@ -7,7 +7,7 @@
         <h3 class="heading h3 mb-2 mt-0">
           <%= application.name.presence || "Draft application" %>
         </h3>
-        <span class="badge bg-orange">
+        <span class="badge bg-<%= application.status_color %>">
           <%= application.aasm_state.humanize %>
         </span>
       </div>
