@@ -26,6 +26,7 @@ module TransactionGroupingEngine
       DISBURSEMENT_CODE = "500" # Legacy code for backwards compatibility
       OUTGOING_DISBURSEMENT_CODE = "501"
       INCOMING_DISBURSEMENT_CODE = "502"
+      DISBURSEMENT_CODE_PREFIX = "5" # Matches all disbursement codes (500, 501, 502)
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
       STRIPE_SERVICE_FEE_CODE = "610"
