@@ -37,7 +37,7 @@ class Donation
     private
 
     def maximum_tiers_limit
-      return if event.donation_tiers.without_deleted.where.not(id: id).count < 10
+      return if event.donation_tiers.where.not(id: id).count < 10
 
       errors.add(:base, "Organization can only have 10 donation tiers")
     end
