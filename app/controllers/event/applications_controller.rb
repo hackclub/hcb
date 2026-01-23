@@ -121,6 +121,7 @@ class Event
 
       if params[:autosave] != "true"
         @return_to = url_from(params[:return_to])
+        flash[:success] = "Changes saved." if params[:confirm] == "true"
 
         return redirect_to @return_to if @return_to.present?
 

@@ -159,7 +159,7 @@
       style="<%= content_for :container_style %>">
       <div class="flex flex-col h-full max-h-dvh overflow-hidden" data-controller="application-autosave">
         <div class="flex flex-col">
-          <div class="flex flex-row items-center justify-between p-4 gap-4 bg-snow dark:bg-darkless">
+          <div class="flex flex-row items-center justify-between p-4 gap-4 bg-snow dark:bg-darkless md:*:w-full md:*:flex-1">
             <div class="flex flex-row items-center justify-start gap-4">
               <%= render partial: "application/logo" %>
               <div class="flex flex-col items-start justify-start">
@@ -167,10 +167,12 @@
                 <h3 class="text-sm muted m-0">Turn your ideas into reality</h3>
               </div>
             </div>
-            <div>
-              <%= render "application/flash" unless @hide_flash %>
+            <div class="flex flex-row justify-center">
+              <div class="w-max">
+                <%= render "application/flash" unless @hide_flash %>
+              </div>
             </div>
-            <div class="pr-3 flex flex-row-reverse gap-8 items-center">
+            <div class="pr-3 flex flex-row-reverse gap-8 items-center flex-shrink-0">
               <div>
                 <div data-application-autosave-target="savingIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
                   <%= inline_icon "cloud-upload", size: 24, class: "align-top text-muted" %>
