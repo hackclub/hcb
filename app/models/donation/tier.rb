@@ -28,11 +28,18 @@ class Donation
 
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
-    validate { errors.add(:base, "Organization can only have 10 donation tiers") if event.donation_tiers.size > 10 }
+    validate :maximum_tiers_limit
 
     default_scope { order(sort_index: :asc) }
 
     acts_as_paranoid
+
+    private
+
+    def maximum_tiers_limit
+      return if event.donation_tiers.where.not(id: id).count < 10
+      errors.add(:base, "Organization can only have 10 donation tiers")
+    end
 
   end
 
