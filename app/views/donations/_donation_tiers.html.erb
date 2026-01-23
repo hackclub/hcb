@@ -1,19 +1,19 @@
 <% if @show_tiers %>
-  <% if params[:tier_id] || params[:custom_amount] %>
-    <div class="max-w-sm mx-auto">
-      <%= link_to upsert_query_params(tier_id: nil, custom_amount: nil), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
+  <% if params[:tier_id] %>
+    <div class="flex">
+      <%= link_to start_donation_donations_path(@event), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
         <%= inline_icon "view-back" %>
         Back
       <% end %>
     </div>
-    <div class="card max-w-sm w-full mx-auto border border-2 border-blue relative shadow-none mt-3 mb-5">
-      <div class="flex items-center justify-center absolute top-0 right-0 m-3 bg-blue rounded-full p-1 text-white">
+    <div class="card border border-2 border-blue relative shadow-none mt-3 mb-5 pt-0">
+      <div class="flex items-center justify-center absolute top-0 right-0 m-5 bg-blue rounded-full p-1 text-white">
         <%= inline_icon "check-thin", size: 24 %>
       </div>
-      <h2 class="mt-3 mb-4">
+      <h2 class="mt-5">
         <%= @tier&.name || "Custom" %>
       </h2>
-      <p class="text opacity-60 mb-3 flex-1 max-w-full break-words whitespace-normal">
+      <p class="text opacity-60 mt-0 mb-2 pr-10 -flex-1 max-w-full break-words whitespace-normal">
         <%= @tier&.description || "Pay a custom amount, one-time or recurring, to support #{@event.name}" %>
       </p>
       <% if @tier %>
@@ -31,7 +31,7 @@
       <% end %>
     </div>
   <% else %>
-    <h2 class="mt-8 px-5 sm:px-2">Make a contribution</h2>
+    <h2 class="mt-10 px-5 sm:px-2">Make a contribution</h2>
     <div class="mt-4 px-2 -mx-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 mx-auto">
       <div class="card w-full flex-1 flex flex-col">
         <h3 class="mb-0 mt-0">
@@ -41,11 +41,11 @@
           Pay a custom amount, one-time or recurring, to support <%= @event.name %>
         </p>
         <div class="flex-1"></div>
-        <%= link_to upsert_query_params(custom_amount: true), class: "w-full btn btn-primary mt-auto" do %>
+        <%= link_to start_donation_tier_donations_path(@event, "custom"), class: "w-full btn btn-primary mt-auto" do %>
           Continue
         <% end %>
       </div>
-      <% @event.donation_tiers.each do |donation_tier| %>
+      <% @tiers.each do |donation_tier| %>
         <div class="card w-full flex-1 shrink-0 flex flex-col">
           <h3 class="mb-0 mt-0">
             <%= donation_tier.name %>

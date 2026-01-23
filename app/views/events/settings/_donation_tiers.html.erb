@@ -5,19 +5,20 @@
 <% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
-<div data-controller="accordion" class="card mt-4">
+<div data-controller="donation-tier-form" class="card mt-4">
   <div class="field field--checkbox mb0">
-    <div>
+    <div class="flex-1">
       <span style="font-weight: 700">Enable donation tiers</span>
       <p class="text-muted mt-0.5 mb-0 text-sm">
         Offer preset monthly donation options with custom names, prices, and perks.
       </p>
     </div>
-    <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+    <%= inline_icon "loading", size: 20, class: "hidden mr-2", "data-donation-tier-form-target": "loader" %>
+    <div class="field--checkbox--switch" style="flex-shrink:0">
       <%= form_with(model: event, local: true) do |form| %>
         <%= form.label :donation_tiers_enabled do %>
           <%= form.check_box :donation_tiers_enabled,
-            data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
+            data: { "donation-tier-form-target": "checkbox" },
             disabled:,
             checked: event.donation_tiers_enabled,
             onchange: "this.closest('form').requestSubmit();",
@@ -27,49 +28,60 @@
       <% end %>
     </div>
   </div>
-  <div data-accordion-target="content" class="rounded-xl">
-    <div class="field mt-5">
-      <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>
-        <ul
-          class="list-none p-0 m-0 flex flex-col gap-2"
-          data-controller="sortable donation-tier-sort"
-          data-sortable-append-to-value="body"
-          data-sortable-handle-value=".draggable-handle"
-          data-donation-tier-sort-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
-          data-action="sortable:stop->donation-tier-sort#sort">
-          <% event.donation_tiers.each do |tier| %>
-            <div class="draggable card shadow-none border bg-gray-50 flex items-start gap-2 mb-2 transition-none">
-              <div class="flex-1">
-                <div class="flex gap-2 w-full">
-                  <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, oninput: "clearTimeout(this.dataset.timer); this.dataset.timer = setTimeout(() => this.form.requestSubmit(), 500);" %>
-                  <div class="flex items-center gap-2 border rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
-                    $
-                    <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !px-0", style: "width: 50px", placeholder: "Cost", oninput: "clearTimeout(this.dataset.timer); this.dataset.timer = setTimeout(() => this.form.requestSubmit(), 500);" %>
-                    /month
+  <% if @event.donation_tiers_enabled %>
+    <div data-donation-tier-form-target="content">
+      <div class="field mt-5">
+        <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>
+          <ul
+            class="list-none p-0 m-0 flex flex-col gap-2"
+            data-controller="sortable donation-tier-sort"
+            data-sortable-append-to-value="body"
+            data-sortable-handle-value=".draggable-handle"
+            data-donation-tier-sort-positions-value="<%= event.donation_tiers.pluck(:id).to_json %>"
+            data-action="sortable:stop->donation-tier-sort#sort">
+            <% event.donation_tiers.each do |tier| %>
+              <div class="draggable card shadow-none border border-gray-200 dark:border-gray-700 bg-gray-50 flex items-start gap-2 mb-2 transition-none">
+                <div class="flex-1">
+                  <div class="flex gap-2 w-full">
+                    <%= form.text_field "tiers[#{tier.id}][name]", value: tier.name, class: "flex-1 !max-w-full", placeholder: "Tier name", required: true, data: { "donation-tier-form-target": "field" } %>
+                    <div class="flex items-center gap-2 rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
+                      $
+                      <%= form.number_field "tiers[#{tier.id}][amount_cents]", value: tier.amount_cents / 100, required: true, min: 0, class: "!border-none !shadow-none !px-0", style: "width: 50px", placeholder: "Cost", data: { "donation-tier-form-target": "field" } %>
+                      /month
+                    </div>
+                  </div>
+                  <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description", data: { "donation-tier-form-target": "field" } %>
+                  <div>
+                    <label class="inline-flex items-center gap-2 mt-2">
+                      <%= form.check_box "tiers[#{tier.id}][published]", { checked: tier.published, data: { "donation-tier-form-target": "field" } }, "1", "0" %>
+                      <span>Show on donation page?</span>
+                    </label>
                   </div>
                 </div>
-                <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description", oninput: "clearTimeout(this.dataset.timer); this.dataset.timer = setTimeout(() => this.form.requestSubmit(), 500);" %>
-              </div>
 
-              <div class="flex flex-col gap-1">
-                <%= pop_icon_to "drag-indicator", "javascript:void(0)", class: "draggable-handle cursor-move" %>
-                <%= pop_icon_to "delete", event_donation_tiers_path(event, tier), method: :delete, data: { turbo_confirm: "Are you sure?" } %>
+                <div class="flex flex-col gap-1">
+                  <%= pop_icon_to "drag-indicator", "javascript:void(0)", class: "draggable-handle cursor-move" %>
+                  <%= pop_icon_to "delete", event_donation_tiers_path(event, tier), method: :delete, data: { turbo_confirm: "Are you sure?" } %>
+                </div>
               </div>
-            </div>
-          <% end %>
-        </ul>
-      <% end %>
-      <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post) do |form| %>
-        <div class="flex px-1 my-3 items-center">
-          <% unless event.donation_tiers.empty? %>
-            <span class="muted block text-sm flex-1">Changes will be saved automatically</span>
-          <% end %>
-          <button type="submit" class="btn gap-4 pr-2 <%= "w-full !transform-none" if event.donation_tiers.empty? %>">
-            Create tier
-            <%= inline_icon "plus" %>
-          </button>
-        </div>
-      <% end %>
+            <% end %>
+          </ul>
+        <% end %>
+        <%= form_with(url: event_donation_tiers_path(event), local: true, method: :post) do |form| %>
+          <div class="flex px-1 my-3 items-center">
+            <% unless event.donation_tiers.empty? %>
+              <span class="muted block text-sm flex-1">Changes will be saved automatically</span>
+            <% end %>
+            <button
+              <%= "disabled" if event.donation_tiers.length >= 10 %>
+              type="submit"
+              class="btn gap-4 pr-2 <%= "w-full !transform-none" if event.donation_tiers.empty? %>">
+              Create tier
+              <%= inline_icon "plus" %>
+            </button>
+          </div>
+        <% end %>
+      </div>
     </div>
-  </div>
+  <% end %>
 </div>
