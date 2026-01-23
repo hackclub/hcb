@@ -46,9 +46,9 @@
 
 <% if current_user.card_grants.not_activated.size > 0 %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
-  <ul class="grid grid--spacious text-left w-full mt-2">
+  <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
-      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row">
+      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
         <div class="flex-1">
           <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
           <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
@@ -57,7 +57,7 @@
           <%= link_to "Activate my grant", grant, class: "btn" %>
           <p class="my-0 text-sm italic text-muted">
             <% if grant.expires_on.future? %>
-              Expires in <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
+              Spend within <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
             <% else %>
               Expired <%= time_ago_in_words(grant.expires_on) %> ago
             <% end %>

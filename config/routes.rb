@@ -592,7 +592,7 @@ Rails.application.routes.draw do
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
-  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
+  get "privacy", to: redirect("https://hackclub.com/privacy-and-terms/")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
@@ -648,7 +648,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show, :create] do
+          resources :invitations, only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -671,6 +671,8 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
+          resources :invitations, only: [:index, :create, :destroy]
+          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -704,6 +706,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do

@@ -67,6 +67,7 @@ class CardGrant < ApplicationRecord
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
   has_one :pre_authorization
+  has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
@@ -87,7 +88,7 @@ class CardGrant < ApplicationRecord
   serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
@@ -103,7 +104,9 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
-    if canceled? || expired?
+    if suspected_fraud?
+      "error"
+    elsif suspected_fraud? || canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
@@ -115,7 +118,9 @@ class CardGrant < ApplicationRecord
   end
 
   def state_text
-    if canceled?
+    if suspected_fraud?
+      "Fraudulent"
+    elsif canceled?
       "Canceled"
     elsif expired?
       "Expired"
@@ -131,10 +136,14 @@ class CardGrant < ApplicationRecord
   def status_badge_type
     s = state.to_sym
     return :success if s == :success
-    return :error if s == :muted
+    return :error if [:muted, :error].include?(s)
     return :warning if s == :info
 
     :muted
+  end
+
+  def suspected_fraud?
+    pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
@@ -193,7 +202,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -233,15 +242,19 @@ class CardGrant < ApplicationRecord
   def create_stripe_card(ip_address)
     return if stripe_card.present?
 
-    self.stripe_card = StripeCardService::Create.new(
-      card_type: "virtual",
-      event_id:,
-      current_user: user,
-      ip_address:,
-      subledger:,
-    ).run
+    begin
+      self.stripe_card = StripeCardService::Create.new(
+        card_type: "virtual",
+        event_id:,
+        current_user: user,
+        ip_address:,
+        subledger:,
+      ).run
 
-    save!
+      save!
+    rescue Stripe::InvalidRequestError, Errors::StripeInvalidNameError => e
+      raise e.class, "This card could not be activated: #{e.message}"
+    end
   end
 
   def allowed_merchants
@@ -302,8 +315,8 @@ class CardGrant < ApplicationRecord
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
-      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}.",
-      inviter: sent_by
+      inviter: sent_by,
+      card_grant: self
     )
   end
 
