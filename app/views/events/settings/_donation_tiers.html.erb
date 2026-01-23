@@ -53,7 +53,7 @@
                   <%= form.text_area "tiers[#{tier.id}][description]", value: tier.description, class: "w-100 max-w-full mt-1", placeholder: "Description", data: { "donation-tier-form-target": "field" } %>
                   <div>
                     <label class="inline-flex items-center gap-2 mt-2">
-                      <%= form.check_box "tiers[#{tier.id}][published]", checked: tier.published, data: { "donation-tier-form-target": "field" }, "1", "0" %>
+                      <%= form.check_box "tiers[#{tier.id}][published]", { checked: tier.published, data: { "donation-tier-form-target": "field" } }, "1", "0" %>
                       <span>Show on donation page?</span>
                     </label>
                   </div>
