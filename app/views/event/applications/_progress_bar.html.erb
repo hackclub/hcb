@@ -4,7 +4,7 @@
 <% steps = steps.map.with_index { |step, index| step.merge(state: index < last_completed_index ? :completed : index == last_completed_index ? :last_completed : index == last_completed_index + 1 ? :active : :pending) } %>
 
 <div class="mb-4 w-max rounded-full bg-smoke snow bold flex flex-row overflow-hidden items-stretch [&>div]:py-3 [&>div]:px-5 text-black *:last:invisible">
-  <% steps.each_with_index do |step, index| %>
+  <% steps.each do |step| %>
     <% background = { completed: "muted", last_completed: "muted", active: "primary", pending: "smoke" }[step[:state]] %>
     <% text_color = { completed: "snow", last_completed: "snow", active: "snow", pending: "black" }[step[:state]] %>
     <% next_background = { completed: "muted", last_completed: "primary", active: "smoke", pending: nil }[step[:state]] %>
