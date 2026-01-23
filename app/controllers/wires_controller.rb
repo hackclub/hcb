@@ -122,6 +122,7 @@ class WiresController < ApplicationController
        :address_postal_code,
        :address_state,
        :payment_recipient_id,
+       :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end

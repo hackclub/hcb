@@ -170,6 +170,8 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
+  after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
+
   after_update :queue_sync_with_loops_job
 
   before_update :set_default_seasonal_theme
@@ -358,6 +360,10 @@ class User < ApplicationRecord
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
     full_name_in_database.blank?
+  end
+
+  def was_onboarding?
+    full_name_before_last_save.blank?
   end
 
   def active_mailbox_address
@@ -647,6 +653,10 @@ class User < ApplicationRecord
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
     self.seasonal_themes_enabled = teenager?
+  end
+
+  def send_onboarded_email
+    UserMailer.onboarded(user: self).deliver_later
   end
 
 end

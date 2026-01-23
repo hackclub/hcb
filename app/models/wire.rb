@@ -25,6 +25,7 @@
 #  recipient_information     :jsonb
 #  recipient_name            :string           not null
 #  return_reason             :text
+#  send_email_notification   :boolean          default(FALSE)
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -107,6 +108,9 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
+      after_commit do
+        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+      end
       transitions from: :pending, to: :approved
     end
 
@@ -247,6 +251,12 @@ class Wire < ApplicationRecord
     user_id = versions.where_object_changes_to(...).last&.whodunnit
 
     user_id && User.find(user_id)
+  end
+
+  def column_wire_details
+    return nil unless column_id.present?
+
+    @column_wire_details ||= ColumnService.international_wire(column_id)
   end
 
 end

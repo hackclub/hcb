@@ -117,13 +117,7 @@ module SessionsHelper
   end
 
   def current_session
-    Current.session ||= begin
-      # Find a valid session (not expired) using the session token
-      session_token = cookies.encrypted[:session_token]
-      return nil if session_token.nil?
-
-      User::Session.not_expired.find_by(session_token:)
-    end
+    Current.session
   end
 
   def signed_in_user
