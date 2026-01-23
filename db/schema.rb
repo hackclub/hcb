@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_173228) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2010,6 +2010,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_173228) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
