@@ -82,7 +82,6 @@
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
   <div
     data-controller="file-upload file-drop form"
-    data-file-drop-title-value="Drop to add a receipt."
     data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
     <%= form.file_field :file,
         multiple: true,
