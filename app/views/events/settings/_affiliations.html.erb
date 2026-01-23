@@ -6,8 +6,8 @@
   <h3 class="mb1">Add a new affiliation</h3>
   <div class="card mb3">
 
-    <%= form_with(url: event_affiliations_path(event), local: true, html: { "x-data": "{ type: 'first' }" }) do |form| %>
-      <%= render "events/settings/affiliation_form", affiliation: Event::Affiliation.new(event:), form: %>
+    <%= form_with(url: affiliations_path(affiliable_type: event.class.name, affiliable_id: event.id), local: true, html: { "x-data": "{ type: 'first' }" }) do |form| %>
+      <%= render "events/settings/affiliation_form", affiliation: Event::Affiliation.new(affiliable: event), form: %>
     <% end %>
   </div>
 
@@ -52,13 +52,13 @@
             disabled: %>
           <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_affiliation_<%= affiliation.id %>">
             <%= modal_header("Edit affiliation") %>
-            <%= form_with(url: event_affiliation_path(event, affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}' }" }) do |form| %>
+            <%= form_with(url: affiliation_path(affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}' }" }) do |form| %>
               <%= render "events/settings/affiliation_form", affiliation:, form: %>
             <% end %>
           </section>
         </div>
         <%= pop_icon_to "delete",
-          event_affiliation_path(event, affiliation),
+          affiliation_path(affiliation.id),
           icon_size: 26,
           class: "tooltipped tooltipped--w h-8 w-8",
           style: "background: #ec375020; color: #ec3750",
