@@ -36,7 +36,7 @@
     <%= render "donations/donation_tiers", donation: @donation %>
   </div>
   <% end %>
-  <div class="flex-1 mt-<%= !@show_tiers || params[:tier_id] == "custom" ? "5" : "20" %>">
+  <div class="flex-1 px-5 mt-<%= !@show_tiers || params[:tier_id] == "custom" ? "5" : "20" %>">
     <% if !@show_tiers || @tier || params[:tier_id] == "custom" %>
       <%= render "donations/donation_form", donation: @donation %>
     <% end %>
