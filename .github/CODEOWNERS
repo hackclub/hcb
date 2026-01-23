@@ -3,9 +3,7 @@
 
 # Package management - Requires review for dependency security
 /Gemfile @garyhtou
-/Gemfile.lock @garyhtou
 /package.json @garyhtou
-/yarn.lock @garyhtou
 
 # Critical configs - Requires review from Gary
 /.ruby-version @garyhtou
