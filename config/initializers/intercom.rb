@@ -12,7 +12,7 @@ IntercomRails.config do |config|
   # This is required to enable Identity Verification, you can find it on your Setup
   # guide in the "Identity Verification" step.
   #
-  # config.api_secret = "..."
+  config.api_secret = Credentials.fetch(:INTERCOM, :API_SECRET)
 
   # == Enabled Environments
   # Which environments is auto inclusion of the Javascript enabled for
@@ -119,11 +119,7 @@ IntercomRails.config do |config|
   #
   config.api_base = "https://api-iam.intercom.io"
 
-  config.api_secret = Credentials.fetch(:INTERCOM, :API_SECRET)
-
   config.jwt.enabled = true
-
   config.jwt.signed_user_fields = ["email", "id"]
-
   config.jwt.expiry = 1.hour
 end
