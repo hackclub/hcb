@@ -1,7 +1,12 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
 <p>
-  <%= @invite.user.name %> has accepted their invite to join <%= @invite.event.name %> as a <%= @invite.role %>!
+  <% if @invite.organizer_position_invite_request.present? %>
+    <%= @invite.user.possessive_name %> request to join <%= @invite.event.name %> has been approved as a <%= @invite.role %>!
+  <% else %>
+    <%= @invite.user.name %> has accepted their invite to join <%= @invite.event.name %> as a <%= @invite.role %>!
+  <% end %>
+
   <% if @invite.initial_control_allowance_amount_cents.present? %>
     <% if @invite.initial_control_allowance_amount_cents > 0 %>
       They have an initial spending allowance of <%= render_money @invite.initial_control_allowance_amount_cents %>.
