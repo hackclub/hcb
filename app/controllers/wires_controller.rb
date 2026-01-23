@@ -82,7 +82,7 @@ class WiresController < ApplicationController
         fronted: @wire.event.plan.front_disbursements_enabled?
       ).run
 
-      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
+      disbursement.all_local_hcb_codes.each do |hcb_code|
         hcb_code.comments.create(content: "Associated with #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
       end
     end

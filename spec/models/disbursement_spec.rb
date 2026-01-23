@@ -49,7 +49,6 @@ RSpec.describe Disbursement, type: :model do
         end
 
         it "sets fulfilled_by" do
-          original_user = disbursement.fulfilled_by
           new_user = create(:user)
           disbursement.mark_approved!(new_user)
           expect(disbursement.fulfilled_by).to eq(new_user)

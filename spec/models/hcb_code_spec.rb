@@ -80,6 +80,7 @@ RSpec.describe HcbCode, type: :model do
       end
     end
 
+    # The goal is to deprecate this method entirely with the disbursement splitting work
     describe "#events" do
       context "with a disbursement that has canonical pending transactions" do
         let(:source_event) { create(:event) }
@@ -95,15 +96,22 @@ RSpec.describe HcbCode, type: :model do
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
 
           incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-          incoming_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+          incoming_cpt.update_column(:hcb_code, disbursement.incoming_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: incoming_cpt, event: destination_event)
         end
 
-        it "returns both source and destination events" do
+        it "returns source event for outgoing hcb_code" do
           hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
           hcb_code.instance_variable_set(:@events, nil)
 
-          expect(hcb_code.events).to contain_exactly(source_event, destination_event)
+          expect(hcb_code.events).to match_array([source_event])
+        end
+
+        it "returns destination event for incoming hcb_code" do
+          hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+          hcb_code.instance_variable_set(:@events, nil)
+
+          expect(hcb_code.events).to match_array([destination_event])
         end
       end
 
@@ -169,17 +177,17 @@ RSpec.describe HcbCode, type: :model do
 
           # Insert card_grant directly via SQL to bypass all callbacks
           CardGrant.insert!({
-            disbursement_id: disbursement.id,
-            event_id: disbursement.source_event.id,
-            stripe_card_id: stripe_card.id,
-            user_id: user.id,
-            sent_by_id: sent_by.id,
-            email: "test@example.com",
-            amount_cents: 1000,
-            invite_message: "Test invite message",
-            created_at: Time.current,
-            updated_at: Time.current
-          })
+                              disbursement_id: disbursement.id,
+                              event_id: disbursement.source_event.id,
+                              stripe_card_id: stripe_card.id,
+                              user_id: user.id,
+                              sent_by_id: sent_by.id,
+                              email: "test@example.com",
+                              amount_cents: 1000,
+                              invite_message: "Test invite message",
+                              created_at: Time.current,
+                              updated_at: Time.current
+                            })
 
           hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
 
@@ -204,17 +212,17 @@ RSpec.describe HcbCode, type: :model do
 
         # Insert card_grant directly via SQL to bypass all callbacks
         CardGrant.insert!({
-          disbursement_id: disbursement.id,
-          event_id: disbursement.source_event.id,
-          stripe_card_id: stripe_card.id,
-          user_id: user.id,
-          sent_by_id: sent_by.id,
-          email: "test@example.com",
-          amount_cents: 1000,
-          invite_message: "Test invite message",
-          created_at: Time.current,
-          updated_at: Time.current
-        })
+                            disbursement_id: disbursement.id,
+                            event_id: disbursement.source_event.id,
+                            stripe_card_id: stripe_card.id,
+                            user_id: user.id,
+                            sent_by_id: sent_by.id,
+                            email: "test@example.com",
+                            amount_cents: 1000,
+                            invite_message: "Test invite message",
+                            created_at: Time.current,
+                            updated_at: Time.current
+                          })
 
         hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
 

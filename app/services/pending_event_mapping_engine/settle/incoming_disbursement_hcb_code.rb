@@ -10,8 +10,8 @@ module PendingEventMappingEngine
           Rails.error.unexpected("Disbursement not found for canonical pending transaction #{cpt.id}") unless disbursement
           next unless disbursement
 
-          # 2. look up canonical transactions by hcb & amount
-          cts = disbursement.incoming_local_hcb_code&.canonical_transactions&.where(amount_cents: cpt.amount_cents) || []
+          # 2. look up canonical transactions by amount (check both sides during migration)
+          cts = disbursement.canonical_transactions.where(amount_cents: cpt.amount_cents)
           ct = cts.first
 
           next unless ct

@@ -8,10 +8,9 @@ class DisbursementsController < ApplicationController
   def show
     authorize @disbursement
 
-    # Comments - use outgoing hcb_code as the primary for viewing
+    # TODO show comments from both sides of the disbursement, probably 2 separate sections?
     @outgoing_hcb_code = @disbursement.outgoing_local_hcb_code
     @incoming_hcb_code = @disbursement.incoming_local_hcb_code
-    @hcb_code = @outgoing_hcb_code || @incoming_hcb_code
   end
 
   def transfer_confirmation_letter
@@ -96,15 +95,12 @@ class DisbursementsController < ApplicationController
     ).run
 
     if disbursement_params[:file]
-      receiptable = disbursement.outgoing_local_hcb_code || disbursement.incoming_local_hcb_code
-      if receiptable
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: disbursement_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable:
-        ).run!
-      end
+      ::ReceiptService::Create.new(
+        uploader: current_user,
+        attachments: disbursement_params[:file],
+        upload_method: :transfer_create_page,
+        receiptable: disbursement.outgoing_local_hcb_code
+      ).run!
     end
 
     flash[:success] = "Transfer successfully requested."
@@ -136,7 +132,7 @@ class DisbursementsController < ApplicationController
     @disbursement = Disbursement.find(params[:disbursement_id])
     authorize @disbursement
     @disbursement.mark_rejected!
-    redirect_to @disbursement.outgoing_local_hcb_code || @disbursement.incoming_local_hcb_code || @disbursement
+    redirect_to @disbursement
   end
 
   def set_transaction_categories

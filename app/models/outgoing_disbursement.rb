@@ -24,9 +24,7 @@ class OutgoingDisbursement
 
   alias_method :amount, :amount_cents
 
-  def name
-    @disbursement.name
-  end
+  delegate :name, to: :@disbursement
 
   def hcb_code
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{@disbursement.id}"
@@ -40,17 +38,15 @@ class OutgoingDisbursement
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
-  def state
-    @disbursement.state
+  def transaction_memo
+    "HCB-#{local_hcb_code&.short_code}"
   end
 
-  def state_text
-    @disbursement.state_text
-  end
+  delegate :state, to: :@disbursement
 
-  def state_icon
-    @disbursement.state_icon
-  end
+  delegate :state_text, to: :@disbursement
+
+  delegate :state_icon, to: :@disbursement
 
   # Returns the corresponding IncomingDisbursement for the destination event
   def incoming_disbursement
@@ -88,7 +84,6 @@ class OutgoingDisbursement
            :special_appearance?,
            :special_appearance_memo,
            :fee_waived?,
-           :transaction_memo,
            to: :@disbursement
 
   # Comparison - two OutgoingDisbursements are equal if they wrap the same disbursement

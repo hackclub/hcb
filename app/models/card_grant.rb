@@ -166,10 +166,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
-        hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-        hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
-      end
+      disbursement.update_all_custom_memos!(custom_memo:)
     end
   end
 
@@ -190,10 +187,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
-        hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-        hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
-      end
+      disbursement.update_all_custom_memos!(custom_memo:)
     end
   end
 
@@ -206,8 +200,9 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    disbursement_hcb_codes = (topup_disbursements + withdrawal_disbursements).flat_map { |d| [d.outgoing_local_hcb_code, d.incoming_local_hcb_code] }.compact
-    ((stripe_card&.local_hcb_codes || []) + disbursement_hcb_codes).sort_by(&:created_at).reverse
+    card_hcb_codes = stripe_card&.local_hcb_codes || []
+    disbursement_hcb_codes = (topup_disbursements + withdrawal_disbursements).flat_map(&:all_local_hcb_codes)
+    (card_hcb_codes + disbursement_hcb_codes).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -229,10 +224,7 @@ class CardGrant < ApplicationRecord
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
     ).run
-    [disbursement.outgoing_local_hcb_code, disbursement.incoming_local_hcb_code].compact.each do |hcb_code|
-      hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
-    end
+    disbursement.update_all_custom_memos!(custom_memo:)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)

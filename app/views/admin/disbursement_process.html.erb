@@ -13,19 +13,23 @@
   <tr>
     <td class="text-right">Outgoing HCB Code:</td>
     <td>
-      <% if @disbursement.outgoing_local_hcb_code %>
-        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_local_hcb_code)) %>
-      <% end %>
+      <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_local_hcb_code)) %>
     </td>
   </tr>
   <tr>
     <td class="text-right">Incoming HCB Code:</td>
     <td>
-      <% if @disbursement.incoming_local_hcb_code %>
-        <%= link_to(@disbursement.incoming_hcb_code, hcb_code_path(@disbursement.incoming_local_hcb_code)) %>
-      <% end %>
+      <%= link_to(@disbursement.incoming_hcb_code, hcb_code_path(@disbursement.incoming_local_hcb_code)) %>
     </td>
   </tr>
+  <% if @disbursement.legacy_local_hcb_code %>
+    <tr>
+      <td class="text-right">Legacy HCB Code:</td>
+      <td>
+        <%= link_to(@disbursement.legacy_hcb_code, hcb_code_path(@disbursement.legacy_local_hcb_code)) %>
+      </td>
+    </tr>
+  <% end %>
   <tr>
     <td class="text-right">From:</td>
     <td>

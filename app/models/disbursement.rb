@@ -206,7 +206,7 @@ class Disbursement < ApplicationRecord
   end
 
   def pending_expired?
-    (outgoing_local_hcb_code&.has_pending_expired? || incoming_local_hcb_code&.has_pending_expired?) || false
+    canonical_pending_transactions.pending_expired.any?
   end
 
   alias_attribute :approved_at, :pending_at
@@ -225,12 +225,21 @@ class Disbursement < ApplicationRecord
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
   end
 
+  # Legacy HCB code (HCB-500-xxx) for backwards compatibility during migration
+  def legacy_hcb_code
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}-#{id}"
+  end
+
+  def legacy_local_hcb_code
+    @legacy_local_hcb_code ||= HcbCode.find_by(hcb_code: legacy_hcb_code)
+  end
+
   def outgoing_local_hcb_code
-    @outgoing_local_hcb_code ||= HcbCode.find_by(hcb_code: outgoing_hcb_code)
+    @outgoing_local_hcb_code ||= HcbCode.find_or_create_by(hcb_code: outgoing_hcb_code)
   end
 
   def incoming_local_hcb_code
-    @incoming_local_hcb_code ||= HcbCode.find_by(hcb_code: incoming_hcb_code)
+    @incoming_local_hcb_code ||= HcbCode.find_or_create_by(hcb_code: incoming_hcb_code)
   end
 
   def canonical_transactions
@@ -239,6 +248,15 @@ class Disbursement < ApplicationRecord
 
   def canonical_pending_transactions
     @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
+  end
+
+  def all_local_hcb_codes
+    [outgoing_local_hcb_code, incoming_local_hcb_code]
+  end
+
+  def update_all_custom_memos!(custom_memo:)
+    canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
   end
 
   def transactions_helper
