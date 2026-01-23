@@ -8,6 +8,16 @@ module DonationPageSetup
       return not_found
     end
 
+    # Handle tier lookup if tier_id is present
+    if params[:tier_id].present?
+      @tier = event.donation_tiers.find_by(id: params[:tier_id]) unless params[:tier_id] == "custom"
+
+      if @tier.nil? && params[:tier_id] != "custom"
+        redirect_to start_donation_donations_path(event), flash: { error: "Donation tier could not be found." }
+        return false
+      end
+    end
+
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
     @tiers = event.donation_tiers.where(published: true)
@@ -33,7 +43,7 @@ module DonationPageSetup
 
     @monthly = params[:monthly].present? || params[:tier_id].present?
     if @monthly
-      @recurring_donation = @event.recurring_donations.build(
+      @recurring_donation = event.recurring_donations.build(
         name: params[:name],
         email: params[:email],
         amount: params[:amount],
@@ -44,5 +54,7 @@ module DonationPageSetup
     end
 
     @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(event, monthly: @monthly).run / 100.0)
+
+    true
   end
 end
