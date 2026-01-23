@@ -48,12 +48,9 @@ class DonationsController < ApplicationController
   end
 
   def start_donation
-    build_donation_page!(event: @event, params:, request:)
+    return unless build_donation_page!(event: @event, params:, request:)
+
     authorize @donation
-    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
-    if params[:tier_id].present? && @tier.nil? && params[:tier_id] != "custom"
-      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." } and return
-    end
 
     render "donations/start_donation"
   end
