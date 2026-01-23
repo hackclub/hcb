@@ -51,7 +51,6 @@ class Disbursement < ApplicationRecord
   pg_search_scope :search_name, against: [:name]
 
   include AASM
-  include Commentable
 
   include Freezable
 
