@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# app/controllers/concerns/donation_page_setup.rb
 module DonationPageSetup
   extend ActiveSupport::Concern
 
@@ -32,7 +31,7 @@ module DonationPageSetup
       utm_content: params[:utm_content]
     )
 
-    @monthly = params[:monthly].present?
+    @monthly = params[:monthly].present? || params[:tier_id].present?
     if @monthly
       @recurring_donation = @event.recurring_donations.build(
         name: params[:name],
