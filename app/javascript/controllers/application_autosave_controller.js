@@ -25,7 +25,9 @@ export default class extends ApplicationController {
     })
       .then(res => {
         if (res.ok) {
-          this.toggleIndicator('saved')
+          setTimeout(() => {
+            this.toggleIndicator('saved')
+          }, 1000)
         } else {
           throw res
         }
