@@ -3,10 +3,10 @@
 <div class="flex flex-col items-center flex-grow">
   <div class="md:max-w-[600px] w-full my-3 space-y-8 pb-5">
     <%= form_with model: @application, url: application_path(@application, return_to: submission_application_path(@application), confirm: true), method: :patch, id: "edit_application_#{@application.id}", class: "space-y-8" do |form| %>
-      
+
       <div class="card card--outline">
         <h3 class="text-2xl my-0 mb-6">Project Information</h3>
-        
+
         <div class="field" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>' }">
           <%= form.label :name do %>
             Project name <span class="text-primary">*</span>
@@ -54,7 +54,7 @@
 
       <div class="card" x-data="{ minor: <%= @application.user.teenager? %> }">
         <h3 class="text-2xl my-0 mb-6">Personal Information</h3>
-        
+
         <div class="md:flex gap-2">
           <div class="field flex-1">
             <%= form.label :full_name do %>
@@ -106,7 +106,7 @@
 
         <div>
           <h4 class="text-lg my-0 mb-4">Address</h4>
-          
+
           <%= form.label :address_line1 do %>
             Street address <span class="text-primary">*</span>
           <% end %>
@@ -148,7 +148,7 @@
 
         <div>
           <h4 class="text-lg my-0 mb-4">Additional Information</h4>
-          
+
           <div class="field">
             <%= form.label :referrer do %>
               How did you hear about HCB? <span class="text-primary">*</span>
