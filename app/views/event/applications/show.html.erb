@@ -3,35 +3,13 @@
 <% if @application.draft? %>
   <%= render partial: "begin", locals: { application: @application } %>
 <% else %>
-  <% primary_divider = capture do %>
-    <span class="flex relative">
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-primary flex z-20" style="clip-path: polygon(0px 0px, calc(100% - 1px) 0px, 1px 100%, 0px 100%);"></div>
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-white flex z-10" style="clip-path: polygon(0.5px 0px, 100% 0px, 2px 100%, 0.5px 100%);"></div>
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-[calc(50%_-_1px)] h-full w-4 bg-smoke flex"></div>
-    </span>
-  <% end %>
-  <% muted_divider = capture do %>
-    <span class="flex relative">
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-smoke flex z-20" style="clip-path: polygon(0px 0px, calc(100% - 1px) 0px, 1px 100%, 0px 100%);"></div>
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-white flex z-10" style="clip-path: polygon(0.5px 0px, 100% 0px, 2px 100%, 0.5px 100%);"></div>
-      <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-[calc(50%_-_1px)] h-full w-4 bg-smoke flex"></div>
-    </span>
-  <% end %>
-
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
-    <div class="mb-4 w-max rounded-full bg-smoke snow bold flex flex-row overflow-hidden items-stretch [&>div]:py-3 [&>div]:px-5 text-black">
-      <div class="bg-primary snow">
-        ➀ Sign agreement
-      </div>
-      <%= primary_divider %>
-      <div>
-        ➁ Await review
-      </div>
-      <%= muted_divider %>
-      <div>
-        ➂ Start spending
-      </div>
-    </div>
+    <% steps = [] %>
+    <% steps << { label: "Submit application", completed: true } %>
+    <% steps << { label: "Sign agreement", completed: @application.contract.party(:signee).signed? && !@application.contract.party(:cosigner)&.pending? } %>
+    <% steps << { label: "Await review", completed: @application.approved? } %>
+    <% steps << { label: "Start spending", completed: false } %>
+    <%= render partial: "progress_bar", locals: { steps: } %>
     <h2 class="text-3xl md:text-4xl m-0">Your application has been submitted!</h2>
     <h3 class="m-0 muted">Here's what's next for <%= @application.name %></h3>
   </div>
