@@ -58,7 +58,8 @@ class Donation
         name: "Untitled tier",
         amount_cents: 1000,
         description: "",
-        sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1
+        sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1,
+        published: false
       )
       @tier.save!
 
