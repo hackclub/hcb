@@ -48,12 +48,13 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
   include HasWiseRecipient
+
+  include PublicIdentifiable
+  set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user
@@ -236,6 +237,10 @@ class WiseTransfer < ApplicationRecord
 
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
+  end
+
+  def usd_amount_cents_or_quoted
+    usd_amount_cents || quoted_usd_amount_cents
   end
 
   def generate_quote!

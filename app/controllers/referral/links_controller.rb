@@ -2,10 +2,11 @@
 
 module Referral
   class LinksController < ApplicationController
-    before_action :set_link, only: :show
     skip_before_action :signed_in_user, only: :show
 
     def show
+      @link = Referral::Link.find_by(slug: params[:id]).presence
+
       if @link
         unless signed_in?
           skip_authorization
@@ -27,10 +28,19 @@ module Referral
       end
     end
 
-    private
+    def create
+      program = Referral::Program.find(params[:program_id])
+      @link = program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
 
-    def set_link
-      @link = Referral::Link.find_by(slug: params[:id]).presence
+      authorize(@link)
+
+      if @link.save
+        flash[:success] = "Referral link created successfully."
+      else
+        flash[:error] = @link.errors.full_messages.to_sentence
+      end
+
+      redirect_to referral_programs_admin_index_path
     end
 
   end
