@@ -43,6 +43,6 @@ module DonationPageSetup
       )
     end
 
-    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
+    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(event, monthly: @monthly).run / 100.0)
   end
 end
