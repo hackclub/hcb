@@ -123,16 +123,6 @@ class Event
       return "Review and submit" if draft?
     end
 
-    def status_color
-      return :muted if draft?
-      return :blue if submitted?
-      return :purple if under_review?
-      return :green if approved?
-      return :red if rejected?
-
-      :muted
-    end
-
     def completion_percentage
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
