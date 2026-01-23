@@ -123,8 +123,18 @@
 
 <h3>Instructions</h3>
 
-<% if @disbursement.rejected? || @disbursement.pending? %>
+<% if @disbursement.rejected? %>
   <p>Nothing more to do here. ✨</p>
+<% elsif @disbursement.pending? %>
+  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+    <div class="field">
+      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    </div>
+    <%= form.submit "Reject disbursement",
+      class: "admin-bg-orange",
+      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+  <% end %>
 <% else %>
   <p>This is a human review check.</p>
 
