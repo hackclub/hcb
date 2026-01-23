@@ -201,8 +201,8 @@ class Event
       return unless submitted_at.present?
 
       app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
-      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{self.id}\"").first
-      app ||= ApplicationsTable.new("HCB Application ID" => self.id)
+      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
+      app ||= ApplicationsTable.new("HCB Application ID" => hashid)
 
       app["First Name"] = user.first_name
       app["Last Name"] = user.last_name
