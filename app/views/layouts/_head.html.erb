@@ -65,5 +65,5 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
 <% end %>
 
-<%= render "application/seo_meta_tags" %>
+<%= render "application/seo_meta_tags" unless @skip_layout_og_tags %>
 <%= yield(:head) if content_for?(:head) %>
