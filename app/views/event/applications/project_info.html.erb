@@ -13,56 +13,53 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>' }">
-      <%= form.label :teenager do %>
-        Are you a teenager? <span class="text-primary">*</span>
-      <% end %>
+  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: null }">
+    <%= form.label :teenager do %>
+      Are you a teenager? <span class="text-primary">*</span>
+    <% end %>
 
-      <p class="text-sm muted mt-1 mb-2">HCB primarily focuses on teen-led projects, so we're more selective with adult-run organizations.</p>
+    <p class="text-sm muted mt-1 mb-2">HCB primarily focuses on teen-led projects, so we're more selective with adult-run organizations.</p>
 
     <div class="field field--options max-w-none">
-
-      <%= form.radio_button :card_type, "virtual" %>
-      <%= form.label :card_type, value: "virtual" do %>
+      <%= form.radio_button :teenager, "true", { "x-model": "teenager" } %>
+      <%= form.label :teenager, value: "true" do %>
         <strong>Yes, I'm a teenager</strong>
         <small>18 and under</small>
       <% end %>
-      <%= form.radio_button :card_type, "physical" %>
-      <%= form.label :card_type, value: "physical" do %>
+      <%= form.radio_button :teenager, "false", { "x-model": "teenager" } %>
+      <%= form.label :teenager, value: "false" do %>
         <strong>No, I'm an adult</strong>
         <small>Over 18</small>
       <% end %>
     </div>
 
-
-
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true, "x-bind:disabled": "true" %>
+      <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field">
-        <%= form.label :description do %>
-          Tell us about your project <span class="text-primary">*</span>
-        <% end %>
-        <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
-        <%= form.text_area :description, class: "w-full max-w-full", required: true %>
+      <%= form.label :description do %>
+        Tell us about your project <span class="text-primary">*</span>
+      <% end %>
+      <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
+      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field">
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_website === 'true'">
       <%= form.label :website_url do %>
         Website URL <span class="text-primary">*</span>
       <% end %>
-      <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" } %>
+      <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field">
@@ -70,14 +67,14 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_political === 'true'">
       <%= form.label :political_description do %>
         Please describe the political activity your project is involved in <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field" %>
+      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", "x-bind:disabled": "teenager == null" %>
     </div>
   </div>
 
