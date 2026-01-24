@@ -53,7 +53,10 @@ class Event
 
       @application.mark_approved!
       flash[:success] = "Application approved."
-      redirect_back_or_to application_path(@application)
+
+      party = @application.contract.party :hcb
+
+      redirect_to contract_party_path(party)
     end
 
     def admin_reject
@@ -62,6 +65,14 @@ class Event
       @application.mark_rejected!(rejection_message: params[:rejection_message])
       flash[:success] = "Application rejected."
       redirect_back_or_to application_path(@application)
+    end
+
+    def admin_activate
+      authorize @application
+
+      @application.activate!
+
+      redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
 
     def submission

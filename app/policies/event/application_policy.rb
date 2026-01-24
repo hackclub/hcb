@@ -22,6 +22,10 @@ class Event
       user.admin?
     end
 
+    def admin_activate?
+      user.admin?
+    end
+
     def edit?
       user.admin?
     end

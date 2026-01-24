@@ -192,7 +192,7 @@ class Event
     end
 
     def on_contract_party_signed(party)
-      if party.contract.parties.not_hcb.all?(&:signed?)
+      if party.contract.parties.not_hcb.all?(&:signed?) && party.contract.party(:hcb).pending?
         mark_under_review!
       end
     end
@@ -240,6 +240,24 @@ class Event
 
     def record_pageview(last_page_viewed)
       update!(last_viewed_at: Time.current, last_page_viewed:)
+    end
+
+    def activate!
+      raise "Contract must be signed before activation" unless contract.signed?
+
+      poc = contract.party(:hcb).user
+
+      Event.create!(
+        name:,
+        country: address_country,
+        point_of_contact_id: poc.id,
+        application: self
+      )
+
+      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager)
+      service.run
+
+      self
     end
 
   end

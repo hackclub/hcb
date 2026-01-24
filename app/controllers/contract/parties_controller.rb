@@ -17,7 +17,7 @@ class Contract
         end
       end
 
-      if @party.signed?
+      if @party.signed? && !(@contract.contractable.is_a?(Event::Application) && @party.hcb?)
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?

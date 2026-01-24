@@ -863,6 +863,7 @@ Rails.application.routes.draw do
         post "submit"
         post "admin_approve"
         post "admin_reject"
+        post "admin_activate"
       end
     end
   end

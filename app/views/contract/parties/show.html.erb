@@ -4,7 +4,7 @@
 
 <h2>Sign your HCB agreement</h2>
 
-<div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) %>">
+<div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
   <div class="max-h-[75vh] overflow-scroll md:col-span-3">
     <docuseal-form
       id="docusealForm"
@@ -14,6 +14,13 @@
     </docuseal-form>
   </div>
   <div class="md:col-span-2 max-h-[75vh]">
-    <%= render partial: "contract_faq" %>
+    <% if @contract.contractable.is_a?(Event::Application) && @party.hcb? %>
+      <p class="text-center">Sign the contract before activating the organization</p>
+      <%= button_to admin_activate_application_path(@contract.contractable), method: :post, class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } do %>
+        Activate
+      <% end %>
+    <% else %>
+      <%= render partial: "contract_faq" %>
+    <% end %>
   </div>
 </div>
