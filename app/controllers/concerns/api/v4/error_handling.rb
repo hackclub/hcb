@@ -11,7 +11,7 @@ module Api
         end
 
         rescue_from ActiveRecord::RecordNotFound do |e|
-          render json: { error: "resource_not_found", message: ("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model) }.compact_blank, status: :not_found
+          render json: { error: "resource_not_found", messages: [("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model)] }.compact_blank, status: :not_found
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
