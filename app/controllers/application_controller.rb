@@ -16,6 +16,7 @@ class ApplicationController < ActionController::Base
   include ToursHelper
   include PublicActivity::StoreController
   include SetGovernanceRequestContext
+  include ThemeDetection
 
   protect_from_forgery
 

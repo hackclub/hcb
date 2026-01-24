@@ -16,8 +16,7 @@
       type="button"
       class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
       aria-label="Get help"
-      id="help-icon"
-      onclick="window.Beacon && (window.Beacon('identify', { name: <%= current_user&.name.to_json %>, email: <%= current_user&.email.to_json %>, signature: <%= OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY) || "", current_user&.email || "").to_json %>, 'hcb-url': <%= (current_user && admin_user_url(current_user)).to_json %> }), window.Beacon('session-data', { url: <%= url_params[:url].to_json %>, location: <%= url_params[:location].to_json %>, user_id: <%= url_params[:user_id].to_json %> }), window.Beacon('toggle'))">
+      id="intercom-trigger">
       <%= inline_icon "question-mark", size: 18, style: "width:18px" %>
     </a>
   </div>

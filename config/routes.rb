@@ -658,6 +658,7 @@ Rails.application.routes.draw do
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :beacon_config
+          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do

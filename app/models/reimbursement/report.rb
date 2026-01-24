@@ -113,7 +113,7 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+            user.payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
               expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
@@ -336,7 +336,7 @@ module Reimbursement
     end
 
     def minimum_wire_amount_cents
-      event.minimum_wire_amount_cents unless card_grant.present?
+      return event.minimum_wire_amount_cents unless card_grant.present?
 
       500_00
     end
