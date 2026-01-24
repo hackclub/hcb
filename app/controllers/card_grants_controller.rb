@@ -39,7 +39,7 @@ class CardGrantsController < ApplicationController
   end
 
   def new
-    @card_grant = @event.card_grants.build(email: params[:email], pre_authorization_required: @event.card_grant_setting&.pre_authorization_required?)
+    @card_grant = @event.card_grants.build(email: params[:email])
 
     authorize @card_grant
 
