@@ -87,7 +87,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !user.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>

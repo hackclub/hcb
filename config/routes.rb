@@ -658,6 +658,7 @@ Rails.application.routes.draw do
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :beacon_config
+          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -706,6 +707,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do

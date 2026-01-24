@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 module TwilioMessageService
+  # Twilio errors we expect and don't need to report:
+  # 21408, 21612: can't send text messages to certain countries (e.g. UK)
+  # 60410: user has been flagged for fraud by Twilio
+  EXPECTED_TWILIO_ERRORS = %w[21408 21612 60410].freeze
+
   class Send
     def initialize(user, body, hcb_code: nil, phone_number: nil)
       @user = user
@@ -42,6 +47,11 @@ module TwilioMessageService
       )
 
       sms_message
+    rescue => e
+      unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
+        Rails.error.report(e)
+        raise
+      end
     end
 
   end

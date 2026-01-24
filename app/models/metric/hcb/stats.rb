@@ -83,7 +83,7 @@ class Metric
           # users
 
           currently_online: ::User.currently_online.count,
-          mobile_installs: ::ApiToken.joins("INNER JOIN oauth_applications ON api_tokens.application_id = oauth_applications.id").where(oauth_applications: { name: "HCB Mobile" }).where(revoked_at: nil).distinct.count(:user_id)
+          mobile_installs: ::ApiToken.joins("INNER JOIN oauth_applications ON api_tokens.application_id = oauth_applications.id").where(oauth_applications: { name: "HCB Mobile" }).distinct.count(:user_id)
         }
       end
 
