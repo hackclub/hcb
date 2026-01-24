@@ -17,10 +17,10 @@
 
         <% if @application.approved_at? %>
           <% approved_at = @application.approved_at.in_time_zone(current_session.timezone.presence || Time.zone.name) %>
-          Approved on <%= approved_at.strftime("%B #{approved_at.day.ordinalize}") %> at <%= approved_at.strftime("%l:%M%p").downcase %>
+          <br>Approved on <%= approved_at.strftime("%B #{approved_at.day.ordinalize}") %> at <%= approved_at.strftime("%l:%M%p").downcase %>
         <% elsif @application.rejected_at? %>
           <% rejected_at = @application.rejected_at.in_time_zone(current_session.timezone.presence || Time.zone.name) %>
-          Rejected on <%= rejected_at.strftime("%B #{rejected_at.day.ordinalize}") %> at <%= rejected_at.strftime("%l:%M%p").downcase %>
+          <br>Rejected on <%= rejected_at.strftime("%B #{rejected_at.day.ordinalize}") %> at <%= rejected_at.strftime("%l:%M%p").downcase %>
         <% end %>
       </p>
     </div>
