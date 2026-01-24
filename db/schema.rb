@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -466,7 +466,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
     t.string "merchant_lock"
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
-    t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
+    t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
   create_table "card_grants", force: :cascade do |t|
@@ -1668,9 +1668,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
   create_table "organizer_position_invite_requests", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
+    t.bigint "organizer_position_invite_id"
     t.bigint "organizer_position_invite_link_id", null: false
     t.bigint "requester_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_0bf62e304a"
     t.index ["organizer_position_invite_link_id"], name: "idx_on_organizer_position_invite_link_id_241807b5ee"
     t.index ["requester_id"], name: "index_organizer_position_invite_requests_on_requester_id"
   end
@@ -2008,6 +2010,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
@@ -2091,6 +2094,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
 
   create_table "reimbursement_reports", force: :cascade do |t|
     t.string "aasm_state"
+    t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
@@ -2109,6 +2113,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
     t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2610,6 +2615,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
     t.jsonb "recipient_information"
     t.string "recipient_name", null: false
     t.text "return_reason"
+    t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
@@ -2772,6 +2778,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_004848) do
   add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
   add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
   add_foreign_key "organizer_position_invite_requests", "organizer_position_invite_links"
+  add_foreign_key "organizer_position_invite_requests", "organizer_position_invites"
   add_foreign_key "organizer_position_invite_requests", "users", column: "requester_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"

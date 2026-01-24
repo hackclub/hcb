@@ -84,8 +84,8 @@ class CardGrant
     def status_badge_type(organizer: false)
       return :muted if draft?
       return :pending if submitted?
-      return :success if approved? || (fraudulent? && !organizer)
-      return :error if fraudulent? && organizer
+      return :success if approved? || (fraudulent? && authorized? && !organizer)
+      return :error if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
       return :error if rejected?
 
       :muted
@@ -94,8 +94,9 @@ class CardGrant
     def status_text(organizer: false)
       return "Draft" if draft?
       return "Under review" if submitted?
-      return "Approved" if approved? || (fraudulent? && !organizer)
-      return "Flagged as fraudulent" if fraudulent? && organizer
+      return "Approved" if approved? || (fraudulent? && authorized? && !organizer)
+      return "Flagged as fraudulent" if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
+
       return "Rejected" if rejected?
 
       aasm_state.humanize
@@ -187,6 +188,13 @@ class CardGrant
 
       broadcast_refresh_to self
     rescue Faraday::Error => e
+      # If OpenAI rejects the image as invalid, mark as fraudulent
+      if e.response_body&.include?("does not represent a valid image")
+        mark_fraudulent!
+        broadcast_refresh_to self
+        return
+      end
+
       # Modify the original exception to append the response body to the message
       # so these are easier to debug
       raise(e.exception(<<~MSG))

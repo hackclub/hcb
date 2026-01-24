@@ -45,6 +45,8 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def ephemeral_keys?
+    return false if record.card_grant&.pre_authorization&.unauthorized?
+
     cardholder?
   end
 

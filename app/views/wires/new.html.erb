@@ -158,6 +158,7 @@
         accept: "image/*,image/heic,.pdf",
         style: "margin: 8px 0px",
         class: "field--fileupload__field",
+        direct_upload: true,
         data: {
           "file-drop-target" => "fileInput"
         },
@@ -166,6 +167,11 @@
   </div>
 
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
+
+  <div class="field field--checkbox">
+    <%= form.check_box :send_email_notification, disabled: %>
+    <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
+  </div>
 
   <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your wire will be sent out on the next business day.">
     <%= form.submit "Send wire", disabled: %>

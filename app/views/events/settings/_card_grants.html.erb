@@ -27,7 +27,7 @@
         </div>
 
         <div class="field">
-          <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
+          <%= card_grant_setting_fields.label :expiration_preference, "Return grants after..." %>
           <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, { selected: event.card_grant_setting.expiration_preference }, { disabled: } %>
         </div>
 

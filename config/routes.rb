@@ -648,7 +648,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show, :create] do
+          resources :invitations, only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -658,6 +658,7 @@ Rails.application.routes.draw do
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :beacon_config
+          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -671,6 +672,8 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
+          resources :invitations, only: [:index, :create, :destroy]
+          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -704,6 +707,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do
