@@ -73,14 +73,15 @@ RSpec.describe Api::V4::CardGrantsController do
           "expires_on"                 => card_grant.expires_on.iso8601(3),
           "disbursements"              => [
             {
-              "id"            => disbursement.public_id,
-              "memo"          => "Grant to recipient",
-              "status"        => "completed",
-              "amount_cents"  => 123_45,
-              "card_grant_id" => card_grant.public_id,
-              "from"          => serialized_event,
-              "to"            => serialized_event,
-              "sender"        => {
+              "id"             => disbursement.public_id,
+              "memo"           => "Grant to recipient",
+              "status"         => "completed",
+              "transaction_id" => disbursement.local_hcb_code.public_id,
+              "amount_cents"   => 123_45,
+              "card_grant_id"  => card_grant.public_id,
+              "from"           => serialized_event,
+              "to"             => serialized_event,
+              "sender"         => {
                 "id"       => user.public_id,
                 "name"     => "Orpheus D",
                 "email"    => "orpheus@hackclub.com",
