@@ -361,8 +361,8 @@ class CardGrant < ApplicationRecord
 
   def set_defaults
     if self.new_record?
-      self.pre_authorization_required = setting.pre_authorization_required
-      self.invite_message = setting.invite_message
+      self.pre_authorization_required = setting&.pre_authorization_required
+      self.invite_message = setting&.invite_message
     end
   end
 
