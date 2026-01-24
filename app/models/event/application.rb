@@ -78,8 +78,10 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          app_contract = contract || create_contract
-          app_contract.party(:cosigner)&.notify
+          if user.teenager?
+            app_contract = contract || create_contract
+            app_contract.party(:cosigner)&.notify
+          end
           Event::ApplicationMailer.with(application: self).confirmation.deliver_later
         end
       end
@@ -93,6 +95,9 @@ class Event
 
       event :mark_approved do
         transitions from: [:submitted, :under_review], to: :approved
+        after do
+          create_contract unless user.teenager? || contract.present?
+        end
       end
 
       event :mark_rejected do
@@ -192,7 +197,7 @@ class Event
     end
 
     def on_contract_party_signed(party)
-      if party.contract.parties.not_hcb.all?(&:signed?) && party.contract.party(:hcb).pending?
+      if party.contract.parties.not_hcb.all?(&:signed?) && party.contract.party(:hcb).pending? && submitted?
         mark_under_review!
       end
     end

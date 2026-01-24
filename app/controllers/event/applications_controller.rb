@@ -35,6 +35,46 @@ class Event
       # Signees are redirected to this page right after signing, so let's make sure we have updated data
       @application.contract&.party(:signee)&.sync_with_docuseal
       @application.record_pageview(:show)
+
+      contract_description = if @application.contract.nil?
+                               "We'll send you our fiscal sponsorship agreement, which sets the terms and conditions of your usage of HCB."
+                             elsif @application.contract.party(:cosigner)&.pending?
+                               if @application.contract.party(:signee).signed?
+                                 "Your parent or legal guardian (#{@application.cosigner_email}) needs to sign the agreement before we can review your application."
+                               else
+                                 "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
+                               end
+                             elsif @application.contract.party(:signee).pending?
+                               "You (#{@application.user.email}) need to sign the agreement before we can review your application."
+                             else
+                               "Our team will sign and finalize the contract soon."
+                             end
+
+      contract_step = {
+        label: "Sign agreement",
+        name: "Sign the Fiscal Sponsorship Agreement",
+        description: contract_description,
+        completed: @application.contract&.party(:signee)&.signed? && !@application.contract&.party(:cosigner)&.pending? && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
+      }
+
+      unless @application.draft?
+        @steps = []
+        @steps << { label: "Submit application", completed: true }
+        @steps << contract_step if @application.user.teenager?
+        @steps << {
+          label: "Await review",
+          name: "Wait for a response from the HCB team",
+          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          completed: @application.approved?,
+        }
+        @steps << contract_step unless @application.user.teenager?
+        @steps << {
+          label: "Start spending",
+          name: "Start spending!",
+          description: "You'll have access to your organization to begin raising and spending money.",
+          completed: false
+        }
+      end
     end
 
     def airtable
@@ -54,9 +94,12 @@ class Event
       @application.mark_approved!
       flash[:success] = "Application approved."
 
-      party = @application.contract.party :hcb
-
-      redirect_to contract_party_path(party)
+      if @application.user.teenager?
+        party = @application.contract.party :hcb
+        redirect_to contract_party_path(party)
+      else
+        redirect_to submission_application_path(@application)
+      end
     end
 
     def admin_reject
