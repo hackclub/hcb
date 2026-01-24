@@ -360,9 +360,9 @@ class CardGrant < ApplicationRecord
   end
 
   def set_defaults
-    if self.new_record?
-      self.pre_authorization_required = setting&.pre_authorization_required
-      self.invite_message = setting&.invite_message
+    if self.new_record? && setting.present?
+      self.pre_authorization_required = setting.pre_authorization_required
+      self.invite_message = setting.invite_message
     end
   end
 
