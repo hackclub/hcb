@@ -73,18 +73,15 @@ class CardGrant < ApplicationRecord
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
-  after_create :transfer_money
-  after_create_commit :send_email
+  before_create :set_defaults
 
-  after_initialize :set_defaults
-  before_create do
-    if self.invite_message.nil?
-      # If left blank, use the default from the setting.
-      # Although we set defaults on new records, API calls
-      # don't have the defaults applied automatically.
-      self.invite_message = setting.invite_message
+  after_initialize, if :new_record? do
+    if setting.present?
     end
   end
+
+  after_create :transfer_money
+  after_create_commit :send_email
 
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
@@ -359,9 +356,23 @@ class CardGrant < ApplicationRecord
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
   end
 
+  # def set_defaults_2
+  #   # If it's blank, allow it to continue being blank. This likely means the
+  #   # user explicitly cleared the field in the UI.
+  #   # However, if it's `nil`, then use the default from the setting. The field
+  #   # was likely left unset via the API.
+  #   if setting.present?
+  #     # self.pre_authorization_required = setting.pre_authorization_required
+  #     # self.invite_message = setting.invite_message
+  #   end
+  # end
+
   def set_defaults
-    if self.new_record? && setting.present?
-      self.pre_authorization_required = setting.pre_authorization_required
+    # If it's blank, allow it to continue being blank. This likely means the
+    # user explicitly cleared the field in the UI.
+    # However, if it's `nil`, then use the default from the setting. The field
+    # was likely left unset via the API.
+    if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
   end
