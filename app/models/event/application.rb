@@ -109,6 +109,8 @@ class Event
       end
     end
 
+    scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
+
     def default_rejection_message
       <<~MSG.strip
         Hi #{user.first_name},
@@ -126,13 +128,16 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
+      return "Sign the fiscal sponsorship agreement" if submitted?
+      return "Start spending!" if approved?
+      return "" if rejected?
     end
 
     def completion_percentage
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted?
+      return 100 if submitted? || under_review?
 
       0
     end
