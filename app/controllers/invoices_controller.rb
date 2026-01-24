@@ -75,7 +75,7 @@ class InvoicesController < ApplicationController
         "created_at"
       end
 
-    @invoices = organizer_signed_in? ? relation.order("#{sort_column} #{sort_direction}") : relation
+    @invoices = organizer_signed_in? ? relation.order(sort_column => sort_direction) : relation
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
