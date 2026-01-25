@@ -44,7 +44,7 @@ RSpec.describe EventsController do
             "logo"      => "none",
             "demo_mode" => false,
             "member"    => true,
-            "features"  => { "acard_grants" => false, "subevents" => false },
+            "features"  => { "card_grants" => false, "subevents" => false },
           }
         ]
       )
@@ -82,7 +82,7 @@ RSpec.describe EventsController do
             "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
             "demo_mode" => true,
             "member"    => false,
-            "features"  => { "acard_grants" => false, "subevents" => true },
+            "features"  => { "card_grants" => false, "subevents" => true },
           },
         ]
       )
