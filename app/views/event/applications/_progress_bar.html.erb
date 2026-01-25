@@ -3,18 +3,25 @@
 <% last_completed_index = steps.rindex { |step| step[:completed] } || -1 %>
 <% steps = steps.map.with_index { |step, index| step.merge(state: index < last_completed_index ? :completed : index == last_completed_index ? :last_completed : index == last_completed_index + 1 ? :active : :pending) } %>
 
-<div class="mb-4 w-max rounded-full bg-smoke snow bold flex flex-row overflow-hidden items-stretch [&>div]:py-3 [&>div]:px-5 text-black *:last:invisible">
+<div class="mb-4 w-max rounded-full bg-smoke snow bold flex flex-row overflow-hidden items-stretch text-black">
   <% steps.each do |step| %>
     <% background = { completed: "muted", last_completed: "muted", active: "primary", pending: "smoke" }[step[:state]] %>
     <% text_color = { completed: "snow", last_completed: "snow", active: "snow", pending: "black" }[step[:state]] %>
     <% next_background = { completed: "muted", last_completed: "primary", active: "smoke", pending: nil }[step[:state]] %>
 
-    <div class="bg-<%= background %> <%= text_color %> flex flex-row items-center gap-2">
-      <%= inline_icon "checkmark" if step[:state] == :completed || step[:state] == :last_completed %>
-      <%= step[:label] %>
+    <div class="bg-<%= background %> <%= text_color %> flex flex-row items-center gap-2 py-2 sm:py-3 px-3 sm:px-4 md:px-5">
+      <%= inline_icon "checkmark", size: 24 if step[:state] == :completed || step[:state] == :last_completed %>
+      <span>
+        <span class="sm:hidden">
+          <%= step[:shorthand] || step[:label] %>
+        </span>
+        <span class="hidden sm:inline">
+          <%= step[:label] %>
+        </span>
+      </span>
     </div>
 
-    <span class="flex relative">
+    <span class="flex relative last:invisible">
       <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-<%= background %> flex z-20" style="clip-path: polygon(0px 0px, calc(100% - 1px) 0px, 1px 100%, 0px 100%);"></div>
       <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 h-full w-4 bg-white flex z-10" style="clip-path: polygon(0.5px 0px, 100% 0px, 2px 100%, 0.5px 100%);"></div>
       <div class="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-[calc(50%_-_1px)] h-full w-4 bg-<%= next_background %> flex"></div>

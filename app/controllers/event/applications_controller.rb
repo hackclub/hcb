@@ -50,26 +50,30 @@ class Event
                                "Our team will sign and finalize the contract soon."
                              end
 
+      contract_signed = @application.contract&.party(:signee)&.signed? && !@application.contract&.party(:cosigner)&.pending? && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
       contract_step = {
         label: "Sign agreement",
+        shorthand: "Sign",
         name: "Sign the Fiscal Sponsorship Agreement",
         description: contract_description,
-        completed: @application.contract&.party(:signee)&.signed? && !@application.contract&.party(:cosigner)&.pending? && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
+        completed: contract_signed
       }
 
       unless @application.draft?
         @steps = []
-        @steps << { label: "Submit application", completed: true }
+        @steps << { label: "Submit application", shorthand: "Submit", completed: true }
         @steps << contract_step if @application.user.teenager?
         @steps << {
           label: "Await review",
+          shorthand: "Review",
           name: "Wait for a response from the HCB team",
           description: "Our operations team will review your application and respond within #{@application.response_time}.",
-          completed: @application.approved?,
+          completed: @application.approved? && (contract_signed || !@application.user.teenager?)
         }
         @steps << contract_step unless @application.user.teenager?
         @steps << {
           label: "Start spending",
+          shorthand: "Spend",
           name: "Start spending!",
           description: "You'll have access to your organization to begin raising and spending money.",
           completed: false
