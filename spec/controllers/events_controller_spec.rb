@@ -36,7 +36,7 @@ RSpec.describe EventsController do
             "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
             "demo_mode" => true,
             "member"    => true,
-            "features"  => { "subevents" => true },
+            "features"  => { "card_grants" => false, "subevents" => true },
           },
           {
             "name"      => "Event 1",
