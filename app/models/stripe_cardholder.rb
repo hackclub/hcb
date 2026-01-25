@@ -22,8 +22,8 @@
 #
 # Indexes
 #
-#  index_stripe_cardholders_on_stripe_id  (stripe_id)
-#  index_stripe_cardholders_on_user_id    (user_id)
+#  index_stripe_cardholders_on_stripe_id  (stripe_id) UNIQUE
+#  index_stripe_cardholders_on_user_id    (user_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -47,6 +47,7 @@ class StripeCardholder < ApplicationRecord
   validates :stripe_billing_address_line1, presence: true, on: :update
   validates :stripe_billing_address_city, presence: true, on: :update
   validates :stripe_billing_address_country, presence: true, on: :update
+  validates :user, uniqueness: true
 
   validates_comparison_of :stripe_billing_address_country, equal_to: "US"
   validates :stripe_billing_address_state, inclusion: {
