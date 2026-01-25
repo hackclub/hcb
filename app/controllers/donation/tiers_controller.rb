@@ -2,6 +2,7 @@
 
 class Donation
   class TiersController < ApplicationController
+    include SetEvent
     include DonationPageSetup
 
     before_action :set_event, except: [:set_index]
@@ -94,13 +95,6 @@ class Donation
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
-    end
-
-    private
-
-    def set_event
-      @event = Event.where(slug: params[:event_name] || params[:event_id]).first
-      render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
   end
