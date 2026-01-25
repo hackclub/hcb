@@ -118,7 +118,7 @@ module Discord
 
       attachments = @interaction.dig(:data, :resolved, :attachments)
       file = attachments&.values&.first
-      content_type = file[:content_type] if file.present?
+      content_type = file&.[](:content_type)
 
       unless file.present? && (content_type == "application/pdf" || content_type&.start_with?("image/"))
         return respond(embeds: [{
