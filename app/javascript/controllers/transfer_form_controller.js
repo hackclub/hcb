@@ -14,6 +14,7 @@ export default class extends Controller {
     'answerText',
     'answerCTA',
     'learnMore',
+    'wiseAnswerNote',
   ]
 
   static values = {
@@ -88,6 +89,8 @@ export default class extends Controller {
 
       this.answerTarget.hidden = false
       this.wizardTarget.hidden = true
+
+      this.wiseAnswerNoteTarget.hidden = payload.type !== 'Wise transfer'
     }
   }
 
@@ -98,6 +101,7 @@ export default class extends Controller {
     if (answer == 'Mailed check') value = 'check'
     if (answer == 'International wire') value = 'wire'
     if (answer == 'Wise transfer') value = 'wise'
+
     window.Turbo.visit(this[`${value}Value`])
   }
 }
