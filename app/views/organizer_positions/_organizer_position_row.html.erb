@@ -68,11 +68,11 @@
         </div>
       </div>
     <% end %>
-    <% if admin_signed_in? %>
+    <% if auditor_signed_in? %>
       <div class="tooltipped tooltipped--s" aria-label="Edit user's settings">
-        <%= pop_icon_to "controls", edit_user_path(organizer_position.user.slug), data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
+        <%= pop_icon_to "settings", admin_user_path(organizer_position.user), data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
       </div>
-      <% unless organizer_position.user == current_user || current_session&.impersonated? %>
+      <% unless organizer_position.user == current_user || current_session&.impersonated? || !admin_signed_in? %>
         <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
           <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
         </div>
