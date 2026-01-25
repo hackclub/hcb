@@ -28,7 +28,7 @@ export default class extends Controller {
       id: 1,
       question: 'Does your recipient live within the US?',
       yes: 2,
-      no: 3
+      no: 3,
     },
     {
       id: 2,
@@ -53,7 +53,7 @@ export default class extends Controller {
         type: 'Wise transfer',
         link: 'https://help.hcb.hackclub.com/en/articles/13370917-how-do-i-send-wise-transfers-through-hcb',
       },
-    }
+    },
   ]
 
   showWizard = () => {
