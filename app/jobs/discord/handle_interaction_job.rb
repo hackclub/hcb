@@ -128,10 +128,8 @@ module Discord
                        }])
       end
 
-      url = file[:url]
       filename = file[:filename]
       content_type = file[:content_type]
-
       io = URI(file[:url]).open
 
       ActiveRecord::Base.transaction do
