@@ -120,7 +120,7 @@ module Discord
       file = attachments&.values&.first
       content_type = file[:content_type] if file.present?
 
-      unless file.nil? || content_type == "application/pdf" || content_type&.start_with?("image/")
+      unless file.present? && (content_type == "application/pdf" || content_type&.start_with?("image/"))
         return respond(embeds: [{
                          title: "There was a problem with your receipt",
                          description: "Only images and PDF files are supported. Please try again.",
@@ -129,7 +129,6 @@ module Discord
       end
 
       filename = file[:filename]
-      content_type = file[:content_type]
       io = URI(file[:url]).open
 
       ActiveRecord::Base.transaction do
