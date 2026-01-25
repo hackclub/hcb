@@ -44,7 +44,7 @@ RSpec.describe EventsController do
             "logo"      => "none",
             "demo_mode" => false,
             "member"    => true,
-            "features"  => { "subevents" => false },
+            "features"  => { "card_grants" => true, "subevents" => false },
           }
         ]
       )
