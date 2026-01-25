@@ -120,6 +120,12 @@ class CanonicalPendingTransaction < ApplicationRecord
       .includes(:canonical_pending_declined_mapping)
       .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
   }
+  scope :declined, -> {
+    includes(:canonical_pending_settled_mappings)
+      .where(canonical_pending_settled_mappings: { canonical_pending_transaction_id: nil })
+      .includes(:canonical_pending_declined_mapping)
+      .where.not(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
+  }
   scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }

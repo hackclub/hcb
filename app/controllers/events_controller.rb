@@ -192,7 +192,8 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym,
-      subledger: params[:subledger]
+      subledger: params[:subledger],
+      declined_or_reversed: @declined_or_reversed
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -206,8 +207,8 @@ class EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
 
-    @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
-    TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
+    @transactions = Kaminari.paginate_array([@pending_transactions, @all_transactions].flatten).page(page).per(per_page)
+    TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions.reject { |t| t.is_a?(CanonicalPendingTransaction) }, event: @event).run!
 
     if show_running_balance?
       offset = page * per_page
@@ -221,7 +222,7 @@ class EventsController < ApplicationController
                            0
                          end
 
-      @transactions.reverse.reduce(initial_subtotal) do |running_total, transaction|
+      @transactions.reject { |t| t.is_a?(CanonicalPendingTransaction) }.reverse.reduce(initial_subtotal) do |running_total, transaction|
         transaction.running_balance = running_total + transaction.amount
       end
     end
@@ -1190,6 +1191,7 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @declined_or_reversed = params[:declined_or_reversed].present?
     @merchant = params[:merchant]
     @direction = params[:direction]
     @category = TransactionCategory.find_by(slug: params[:category])
@@ -1229,7 +1231,8 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date",
-      subledger: params[:subledger]
+      subledger: params[:subledger],
+      declined_or_reversed: @declined_or_reversed
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
