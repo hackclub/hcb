@@ -36,12 +36,12 @@
       <% end %>
     <% end %>
   </div>
-  
+
   <% if card_grant.setting.support_message.present? %>
     <section id="support_card_grant_<%= card_grant.id %>" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
       <%= modal_header "Get support for your card grant" %>
       <%= sanitize(MarkdownService.instance.renderer.render(card_grant.setting.support_message), scrubber: MarkdownScrubber.new) %>
-      
+
       <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 mt2" style="border-top: none;">
         <% if card_grant.setting.support_url.present? %>
           <div>

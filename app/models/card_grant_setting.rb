@@ -49,7 +49,11 @@ class CardGrantSetting < ApplicationRecord
   }, prefix: :expires_after
 
   def slack_support?
-    support_url&.match?(%r{\Ahttps://.+\.slack\.com/})
+    return false unless support_url.present?
+
+    URI.parse(support_url)&.host&.end_with?(".slack.com") || false
+  rescue URI::InvalidURIError, ArgumentError
+    false
   end
 
   def email_support?
