@@ -43,11 +43,11 @@ class StripeCardholder < ApplicationRecord
   alias_method :transactions, :stripe_authorizations
 
   validates_uniqueness_of :stripe_id
+  validates :user, uniqueness: true
 
   validates :stripe_billing_address_line1, presence: true, on: :update
   validates :stripe_billing_address_city, presence: true, on: :update
   validates :stripe_billing_address_country, presence: true, on: :update
-  validates :user, uniqueness: true
 
   validates_comparison_of :stripe_billing_address_country, equal_to: "US"
   validates :stripe_billing_address_state, inclusion: {
