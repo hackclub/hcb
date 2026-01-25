@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_25_193024) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2183,8 +2183,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.text "stripe_phone_number"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["stripe_id"], name: "index_stripe_cardholders_on_stripe_id"
-    t.index ["user_id"], name: "index_stripe_cardholders_on_user_id"
+    t.index ["stripe_id"], name: "index_stripe_cardholders_on_stripe_id", unique: true
+    t.index ["user_id"], name: "index_stripe_cardholders_on_user_id", unique: true
   end
 
   create_table "stripe_cards", force: :cascade do |t|
