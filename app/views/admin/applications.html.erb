@@ -12,12 +12,13 @@
   <%= paginate @applications %>
 </div>
 
-<table>
+<table class="min-w-0">
   <thead>
     <tr>
       <th class="w-24">ID</th>
       <th class="w-32">Date</th>
-      <th>Event</th>
+      <th>Project Name</th>
+      <th>User</th>
       <th>Status</th>
       <th class="w-24">Actions</th>
     </tr>
@@ -28,9 +29,11 @@
         <td><%= application.id %></td>
         <td><%= application.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= application.name %></td>
+        <td><%= user_mention(application.user) %></td>
         <td><%= application.aasm.human_state %></td>
-        <td>
+        <td class="text-nowrap">
           <%= link_to "View", submission_application_path(application) %>
+          <%= link_to "Airtable", airtable_application_path(application), target: "_blank" %>
         </td>
       </tr>
     <% end %>
