@@ -42,6 +42,7 @@ module FeeEngine
       reason = :transfer_returned if canonical_transaction.local_hcb_code.ach_transfer? # outgoing ACH transfers are sometimes returned to the account upon failure
       reason = :transfer_returned if canonical_transaction.local_hcb_code.wire? # outgoing wires are sometimes returned to the account upon failure
       reason = :transfer_returned if canonical_transaction.local_hcb_code.reimbursement_payout_holding? # payout holdings are sometimes returned to the account upon failure
+      reason = :transfer_returned if canonical_transaction.local_hcb_code.reimbursement_expense_payout? # expense payouts are sometimes returned to the account upon failure
 
       # don't run fee if other transactions in it's HCB Code have fees waived
       reason = :revenue_waived if canonical_transaction.local_hcb_code.canonical_transactions.includes(:fee).any? { |ct| ct.fee&.revenue_waived? }

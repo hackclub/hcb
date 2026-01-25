@@ -16,9 +16,7 @@
     title: "Important information about Wise transfers",
     class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
     footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
-  We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.
-  <br>
-  Sending over $500? Avoid all fees by sending an international wire.
+  We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization. <i>Sending over $500? Avoid all fees by sending an international wire.</i>
 <% end %>
 
 <%= form_with(model: [@event, @wise_transfer], local: true, html: {
@@ -71,6 +69,12 @@
 
     <p x-text="(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') ? 'Enter an amount & currency to get an estimate in USD' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Approximately ${usd_quote} USD`" class="muted mt-0"></p>
 
+  <div x-show="!(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') && !Number.isNaN(usd_quote) && parseFloat(String(usd_quote).replace('$', '').replace(',', '')) > 500">
+      <%= render "application/callout", type: "info", title: "You can save money by sending a wire." do %>
+        <p><%= link_to "Wire transfers", new_event_wire_path(@event) %> are available for all transfers above $500 (USD) and are entirely fee-free for HCB users.</p>
+      <% end %>
+    </div>
+
   </div>
 
   <div class="field">
@@ -98,6 +102,7 @@
         accept: "image/*,image/heic,.pdf",
         style: "margin: 8px 0px",
         class: "field--fileupload__field",
+        direct_upload: true,
         data: {
           "file-drop-target" => "fileInput"
         },

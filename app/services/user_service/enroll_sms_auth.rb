@@ -2,6 +2,9 @@
 
 module UserService
   class EnrollSmsAuth
+    class SMSEnrollmentError < StandardError
+    end
+
     def initialize(user)
       @user = user
     end
@@ -34,8 +37,8 @@ module UserService
     end
 
     def enroll_sms_auth
-      raise SMSEnrollmentError("user has no phone number") if @user.phone_number.blank?
-      raise SMSEnrollmentError("user has not verified phone number") unless @user.phone_number_verified
+      raise SMSEnrollmentError, "user has no phone number" if @user.phone_number.blank?
+      raise SMSEnrollmentError, "user has not verified phone number" unless @user.phone_number_verified
 
       disallow_fresh_users
 
@@ -50,13 +53,10 @@ module UserService
 
     private
 
-    class SMSEnrollmentError < StandardError
-    end
-
     def disallow_fresh_users
       return if @user.created_at < 1.day.ago
 
-      raise SMSEnrollmentError("Please wait at least 24 hours after creating your account before enrolling in SMS authentication.")
+      raise SMSEnrollmentError, "Please wait at least 24 hours after creating your account before enrolling in SMS authentication."
     end
 
   end

@@ -41,6 +41,7 @@ class WiseTransfersController < ApplicationController
 
   def approve
     authorize @wise_transfer
+    return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wise_transfer, amount_cents: @wise_transfer.quoted_usd_amount_cents)
     @wise_transfer.mark_approved!

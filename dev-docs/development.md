@@ -1,6 +1,6 @@
 # Development
 
-We recommend using Docker to get an instance running locally. It should work out-of-the-box and is how most contributors work on HCB.
+We recommend using GitHub Codespaces to get an instance running. It should work out-of-the-box and is how most contributors work on HCB.
 
 - [Running HCB locally](#running-hcb-locally)
   - [Quickstart with GitHub Codespaces](#quickstart-with-github-codespaces)
@@ -167,10 +167,6 @@ HCB has a limited set of tests created using [RSpec](https://rspec.info/). Run t
 ```bash
 bundle exec rspec
 ```
-
-### Staging access
-
-All PRs are deployed in a staging enviroment using Heroku. Login using the email `staging@bank.engineering`. Visit [`#hcb-staging`](https://hackclub.slack.com/archives/C07KLU4B0M7) on the [Hack Club Slack](https://hackclub.com/slack) for the code.
 
 ## Credentials
 

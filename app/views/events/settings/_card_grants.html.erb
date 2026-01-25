@@ -27,7 +27,7 @@
         </div>
 
         <div class="field">
-          <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
+          <%= card_grant_setting_fields.label :expiration_preference, "Return grants after..." %>
           <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, { selected: event.card_grant_setting.expiration_preference }, { disabled: } %>
         </div>
 
@@ -48,7 +48,7 @@
           </div>
         </div>
 
-        <div class="field field--checkbox mb-0 flex flex-row items-center justify-between">
+        <div class="field field--checkbox flex flex-row items-center justify-between">
           <div>
             <span style="font-weight: 700">Enable pre-authorization on new cards by default</span>
             <p class="h5 muted m-0">
@@ -58,6 +58,26 @@
           <div class="field--checkbox--switch" style="flex-shrink:0">
             <%= card_grant_setting_fields.label :pre_authorization_required do %>
               <%= card_grant_setting_fields.check_box :pre_authorization_required,
+                disabled:,
+                switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="field field--checkbox mb-0 flex flex-row items-center justify-between">
+          <div>
+            <span style="font-weight: 700">
+              <%= inline_icon "rep", class: "purple m-[-6px] pr-1 align-sub" %>
+              Block suspected fraud on pre-authorizations
+            </span>
+            <p class="h5 muted m-0">
+              When HCB suspects a fraudulent pre-authorization submission, automatically block the grant
+            </p>
+          </div>
+          <div class="field--checkbox--switch" style="flex-shrink:0">
+            <%= card_grant_setting_fields.label :block_suspected_fraud do %>
+              <%= card_grant_setting_fields.check_box :block_suspected_fraud,
                 disabled:,
                 switch: true %>
               <span class="slider"></span>

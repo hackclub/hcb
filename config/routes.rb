@@ -213,6 +213,7 @@ Rails.application.routes.draw do
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
+      get "fee_revenues", to: "admin#fee_revenues"
       get "users", to: "admin#users"
       get "raw_transactions", to: "admin#raw_transactions"
       get "raw_transaction_new", to: "admin#raw_transaction_new"
@@ -256,8 +257,8 @@ Rails.application.routes.draw do
       get "email_html", to: "admin#email_html"
       get "merchant_memo_check", to: "admin#merchant_memo_check"
       get "referral_programs", to: "admin#referral_programs"
-      post "referral_program_create", to: "admin#referral_program_create"
-      post "referral_link_create", to: "admin#referral_link_create"
+      post "referral_program_create", to: "referral/programs#create"
+      post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
@@ -591,7 +592,7 @@ Rails.application.routes.draw do
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
-  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
+  get "privacy", to: redirect("https://hackclub.com/privacy-and-terms/")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
@@ -643,10 +644,11 @@ Rails.application.routes.draw do
       defaults format: :json do
         resource :user, only: [] do
           get "/", to: "users#me", as: "user"
+          post :revoke
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show, :create] do
+          resources :invitations, only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -656,6 +658,7 @@ Rails.application.routes.draw do
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :beacon_config
+          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -669,6 +672,8 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
+          resources :invitations, only: [:index, :create, :destroy]
+          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -702,6 +707,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do
@@ -717,11 +725,12 @@ Rails.application.routes.draw do
             post "topup"
             post "withdraw"
             post "cancel"
+            get "transactions"
           end
         end
 
         resources :invoices, only: [:show, :create]
-
+        resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
@@ -876,6 +885,9 @@ Rails.application.routes.draw do
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
+    get "card_grants/bulk_upload", to: "card_grants#bulk_upload_form", as: :card_grants_bulk_upload
+    post "card_grants/bulk_upload", to: "card_grants#bulk_upload"
+    get "card_grants/bulk_upload_template", to: "card_grants#bulk_upload_template", as: :card_grants_bulk_upload_template
 
     resources :follows, only: [:create], controller: "event/follows"
 

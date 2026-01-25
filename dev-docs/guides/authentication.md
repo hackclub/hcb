@@ -1,12 +1,12 @@
 # Authentication on HCB
 HCB’s authentication system is an awkward hodgepodge of systems, built one on top of the other. I’m going to start off by listing the models and their purposes:
 
-* [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb): stores information about an attempt to login, whether successful or not. It’s created when someone enters their email address and either expires or ends after they’ve provided one or two factors of authentication, which creates a [`UserSession`](https://github.com/hackclub/hcb/blob/main/app/models/user_session.rb).
+* [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb): stores information about an attempt to login, whether successful or not. It’s created when someone enters their email address and either expires or ends after they’ve provided one or two factors of authentication, which creates a [`User::Session`](https://github.com/hackclub/hcb/blob/main/app/models/user/session.rb).
 * [`LoginCode`](https://github.com/hackclub/hcb/blob/main/app/models/login_code.rb): a temporary code sent via email to users. They can use this code as an authentication factor.
   * [`LoginCodeService::Request`](https://github.com/hackclub/hcb/blob/main/app/services/login_code_service/request.rb) confusingly can also send SMS login codes, however, these don’t have an associated [`LoginCode`](https://github.com/hackclub/hcb/blob/main/app/models/login_code.rb) record and are done through Twilio. 
 * [`User::Totp`](https://github.com/hackclub/hcb/blob/main/app/models/user/totp.rb): a TOTP credential that users can use to login. One-per-user.
 * [`WebauthnCredential`](https://github.com/hackclub/hcb/blob/main/app/models/webauthn_credential.rb): a WebAuthn credential that users can use to login, eg. a fingerprint or a Yubikey. Users can have multiple.
-* [`UserSession`](https://github.com/hackclub/hcb/blob/main/app/models/user_session.rb): created after a successful [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb). Has a `session_token` that is set as a browser cookie.
+* [`User::Session`](https://github.com/hackclub/hcb/blob/main/app/models/user/session.rb): created after a successful [`Login`](https://github.com/hackclub/hcb/blob/main/app/models/login.rb). Has a `session_token` that is set as a browser cookie.
 
 ## Logging in
 
@@ -45,6 +45,6 @@ We use GitHub’s [`@github/webauthn-json`](https://github.com/github/webauthn-j
 
 ## Fingerprinting
 
-We fingerprint every user session using [`@fingerprintjs/fingerprintjs`](https://github.com/fingerprintjs/fingerprintjs). This is passed into the [`UserSession`](https://github.com/hackclub/hcb/blob/main/app/models/user_session.rb) created inside of `complete_login_path`.
+We fingerprint every user session using [`@fingerprintjs/fingerprintjs`](https://github.com/fingerprintjs/fingerprintjs). This is passed into the [`User::Session`](https://github.com/hackclub/hcb/blob/main/app/models/user/session.rb) created inside of `complete_login_path`.
 
 \- [@sampoder](https://github.com/sampoder)

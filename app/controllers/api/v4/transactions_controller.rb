@@ -83,12 +83,7 @@ module Api
         @hcb_code = HcbCode.find_by_public_id!(params[:id])
         authorize @hcb_code, :mark_no_or_lost?, policy_class: ReceiptablePolicy
 
-        begin
-          @hcb_code.no_or_lost_receipt!
-        rescue
-          return render json: { error: "invalid_operation", messages: "Failed to mark transaction as no/lost receipt" }, status: :unprocessable_entity
-        end
-
+        @hcb_code.no_or_lost_receipt!
         render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
       end
 

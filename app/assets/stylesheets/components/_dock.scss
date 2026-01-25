@@ -64,41 +64,6 @@ summary.dock__item {
   transition: transform 0.125s;
 }
 
-.hide__pwa__prompt .pwa__prompt {
-  display: none !important;
-}
-
-.pwa__prompt__hide {
-  position: absolute;
-  right: 5px;
-  top: 5px;
-  cursor: pointer;
-}
-
-.pwa__prompt {
-  display: none;
-  @supports (-webkit-touch-callout: none) {
-    display: block;
-  }
-  @media (min-width: 768px) {
-    display: none !important;
-  }
-  flex: 1 0 100%;
-  background: #ec3750;
-  padding: 8px 16px;
-  text-align: center;
-  color: white;
-  margin-bottom: -16px;
-}
-
-.pwa__prompt > b {
-  font-weight: 600;
-}
-
-.pwa__prompt__icon {
-  transform: translateY(2.5px);
-}
-
 .dock__section {
   font-size: 12px;
   font-weight: 700;

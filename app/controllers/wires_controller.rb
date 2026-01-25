@@ -11,9 +11,6 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
-    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
-      return render :new_v2
-    end
   end
 
   def create
@@ -42,6 +39,7 @@ class WiresController < ApplicationController
 
   def approve
     authorize @wire
+    return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.mark_approved!
@@ -124,6 +122,7 @@ class WiresController < ApplicationController
        :address_postal_code,
        :address_state,
        :payment_recipient_id,
+       :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end

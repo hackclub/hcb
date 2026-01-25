@@ -11,6 +11,11 @@ module Api
         transfer
         bank_account_transaction
         card_charge
+        wire_transfer
+        wise_transfer
+        check_deposit
+        reimbursed_expense
+        hcb_fee
       ].freeze
 
       when_expanded do
@@ -108,6 +113,26 @@ module Api
             entity: Entities::Transfer,
             hcb_method: :disbursement
           },
+          {
+            entity: Entities::WireTransfer,
+            hcb_method: :wire
+          },
+          {
+            entity: Entities::WiseTransfer,
+            hcb_method: :wise_transfer
+          },
+          {
+            entity: Entities::CheckDeposit,
+            hcb_method: :check_deposit
+          },
+          {
+            entity: Entities::ReimbursedExpense,
+            hcb_method: :reimbursement_expense_payout
+          },
+          {
+            entity: Entities::HcbFee,
+            hcb_method: :bank_fee
+          },
         ].each do |linked_type|
           entity = linked_type[:entity]
           method = linked_type[:hcb_method]
@@ -143,6 +168,12 @@ module Api
           :transfer
         when :unknown # rename "unknown" to "bank_account_transaction"
           :bank_account_transaction
+        when :wire # rename "wire" to "wire_transfer"
+          :wire_transfer
+        when :reimbursement_expense_payout # rename to "reimbursed_expense"
+          :reimbursed_expense
+        when :bank_fee # rename to "hcb_fee"
+          :hcb_fee
         else
           type
         end

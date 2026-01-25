@@ -37,8 +37,15 @@
 
   <div class="container--xs">
     <h1 class="mt0">Send a check</h1>
-    <%= form_with(model: [@event, @check], local: true, data: { controller: "extraction", extraction_target: "form" }) do |form| %>
+    <%= form_with(model: [@event, @check], local: true, data: { controller: "input extraction", extraction_target: "form" }, html: {
+      "x-data" => "check(#{({
+        payment_recipient: (@check.payment_recipient.to_safe_hash if @check.payment_recipient&.event&.== @check.event),
+        editing: @check.address_line1.present?,
+      }.to_json)})"
+    }) do |form| %>
       <%= form_errors(@check, "check", "We couldn't send this") %>
+
+      <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
       <div class="field">
         <%= form.label :memo %>
@@ -84,102 +91,170 @@
 
       <h2>Recipient details</h2>
 
-      <div class="field mt2">
+      <div class="field mt2" id="increase_check_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#increase_check_name_field" data-text-filter-empty-class="display-none">
         <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
-        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, disabled:, data: { 'behavior': "check_payee_name_field", extraction_field: "seller_name" }, maxlength: 250 %>
-      </div>
+        <%= form.text_field :recipient_name,
+                            placeholder: "Raviga Capital",
+                            required: true,
+                            disabled: disabled,
+                            role: "combobox",
+                            "aria-controls": "#payment-recipient-search",
+                            data: {
+                              input_target: "input",
+                              extraction_field: "seller_name",
+                              action: "
+                                keydown.enter->text-filter#selectFirst
 
-      <div class="field">
-        <%= form.label :address_line1, "Street address (where we’re mailing it to)" %>
-        <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled:, data: { extraction_field: "seller_address_line_1" } %>
-      </div>
+                                click->menu#open
+                                focus->menu#open
+                                click@document->menu#close
+                                keydown@document->menu#keydown
 
-      <div class="field">
-        <%= form.text_field :address_line2, placeholder: "Suite 500", disabled:, data: { extraction_field: "seller_address_line_2" } %>
-      </div>
-
-      <div class="flex">
-        <div class="field flex-auto mr1">
-          <%= form.label :address_city, "City" %>
-          <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled:, data: { extraction_field: "seller_address_city" } %>
-        </div>
-        <div class="field flex-auto ml1">
-          <%= form.label :address_state, "State" %>
-          <%= form.select :address_state, [
-                ["Alabama", "AL"],
-                ["Alaska", "AK"],
-                ["Arizona", "AZ"],
-                ["Arkansas", "AR"],
-                ["California", "CA"],
-                ["Colorado", "CO"],
-                ["Connecticut", "CT"],
-                ["Delaware", "DE"],
-                ["Washington, D.C.", "DC"],
-                ["Florida", "FL"],
-                ["Georgia", "GA"],
-                ["Hawaii", "HI"],
-                ["Idaho", "ID"],
-                ["Illinois", "IL"],
-                ["Indiana", "IN"],
-                ["Iowa", "IA"],
-                ["Kansas", "KS"],
-                ["Kentucky", "KY"],
-                ["Louisiana", "LA"],
-                ["Maine", "ME"],
-                ["Maryland", "MD"],
-                ["Massachusetts", "MA"],
-                ["Michigan", "MI"],
-                ["Minnesota", "MN"],
-                ["Mississippi", "MS"],
-                ["Missouri", "MO"],
-                ["Montana", "MT"],
-                ["Nebraska", "NE"],
-                ["Nevada", "NV"],
-                ["New Hampshire", "NH"],
-                ["New Jersey", "NJ"],
-                ["New Mexico", "NM"],
-                ["New York", "NY"],
-                ["North Carolina", "NC"],
-                ["North Dakota", "ND"],
-                ["Ohio", "OH"],
-                ["Oklahoma", "OK"],
-                ["Oregon", "OR"],
-                ["Pennsylvania", "PA"],
-                ["Rhode Island", "RI"],
-                ["South Carolina", "SC"],
-                ["South Dakota", "SD"],
-                ["Tennessee", "TN"],
-                ["Texas", "TX"],
-                ["Utah", "UT"],
-                ["Vermont", "VT"],
-                ["Virginia", "VA"],
-                ["Washington", "WA"],
-                ["West Virginia", "WV"],
-                ["Wisconsin", "WI"],
-                ["Wyoming", "WY"],
-              ], { prompt: "Select a state" }, disabled:, data: { extraction_field: "seller_address_state_code" } %>
-          <% @check.errors.messages_for(:address_state).each do |message| %>
-            <div class="primary"><%= message %></div>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="field">
-        <%= form.label :address_zip, "ZIP" %>
-        <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled:, data: { extraction_field: "seller_address_zip" } %>
-        <% @check.errors.messages_for(:address_zip).each do |message| %>
-          <div class="primary"><%= message %></div>
+                                input->text-filter#query
+                              ",
+                              menu_target: "toggle",
+                            },
+                            maxlength: 250,
+                            "x-ref" => "name_input",
+                            "@input" => "payment_recipient = null" %>
+        <span class="muted">This will be used for tax purposes; it should match the name on their bank account.</span>
+        <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
+          <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
+            <% @event.payment_recipients.where(payment_model: "IncreaseCheck").each do |payment_recipient| %>
+              <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
+                <button
+                  type="button"
+                  class="menu__action flex justify-between flex-auto mr1"
+                  data-action="input#focus menu#close"
+                  data-recipient="<%= payment_recipient.to_safe_json %>"
+                  @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+                  <span class="truncate"><%= payment_recipient.name %></span>
+                  <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
+                </button>
+                <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
+                  <%= inline_icon "view-close", size: 24, class: "align-middle" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
         <% end %>
       </div>
 
-      <div class="field">
-        <%= form.label :address_country, "Country" %>
-        <%= form.text_field :address_country, value: "United States", disabled: true %>
-      </div>
+      <div class="card mb-4 relative">
+        <template x-if="!payment_recipient || editing">
+          <div>
 
-      <div class="field">
-        <%= form.label :recipient_email, "Recipient Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
+            <div class="field">
+              <%= form.label :recipient_email, "Recipient Email" %>
+              <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, data: { extraction_field: "seller_email" } %>
+            </div>
+
+            <div class="field mb-2">
+              <%= form.label :address_line1, "Street address (where we're mailing it to)" %>
+              <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled:, data: { extraction_field: "seller_address_line_1" } %>
+            </div>
+
+            <div class="field">
+              <%= form.text_field :address_line2, placeholder: "Suite 500", disabled:, data: { extraction_field: "seller_address_line_2" } %>
+            </div>
+
+            <div class="flex">
+              <div class="field flex-auto mr1">
+                <%= form.label :address_city, "City" %>
+                <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled:, data: { extraction_field: "seller_address_city" } %>
+              </div>
+              <div class="field flex-auto ml1">
+                <%= form.label :address_state, "State" %>
+                <%= form.select :address_state, [
+                      ["Alabama", "AL"],
+                      ["Alaska", "AK"],
+                      ["Arizona", "AZ"],
+                      ["Arkansas", "AR"],
+                      ["California", "CA"],
+                      ["Colorado", "CO"],
+                      ["Connecticut", "CT"],
+                      ["Delaware", "DE"],
+                      ["Washington, D.C.", "DC"],
+                      ["Florida", "FL"],
+                      ["Georgia", "GA"],
+                      ["Hawaii", "HI"],
+                      ["Idaho", "ID"],
+                      ["Illinois", "IL"],
+                      ["Indiana", "IN"],
+                      ["Iowa", "IA"],
+                      ["Kansas", "KS"],
+                      ["Kentucky", "KY"],
+                      ["Louisiana", "LA"],
+                      ["Maine", "ME"],
+                      ["Maryland", "MD"],
+                      ["Massachusetts", "MA"],
+                      ["Michigan", "MI"],
+                      ["Minnesota", "MN"],
+                      ["Mississippi", "MS"],
+                      ["Missouri", "MO"],
+                      ["Montana", "MT"],
+                      ["Nebraska", "NE"],
+                      ["Nevada", "NV"],
+                      ["New Hampshire", "NH"],
+                      ["New Jersey", "NJ"],
+                      ["New Mexico", "NM"],
+                      ["New York", "NY"],
+                      ["North Carolina", "NC"],
+                      ["North Dakota", "ND"],
+                      ["Ohio", "OH"],
+                      ["Oklahoma", "OK"],
+                      ["Oregon", "OR"],
+                      ["Pennsylvania", "PA"],
+                      ["Rhode Island", "RI"],
+                      ["South Carolina", "SC"],
+                      ["South Dakota", "SD"],
+                      ["Tennessee", "TN"],
+                      ["Texas", "TX"],
+                      ["Utah", "UT"],
+                      ["Vermont", "VT"],
+                      ["Virginia", "VA"],
+                      ["Washington", "WA"],
+                      ["West Virginia", "WV"],
+                      ["Wisconsin", "WI"],
+                      ["Wyoming", "WY"],
+                    ], { prompt: "Select a state" }, disabled:, data: { extraction_field: "seller_address_state_code" } %>
+                <% @check.errors.messages_for(:address_state).each do |message| %>
+                  <div class="primary"><%= message %></div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="field">
+              <%= form.label :address_zip, "ZIP" %>
+              <%= form.text_field :address_zip, placeholder: "94129", required: true, disabled:, data: { extraction_field: "seller_address_zip" } %>
+              <% @check.errors.messages_for(:address_zip).each do |message| %>
+                <div class="primary"><%= message %></div>
+              <% end %>
+            </div>
+
+            <div class="field">
+              <%= form.label :address_country, "Country" %>
+              <%= form.text_field :address_country, value: "United States", disabled: true %>
+            </div>
+          </div>
+        </template>
+        <template x-if="payment_recipient && !editing">
+          <div>
+            <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit address details" @click="editing = true">
+              <%= inline_icon "pen", size: 18 %>
+            </button>
+            <!-- These fields do not use Rail's form helper as they should not be sent to the backend and are for display purposes only. !-->
+            <div class="field"><label>Recipient email</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.email"></div>
+            <div class="field mb-2"><label>Street address (where we're mailing it to)</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_line1"></div>
+            <div class="field"><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_line2"></div>
+            <div class="flex">
+              <div class="field flex-auto mr1"><label>City</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_city"></div>
+              <div class="field flex-auto ml1"><label>State</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_state"></div>
+            </div>
+            <div class="field"><label>ZIP</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_zip"></div>
+            <div class="field"><label>Country</label><input disabled class="!text-muted bg-transparent" type="text" value="United States"></div>
+          </div>
+        </template>
       </div>
 
       <div class="field field--checkbox">
@@ -204,6 +279,7 @@
             accept: "image/*,image/heic,.pdf",
             style: "margin: 8px 0px",
             class: "field--fileupload__field",
+            direct_upload: true,
             data: {
               "file-drop-target" => "fileInput",
               "action"           => "change->extraction#upload"

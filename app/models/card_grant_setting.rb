@@ -7,6 +7,7 @@
 #  id                                :bigint           not null, primary key
 #  banned_categories                 :string
 #  banned_merchants                  :string
+#  block_suspected_fraud             :boolean          default(TRUE), not null
 #  category_lock                     :string
 #  expiration_preference             :integer          default("1 year"), not null
 #  invite_message                    :string
@@ -18,7 +19,7 @@
 #
 # Indexes
 #
-#  index_card_grant_settings_on_event_id  (event_id)
+#  index_card_grant_settings_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -28,6 +29,7 @@ class CardGrantSetting < ApplicationRecord
   has_paper_trail
 
   belongs_to :event
+  validates :event, uniqueness: true
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder

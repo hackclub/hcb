@@ -10,7 +10,7 @@ class AuditorConstraint
 
     return false unless session_token.present?
 
-    potential_session = UserSession.find_by(session_token:)
+    potential_session = User::Session.find_by(session_token:)
     if potential_session
       return potential_session.user&.auditor?
     end

@@ -82,22 +82,6 @@ module Discord
       @generate_discord_unlink_server_url ||= url_helpers.discord_unlink_server_url(signed_guild_id: Discord.generate_signed(@guild_id, purpose: :unlink_server))
     end
 
-    def ping_component
-      {
-        "type": 9,
-        "data": {
-          "custom_id": "ping_modal",
-          "title": "Ping",
-          "components": [
-            {
-              "type": 10,
-              "content": "Pong! 🏓",
-            },
-          ]
-        }
-      }
-    end
-
     def attach_receipt_component
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
@@ -178,19 +162,7 @@ module Discord
     end
 
     def ping_command
-      respond content: "Pong! 🏓", components: [
-        {
-          type: 1,
-          components: [
-            {
-              type: 2,
-              label: "Ping",
-              style: 1,
-              custom_id: "ping"
-            }
-          ]
-        }
-      ]
+      respond content: "Pong! 🏓"
     end
 
     def link_command
@@ -311,7 +283,7 @@ module Discord
     end
 
     def require_linked_user
-      return respond content: "This command requires you to link this Discord server to HCB", components: button_to("Set up HCB", "setup") if @responded
+      return respond content: "This command requires you to link this Discord account to HCB", components: button_to("Set up HCB", "setup") if @responded
 
       respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: 1 << 6
     end

@@ -11,10 +11,6 @@ class IncreaseChecksController < ApplicationController
     @check = @event.increase_checks.build
 
     authorize @check
-
-    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
-      return render :new_v2
-    end
   end
 
   def create
@@ -45,6 +41,7 @@ class IncreaseChecksController < ApplicationController
 
   def approve
     authorize @check
+    return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
     @check.send_check!

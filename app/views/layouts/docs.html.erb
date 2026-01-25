@@ -1,72 +1,8 @@
-<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
-
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
   <head>
-    <title>
-      <%= yield(:title).concat(" –") if content_for?(:title) %>
-      HCB
-    </title>
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-    <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
-
-    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
-    <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
-
-    <%# Web component used for TOTP / donation QR codes %>
-    <script src="https://unpkg.com/@bitjson/qr-code@1.0.2/dist/qr-code.js"></script>
-
-    <% unless Rails.env.production? %>
-      <meta name="turbo-prefetch" content="false">
-    <% end %>
-
-    <% if Rails.env.production? %>
-      <script>
-        console.log(`%c                -*%@@%*-
-              .=#@@@@@@@@@@#=.
-          .=%@@@@@*-..-*@@@@@%=.
-        -#@@@@@+:        :+@@@@@#-
-      :*@@@@@*:              :*@@@@@*:
-    =%@@@@#-                    -#@@@@%=.
-  *@@@@@+.                        .+@@@@@*
-  *@@*-   *@@*      *@@*      *@@*   :*@@*
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          @@@@      @@@@      @@@@
-          *@@*      *@@*      *@@*
-
-    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-    *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
-
-          Come hack on HCB with us!
-  <%= Rails.configuration.constants.hack_on_hcb_form_url %> <%# erb_lint:disable ErbSafety %>
-  `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
-      </script>
-    <% end %>
-
-    <meta name="format-detection" content="telephone=no">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <% if content_for?(:favicon) %>
-      <%= yield :favicon %>
-    <% elsif user_birthday? %>
-      <link rel="icon" type="image/png" href="/favicon-party.gif">
-    <% else %>
-      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
-      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
-    <% end %>
-    <link rel="manifest" href="/site.webmanifest">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
-    <meta name="msapplication-TileColor" content="#ec3750">
-    <%= yield(:head) if content_for?(:head) %>
+    <%= render "layouts/head" %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%= react_component "tour/TourOverlay",
@@ -92,41 +28,10 @@
       </div>
     <% end %>
 
-    <%# LET THERE BE SNOW %>
-    <% if winter? %>
-      <%= react_component "holiday/Snow", {}, { style: "height:100%" } %>
-    <% end %>
-
-    <%# ghosts and ghouls %>
-    <% if fall? %>
-      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7e4929972e5eee4c_image.png" alt="oOoOoOoOo" class="flying-spook ghost">
-      <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/1106e43a5e5219cf_image.png" alt="witch orpheus" class="flying-spook">
-    <% end %>
+    <%= render "layouts/seasonal" %>
 
     <% if content_for?(:nav) %>
       <main class="container app">
-        <% if @event && @first_time %>
-          <div class="welcome" data-controller="welcome" data-welcome-organizer-position-value="<%= @organizer_position&.id %>">
-            <div class="welcome__image mb3">
-              <div class="welcome__shine"></div>
-              <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
-              <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
-            </div>
-
-            <div class="welcome__content">
-              <div class="center">
-                <h3 class="h3 caps secondary block my-0">Welcome to</h3>
-                <h1 class="primary mt0 border-none"><%= @organizer_position&.initial? ? "HCB" : @event.name %></h1>
-              </div>
-
-              <div class="mb2">
-                <button class="btn" data-action="welcome#tour">Show me around</button>
-              </div>
-              <a href="<%= event_path(@event) %>" data-action="welcome#dismiss">No thanks, bring me straight to HCB</a>
-            </div>
-          </div>
-        <% end %>
-
         <%= render "application/native_changelog" if @latest_changelog_post %>
 
         <aside class="app__sidebar">
@@ -143,7 +48,7 @@
     <% else %>
       <%= render "application/docs_header" unless @no_app_shell %>
       <%= yield(:header) %>
-      <main class="container <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+      <main class="container px-6 lg:px-3 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash" unless @hide_flash %>
         <%= yield %>
         <%= render "application/footer" unless @no_app_shell || @hide_footer %>
@@ -151,32 +56,6 @@
     <% end %>
 
     <%= render "application/fullstory" %>
-
-    <% if flash[:confetti] %>
-      <script src="/brand/js-confetti.browser.js"></script>
-      <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-          const jsConfetti = new JSConfetti()
-          const emojis = <%= flash[:confetti_emojis].to_json.html_safe %>
-
-          setTimeout(() => {
-            if (!emojis) {
-              jsConfetti.addConfetti()
-            } else {
-              jsConfetti.addConfetti({
-                emojis: emojis.split(",")
-              })
-            }
-          }, 100);
-        });
-      </script>
-    <% end %>
-    <% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
-      <style>
-        .success-dark {
-            color: #1f8164
-        }
-      </style>
-    <% end %>
+    <%= render "layouts/body_suffix" %>
   </body>
 </html>

@@ -45,7 +45,7 @@
 
       <tbody>
         <% @check_deposits.each do |check_deposit| %>
-          <tr>
+          <tr class="clickable">
             <% if policy(check_deposit).view_image? %>
               <td style="width: 0%"><%= image_tag check_deposit.front.representation(resize_to_limit: [64, 64]), class: "rounded mr1", width: 40 %></td>
             <% elsif can_view_any_check_images %>
@@ -53,8 +53,10 @@
             <% end %>
             <td><span class="badge bg-<%= check_deposit.state %> m0"><%= check_deposit.state_text %></span></td>
             <td><%= format_date check_deposit.created_at %></td>
-            <td><%= render_money check_deposit.amount_cents %></td>
-            <td><%= link_to "Details", url_for(check_deposit.local_hcb_code) %></td>
+            <td>
+              <%= render_money check_deposit.amount_cents %>
+              <%= link_to "", url_for(check_deposit.local_hcb_code), class: "stretched-link" %>
+            </td>
           </tr>
         <% end %>
       </tbody>

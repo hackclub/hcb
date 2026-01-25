@@ -2,8 +2,8 @@ EnableDefaultLinters: true
 exclude:
   - app/views/grants/_activate_form.html.erb
   - app/views/ach_transfers/_form.html.erb # erb-lint _really_ doesn't like Alpine
-  - app/views/wires/new_v2.html.erb # erb-lint _really_ doesn't like Alpine
-  - app/views/increase_checks/new_v2.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/wires/new.html.erb # erb-lint _really_ doesn't like Alpine
+  - app/views/increase_checks/new.html.erb # erb-lint _really_ doesn't like Alpine
   - app/views/events/sub_organizations.html.erb # erb-lint _really_ doesn't like Alpine
   - app/views/events/scoped_tags/_scoped_tag_option.html.erb # erb-lint _really_ doesn't like Alpine
   - app/views/doorkeeper/authorizations/new.html.erb

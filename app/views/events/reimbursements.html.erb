@@ -35,16 +35,18 @@
 
 <div class="statset mb-2">
   <div class="stat">
-    <span class="stat__label">Total</span>
-    <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@event.reimbursement_reports.to_calculate_total.sum(&:amount_cents)) %></span>
+    <span class="stat__label">
+      Total
+    </span>
+    <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@total) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Reimbursed</span>
-    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.reimbursed.sum(&:amount_cents)) %></span>
+    <span class="stat__value"><%= render_money_amount(@reimbursed) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Pending</span>
-    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.pending.reimbursed.sum(&:amount_cents)) %></span>
+    <span class="stat__value"><%= render_money_amount(@pending) %></span>
   </div>
 </div>
 

@@ -18,6 +18,9 @@ class RawColumnTransaction < ApplicationRecord
   has_one :canonical_transaction, as: :transaction_source
 
   after_create :canonize, if: -> { canonical_transaction.nil? }
+  after_create if: -> { transaction_id&.start_with?("admt_") } do
+    Rails.error.unexpected("Manual Column transfer (admt_) imported", context: { raw_column_transaction_id: id, transaction_id: })
+  end
 
   def canonize
     ct = create_canonical_transaction!(
