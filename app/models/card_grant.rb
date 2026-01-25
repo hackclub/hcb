@@ -75,7 +75,7 @@ class CardGrant < ApplicationRecord
   before_create :create_subledger
   before_create :set_defaults
 
-  after_initialize, if :new_record? do
+  after_initialize, if: :new_record? do
     if setting.present?
     end
   end
@@ -355,17 +355,6 @@ class CardGrant < ApplicationRecord
   def send_email
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
   end
-
-  # def set_defaults_2
-  #   # If it's blank, allow it to continue being blank. This likely means the
-  #   # user explicitly cleared the field in the UI.
-  #   # However, if it's `nil`, then use the default from the setting. The field
-  #   # was likely left unset via the API.
-  #   if setting.present?
-  #     # self.pre_authorization_required = setting.pre_authorization_required
-  #     # self.invite_message = setting.invite_message
-  #   end
-  # end
 
   def set_defaults
     # If it's blank, allow it to continue being blank. This likely means the
