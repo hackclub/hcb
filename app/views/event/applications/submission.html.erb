@@ -59,6 +59,10 @@
       <% admin_tool do %>
         <%= button_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.user.teenager?}" %>
       <% end %>
+    <% elsif @application.approved? && (party = @application.contract&.party(:hcb))&.pending? %>
+      <% admin_tool do %>
+        <%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success" %>
+      <% end %>
     <% end %>
     <% if @application.may_mark_rejected? %>
       <% admin_tool do %>
