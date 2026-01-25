@@ -117,13 +117,22 @@ module Discord
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
 
       attachments = @interaction.dig(:data, :resolved, :attachments)
+      content_type = attachments.values.first[:content_type] if attachments.present?
 
-      file = attachments.values.first if attachments.present? && attachments.values.first[:content_type]&.start_with?("image/")
-      url = file[:url] if file.present?
-      filename = file[:filename] if file.present?
-      content_type = file[:content_type] if file.present?
+      unless content_type == "application/pdf" || content_type&.start_with?("image/")
+        return respond(embeds: [{
+                         title: "There was a problem with your receipt",
+                         description: "Only images and PDF files are supported. Please try again.",
+                         color:
+                       }])
+      end
 
-      io = URI(url).open if url.present?
+      file = attachments.values.first
+      url = file[:url]
+      filename = file[:filename]
+      content_type = file[:content_type]
+
+      io = URI(file[:url]).open
 
       ActiveRecord::Base.transaction do
         blob = ActiveStorage::Blob.create_and_upload!(
