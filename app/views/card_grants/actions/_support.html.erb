@@ -1,0 +1,70 @@
+<%# locals: (card_grant:) %>
+
+<% if card_grant.setting.support_message.present? || card_grant.setting.support_url.present? %>
+  <div class="tooltipped tooltipped--n">
+    <% if card_grant.setting.support_message.present? %>
+      <button class="btn bg-info btn--list-item" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
+        <%= inline_icon "help" %>
+        <div>
+          <p><strong>Get support</strong></p>
+          <p class="text-sm opacity-60">
+            Get in touch with <%= card_grant.event.name %> for support
+          </p>
+        </div>
+      </button>
+    <% else %>
+      <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn bg-info btn--list-item" do %>
+        <% if card_grant.setting.slack_support? %>
+          <%= inline_icon "slack" %>
+        <% elsif card_grant.setting.email_support? %>
+          <%= inline_icon "email" %>
+        <% else %>
+          <%= inline_icon "help" %>
+        <% end %>
+        <div>
+          <p><strong>Get support</strong></p>
+          <p class="text-sm opacity-60">
+            <% if card_grant.setting.slack_support? %>
+              Contact <%= card_grant.event.name %> on Slack
+            <% elsif card_grant.setting.email_support? %>
+              Email <%= card_grant.event.name %> for support
+            <% else %>
+              Get in touch with <%= card_grant.event.name %> for support
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+  
+  <% if card_grant.setting.support_message.present? %>
+    <section id="support_card_grant_<%= card_grant.id %>" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
+      <%= modal_header "Get support for your card grant" %>
+      <%= sanitize(MarkdownService.instance.renderer.render(card_grant.setting.support_message), scrubber: MarkdownScrubber.new) %>
+      
+      <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 mt2" style="border-top: none;">
+        <% if card_grant.setting.support_url.present? %>
+          <div>
+            <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn btn--primary" do %>
+              <% if card_grant.setting.slack_support? %>
+                <%= inline_icon "slack" %>
+              <% elsif card_grant.setting.email_support? %>
+                <%= inline_icon "email" %>
+              <% else %>
+                <%= inline_icon "link" %>
+              <% end %>
+              <% if card_grant.setting.slack_support? %>
+                Contact <%= card_grant.event.name %> on Slack
+              <% elsif card_grant.setting.email_support? %>
+                Email <%= card_grant.event.name %>
+              <% else %>
+                Get support
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </footer>
+
+    </section>
+  <% end %>
+<% end %>

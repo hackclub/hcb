@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_25_225407) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -466,6 +466,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.string "merchant_lock"
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
+    t.string "support_message"
+    t.string "support_url"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
