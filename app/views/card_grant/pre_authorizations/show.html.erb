@@ -53,7 +53,7 @@
 <% if @card_grant.instructions.present? %>
   <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
-      <%= @card_grant.instructions %>
+      <%= sanitize(MarkdownService.instance.renderer.render(@card_grant.instructions), scrubber: MarkdownScrubber.new) %>
     </p>
   <% end %>
 <% end %>
