@@ -75,8 +75,9 @@ class CardGrant < ApplicationRecord
   before_create :create_subledger
   before_create :set_defaults
 
-  after_initialize, if: :new_record? do
+  after_initialize(if: :new_record?) do
     if setting.present?
+      # do nothing
     end
   end
 
