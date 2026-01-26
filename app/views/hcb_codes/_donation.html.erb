@@ -65,7 +65,7 @@
       <% end %>
     </span>
 
-    <span class="badge h4 bg-<%= @donation.state %> nowrap" style="order: 1">
+    <span class="badge h4 bg-<%= @donation.state %> nowrap order-1">
       <%= @donation.state_text %>
       <%= inline_icon @donation.state_icon, size: 20 if @donation.state_icon %>
     </span>

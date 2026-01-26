@@ -20,7 +20,7 @@
         <span class="regular"><%= Money.from_cents(@hcb_code.wire.amount_cents, @hcb_code.wire.currency).format %></span>
       <% end %>
     </span>
-    <span class="badge h4 bg-<%= @hcb_code.wire.state %> nowrap" style="order: 1">
+    <span class="badge h4 bg-<%= @hcb_code.wire.state %> nowrap order-1">
       <%= @hcb_code.wire.state_text %>
     </span>
   <% end %>
