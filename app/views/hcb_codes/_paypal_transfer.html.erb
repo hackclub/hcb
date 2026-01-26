@@ -1,12 +1,12 @@
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <span class="regular muted"><%= @hcb_code.paypal_transfer.deposited? ? "Transferred " : "Transferring " %> </span>
       <%= @hcb_code.paypal_transfer.recipient_name %>
       <span class="regular"><%= render_money @hcb_code.amount.abs %></span>
       <span class="regular muted">via PayPal</span>
     </span>
-    <span class="badge h4 ml0 bg-<%= @hcb_code.paypal_transfer.state %> nowrap">
+    <span class="badge h4 ml0 bg-<%= @hcb_code.paypal_transfer.state %> nowrap" style="margin-left: auto">
       <%= @hcb_code.paypal_transfer.state_text %>
     </span>
   <% end %>

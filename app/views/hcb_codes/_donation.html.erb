@@ -50,7 +50,7 @@
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <%= @donation.name(show_anonymous: organizer_signed_in?) %>
       <% if @donation.anonymous? %>
         <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
@@ -65,7 +65,7 @@
       <% end %>
     </span>
 
-    <span class="badge h4 bg-<%= @donation.state %> nowrap">
+    <span class="badge h4 bg-<%= @donation.state %> nowrap" style="margin-left: auto">
       <%= @donation.state_text %>
       <%= inline_icon @donation.state_icon, size: 20 if @donation.state_icon %>
     </span>
