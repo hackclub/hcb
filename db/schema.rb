@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_25_225407) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -633,6 +633,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_225407) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
+    t.string "external_id"
     t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
@@ -958,11 +959,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_225407) do
   end
 
   create_table "event_affiliations", force: :cascade do |t|
+    t.bigint "affiliable_id", null: false
+    t.string "affiliable_type", null: false
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.jsonb "metadata", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
   end
 
@@ -1616,24 +1620,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_25_225407) do
     t.index ["device_code"], name: "index_oauth_device_grants_on_device_code", unique: true
     t.index ["resource_owner_id"], name: "index_oauth_device_grants_on_resource_owner_id"
     t.index ["user_code"], name: "index_oauth_device_grants_on_user_code", unique: true
-  end
-
-  create_table "organizer_position_contracts", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "cosigner_email"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.bigint "document_id"
-    t.string "external_id"
-    t.integer "external_service"
-    t.boolean "include_videos", default: false, null: false
-    t.bigint "organizer_position_invite_id", null: false
-    t.integer "purpose", default: 0
-    t.datetime "signed_at"
-    t.datetime "updated_at", null: false
-    t.datetime "void_at"
-    t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
-    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
   end
 
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
