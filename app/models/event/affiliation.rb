@@ -4,16 +4,19 @@
 #
 # Table name: event_affiliations
 #
-#  id         :bigint           not null, primary key
-#  metadata   :jsonb            not null
-#  name       :string           not null
-#  created_at :datetime         not null
-#  updated_at :datetime         not null
-#  event_id   :bigint           not null
+#  id              :bigint           not null, primary key
+#  affiliable_type :string           not null
+#  metadata        :jsonb            not null
+#  name            :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  affiliable_id   :bigint           not null
+#  event_id        :bigint           not null
 #
 # Indexes
 #
-#  index_event_affiliations_on_event_id  (event_id)
+#  index_event_affiliations_on_affiliable  (affiliable_type,affiliable_id)
+#  index_event_affiliations_on_event_id    (event_id)
 #
 # Foreign Keys
 #
@@ -23,7 +26,7 @@ class Event
   class Affiliation < ApplicationRecord
     include Hashid::Rails
 
-    belongs_to :event
+    belongs_to :affiliable, polymorphic: true
 
     store_accessor :metadata, :league, :team_number, :size, :venue_name
 
