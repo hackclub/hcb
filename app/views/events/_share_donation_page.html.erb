@@ -1,5 +1,5 @@
 <%= pop_icon_to "share", "javascript:void(0)", data: { behavior: "modal_trigger", modal: "share_donation_page" } %>
-<a href="<%= start_donation_donations_url(@event) %>" class="ml2 btn bg-success gap-2" target="_blank">
+<a href="<%= start_donation_donations_url(@event) %>" class="btn bg-success <%= defined?(blankslate) ? "gap-2 w-full" : "ml-2" %>" target="_blank">
   Donation page
   <%= inline_icon "external", class: "!m-0" %>
 </a>

@@ -189,39 +189,34 @@
 <% end %>
 </div>
 <% else %>
-  <div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-2 px-5">
-    <div class="flex flex-col justify-center col-span-2">
-      <h1 class="heading border-0 mb-0">
-        Donations
-      </h1>
-
-      <ul class="pl-4 mt-0">
-        <li class="mb-3">
-          <strong>Turn supporters into funders</strong><br>
-          Create a custom donation page in minutes. Share the link on social media, your website, or anywhere your community gathers
-        </li>
-        <li class="mb-3">
-          <strong>Make giving effortless</strong><br>
-          Donors enter their amount, pay securely, and they're done. You can suggest donation tiers or let people contribute whatever feels right
-        </li>
-        <li class="mb-3">
-          <strong>Grow sustainable funding</strong><br>
-          Track who's supporting your work, send thank-you messages, and enable recurring donations so supporters can contribute monthly
-        </li>
-      </ul>
-      <div class="flex flex-row-reverse items-start gap-2">
-        <div class="ml-auto"></div>
-        <%= render partial: "events/share_donation_page" %>
-      </div>
+  <%= render "events/blankslate_page",
+    title: "Donations",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "friend",
+        title: "Turn supporters into funders",
+        description: "Create a custom donation page in minutes. Share the link on social media, your website, or anywhere your community gathers."
+      },
+      {
+        icon: "support",
+        title: "Make giving effortless",
+        description: "Donors enter their amount, pay securely, and they're done. You can suggest donation tiers or let people contribute whatever feels right."
+      },
+      {
+        icon: "payment",
+        title: "Grow sustainable funding",
+        description: "Track who's supporting your work and enable recurring donations so supporters can contribute monthly."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+    <div class="flex gap-2">
+      <%= render partial: "events/share_donation_page", blankslate: true %>
     </div>
-    <div class="col-span-3 flex items-center justify-center">
-      <div class="card p-0 card--breakdown">
-        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png" alt="Invoice illustration" class="w-full h-auto dark:hidden">
-        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png" alt="Invoice illustration" class="w-full h-auto hidden dark:block">
-        <div class="p-2 pt-0 text-center">
-          <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <% end %>
 <% end %>
