@@ -13,6 +13,7 @@
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  contract_id    :bigint           not null
+#  external_id    :string
 #  user_id        :bigint
 #
 # Indexes
