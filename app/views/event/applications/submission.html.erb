@@ -70,27 +70,36 @@
           Reject
         </button>
 
+
         <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reject_application">
           <%= modal_header "Reject application" %>
+          <h3 class="text-lg">Choose a template</h3>
+          <div class="flex flex-col gap-3">
+            <% @application.rejection_messages.each do |key, value| %>
+              <details>
+                <summary><%= key.to_s.humanize.titleize %> rejection message</summary>
 
-          <%= form_with model: false, url: admin_reject_application_path(@application), method: :post do |form| %>
-            <div class="field">
-              <div class="flex flex-row items-center justify-between">
-                <%= form.label :rejection_message, "Rejection message" %>
-                <span class="h5 muted m-0">
-                  <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
-                    <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
-                  <% end %>
-                </span>
-              </div>
-              <p class="h5 muted mt-0 mb-1">
-                This message will be sent to the applicant in the rejection email
-              </p>
-              <%= form.text_area :rejection_message, value: @application.default_rejection_message, class: "min-h-[300px] w-full max-w-full" %>
-            </div>
+                <%= form_with model: false, url: admin_reject_application_path(@application), method: :post, class: "card mt-2" do |form| %>
+                  <div class="field">
+                    <div class="flex flex-row items-center justify-between">
+                      <%= form.label :rejection_message, "Rejection message" %>
+                      <span class="h5 muted m-0">
+                        <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+                          <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+                        <% end %>
+                      </span>
+                    </div>
+                    <p class="h5 muted mt-0 mb-1">
+                      This message will be sent to the applicant in the rejection email
+                    </p>
+                    <%= form.text_area :rejection_message, value:, class: "min-h-[300px] w-full max-w-full" %>
+                  </div>
+                  <%= form.submit "Reject", class: "btn bg-primary" %>
+                </details>
+              <% end %>
 
-            <%= form.submit "Reject", class: "btn bg-primary" %>
-          <% end %>
+            <% end %>
+          </div>
         </section>
       <% end %>
     <% end %>

@@ -118,8 +118,8 @@ class Event
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
-    def default_rejection_message
-      <<~MSG.strip
+    def rejection_messages
+      generic = <<~MSG.strip
         Hi #{user.first_name},
 
         Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
@@ -129,6 +129,34 @@ class Event
         Best,
         The HCB Team
       MSG
+
+      adult = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB Team
+      MSG
+
+      mission = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB Team
+      MSG
+
+      {
+        generic:,
+        adult:,
+        mission:
+      }
     end
 
     def next_step
