@@ -64,7 +64,7 @@ RSpec.describe OrganizerPositionInvitesController do
         stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
         .to_return(
           status: 200,
-          body: { submitters: [{ role: "HCB", slug: "STUBBED" }, { role: "Contract Signee", slug: "STUBBED" }] }.to_json,
+          body: { submitters: [{ role: "HCB", slug: "STUBBED" }, { role: "Contract Signee", slug: "STUBBED" }, { role: "Cosigner", slug: "STUBBED" }] }.to_json,
           headers: { content_type: "application/json" }
         )
 
