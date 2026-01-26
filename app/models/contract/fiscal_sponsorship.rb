@@ -88,6 +88,11 @@ class Contract
                 name: "Organization",
                 default_value: prefills["name"],
                 readonly: true
+              },
+              {
+                name: "The Project",
+                default_value: prefills["description"],
+                readonly: false
               }
             ]
           },
@@ -110,11 +115,6 @@ class Contract
               {
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
-                readonly: false
-              },
-              {
-                name: "The Project",
-                default_value: prefills["description"],
                 readonly: false
               }
             ]

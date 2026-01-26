@@ -33,7 +33,7 @@
         <%= link_to "Overview", edit_overview_event_card_grant_path(@card_grant), data: { turbo: true } %>
     <% end %>
     <%= settings_tab active: active == "purpose" do %>
-        <%= link_to "Purpose", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
+        <%= link_to "Purpose and instructions", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
     <% end %>
     <%= settings_tab active: active == "usage" do %>
         <%= link_to "Usage restrictions", edit_usage_restrictions_event_card_grant_path(@card_grant), data: { turbo: true } %>
