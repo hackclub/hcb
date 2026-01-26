@@ -19,7 +19,7 @@
       <span class="regular muted">to</span>
       <%= @destination.name %>
     </span>
-    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %>" style="margin-left: auto">
+    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %>" style="order: 1">
       <%= @hcb_code.disbursement.state_text.humanize %>
       <%= inline_icon @hcb_code.disbursement.state_icon, size: 20 if @hcb_code.disbursement.state_icon %>
     </span>
