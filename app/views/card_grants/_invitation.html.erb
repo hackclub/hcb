@@ -10,16 +10,24 @@
           Before you can start spending, you need to agree to the Card Issuing Terms and pledge to use the card responsibly.
         </p>
         <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
+          <% if card_grant.purpose.present? %>
+            <div class="field field--checkbox mb2">
+              <%= form.check_box :purpose, required: true %>
+              <%= form.label :purpose do %>
+                I will only use this card for the provided purpose: <strong><%= card_grant.purpose %></strong>
+              <% end %>
+            </div>
+          <% end %>
           <div class="field field--checkbox mb2">
             <%= form.check_box :policy, required: true %>
             <%= form.label :policy do %>
-              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct" %> and understand that misuse of this card constitutes fraud, which will result in a ban
+              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraud will result in a ban
             <% end %>
           </div>
           <div class="field field--checkbox mb2">
             <%= form.check_box :terms, required: true %>
             <%= form.label :terms do %>
-              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
+              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
             <% end %>
           </div>
           <div class="actions">
