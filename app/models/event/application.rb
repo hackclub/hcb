@@ -58,6 +58,13 @@ class Event
 
     after_commit :sync_to_airtable
 
+    after_create_commit do
+      Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
+      Event::ApplicationReminderJob.set(wait: 2.days).perform_later(self, 2)
+      Event::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
+      Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
+    end
+
     enum :last_page_viewed, {
       show: 0,
       project_info: 1,
