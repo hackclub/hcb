@@ -15,6 +15,10 @@ import { generateColor, USDollarNoCents, useDarkMode } from './utils'
 export default function Users({ data }) {
   const isDark = useDarkMode()
 
+  const maxNameLength = Math.max(...data.map(d => d.name.length))
+  const charWidth = 8
+  const yAxisWidth = Math.min(maxNameLength * charWidth, 120)
+
   return (
     <ResponsiveContainer
       width="100%"
@@ -43,12 +47,12 @@ export default function Users({ data }) {
           dataKey="name"
           textAnchor="end"
           interval={0}
-          width={100}
-          tick={{ width: 95 }}
+          width={yAxisWidth}
+          tick={{ width: yAxisWidth - 5 }}
           tickFormatter={v => {
-            const maxLength = 12
-            if (v.length > maxLength) {
-              return v.substring(0, maxLength - 1) + '…'
+            const maxChars = Math.floor(yAxisWidth / charWidth)
+            if (v.length > maxChars) {
+              return v.substring(0, maxChars - 1) + '…'
             }
             return v
           }}
