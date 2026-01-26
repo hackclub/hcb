@@ -1097,7 +1097,8 @@ class EventsController < ApplicationController
           :banned_categories,
           :expiration_preference,
           :reimbursement_conversions_enabled,
-          :pre_authorization_required
+          :pre_authorization_required,
+          :block_suspected_fraud
         ],
         config_attributes: [
           :id,
@@ -1157,7 +1158,8 @@ class EventsController < ApplicationController
         :banned_categories,
         :expiration_preference,
         :reimbursement_conversions_enabled,
-        :pre_authorization_required
+        :pre_authorization_required,
+        :block_suspected_fraud
       ],
       config_attributes: [
         :id,
