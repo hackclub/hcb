@@ -2,11 +2,21 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
-  <div class="flex flex-col w-100 pt3">
-    <div class="container--xs m-auto">
-      <div class="card border b--info center">
+  <div class="flex flex-col w-100">
+    <div class="w-full">
+      <div class="card border b--info">
+        <h2 class="mt-0">Activate your grant card</h2>
+        <p>
+          Before you can start spending, you need to agree to the Card Issuing Terms and pledge to use the card responsibly.
+        </p>
         <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
-          <div class="field field--checkbox mb2 justify-center">
+          <div class="field field--checkbox mb2">
+            <%= form.check_box :policy, required: true %>
+            <%= form.label :policy do %>
+              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct" %> and understand that misuse of this card constitutes fraud, which will result in a ban
+            <% end %>
+          </div>
+          <div class="field field--checkbox mb2">
             <%= form.check_box :terms, required: true %>
             <%= form.label :terms do %>
               I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms" %>
