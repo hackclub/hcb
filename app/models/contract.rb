@@ -168,6 +168,14 @@ class Contract < ApplicationRecord
     end
 
     update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+
+    submitters = docuseal_document["submitters"]
+
+    parties.each do |party|
+      slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
+
+      party.update!(external_id: slug) if slug.present?
+    end
   end
 
   def archive_on_docuseal!
