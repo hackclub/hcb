@@ -174,7 +174,11 @@ class Contract < ApplicationRecord
     parties.each do |party|
       slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
 
-      party.update!(external_id: slug) if slug.present?
+      if slug.present?
+        party.update!(external_id: slug)
+      else
+        Rails.error.unexpected("Contract Party (#{party.id}) role and/or slug missing in DocuSeal.")
+      end
     end
   end
 
