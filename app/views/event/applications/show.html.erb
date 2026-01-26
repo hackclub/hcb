@@ -5,21 +5,23 @@
 <% else %>
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
     <%= render partial: "progress_bar", locals: { steps: @steps } %>
-    <% if @application.approved? %>
-      <h2 class="text-3xl md:text-4xl m-0">Your application has been approved!</h2>
-    <% else %>
-      <h2 class="text-3xl md:text-4xl m-0">Your application has been submitted!</h2>
-    <% end %>
-      <h3 class="m-0 muted">
-        <% if !@application.approved? || @application.contract.party(:signee).pending? || @application.contract.party(:cosigner)&.pending? %>
-          Here's what's next for <%= @application.name %>
-        <% elsif @application.approved? && @application.contract.party(:hcb).pending? %>
-          HCB is finalizing your contact
-        <% else %>
-          You're ready to start spending
-        <% end%>
-      </h3>
-    <% end %>
+    <h2 class="text-3xl md:text-4xl m-0">
+      <% if @application.approved? %>
+        Your application has been approved!
+      <% else %>
+        Your application has been submitted!
+      <% end %>
+    </h2>
+
+    <h3 class="m-0 muted">
+      <% if !@application.approved? || @application.contract.party(:signee).pending? || @application.contract.party(:cosigner)&.pending? %>
+        Here's what's next for <%= @application.name %>
+      <% elsif @application.approved? && @application.contract.party(:hcb).pending? %>
+        HCB is finalizing your contact
+      <% else %>
+        You're ready to start spending
+      <% end%>
+    </h3>
   </div>
   <div class="flex flex-col mt-9 items-center justify-start">
     <div class="flex flex-col gap-3 w-full max-w-4xl">
