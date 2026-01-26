@@ -168,6 +168,18 @@ class Contract < ApplicationRecord
     end
 
     update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+
+    submitters = docuseal_document["submitters"]
+
+    parties.each do |party|
+      slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
+
+      if slug.present?
+        party.update!(external_id: slug)
+      else
+        Rails.error.unexpected("Contract Party (#{party.id}) role and/or slug missing in DocuSeal.")
+      end
+    end
   end
 
   def archive_on_docuseal!

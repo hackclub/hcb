@@ -631,6 +631,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
+    t.string "external_id"
     t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
