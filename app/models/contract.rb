@@ -96,6 +96,8 @@ class Contract < ApplicationRecord
     manual: 999 # used to backfill contracts
   }, prefix: :sent_with
 
+  scope :not_voided, -> { where.not(aasm_state: :voided) }
+
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
   end
@@ -168,6 +170,18 @@ class Contract < ApplicationRecord
     end
 
     update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+
+    submitters = docuseal_document["submitters"]
+
+    parties.each do |party|
+      slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
+
+      if slug.present?
+        party.update!(external_id: slug)
+      else
+        Rails.error.unexpected("Contract Party (#{party.id}) role and/or slug missing in DocuSeal.")
+      end
+    end
   end
 
   def archive_on_docuseal!
@@ -175,7 +189,7 @@ class Contract < ApplicationRecord
   end
 
   def one_non_void_contract
-    if contractable.contracts.where.not(aasm_state: :voided).excluding(self).any?
+    if contractable.contracts.not_voided.excluding(self).any?
       self.errors.add(:base, "source already has a contract!")
     end
   end
