@@ -181,7 +181,12 @@ class LoginsController < ApplicationController
             return_path = root_path
           end
         end
-        redirect_to(return_path || root_path)
+
+        if @user.events.none? && @user.card_grants.none? && @user.organizer_position_invites.none? && @user.contracts.none? && @user.applications.one?
+          redirect_to application_path(@user.applications.first)
+        else
+          redirect_to(return_path || root_path)
+        end
       end
     else
       if @login.sms_available? || @login.email_available?
