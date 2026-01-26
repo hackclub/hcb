@@ -18,7 +18,7 @@
           <div>
             <h3 class="mb-0 mt-1"><%= step[:name] %></h3>
             <% unless step[:completed] %>
-              <p class="my-1"><%= step[:description]%></p>
+              <p class="my-1"><%= step[:description] %></p>
 
               <% if step[:label] == "Sign agreement" && @application.contract.present? %>
                 <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">

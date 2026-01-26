@@ -10,7 +10,7 @@
     <% next_background = { completed: "muted", last_completed: "primary", active: "smoke", pending: nil }[step[:state]] %>
 
     <div class="bg-<%= background %> <%= text_color %> flex flex-row items-center gap-2 py-2 sm:py-3 px-3 sm:px-4 md:px-5">
-      <%= inline_icon "checkmark", size: 24 if step[:state] == :completed || step[:state] == :last_completed %>
+      <%= inline_icon "checkmark", size: 24 if [:completed, :last_completed].include?(step[:state]) %>
       <span>
         <span class="sm:hidden">
           <%= step[:shorthand] || step[:label] %>
