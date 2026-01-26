@@ -66,7 +66,7 @@ class Contract
     end
 
     def docuseal_signature_url
-      "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]["slug"]}"
+      "https://docuseal.co/s/#{external_id}"
     end
 
     def docuseal_role
