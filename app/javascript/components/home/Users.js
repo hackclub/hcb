@@ -42,10 +42,16 @@ export default function Users({ data }) {
           type="category"
           dataKey="name"
           textAnchor="end"
-          verticalAnchor="start"
           interval={0}
-          height={80}
-          tickFormatter={v => ` ${v}`}
+          width={100}
+          tick={{ width: 95 }}
+          tickFormatter={v => {
+            const maxLength = 12
+            if (v.length > maxLength) {
+              return v.substring(0, maxLength - 1) + '…'
+            }
+            return v
+          }}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
