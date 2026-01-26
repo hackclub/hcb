@@ -157,8 +157,8 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
-      flash[:success] = "Grant's purpose has been successfully updated!"
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+      flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
@@ -168,8 +168,9 @@ class CardGrantsController < ApplicationController
 
   def clear_purpose
     authorize @card_grant, :update?
-    @card_grant.update(purpose: nil)
-    redirect_back fallback_location: card_grant_url(@card_grant)
+    @card_grant.update!(purpose: nil)
+    flash[:success] = "Purpose has been successfully cleared!"
+    redirect_to card_grant_url(@card_grant)
   end
 
   def show

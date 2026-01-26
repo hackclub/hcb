@@ -1097,7 +1097,9 @@ class EventsController < ApplicationController
           :expiration_preference,
           :reimbursement_conversions_enabled,
           :pre_authorization_required,
-          :block_suspected_fraud
+          :block_suspected_fraud,
+          :support_message,
+          :support_url
         ],
         config_attributes: [
           :id,
@@ -1158,7 +1160,9 @@ class EventsController < ApplicationController
         :expiration_preference,
         :reimbursement_conversions_enabled,
         :pre_authorization_required,
-        :block_suspected_fraud
+        :block_suspected_fraud,
+        :support_message,
+        :support_url
       ],
       config_attributes: [
         :id,

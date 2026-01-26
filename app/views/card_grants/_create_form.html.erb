@@ -61,7 +61,13 @@
 
       <div class="field">
         <%= form.label :instructions, "Instructions (optional)", class: "bold" %>
+
         <%= form.text_area :instructions, placeholder: "Please only purchase a soldering iron…", disabled:, class: "min-h-[70px]" %>
+        <p class="h5 muted mt0 mb1">
+          <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+            <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+          <% end %>
+        </p>
       </div>
 
     </div>
