@@ -2,8 +2,8 @@
 <% title "Send a Wise transfer" %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_button", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_button", number: 2, label: "Payment information" %>
+  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
