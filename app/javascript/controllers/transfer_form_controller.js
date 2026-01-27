@@ -14,12 +14,14 @@ export default class extends Controller {
     'answerText',
     'answerCTA',
     'learnMore',
+    'wiseAnswerNote',
   ]
 
   static values = {
     ach: String,
     check: String,
     wire: String,
+    wise: String,
   }
 
   static questions = [
@@ -27,10 +29,7 @@ export default class extends Controller {
       id: 1,
       question: 'Does your recipient live within the US?',
       yes: 2,
-      no: {
-        type: 'International wire',
-        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
-      },
+      no: 3,
     },
     {
       id: 2,
@@ -42,6 +41,18 @@ export default class extends Controller {
       no: {
         type: 'Mailed check',
         link: 'https://help.hcb.hackclub.com/article/25-what-are-money-transfers',
+      },
+    },
+    {
+      id: 3,
+      question: 'Is your transfer amount over $500?',
+      yes: {
+        type: 'International wire',
+        link: 'https://help.hcb.hackclub.com/article/61-what-are-international-wires',
+      },
+      no: {
+        type: 'Wise transfer',
+        link: 'https://help.hcb.hackclub.com/en/articles/13370917-how-do-i-send-wise-transfers-through-hcb',
       },
     },
   ]
@@ -78,6 +89,8 @@ export default class extends Controller {
 
       this.answerTarget.hidden = false
       this.wizardTarget.hidden = true
+
+      this.wiseAnswerNoteTarget.hidden = payload.type !== 'Wise transfer'
     }
   }
 
@@ -87,6 +100,8 @@ export default class extends Controller {
     if (answer == 'ACH transfer') value = 'ach'
     if (answer == 'Mailed check') value = 'check'
     if (answer == 'International wire') value = 'wire'
+    if (answer == 'Wise transfer') value = 'wise'
+
     window.Turbo.visit(this[`${value}Value`])
   }
 }

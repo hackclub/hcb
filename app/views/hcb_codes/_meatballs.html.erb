@@ -5,7 +5,11 @@
 <% disputable = can_dispute?(hcb_code:) %>
 <% reversible_disbursement = hcb_code.disbursement? && hcb_code.disbursement.present? && policy(hcb_code.disbursement.destination_event).create_transfer? %>
 
-<% if (disputable || flagable || pinnable || open_invoice || reversible_disbursement) && organizer_signed_in?(as: :member) %>
+<% merchant_not_allowed = hcb_code.stripe_card? && hcb_code.pt.hcb_decline_reason == :merchant_not_allowed && hcb_code.stripe_card&.card_grant.present? %>
+<% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
+<% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
+
+<% if (disputable || flagable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -51,6 +55,18 @@
         <%= link_to dispute_hcb_code_path(hcb_code), target: "_blank" do %>
           <%= inline_icon "flag-fill", size: 24 %>
           Dispute this transaction
+        <% end %>
+      <% end %>
+      <% if allowable_on_card %>
+        <%= link_to permit_merchant_event_card_grant_path(id: hcb_code.stripe_card.card_grant.hashid, event_id: hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), method: :post, class: "flex items-center", data: { confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} on this grant card." } do %>
+          <%= inline_icon "checkmark", size: 24 %>
+          Allow merchant on this card
+        <% end %>
+      <% end %>
+      <% if allowable_on_event %>
+        <%= link_to permit_merchant_event_path(hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), method: :post, class: "flex items-center", data: { confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} across all grant cards for #{hcb_code.stripe_card.card_grant.event.name}." } do %>
+          <%= inline_icon "event-check", size: 24 %>
+          Allow merchant across <%= hcb_code.stripe_card.card_grant.event.name %>
         <% end %>
       <% end %>
     </div>
