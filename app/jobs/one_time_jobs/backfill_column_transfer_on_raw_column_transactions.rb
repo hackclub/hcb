@@ -7,7 +7,7 @@ module OneTimeJobs
     limit_method :perform, rate: 180 # 3 requests per second
 
     def self.perform
-      raw_column_transactions = RawColumnTransaction.where(id: CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", hcb_code: HcbCode.where("hcb_code ILIKE 'HCB-000%'").select(:hcb_code)).select(:transaction_source_id), local_object: nil)
+      raw_column_transactions = RawColumnTransaction.where(id: CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", hcb_code: HcbCode.where("hcb_code ILIKE 'HCB-000%'").select(:hcb_code)).select(:transaction_source_id), column_transfer: nil)
 
       raw_column_transactions.find_each(batch_size: 100) do |rct|
         process(rct)

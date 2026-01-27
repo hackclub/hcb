@@ -1772,10 +1772,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_27_060550) do
     t.integer "amount_cents"
     t.string "column_report_id"
     t.jsonb "column_transaction"
+    t.jsonb "column_transfer"
     t.datetime "created_at", null: false
     t.date "date_posted"
     t.text "description"
-    t.jsonb "local_object"
     t.integer "transaction_index"
     t.datetime "updated_at", null: false
   end

@@ -7,9 +7,9 @@
 #  id                 :bigint           not null, primary key
 #  amount_cents       :integer
 #  column_transaction :jsonb
+#  column_transfer    :jsonb
 #  date_posted        :date
 #  description        :text
-#  local_object       :jsonb
 #  transaction_index  :integer
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -102,7 +102,7 @@ class RawColumnTransaction < ApplicationRecord
   end
 
   def extract_remote_object
-    update(local_object: remote_object)
+    update(column_transfer: remote_object)
   end
 
 end
