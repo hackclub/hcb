@@ -4,7 +4,7 @@
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <%= @source.name %>
       <span class="regular muted">
         <% if @hcb_code.disbursement.fulfilled? || (@destination.can_front_balance? && (@hcb_code.disbursement.processed? || @hcb_code.disbursement.pending?)) %>
@@ -19,7 +19,7 @@
       <span class="regular muted">to</span>
       <%= @destination.name %>
     </span>
-    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %>">
+    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %> order-1">
       <%= @hcb_code.disbursement.state_text.humanize %>
       <%= inline_icon @hcb_code.disbursement.state_icon, size: 20 if @hcb_code.disbursement.state_icon %>
     </span>
