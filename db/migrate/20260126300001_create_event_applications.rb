@@ -11,6 +11,9 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.text :description
       t.text :political_description
       t.string :website_url
+      t.boolean :teen_led
+      t.integer :annual_budget_cents
+      t.integer :committed_amount_cents
 
       t.string :address_line1
       t.string :address_line2
