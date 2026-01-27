@@ -3,15 +3,15 @@
 class Event
   class AffiliationPolicy < ApplicationPolicy
     def create?
-      OrganizerPosition.role_at_least?(user, record, :manager)
+      return OrganizerPosition.role_at_least?(user, record, :manager) if record.is_a?(Event)
     end
 
     def update?
-      OrganizerPosition.role_at_least?(user, record.event, :manager)
+      return OrganizerPosition.role_at_least?(user, record.affiliable, :manager) if record.affiliable.is_a?(Event)
     end
 
     def destroy?
-      OrganizerPosition.role_at_least?(user, record.event, :manager)
+      return OrganizerPosition.role_at_least?(user, record.affiliable, :manager) if record.affiliable.is_a?(Event)
     end
 
   end
