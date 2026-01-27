@@ -78,11 +78,9 @@
         <strong>Note:</strong>
         Wise does <strong>not</strong> support these currencies:
         <ul>
-          <li>HRK (Croatian Kuna)</li>
-          <li>RUB (Russian Ruble)</li>
-          <li>ISK (Icelandic Króna)</li>
-          <li>INR (Indian Rupee)</li>
-          <li>UGX (Ugandan Shilling)</li>
+          <% WiseTransfer.unsupported_currencies_supported_by_wire.excluding("USD").each do |currency_code| %>
+            <li><%= currency_code %></li>
+          <% end %>
         </ul>
         If you need to send to one of these currencies, <strong>please select "International wire" instead.</strong>
       </div>
