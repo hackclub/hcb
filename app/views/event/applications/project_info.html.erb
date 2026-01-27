@@ -108,6 +108,8 @@
 <% end %>
 
 <% content_for :footer do %>
-  <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>">← Back</button>
-  <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
+  <div class="flex flex-row-reverse justify-between items-center w-full">
+    <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
+    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+  </div>
 <% end %>
