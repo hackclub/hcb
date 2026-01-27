@@ -12,6 +12,7 @@
       <% end %>
 
       <% if policy(event).update? %>
+        <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
         <%= form.file_field :background_image, id: "event_background_image", class: "!hidden" %>
         <div data-controller="menu" class="z-[1] event_settings__banner--edit rounded-md">
           <button
@@ -44,6 +45,7 @@
         <% end %>
 
         <% if policy(event).update? %>
+          <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
           <%= form.file_field :logo, disabled:, id: "event_logo", class: "!hidden" %>
           <div data-controller="menu" class="event_settings__logo--edit z-[1] rounded-md">
             <button
