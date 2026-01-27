@@ -115,10 +115,6 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
-        after do |rejection_message: nil|
-          rejection_message ||= default_rejection_message
-          Event::ApplicationMailer.with(application: self, rejection_message:).rejected.deliver_later
-        end
       end
     end
 
