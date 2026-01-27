@@ -8,7 +8,7 @@
 
   <% if @source_event && @destination_event %>
     <% admin_tool("my-2 p-2 px-3") do %>
-      my-2ke a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.
+      Make a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.
     <% end %>
   <% elsif @source_event %>
     <% admin_tool("my-2 p-2 px-3") do %>
