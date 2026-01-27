@@ -9,6 +9,7 @@
 #  column_transaction :jsonb
 #  date_posted        :date
 #  description        :text
+#  local_object       :jsonb
 #  transaction_index  :integer
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
@@ -98,6 +99,10 @@ class RawColumnTransaction < ApplicationRecord
     end
   rescue
     nil
+  end
+
+  def extract_remote_object
+    update(local_object: remote_object)
   end
 
 end
