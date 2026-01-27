@@ -23,8 +23,19 @@
 class Event
   class Plan
     class ScGoogleGrant < Standard
+      def label
+        "South Carolina Google Grant"
+      end
+
       def contract_docuseal_template_id
         2672920
+      end
+
+      def contract_skip_prefills
+        {
+          "Contract Signee" => ["The Project", "Organization"],
+          "HCB"             => ["HCB ID", "Signature"]
+        }
       end
 
     end

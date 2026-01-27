@@ -60,7 +60,7 @@ class Contract
       cosigner = party :cosigner
       hcb = party :hcb
 
-      {
+      payload = {
         template_id: external_template_id,
         send_email: false,
         order: "preserved",
@@ -121,6 +121,21 @@ class Contract
           }
         ].compact
       }
+
+      if contractable.is_a?(OrganizerPositionInvite)
+        skip_prefills = contractable.event.plan.contract_skip_prefills
+        payload[:submitters] = payload[:submitters].map do |submitter|
+          skip_prefill_party = skip_prefills.find { |role, list| role == submitter[:role] }&.second
+          next submitter if skip_prefill_party.nil?
+
+          submitter[:fields] = submitter[:fields].reject do |field|
+            skip_prefill_party.include? field[:name]
+          end
+          submitter
+        end
+      end
+
+      payload
     end
 
     def required_roles
