@@ -164,9 +164,6 @@ class Event
     def update
       authorize @application
 
-      ap application_params
-      ap user_params
-
       @application.update!(application_params)
 
       if user_params.present?
@@ -209,7 +206,7 @@ class Event
     end
 
     def application_params
-      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email)
+      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email, :teen_led)
     end
 
     def user_params
