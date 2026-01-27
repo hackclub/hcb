@@ -6,7 +6,7 @@
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <% if @hcb_code.wire.failed? %>
         <span class="regular muted">Attempted to wire transfer to</span>
         <%= @hcb_code.wire.recipient_name %>
@@ -20,7 +20,7 @@
         <span class="regular"><%= Money.from_cents(@hcb_code.wire.amount_cents, @hcb_code.wire.currency).format %></span>
       <% end %>
     </span>
-    <span class="badge h4 bg-<%= @hcb_code.wire.state %> nowrap">
+    <span class="badge h4 bg-<%= @hcb_code.wire.state %> nowrap order-1">
       <%= @hcb_code.wire.state_text %>
     </span>
   <% end %>
