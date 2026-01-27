@@ -1282,7 +1282,7 @@ class EventsController < ApplicationController
       member:,
       features: {
         subevents: event.subevents_enabled?,
-        card_grants: event.plan.card_grants_enabled? || event.card_grants.any?
+        card_grants: event.plan.card_grants_enabled?
       }
     }
   end
