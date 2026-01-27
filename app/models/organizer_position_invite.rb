@@ -131,6 +131,7 @@ class OrganizerPositionInvite < ApplicationRecord
       role:,
       is_signee:,
       first_time: show_onboarding,
+      fiscal_sponsorship_contract: contract
     )
 
     self.accepted_at = Time.current
@@ -211,10 +212,12 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def send_contract(cosigner_email: nil, include_videos: false)
+    fs_contract = nil
+
     ActiveRecord::Base.transaction do
-      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
-      contract.parties.create!(user:, role: :signee)
-      contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+      fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      fs_contract.parties.create!(user:, role: :signee)
+      fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
@@ -222,7 +225,7 @@ class OrganizerPositionInvite < ApplicationRecord
       event.set_airtable_status("Documents sent")
     end
 
-    contract.send!
+    fs_contract.send!
   end
 
   def on_contract_signed(contract)
