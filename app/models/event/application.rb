@@ -61,6 +61,9 @@ class Event
 
     after_commit :sync_to_airtable
 
+    monetize :annual_budget_cents, allow_nil: true
+    monetize :committed_amount_cents, allow_nil: true
+
     after_create_commit do
       Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
       Event::ApplicationReminderJob.set(wait: 2.days).perform_later(self, 2)
