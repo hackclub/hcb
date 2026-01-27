@@ -1,12 +1,110 @@
 <p>Hi there! 👋</p>
 
+
 <p>
-  You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event_name %> on HCB on behalf of your child.
+  Your child has applied for HCB, a fiscal sponsorship platform supporting teens building nonprofit projects. You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event_name %> on HCB on behalf of your child.
 </p>
+
+<h3>What is HCB?</h3>
+
+<p>HCB is a project of Hack Club that provides 501(c)(3) status and an online financial platform for teen-led nonprofit projects.</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;">
+    <tr>
+        <td align="left" valign="top" style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
+                <tr>
+                    <td style="background-color:#f2f2f2; padding:12px; border-radius:4px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#111111;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td valign="middle" style="padding-right:8px; vertical-align:middle;">
+                                    <%= inline_icon "bank-account" %>
+                                </td>
+                                <td valign="middle" style="vertical-align:middle; line-height:16px;">
+                                    Receive foundation grants with tax-deductible 501(c)(3) status.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+
+        <td width="12" style="width:12px;"></td>
+
+        <td align="left" valign="top" style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
+                <tr>
+                    <td style="background-color:#f2f2f2; padding:12px; border-radius:4px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#111111;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td valign="middle" style="padding-right:8px; vertical-align:middle;">
+                                    <%= inline_icon "payment-transfer" %>
+                                </td>
+                                <td valign="middle" style="vertical-align:middle; line-height:16px;">
+                                    Send money &amp; reimburse via check, ACH, bank wire, &amp; more.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td colspan="3" height="12" style="height:12px; line-height:12px; font-size:12px;">&nbsp;</td>
+    </tr>
+
+    <tr>
+        <td align="left" valign="top" style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
+                <tr>
+                    <td style="background-color:#f2f2f2; padding:12px; border-radius:4px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#111111;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td valign="middle" style="padding-right:8px; vertical-align:middle;">
+                                    <%= inline_icon "card" %>
+                                </td>
+                                <td valign="middle" style="vertical-align:middle; line-height:16px;">
+                                    Issue physical &amp; virtual debit cards with receipt tracking &amp; Apple Pay.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+
+        <td width="12" style="width:12px;"></td>
+
+        <td align="left" valign="top" style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;width:100%;">
+                <tr>
+                    <td style="background-color:#f2f2f2; padding:12px; border-radius:4px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#111111;">
+                        <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                            <tr>
+                                <td valign="middle" style="padding-right:8px; vertical-align:middle;">
+                                    <%= inline_icon "like" %>
+                                </td>
+                                <td valign="middle" style="vertical-align:middle; line-height:16px;">
+                                    Accept donations of any size with a custom, embeddable online form.
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
 <p>
   <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement and get them running on HCB!
 </p>
+
+<p>You can learn more about HCB <%= link_to "on our website", "https://hackclub.com/fiscal-sponsorship?utm_source=cosigner_learn_more&utm_medium=email&utm_campaign=cosigner_email" %>, and our team is around if you have any questions. Just reply to this email.</p>
 
 <p>
   Best,<br>
