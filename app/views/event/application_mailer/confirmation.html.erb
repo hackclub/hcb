@@ -2,7 +2,7 @@
 
 <p>Thank you for applying to HCB, Hack Club's fiscal sponsorship program!</p>
 
-<p>Before we can review your application, you <%= "and your parent (#{@application.cosigner_email})" %> will need to sign the HCB Fiscal Sponsorship Agreement.</p>
+<p>Before we can review your application, you <%= "and your parent (#{@application.cosigner_email})" if @application.cosigner_email.present? %> will need to sign the HCB Fiscal Sponsorship Agreement.</p>
 <p>Go to your <%= link_to "application status page", application_url(@application) %> to sign the agreement. <%= "You can also resend the agreement to your parent or legal guardian on this page." if @application.cosigner_email.present? %></p>
 
 <p>
