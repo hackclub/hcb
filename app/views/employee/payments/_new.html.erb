@@ -20,6 +20,7 @@
     <%= form.label :file, "Attach an invoice", class: "mt1 font-semibold" %>
     <div
       data-controller="file-upload file-drop form"
+      data-file-drop-title-value="Drop to attach an invoice."
       data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
       <%= form.file_field :file,
           multiple: true,
