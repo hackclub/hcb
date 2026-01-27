@@ -381,9 +381,13 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    return nil unless linked_object.is_a?(Disbursement)
 
-    nil
+    if local_hcb_code&.outgoing_disbursement?
+      Disbursement::Outgoing.new(linked_object)
+    else
+      Disbursement::Incoming.new(linked_object)
+    end
   end
 
   def unique_bank_identifier

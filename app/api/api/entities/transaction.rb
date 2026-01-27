@@ -27,12 +27,7 @@ module Api
           # amount_cents of 0 (zero) since there are two equal, by opposite,
           # Canonical Transactions. Therefore, for the API, we are overriding the
           # default amount_cents exposure defined in the LinkedObjectBase.
-          if hcb_code.disbursement? && org == hcb_code.disbursement.source_event &&
-             !(hcb_code.disbursement.source_subledger_id && hcb_code.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
-            next -hcb_code.disbursement.amount
-          elsif hcb_code.disbursement?
-            next hcb_code.disbursement.amount
-          end
+          next hcb_code.disbursement.amount if hcb_code.disbursement?
           next hcb_code.donation.amount if hcb_code.donation?
           next hcb_code.invoice.item_amount if hcb_code.invoice?
           next -hcb_code.ach_transfer.amount if hcb_code.ach_transfer?

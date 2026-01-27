@@ -259,6 +259,10 @@ class Disbursement < ApplicationRecord
     deposited?
   end
 
+  def plain_transfer?
+    !source_subledger_id && !destination_subledger_id
+  end
+
   def filter_data
     {
       exists: true,

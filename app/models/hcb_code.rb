@@ -399,7 +399,18 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
-    @disbursement ||= Disbursement.find_by(id: hcb_i2) if disbursement?
+    return nil unless disbursement?
+
+    @disbursement ||= begin
+      raw = Disbursement.find_by(id: hcb_i2)
+      return nil unless raw
+
+      if outgoing_disbursement?
+        Disbursement::Outgoing.new(raw)
+      else
+        Disbursement::Incoming.new(raw)
+      end
+    end
   end
 
   def card_grant

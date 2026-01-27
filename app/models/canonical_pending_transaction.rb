@@ -259,9 +259,13 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    return nil unless linked_object.is_a?(Disbursement)
 
-    nil
+    if raw_pending_outgoing_disbursement_transaction
+      Disbursement::Outgoing.new(linked_object)
+    elsif raw_pending_incoming_disbursement_transaction
+      Disbursement::Incoming.new(linked_object)
+    end
   end
 
   def ach_transfer

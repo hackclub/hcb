@@ -66,11 +66,20 @@ RSpec.describe HcbCode, type: :model do
     end
 
     describe "#disbursement" do
-      it "returns the correct Disbursement record" do
+      it "returns the correct Disbursement wrapper for outgoing" do
         disbursement = create(:disbursement)
         hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-500-#{disbursement.id}")
 
-        expect(hcb_code.disbursement).to eq(disbursement)
+        expect(hcb_code.disbursement).to be_a(Disbursement::Outgoing)
+        expect(hcb_code.disbursement.disbursement).to eq(disbursement)
+      end
+
+      it "returns the correct Disbursement wrapper for incoming" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-550-#{disbursement.id}")
+
+        expect(hcb_code.disbursement).to be_a(Disbursement::Incoming)
+        expect(hcb_code.disbursement.disbursement).to eq(disbursement)
       end
 
       it "returns nil for non-disbursement codes" do
@@ -115,8 +124,14 @@ RSpec.describe HcbCode, type: :model do
           create(:disbursement, source_event: source_event, event: destination_event)
         end
 
-        it "falls back to the disbursement's destination event" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        it "falls back to the disbursement's source event for outgoing hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
+
+          expect(hcb_code.events).to include(source_event)
+        end
+
+        it "falls back to the disbursement's destination event for incoming hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.incoming_hcb_code)
 
           expect(hcb_code.events).to include(destination_event)
         end

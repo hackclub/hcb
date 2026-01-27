@@ -33,16 +33,11 @@ module Api
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        if tx.disbursement? && event == tx.disbursement.source_event
-          return -tx.disbursement.amount
-        elsif tx.disbursement? && event == tx.disbursement.destination_event
-          return tx.disbursement.amount
-        end
-
+        return tx.disbursement.amount if tx.disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
 
-        return tx.amount.cents
+        tx.amount.cents
       end
 
       def expand?(key)
