@@ -216,8 +216,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     ActiveRecord::Base.transaction do
       fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
-      fs_contract.contract.parties.create!(user:, role: :signee)
-      fs_contract.contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+      fs_contract.parties.create!(user:, role: :signee)
+      fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
