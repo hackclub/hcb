@@ -14,20 +14,20 @@
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
   <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: null }">
-    <%= form.label :teenager do %>
+    <%= form.label :teen_led do %>
       Are you a teenager? <span class="text-primary">*</span>
     <% end %>
 
     <p class="text-sm muted mt-1 mb-2">HCB primarily focuses on teen-led projects, so we're more selective with adult-run organizations.</p>
 
     <div class="field field--options max-w-none">
-      <%= form.radio_button :teenager, "true", { "x-model": "teenager" } %>
-      <%= form.label :teenager, value: "true" do %>
+      <%= form.radio_button :teen_led, "true", { "x-model": "teenager" } %>
+      <%= form.label :teen_led, value: "true" do %>
         <strong>Yes, I'm a teenager</strong>
         <small>18 and under</small>
       <% end %>
-      <%= form.radio_button :teenager, "false", { "x-model": "teenager" } %>
-      <%= form.label :teenager, value: "false" do %>
+      <%= form.radio_button :teen_led, "false", { "x-model": "teenager" } %>
+      <%= form.label :teen_led, value: "false" do %>
         <strong>No, I'm an adult</strong>
         <small>Over 18</small>
       <% end %>
