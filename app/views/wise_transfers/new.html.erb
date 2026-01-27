@@ -1,114 +1,110 @@
 <% disabled = !policy(@event).create_transfer? %>
-
 <% title "Send a Wise transfer" %>
-<%= render "events/nav", selected: :transfers %>
-<% page_sm %>
 
-<% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
+<% content_for :table_of_contents do %>
+  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
 <% end %>
 
-<h1>Send a Wise transfer</h1>
-
-<%= render "application/callout",
-    type: "info",
-    icon: "wise",
-    title: "Important information about Wise transfers",
-    class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
-    footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
-  We've integrated Wise into HCB to offer international transfers to over 100 countries. HCB never charges fees to send transfers, however Wise will charge processing fees to your organization. <i>Sending over $500? Avoid all fees by sending an international wire.</i>
+<% content_for :sidebar_footer do %>
+  <% if @event.present? && !policy(@event).create_transfer? %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
+  <% end %>
+  <%= render "application/callout",
+      type: "info",
+      icon: "wise",
+      title: "Heads up!",
+      class: "my-4 !border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870]",
+      footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+    <ul>
+      <li>We've integrated Wise into HCB to offer international transfers to over 100 countries.</li>
+      <li>HCB never charges fees to send transfers, however Wise will charge processing fees to your organization.</li>
+      <li><i>Sending over $500? Avoid all fees by sending an international wire.</i></li>
+    </ul>
+  <% end %>
 <% end %>
 
-<%= form_with(model: [@event, @wise_transfer], local: true, html: {
-                "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
-              }) do |form| %>
+<%= form_with(
+      model: [@event, @wise_transfer],
+      local: true,
+      html: {
+        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
+      }
+    ) do |form| %>
 
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
 
-  <h2 class="mb2 mt3">Recipient details</h2>
-
-  <div class="field mt2">
-    <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
-    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250, disabled: %>
-    <span class="muted">This may be used for tax purposes; it should match the name on the recipient's bank account.</span>
-  </div>
-
-  <div class="field">
-    <%= form.label :recipient_email, "Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled:, "@keyup": "email = $event.target.value" %>
-  </div>
-
-  <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
-
-  <h2 class="mt3">Payment information</h2>
-  <p>Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
-
-  <%= form.label :amount, "Currency & amount" %>
-
-  <div class="field">
-    <div class="flex items-center g1">
-      <div style="width: 72px">
-        <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value; usd_quote = NaN; if(amount != null && amount != '' && currency != null && currency != ''){ fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })}" } %>
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Recipient details</h3>
+    <div class="card mb-4 relative">
+      <div class="field">
+        <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
+        <span class="muted mb-1 block">May be used for tax purposes. Match the name on the recipient's account.</span>
+        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", class: "!max-w-full", required: true, maxlength: 250, disabled: %>
       </div>
-      <div class="flex flex-col flex-grow">
-        <%= form.number_field :amount,
-          placeholder: "500.00",
-          disabled: disabled || @event.balance <= 0,
-          step: 0.01,
-          required: true,
-          "@change": "amount = $event.target.value; usd_quote = NaN; if(amount != null && amount != '' && currency != null && currency != ''){ fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })}",
-          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+
+      <div class="field">
+        <%= form.label :recipient_email, "Email" %>
+        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
       </div>
+
+      <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
     </div>
-    <% @wise_transfer.errors.messages_for(:amount).each do |message| %>
-      <div class="primary"><%= message %></div>
-    <% end %>
-    <% if @event.balance <= 0 %>
-      <span class="error">There are no funds to transfer.<br>
-    <% end %>
+  </div>
 
-    <p x-text="(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') ? 'Enter an amount & currency to get an estimate in USD' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Approximately ${usd_quote} USD`" class="muted mt-0"></p>
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-1">Payment information</h3>
+    <p class="muted mt-0 mb-2">Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
 
-  <div x-show="!(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') && !Number.isNaN(usd_quote) && parseFloat(String(usd_quote).replace('$', '').replace(',', '')) > 500">
-      <%= render "application/callout", type: "info", title: "You can save money by sending a wire." do %>
-        <p><%= link_to "Wire transfers", new_event_wire_path(@event) %> are available for all transfers above $500 (USD) and are entirely fee-free for HCB users.</p>
-      <% end %>
+    <div class="card mb-4 relative">
+      <%= form.label :amount, "Currency & amount" %>
+
+      <div class="field">
+        <div class="flex items-center g1">
+          <div style="width: 72px">
+            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value; usd_quote = NaN; if(amount != null && amount != '' && currency != null && currency != ''){ fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })}" } %>
+          </div>
+          <div class="flex flex-col flex-grow">
+            <%= form.number_field :amount,
+              placeholder: "500.00",
+              disabled: disabled || @event.balance <= 0,
+              step: 0.01,
+              required: true,
+              "@change": "amount = $event.target.value; usd_quote = NaN; if(amount != null && amount != '' && currency != null && currency != ''){ fetch('/wise_transfers/generate_quote?amount=' + amount + '&currency=' + currency).then(response => response.text()).then(text => { usd_quote = text })}",
+              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+          </div>
+        </div>
+        <% @wise_transfer.errors.messages_for(:amount).each do |message| %>
+          <div class="primary"><%= message %></div>
+        <% end %>
+        <% if @event.balance <= 0 %>
+          <span class="error">There are no funds to transfer.<br>
+        <% end %>
+
+        <p x-text="(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') ? 'Enter an amount & currency to get an estimate in USD' : Number.isNaN(usd_quote) ? 'Loading quote from Wise...' : `Approximately ${usd_quote} USD`" class="muted mt-0"></p>
+
+        <div x-show="!(usd_quote == null || currency == null || currency == '' || amount == null || amount == '') && !Number.isNaN(usd_quote) && parseFloat(String(usd_quote).replace('$', '').replace(',', '')) > 500">
+          <%= render "application/callout", type: "info", title: "You can save money by sending a wire." do %>
+            <p><%= link_to "Wire transfers", new_event_wire_path(@event) %> are available for all transfers above $500 (USD) and are entirely fee-free for HCB users.</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="field">
+        <%= form.label :payment_for, "What are you paying for with this transfer?" %>
+        <span class="muted">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+      </div>
+
+      <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
-
   </div>
 
-  <div class="field">
-    <%= form.label :payment_for, "What are you paying for with this transfer?" %>
-    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions.</span>
-  </div>
-
-  <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
-
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-    <div
-      data-controller="file-upload file-drop form"
-      data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
-      <%= form.file_field :file,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        direct_upload: true,
-        data: {
-          "file-drop-target"   => "fileInput",
-          "file-upload-target" => "input"
-        },
-        disabled: %>
-      <button data-file-upload-target="preview" type="button"></button>
-      <div data-file-upload-target="clear"></div>
-  </div>
-
-  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-
-  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your transfer will be sent out on the next business day.">
-    <button type="submit" <%= "disabled" if disabled %> class="btn">
-      <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
-    </button>
-  </div>
+  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
+    <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
+  </button>
+  <p class="muted mt-3 text-center text-sm">
+    Your transfer will be sent out on the next business day.
+  </p>
 <% end %>

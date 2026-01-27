@@ -1,16 +1,19 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Send a wire" %>
-<%= render "events/nav", selected: :transfers %>
-<% page_sm %>
 
 <% if @event.present? && !policy(@event).create_transfer? %>
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a wire" } %>
 <% end %>
 
-<h1>Send a wire</h1>
+<% content_for :table_of_contents do %>
+  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
+<% end %>
 
-<%= render partial: "wires/requirements", locals: { event: @event } %>
+<% content_for :sidebar_footer do %>
+  <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
+<% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {
       "x-data" => "wire(#{({
@@ -19,155 +22,131 @@
         country: @wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"
       }.to_json)})"
 }) do |form| %>
-
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
-  <div class="field">
-    <%= form.label :memo %>
-    <%= form.text_field :memo,
-        placeholder: "For venue payment...",
-        required: true,
-        disabled: %>
-  </div>
-
-  <h2 class="mb2 mt3">Recipient details</h2>
-
-  <div class="field mt2" id="wire_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#wire_name_field" data-text-filter-empty-class="display-none">
-    <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
-    <%= form.text_field :recipient_name,
-                        placeholder: "Raviga Capital",
-                        required: true,
-                        disabled: disabled,
-                        role: "combobox",
-                        "aria-controls": "#payment-recipient-search",
-                        data: {
-                          action: "
-                            keydown.enter->text-filter#selectFirst
-                            click->menu#open
-                            focus->menu#open
-                            click@document->menu#close
-                            keydown@document->menu#keydown
-                            input->text-filter#query
-                          ",
-                          menu_target: "toggle",
-                        },
-                        maxlength: 250,
-                        "x-ref" => "name_input",
-                        "@input" => "payment_recipient = null" %>
-    <span class="muted">This will be used for tax purposes; it should match the name on their bank account.</span>
-    <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
-      <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
-        <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
-          <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
-            <button
-              type="button"
-              class="menu__action flex justify-between flex-auto mr1"
-              data-action="input#focus menu#close"
-              data-recipient="<%= payment_recipient.to_safe_json %>"
-              @click="payment_recipient = JSON.parse($el.dataset.recipient)">
-              <span class="truncate"><%= payment_recipient.name %></span>
-              <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
-            </button>
-            <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
-              <%= inline_icon "view-close", size: 24, class: "align-middle" %>
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Recipient details</h3>
+    <div class="card mb-4 relative flex flex-col gap-3">
+      <div id="wire_name_field" data-controller="menu text-filter" data-menu-content-id-value="payment-recipient-search" data-menu-append-to-value="#wire_name_field" data-text-filter-empty-class="display-none">
+        <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
+        <span class="muted block mb-1">May be used for tax purposes. Match the name on the recipient's account.</span>
+        <%= form.text_field :recipient_name,
+                            placeholder: "Raviga Capital",
+                            required: true,
+                            disabled: disabled,
+                            role: "combobox",
+                            "aria-controls": "#payment-recipient-search",
+                            data: {
+                              action: "
+                                keydown.enter->text-filter#selectFirst
+                                click->menu#open
+                                focus->menu#open
+                                click@document->menu#close
+                                keydown@document->menu#keydown
+                                input->text-filter#query
+                              ",
+                              menu_target: "toggle",
+                            },
+                            maxlength: 250,
+                            class: "!max-w-full",
+                            "x-ref" => "name_input",
+                            "@input" => "payment_recipient = null" %>
+        <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
+          <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
+            <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
+              <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
+                <button
+                  type="button"
+                  class="menu__action flex justify-between flex-auto mr1"
+                  data-action="input#focus menu#close"
+                  data-recipient="<%= payment_recipient.to_safe_json %>"
+                  @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+                  <span class="truncate"><%= payment_recipient.name %></span>
+                  <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
+                </button>
+                <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
+                  <%= inline_icon "view-close", size: 24, class: "align-middle" %>
+                <% end %>
+              </div>
             <% end %>
           </div>
         <% end %>
       </div>
-    <% end %>
-  </div>
 
-  <template x-if="payment_recipient && !editing">
-      <div class="card mb-4 relative">
-        <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
-          <%= inline_icon "pen", size: 18 %>
-        </button>
-
-        <div class="field"><label>Recipient email</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.email"></div>
-        <div class="field"><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bic_code"></div>
-        <div class="field"><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
-      </div>                                                                                             
-    </template>
-
-  <template x-if="!payment_recipient || editing">
-    <div>
-      <div class="field">
+      <div>
         <%= form.label :recipient_email, "Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+        <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
+      </div>
+      <%= render "events/notify_transfer_recipient", form:, disabled: %>
+
+      <template x-if="payment_recipient && !editing">
+        <div class="flex flex-col gap-3">
+          <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
+            <%= inline_icon "pen", size: 18 %>
+          </button>
+          <div><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bic_code"></div>
+          <div><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
+        </div>
+      </template>
+
+      <template x-if="!payment_recipient || editing">
+        <div class="flex flex-col gap-3">
+          <%= render partial: "wires/recipient_details", locals: { form: form, disabled: disabled, required: true } %>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Payment information</h3>
+    <div class="card mb-4 relative flex flex-col gap-3">
+      <div>
+        <%= form.label :payment_for, "What are you paying for with this wire?" %>
+        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :payment_for, class: "!max-w-full", placeholder: "Event venue", required: true, disabled: disabled %>
       </div>
 
-      <%= render partial: "wires/recipient_details", locals: { form:, disabled:, required: true } %>
-    </div>
-  </template>
-
-  <h2 class="mb2 mt3">Payment information</h2>
-
-  <%= form.label :amount, "Currency & amount" %>
-
-  <div class="field">
-    <div class="flex items-center g1">
-      <div style="width: 72px">
-        <%= form.select :currency, Wire::AVAILABLE_CURRENCIES, required: true, default: "USD", disabled: %>
+      <div class="flex items-center gap-2 justify-between">
+        <%= form.label :memo %>
+        <%= form.text_field :memo, placeholder: "For venue payment...", required: true, disabled: disabled, class: "!max-w-[300px] flex-1" %>
       </div>
-      <div class="flex flex-col flex-grow">
-        <%= form.number_field :amount,
-          placeholder: "500.00",
-          disabled: disabled || @event.balance <= 0,
-          step: 0.01,
-          required: true,
-          data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+
+      <div class="flex items-center gap-2 justify-between">
+        <%= form.label :amount, "Currency & amount" %>
+        <div class="flex items-center gap-2">
+          <div style="width: 72px">
+            <%= form.select :currency, Wire::AVAILABLE_CURRENCIES, required: true, default: "USD", disabled: disabled %>
+          </div>
+          <div class="flex flex-col flex-grow">
+            <%= form.number_field :amount, placeholder: "500.00", disabled: disabled || @event.balance <= 0, step: 0.01, required: true, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+          </div>
+        </div>
       </div>
+      <% @wire.errors.messages_for(:amount).each do |message| %>
+        <div class="primary"><%= message %></div>
+      <% end %>
+      <% if @event.balance <= 0 %>
+        <span class="error">There are no funds to transfer.</span>
+      <% end %>
+
+      <template x-if="!payment_recipient || editing">
+        <div class="flex flex-col gap-3">
+          <%= render partial: "wires/account_details", locals: { form: form, disabled: disabled, required: true } %>
+          <%= render partial: "wires/country_specific_details", locals: { form: form, disabled: disabled, required: true } %>
+        </div>
+      </template>
+
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
-    <% @wire.errors.messages_for(:amount).each do |message| %>
-      <div class="primary"><%= message %></div>
-    <% end %>
-    <% if @event.balance <= 0 %>
-      <span class="error">There are no funds to transfer.<br>
-    <% end %>
-  </div>
 
-  <div class="field">
-    <%= form.label :payment_for, "What are you paying for with this wire?" %>
-    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions.</span>
-  </div>
-
-  <template x-if="!payment_recipient || editing">
-    <div>
-      <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
-      <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
-    </div>
-  </template>
-
-  <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-  <div
-    data-controller="file-upload file-drop form"
-    data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
-    <%= form.file_field :file,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        direct_upload: true,
-        data: {
-          "file-drop-target" => "fileInput",
-          "file-upload-target" => "input",
-        },
-        disabled: %>
-    <button data-file-upload-target="preview" type="button"></button>
-    <div data-file-upload-target="clear"></div>
-  </div>
-
-  <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
-
-  <div class="field field--checkbox">
-    <%= form.check_box :send_email_notification, disabled: %>
-    <%= form.label :send_email_notification, "Would you like us to notify the recipient?" %>
-  </div>
-
-  <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your wire will be sent out on the next business day.">
-    <%= form.submit "Send wire", disabled: %>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Send wire
+      <%= inline_icon "send" %>
+    </button>
+    <p class="muted mt-3 text-center text-sm">
+      Your wire will be sent out on the next business day.
+    </p>
   </div>
 <% end %>

@@ -1,12 +1,9 @@
 <%# locals: (form:, disabled:) %>
 
-<div class="field mb1">
-  <%= form.label :address_line1, "Street address" %>
-  <%= form.text_field :address_line1, placeholder: "Phase II, Udyog Vihar" %>
-</div>
-
-<div class="field mt0">
-  <%= form.text_field :address_line2, placeholder: "Sector 20", disabled: %>
+<%= form.label :address_line1, "Street address" %>
+<div class="flex gap-2">
+  <%= form.text_field :address_line1, class: "flex-1", placeholder: "Phase II, Udyog Vihar" %>
+  <%= form.text_field :address_line2, class: "flex-1", placeholder: "Sector 20", disabled: %>
 </div>
 
 <div class="grid grid--split gap-2">
