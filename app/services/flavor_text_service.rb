@@ -82,6 +82,10 @@ class FlavorTextService
       "Dear Santa...",
       "where's my gingerbread house",
       "makin' that money snow",
+      "hack the halls",
+      "sudo snow",
+      "404: santa not found",
+      "Is this list checked twice?",
       "Merry Fourth Of July and have a jolly halloween!"
     ]
   end
@@ -494,7 +498,7 @@ class FlavorTextService
       "BOOOOOOOOOONNNNNNKKKKKKKKKKKKK",
       "Wanna&nbsp;<a href='#{Rails.configuration.constants.github_url}' target='_blank' style='color: inherit'>hack on hcb</a>?".html_safe,
       "everyone's favorite money thing!",
-      -> { "#{UserSession.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
+      -> { "#{User::Session.not_impersonated.where("last_seen_at > ?", 15.minutes.ago).count("DISTINCT(user_id)")} online" },
       "We Column like we see 'em!",
       "Raccoon-tested, dinosaur-approved.",
       "original recipe!",

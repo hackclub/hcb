@@ -1,28 +1,30 @@
-<% if local_assigns[:hcb_codes].present? %>
-  <h2 class="heading h2 leading-[1.5] mt0 ml0 pt1 pb1 pr2">Transactions on this card</h2>
+<%# locals: (hcb_codes: nil, is_public: false) %>
 
-  <div style="overflow-x: auto;">
+<% if hcb_codes&.any? %>
+  <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
+
+  <div style="overflow-x: auto;" class="table-container">
     <table>
       <tbody data-behavior="transactions">
-        <% local_assigns[:hcb_codes].each do |hcb_code| %>
+        <% hcb_codes.each do |hcb_code| %>
           <% if hcb_code.canonical_transactions.any? %>
             <% if hcb_code.canonical_transactions.all? { |ct| ct.canonical_event_mapping&.subledger&.present? } %>
               <%# passing in a HCB code allows for all CTs of a HCB code to show up as one ledger item
                   but should only be done if all CTs are on the subledger. An example of when they're not
                   is grant topups / withdrawals. %>
-              <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, authorless: true, receipt_upload_button: !local_assigns[:public], receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+              <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
             <% else %>
-              <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions.select { |ct| ct.canonical_event_mapping&.subledger&.present? }, as: :ct, locals: { authorless: true, receipt_upload_button: !local_assigns[:public], receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+              <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions.select { |ct| ct.canonical_event_mapping&.subledger&.present? }, as: :ct, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
             <% end %>
           <% else %>
-            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions.select { |pt| pt.canonical_pending_event_mapping&.subledger&.present? }, as: :pt, locals: { authorless: true, receipt_upload_button: !local_assigns[:public], receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions.select { |pt| pt.canonical_pending_event_mapping&.subledger&.present? }, as: :pt, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
           <% end %>
         <% end %>
       </tbody>
     </table>
   </div>
 <% else %>
-  <div class="mt3">
+  <div class="mb-10">
     <%= blankslate "No purchases yet." %>
   </div>
 <% end %>

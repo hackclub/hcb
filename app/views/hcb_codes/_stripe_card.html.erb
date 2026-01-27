@@ -19,9 +19,11 @@
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span class="flex-auto">
       <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
+        <span class="regular"><%= render_money(renderable_amount_cents) %></span>
         <span class="regular muted">
-          Withdrawal from
+          withdrawal from
         </span>
+        <%= humanized_merchant_name @hcb_code.stripe_merchant %>
       <% else %>
         <span class="regular muted">Purchase at </span>
         <%= humanized_merchant_name @hcb_code.stripe_merchant %>

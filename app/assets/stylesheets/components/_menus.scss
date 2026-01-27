@@ -38,6 +38,31 @@
   }
 }
 
+.blog-menu {
+  animation: blog-menu 0.15s ease forwards;
+
+  @media (max-width: 1024px) {
+    animation: blog-menu-mobile 0.15s ease forwards;
+  }
+}
+
+@keyframes blog-menu {
+  from {
+    transform: translateY(-10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes blog-menu-mobile {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
 .menu__content,
 .dropdown-button__menu {
   display: none;

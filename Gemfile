@@ -114,7 +114,7 @@ gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.2"
+gem "webauthn", "~> 3.4"
 
 gem "ahoy_matey" # analytics
 gem "blazer" # business intelligence tool/dashboard
@@ -200,7 +200,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-gem "public_activity"
+gem "public_activity", ">= 3.0.2"
 
 gem "console1984"
 gem "audits1984"
@@ -232,3 +232,5 @@ gem "discordrb"
 
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
+
+gem "intercom-rails"

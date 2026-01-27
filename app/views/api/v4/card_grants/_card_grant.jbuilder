@@ -12,7 +12,8 @@ json.call(
   :purpose,
   :one_time_use,
   :pre_authorization_required,
-  :email
+  :email,
+  :expires_on
 )
 json.balance_cents card_grant.balance.cents if expand?(:balance_cents)
 json.status card_grant.status

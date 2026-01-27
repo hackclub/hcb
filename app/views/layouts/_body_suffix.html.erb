@@ -1,0 +1,42 @@
+<% if Rails.env.production? %>
+  <%= render "application/fullstory" if current_user&.sessions_reported %>
+<% end %>
+
+<% if flash[:confetti] %>
+  <script src="/brand/js-confetti.browser.js"></script>
+  <script>
+    const triggerConfetti = () => {
+      const jsConfetti = new JSConfetti()
+      const emojis = <%= flash[:confetti_emojis].to_json.html_safe %>
+
+      setTimeout(() => {
+        if (!emojis) {
+          jsConfetti.addConfetti()
+        } else {
+          jsConfetti.addConfetti({
+            emojis: emojis.split(",")
+          })
+        }
+      }, 100);
+    };
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    (async () => {
+      while (typeof JSConfetti == "undefined") {
+        await sleep(500);
+      }
+
+      triggerConfetti()
+    })();
+  </script>
+<% end %>
+<% if Flipper.enabled?(:transactions_background_2024_06_05, current_user) %>
+  <style>
+      .success-dark {
+          color: #1f8164
+      }
+  </style>
+<% end %>

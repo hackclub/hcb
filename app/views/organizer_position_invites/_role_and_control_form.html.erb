@@ -7,10 +7,10 @@
       type="button"
       class="pop menu__toggle menu__toggle--arrowless overflow-visible muted w-10 h-10"
       data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-      <%= inline_icon "question-mark", size: 16 %>
+      <%= inline_icon "question-mark", size: 18 %>
     </button>
-    <div class="menu__content menu__content--2 menu__content--compact h5 px-4" data-menu-target="content">
-      <p class="muted mb1"><span class="bold info">Managers</span> can do everything
+    <div class="menu__content menu__content--2 menu__content--compact px-4 py-3" data-menu-target="content">
+      <p class="muted mb1 mt-0"><span class="bold info">Managers</span> can do everything
         in the organization.</p>
       <div class="muted mb1">
         <p class="m0"><span class="bold info">Members</span> can:</p>
@@ -21,7 +21,7 @@
           <li>Not change the organization's settings</li>
         </ul>
       </div>
-      <p class="muted mb1"><span class="bold info">Readers</span> have read-only access to the organization.</p>
+      <p class="muted mb-0"><span class="bold info">Readers</span> have read-only access to the organization.</p>
     </div>
   </div>
   <%= form.select :role,

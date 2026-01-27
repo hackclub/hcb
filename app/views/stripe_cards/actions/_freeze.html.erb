@@ -24,7 +24,7 @@
       <p class="text-sm opacity-60"><%= policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %></p>
     </div>
   <% end %>
-<% else %>
+<% elsif !stripe_card&.canceled? %>
   <%= link_to "#",
               method: :post,
               class: "btn btn--list-item",

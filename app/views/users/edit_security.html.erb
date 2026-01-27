@@ -160,7 +160,7 @@
 
     <div class="grid grid--split">
       <% @all_sessions.each do |session| %>
-        <% if session.is_a? UserSession %>
+        <% if session.is_a? User::Session %>
           <%= render "users/user_session", session: %>
         <% elsif session.respond_to? :authorization_count %>
           <%= render "users/oauth_authorization", authorization: session, disabled: %>
@@ -175,7 +175,7 @@
       </h3>
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>
-          <% if session.is_a? UserSession %>
+          <% if session.is_a? User::Session %>
             <%= render "users/user_session", session: %>
           <% elsif session.respond_to? :authorization_count %>
             <%= render "users/oauth_authorization", authorization: session, disabled: %>

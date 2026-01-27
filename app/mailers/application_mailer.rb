@@ -11,6 +11,7 @@ class ApplicationMailer < ActionMailer::Base
 
   # allow usage of application helper
   helper :application
+  helper :logo
 
   def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt

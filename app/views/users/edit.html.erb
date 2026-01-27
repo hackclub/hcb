@@ -62,7 +62,7 @@
             <div class="field flex-1">
               <div class="inline-flex items-center gap-1">
                 <%= form.label :birthday %>
-                <div class="info tooltipped tooltipped--w h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers (< 18) and need to understand which users are under 18 as there are certain laws that protect them.">
+                <div class="info tooltipped tooltipped--e tooltipped--tappable h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers and need to know which users are under 18 as there are certain laws that protect them.">
                   <%= inline_icon "info", size: 18 %>
                 </div>
               </div>
@@ -82,7 +82,7 @@
             <%= avatar_for @user, size: 48, class: "mr2" %>
             <div class="field--fileupload">
               <%= form.label :profile_picture, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
+              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true %>
             </div>
           </div>
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
@@ -156,7 +156,7 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required">
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" <%= "disabled" if disabled %>>
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
             <p class="h5 mt1 m0 warning flex items-center">
               <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
@@ -213,7 +213,7 @@
           </p>
           <div class="field field--fileupload">
             <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
-            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", disabled: %>
+            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
           </div>
         </div>
 

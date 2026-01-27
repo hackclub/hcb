@@ -68,10 +68,16 @@ module Reimbursement
                   user: User.system_user
                 )
                 check.save!
-                check.send_check!
-                payout_holding.increase_check = check
-                payout_holding.save!
-                payout_holding.mark_sent!
+                begin
+                  check.send_check!
+                  payout_holding.increase_check = check
+                  payout_holding.save!
+                  payout_holding.mark_sent!
+                rescue Faraday::Error => e
+                  check.mark_rejected!
+                  message = e.response_body&.dig("message") || e.message
+                  Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
+                end
               end
             when User::PayoutMethod::AchTransfer
               Rails.error.handle do

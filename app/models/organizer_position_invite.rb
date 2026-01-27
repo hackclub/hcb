@@ -77,18 +77,20 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
+  has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
+
+  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true
 
-  validate :not_already_organizer, if: -> { event_changed? || user_changed? }
+  validate :not_already_organizer, on: :create
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
 
   validate :initial_control_allowance_amount_cents_nil_for_non_members
 
-  after_create_commit :autofollow_event
   after_create_commit do
     unless pending_signature?
       user == sender ? accept : deliver
@@ -96,7 +98,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def contract
-    contracts.where.not(aasm_state: :voided).last
+    contracts.not_voided.last
   end
 
   def pending_signature?
@@ -264,15 +266,6 @@ class OrganizerPositionInvite < ApplicationRecord
     if role == "manager" && initial_control_allowance_amount_cents.present?
       self.errors.add(:user, "can not set an initial control allowance for a manager")
     end
-  end
-
-  def autofollow_event
-    if event.announcements.any? && !event.followers.include?(user:)
-      event.event_follows.create!(user:)
-    end
-
-  rescue ActiveRecord::RecordNotUnique
-    # Do nothing. The user already follows this event.
   end
 
 end
