@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Event
+class Event
   class ApplicationReminderJob < ApplicationJob
     queue_as :low
     def perform(application, tip_number)
