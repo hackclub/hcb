@@ -86,7 +86,7 @@ export const generateEventActions = data => {
         id: `${event.slug}-card-grants`,
         name: 'Card grants',
         perform: navigate(`/${event.slug}/card_grants`),
-        icon: <Icon glyph="card" size={16} />,
+        icon: <Icon glyph="bag" size={16} />,
         parent: event.slug,
       })),
     ...data.filter(restrictedFilter).map(event => ({
