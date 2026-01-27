@@ -5,7 +5,10 @@
   <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
-    <p class="text-sm text-muted m-0 truncate">From <%= @event.name %></p>
+    <%# For disbursements %>
+    <% unless @source_event.present? %>
+      <p class="text-sm text-muted m-0 truncate">From <%= @event.name %></p>
+    <% end %>
   </div>
 </nav>
 
