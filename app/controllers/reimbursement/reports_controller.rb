@@ -197,6 +197,9 @@ module Reimbursement
           text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.payout_method.name}.",
           link: settings_payouts_path
         }
+        if @report.user.can_update_payout_method?
+          flash[:success][:link_text] = "If needed, you can still edit your payout settings."
+        end
       rescue => e
         flash[:error] = e.message
       end
