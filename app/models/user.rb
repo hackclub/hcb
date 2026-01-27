@@ -41,7 +41,7 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
-  BLACKLISTED_DOMAINS = ["aboodbab.com"]
+  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
 
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
