@@ -1,12 +1,14 @@
 <p>Hi there! 👋</p>
 
 <p>
-  Your child has applied for HCB, a fiscal sponsorship platform supporting teens building nonprofit projects. You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event_name %> on HCB on behalf of your child.
+  Your child, <%= @contract.party(:signee).user.name %>, has applied for HCB, a fiscal sponsorship platform supporting teens building nonprofit projects. You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event_name %> on HCB on behalf of your child.
 </p>
+
+<%= link_to "Sign the agreement →", contract_party_url(@party), style: "border: 0; border-radius: 6px; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.125); cursor: pointer; display: inline-flex; font-size: 1rem; font-weight: 600; justify-content: center; align-items: center; height: 36px; letter-spacing: 0; overflow: hidden; padding: 0 1rem; position: relative; text-align: center; text-decoration: none; user-select: none; transition: box-shadow 0.125s ease-in-out, background-color 0.125s ease-in-out, color 0.125s ease-in-out; min-height: 36px; background-color: #74B3E7; color: #121519 !important; margin: 6px 0px;" %>
 
 <h3>What is HCB?</h3>
 
-<p>HCB is a project of Hack Club that provides 501(c)(3) status and an online financial platform for teen-led nonprofit projects.</p>
+<p>HCB is a project of <%= link_to "Hack Club", "https://hackclub.com" %> that provides 501(c)(3) status and an online financial platform for teen-led nonprofit projects.</p>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;table-layout:fixed;">
     <tr>
@@ -100,7 +102,13 @@
 </table>
 
 <p>
-  <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement and get them running on HCB!
+  Hack Club was founded in 2014 and has partnered with tech companies like <%= link_to "Microsoft", "https://www.microsoft.com" %> and <%= link_to "AMD", "https://www.amd.com" %> to get high school students around the world involved in coding and building projects. Some  projects running on HCB include <%= link_to "Reboot", "https://hcb.hackclub.com/reboot" %>, <%= link_to "Ghostty", "https://hcb.hackclub.com/ghostty"%>, and hundreds of robotics teams like <%= link_to "Green Mountain Robotics", "https://hcb.hackclub.com/green-mountain-robotics" %>.
+</p>
+
+<h3 style="margin-top: 24px;">What do I need to do?</h3>
+
+<p>
+  <%= @contract.party(:signee).user.name %> has requested that you <%= link_to "sign the fiscal sponsorship agreement", contract_party_url(@party) %> to get their project started. This will allow them to start raising money for <%= @contract.event_name %>.
 </p>
 
 <p>You can learn more about HCB <%= link_to "on our website", "https://hackclub.com/fiscal-sponsorship?utm_source=cosigner_learn_more&utm_medium=email&utm_campaign=cosigner_email" %>, and our team is around if you have any questions. Just reply to this email.</p>
