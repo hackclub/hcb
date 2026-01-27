@@ -115,8 +115,14 @@ RSpec.describe HcbCode, type: :model do
           create(:disbursement, source_event: source_event, event: destination_event)
         end
 
-        it "falls back to the disbursement's destination event" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        it "falls back to the disbursement's source event for outgoing hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
+
+          expect(hcb_code.events).to include(source_event)
+        end
+
+        it "falls back to the disbursement's destination event for incoming hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.incoming_hcb_code)
 
           expect(hcb_code.events).to include(destination_event)
         end
