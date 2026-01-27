@@ -301,8 +301,11 @@ class Event
         application: self
       )
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager)
-      service.run
+      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
+      invite = service.model
+      service.run!
+
+      invite.accept(application_contract: contract)
 
       self
     end
