@@ -10,4 +10,5 @@ class Event
     end
 
   end
+
 end
