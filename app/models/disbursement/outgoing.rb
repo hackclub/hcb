@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+class Disbursement
+  class Outgoing < Base
+    def hcb_code
+      disbursement.outgoing_hcb_code
+    end
+
+    def event
+      disbursement.source_event
+    end
+
+    def signed_amount
+      -disbursement.amount.abs
+    end
+
+    def subledger
+      disbursement.source_subledger
+    end
+
+    def transaction_category
+      disbursement.source_transaction_category
+    end
+  end
+end
