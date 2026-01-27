@@ -308,7 +308,7 @@ class Event < ApplicationRecord
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
-  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -704,9 +704,9 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
-  def reload
+  def reload(**args)
     @total_fee_payments_v2_cents = nil
-    super
+    super(**args)
   end
 
   def total_fee_payments_v2_cents

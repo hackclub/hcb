@@ -41,6 +41,8 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
+  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
+
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -168,6 +170,8 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
 
+  after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
+
   after_update :queue_sync_with_loops_job
 
   before_update :set_default_seasonal_theme
@@ -183,6 +187,8 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
+  validate :email_not_in_blacklisted_domains, on: :create
+
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
@@ -356,6 +362,10 @@ class User < ApplicationRecord
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
     full_name_in_database.blank?
+  end
+
+  def was_onboarding?
+    full_name_before_last_save.blank?
   end
 
   def active_mailbox_address
@@ -641,6 +651,17 @@ class User < ApplicationRecord
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
     self.seasonal_themes_enabled = teenager?
+  end
+
+  def send_onboarded_email
+    UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def email_not_in_blacklisted_domains
+    domain = email.split("@").last.downcase
+    if BLACKLISTED_DOMAINS.include?(domain)
+      errors.add(:email, "is invalid. Please use a different email address.")
+    end
   end
 
 end

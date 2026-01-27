@@ -14,18 +14,14 @@ module Api
 
         authorize @disbursement
 
-        begin
-          @disbursement = DisbursementService::Create.new(
-            source_event_id: @source_event.id,
-            destination_event_id: @destination_event.id,
-            name: params[:name],
-            amount: Money.from_cents(params[:amount_cents]),
-            requested_by_id: current_user.id,
-            fronted: @source_event.plan.front_disbursements_enabled?
-          ).run
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
+        @disbursement = DisbursementService::Create.new(
+          source_event_id: @source_event.id,
+          destination_event_id: @destination_event.id,
+          name: params[:name],
+          amount: Money.from_cents(params[:amount_cents]),
+          requested_by_id: current_user.id,
+          fronted: @source_event.plan.front_disbursements_enabled?
+        ).run
 
         render :show, status: :created, location: api_v4_transaction_path(@disbursement)
       end

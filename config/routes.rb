@@ -592,7 +592,7 @@ Rails.application.routes.draw do
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
   get "security", to: "static_pages#security"
-  get "privacy", to: redirect("https://hack.club/hcb-privacy-policy")
+  get "privacy", to: redirect("https://hackclub.com/privacy-and-terms/")
   get "faq", to: redirect("https://help.hcb.hackclub.com")
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
@@ -648,7 +648,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show, :create] do
+          resources :invitations, only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -658,6 +658,7 @@ Rails.application.routes.draw do
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :beacon_config
+          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -671,6 +672,8 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
+          resources :invitations, only: [:index, :create, :destroy]
+          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -704,6 +707,9 @@ Rails.application.routes.draw do
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
             get "card_designs"
+            post "freeze"
+            post "defrost"
+            post "activate"
           end
 
           member do
@@ -837,6 +843,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :affiliations, only: [:create, :update, :destroy], module: :event
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -915,7 +923,6 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :affiliations, only: [:create, :update, :destroy], controller: "event/affiliations"
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
     resources :organizer_position_invites,
@@ -957,6 +964,7 @@ Rails.application.routes.draw do
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
         post "disable_pre_authorization"
+        post "permit_merchant"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
@@ -998,6 +1006,7 @@ Rails.application.routes.draw do
       get "audit_log"
       post "validate_slug"
       get "termination"
+      post "permit_merchant"
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end

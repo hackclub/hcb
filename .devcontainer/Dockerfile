@@ -13,7 +13,13 @@ RUN su vscode -c "/bin/bash -l -c \"rvm fix-permissions\""
 
 ARG NODE_VERSION="22"
 RUN su vscode -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
-RUN su vscode -c "source /home/vscode/.nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
+RUN su vscode -c "\
+  export NVM_DIR=/home/vscode/.nvm && \
+  source \$NVM_DIR/nvm.sh && \
+  nvm install ${NODE_VERSION} && \
+  nvm alias default ${NODE_VERSION} && \
+  corepack enable \
+"
 
 # Default value to allow debug server to serve content over GitHub Codespace's port forwarding service
 # The value is a comma-separated list of allowed domains 

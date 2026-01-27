@@ -47,6 +47,40 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "24b4bbb940906be890c8fca79f53e06131392c6b52417b1b280fbf1f554b55e5",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/admin/wise_transfer_process.html.erb",
+      "line": 83,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(WiseTransfer.find(params[:id]).wise_id, WiseTransfer.find(params[:id]).wise_url, :target => \"_blank\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AdminController",
+          "method": "wise_transfer_process",
+          "line": 753,
+          "file": "app/controllers/admin_controller.rb",
+          "rendered": {
+            "name": "admin/wise_transfer_process",
+            "file": "app/views/admin/wise_transfer_process.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "admin/wise_transfer_process"
+      },
+      "user_input": "WiseTransfer.find(params[:id]).wise_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "331898aa15adc3446b48aada00d2cc1f56eb60f26b56ff486da0c5d596773837",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -143,7 +177,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/referral/links_controller.rb",
-      "line": 22,
+      "line": 23,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to((Referral::Link.find_by(:slug => params[:id]).program.redirect_to or root_path), :allow_other_host => true)",
       "render_path": null,
@@ -238,7 +272,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 748,
+          "line": 753,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -264,7 +298,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
-      "line": 89,
+      "line": 97,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
       "render_path": [
@@ -272,7 +306,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 748,
+          "line": 753,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -306,7 +340,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1008,
+          "line": 1032,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -374,7 +408,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 936,
+          "line": 960,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -442,7 +476,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 936,
+          "line": 960,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -510,7 +544,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1008,
+          "line": 1032,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -553,6 +587,6 @@
       "note": ""
     }
   ],
-  "updated": "2025-12-20 19:50:32 +0000",
+  "updated": "2026-01-12 23:56:02 +0000",
   "brakeman_version": "6.2.2"
 }

@@ -58,7 +58,7 @@ module SessionsHelper
     end
 
     user_session.save!
-    self.current_user = user
+    Current.session = user_session
 
     user_session
   end
@@ -79,10 +79,6 @@ module SessionsHelper
     signed_in? &&
       current_user&.superadmin? &&
       !current_session&.impersonated?
-  end
-
-  def current_user=(user)
-    @current_user = user
   end
 
   def organizer_signed_in?(event = @event, as: :reader)
@@ -121,14 +117,7 @@ module SessionsHelper
   end
 
   def current_session
-    return @current_session if defined?(@current_session)
-
-    session_token = cookies.encrypted[:session_token]
-
-    return nil if session_token.nil?
-
-    # Find a valid session (not expired) using the session token
-    @current_session = User::Session.not_expired.find_by(session_token:)
+    Current.session
   end
 
   def signed_in_user
@@ -148,13 +137,10 @@ module SessionsHelper
   end
 
   def sign_out
-    current_user
-      &.user_sessions
-      &.find_by(session_token: cookies.encrypted[:session_token])
-      &.update(signed_out_at: Time.now, expiration_at: Time.now)
+    current_session&.update(signed_out_at: Time.now, expiration_at: Time.now)
 
     cookies.delete(:session_token)
-    self.current_user = nil
+    Current.session = nil
   end
 
   def sign_out_of_all_sessions(user = current_user)

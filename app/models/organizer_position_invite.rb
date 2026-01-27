@@ -77,11 +77,14 @@ class OrganizerPositionInvite < ApplicationRecord
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
+  has_one :organizer_position_invite_request, class_name: "OrganizerPositionInvite::Request"
+
+  belongs_to :contract_user, foreign_key: :user_id, class_name: "User", inverse_of: :organizer_position_invites
   belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :organizer_position_invites
 
   belongs_to :organizer_position, optional: true
 
-  validate :not_already_organizer, if: -> { event_changed? || user_changed? }
+  validate :not_already_organizer, on: :create
   validate :not_already_invited, on: :create
   validates :accepted_at, absence: true, if: -> { rejected_at.present? }
   validates :rejected_at, absence: true, if: -> { accepted_at.present? }
@@ -95,7 +98,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def contract
-    contracts.where.not(aasm_state: :voided).last
+    contracts.not_voided.last
   end
 
   def pending_signature?
@@ -128,6 +131,7 @@ class OrganizerPositionInvite < ApplicationRecord
       role:,
       is_signee:,
       first_time: show_onboarding,
+      fiscal_sponsorship_contract: contract
     )
 
     self.accepted_at = Time.current
@@ -208,10 +212,12 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def send_contract(cosigner_email: nil, include_videos: false)
+    fs_contract = nil
+
     ActiveRecord::Base.transaction do
-      contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
-      contract.parties.create!(user:, role: :signee)
-      contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+      fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      fs_contract.parties.create!(user:, role: :signee)
+      fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
@@ -219,7 +225,7 @@ class OrganizerPositionInvite < ApplicationRecord
       event.set_airtable_status("Documents sent")
     end
 
-    contract.send!
+    fs_contract.send!
   end
 
   def on_contract_signed(contract)

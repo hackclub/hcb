@@ -1,29 +1,13 @@
-<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
-
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
-    <title>
-      <%= "#{yield(:title)} –" if content_for?(:title) %>
-      HCB Admin
-    </title>
-
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+    <%= render "layouts/head", title_suffix: "HCB Admin", admin: true %>
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <%= yield(:head) if content_for?(:head) %>
   </head>
   <body class="bg-snow">
     <a class="skip-to-main" href="#main">Skip to main content</a>
-
     <% title = yield(:title) if content_for?(:title) %>
-
     <% nav = Admin::Nav.new(page_title: title) %>
 
     <nav class="flex flex-col shadow-lg sticky top-0 backdrop-blur-lg z-10 bg-white/80 dark:!bg-[rgba(0,0,0,0.8)]">

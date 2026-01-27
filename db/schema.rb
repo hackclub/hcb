@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -457,6 +457,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   create_table "card_grant_settings", force: :cascade do |t|
     t.string "banned_categories"
     t.string "banned_merchants"
+    t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
@@ -465,7 +466,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.string "merchant_lock"
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
-    t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
+    t.string "support_message"
+    t.string "support_url"
+    t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
   create_table "card_grants", force: :cascade do |t|
@@ -550,8 +553,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.bigint "event_id", null: false
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
-    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx"
-    t.index ["event_id"], name: "index_column_account_numbers_on_event_id"
+    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
   create_table "column_statements", force: :cascade do |t|
@@ -630,6 +633,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
+    t.string "external_id"
     t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
@@ -955,11 +959,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   end
 
   create_table "event_affiliations", force: :cascade do |t|
+    t.bigint "affiliable_id", null: false
+    t.string "affiliable_type", null: false
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.jsonb "metadata", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
   end
 
@@ -1615,24 +1622,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.index ["user_code"], name: "index_oauth_device_grants_on_user_code", unique: true
   end
 
-  create_table "organizer_position_contracts", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "cosigner_email"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.bigint "document_id"
-    t.string "external_id"
-    t.integer "external_service"
-    t.boolean "include_videos", default: false, null: false
-    t.bigint "organizer_position_invite_id", null: false
-    t.integer "purpose", default: 0
-    t.datetime "signed_at"
-    t.datetime "updated_at", null: false
-    t.datetime "void_at"
-    t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
-    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
-  end
-
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
@@ -1667,9 +1656,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   create_table "organizer_position_invite_requests", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
+    t.bigint "organizer_position_invite_id"
     t.bigint "organizer_position_invite_link_id", null: false
     t.bigint "requester_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_0bf62e304a"
     t.index ["organizer_position_invite_link_id"], name: "idx_on_organizer_position_invite_link_id_241807b5ee"
     t.index ["requester_id"], name: "index_organizer_position_invite_requests_on_requester_id"
   end
@@ -2007,6 +1998,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
@@ -2090,6 +2082,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
 
   create_table "reimbursement_reports", force: :cascade do |t|
     t.string "aasm_state"
+    t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
@@ -2108,6 +2101,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2609,6 +2603,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.jsonb "recipient_information"
     t.string "recipient_name", null: false
     t.text "return_reason"
+    t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
@@ -2771,6 +2766,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
   add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
   add_foreign_key "organizer_position_invite_requests", "organizer_position_invite_links"
+  add_foreign_key "organizer_position_invite_requests", "organizer_position_invites"
   add_foreign_key "organizer_position_invite_requests", "users", column: "requester_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"

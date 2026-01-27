@@ -19,6 +19,7 @@ json.balance_available stripe_card.balance_available if expand?(:balance_availab
 
 json.organization stripe_card.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
 json.user         stripe_card.user,  partial: "api/v4/users/user",   as: :user  if expand?(:user)
+json.last_frozen_by stripe_card.last_frozen_by, partial: "api/v4/users/user", as: :user if expand?(:last_frozen_by)
 
 if stripe_card.physical?
   json.personalization do

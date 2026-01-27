@@ -126,7 +126,6 @@ window.attachTooltipListener = () => {
   let mutationObserver = null;
 
   const removeTooltips = () => {
-    if (window.innerWidth < 768) return;
     tooltip.className = "";
     // Stop observing when tooltip is closed
     if (mutationObserver) {
@@ -153,45 +152,57 @@ window.attachTooltipListener = () => {
     Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
   }
 
+  const showTooltip = (trigger) => {
+    if (!trigger.classList.contains("tooltipped")) return;
+    const label = trigger.getAttribute("aria-label")?.trim();
+    if (!label) return;
+
+    tooltip.className = "active";
+    tooltip.textContent = label;
+
+    // Sync size classes
+    ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+      if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+    });
+
+    updateTooltipPosition(trigger);
+
+    // Observe trigger for aria-label changes
+    if (mutationObserver) mutationObserver.disconnect();
+    mutationObserver = new MutationObserver(() => {
+      const updatedLabel = trigger.getAttribute("aria-label").trim();
+      if (updatedLabel) {
+        tooltip.textContent = updatedLabel;
+        updateTooltipPosition(trigger);
+      }
+    });
+    mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+  };
+
   $(".tooltipped").on({
     mouseenter(event) {
       if (window.innerWidth < 768) return;
-
       const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped")) return;
-
-      const label = trigger.getAttribute("aria-label").trim();
-      if (!label) return;
-
-      tooltip.className = "active";
-      tooltip.textContent = label;
-
-      // Sync size classes
-      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
-        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
-      });
-
-      updateTooltipPosition(trigger);
-
-      // Observe trigger for aria-label changes
-      if (mutationObserver) mutationObserver.disconnect();
-      mutationObserver = new MutationObserver(() => {
-        const updatedLabel = trigger.getAttribute("aria-label").trim();
-        if (updatedLabel) {
-          tooltip.textContent = updatedLabel;
-          updateTooltipPosition(trigger);
-        }
-      });
-      mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+      showTooltip(trigger);
     },
+    touchstart(event) {
+      const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped--tappable")) return;
+      showTooltip(trigger);
+    },
+    mouseleave: removeTooltips
+  });
 
-    mouseleave() {
-      removeTooltips()
+  $(document).on("click", function (event) {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
+    if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
+      removeTooltips();
     }
   });
   // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
+  $(document).on('turbo:frame-load', removeTooltips);
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)

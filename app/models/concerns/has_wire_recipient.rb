@@ -383,4 +383,6 @@ module HasWireRecipient
   def bank_country
     ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
   end
+
+  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX"]).uniq
 end
