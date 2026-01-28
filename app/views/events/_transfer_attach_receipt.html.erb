@@ -1,0 +1,23 @@
+<div class="md:flex items-center justify-between gap-4">
+  <div>
+    <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>
+    <span class="muted">Required for reimbursements / goods & services payments.</span>
+  </div>
+
+  <div
+    data-controller="file-upload file-drop form"
+    data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: false,
+        accept: "image/*,image/heic,.pdf",
+        data: {
+          "file-drop-target"   => "fileInput",
+          "file-upload-target" => "input"
+        },
+        disabled: %>
+    <button data-file-upload-target="preview" type="button"></button>
+    <div data-file-upload-target="clear"></div>
+  </div>
+</div>

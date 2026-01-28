@@ -87,6 +87,10 @@ class Event
         487784
       end
 
+      def contract_skip_prefills
+        {}
+      end
+
     end
 
   end
