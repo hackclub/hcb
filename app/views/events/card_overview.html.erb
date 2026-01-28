@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
+<% if @event.stripe_cards.any? %>
 <% if current_user.try(:full_name).try(:blank?) %>
 
   <h1 class="heading">
@@ -48,13 +49,6 @@
     <% end %>
   <% end %>
 
-  <% if organizer_signed_in? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
-      <%= modal_header "Order a card" %>
-      <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
-    </section>
-  <% end %>
-
   <% if @view == "list" %>
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
@@ -91,4 +85,47 @@
     </section>
   <% end %>
 
+<% end %>
+<% else %>
+ <%= render "events/blankslate_page",
+    title: "Cards",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "card",
+        title: "Order physical and virtual cards",
+        description: "Easily order physical and virtual cards for your organization to streamline spending and manage expenses."
+      },
+      {
+        icon: "view",
+        title: "Control spending with ease",
+        description: "Set spending limits and monitor transactions in real-time to ensure responsible use of funds."
+      },
+      {
+        icon: "docs",
+        title: "Simplify expense tracking",
+        description: "Automatically categorize and track expenses, making budgeting and financial reporting a breeze."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
+        <%= inline_icon "card-add" %>
+        Order a card
+      <% end %>
+    <% end %>
+    
+  <% end %>
+<% end %>
+
+<% if organizer_signed_in? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
+    <%= modal_header "Order a card" %>
+    <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
+  </section>
 <% end %>
