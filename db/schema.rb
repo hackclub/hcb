@@ -2521,6 +2521,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
     t.string "discord_id"
     t.text "email", null: false
     t.string "full_name"
+    t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
     t.bigint "payout_method_id"
     t.string "payout_method_type"
