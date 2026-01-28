@@ -30,14 +30,14 @@
         </div>
       <% end %>
     <% else %>
-      <div class="field field--fileupload mb1 mt1">
-        <%= form.label :file, "Choose file", class: "field--fileupload__label", for: "comment_file_upload" %>
+      <div data-controller="file-upload">
         <%= form.file_field :file,
             multiple: false,
             required: false,
-            style: "margin: 8px 0px; max-width: 160px;",
-            class: "field--fileupload__field",
+            data: { "file-upload-target": "input" },
             id: "comment_file_upload" %>
+        <button data-file-upload-target="preview" type="button"></button>
+        <div data-file-upload-target="clear"></div>
       </div>
     <% end %>
 

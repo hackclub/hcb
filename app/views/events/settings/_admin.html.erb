@@ -99,7 +99,7 @@
       </div>
 
       <div class="field field--checkbox">
-        <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨" %>
+        <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨#{" (⚠️ has active recurring donations - please handle before freezing)" if event.recurring_donations.active.exists?}" %>
         <%= form.check_box :financially_frozen, switch: true, disabled: %>
       </div>
 
