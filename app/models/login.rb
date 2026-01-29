@@ -24,6 +24,8 @@
 #  index_logins_on_user_session_id      (user_session_id)
 #
 class Login < ApplicationRecord
+  self.ignored_columns = ["referral_program_id"]
+
   include AASM
   include Hashid::Rails
 
