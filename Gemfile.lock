@@ -773,7 +773,7 @@ GEM
       ffi (~> 1.12)
     ruby2_keywords (0.0.5)
     rubyzip (2.4.1)
-    safely_block (0.4.1)
+    safely_block (0.5.0)
     safety_net_attestation (0.5.0)
       jwt (>= 2.0, < 4.0)
     sanitize (6.0.2)
