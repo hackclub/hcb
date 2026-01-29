@@ -77,7 +77,7 @@ class CardGrant < ApplicationRecord
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_create do
+  after_initialize(if: :new_record?) do
     self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
 
