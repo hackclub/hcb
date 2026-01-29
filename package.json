@@ -64,7 +64,7 @@
     "recharts": "^2.15.4",
     "rich-textarea": "^0.26.5",
     "tailwindcss": "^3.4.17",
-    "ua-parser-js": "^2.0.6",
+    "ua-parser-js": "^2.0.8",
     "webpack": "^5.101.3",
     "webpack-cli": "^6.0.1"
   },
