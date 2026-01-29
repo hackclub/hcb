@@ -163,8 +163,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
-  before_update { self.joined_as_teenager = joined_as_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.teenager = teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = joined_as_teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
