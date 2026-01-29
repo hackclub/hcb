@@ -8,7 +8,7 @@ module Api
 
       def token
         payload = {
-          user_id: current_user.id,
+          user_id: current_user.public_id,
           email: current_user.email,
           exp: 1.hour.from_now.to_i
         }

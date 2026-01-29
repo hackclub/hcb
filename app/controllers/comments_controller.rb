@@ -73,7 +73,7 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:content, :file, :admin_only)
   end
 
-  COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
+  COMMENTABLE_TYPE_MAP = [AchTransfer, EmburseCardRequest, EmburseTransaction,
                           EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
                           OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant].index_by(&:to_s).freeze
 

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -466,6 +466,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.string "merchant_lock"
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
+    t.string "support_message"
+    t.string "support_url"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
@@ -631,6 +633,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
+    t.string "external_id"
     t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
@@ -956,11 +959,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
   end
 
   create_table "event_affiliations", force: :cascade do |t|
+    t.bigint "affiliable_id", null: false
+    t.string "affiliable_type", null: false
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.jsonb "metadata", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
+    t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
   end
 
@@ -1614,24 +1620,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.index ["device_code"], name: "index_oauth_device_grants_on_device_code", unique: true
     t.index ["resource_owner_id"], name: "index_oauth_device_grants_on_resource_owner_id"
     t.index ["user_code"], name: "index_oauth_device_grants_on_user_code", unique: true
-  end
-
-  create_table "organizer_position_contracts", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "cosigner_email"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.bigint "document_id"
-    t.string "external_id"
-    t.integer "external_service"
-    t.boolean "include_videos", default: false, null: false
-    t.bigint "organizer_position_invite_id", null: false
-    t.integer "purpose", default: 0
-    t.datetime "signed_at"
-    t.datetime "updated_at", null: false
-    t.datetime "void_at"
-    t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
-    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
   end
 
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
@@ -2533,6 +2521,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_17_193703) do
     t.string "discord_id"
     t.text "email", null: false
     t.string "full_name"
+    t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
     t.bigint "payout_method_id"
     t.string "payout_method_type"
