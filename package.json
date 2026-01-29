@@ -19,7 +19,7 @@
     "@floating-ui/dom": "^1.7.4",
     "@floating-ui/react-dom": "1.0.0",
     "@fnando/sparkline": "^0.3.10",
-    "@github/text-expander-element": "^2.9.2",
+    "@github/text-expander-element": "^2.9.4",
     "@github/webauthn-json": "^2.1.1",
     "@hackclub/icons": "^0.0.15",
     "@hcb.gg/wrapped": "^2025.0.2",

@@ -1059,10 +1059,10 @@
   resolved "https://registry.yarnpkg.com/@github/combobox-nav/-/combobox-nav-2.3.1.tgz#76da4c47f1e33af56392c5c9cf661a28d5b4168e"
   integrity sha512-gwxPzLw8XKecy1nP63i9lOBritS3bWmxl02UX6G0TwMQZbMem1BCS1tEZgYd3mkrkiDrUMWaX+DbFCuDFo3K+A==
 
-"@github/text-expander-element@^2.9.2":
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/@github/text-expander-element/-/text-expander-element-2.9.2.tgz#5c1c26b41225f76accceb831d07f41165e390329"
-  integrity sha512-XY8EUMqM4GAloNxXNA1Py1ny+engWwYntbgsnpstQN4piaTI9rIlfYldyd0nnPXhxjGCVqHPmP6yg17Q0/n9Vg==
+"@github/text-expander-element@^2.9.4":
+  version "2.9.4"
+  resolved "https://registry.yarnpkg.com/@github/text-expander-element/-/text-expander-element-2.9.4.tgz#a6181764920b93dfabc455a27e73bfb92b970736"
+  integrity sha512-+zxSlek2r0NrbFmRfymVtYhES9YU033acc/mouXUkN2bs8DaYScPucvBhwg/5d0hsEb2rIykKnkA/2xxWSqCTw==
   dependencies:
     "@github/combobox-nav" "^2.0.2"
     dom-input-range "^2.0.0"
