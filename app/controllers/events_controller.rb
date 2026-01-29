@@ -1219,7 +1219,7 @@ class EventsController < ApplicationController
 
     # Also used in Transactions page UI (outside of Ledger)
     if @subledger
-      @users = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq)
+      @users = User.where(id: @event.card_grants.select(:user_id).map(&:user_id).uniq).includes(profile_picture_attachment: :blob).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
     else
       @users = @event.users.includes(profile_picture_attachment: :blob).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
     end
