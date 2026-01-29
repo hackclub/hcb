@@ -41,6 +41,41 @@ RSpec.describe User, type: :model do
       user.update(full_name: "Turing Alan")
       expect(user).to be_valid
     end
+
+    it "fails validation when age is less than 13" do
+      user = create(:user)
+      
+      # Try to set birthday to 12 years ago
+      user.update(birthday: 12.years.ago)
+      expect(user).to_not be_valid
+      expect(user.errors[:birthday]).to include("must indicate you are at least 13 years old.")
+    end
+
+    it "allows birthday when user is exactly 13 years old" do
+      user = create(:user)
+      
+      # Set birthday to exactly 13 years ago
+      user.update(birthday: 13.years.ago)
+      expect(user).to be_valid
+    end
+
+    it "allows birthday when user is older than 13" do
+      user = create(:user)
+      
+      # Set birthday to 20 years ago
+      user.update(birthday: 20.years.ago)
+      expect(user).to be_valid
+    end
+
+    it "does not validate age for existing users with birthday < 13" do
+      # Create a user with a birthday less than 13 years ago
+      user = create(:user)
+      user.update_column(:birthday_ciphertext, User.new(birthday: 10.years.ago).birthday_ciphertext)
+      
+      # Updating other fields should work
+      user.update(full_name: "New Name Test")
+      expect(user).to be_valid
+    end
   end
 
   context "when full_name is removed" do
