@@ -1,7 +1,7 @@
 <% raffle_program = "teenager-raffle-#{Date.current.strftime("%m-%Y")}" %>
 <%= render "raffles/raffle_modal", id: "join_teenager_raffle", program: raffle_program %>
 
-<% if current_user.teenager? && Date.current < Date.new(2026, 1, 1) %>
+<% if current_user.is_teenager? && Date.current < Date.new(2026, 1, 1) %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
   <% current_month = Date.current.strftime("%B") %>
