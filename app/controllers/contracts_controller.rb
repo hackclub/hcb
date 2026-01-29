@@ -7,7 +7,7 @@ class ContractsController < ApplicationController
 
     @contract.mark_voided!
     flash[:success] = "Contract voided successfully."
-    redirect_back(fallback_location: event_team_path(@contract.event))
+    redirect_back(fallback_location: @contract.redirect_path)
   end
 
 end

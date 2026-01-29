@@ -2,9 +2,14 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static values = { advancePath: String }
+  static targets = ['button']
 
   completed() {
-    window.location.href = this.advancePathValue
+    if (this.hasButtonTarget) {
+      this.buttonTarget.disabled = false
+    } else {
+      window.location.href = this.advancePathValue
+    }
   }
 
   void() {

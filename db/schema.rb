@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_300002) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -968,6 +968,41 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
     t.datetime "updated_at", null: false
     t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
+    t.integer "annual_budget_cents"
+    t.datetime "approved_at"
+    t.integer "committed_amount_cents"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.bigint "event_id"
+    t.integer "last_page_viewed"
+    t.datetime "last_viewed_at"
+    t.string "name"
+    t.text "notes"
+    t.text "political_description"
+    t.string "referral_code"
+    t.string "referrer"
+    t.datetime "rejected_at"
+    t.datetime "submitted_at"
+    t.boolean "teen_led"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "website_url"
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -2712,6 +2747,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
