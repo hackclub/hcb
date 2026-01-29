@@ -197,6 +197,12 @@
               <%= inline_icon "payment-docs" %>
               <span>Select</span>
             <% end %>
+
+            <% if Flipper.enabled?(:copy_receipt_email_2026_01_21) %>
+              <button type="button" class="btn <%= "disabled" if local_assigns[:receipt_upload_button_disabled] %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= ct.local_hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this this transaction">
+                <%= inline_icon "email", style: "margin: 0px" %>
+              </button>
+            <% end %>
           </div>
         <% end %>
       <% else %>

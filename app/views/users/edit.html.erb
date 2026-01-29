@@ -80,9 +80,10 @@
           <%= form.label :profile_picture %>
           <div class="flex items-center mt1">
             <%= avatar_for @user, size: 48, class: "mr2" %>
-            <div class="field--fileupload">
-              <%= form.label :profile_picture, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true %>
+            <div data-controller="file-upload">
+              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, data: { "file-upload-target": "input" } %>
+              <button data-file-upload-target="preview" type="button"></button>
+              <div data-file-upload-target="clear"></div>
             </div>
           </div>
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
@@ -211,9 +212,10 @@
               <% end %>
           </span>
           </p>
-          <div class="field field--fileupload">
-            <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
-            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
+          <div data-controller="file-upload" data-file-upload-placeholder-value="Upload profile picture">
+            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
+            <button data-file-upload-target="preview" type="button"></button>
+            <div data-file-upload-target="clear"></div>
           </div>
         </div>
 
