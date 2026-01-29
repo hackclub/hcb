@@ -22,6 +22,7 @@
         <button id="category" data-tabs-target="btn" data-action="click->tabs#select">Category</button>
         <button id="merchant" data-tabs-target="btn" data-action="click->tabs#select">Merchant</button>
         <button id="receipts" data-tabs-target="btn" data-action="click->tabs#select">Receipts</button>
+        <button id="declined" data-tabs-target="btn" data-action="click->tabs#select">Declined</button>
       </div>
 
       <div class="col-span-2 p-2 overflow-y-scroll">
@@ -132,6 +133,14 @@
           </div>
           <div>
             <%= link_to("All transactions", event_ledger_path(@event, upsert_query_params(missing_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+          </div>
+        </div>
+        <div data-tabs-target="tab" id="declined">
+          <div class="flex items-center">
+            <%= link_to("Declined or reversed", event_ledger_path(@event, upsert_query_params(declined_or_reversed: true, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @declined_or_reversed}", data: { turbo_prefetch: "false" }) %>
+          </div>
+          <div>
+            <%= link_to("All other transactions", event_ledger_path(@event, upsert_query_params(declined_or_reversed: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @declined_or_reversed}", data: { turbo_prefetch: "false" }) %>
           </div>
         </div>
       </div>

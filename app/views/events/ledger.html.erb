@@ -19,9 +19,9 @@
           <tbody data-behavior="transactions">
           <%= render "events/pending_fee_transaction" unless @event.fronted_fee_balance_v2_cents <= 0 || @direction == "revenue" || params[:subledger] %>
 
-          <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
+          <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @transactions.select { |t| t.is_a?(CanonicalPendingTransaction) }, as: :pt, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
 
-          <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
+          <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions.reject { |t| t.is_a?(CanonicalPendingTransaction) }, as: :ct, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
           </tbody>
         </table>
       </div>
