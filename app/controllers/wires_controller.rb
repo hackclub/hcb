@@ -11,6 +11,8 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
+
+    render layout: "transfer"
   end
 
   def create

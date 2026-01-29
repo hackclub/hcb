@@ -323,6 +323,22 @@ class EventsController < ApplicationController
     render :edit, layout: !@frame
   end
 
+  def permit_merchant
+    authorize @event
+
+    merchant_lock = @event.card_grant_setting.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants") and return
+    end
+
+    merchant_lock << params[:merchant]
+    @event.card_grant_setting.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants")
+  end
+
   # PATCH/PUT /events/1
   def update
     authorize @event
@@ -1099,7 +1115,10 @@ class EventsController < ApplicationController
           :banned_categories,
           :expiration_preference,
           :reimbursement_conversions_enabled,
-          :pre_authorization_required
+          :pre_authorization_required,
+          :block_suspected_fraud,
+          :support_message,
+          :support_url
         ],
         config_attributes: [
           :id,
@@ -1159,7 +1178,10 @@ class EventsController < ApplicationController
         :banned_categories,
         :expiration_preference,
         :reimbursement_conversions_enabled,
-        :pre_authorization_required
+        :pre_authorization_required,
+        :block_suspected_fraud,
+        :support_message,
+        :support_url
       ],
       config_attributes: [
         :id,

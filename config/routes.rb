@@ -648,7 +648,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show] do
+          resources :organizer_position_invites, path: "invitations", only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -672,7 +672,7 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
-          resources :invitations, only: [:index, :create, :destroy]
+          resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
@@ -843,6 +843,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :affiliations, only: [:create, :update, :destroy], module: :event
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
@@ -921,7 +923,6 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :affiliations, only: [:create, :update, :destroy], controller: "event/affiliations"
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
     resources :organizer_position_invites,
@@ -963,6 +964,7 @@ Rails.application.routes.draw do
         post "convert_to_reimbursement_report"
         post "toggle_one_time_use"
         post "disable_pre_authorization"
+        post "permit_merchant"
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
@@ -1004,6 +1006,7 @@ Rails.application.routes.draw do
       get "audit_log"
       post "validate_slug"
       get "termination"
+      post "permit_merchant"
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end
