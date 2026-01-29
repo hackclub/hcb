@@ -10,7 +10,7 @@
 
   <%= render partial: "events/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
-  <% if @event.canonical_transactions.any? %>
+  <% if @event.canonical_transactions.any? && !@subledger %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
       <button
         type="button"
