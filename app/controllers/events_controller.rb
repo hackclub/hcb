@@ -1256,7 +1256,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date",
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions
