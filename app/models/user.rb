@@ -13,6 +13,7 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
 #  payout_method_type            :string
 #  phone_number                  :text
@@ -163,6 +164,7 @@ class User < ApplicationRecord
   include HasTasks
 
   before_update { self.teenager = teenager? }
+  before_update { self.joined_as_teenager = joined_as_teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -432,6 +434,10 @@ class User < ApplicationRecord
   def teenager?
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
+  end
+
+  def joined_as_teenager?
+    age_on(created_at)&.<=(18)
   end
 
   def last_seen_at

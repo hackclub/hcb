@@ -2,11 +2,13 @@
 <% @no_app_shell = true %>
 
 <nav class="border-b px-6 flex items-center gap-4 fixed top-0 left-0 backdrop-blur-xl h-20 md:h-24 w-full z-10">
-  <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
+  <% unless defined?(@back_url) && @back_url.nil? %>
+    <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
+  <% end %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
     <%# For disbursements %>
-    <% unless @source_event.present? %>
+    <% if !@source_event.present? && @event.present? %>
       <p class="text-sm text-muted m-0 truncate">From <%= @event.name %></p>
     <% end %>
   </div>
