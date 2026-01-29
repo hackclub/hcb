@@ -72,8 +72,6 @@
         <%= category_select.call(:destination_transaction_category_slug) %>
       </div>
 
-      <hr>
-
       <div class="field">
         <%= form.label :scheduled_on, "Schedule for" %>
         <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
