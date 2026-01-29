@@ -2,10 +2,24 @@
 
 class Donation
   class TiersController < ApplicationController
+    include SetEvent
+    include DonationPageSetup
+
     before_action :set_event, except: [:set_index]
 
     def index
       @tiers = @event.donation_tiers
+    end
+
+    def start
+      return not_found unless @event.donation_page_available?
+
+      authorize @event, :show?
+
+      return unless build_donation_page!(event: @event, params:, request:)
+
+      @hide_flash = true
+      render "donations/start_donation"
     end
 
     def set_index
@@ -40,7 +54,8 @@ class Donation
         name: "Untitled tier",
         amount_cents: 1000,
         description: "",
-        sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1
+        sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1,
+        published: false
       )
       @tier.save!
 
@@ -63,7 +78,8 @@ class Donation
         tier.update(
           name: tier_data[:name],
           description: tier_data[:description],
-          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i
+          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i,
+          published: ActiveRecord::Type::Boolean.new.cast(tier_data[:published])
         )
       end
 
@@ -79,13 +95,6 @@ class Donation
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
-    end
-
-    private
-
-    def set_event
-      @event = Event.where(slug: params[:event_id]).first
-      render json: { error: "Event not found" }, status: :not_found unless @event
     end
 
   end
