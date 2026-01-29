@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
+<% if @reports.any? %>
 <h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
   <span class="flex-grow">Reimbursements</span>
   <div class="flex items-center gap-2">
@@ -109,6 +110,65 @@
   <p class="italic muted text-center">
     <%= page_entries_info @reports, entry_name: "reports" %>.
   </p>
+<% end %>
+<% else %>
+  <div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-20 px-3">
+    <div class="flex flex-col justify-center col-span-2">
+      <h1 class="heading border-0 mb-0">
+        Reimbursements
+      </h1>
+
+      <div class="-mx-4">
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "send", class: "mt-1" %>
+            <div>
+              <strong>Manage out-of-pocket expenses</strong>
+              <p class="text-sm opacity-60">
+                Easily track and reimburse expenses incurred by your team members during events.
+              </p>
+            </div>
+        </div>
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "payment", class: "mt-1" %>
+            <div>
+              <strong>
+                Four different methods
+              </strong>
+              <p class="text-sm opacity-60">
+                Reimburse via ACH, mailed checks, Wise, or Wire transfers to suit your team's needs.
+              </p>
+            </div>
+        </div>
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon "copy", class: "mt-1" %>
+            <div>
+              <strong>Upload receipts</strong>
+              <p class="text-sm opacity-60">
+                Organize and store expense receipts to track each expense easily.
+              </p>
+            </div>
+        </div>
+      </div>
+
+      <% if organizer_signed_in?(as: :member) %>
+        <%= link_to new_event_invoice_path(event_id: @event.slug),
+            class: "btn btn--icon bg-success mt-3",
+            data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+          <%= inline_icon "send" %>
+          Send an invoice
+        <% end %>
+      <% end %>
+    </div>
+    <div class="col-span-3 flex items-center justify-center">
+      <div class="card p-0 card--breakdown">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png" alt="Invoice illustration" class="w-full h-auto dark:hidden">
+        <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png" alt="Invoice illustration" class="w-full h-auto hidden dark:block">
+        <div class="p-2 pt-0 text-center">
+          <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
 <% end %>
 
 <%= form_with(model: Reimbursement::Report, class: "display-none", method: :post, url: quick_expense_reimbursement_reports_path, data: { controller: "file-drop form", "file-drop-title-value": "Drop to start a report." }) do |form| %>
