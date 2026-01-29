@@ -13,6 +13,7 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
 #  payout_method_type            :string
 #  phone_number                  :text
@@ -41,6 +42,8 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
+  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
+
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -161,6 +164,7 @@ class User < ApplicationRecord
   include HasTasks
 
   before_update { self.teenager = teenager? }
+  before_update { self.joined_as_teenager = joined_as_teenager? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -185,6 +189,8 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
+  validate :email_not_in_blacklisted_domains, on: :create
+
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
@@ -430,6 +436,10 @@ class User < ApplicationRecord
     age&.<=(18)
   end
 
+  def joined_as_teenager?
+    age_on(created_at)&.<=(18)
+  end
+
   def last_seen_at
     user_sessions.not_impersonated.maximum(:last_seen_at)
   end
@@ -651,6 +661,13 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def email_not_in_blacklisted_domains
+    domain = email.split("@").last.downcase
+    if BLACKLISTED_DOMAINS.include?(domain)
+      errors.add(:email, "is invalid. Please use a different email address.")
+    end
   end
 
 end
