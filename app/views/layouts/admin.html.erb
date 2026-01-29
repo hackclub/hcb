@@ -48,7 +48,7 @@
             </div>
           </div>
           <%= render partial: "application/blog_widget" %>
-          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
+          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "-ml-1 tooltipped tooltipped--w" do %>
             <%= inline_icon "receipt", size: home_action_size %>
           <% end %>
           <%= button_to logout_users_path, method: :delete, id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
