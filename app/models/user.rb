@@ -672,8 +672,6 @@ class User < ApplicationRecord
   end
 
   def minimum_age_requirement
-    return unless birthday.present?
-
     age = age_on(Date.current)
     if age.nil? || age < 13
       errors.add(:birthday, "must indicate you are at least 13 years old.")
