@@ -13,9 +13,11 @@
   <%= dock_item "Notifications",
                 use_my_path ? settings_notifications_path : notifications_user_path(@user || current_user),
                 selected: local_assigns[:selected] == :settings_notifications && local_assigns[:open] %>
-  <%= dock_item "Billing address",
-                use_my_path ? settings_address_path : address_user_path(@user || current_user),
-                selected: local_assigns[:selected] == :settings_billing_address && local_assigns[:open] %>
+  <% if (@user || current_user)&.stripe_cardholder.present? %>
+    <%= dock_item "Billing address",
+                  use_my_path ? settings_address_path : address_user_path(@user || current_user),
+                  selected: local_assigns[:selected] == :settings_billing_address && local_assigns[:open] %>
+  <% end %>
   <%= dock_item "Reimbursement payouts",
                 use_my_path ? settings_payouts_path : payouts_user_path(@user || current_user),
                 selected: local_assigns[:selected] == :settings_reimbursement_payouts && local_assigns[:open] %>
