@@ -245,7 +245,7 @@ class Disbursement < ApplicationRecord
   end
 
   def canonical_pending_transactions
-    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def transactions_helper
