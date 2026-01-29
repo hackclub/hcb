@@ -123,11 +123,6 @@
                   <% end %>
                 </div>
               <% end %>
-              <div class="flex items-center">
-                <%= link_to(event_ledger_path(@event, upsert_query_params(direction:, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
-                  <%= direction.humanize %>
-                <% end %>
-              </div>
             <% end %>
             <div class="flex items-center">
               <%= link_to(event_ledger_path(@event, upsert_query_params(direction: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @direction}", data: { turbo_prefetch: "false" }) do %>
