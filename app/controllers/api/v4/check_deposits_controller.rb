@@ -8,7 +8,7 @@ module Api
       before_action :set_api_event
 
       def index
-        authorize @event
+        authorize @event, :index_in_v4?
         @check_deposits = @event.check_deposits.order(created_at: :desc)
 
         render :index, status: :ok
