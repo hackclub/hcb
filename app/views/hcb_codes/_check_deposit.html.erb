@@ -50,7 +50,8 @@
         <strong>Requested at</strong>
         <%= format_datetime @hcb_code.check_deposit.created_at %>
       </div>
-      <% if @hcb_code.check_deposit.estimated_arrival_date %>
+      <!-- Continue to show the estimate up until we're 2 days past due -->
+      <% unless @hcb_code.check_deposit.estimated_arrival_date.before?(2.days.ago) %>
         <div>
           <strong>Estimated arrival</strong>
           <%= @hcb_code.check_deposit.estimated_arrival_date.strftime("%b %e, %Y") %>
