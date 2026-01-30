@@ -12,8 +12,9 @@
   </div>
 <% end %>
 
+<div class="card card--outline mb-6">
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>' }">
+  <div x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>' }">
     <%= form.label :teen_led do %>
       Are you a teenager? <span class="text-primary">*</span>
     <% end %>
@@ -106,6 +107,19 @@
   </div>
 
 <% end %>
+
+<%= turbo_frame_tag :affiliations_settings do %>
+  <h3 class="mb2">Affiliations</h3>
+  
+  <div class="card mb3">
+    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: 'first' }" }) do |form| %>
+      <%= render "events/settings/affiliation_form", affiliation: Event::Affiliation.new(affiliable: @application), form: %>
+    <% end %>
+  </div>
+
+  <%= render partial: "events/settings/affiliation", collection: @application.affiliations %>
+<% end %>
+</div>
 
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">

@@ -59,6 +59,8 @@ class Event
     belongs_to :user
     belongs_to :event, optional: true
 
+    has_many :affiliations, as: :affiliable
+
     after_commit :sync_to_airtable
 
     monetize :annual_budget_cents, allow_nil: true
@@ -306,6 +308,12 @@ class Event
       service.run!
 
       invite.accept(application_contract: contract)
+
+      affiliations.each do |affiliation|
+        affiliation_copy = affiliation.dup
+        affiliation.affiliable = event
+        affiliation.save!
+      end
 
       self
     end
