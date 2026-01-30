@@ -172,8 +172,6 @@ class CheckDeposit < ApplicationRecord
 
     estimated = submitted_to_column_at&.+(1.week)&.to_date
     return nil if estimated.nil?
-    # Continue to show the estimate up until we're 2 days past due
-    return nil if estimated.before?(2.days.ago)
 
     estimated
   end
