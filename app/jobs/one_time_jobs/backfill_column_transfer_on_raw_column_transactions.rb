@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneTimeJobs
-  class BackfillColumnTransferOnRawColumnTransactions
+  class BackfillColumnTransferOnRawColumnTransactions < ApplicationJob
     extend Limiter::Mixin
 
     limit_method :perform, rate: 180 # 3 requests per second
