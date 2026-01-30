@@ -7,8 +7,10 @@ json.created_at check_deposit.created_at
 json.updated_at check_deposit.updated_at
 
 if check_deposit.rejected? && check_deposit.rejection_reason.present?
-  json.rejection_reason check_deposit.rejection_reason
-  json.rejection_description check_deposit.rejection_description
+  json.rejection do
+    json.reason check_deposit.rejection_reason
+    json.description check_deposit.rejection_description
+  end
 end
 
 if check_deposit.estimated_arrival_date.present?
