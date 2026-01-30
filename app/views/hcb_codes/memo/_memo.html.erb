@@ -54,7 +54,7 @@
       <% end %>
       <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
-        <%= render "hcb_codes/memo_stream", hcb_code: %>
+        <%= render "hcb_codes/memo/stream", hcb_code: %>
       <% end %>
     <% end %>
   <% end %>

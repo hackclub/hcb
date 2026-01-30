@@ -73,7 +73,7 @@
 
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb2 mt1">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
   <% end %>
   <div class="filterbar" role="tablist" aria-label="Reimbursement report filters">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>

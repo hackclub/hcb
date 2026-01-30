@@ -231,15 +231,15 @@
           "line": 3,
           "file": "app/views/hcb_codes/_rich_metadata.html.erb",
           "rendered": {
-            "name": "hcb_codes/_donation",
-            "file": "app/views/hcb_codes/_donation.html.erb"
+            "name": "hcb_codes/transaction_types/_donation",
+            "file": "app/views/hcb_codes/transaction_types/_donation.html.erb"
           }
         },
         {
           "type": "template",
-          "name": "hcb_codes/_donation",
+          "name": "hcb_codes/transaction_types/_donation",
           "line": 5,
-          "file": "app/views/hcb_codes/_donation.html.erb",
+          "file": "app/views/hcb_codes/transaction_types/_donation.html.erb",
           "rendered": {
             "name": "application/_admin_viewer",
             "file": "app/views/application/_admin_viewer.html.erb"

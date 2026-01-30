@@ -79,11 +79,11 @@
                 <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(ct.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
-                  <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 <% end %>
               <% else %>
                 <span>
-                  <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 </span>
               <% end %>
             </span>
