@@ -723,7 +723,7 @@ Rails.application.routes.draw do
 
         resources :invoices, only: [:show, :create]
         resources :sponsors, only: [:show, :create]
-        resources :check_deposits, path: "check-deposits", only: [:index, :show, :create]
+        resources :check_deposits, only: [:index, :show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
