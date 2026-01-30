@@ -3,7 +3,8 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
-    skip_before_action :signed_in_user, only: [:new, :apply]
+    skip_before_action :signed_in_user, only: [:new, :apply, :create]
+    skip_after_action :verify_authorized, only: :create
     skip_before_action :redirect_to_onboarding
 
     layout "apply"
@@ -130,7 +131,11 @@ class Event
     end
 
     def create
-      authorize(@application = Event::Application.new(user: current_user))
+      unless signed_in?
+        redirect_to auth_users_path(return_to: start_applications_path(teenager: params[:teen_led].presence), require_reload: true) and return
+      end
+
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
       @application.save!
 
       redirect_to project_info_application_path(@application)

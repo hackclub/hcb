@@ -14,7 +14,7 @@
 
 <div class="card card--outline mb-6">
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>' }">
+  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '' }">
     <%= form.label :teen_led do %>
       Are you a teenager? <span class="text-primary">*</span>
     <% end %>
@@ -78,8 +78,15 @@
       <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", "x-bind:disabled": "teenager == null" %>
     </div>
 
+    <div class="field" x-show="teenager == 'false' || teenager == false">
+      <%= form.label :planning_duration do %>
+        How long have you been planning your project? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+    </div>
+
     <div class="flex flex-row w-full gap-4 mt-4">
-      <div class="field w-full flex-1 flex-shrink-0" x-show="teenager == 'false' || teenager == false">
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
         <%= form.label :annual_budget do %>
           Annual budget <span class="text-primary">*</span>
         <% end %>
@@ -92,18 +99,26 @@
         </div>
       </div>
 
-      <div class="field w-full flex-1 flex-shrink-0" x-show="teenager == 'false' || teenager == false">
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
         <%= form.label :committed_amount do %>
           Committed amount <span class="text-primary">*</span>
         <% end %>
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
     </div>
+
+    <div class="field m-0 mt-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
+      <%= form.label :funding_source do %>
+        What is the source of your funding? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
+    </div>
+
   </div>
 
 <% end %>

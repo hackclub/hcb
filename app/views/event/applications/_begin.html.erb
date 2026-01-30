@@ -1,53 +1,90 @@
 <%# locals: (application: nil) %>
-<div class="flex flex-col lg:mx-6 relative">
 
-  <h2 class="text-5xl">
-    <% if application.present? && application.created_at < 1.hour.ago %>
-      Continue your application
-    <% else %>
-      Let's get started
-    <% end %>
-  </h2>
+<div class="flex flex-col md:flex-row gap-6 lg:gap-4">
+  <div class="md:sticky md:top-0 flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
 
-  <p class="mt-0 mb-8 text-2xl muted">Applying for HCB is easy and quick</p>
+    <h2 class="text-5xl">
+      <% if application.present? && application.created_at < 1.hour.ago %>
+        Continue your application
+      <% else %>
+        Let's get started
+      <% end %>
+    </h2> 
 
-  <div class="mb-12">
-    <div class="flex flex-col gap-3">
-      <div class="flex flex-row items-start justify-start gap-4">
-        <%= inline_icon "idea" %>
-        <p class="m-0 py-1">We'll start by asking some questions about your project</p>
-      </div>
-      <div class="flex flex-row items-start justify-start gap-4">
-        <%= inline_icon "leader" %>
-        <p class="m-0 py-1">Then, we'll ask some questions about you</p>
-      </div>
-      <div class="flex flex-row items-start justify-start gap-4">
-        <%= inline_icon "clock" %>
-        <p class="m-0 py-1">The whole process takes less than 5 minutes</p>
+    <p class="mt-0 mb-8 text-2xl muted">Applying for HCB is easy and quick</p>
+
+    <div class="mb-12">
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-row items-start justify-start gap-4">
+          <%= inline_icon "idea" %>
+          <p class="m-0 py-1">We'll start by asking some questions about your project</p>
+        </div>
+        <div class="flex flex-row items-start justify-start gap-4">
+          <%= inline_icon "person" %>
+          <p class="m-0 py-1">Then, we'll ask some questions about you</p>
+        </div>
+        <div class="flex flex-row items-start justify-start gap-4">
+          <%= inline_icon "clock" %>
+          <p class="m-0 py-1">The whole process takes less than 5 minutes</p>
+        </div>
       </div>
     </div>
+
+    <div class="max-w-lg">
+      <h3 class="text-lg mb-0">HCB is not a bank, we're a <%= link_to "fiscal sponsor", "https://hackclub.com/fiscal-sponsorship/", class: "underline" %></h3>
+      <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects. We do not provide direct funding.</p>
+    </div>
+
+
   </div>
 
-  <div class="max-w-lg">
-    <h3 class="text-lg mb-0">HCB is not a bank, we're a <%= link_to "fiscal sponsor", "https://hackclub.com/fiscal-sponsorship/", class: "underline" %></h3>
-    <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects.</p>
-  </div>
+  <div class="flex flex-col items-center flex-grow">
+    <div class="md:max-w-[600px] w-full">
+      <%= form_with model: @application || false, url:  "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
+        <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
+          <%= form.label :teen_led do %>
+            Are you a teenager? <span class="text-primary">*</span>
+          <% end %>
 
-  <div class="absolute right-0 top-1/2 -translate-y-1/2 overflow-hidden">
-    <%= inline_icon "bank-account", class: "text-muted h-[600px] w-[600px] opacity-50" %>
-  </div>
+          <p class="text-sm muted mt-1 mb-2">HCB primarily focuses on teen-led projects, so we're more selective with adult-run organizations.</p>
 
+          <div class="field field--options max-w-none mb-0 relative">
+            <%= form.radio_button :teen_led, "true", { "x-model": "teenager", checked: @application&.teen_led?, required: true, class: "absolute !block opacity-0" } %>
+            <%= form.label :teen_led, value: "true" do %>
+              <strong>Yes, I'm a teenager</strong>
+              <small>18 and under</small>
+            <% end %>
+            <%= form.radio_button :teen_led, "false", { "x-model": "teenager", checked: @application&.teen_led? == false, required: true, class: "absolute !block opacity-0" } %>
+            <%= form.label :teen_led, value: "false" do %>
+              <strong>No, I'm an adult</strong>
+              <small>Over 18</small>
+            <% end %>
+          </div>
+
+          <p class="text-sm muted mt-3 mb-0" x-show="teenager == 'true'">HCB is a full financial tool stack that provides 501(c)(3) status for your project. If you are a teenager running a club, nonprofit, club, or robotics team, you qualify.</p>
+          <p class="text-sm muted mt-3 mb-0" x-show="teenager == 'false'">HCB is a model A fiscal sponsor. If approved, your nonprofit will become a project of The Hack Foundation.</p>
+
+        </div>
+      <% end %>
+    </div>
+
+  </div>
 </div>
 
-<% content_for :footer do %>
-  <% if current_user.present? %>
-    <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
-  <% else %>
-    <span></span>
+
+
+
+
+  <% content_for :footer do %>
+    <% if current_user.present? %>
+      <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
+    <% else %>
+      <span></span>
+    <% end %>
+    <% if application.present? %>
+      <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue application</button>
+    <% else %>
+      <button class="btn bg-blue" formaction="<%= applications_path %>" form="create_application" id="start_application">Start application</button>
+    <% end %>
   <% end %>
-  <% if application.present? %>
-    <%= link_to "Continue application", project_info_application_path(application), class: "btn bg-blue" %>
-  <% else %>
-    <%= link_to "Start application", start_applications_path, class: "btn bg-blue" %>
-  <% end %>
-<% end %>
+

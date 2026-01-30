@@ -9,11 +9,15 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.references :event, foreign_key: true
       t.string :name
       t.text :description
+      t.string :planning_duration
       t.text :political_description
       t.string :website_url
       t.boolean :teen_led
       t.integer :annual_budget_cents
       t.integer :committed_amount_cents
+      t.string :funding_source
+      t.boolean :currently_fiscally_sponsored
+      t.string :project_category
 
       t.string :address_line1
       t.string :address_line2
