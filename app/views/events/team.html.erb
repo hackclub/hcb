@@ -52,7 +52,7 @@
 
 <div class="mb-4 flex flex-row justify-between items-center width-100 gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
