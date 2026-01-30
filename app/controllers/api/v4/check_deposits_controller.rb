@@ -28,11 +28,7 @@ module Api
 
         authorize @check_deposit
 
-        begin
-          @check_deposit.save!
-        rescue ActiveRecord::RecordInvalid
-          return render json: { error: "invalid_operation", messages: @check_deposit.errors.full_messages }, status: :unprocessable_entity
-        end
+        @check_deposit.save!
 
         render :show, status: :created
       end
