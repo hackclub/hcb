@@ -7,26 +7,27 @@ module EventsHelper
     items = []
 
     if policy(event).activation_flow?
-      items <<
-        {
-          name: "Activate",
-          path: event_activation_flow_path(event_id: event.slug),
-          tooltip: "Activate this organization",
-          icon: "checkmark",
-          selected: selected == :activation_flow,
-          adminTool: true,
-        }
+      items << {
+        name: "Activate",
+        path: event_activation_flow_path(event_id: event.slug),
+        tooltip: "Activate this organization",
+        icon: "checkmark",
+        selected: selected == :activation_flow,
+        adminTool: true,
+      }
     end
 
-    items << {
-      name: "Home",
-      path: event_path(id: event.slug),
-      tooltip: "See everything at-a-glance",
-      icon: "home",
-      selected: selected == :home,
-    }
+    if policy(event).show?
+      items << {
+        name: "Home",
+        path: event_path(id: event.slug),
+        tooltip: "See everything at-a-glance",
+        icon: "home",
+        selected: selected == :home,
+      }
+    end
 
-    if policy(@event).announcement_overview?
+    if policy(event).announcement_overview?
       items << {
         name: "Announcements",
         path: event_announcement_overview_path(event_id: event.slug),
@@ -36,38 +37,42 @@ module EventsHelper
       }
     end
 
-    items << {
-      name: "Transactions",
-      path: event_transactions_path(event_id: event.slug),
-      tooltip: "View detailed ledger",
-      icon: "bank-account",
-      selected: selected == :transactions,
-    }
+    if policy(event).transactions?
+      items << {
+        name: "Transactions",
+        path: event_transactions_path(event_id: event.slug),
+        tooltip: "View detailed ledger",
+        icon: "bank-account",
+        selected: selected == :transactions,
+      }
+    end
 
-    items << {
-      name: "Account numbers",
-      path: account_number_event_path(@event),
-      tooltip: "View account numbers",
-      icon: "hashtag",
-      selected: selected == :account_number,
-    }
+    if policy(event).account_number?
+      items << {
+        name: "Account numbers",
+        path: account_number_event_path(event),
+        tooltip: "View account numbers",
+        icon: "hashtag",
+        selected: selected == :account_number,
+      }
+    end
 
-    if policy(@event).donation_overview? || ( @event.approved? && @event.plan.invoices_enabled? ) || policy(@event).account_number? || policy(@event.check_deposits.build).index?
+    if policy(event).donation_overview? || policy(event).invoices? || policy(event.check_deposits.build).index?
       items << { section: "Receive" }
     end
 
     if policy(event).donation_overview?
-      items <<
-        {
-          name: "Donations",
-          path: event_donation_overview_path(event_id: event.slug),
-          tooltip: "Support this organization",
-          icon: "support",
-          data: { tour_step: "donations" },
-          selected: selected == :donations,
-        }
+      items << {
+        name: "Donations",
+        path: event_donation_overview_path(event_id: event.slug),
+        tooltip: "Support this organization",
+        icon: "support",
+        data: { tour_step: "donations" },
+        selected: selected == :donations,
+      }
     end
-    if event.approved? && event.plan.invoices_enabled?
+
+    if policy(event).invoices?
       items << {
         name: "Invoices",
         path: event_invoices_path(event_id: event.slug),
@@ -77,28 +82,31 @@ module EventsHelper
       }
     end
 
-    items << {
-      name: "Check deposits",
-      path: event_check_deposits_path(@event),
-      tooltip: "Deposit a check",
-      icon: "cheque",
-      selected: selected == :deposit_check,
-    }
+    if policy(event.check_deposits.build).index?
+      items << {
+        name: "Check deposits",
+        path: event_check_deposits_path(event),
+        tooltip: "Deposit a check",
+        icon: "cheque",
+        selected: selected == :deposit_check,
+      }
+    end
 
-    if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview?
+    if policy(event).card_overview? || policy(event).card_grant_overview? || policy(event).transfers? || policy(event).reimbursements? || policy(event).employees?
       items << { section: "Spend" }
     end
+
     if policy(event).card_overview?
-      items <<
-        {
-          name: "Cards",
-          path: event_cards_overview_path(event_id: event.slug),
-          tooltip: "Manage team HCB cards",
-          icon: "card",
-          data: { tour_step: "cards" },
-          selected: selected == :cards,
-        }
+      items << {
+        name: "Cards",
+        path: event_cards_overview_path(event_id: event.slug),
+        tooltip: "Manage team HCB cards",
+        icon: "card",
+        data: { tour_step: "cards" },
+        selected: selected == :cards,
+      }
     end
+
     if policy(event).card_grant_overview?
       items << {
         name: "Grants",
@@ -108,6 +116,7 @@ module EventsHelper
         selected: selected == :card_grants
       }
     end
+
     if policy(event).transfers?
       items << {
         name: "Transfers",
@@ -117,6 +126,7 @@ module EventsHelper
         selected: selected == :transfers,
       }
     end
+
     if policy(event).reimbursements?
       items << {
         name: "Reimbursements",
@@ -127,55 +137,62 @@ module EventsHelper
         selected: selected == :reimbursements
       }
     end
-    if Flipper.enabled?(:payroll_2025_02_13, @event)
+
+    if policy(event).employees?
       items << {
         name: "Contractors",
-        path: event_employees_path(event_id: @event.slug),
+        path: event_employees_path(event_id: event.slug),
         tooltip: "Manage payroll",
         icon: "person-badge",
         selected: selected == :payroll
       }
     end
 
-    items << { section: "" }
+    if policy(event).team? || policy(event).promotions? || policy(event).g_suite_overview? || policy(event).documentation? || policy(event).sub_organizations?
+      items << { section: "" }
+    end
 
-    items <<
-      {
+    if policy(event).team?
+      items << {
         name: "Team",
         path: event_team_path(event_id: event.slug),
         tooltip: "Manage your team",
         icon: "people-2",
         selected: selected == :team,
       }
-    if event.approved?
+    end
+
+    if policy(event).promotions?
       items << {
         name: "Perks",
         path: event_promotions_path(event_id: event.slug),
         tooltip: !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts",
         icon: "perks",
         data: { tour_step: "perks" },
-        disabled: !policy(@event).promotions?,
+        disabled: !policy(event).promotions?,
         selected: selected == :promotions,
       }
     end
-    if organizer_signed_in?
+
+    if policy(event).g_suite_overview?
       items << {
         name: "Google Workspace",
-        path: event_g_suite_overview_path(event_id: @event.slug),
-        tooltip: (if !policy(@event).g_suite_overview?
+        path: event_g_suite_overview_path(event_id: event.slug),
+        tooltip: (if !policy(event).g_suite_overview?
                     "Your organization isn't eligible for Google Workspace."
                   else
-                    if @event.g_suites.any?
+                    if event.g_suites.any?
                       "Manage domain Google Workspace"
                     else
-                      Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
+                      Flipper.enabled?(:google_workspace, event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
                     end
                   end),
         icon: "google",
-        disabled: !policy(@event).g_suite_overview?,
+        disabled: !policy(event).g_suite_overview?,
         selected: selected == :google_workspace,
       }
     end
+
     if policy(event).documentation?
       items << {
         name: "Documents",
@@ -186,10 +203,10 @@ module EventsHelper
       }
     end
 
-    if policy(@event).sub_organizations?
+    if policy(event).sub_organizations?
       items << {
         name: "Sub-organizations",
-        path: event_sub_organizations_path(event_id: @event.slug),
+        path: event_sub_organizations_path(event_id: event.slug),
         tooltip: "Create & manage subsidiary organisations",
         icon: "channels",
         selected: selected == :sub_organizations

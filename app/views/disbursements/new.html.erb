@@ -1,29 +1,31 @@
 <% title "Initiate a disbursement" %>
-<% page_sm %>
-<%= content_for(:container_class, " px-4 pb-4") %>
-<%= render "events/nav", selected: :transfers if @event %>
+<% @back_url = @source_event ? event_transfers_path(@source_event) : nil %>
 
-<h1>Send a HCB transfer</h1>
+<% content_for :sidebar_footer do %>
+  <% if @allowed_destination_events.empty? %>
+    <p class="h5 muted">It looks like you don't have any organizations to transfer to. You can transfer funds between any organizations you're a part of.</p>
+  <% end %>
 
-<%= render "application/callout", type: "warning", title: "Important info about transfers", footer: :questions do %>
-  <p>Transfers are reviewed by the HCB team and process within 24 hours on weekdays.</p>
+  <% if @source_event && @destination_event %>
+    <% admin_tool("my-2 p-2 px-3") do %>
+      Make a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.
+    <% end %>
+  <% elsif @source_event %>
+    <% admin_tool("my-2 p-2 px-3") do %>
+      Looking to make a transfer to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id) %>.
+    <% end %>
+  <% elsif @destination_event %>
+    <% admin_tool("my-2 p-2 px-3")  do %>
+      Looking to make a transfer from <%= @destination_event.name %>? <%= link_to "Click here", new_disbursement_path(source_event_id: @destination_event.id) %>.
+    <% end %>
+  <% end %>
 <% end %>
 
-<% if @allowed_destination_events.empty? %>
-  <p class="h5 muted">It looks like you don't have any organizations to transfer to. You can transfer funds between any organizations you're a part of.</p>
-<% end %>
-
-<% if @source_event && @destination_event %>
-  <% admin_tool("mb2 p-2 px-3") do %>
-    Looking to make a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.
-  <% end %>
-<% elsif @source_event %>
-  <% admin_tool("mb2 p-2 px-3") do %>
-    Looking to make a transfer to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id) %>.
-  <% end %>
-<% elsif @destination_event %>
-  <% admin_tool("mb2 p-2 px-3")  do %>
-    Looking to make a transfer from <%= @destination_event.name %>? <%= link_to "Click here", new_disbursement_path(source_event_id: @destination_event.id) %>.
+<% content_for :table_of_contents do %>
+  <%= render "events/transfer_step_item", number: 1, label: "Transfer details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
+  <% if auditor_signed_in? || admin_signed_in? %>
+    <%= render "events/transfer_step_item", number: 3, label: "Admin" %>
   <% end %>
 <% end %>
 

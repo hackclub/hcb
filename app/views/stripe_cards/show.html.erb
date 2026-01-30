@@ -11,7 +11,7 @@
           <% admin_tool do %>
             This card is linked to a <%= link_to "#{@card.card_grant.amount.format} grant", @card.card_grant, data: { turbo_frame: "_top" } %> to <%= mail_to @card.card_grant.user.email %>.
             <br>
-            <%= link_to "View grant", card_grant_path(@card.card_grant), method: :post, class: "btn bg-accent m1" %>
+            <%= link_to "View grant", card_grant_path(@card.card_grant), class: "btn bg-accent m1", data: { turbo_frame: "_top" } %>
           <% end %>
         <% end %>
 

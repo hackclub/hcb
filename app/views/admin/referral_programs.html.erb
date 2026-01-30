@@ -8,6 +8,7 @@
           <div class="flex flex-col">
             <h5 class="m-0 p-0"><%= program.name %></h5>
             <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %></small>
+            <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url) %></small>
           </div>
           <div class="flex flex-row gap-2 justify-between m-0">
             <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
@@ -65,7 +66,8 @@
     <legend>Create a referral program</legend>
     <%= form.label :name, "Program name" %>
     <%= form.text_field :name, placeholder: "Program Name", required: true, class: "w-100" %>
-    <br>
+    <%= form.label :redirect_to, "Redirect to (optional)" %>
+    <%= form.text_field :redirect_to, placeholder: "https://hcb.hackclub.com/", class: "w-100" %>
     <%= form.submit "Create", class: "btn bg-success" %>
   </fieldset>
 <% end %>

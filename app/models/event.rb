@@ -308,7 +308,7 @@ class Event < ApplicationRecord
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
-  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -439,6 +439,8 @@ class Event < ApplicationRecord
   validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
+
+  after_create :apply_plan_default_values
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
@@ -702,9 +704,9 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
-  def reload
+  def reload(**args)
     @total_fee_payments_v2_cents = nil
-    super
+    super(**args)
   end
 
   def total_fee_payments_v2_cents
@@ -967,6 +969,12 @@ class Event < ApplicationRecord
     unless eligible_for_indexing?
       self.is_indexable = false
     end
+  end
+
+  def apply_plan_default_values
+    return if plan&.default_values.blank?
+
+    update!(plan.default_values)
   end
 
   def stripe_transaction_merchant(transaction)

@@ -124,13 +124,12 @@ class CheckDeposit < ApplicationRecord
 
   def state
     return :muted if column_id.nil? && increase_id.nil?
+    return :error if rejected? || returned?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?
       :info
-    elsif rejected? || returned?
-      :error
-    elsif deposited? || local_hcb_code.ct.present?
+    elsif deposited?
       :success
     elsif submitted?
       :info

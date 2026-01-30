@@ -10,10 +10,12 @@
       <% else %>
         <%= render "card_grants/actions/cancel", card_grant: %>
       <% end %>
+      <%= render "card_grants/actions/support", card_grant: %>
     <% elsif card_grant.user == current_user %>
       <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
       <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: "Get reimbursed" %>
       <%= render "card_grants/actions/return", card_grant: %>
+      <%= render "card_grants/actions/support", card_grant: %>
     <% end %>
   </div>
 <% end %>

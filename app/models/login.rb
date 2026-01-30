@@ -28,7 +28,7 @@ class Login < ApplicationRecord
   include Hashid::Rails
 
   belongs_to :user
-  belongs_to :user_session, optional: true
+  belongs_to :user_session, class_name: "User::Session", optional: true
 
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })

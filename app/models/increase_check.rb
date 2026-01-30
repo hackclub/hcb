@@ -63,6 +63,9 @@ class IncreaseCheck < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  include PublicIdentifiable
+  set_public_id_prefix :ick
+
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -99,7 +102,7 @@ class IncreaseCheck < ApplicationRecord
       transitions from: :pending, to: :approved
 
       after_commit do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later unless reimbursement_payout_holding.present?
         employee_payment.mark_paid! if employee_payment.present?
       end
     end
@@ -138,8 +141,9 @@ class IncreaseCheck < ApplicationRecord
     end
   end
 
-  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]) }
-  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)) }
+  scope :deposited, -> { where(increase_status: :deposited).or(where(column_status: :settled)) }
+  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]).or(where(column_status: [:initiated, :issued, :pending_deposit, :pending_first_return, :first_return, :pending_reclear, :pending_second_return, :second_return, :user_initiated_return_submitted, :user_initiated_returned, :user_initiated_return_dishonored, :manual_review])) }
+  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)).or(where(column_status: [:pending_stop, :stopped, :rejected])) }
 
   enum :increase_status, {
     pending_approval: "pending_approval",
@@ -156,8 +160,38 @@ class IncreaseCheck < ApplicationRecord
     requires_attention: "requires_attention"
   }, prefix: :increase
 
-  enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed rendered_pdf in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  # https://column.com/docs/checks/notifications-and-states#states-and-events
+  enum :column_status, %w[
+    initiated
+    issued
+    pending_deposit
+    settled
+    pending_first_return
+    first_return
+    pending_reclear
+    pending_second_return
+    second_return
+    user_initiated_return_submitted
+    user_initiated_returned
+    user_initiated_return_dishonored
+    pending_stop
+    stopped
+    manual_review
+    rejected
+  ].index_with(&:itself), prefix: :column
+
+  enum :column_delivery_status, %w[
+    created
+    rendered_pdf
+    mailed
+    in_transit
+    in_local_area
+    processed_for_delivery
+    delivered
+    rerouted
+    returned_to_sender
+    failed
+  ].index_with(&:itself), prefix: :column_delivery
 
   VALID_DURATION = 180.days
 

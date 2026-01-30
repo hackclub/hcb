@@ -10,10 +10,18 @@
 
   <% if organizer_signed_in?(as: :member) %>
     <%= render "card_grants/create_modal" %>
-    <%= link_to new_event_card_grant_path(@event), class: "btn bg-success !ml-0 lg:!ml-auto", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>
-      <%= inline_icon "card-add" %>
-      Send a grant
-    <% end %>
+    <div class="flex gap-2 items-center">
+      <% if policy(@event).bulk_upload_card_grants? %>
+        <%= link_to event_card_grants_bulk_upload_path(@event), class: "btn btn--primary" do %>
+          <%= inline_icon "share" %>
+          Upload a CSV
+        <% end %>
+      <% end %>
+      <%= link_to new_event_card_grant_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>
+        <%= inline_icon "card-add" %>
+        Send a grant
+      <% end %>
+    </div>
   <% end %>
 </h1>
 

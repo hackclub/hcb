@@ -31,29 +31,8 @@
   <% end %>
 </div>
 
-<% if current_user.card_grants.not_activated.size > 0 %>
-  <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card container--sm mx-auto mb-12 mt-6 text-center sm:text-left flex items-center flex-col sm:flex-row">
-      <div class="flex-1">
-        <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
-        <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
-      </div>
-      <div class="flex flex-col items-center gap-1">
-        <%= link_to "Activate my grant", grant, class: "btn" %>
-        <p class="my-0 text-sm italic text-muted">
-          <% if grant.expires_on.future? %>
-            Expires in <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
-          <% else %>
-            Expired <%= time_ago_in_words(grant.expires_on) %> ago
-          <% end %>
-        </p>
-      </div>
-    </div>
-  <% end %>
-<% end %>
-
 <% if current_user.card_grants.activated.size > 0 %>
-  <h2 class="user-home-section">Grants</h2>
+  <h2 class="user-home-section">Your grants</h2>
 
   <div class="mixed-grid grid--spacious">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
@@ -65,9 +44,32 @@
   </div>
 <% end %>
 
+<% if current_user.card_grants.not_activated.size > 0 %>
+  <h2 class="user-home-section mb-2">Pending grant invitations</h2>
+  <ul class="grid grid-cols-1 text-left w-full mt-2">
+    <% current_user.card_grants.not_activated.each do |grant| %>
+      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
+        <div class="flex-1">
+          <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
+          <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <%= link_to "Activate my grant", grant, class: "btn" %>
+          <p class="my-0 text-sm italic text-muted">
+            <% if grant.expires_on.future? %>
+              Spend within <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
+            <% else %>
+              Expired <%= time_ago_in_words(grant.expires_on) %> ago
+            <% end %>
+          </p>
+        </div>
+      </div>
+    <% end %>
+  </ul>
+<% end %>
+
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
-
     <h2 class="user-home-section mb-2 flex items-center w-full">
       <span>Your organizations</span>
       <% if @show_event_reorder_tip && @events.any? %>
@@ -124,7 +126,7 @@
     <% end %>
 
     <% if @invites.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending invitations</h2>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending organization invitations</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
@@ -140,7 +142,7 @@
     <% end %>
 
     <% if @invite_requests.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending join requests</h2>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending join requests</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invite_requests.each do |invite_request| %>
           <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
@@ -185,7 +187,7 @@
 
     <% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
     <% if valid_contracts.any? %>
-      <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending forms</h2>
+      <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
       <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
       <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
         <% valid_contracts.each do |contract| %>
@@ -202,6 +204,7 @@
       </ul>
     <% end %>
   <% end %>
+
   <% if auditor_signed_in? %>
     <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
       <p>Loading admin tools</p>

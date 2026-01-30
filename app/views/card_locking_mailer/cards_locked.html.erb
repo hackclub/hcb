@@ -1,3 +1,15 @@
-Your HCB cards have been locked due to your <%= @missing_receipts %> outstanding missing receipts.
-<br><br>
-You can manage your receipts on HCB <%= link_to "receipts page", my_inbox_url %>.
+<p>
+Your HCB cards have been locked due to your <%= @hcb_codes.count %> outstanding missing receipts.
+</p>
+
+<p>
+You can also manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
+</p>
+
+<h3>Transactions missing receipts (<%= @hcb_codes.count %>)</h3>
+<%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
+
+<% if @hcb_codes_upcoming.any? %>
+  <h3>Upcoming (will count in 24 hours)</h3>
+  <%= render "transactions_table", hcb_codes: @hcb_codes_upcoming, show_org: @show_org %>
+<% end %>

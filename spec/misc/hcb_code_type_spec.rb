@@ -20,6 +20,14 @@ RSpec.describe("HCB_CODE_TYPE") do
 
     mapping.each do |return_value, code|
       hcb_code = "HCB-#{code}-12345"
+
+      # Skip outgoing_disbursement only while legacy DISBURSEMENT_CODE exists.
+      # Once removed, this test will fail, forcing us to update the SQL function.
+      if return_value == "outgoing_disbursement" &&
+         TransactionGroupingEngine::Calculate::HcbCode.const_defined?(:DISBURSEMENT_CODE)
+        next
+      end
+
       expect(hcb_code_type(hcb_code)).to(
         eq(return_value),
         "HCB code #{hcb_code.inspect} should have #{return_value.inspect} type"

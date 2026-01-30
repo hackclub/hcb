@@ -11,7 +11,9 @@ module Discord
     def perform(public_activity_id)
       @activity = PublicActivity::Activity.find(public_activity_id)
       @event = @activity.event
-      @user = @activity.owner
+      return if @event.discord_channel_id.blank?
+
+      @user = @activity.owner || User.system_user
 
       discord_scrubber = Loofah::Scrubber.new do |node|
         if node.name == "img"
@@ -29,19 +31,20 @@ module Discord
       begin
         key = @activity.key.gsub(".", "/")
         partial = "public_activity/#{key}_discord"
-        text = ApplicationController.renderer.render(partial:, locals: { activity: @activity, p: { current_user: @user || User.system_user } })
+        text = ApplicationController.renderer.render(partial:, locals: { activity: @activity, p: { current_user: @user } })
         json = JSON.parse(text)
 
         embed = {
           description: "No description",
           timestamp: @activity.created_at.iso8601,
-          author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
+          author: { name: @user.name, icon_url: profile_picture_for(@user) },
           color:
         }.merge(json["embed"] || {})
 
         components = format_components(json["components"])
       rescue ActionView::MissingTemplate, ActionView::Template::Error # fallback to HTML (which already exists for all activities)
-        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, p: { current_user: User.system_user } })
+        @user = User.system_user # this templates may use "you" if current user == owner which doesn't make sense in a team context
+        html = ApplicationController.renderer.render(partial: "public_activity/activity", locals: { activity: @activity, current_user: @user })
         html = Loofah.scrub_html5_fragment(html, discord_scrubber)
 
         text = ReverseMarkdown.convert(html)[0..4000]
@@ -49,7 +52,7 @@ module Discord
         embed = {
           description: text,
           timestamp: @activity.created_at.iso8601,
-          author: { name: @user.name, icon_url: profile_picture_for(@activity.owner) },
+          author: { name: @user.name, icon_url: profile_picture_for(@user) },
           color:
         }
 

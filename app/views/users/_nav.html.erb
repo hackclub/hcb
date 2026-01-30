@@ -32,18 +32,13 @@
         selected: item[:selected] %>
     <% end %>
     <div>
-      <%= render "users/settings_dropdown", local_assigns: %>
+      <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
     </div>
-    <% if @first_visit %>
-      <div class="pwa__prompt" style="position: relative">
-        <div class="pwa__prompt__hide" onclick="hidePWAPrompt()">
-          <%= inline_icon "private-fill", size: 24, class: "pwa__prompt__icon" %>
-        </div>
-        <b>Looking for a mobile app?</b>
-        <br>
-        Click <%= inline_icon "share", size: 18, class: "pwa__prompt__icon" %>
-        and then <%= inline_icon "plus-box", size: 18, class: "pwa__prompt__icon" %>
-        <i>Add to Home Screen</i>.
+    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+      <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <div>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
       </div>
     <% end %>
   </nav>
@@ -54,13 +49,12 @@
         <span class="flex-auto flex justify-between items-center">
           <span>Check out your <a href="/wrapped" target="_blank" class="primary nowrap" style="color: white;" id="bank-wrapped-link"><strong>HCB Wrapped</strong></a> for <%= Metric.year %>!</span>
         </span>
-        <svg onclick="(localStorage.setItem(window.wrappedDialogLocalStorageKey, 'true'), document.getElementById('bank-wrapped-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
+        <svg onclick="(localStorage.setItem('hide_hcb_wrapped_2025', 'true'), document.getElementById('bank-wrapped-dialog').remove())" xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" fill-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414" aria-label="view-close" clip-rule="evenodd" preserveAspectRatio="xMidYMid meet" viewBox="0 0 32 32" class="pointer" style=""><g><path d="M11.121,9.707c-0.39,-0.391 -1.024,-0.391 -1.414,0c-0.391,0.39 -0.391,1.024 0,1.414l4.95,4.95l-4.95,4.95c-0.391,0.39 -0.391,1.023 0,1.414c0.39,0.39 1.024,0.39 1.414,0l4.95,-4.95l4.95,4.95c0.39,0.39 1.023,0.39 1.414,0c0.39,-0.391 0.39,-1.024 0,-1.414l-4.95,-4.95l4.95,-4.95c0.39,-0.39 0.39,-1.024 0,-1.414c-0.391,-0.391 -1.024,-0.391 -1.414,0l-4.95,4.95l-4.95,-4.95Z"></path></g></svg>
       </article>
     </div>
 
     <script>
-      window.wrappedDialogLocalStorageKey = <%= "hide_hcb_wrapped_#{Metric.year}".to_json %>;
-      if (localStorage.getItem(window.wrappedDialogLocalStorageKey) !== 'true') {
+      if (localStorage.getItem('hide_hcb_wrapped_2025') !== 'true') {
         document.getElementById('bank-wrapped-dialog').style.display = 'block';
       }
     </script>

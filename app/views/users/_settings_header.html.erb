@@ -1,4 +1,9 @@
-<span class="text-sm text-muted uppercase font-bold mt-6 block">Settings</span>
+<span class="text-sm text-muted uppercase font-bold mt-6 block">
+  <% if @user != current_user %>
+    <%= @user.possessive_name %>
+  <% end %>
+  Settings
+</span>
 <h1 class="mt-0">
   <%= active.humanize %>
 </h1>

@@ -1,5 +1,9 @@
 <% title "Grant to #{@card_grant.user.name}" %>
-<%= render "events/nav", selected: :transfers if organizer_signed_in? %>
+<% if organizer_signed_in? %>
+  <%= render "events/nav", selected: :transfers %>
+<% else %>
+  <%= render "users/nav", selected: :home %>
+<% end %>
 
 <% footer = nil %>
 <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
@@ -21,12 +25,12 @@
 <% if @card_grant.instructions.present? %>
   <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
-      <%= @card_grant.instructions %>
+      <%= sanitize(MarkdownService.instance.renderer.render(@card_grant.instructions), scrubber: MarkdownScrubber.new) %>
     </p>
   <% end %>
 <% end %>
 
-<div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
+<div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %> mb-5" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
@@ -63,8 +67,6 @@
     </div>
   <% end %>
 </div>
-
-<hr>
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes } %>
