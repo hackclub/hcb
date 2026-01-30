@@ -17,5 +17,7 @@ class Event
     def rejected
       Event::ApplicationMailer.with(application: Event::Application.last).rejected
     end
+
   end
+
 end
