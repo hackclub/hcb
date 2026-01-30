@@ -13,11 +13,7 @@ if check_deposit.rejected? && check_deposit.rejection_reason.present?
   end
 end
 
-if check_deposit.estimated_arrival_date.present?
-  json.estimated_arrival_date check_deposit.estimated_arrival_date
-else
-  json.estimated_arrival_date json.nil!
-end
+json.estimated_arrival_date check_deposit.estimated_arrival_date
 
 if policy(check_deposit).view_image?
   json.front_url Rails.application.routes.url_helpers.rails_blob_url(check_deposit.front) if check_deposit.front.attached?
