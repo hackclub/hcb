@@ -3,6 +3,44 @@
 <%= render "events/nav", selected: :transfers %>
 <%= render "card_grants/create_modal" %>
 
+<% if @transfers.empty? %>
+  <%= render "events/blankslate_page",
+    title: "Transfers",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "announcement",
+        title: "Keep your community informed",
+        description: "Share updates, news, and important information with your event followers through announcements."
+      },
+      {
+        icon: "friend",
+        title: "Engage your audience",
+        description: "Build a stronger connection with your community by regularly updating them on event developments and highlights."
+      },
+      {
+        icon: "up-caret",
+        title: "Grow your following",
+        description: "Encourage attendees and supporters to follow your event for the latest announcements and updates."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_transfers_new_path(event_id: @event.slug), class: "w-full btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+        <%= inline_icon "payment-transfer" %>
+        Send
+      <% end %>
+    <% end %>
+    
+  <% end %>
+
+<% else %>
 <h1 class="heading border-0 mb-0">
   <span class="flex items-center">
     Transfers
@@ -172,6 +210,8 @@
   </article>
 <% else %>
   <%= blankslate "No transfers yet" %>
+<% end %>
+
 <% end %>
 
 <% if organizer_signed_in? %>

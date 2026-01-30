@@ -4,7 +4,7 @@
 <%= render "events/nav", selected: :announcements %>
 
 <% if @announcements.empty? %>
-   <%= render "events/blankslate_page",
+  <%= render "events/blankslate_page",
     title: "Announcements",
     screenshots: {
       light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
@@ -31,80 +31,57 @@
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
     <% end %>
     <div class="flex gap-2 flex-row-reverse">
-    <%= render "announcement_header" %>
+      <%= render "announcement_header" %>
     </div>
   <% end %>
 
 <% else %>
-<h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
-  <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
-    Announcements
-    <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
-    <%= render "events/followers_modal", event_follows: @event.event_follows if show_followers_modal %>
-    <% if show_followers_modal %>
-      <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
-        <%= inline_icon "person", size: 20 %>
-        <%= pluralize(@event.followers.count, "follower") %>
-      <% end %>
-    <% end %>
-    </span>
-  </span>
-
-  <div class="mt-1 sm:mt-0 flex items-center gap-2">
-    <%= render "announcement_header" %>
-  </div>
-</h1>
-
-<% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
-  <% scheduled_for = Date.today.next_month.beginning_of_month %>
-  <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
-
-  <% if @monthly_announcement.template_draft? && (DateTime.now > DateTime.now.end_of_month - 1.week) %>
-    <%= render "application/callout", type: "error", title: "Your scheduled monthly announcement will be skipped", footer: :questions do %>
-      <ul>
-        <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> will be skipped.</li>
-        <li>If you would like to keep this monthly announcement, <%= link_to "edit it", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
-        <li>You can also disable sending monthly announcements in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
-      </ul>
-    <% end %>
-  <% elsif !@monthly_announcement.published? %>
-    <%= render "application/callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
-      <ul>
-        <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
-        <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
-        <li>This announcement will be sent out to everyone following you on <%= scheduled_for_string %>.</li>
-      </ul>
-    <% end %>
-  <% end %>
-<% end %>
-
-<% if @announcements.empty? %>
-  <div class="flex flex-1 flex-col items-center justify-center">
-    <div class="text-center">
-      <h3 class="text-2xl font-bold mb-0">
-        It's quiet here...
-      </h3>
-      <% if organizer_signed_in?(as: :manager) %>
-        <p class="text-gray-500 my-1 max-w-xs ">
-          Create a new announcement to keep your followers up to date!
-        </p>
-        <% unless @event.is_public %>
-          <p class="text-gray-500 my-1 max-w-sm">This page will not be publicly visible until you publish your first announcement.</p>
+  <h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
+    <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
+      Announcements
+      <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
+      <%= render "events/followers_modal", event_follows: @event.event_follows if show_followers_modal %>
+      <% if show_followers_modal %>
+        <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
+          <%= inline_icon "person", size: 20 %>
+          <%= pluralize(@event.followers.count, "follower") %>
         <% end %>
-      <% else %>
-        <p class="text-gray-500 my-1 max-w-sm">
-          No announcements are posted yet.
-        </p>
       <% end %>
+      </span>
+    </span>
+
+    <div class="mt-1 sm:mt-0 flex items-center gap-2">
+      <%= render "announcement_header" %>
     </div>
-  </div>
-<% else %>
+  </h1>
+
+  <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
+    <% scheduled_for = Date.today.next_month.beginning_of_month %>
+    <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
+
+    <% if @monthly_announcement.template_draft? && (DateTime.now > DateTime.now.end_of_month - 1.week) %>
+      <%= render "application/callout", type: "error", title: "Your scheduled monthly announcement will be skipped", footer: :questions do %>
+        <ul>
+          <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> will be skipped.</li>
+          <li>If you would like to keep this monthly announcement, <%= link_to "edit it", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+          <li>You can also disable sending monthly announcements in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+        </ul>
+      <% end %>
+    <% elsif !@monthly_announcement.published? %>
+      <%= render "application/callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
+        <ul>
+          <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+          <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+          <li>This announcement will be sent out to everyone following you on <%= scheduled_for_string %>.</li>
+        </ul>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <div class="flex flex-col gap-2">
     <% @announcements.each do |announcement| %>
       <%= render partial: "announcements/announcement_card", locals: { announcement: } %>
     <% end %>
   </div>
-<% end %>
-
-<%= paginate @announcements %>
+  <%= paginate @announcements %>
 <% end %>
