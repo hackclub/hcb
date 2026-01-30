@@ -3,6 +3,39 @@
 <% auto_discover_feed(@event) %>
 <%= render "events/nav", selected: :announcements %>
 
+<% if @announcements.empty? %>
+   <%= render "events/blankslate_page",
+    title: "Announcements",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "announcement",
+        title: "Keep your community informed",
+        description: "Share updates, news, and important information with your event followers through announcements."
+      },
+      {
+        icon: "friend",
+        title: "Engage your audience",
+        description: "Build a stronger connection with your community by regularly updating them on event developments and highlights."
+      },
+      {
+        icon: "up-caret",
+        title: "Grow your following",
+        description: "Encourage attendees and supporters to follow your event for the latest announcements and updates."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+    <div class="flex gap-2 flex-row-reverse">
+    <%= render "announcement_header" %>
+    </div>
+  <% end %>
+
+<% else %>
 <h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
   <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
     Announcements
@@ -18,17 +51,8 @@
   </span>
 
   <div class="mt-1 sm:mt-0 flex items-center gap-2">
-    <%= link_to event_feed_path(@event, format: :atom), class: "pop tooltipped tooltipped--s", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
-      <%= inline_icon "rss", size: 30 %>
-    <% end %>
-    <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-    <% if organizer_signed_in?(as: :member) %>
-      <%= link_to event_announcements_new_path(@event), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
-        <%= inline_icon "plus" %>
-        Create
-      <% end %>
-    <% end %>
-    </div>
+    <%= render "announcement_header" %>
+  </div>
 </h1>
 
 <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
@@ -83,3 +107,4 @@
 <% end %>
 
 <%= paginate @announcements %>
+<% end %>
