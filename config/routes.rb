@@ -649,7 +649,7 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :invitations, only: [:index, :show] do
+          resources :organizer_position_invites, path: "invitations", only: [:index, :show] do
             member do
               post "accept"
               post "reject"
@@ -673,7 +673,7 @@ Rails.application.routes.draw do
           resources :card_grants, only: [:index, :create]
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
-          resources :invitations, only: [:index, :create, :destroy]
+          resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]

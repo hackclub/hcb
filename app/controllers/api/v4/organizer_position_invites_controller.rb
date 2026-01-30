@@ -2,7 +2,7 @@
 
 module Api
   module V4
-    class InvitationsController < ApplicationController
+    class OrganizerPositionInvitesController < ApplicationController
       include SetEvent
 
       skip_after_action :verify_authorized, only: [:index]
