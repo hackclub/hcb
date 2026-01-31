@@ -12,9 +12,7 @@ class Disbursement
       disbursement.destination_event
     end
 
-    def amount
-      disbursement.amount
-    end
+    delegate :amount, to: :disbursement
 
     def subledger
       disbursement.destination_subledger
