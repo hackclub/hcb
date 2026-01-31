@@ -350,6 +350,7 @@ class HcbCode < ApplicationRecord
   end
 
   def card_grant?
+    # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
