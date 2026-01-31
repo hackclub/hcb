@@ -38,19 +38,19 @@ class HcbCode
       end
 
       def card_grant_memo
-        "Grant to #{disbursement.card_grant.user.name}".strip
+        "Grant to #{outgoing_disbursement.card_grant.user.name}".strip
       end
 
       def incoming_disbursement_memo
         return incoming_disbursement.special_appearance_memo if incoming_disbursement.special_appearance_memo
 
-        "Transfer from #{disbursement.source_event.name}".strip
+        "Transfer from #{incoming_disbursement.source_event.name}".strip
       end
 
       def outgoing_disbursement_memo
         return outgoing_disbursement.special_appearance_memo if outgoing_disbursement.special_appearance_memo
 
-        "Transfer to #{disbursement.destination_event.name}".strip
+        "Transfer to #{outgoing_disbursement.destination_event.name}".strip
       end
 
       def invoice_memo
