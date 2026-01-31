@@ -23,5 +23,7 @@ class Disbursement
     def transaction_category
       disbursement.source_transaction_category
     end
+
   end
+
 end
