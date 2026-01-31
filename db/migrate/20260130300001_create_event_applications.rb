@@ -15,6 +15,7 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.boolean :teen_led
       t.integer :annual_budget_cents
       t.integer :committed_amount_cents
+      t.integer :team_size
       t.string :funding_source
       t.boolean :currently_fiscally_sponsored
       t.string :project_category

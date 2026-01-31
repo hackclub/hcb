@@ -1000,6 +1000,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_30_300002) do
     t.string "referrer"
     t.datetime "rejected_at"
     t.datetime "submitted_at"
+    t.integer "team_size"
     t.boolean "teen_led"
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false

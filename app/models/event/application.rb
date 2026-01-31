@@ -31,6 +31,7 @@
 #  referrer                     :string
 #  rejected_at                  :datetime
 #  submitted_at                 :datetime
+#  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
 #  website_url                  :string

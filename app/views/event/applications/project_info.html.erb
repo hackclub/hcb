@@ -67,6 +67,13 @@
       <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
     </div>
 
+    <div class="field" x-show="teenager == 'false' || teenager == false">
+      <%= form.label :team_size do %>
+        How many people are on your team? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+    </div>
+
     <div class="flex flex-row w-full gap-4 mt-4">
       <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
         <%= form.label :annual_budget do %>
