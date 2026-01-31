@@ -1,5 +1,5 @@
 <% title "Initiate a disbursement" %>
-<% @back_url = event_transfers_path(@source_event) %>
+<% @back_url = @source_event ? event_transfers_path(@source_event) : nil %>
 
 <% content_for :sidebar_footer do %>
   <% if @allowed_destination_events.empty? %>

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_28_060550) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1773,6 +1773,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
     t.integer "amount_cents"
     t.string "column_report_id"
     t.jsonb "column_transaction"
+    t.jsonb "column_transfer"
     t.datetime "created_at", null: false
     t.date "date_posted"
     t.text "description"
@@ -2522,6 +2523,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
     t.string "discord_id"
     t.text "email", null: false
     t.string "full_name"
+    t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
     t.bigint "payout_method_id"
     t.string "payout_method_type"
@@ -2834,7 +2836,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_203310) do
        RETURNS text
        LANGUAGE sql
        IMMUTABLE STRICT
-      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
+      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '550'::text THEN 'incoming_disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
   SQL
 
 end
