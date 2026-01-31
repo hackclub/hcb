@@ -58,9 +58,9 @@ class HcbCodesController < ApplicationController
       redirect_to card_grant_path(@hcb_code.stripe_card.card_grant, frame: params[:frame])
     else
       if @hcb_code.outgoing_disbursement?
-        incoming_disbursement = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement
-        if incoming_disbursement.event.users.include?(current_user)
-          return redirect_to hcb_code_path(incoming_disbursement.local_hcb_code.hashid)
+        incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
+        if HcbCodePolicy.new(current_user, incoming_hcb_code).show?
+          return redirect_to hcb_code_path(incoming_hcb_code.hashid)
         end
       end
 
