@@ -53,7 +53,7 @@ module TransactionGroupingEngine
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
-        return disbursement_hcb_code if disbursement
+        # return disbursement_hcb_code if disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
