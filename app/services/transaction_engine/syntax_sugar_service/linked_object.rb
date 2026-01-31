@@ -32,9 +32,9 @@ module TransactionEngine
 
           return likely_donation if donation?
 
-          return outgoing_disbursement if outgoing_disbursement?
+          # return outgoing_disbursement if outgoing_disbursement?
 
-          return incoming_disbursement if incoming_disbursement?
+          # return incoming_disbursement if incoming_disbursement?
 
           return likely_bank_fee if outgoing_bank_fee?
 
