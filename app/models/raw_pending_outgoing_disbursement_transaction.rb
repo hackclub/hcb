@@ -34,6 +34,10 @@ class RawPendingOutgoingDisbursementTransaction < ApplicationRecord
     "Outgoing transfer"
   end
 
+  def outgoing_disbursement
+    Disbursement::Outgoing.new(disbursement)
+  end
+
   def likely_event_id
     @likely_event_id ||= disbursement.source_event.id
   end

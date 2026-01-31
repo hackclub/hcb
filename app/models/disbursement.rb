@@ -259,7 +259,7 @@ class Disbursement < ApplicationRecord
     deposited?
   end
 
-  def plain_transfer?
+  def inter_event_transfer?
     !source_subledger_id && !destination_subledger_id
   end
 

@@ -252,8 +252,8 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_donation_transaction.donation if raw_pending_donation_transaction
     return raw_pending_invoice_transaction.invoice if raw_pending_invoice_transaction
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
-    return Disbursement::Incoming.new(raw_pending_incoming_disbursement_transaction.disbursement) if raw_pending_incoming_disbursement_transaction
-    return Disbursement::Outgoing.new(raw_pending_outgoing_disbursement_transaction.disbursement) if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
+    return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
 
     nil
   end
