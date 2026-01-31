@@ -4,37 +4,41 @@
 #
 # Table name: event_applications
 #
-#  id                     :bigint           not null, primary key
-#  aasm_state             :string
-#  address_city           :string
-#  address_country        :string
-#  address_line1          :string
-#  address_line2          :string
-#  address_postal_code    :string
-#  address_state          :string
-#  airtable_status        :string
-#  annual_budget_cents    :integer
-#  approved_at            :datetime
-#  committed_amount_cents :integer
-#  cosigner_email         :string
-#  description            :text
-#  last_page_viewed       :integer
-#  last_viewed_at         :datetime
-#  name                   :string
-#  notes                  :text
-#  political_description  :text
-#  referral_code          :string
-#  referrer               :string
-#  rejected_at            :datetime
-#  submitted_at           :datetime
-#  teen_led               :boolean
-#  under_review_at        :datetime
-#  website_url            :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  airtable_record_id     :string
-#  event_id               :bigint
-#  user_id                :bigint           not null
+#  id                           :bigint           not null, primary key
+#  aasm_state                   :string
+#  address_city                 :string
+#  address_country              :string
+#  address_line1                :string
+#  address_line2                :string
+#  address_postal_code          :string
+#  address_state                :string
+#  airtable_status              :string
+#  annual_budget_cents          :integer
+#  approved_at                  :datetime
+#  committed_amount_cents       :integer
+#  cosigner_email               :string
+#  currently_fiscally_sponsored :boolean
+#  description                  :text
+#  funding_source               :string
+#  last_page_viewed             :integer
+#  last_viewed_at               :datetime
+#  name                         :string
+#  notes                        :text
+#  planning_duration            :string
+#  political_description        :text
+#  project_category             :string
+#  referral_code                :string
+#  referrer                     :string
+#  rejected_at                  :datetime
+#  submitted_at                 :datetime
+#  teen_led                     :boolean
+#  under_review_at              :datetime
+#  website_url                  :string
+#  created_at                   :datetime         not null
+#  updated_at                   :datetime         not null
+#  airtable_record_id           :string
+#  event_id                     :bigint
+#  user_id                      :bigint           not null
 #
 # Indexes
 #
