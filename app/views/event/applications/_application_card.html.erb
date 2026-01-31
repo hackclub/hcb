@@ -1,0 +1,27 @@
+<%# locals: (application:) %>
+
+<%= link_to application_path(application), class: "no-underline text-inherit" do %>
+  <div class="card p-0 card--hover">
+    <div class="p-4">
+      <div class="flex flex-row items-center justify-between">
+        <h3 class="heading h3 mb-2 mt-0">
+          <%= application.name.presence || "Draft application" %>
+        </h3>
+        <span class="badge bg-<%= application.status_color %>">
+          <%= application.aasm_state.humanize %>
+        </span>
+      </div>
+      <div class="flex flex-row items-center justify-between mt-3">
+        <% if application.next_step.present? %>
+          <p class="m-0">Next step: <strong><%= application.next_step %></strong></p>
+        <% else %>
+          <p class="m-0">We're reviewing your application</p>
+        <% end %>
+        <%= inline_icon "view-forward", class: "muted" %>
+      </div>
+    </div>
+    <div class="bg-smoke bg-opacity-30 h-1">
+      <div class="bg-primary h-1" style="width: <%= application.completion_percentage %>%"></div>
+    </div>
+  </div>
+<% end %>

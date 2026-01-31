@@ -63,6 +63,7 @@
     "react_ujs": "^3.2.1",
     "recharts": "^2.15.4",
     "rich-textarea": "^0.26.5",
+    "stimulus-use": "^0.52.3",
     "tailwindcss": "^3.4.17",
     "ua-parser-js": "^2.0.8",
     "webpack": "^5.101.3",

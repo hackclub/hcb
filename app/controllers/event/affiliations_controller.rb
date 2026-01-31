@@ -48,6 +48,8 @@ class Event
       case params[:affiliable_type]
       when "Event"
         @affiliable = Event.find(params[:affiliable_id])
+      when "Event::Application"
+        @affiliable = Event::Application.find(params[:affiliable_id])
       end
     end
 

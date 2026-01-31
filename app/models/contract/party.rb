@@ -51,7 +51,7 @@ class Contract
       event :mark_signed do
         transitions from: :pending, to: :signed
         after do
-          contract.on_party_signed
+          contract.on_party_signed(self)
         end
 
       end
@@ -69,6 +69,10 @@ class Contract
       "https://docuseal.co/s/#{external_id}"
     end
 
+    def docuseal_submission
+      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
+
     def docuseal_role
       case role
       when "signee"
@@ -84,9 +88,19 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event.name}'s agreement as HCB Operations"
+        "Sign the #{contract.event_name}'s agreement as HCB Operations"
+      elsif cosigner?
+        "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
       else
-        "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
+        "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
+      end
+    end
+
+    # We may miss a webhook or load a page before we've received the webhook,
+    # so we can manually sync the party with this method!
+    def sync_with_docuseal
+      if pending? && docuseal_submission&.[]("status") == "completed"
+        mark_signed!
       end
     end
 
