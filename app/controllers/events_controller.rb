@@ -972,7 +972,7 @@ class EventsController < ApplicationController
       },
       "hcb_transfer"           => {
         "settled" => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement? },
-        "pending" => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement?  }
+        "pending" => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement? }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },

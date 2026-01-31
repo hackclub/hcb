@@ -40,13 +40,13 @@ class HcbCode
       def card_grant_memo
         "Grant to #{disbursement.card_grant.user.name}".strip
       end
-      
+
       def incoming_disbursement_memo
         return incoming_disbursement.special_appearance_memo if incoming_disbursement.special_appearance_memo
 
-        "Transfer from #{disbursement.source_event.name}".strip      
+        "Transfer from #{disbursement.source_event.name}".strip
       end
-      
+
       def outgoing_disbursement_memo
         return outgoing_disbursement.special_appearance_memo if outgoing_disbursement.special_appearance_memo
 

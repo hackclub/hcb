@@ -267,13 +267,13 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def incoming_disbursement
     return linked_object if linked_object.is_a?(Disbursement::Incoming)
-    
+
     nil
   end
 
   def outgoing_disbursement
     return linked_object if linked_object.is_a?(Disbursement::Outgoing)
-    
+
     nil
   end
 
