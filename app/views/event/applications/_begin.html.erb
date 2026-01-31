@@ -9,7 +9,7 @@
       <% else %>
         Let's get started
       <% end %>
-    </h2> 
+    </h2>
 
     <p class="mt-0 mb-8 text-2xl muted">Applying for HCB is easy and quick</p>
 
@@ -35,12 +35,11 @@
       <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects. We do not provide direct funding.</p>
     </div>
 
-
   </div>
 
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px] w-full">
-      <%= form_with model: @application || false, url:  "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
+      <%= form_with model: @application || false, url: "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
         <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
           <%= form.label :teen_led do %>
             Are you a teenager? <span class="text-primary">*</span>
@@ -71,10 +70,6 @@
   </div>
 </div>
 
-
-
-
-
   <% content_for :footer do %>
     <% if current_user.present? %>
       <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
@@ -87,4 +82,3 @@
       <button class="btn bg-blue" formaction="<%= applications_path %>" form="create_application" id="start_application">Start application</button>
     <% end %>
   <% end %>
-
