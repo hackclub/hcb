@@ -13,7 +13,7 @@ class Disbursement
     end
 
     def amount
-      -disbursement.amount.abs
+      -disbursement.amount
     end
 
     def subledger
