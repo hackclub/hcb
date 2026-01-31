@@ -33,7 +33,8 @@ module Api
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        return tx.disbursement.amount if tx.disbursement?
+        return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
+        return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
 

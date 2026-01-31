@@ -971,8 +971,8 @@ class EventsController < ApplicationController
         "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? && t.local_hcb_code.disbursement.plain_transfer? },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? && t.local_hcb_code.disbursement.plain_transfer? }
+        "settled" => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement? },
+        "pending" => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement?  }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },

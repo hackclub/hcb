@@ -103,7 +103,7 @@ class HcbCode < ApplicationRecord
     return :ach if ach_transfer?
     return :check if check? || increase_check?
     return :card_grant if card_grant?
-    return :disbursement if disbursement?
+    return :disbursement if outgoing_disbursement? || incoming_disbursement?
     return :card_charge if stripe_card?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
@@ -118,7 +118,7 @@ class HcbCode < ApplicationRecord
     return "ACH" if ach_transfer?
     return "Bank fee" if bank_fee?
     return "Card grant" if card_grant?
-    return "Transfer" if disbursement?
+    return "Transfer" if outgoing_disbursement? || incoming_disbursement?
 
     t = type || :transaction
     t = :transaction if unknown?
@@ -212,7 +212,8 @@ class HcbCode < ApplicationRecord
           ach_transfer.try(:event).try(:id),
           check.try(:event).try(:id),
           increase_check.try(:event).try(:id),
-          disbursement.try(:event).try(:id),
+          outgoing_disbursement.try(:event).try(:id),
+          incoming_disbursement.try(:event).try(:id),
           check_deposit.try(:event).try(:id),
           bank_fee.try(:event).try(:id),
         ].compact.uniq)
@@ -335,7 +336,9 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    Rails.error.unexpected "HcbCode#disbursement? accessed"
+
+    return [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
   end
 
   def outgoing_disbursement?
@@ -347,7 +350,7 @@ class HcbCode < ApplicationRecord
   end
 
   def card_grant?
-    disbursement? && disbursement&.card_grant.present?
+    outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
   def grant?
@@ -399,6 +402,7 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
+    Rails.error.unexpected "HcbCode#disbursement accessed"
     return nil unless disbursement?
 
     @disbursement ||= begin
@@ -406,11 +410,27 @@ class HcbCode < ApplicationRecord
       return nil unless raw
 
       if outgoing_disbursement?
-        Disbursement::Outgoing.new(raw)
+        outgoing_disbursement
       else
-        Disbursement::Incoming.new(raw)
+        incoming_disbursement
       end
     end
+  end
+
+  def incoming_disbursement
+    return nil unless incoming_disbursement?
+    disbursement = Disbursement.find_by(id: hcb_i2)
+    return nil unless disbursement
+
+    Disbursement::Incoming.new(disbursement)
+  end
+
+  def outgoing_disbursement
+    return nil unless outgoing_disbursement?
+    disbursement = Disbursement.find_by(id: hcb_i2)
+    return nil unless disbursement
+
+    Disbursement::Outgoing.new(disbursement)
   end
 
   def card_grant
@@ -644,7 +664,8 @@ class HcbCode < ApplicationRecord
     return ach_transfer&.creator if ach_transfer?
     return check&.creator if check?
     return increase_check&.user if increase_check?
-    return disbursement&.requested_by if disbursement?
+    return outgoing_disbursement&.requested_by if outgoing_disbursement?
+    return incoming_disbursement&.requested_by if incoming_disbursement?
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?

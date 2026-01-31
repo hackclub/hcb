@@ -83,7 +83,7 @@
         <%= format_datetime @disbursement.created_at %>
       </p>
 
-      <% if @hcb_code.disbursement.scheduled_on.present? %>
+      <% if @disbursement.scheduled_on.present? %>
         <% admin_tool("", "p") do %>
           <strong>Scheduled for</strong>
           <%= @disbursement.scheduled_on.strftime("%B %e, %Y") %>

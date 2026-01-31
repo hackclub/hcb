@@ -53,14 +53,16 @@ module EventMappingEngine
         end
 
         def guess_event_id(hcb_code, ct)
-          return hcb_code.disbursement.event.id if hcb_code.disbursement?
+          return hcb_code.outgoing_disbursement.event.id if hcb_code.outgoing_disbursement?
+          return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.event.try(:id) if hcb_code.events.length == 1
 
           raise ArgumentError, "attempted to map a transaction with HCB short codes to a multi-event HCB code"
         end
 
         def guess_subledger_id(hcb_code, ct)
-          return hcb_code.disbursement.subledger&.id if hcb_code.disbursement?
+          return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
+          return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
         end
 

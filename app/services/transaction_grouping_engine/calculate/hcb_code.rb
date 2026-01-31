@@ -194,6 +194,8 @@ module TransactionGroupingEngine
       end
 
       def disbursement_hcb_code
+        Rails.error.unexpected "Calculate#HcbCode#disbursement_hcb_code accessed"
+
         [
           HCB_CODE,
           DISBURSEMENT_CODE,
@@ -202,7 +204,9 @@ module TransactionGroupingEngine
       end
 
       def disbursement
-        @disbursement ||= @ct_or_cp.disbursement
+        Rails.error.unexpected "Calculate#HcbCode#disbursement accessed"
+
+        nil
       end
 
       def reimbursement_expense_payout

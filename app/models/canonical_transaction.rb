@@ -380,16 +380,6 @@ class CanonicalTransaction < ApplicationRecord
     nil # TODO
   end
 
-  def disbursement
-    return nil unless linked_object.is_a?(Disbursement)
-
-    if local_hcb_code&.outgoing_disbursement?
-      Disbursement::Outgoing.new(linked_object)
-    else
-      Disbursement::Incoming.new(linked_object)
-    end
-  end
-
   def unique_bank_identifier
     @unique_bank_identifier ||= transaction_source.try(:unique_bank_identifier)
   end
