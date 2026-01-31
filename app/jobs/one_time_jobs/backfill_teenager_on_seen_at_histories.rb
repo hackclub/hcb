@@ -7,7 +7,7 @@ module OneTimeJobs
         histories = User::SeenAtHistory.where(user_id: user.id)
         next if histories.empty?
 
-        if user.teenager?
+        if user.is_teenager?
           # User is currently a teenager so they've always been a teenager
           histories.update_all(teenager: true)
         else

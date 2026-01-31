@@ -60,7 +60,7 @@
     </script>
   <% end %>
 
-  <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
+  <% if (current_user.is_teenager? && current_user.only_card_grant_user?) %>
     <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 <% end %>

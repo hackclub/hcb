@@ -35,7 +35,7 @@
 
 <%# disbursement %>
 <% if @hcb_code.disbursement? && @hcb_code.disbursement.present? %>
-  <%= render partial: "hcb_codes/disbursement", locals: {} %>
+  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.disbursement } %>
 <% end %>
 
 <%# bank fee %>

@@ -13,7 +13,7 @@ class Disbursement
     end
 
     def amount
-      -disbursement.amount.abs
+      -disbursement.amount
     end
 
     def subledger
@@ -23,5 +23,7 @@ class Disbursement
     def transaction_category
       disbursement.source_transaction_category
     end
+
   end
+
 end
