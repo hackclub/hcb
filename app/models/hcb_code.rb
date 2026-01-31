@@ -10,6 +10,8 @@
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  event_id                     :bigint
+#  subledger_id                 :bigint
 #
 # Indexes
 #
@@ -43,6 +45,9 @@ class HcbCode < ApplicationRecord
 
   has_one :personal_transaction, required: false
   has_one :pin, required: false
+
+  belongs_to :event, optional: true
+  belongs_to :subledger, optional: true
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -189,11 +194,11 @@ class HcbCode < ApplicationRecord
   end
 
   def subledger
-    subledgers.first
+    super || subledgers.first
   end
 
   def event
-    events.first
+    super || events.first
   end
 
   def events
@@ -654,6 +659,10 @@ class HcbCode < ApplicationRecord
     return invoice.sponsor.name if invoice?
 
     nil
+  end
+  
+  def write_event_and_subledger_id
+    update(event_id: events.first&.id, subledger_id: subledgers.first&.id,)
   end
 
 end
