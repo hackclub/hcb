@@ -15,13 +15,13 @@
         <% if organizer_signed_in? %>
           <span class="tooltipped tooltipped--e" aria-label="<%= et.category_name.presence || "Not categorized" %>">
             <%= link_to et, target: "_blank", class: "text-decoration-none" do %>
-              <%= inline_icon "payment-docs", size: 16, class: "ml1" %>
+              <%= inline_icon "receipt", size: 16, class: "ml1" %>
             <% end %>
           </span>
         <% else %>
           <span class="tooltipped tooltipped--e" aria-label="Sign in to view receipts">
             <%= link_to root_path, target: "_blank", class: "text-decoration-none" do %>
-              <%= inline_icon "payment-docs", size: 16, class: "ml1" %>
+              <%= inline_icon "receipt", size: 16, class: "ml1" %>
             <% end %>
           </span>
         <% end %>

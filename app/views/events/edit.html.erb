@@ -1,53 +1,10 @@
 <% title "#{@event.name} Settings" %>
 <% page_md %>
-<%= render "nav", selected: :settings %>
+<%= render "events/nav", selected: :settings %>
 
 <% unless params[:frame] %>
-  <h1>Settings</h1>
-  <%= render "events/settings/account_info", event: @event %>
-
-  <ul class="tab-container">
-    <%= settings_tab active: @settings_tab == "details" || @settings_tab.nil? do %>
-      <%= link_to "Organization details", edit_event_path(@event, tab: "details"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <% if @event.approved? %>
-      <% if @event.plan.donations_enabled? %>
-        <%= settings_tab active: @settings_tab == "donations" do %>
-          <%= link_to "Donations", edit_event_path(@event, tab: "donations"), data: { turbo: true, turbo_action: "advance" } %>
-        <% end %>
-      <% end %>
-      <% if @event.plan.reimbursements_enabled? %>
-        <%= settings_tab active: @settings_tab == "reimbursements" do %>
-          <%= link_to "Reimbursements", edit_event_path(@event, tab: "reimbursements"), data: { turbo: true, turbo_action: "advance" } %>
-        <% end %>
-      <% end %>
-      <% if @event.plan.card_grants_enabled? %>
-        <%= settings_tab active: @settings_tab == "card_grants" do %>
-          <%= link_to "Card grants", edit_event_path(@event, tab: "card_grants"), data: { turbo: true, turbo_action: "advance" } %>
-        <% end %>
-      <% end %>
-    <% end %>
-    <%= settings_tab active: @settings_tab == "tags" do %>
-      <%= link_to "Tags", edit_event_path(@event, tab: "tags"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <%= settings_tab active: @settings_tab == "affiliations" do %>
-      <%= link_to "Affiliations", edit_event_path(@event, tab: "affiliations"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <%= settings_tab active: @settings_tab == "features" do %>
-      <%= link_to "Feature previews", edit_event_path(@event, tab: "features"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <%= settings_tab active: @settings_tab == "integrations" do %>
-      <%= link_to "Integrations", edit_event_path(@event, tab: "integrations"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <%= settings_tab active: @settings_tab == "audit_log" do %>
-      <%= link_to "Audit log", edit_event_path(@event, tab: "audit_log"), data: { turbo: true, turbo_action: "advance" } %>
-    <% end %>
-    <% admin_tool("py0 px2 overflow-hidden") do %>
-      <%= settings_tab active: @settings_tab == "admin" do %>
-        <%= link_to "Admin", edit_event_path(@event, tab: "admin"), data: { turbo: true, turbo_action: "advance" } %>
-      <% end %>
-    <% end %>
-  </ul>
+  <span class="eyebrow -mb-4 mt-5 block">Settings</span>
+  <h1><%= @settings_tab&.gsub("details", "Organization")&.humanize %></h1>
 <% end %>
 
 <% if @settings_tab == "donations" && @event.approved? && @event.plan.donations_enabled? %>
@@ -69,5 +26,6 @@
 <% elsif @settings_tab == "admin" && auditor_signed_in? %>
   <%= render "events/settings/admin", event: @event %>
 <% else %>
+  <%= render "events/settings/account_info", event: @event %>
   <%= render "events/settings/details", event: @event %>
 <% end %>

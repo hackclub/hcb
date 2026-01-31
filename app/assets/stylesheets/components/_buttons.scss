@@ -1,36 +1,65 @@
 input[type='submit'],
 .btn {
   -webkit-appearance: none;
-  align-items: center;
   border: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-  @include gradient(info);
-  color: $white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-border);
+  background-color: $white;
+  [data-dark='true'] & {
+    background-color: $darkless;
+    color: $snow;
+  }
+  color: $black;
   cursor: pointer;
   display: inline-flex;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   justify-content: center;
+  align-items: center;
+  height: 36px;
+  &:not(.menu__content *) {
+    min-height: 36px;
+  }
   letter-spacing: 0;
-  line-height: 1.5;
   overflow: hidden;
-  padding: 0.5rem 1.25rem;
+  padding: 0 1rem;
   position: relative;
   text-align: center;
   text-decoration: none;
-  transform: scale(1);
-  transition:
-    transform 0.125s ease-in-out,
-    box-shadow 0.25s ease-in-out;
   user-select: none;
+  transition:
+    box-shadow 0.125s ease-in-out,
+    background-color 0.125s ease-in-out,
+    color 0.125s ease-in-out;
 
   &:hover,
   &:focus,
   &[aria-expanded='true'] {
-    color: $white;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
-    transform: scale(1.0625);
+    transition-duration: 0s;
+    background: darken($white, 5%);
+
+    [data-dark='true'] & {
+      background-color: lighten($darkless, 5%);
+    }
+  }
+
+  &:focus-visible {
+    box-shadow:
+      inset 0 0 0 0.5px map-get($palette, info),
+      0 0 0 3px rgba(map-get($palette, info), 0.25) !important;
+  }
+
+  // Use .btn-default for buttons that do not have a background class or are not submit inputs
+  .btn-default {
+    box-shadow: var(--shadow-border);
+
+    &:hover,
+    &:focus,
+    &[aria-expanded='true'] {
+      box-shadow:
+        var(--shadow-border-md),
+        inset 0 0 0px 0.5px rgba(0, 0, 0, 0.15);
+    }
   }
 
   &.disabled,
@@ -44,12 +73,37 @@ input[type='submit'],
   svg {
     width: 24px;
     height: 24px;
-    margin-left: -4px;
-    margin-right: 6px;
+    opacity: 0.875;
+  }
+
+  > svg {
+    &:first-child {
+      margin-left: -4px;
+      margin-right: 6px;
+    }
+
+    &:not(:first-child)[aria-label='down-caret'] {
+      margin-left: 6px;
+      margin-right: -4px;
+    }
   }
 
   &.bg-primary {
-    @include gradient(primary);
+    background-color: saturate(lighten(map-get($palette, primary), 13%), 10%);
+    color: darken(map-get($palette, primary), 50%) !important;
+
+    &:hover {
+      background-color: saturate(lighten(map-get($palette, primary), 5%), 10%);
+    }
+
+    &:active,
+    &:focus {
+      transition:
+        box-shadow 0.125s ease-in-out,
+        background-color 0.125s ease-in-out,
+        color 0.125s ease-in-out;
+      background-color: saturate(map-get($palette, primary), 10%);
+    }
   }
 
   &.bg-smoke {
@@ -62,24 +116,98 @@ input[type='submit'],
     }
   }
 
+  &.bg-blue {
+    background-color: lighten(map-get($palette, info), 15%);
+    color: darken(map-get($palette, info), 40%) !important;
+
+    &:hover {
+      background-color: lighten(map-get($palette, info), 10%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: map-get($palette, info);
+      color: darken(map-get($palette, info), 50%) !important;
+    }
+  }
+
   &.bg-muted {
-    @include gradient(muted);
+    background-color: lighten(map-get($palette, muted), 30%);
+    color: darken(map-get($palette, muted), 50%) !important;
+    &:hover {
+      background-color: lighten(map-get($palette, muted), 25%) !important;
+    }
+    &:active,
+    &:focus {
+      background-color: lighten(map-get($palette, muted), 20%) !important;
+    }
+
+    &.btn-text {
+      color: darken(map-get($palette, muted), 20%) !important;
+      background-color: transparent !important;
+
+      &:hover {
+        background-color: rgba(map-get($palette, muted), 0.1) !important;
+      }
+      &:active,
+      &:focus {
+        background-color: rgba(map-get($palette, muted), 0.15) !important;
+      }
+    }
   }
 
   &.bg-warning {
-    @include gradient(warning);
+    background-color: map-get($palette, warning);
+    color: darken(map-get($palette, warning), 33.3%) !important;
 
     html[data-dark='true'] & {
       color: darken(map-get($palette, warning), 33.3%) !important;
     }
   }
 
+  &.bg-warning {
+    background-color: map-get($palette, warning);
+    color: darken(map-get($palette, warning), 33.3%) !important;
+
+    html[data-dark='true'] & {
+      color: darken(map-get($palette, warning), 33.3%) !important;
+    }
+  }
+
+  &.bg-light-warning {
+    background-color: map-get($palette, white) !important;
+    color: darken(map-get($palette, warning), 33.3%) !important;
+
+    html[data-dark='true'] & {
+      background: $darkless !important;
+      color: lighten(map-get($palette, warning), 33.3%) !important;
+    }
+  }
+
   &.bg-purple {
     @include gradient(purple);
+    color: darken(map-get($palette, purple), 40%) !important;
+
+    &:hover {
+      background: darken(map-get($palette, purple), 5%);
+    }
+    &:active,
+    &:focus {
+      background: darken(map-get($palette, purple), 10%);
+    }
   }
 
   &.bg-slate {
-    @include gradient(slate);
+    background: lighten(map-get($palette, slate), 25%);
+    color: darken(map-get($palette, slate), 40%) !important;
+
+    &:hover {
+      background: lighten(map-get($palette, slate), 20%);
+    }
+    &:active,
+    &:focus {
+      background: lighten(map-get($palette, slate), 15%);
+    }
   }
 
   &.bg-ai {
@@ -87,54 +215,84 @@ input[type='submit'],
   }
 
   &.bg-success {
-    @include gradient(success);
-    color: darken(map-get($palette, success), 33.3%) !important;
+    background-color: map-get($palette, success);
+    color: darken(map-get($palette, success), 40%) !important;
+
+    &:hover {
+      background-color: darken(map-get($palette, success), 5%);
+    }
+
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, success), 10%);
+    }
   }
 
   &.bg-accent {
-    @include gradient(accent);
-    color: darken(map-get($palette, accent), 33.3%) !important;
+    background-color: map-get($palette, accent);
+    color: darken(map-get($palette, accent), 50%) !important;
+
+    &:hover {
+      background-color: darken(map-get($palette, accent), 5%);
+    }
+    &:active,
+    &:focus {
+      background-color: darken(map-get($palette, accent), 10%);
+    }
   }
 
   &.bg-error,
   &.btn--destroy {
-    @include gradient(error);
+    transition:
+      box-shadow 0.125s ease,
+      background-color 0.125s ease;
+    background-color: map-get($palette, white) !important;
+
+    [data-dark='true'] & {
+      background-color: $darkless !important;
+      color: lighten(map-get($palette, error), 50%);
+    }
+
+    [data-dark='false'] & {
+      color: map-get($palette, error);
+    }
+
+    &:hover {
+      background-color: rgba(map-get($palette, primary), 0.125) !important;
+    }
   }
 }
 
-.btn--form-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  text-align: center;
-  line-height: 1.25;
-  color: map-get($palette, info);
-  background-color: rgba(map-get($palette, accent), 0.25);
+.btn.bg-info,
+input[type='submit'] {
+  background-color: lighten(map-get($palette, info), 15%);
+  color: darken(map-get($palette, info), 25%) !important;
 
-  &:hover,
+  [data-dark='true'] & {
+    background-color: darken(map-get($palette, info), 30%);
+    color: lighten(map-get($palette, info), 40%) !important;
+  }
+
+  &:hover {
+    background-color: lighten(map-get($palette, info), 10%);
+    color: darken(map-get($palette, info), 40%) !important;
+
+    [data-dark='true'] & {
+      background-color: darken(map-get($palette, info), 20%);
+      color: lighten(map-get($palette, info), 30%) !important;
+    }
+  }
+
+  &:active,
   &:focus {
-    color: map-get($palette, info);
+    background-color: darken(map-get($palette, info), 10%);
+    color: darken(map-get($palette, info), 40%) !important;
+
+    [data-dark='true'] & {
+      background-color: map-get($palette, info);
+      color: lighten(map-get($palette, info), 50%) !important;
+    }
   }
-
-  html[data-dark='true'] & {
-    color: map-get($palette, white);
-  }
-}
-
-.btn--form-option--disabled {
-  background-color: rgba(map-get($palette, accent), 0.12);
-  color: rgba(map-get($palette, info), 0.7);
-
-  html[data-dark='true'] & {
-    color: rgba(map-get($palette, white), 0.7);
-  }
-
-  cursor: default;
-  pointer-events: none;
-  user-select: none;
 }
 
 .btn-small {
@@ -174,25 +332,119 @@ form .flex-auto + input[type='submit'] {
   }
 
   @media (min-width: 32em) {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-    border-radius: 0.75rem;
+    border-radius: var(--radius-md);
 
     .btn:first-child {
-      border-radius: 0.75rem 0 0 0.75rem;
+      border-radius: var(--radius-md) 0 0 var(--radius-md);
     }
     .btn {
       border-radius: 0;
-      box-shadow: none;
       margin: 0;
-
-      &:hover,
-      &:focus {
-        z-index: 2;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.125);
-      }
     }
     .btn:last-child {
-      border-radius: 0 0.75rem 0.75rem 0;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
     }
+  }
+}
+
+.quick-action {
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.9rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  transition: all 0.125s ease-in-out;
+
+  & svg {
+    margin-bottom: 0px;
+    margin-top: 0px;
+  }
+
+  &:hover {
+    transition-duration: 0s;
+    background: rgba(0, 0, 0, 0.05);
+
+    &:active {
+      transition-duration: 0.125s;
+      background: rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  [data-dark='true'] & {
+    background-color: #252429 !important;
+
+    &:hover {
+      transition-duration: 0s;
+      background-color: #2e2c33 !important;
+    }
+
+    &:active {
+      transition-duration: 0.125s;
+      background-color: #35333a !important;
+    }
+
+    color: lighten(map-get($palette, slate), 50%) !important;
+
+    & svg {
+      stroke: lighten(map-get($palette, smoke), 50%) !important;
+    }
+  }
+}
+
+.btn.btn--list-item {
+  height: auto !important;
+  width: 100% !important;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+  background-color: transparent !important;
+  box-shadow: none;
+  padding: 10px 20px !important;
+
+  & p {
+    margin: 0;
+  }
+
+  &:hover {
+    background-color: rgba(200, 200, 200, 0.1) !important;
+  }
+
+  &:active,
+  &:focus {
+    background-color: rgba(200, 200, 200, 0.2) !important;
+  }
+
+  & svg {
+    padding: 5px;
+    width: 35px !important;
+    height: 35px !important;
+    border-radius: var(--radius-xl);
+    background: rgba(map-get($palette, muted), 0.15) !important;
+  }
+
+  &.bg-error svg {
+    background: rgba(map-get($palette, error), 0.15) !important;
+
+    [data-dark='true'] & {
+      background: rgba(lighten(map-get($palette, error), 40%), 0.15) !important;
+    }
+  }
+
+  &.bg-success svg {
+    background: rgba(map-get($palette, success), 0.15) !important;
+
+    [data-dark='true'] & {
+      background: rgba(
+        lighten(map-get($palette, success), 40%),
+        0.15
+      ) !important;
+    }
+  }
+
+  &.bg-success {
+    color: map-get($palette, success) !important;
   }
 }

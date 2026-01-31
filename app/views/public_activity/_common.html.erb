@@ -1,9 +1,9 @@
-<li class="mt1" style="font-size: 14px">
-  <div class="flex flex-row" style="gap: 8px; margin-left: 4px">
+<li class="mb1 text-sm">
+  <div class="flex flex-row gap-2">
     <% if defined?(icon) && defined?(color) %>
       <%= inline_icon icon, width: 24, class: "bg-#{color}", style: "height: 24px; color: white; border-radius: 999px; padding: 4px;" %>
     <% else %>
-      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cloud-odxy4yxov-hack-club-bot.vercel.app/0af21ff968edcc04557ff4106897e20f6.png") %>
+      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png") %>
     <% end %>
     <div class="flex flex-col" style="transform: translateY(-3px); line-height: 1.6">
       <span>

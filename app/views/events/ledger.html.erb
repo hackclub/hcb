@@ -1,16 +1,15 @@
 <% cache_if @cacheable, "#{@event.id}_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
-    <%= render partial: "filter" %>
-
+    <%= render partial: "events/filter" %>
     <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
-      <div class="table-container" data-tour-step="transactions">
+      <div class="table-container mt-4" data-tour-step="transactions">
         <table>
           <thead>
           <tr>
             <th><%# icon %></th>
             <th>Date</th>
             <th>Description</th>
-            <th class="right-align">Amount</th>
+            <th class="text-right">Amount</th>
             <% if @show_running_balance %>
               <th>Running Balance</th>
             <% end %>
@@ -18,7 +17,7 @@
           </tr>
           </thead>
           <tbody data-behavior="transactions">
-          <%= render "pending_fee_transaction" unless @event.fronted_fee_balance_v2_cents <= 0 || @direction == "revenue" %>
+          <%= render "events/pending_fee_transaction" unless @event.fronted_fee_balance_v2_cents <= 0 || @direction == "revenue" || params[:subledger] %>
 
           <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
 
@@ -36,8 +35,10 @@
       browser history since it's attempt to set the URL to this frame's. So, i'm
       manually doing it here.
     %>
-    <script>
-      window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
-    </script>
+    <% if !params[:subledger] %>
+      <script>
+        window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
+      </script>
+    <% end %>
   <% end %>
 <% end %>

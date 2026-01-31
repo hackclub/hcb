@@ -1,0 +1,9 @@
+<%# locals: (event:, invite_links:) %>
+
+<%= turbo_frame_tag "invite_links_section" do %>
+  <h3 class="mb-2 flex items-center justify-between">
+    Links
+    <%= render "organizer_position_invite/links/form", event: event %>
+  </h3>
+  <%= render "organizer_position_invite/links/link_list", event: event, invite_links: invite_links %>
+<% end %>

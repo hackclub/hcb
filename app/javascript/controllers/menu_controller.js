@@ -112,8 +112,8 @@ export default class extends Controller {
     computePosition(this.toggleTarget, this.content, {
       placement: this.placementValue,
       middleware: [
-        offset(5),
-        flip({ padding: 5 }),
+        offset(this.placementValue.includes('top') ? 0 : 10),
+        flip({ padding: 4 }),
         size({
           padding: 5,
           apply({ availableHeight, availableWidth, elements }) {
@@ -132,9 +132,9 @@ export default class extends Controller {
       if (firstTime) {
         // Animate!
         gsap.from(this.content, {
-          y: placement.includes('top') ? -15 : 15,
-          opacity: 0,
-          duration: 0.25,
+          y: placement.includes('top') ? -12 : 12,
+          opacity: 0.75,
+          duration: 0.15,
         })
       }
 

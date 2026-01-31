@@ -62,7 +62,7 @@
             <div class="field flex-1">
               <div class="inline-flex items-center gap-1">
                 <%= form.label :birthday %>
-                <div class="info tooltipped tooltipped--w h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers (< 18) and need to understand which users are under 18 as there are certain laws that protect them.">
+                <div class="info tooltipped tooltipped--e tooltipped--tappable h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers and need to know which users are under 18 as there are certain laws that protect them.">
                   <%= inline_icon "info", size: 18 %>
                 </div>
               </div>
@@ -80,15 +80,16 @@
           <%= form.label :profile_picture %>
           <div class="flex items-center mt1">
             <%= avatar_for @user, size: 48, class: "mr2" %>
-            <div class="field--fileupload">
-              <%= form.label :profile_picture, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field" %>
+            <div data-controller="file-upload">
+              <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, data: { "file-upload-target": "input" } %>
+              <button data-file-upload-target="preview" type="button"></button>
+              <div data-file-upload-target="clear"></div>
             </div>
           </div>
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
 
           <div class="actions flex">
-            <button type="submit" class="btn w-full gap-2">
+            <button type="submit" class="btn bg-info w-full gap-2">
               Start using HCB
               <%= inline_icon "enter", size: 40 %>
             </button>
@@ -119,14 +120,12 @@
     </div>
   </div>
 <% else %>
-  <% title "Account Settings" %>
+  <% title "Account settings" %>
   <% page_md %>
+  <%= render "users/nav", selected: :settings_home %>
   <% disabled = !policy(@user).update? %>
-
-  <%= render "users/nav", selected: :settings %>
-  <h1>Settings</h1>
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-    <%= render "settings_nav", active: "general" unless @onboarding %>
+    <%= render "settings_header", active: "general" unless @onboarding %>
     <section>
       <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>
@@ -158,7 +157,7 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required">
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" <%= "disabled" if disabled %>>
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
             <p class="h5 mt1 m0 warning flex items-center">
               <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
@@ -179,7 +178,7 @@
                                  prompt: @user.birthday.nil?,
                                  disabled: %>
             <% unless @user.birthday.nil? %>
-              <% admin_tool do %>
+              <% admin_tool("p-1.5 !ml-2") do %>
                 <%= @user.teenager? ? "✅ Teenager" : "Not a teenager" %>
               <% end %>
             <% end %>
@@ -213,14 +212,15 @@
               <% end %>
           </span>
           </p>
-          <div class="field field--fileupload">
-            <%= form.label :profile_picture, "Upload picture", class: "field--fileupload__label" %>
-            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", disabled: %>
+          <div data-controller="file-upload" data-file-upload-placeholder-value="Upload profile picture">
+            <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
+            <button data-file-upload-target="preview" type="button"></button>
+            <div data-file-upload-target="clear"></div>
           </div>
         </div>
 
         <% if @user.has_discord_account? %>
-          <div class="card max-w-6xl">
+          <div class="card field">
             <p class="medium">Connected Discord account</p>
             <p class="h5 muted mt-0 mb-3">
               You've set up the HCB discord bot

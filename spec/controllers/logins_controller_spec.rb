@@ -366,7 +366,11 @@ RSpec.describe LoginsController do
 
     context "2fa" do
       it "requests a second factor if 2fa is enabled" do
-        user = create(:user, phone_number: "+18556254225", use_two_factor_authentication: true)
+        user = create(:user,
+                      phone_number: "+18556254225",
+                      phone_number_verified: true,
+                      use_sms_auth: true,
+                      use_two_factor_authentication: true)
         totp = user.create_totp!
         login = create(:login, user:)
         login_code = create(:login_code, user:)
@@ -454,7 +458,7 @@ RSpec.describe LoginsController do
 
       post(:reauthenticate, params: { return_to: "/test" })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
 
       post(

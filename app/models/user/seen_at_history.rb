@@ -7,6 +7,7 @@
 #  id              :bigint           not null, primary key
 #  period_end_at   :datetime         not null
 #  period_start_at :datetime         not null
+#  teenager        :boolean
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  user_id         :bigint
@@ -20,7 +21,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class User
-  # This table stores a history of Users' UserSession#last_seen_at.
+  # This table stores a history of Users' User::Session#last_seen_at.
   # The data is sampled every 30 minutes using a cron job, but the sample
   # collects data from the past hour (PERIOD_DURATION). Sampling more often
   # prevents us from missing data in case the hourly job is delayed.

@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "categories" do %>
   <% if !@categories.empty? %>
     <div id="categories-chart">
-      <h3 class="mt2 mb2">Top categories</h3>
+      <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top categories</h3>
       <%= react_component "home/Categories", { data: @categories }, { camelize_props: false } %>
     </div>
     <%# Only shown if merchants chart is visible to prevent awkward gap %>
@@ -10,8 +10,10 @@
       <h3 class="text-2xl font-bold mb-0">
         It's quiet here...
       </h3>
-      <p class="text-gray-500 my-1">
-        Categories will appear here<br>as you spend more money
+      <p class="text-gray-500 my-1 mb-8">
+        Categories will appear here<br>as
+        <%= organizer_signed_in? ? "you" : "they" %>
+        spend more money
       </p>
     </div>
   <% end %>

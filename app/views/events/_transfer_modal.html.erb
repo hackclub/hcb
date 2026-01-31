@@ -4,6 +4,6 @@
 
     <%= render partial: "events/unauthorized_callout", locals: { action: "transfer money" } unless policy(@event).create_transfer? %>
 
-    <%= render "transfer_form" %>
+    <%= render "events/transfer_form" %>
   <% end %>
 </section>

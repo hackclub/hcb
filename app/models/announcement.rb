@@ -30,6 +30,9 @@ class Announcement < ApplicationRecord
   include Hashid::Rails
   include AASM
 
+  ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze
+  WHITELISTED_ATTRIBUTES = ["href", "src", "rel", "target", "title", "id", "alt"].freeze
+
   has_paper_trail
   acts_as_paranoid
 
@@ -72,6 +75,8 @@ class Announcement < ApplicationRecord
 
   before_save :autofollow_organizers
 
+  before_save :remove_unsafe_content
+
   def render
     ProsemirrorService::Renderer.render_html(content, event)
   end
@@ -81,6 +86,46 @@ class Announcement < ApplicationRecord
   end
 
   private
+
+  def remove_unsafe_content
+    return if self.content.blank?
+
+    new_content = ProsemirrorService::Renderer.map_nodes self.content do |node|
+      if node["marks"].present?
+        new_marks = node["marks"].map do |mark|
+          next mark unless mark["attrs"].present?
+
+          mark["attrs"] = whitelist_attrs(mark["attrs"])
+
+          next mark unless mark["attrs"]["href"].present?
+
+          url = URI.parse(URI::RFC2396_PARSER.escape(mark["attrs"]["href"]))
+
+          if Announcement::ALLOWED_URL_SCHEMES.exclude? url.scheme
+            mark["attrs"]["href"] = "#"
+          end
+
+          mark
+        end
+
+        node["marks"] = new_marks
+      end
+
+      if node["attrs"].present?
+        node["attrs"] = whitelist_attrs(node["attrs"])
+      end
+
+      node
+    end
+
+    self.content = new_content
+  end
+
+  def whitelist_attrs(attrs)
+    attrs.select do |attr_key|
+      WHITELISTED_ATTRIBUTES.include? attr_key
+    end
+  end
 
   def autofollow_organizers
     # is this the first announcement to be published?

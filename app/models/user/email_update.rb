@@ -53,6 +53,9 @@ class User
     validate :non_hcb_email
     validate :non_existing_email
 
+    normalizes :original, with: ->(original) { original.strip.downcase }
+    normalizes :replacement, with: ->(replacement) { replacement.strip.downcase }
+
     after_create_commit do
       user.email_updates.requested.excluding(self).each(&:mark_stale!)
       send_emails unless confirmed?
@@ -103,14 +106,14 @@ class User
     end
 
     def non_hcb_email
-      if GSuiteAccount.where(address: replacement).any?
-        errors.add(:email, "must not be provided through a HCB account's Google Workspace.")
+      if GSuiteAccount.where(address: replacement).any? || GSuiteAlias.where(address: replacement).any?
+        errors.add(:email, "must not be provided through a HCB account's Google Workspace")
       end
     end
 
     def non_existing_email
       if User.where(email: replacement).any?
-        errors.add(:email, "is currently in use on HCB, please use another address.")
+        errors.add(:email, "is currently in use on HCB, please use another address")
       end
     end
 

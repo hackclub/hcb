@@ -38,7 +38,7 @@ module BreakdownEngine
 
       # Sort by value in descending order and limit to top 7 merchants
       merchants.sort_by! { |merchant| -merchant[:value] }
-      merchants.first(7)
+      merchants.first(5)
     end
 
   end

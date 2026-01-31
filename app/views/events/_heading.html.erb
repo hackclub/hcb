@@ -1,0 +1,18 @@
+<%# locals: (event:, event_follow: nil) %>
+
+<h1 class="flex items-center gap-4 border-b-0 mb-0 flex-wrap gap-y-2">
+  <%= yield %>
+  <% admin_tool("badge p-1 gap-1", "span") do %>
+    <span class="badge m-0 bg-muted">
+      #<%= event.id %>
+    </span>
+    <span class="badge m-0 bg-muted ml1">
+      SL<%= event.service_level %>
+    </span>
+  <% end %>
+
+  <div class="flex items-center gap-2">
+    <%= render "events/follow_button", event:, event_follow: %>
+    <%= render "events/donate_button", event: %>
+  </div>
+</h1>

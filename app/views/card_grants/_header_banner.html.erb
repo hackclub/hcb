@@ -1,7 +1,7 @@
 <%# locals: (card_grant:, footer: nil) %>
 
 <section class="card mt-8 min-h-[300px] flex flex-col justify-between card--background-image" style="<%= card_grant.event.background_image.attached? ? "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" : "--bg-image: #{GeoPattern.generate(card_grant.stripe_card&.public_id || card_grant.public_id).to_data_uri}" %>">
-  <div class="flex flex-row justify-end items-start gap-4">
+  <div class="flex flex-row justify-end items-start gap-x-4 gap-y-2 flex-wrap">
     <% if organizer_signed_in?(as: :member) %>
       <%= render "card_grants/actions/edit", card_grant: card_grant %>
     <% end %>
@@ -21,26 +21,26 @@
       </p>
     </div>
 
-    <section class="details-horiz">
-    <p>
-      <strong>Sent by</strong>
-      <%= user_mention card_grant.sent_by %>
-    </p>
-    <p>
-      <strong>Funded by</strong>
-      <%= link_to card_grant.event.name, card_grant.event %>
-    </p>
-    <p>
-      <strong>Sent</strong>
-      <span class="tooltipped" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
-        <%= time_ago_in_words card_grant.created_at %> ago
-      </span>
-    </p>
-  </section>
+    <section class="details-horiz px-4">
+      <p>
+        <strong>Sent by</strong>
+        <%= user_mention card_grant.sent_by %>
+      </p>
+      <p>
+        <strong>Funded by</strong>
+        <%= link_to card_grant.event.name, card_grant.event %>
+      </p>
+      <p>
+        <strong>Sent</strong>
+        <span class="tooltipped" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
+          <%= time_ago_in_words card_grant.created_at %> ago
+        </span>
+      </p>
+    </section>
   </div>
   <% if defined?(footer) && footer.present? %>
     <div class="card !shadow-none m-[-16px] mt-4 rounded-tl-none rounded-tr-none border-top divide-secondary">
-        <%= footer %>
+      <%= footer %>
     </div>
   <% end %>
 </section>

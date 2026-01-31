@@ -1,0 +1,12 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @request.requester.name %> has requested to join <%= @request.link.event.name %>.
+</p>
+
+You can <%= link_to "click here", event_team_url(@request.link.event) %> to approve or deny.
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

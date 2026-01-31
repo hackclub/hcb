@@ -54,7 +54,7 @@ html {
 *,
 *:before,
 *:after {
-  box-sizing: inherit;
+  box-sizing: border-box;
 }
 
 // /* ---------------------------------------------------------------------------------------------- */
@@ -178,40 +178,6 @@ html[data-dark='true'] {
 * {
   margin: 0;
   padding: 0;
-}
-
-address,
-area,
-article,
-aside,
-audio,
-blockquote,
-datalist,
-details,
-dl,
-fieldset,
-figure,
-form,
-input,
-iframe,
-*:not(.mention) > img,
-meter,
-nav,
-ol,
-optgroup,
-option,
-output,
-p,
-pre,
-progress,
-ruby,
-section,
-table,
-textarea,
-ul,
-video {
-  /* Margins for most elements */
-  margin-bottom: 1rem;
 }
 
 html,
@@ -732,73 +698,73 @@ video {
 
 /* The navigation bar used for admin pages */
 
-.nav-row {
-  flex-direction: column;
-  flex-wrap: wrap;
-}
-
-.nav-row > *:not(:last-child) > summary {
+.nav-row-scroll-container .nav-item:not(:last-child) {
   border-right: 1px solid var(--hcb-bg-3) !important;
 }
 
-@media screen and (min-width: 800px) {
-  .nav-row {
-    flex-direction: row;
-  }
+.nav-row .nav-row-scroll-container {
+  flex-direction: row;
+}
 
-  .admin-nav-item:active {
-    pointer-events: none;
-  }
+.admin-nav-item:active {
+  pointer-events: none;
+}
 
-  nav {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .admin-nav-item[open] {
-    /* Adjust the <details> padding while open */
-    padding-bottom: 0rem;
-    margin-bottom: 0 !important;
-  }
+.admin-menu-content {
+  min-width: calc(100vw / 6);
+  width: calc(100vw / 6);
 
-  .admin-nav-item[open] summary {
-    /* Adjust the <details> padding while open */
-    margin-bottom: 0px !important;
+  @media (max-width: 768px) {
+    min-width: unset;
+    width: unset;
   }
+  & .menu__divider {
+    background-color: rgba(190, 190, 190, 0.3);
+  }
+  & a:hover {
+    background-color: rgba(200, 200, 200, 0.3);
+  }
+  & a:active {
+    background-color: rgba(200, 200, 200, 0.4) !important;
+  }
+}
 
-  .dropdown {
-    position: absolute;
-    top: 32px;
-    padding-top: 4px;
-  }
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  summary:hover + detail,
-  detail:hover,
-  details:hover > .dropdown {
-    display: block;
-  }
+summary:hover + detail,
+detail:hover,
+details:hover > .dropdown {
+  display: block;
+}
 
-  detail,
-  .dropdown {
-    display: none;
-  }
+detail,
+.dropdown {
+  display: none;
+}
 
-  .role-badge {
-    margin-bottom: 0px !important;
-  }
+.role-badge {
+  margin-bottom: 0px !important;
 }
 
 .sub-items {
   display: flex;
   flex-direction: column;
-  background: var(--hcb-bg-2-5);
-  outline: 1px solid var(--hcb-bg-3);
+  background: #fff;
+  border: 1px solid var(--hcb-bg-3);
+  box-shadow: var(--shadow-lg);
+  border-top: none;
   border-radius: 0px 0px 4px 4px;
   z-index: 999;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
-  margin-top: 4px;
+  margin-top: -5px;
+  padding-top: 9px;
+  margin-left: -2px;
 }
 
 .sub-items > a:last-child {
@@ -810,7 +776,7 @@ video {
   pointer-events: auto;
   color: var(--hcb-tx-1);
   text-decoration: none;
-  background: var(--hcb-bg-2-5);
+  background: #fff;
   min-width: 220px;
   padding: 8px 12px;
   font-weight: 600;
@@ -838,11 +804,8 @@ video {
   padding: 4px 12px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-}
-
-.nav-item > .dropdown {
-  background: var(--hcb-bg-2-5);
 }
 
 .role-badge {
@@ -898,8 +861,8 @@ summary {
   flex-grow: 1;
 }
 
-.logo {
-  height: 36px;
+.logo-dark {
+  display: none;
 }
 
 #admin-theme-toggle,
@@ -950,7 +913,7 @@ form:has(> #admin-logout-button) {
     box-shadow: 0 1px 2px hsl(240 3.8% 46.1% / 12%);
     animation-duration: 0.5s;
     animation-name: flash-slide-in;
-    z-index: 999;
+    z-index: 999999;
 
     &.flash--success {
       border-top-color: var(--hcb-accent-active);
@@ -981,6 +944,21 @@ form:has(> #admin-logout-button) {
     padding: 0;
     margin: 0;
     color: inherit;
+  }
+}
+.command-bar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  color: inherit;
+  transition: background-color 0.125s ease-in-out;
+  cursor: pointer;
+  &:hover {
+    transition-duration: 0s;
+  }
+  &:active {
+    transition-duration: 0.125s;
   }
 }
 

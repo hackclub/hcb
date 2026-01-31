@@ -1,0 +1,56 @@
+<%= turbo_frame_tag :card_grant_card_overview do %>
+  <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/search", form: %>
+    <% end %>
+  </div>
+
+  <% if @card_grants.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date</th>
+            <th>To</th>
+            <th>For</th>
+            <th>Amount</th>
+            <th class="text-right">Balance</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @paginated_card_grants.each do |card_grant| %>
+            <tr>
+              <td>
+                <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
+              </td>
+              <td>
+                <%= format_date card_grant.created_at %>
+              </td>
+              <td>
+                <%= user_mention card_grant.user %>
+              </td>
+              <td>
+                <%= link_to card_grant.purpose.presence || card_grant.disbursement.local_hcb_code.memo, spending_card_grant_path(card_grant), data: { turbo_frame: "_top" } %>
+              </td>
+              <td>
+                <%= render_money card_grant.amount_cents %>
+              </td>
+              <td class="text-right">
+                <%= render_money card_grant.balance %>
+              </td>
+              <td>
+                <%= render "events/card_grant_actions", card_grant: %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <%= paginate @paginated_card_grants %>
+    </div>
+  <% else %>
+    <%= blankslate "No card grants yet" %>
+  <% end %>
+<% end %>

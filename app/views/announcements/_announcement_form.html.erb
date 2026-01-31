@@ -21,11 +21,11 @@
   <div class="field">
     <%= form.label :content, class: "text-lg" %>
     <%= form.hidden_field :json_content, data: { "tiptap-target": "contentInput" } %>
-    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md mt-1 relative">
-      <div class="flex gap-2 bg-snow dark:bg-darkless p-2 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
+    <div class="border-smoke dark:border-0 border-[1px] border-solid rounded-md mt-1 relative dark:border-gray-700" style="border-width:1px;">
+      <div class="bg-white dark:bg-darkless flex px-2 py-1 rounded-md rounded-b-none dark:border-b-dark border-b-smoke border-b-[1px] border-solid border-0">
         <%= render partial: "announcements/format_menu", locals: { event: announcement.event } %>
       </div>
-      <div data-tiptap-target="editor" data-action="click->tiptap#focus" class="dark:bg-darkless bg-snow p-2 rounded-md rounded-t-none py-1 min-h-32"></div>
+      <div data-tiptap-target="editor" data-action="click->tiptap#focus" class="p-2 pt-3 rounded-md rounded-t-none py-1 min-h-32 px-5"></div>
       <div class="tooltipped absolute right-1 bottom-1 h-8" aria-label="Styling with Markdown is supported">
         <%= inline_icon "markdown", size: 32 %>
       </div>

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.hackclub.hcb",
+      "sha256_cert_fingerprints": [
+        "B1:AE:39:1C:B2:40:A7:91:5C:B2:2E:9C:0F:5D:09:24:DF:AF:67:AD:D7:CC:2A:D2:8C:73:2B:95:97:06:17:90"
+      ]
+    }
+  }
+]

@@ -1,4 +1,4 @@
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_card_grant">
+<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="create_card_grant">
   <%= modal_header "Send a grant" %>
 
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a grant" } unless policy(@event).create_transfer? %>

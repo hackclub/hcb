@@ -47,12 +47,12 @@
       </div>
       <div id="external_contributor_wrapper">
         <div class="field">
-          <%= form.label :user_email, "Teammate", class: "display-none-not-important bold" %>
+          <%= form.label :user_email, "Teammate", class: "hidden bold" %>
           <%= form.collection_select :user_email, @event.users.excluding(current_user), :email, :name %>
         </div>
         <div class="field">
-          <%= form.label :email, "Contributor’s email", class: "display-none-not-important bold" %>
-          <%= form.email_field :email, class: "display-none-not-important", placeholder: "contributor@gmail.com", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: @current_user.email %>
+          <%= form.label :email, "Contributor’s email", class: "hidden bold" %>
+          <%= form.email_field :email, class: "hidden", placeholder: "contributor@gmail.com", data: { "behavior": "reimbursement_report_email_input" }, required: true, value: @current_user.email %>
         </div>
         <%= form.hidden_field :event_id, value: @event.id %>
         <div id="reimbursement_report_maximum_amount_wrapper" class="field">

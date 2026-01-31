@@ -2,14 +2,14 @@
 <% page_md %>
 <%= render "users/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
-<h1 class="heading flex items-center">
+<h1 class="heading flex items-center flex-col sm:flex-row border-0 mb-0">
   <span class="flex items-center">
     Cards
     <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
   </span>
   <div class="flex ml-auto gap-3 items-center -mt-3">
-    <%= render partial: "cards_filter_menu" unless @filter_applied %>
-    <button class="btn bg-success -mb-3" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
+    <%= render partial: "my/cards_filter_menu" unless @filter_applied %>
+    <button class="btn bg-success mb-1" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
       <%= inline_icon "card-add" %>
       Order a card
     </button>
@@ -17,7 +17,7 @@
   </h1>
   <% if @filter_applied %>
     <div class="flex items-center filter-menu">
-      <%= render partial: "cards_filter_menu" %>
+      <%= render partial: "my/cards_filter_menu" %>
       <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
         <%= inline_icon "view-close", size: 28 %>
       <% end %>

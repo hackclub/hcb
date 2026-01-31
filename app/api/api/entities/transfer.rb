@@ -18,6 +18,10 @@ module Api
           ]
         }
 
+        expose_associated Organization, as: :source_organization, hide: [API_LINKED_OBJECT_TYPE, Transaction] do |obj, options|
+          obj.source_event
+        end
+
       end
 
     end

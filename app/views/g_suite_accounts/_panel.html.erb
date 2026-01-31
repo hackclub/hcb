@@ -97,7 +97,7 @@
                   <div class="flex flex-row m-auto">
                     <div class="field m-2">
                       <div class="flex items-center">
-                        <%= form.text_field :address, class: "input--narrow right-align", required: true, disabled: !policy(account).create? %>
+                        <%= form.text_field :address, class: "input--narrow text-right", required: true, disabled: !policy(account).create? %>
                         <span class="mx-2 muted">@<%= account.g_suite.domain %></span>
                       </div>
                     </div>

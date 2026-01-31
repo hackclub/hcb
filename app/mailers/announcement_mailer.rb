@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AnnouncementMailer < ApplicationMailer
-  before_action :set_warning_variables, only: [:seven_day_warning, :two_day_warning, :canceled]
+  before_action :set_warning_variables, only: [:seven_day_warning, :two_day_warning, :skipped]
 
   def announcement_published
     @announcement = params[:announcement]
@@ -18,8 +18,8 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
   end
 
-  def canceled
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been canceled"
+  def skipped
+    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been skipped"
   end
 
   def notice

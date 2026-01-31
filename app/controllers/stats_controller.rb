@@ -34,6 +34,7 @@ class StatsController < ApplicationController
   end
 
   def admin_receipt_stats # secret api endpoint for the tv in the bank office
+    since_card_locking = !!params[:since_card_locking]
     users = [
       # These users are on the list because they're in HQ
       2189, # Caleb
@@ -90,7 +91,7 @@ class StatsController < ApplicationController
       21013, # Paolo Carino
     ]
 
-    q = <<~SQL
+    q = <<~SQL.squish
       SELECT
         id,
         (
@@ -102,15 +103,18 @@ class StatsController < ApplicationController
             LEFT JOIN canonical_pending_declined_mappings cpdm ON cpdm.canonical_pending_transaction_id = cpt.id
             INNER JOIN canonical_pending_event_mappings cpem ON cpem.canonical_pending_transaction_id = cpt.id
             INNER JOIN events ON events.id = cpem.event_id
+            INNER JOIN event_plans ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'
             WHERE sc.user_id = users.id
             AND   receipts.id IS NULL AND cpdm.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at IS NULL
+            AND   event_plans.type != 'Event::Plan::SalaryAccount'
+            #{"AND rpst.created_at >= ?" if since_card_locking}
         )
       FROM users
       WHERE id IN (?)
       ORDER BY count DESC;
     SQL
 
-    render json: User.find_by_sql([q, users])
+    render json: User.find_by_sql([q, (Receipt::CARD_LOCKING_START_DATE if since_card_locking), users].compact)
   end
 
 end

@@ -11,6 +11,10 @@
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
 #
+# Indexes
+#
+#  index_event_tags_on_name_and_purpose  (name,purpose) UNIQUE
+#
 class EventTag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
 

@@ -1,70 +1,51 @@
-.pagination {
-}
-
-.pagination,
 .filterbar {
-  padding: 0.75rem 0;
-  align-self: center;
-}
-
-.filterbar__filters {
+  box-shadow: var(--shadow-border);
+  border-radius: var(--radius-md);
+  height: 36px;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  @media (max-width: 32em) {
-    margin-left: -1rem;
-    margin-right: -1rem;
-    padding-left: 1rem;
-  }
+  display: flex;
+  max-width: 100%;
 }
 
 .pagination a,
 .filterbar__item {
-  border-radius: 1rem;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
   flex-shrink: 0;
   font-family: inherit;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.75;
-  outline: 0;
-  padding: 0.25rem 0.75rem;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  height: 100%;
   position: relative;
   text-decoration: none;
+  outline-color: map-get($palette, info);
   transition:
     color 0.125s ease-in-out,
-    background-image 0.125s ease-in-out,
-    box-shadow 0.125s ease-in-out,
-    transform 0.125s ease-in-out;
+    background-color 0.125s ease-in-out,
+    box-shadow 0.125s ease-in-out;
 
+  &:hover,
   &:focus {
-    color: map-get($palette, info);
-  }
-}
-
-.filterbar__item {
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    pointer-events: none;
-    @include gradient(info);
-    border-radius: 1rem;
-    transform: scale(0);
-    transition: transform 250ms ease-in-out;
+    color: map-get($palette, slate);
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-border-md);
   }
 
-  &:active,
-  &.active,
+  &[aria-current='page'],
   &[aria-selected='true'] {
-    color: $white;
-    &:before {
-      transform: scale(1);
+    color: map-get($palette, slate);
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-border-md);
+    z-index: 1;
+    font-weight: 600;
+
+    &:hover,
+    &:focus {
+      box-shadow: var(--shadow-border-md);
     }
   }
 }

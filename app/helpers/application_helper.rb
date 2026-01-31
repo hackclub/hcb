@@ -38,11 +38,7 @@ module ApplicationHelper
   end
 
   def render_transaction_amount(amount)
-    if amount > 0
-      content_tag(:span, "+#{render_money amount}", class: "success-dark medium")
-    else
-      render_money amount
-    end
+    render_money amount
   end
 
   def render_percentage(decimal, params = {})
@@ -55,12 +51,12 @@ module ApplicationHelper
     content << [obj.address_line1, tag.br].join("")
     content << [obj.address_line2 + tag.br].join("") if obj.address_line2.present?
     content << [obj.address_city, obj.address_state, obj.address_postal_code].join(", ")
-    content_tag(:span, content.join.html_safe)
+    content_tag(:span, sanitize(content.join))
   end
 
   def blankslate(text, **options)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 muted font-medium h3 w-full rounded-lg border border-gray-200 dark:border-gray-700 #{options[:class]}", **other_options)
   end
 
   def list_badge_for(count, item, glyph, optional: false, required: false, **options)
@@ -87,7 +83,7 @@ module ApplicationHelper
   end
 
   def pop_icon_to(icon, url, icon_size: 28, **options)
-    link_to url, options.merge(class: "pop #{options[:class] || "info"}") do
+    link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
     end
   end
@@ -122,14 +118,14 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", external_link, target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
   end
 
   def modal_header(text, external_link: nil)
-    content_tag :header, class: "pb2" do
+    content_tag :header, class: "pb2 rounded-t-lg" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, text.html_safe, class: "h1 mt0 mb0 pb0 border-none")
+        content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 
@@ -179,6 +175,9 @@ module ApplicationHelper
       options[:height] ||= options[:size]
       options.delete :size
     end
+    unless options["aria-label"]
+      options["aria-hidden"] = true
+    end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
   end
@@ -213,7 +212,7 @@ module ApplicationHelper
   end
 
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or #{help_phone}.".html_safe
+    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.".html_safe
   end
 
   def help_email
@@ -239,6 +238,12 @@ module ApplicationHelper
 
   def home_action_size
     @home_size.to_i > 48 ? 36 : 28
+  end
+
+  def parent_layout(name)
+    @view_flow.set(:layout, output_buffer)
+    output = render(template: "layouts/#{name}")
+    self.output_buffer = ActionView::OutputBuffer.new(output)
   end
 
   def page_xl
@@ -392,20 +397,20 @@ module ApplicationHelper
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **options[:button_options] do
           (inline_icon options[:button_icon]) +
-          (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
+          (content_tag :span, template.call(options[:options][0][1]), class: "truncate", data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
       (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
           options[:options].map.with_index do |option, index|
-            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
-            (options[:form].label options[:name], value: option[1] do
-              (tag.strong option[0]) + (tag.p option[2])
+            (options[:form].radio_button sanitize(options[:name]), option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": sanitize(template.call(option[1])) } }) +
+            (options[:form].label sanitize(options[:name]), value: option[1] do
+              (tag.strong sanitize(option[0])) + (tag.p sanitize(option[2]))
             end)
           end.join.html_safe
         end

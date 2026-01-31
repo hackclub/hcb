@@ -4,14 +4,11 @@
   $col1: rgba(map-get($palette, info), 0.15);
   $col2: rgba(map-get($palette, info), 0.2);
 
-  position: sticky;
-  top: 0;
   width: 100%;
+  text-align: center;
+  padding: 0 1rem;
   // background-color: rgba(map-get($palette, primary), 0.2);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.125);
   backdrop-filter: blur(2rem);
-  z-index: 100;
-  border: 1px solid map-get($palette, primary);
 
   background-image: linear-gradient(
     135deg,

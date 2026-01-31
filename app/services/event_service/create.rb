@@ -41,7 +41,7 @@ module EventService
     end
 
     def run
-      raise ArgumentError, "name required" unless @name.present?
+      raise ArgumentError, "organization name is required" unless @name.present?
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
       ActiveRecord::Base.transaction do
@@ -61,7 +61,7 @@ module EventService
           invite_service.run!
 
           if @is_signee
-            OrganizerPosition::Contract.create(organizer_position_invite: invite_service.model, cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
           end
         end
 

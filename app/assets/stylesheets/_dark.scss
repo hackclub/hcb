@@ -10,6 +10,13 @@ html[data-dark='true'] {
   body {
     background-color: $dark;
     color: map-get($palette, smoke);
+    color-scheme: dark;
+    --bg-color: var(--dark);
+    --shadow-border: inset 0 0 0 0.5px rgba(255, 255, 255, 0.25);
+    --shadow-sm: 0 2px 2px rgba(0, 0, 0, 0.04);
+    --shadow-border-sm: var(--shadow-border), var(--shadow-sm);
+    --shadow-border-md: var(--shadow-border), var(--shadow-md);
+    --shadow-border-lg: var(--shadow-border), var(--shadow-lg);
   }
 
   input[type='date'],
@@ -23,12 +30,19 @@ html[data-dark='true'] {
   select,
   .input,
   textarea {
-    background-color: $darkless;
     color: map-get($palette, white);
-    border-color: $darkless;
+    border-color: rgba(255, 255, 255, 0.1);
+    border-width: 0.5px;
 
     &:focus-within {
       border-color: map-get($palette, info);
+    }
+
+    &::placeholder {
+      color: map-get($palette, muted);
+    }
+    &::-moz-placeholder {
+      color: map-get($palette, muted);
     }
   }
 
@@ -39,6 +53,7 @@ html[data-dark='true'] {
   .details > div,
   .details__row,
   .border,
+  .border-color,
   .border-top,
   .border-right,
   .border-bottom,
@@ -47,7 +62,11 @@ html[data-dark='true'] {
   .details-horiz > div:not(:last-of-type),
   .details-horiz > .details-horiz__col,
   tr {
-    border-color: map-get($palette, slate);
+    border-color: rgba(255, 255, 255, 0.125);
+  }
+  tr.transaction--positive,
+  tr.transaction--negative {
+    border-color: rgba(255, 255, 255, 0.125);
   }
   .menu__toggle[aria-expanded='true']:after {
     border-bottom-color: $darkless;
@@ -71,6 +90,17 @@ html[data-dark='true'] {
   .menu__content > a,
   .menu__action {
     color: map-get($palette, smoke);
+  }
+  .menu__content > a,
+  .menu__action {
+    & svg {
+      fill: map-get($palette, muted);
+    }
+
+    &:hover,
+    &.hovered {
+      background-color: $dark;
+    }
   }
   tr a,
   .secondary,
@@ -134,7 +164,6 @@ html[data-dark='true'] {
   }
 
   .modal,
-  .card,
   .menu__content {
     box-shadow:
       -2px -4px 8px rgba(0, 0, 0, 0.125),
@@ -190,15 +219,24 @@ html[data-dark='true'] {
   }
 
   .black,
-  .btn,
-  .dock__item span,
+  .dock__item,
   label,
   a > .card {
     color: map-get($palette, smoke);
   }
 
-  .dock__item.disabled span {
+  .dock__item.disabled {
     color: map-get($palette, muted);
+  }
+  .dock__item[aria-current='page'] {
+    background-color: rgba(map-get($palette, primary), 0.2);
+
+    &:hover {
+      background-color: rgba(map-get($palette, primary), 0.25);
+    }
+    &:active {
+      background-color: rgba(map-get($palette, primary), 0.3);
+    }
   }
 
   pre,
@@ -208,7 +246,7 @@ html[data-dark='true'] {
   }
 
   .card__darker {
-    background: $dark;
+    background: lighten($darkless, 7%);
     color: map-get($palette, muted) !important;
   }
 
@@ -217,7 +255,7 @@ html[data-dark='true'] {
     background-color: rgba(map-get($palette, dark), 0.75);
   }
 
-  .admin-tools {
+  .admin-tools::before {
     background-color: rgba(map-get($palette, warning), 0.0625);
   }
 
@@ -254,27 +292,7 @@ html[data-dark='true'] {
   }
 
   .card--sunset {
-    background-image: url('https://cloud-hlea0o5k2-hack-club-bot.vercel.app/0sunset_card__4_.png');
-  }
-
-  input[type='submit'],
-  .btn {
-    background-color: rgba(map-get($palette, info), 0.75);
-  }
-  .btn.bg-primary {
-    background-color: rgba(map-get($palette, primary), 0.75);
-  }
-  .btn.bg-accent {
-    background-color: rgba(map-get($palette, accent), 0.75);
-  }
-  .btn.bg-success {
-    background-color: rgba(map-get($palette, success), 0.75);
-  }
-  .btn.bg-warning {
-    background-color: rgba(map-get($palette, warning), 0.75);
-  }
-  .btn.bg-error {
-    background-color: rgba(map-get($palette, error), 0.75);
+    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/cc0d90d3c01af31f_image.png');
   }
 
   .badge {
@@ -297,7 +315,8 @@ html[data-dark='true'] {
     color: map-get($palette, purple);
   }
   .badge.bg-error {
-    color: map-get($palette, error);
+    background-color: rgba(map-get($palette, error), 0.3);
+    color: map-get($palette, primary);
   }
   .badge.archived {
     background-color: rgba(map-get($palette, pending), 0.625);
@@ -308,19 +327,27 @@ html[data-dark='true'] {
     background-color: rgba(0, 0, 0, 0.125);
   }
 
-  .list-badge.quick-action {
-    border: 1px solid darken(map-get($palette, muted), 20%);
+  .dock__item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    &:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+  .filterbar__item:hover,
+  .filterbar__item:focus {
+    outline: none;
+    background-color: $darkless;
+    color: map-get($palette, muted);
   }
 
-  .filterbar__item:active,
   .filterbar__item[aria-selected='true'] {
-    background-color: rgba(map-get($palette, info), 0.125);
+    background-color: $darkless;
+    color: map-get($palette, smoke);
   }
   .badge.bg-info,
   .flash.info,
-  .pop,
   .pop.info {
-    background-color: rgba(map-get($palette, info), 0.125);
+    background-color: rgba(map-get($palette, info), 0.2);
   }
 
   .badge.bg-snow {
@@ -331,33 +358,44 @@ html[data-dark='true'] {
   .flash.accent,
   .badge.bg-accent,
   .pop.accent {
-    background-color: rgba(map-get($palette, accent), 0.125);
+    background-color: rgba(map-get($palette, accent), 0.2);
   }
 
   .flash.success,
   .badge.bg-success,
   .pop.success {
-    background-color: rgba(map-get($palette, success), 0.125);
+    background-color: rgba(map-get($palette, success), 0.2);
+  }
+
+  .success-dark {
+    color: map-get($palette, success);
   }
 
   .flash.warning,
   .badge.bg-warning,
   .pop.warning {
-    background-color: rgba(map-get($palette, warning), 0.125);
+    background-color: rgba(map-get($palette, warning), 0.3);
   }
 
   .flash.muted,
   .badge,
+  .pop,
   .badge.bg-muted,
   .pop.muted {
-    background-color: rgba(map-get($palette, muted), 0.125);
+    background-color: rgba(map-get($palette, muted), 0.2);
+  }
+  .pop {
+    color: lighten(map-get($palette, muted), 20%);
   }
   .flash.error,
-  .btn--destroy,
   .error-card,
   .badge.bg-error,
   .pop.error {
-    background-color: rgba(map-get($palette, error), 0.125);
+    background-color: rgba(map-get($palette, error), 0.3);
+  }
+
+  .error {
+    color: map-get($palette, error-light);
   }
 
   .banner--archived {
@@ -460,9 +498,5 @@ html[data-dark='true'] {
   #card-pin {
     color: #1f2d3d !important;
     filter: invert(1);
-  }
-
-  .modal__close {
-    background-color: rgb(23 23 29) !important;
   }
 }

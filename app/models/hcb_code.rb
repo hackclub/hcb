@@ -176,6 +176,22 @@ class HcbCode < ApplicationRecord
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
 
+  def subledgers
+    @subledgers ||=
+      begin
+        ids = [].concat(canonical_pending_transactions.includes(:canonical_pending_event_mapping).pluck(:subledger_id))
+                .concat(canonical_transactions.includes(:canonical_event_mapping).pluck(:subledger_id))
+                .compact
+                .uniq
+
+        Subledger.where(id: ids)
+      end
+  end
+
+  def subledger
+    subledgers.first
+  end
+
   def event
     events.first
   end
@@ -319,7 +335,15 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE
+    [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+  end
+
+  def outgoing_disbursement?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE
+  end
+
+  def incoming_disbursement?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE
   end
 
   def card_grant?
@@ -419,6 +443,8 @@ class HcbCode < ApplicationRecord
       paypal_transfer
     elsif wire? && wire&.reimbursement_payout_holding.present?
       wire
+    elsif wise_transfer? && wise_transfer&.reimbursement_payout_holding.present?
+      wise_transfer
     else
       nil
     end
@@ -485,6 +511,14 @@ class HcbCode < ApplicationRecord
   # HCB-600: Stripe card charges (always required)
   # @sampoder
 
+  # receipt_required (the scope) diverges from receipt_required?
+  # in a couple of ways:
+  #
+  # 1) it doesn't consider event plan
+  # 2) it doesn't consider the amount of the HCB code
+  #
+  # this is because these two things are expensive to compute on a HCB code.
+
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
@@ -497,8 +531,13 @@ class HcbCode < ApplicationRecord
               ")
   }
 
-  def receipt_required?
+  # we optionally take an event parameter here. this
+  # is a performance optimisation because it allows us to
+  # load the event once on the ledger and never again
+  def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
+
+    return false if amount_cents >= 0
 
     return false unless event&.plan&.receipts_required?
 
@@ -511,12 +550,17 @@ class HcbCode < ApplicationRecord
     false
   end
 
-  def receipt_optional?
-    !receipt_required?
+  def receipt_optional?(event = self.event, type = self.type)
+    !receipt_required?(event, type)
+  end
+
+  # we have a custom implementation here for caching
+  def missing_receipt?(event = self.event, type = self.type)
+    receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
   end
 
   def receipts
-    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout.present?
+    return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 
     super
   end

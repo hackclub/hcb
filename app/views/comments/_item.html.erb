@@ -1,6 +1,6 @@
 <% if policy(comment).show? %>
   <div class="mt2 mb2 <%= local_assigns[:class] %>" id="<%= dom_id comment %>">
-    <div class="card border pb0 pt0 mb2 max-width-4<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
+    <div class="card border pb0 pt0 mb2 max-w-5xl<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
       <div class="border-bottom card__banner secondary">
         <%= user_mention comment.user, click_to_mention: true %> <%= comment.action_text %>
         <%= link_to "#comment-#{comment.hashid}", title: comment.created_at, data: { controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: "comment-#{comment.hashid}"), action: "clipboard#copy" } do %>

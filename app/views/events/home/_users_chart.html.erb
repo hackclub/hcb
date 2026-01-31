@@ -7,14 +7,18 @@
             Not enough data
           </h3>
           <p class="text-gray-500 my-1">
-            To see users here, make sure they have at least one transaction. If not, invite team members to get
-            started!
+            Spending by user is available when users have at least one transaction.
+            <% if organizer_signed_in? %>
+              Invite some team members to get started!
+            <% end %>
           </p>
-          <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
+          <% if organizer_signed_in? %>
+            <%= link_to "Invite", event_team_path(event), class: "btn mt-4", target: "_top" %>
+          <% end %>
         </div>
       </div>
     <% else %>
-      <h3 class="mt2 mb2">Top users</h3>
+      <h3 class="mt-0 px-0 sm:mt-2 mb-2">Top users</h3>
       <%= react_component "home/Users", { data: users }, { camelize_props: false } %>
     <% end %>
   </div>

@@ -9,7 +9,7 @@ class ReceiptableMailerPreview < ActionMailer::Preview
     user = User.find_by(email: "max@hackclub.com")
     user_id = user.id
     # Normally this would be just requiring receipt, but this shows all
-    hcb_ids = user.stripe_cards.map{ |c| c.hcb_codes }.flatten
+    hcb_ids = user.stripe_cards.map{ |c| c.local_hcb_codes }.flatten
     ReceiptableMailer.with(
       user_id:,
       hcb_ids:

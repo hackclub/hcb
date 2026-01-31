@@ -3,7 +3,7 @@
 
 <%= render "users/nav", selected: :home if signed_in? %>
 
-<h1 class="heading items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0">
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
     <% if current_user.hack_clubber? || current_user.teenager? %>
       <a
@@ -17,44 +17,73 @@
       Welcome to <span class="primary">HCB</span>
     </span>
   </div>
-  <span class="badge ml-0 text-sm caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+  <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<% if current_user.card_grants.not_activated.size > 0 %>
-  <% current_user.card_grants.not_activated.each do |grant| %>
-    <div class="card border b--info container--sm mx-auto mb-12 mt-6 text-center">
-      <p class="my-0 text-xl">You have a grant invitation from <strong><%= grant.event.name %></strong>!</p>
-      <p class="mt-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
-      <%= link_to "Activate my grant", grant, class: "btn" %>
-    </div>
+<div class="card mb-6 mt-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+  <div class="flex-1">
+    <p class="my-0 text-lg font-[700]">HCB has gotten a visual refresh!</p>
+    <p class="my-0 text-md max-w-2xl">The HCB you know and love has a fresh new look. We're hoping it makes HCB easier to use and navigate, and we'd love to hear your feedback.</p>
+  </div>
+  <%= link_to "https://forms.hackclub.com/hcb-feedback", class: "btn" do %>
+    <%= inline_icon "message-new", size: 16, class: "mr-1" %>
+    Share feedback
   <% end %>
-<% end %>
+</div>
 
 <% if current_user.card_grants.activated.size > 0 %>
-  <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Grants</h2>
+  <h2 class="user-home-section">Your grants</h2>
 
-  <div class="grid grid--wide mb-12">
+  <div class="mixed-grid grid--spacious">
     <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
+      <%= render "stripe_cards/stripe_card", stripe_card: grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
+    <% end %>
+    <% if current_user.card_grants.activated.size.odd? %>
+      <div></div>
     <% end %>
   </div>
 <% end %>
 
+<% if current_user.card_grants.not_activated.size > 0 %>
+  <h2 class="user-home-section mb-2">Pending grant invitations</h2>
+  <ul class="grid grid-cols-1 text-left w-full mt-2">
+    <% current_user.card_grants.not_activated.each do |grant| %>
+      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
+        <div class="flex-1">
+          <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
+          <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
+        </div>
+        <div class="flex flex-col items-center gap-1">
+          <%= link_to "Activate my grant", grant, class: "btn" %>
+          <p class="my-0 text-sm italic text-muted">
+            <% if grant.expires_on.future? %>
+              Spend within <%= distance_of_time_in_words(Time.current, grant.expires_on) %>
+            <% else %>
+              Expired <%= time_ago_in_words(grant.expires_on) %> ago
+            <% end %>
+          </p>
+        </div>
+      </div>
+    <% end %>
+  </ul>
+<% end %>
+
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
-
-    <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 border-none ml-0 pl-0">Your organizations</h2>
-
-    <% if @events.any? %>
-      <% if @show_event_reorder_tip %>
+    <h2 class="user-home-section mb-2 flex items-center w-full">
+      <span>Your organizations</span>
+      <% if @show_event_reorder_tip && @events.any? %>
         <% if @events.size > 1 %>
-          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 mb1 self-baseline", target: "_blank" do %>
+          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 ml-auto", target: "_blank" do %>
             <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
           <% end %>
         <% end %>
       <% end %>
+    </h2>
+
+    <% if @events.any? %>
       <ul
-        class="grid grid--medium-narrow left-align w-100 mt0"
+        class="grid grid--medium-narrow text-left w-100 mt0"
         data-controller="sortable event-sort"
         data-sortable-append-to-value="body"
         data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
@@ -97,7 +126,7 @@
     <% end %>
 
     <% if @invites.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending invitations</h2>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending organization invitations</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invites.each do |invite| %>
           <%= link_to invite do %>
@@ -113,7 +142,7 @@
     <% end %>
 
     <% if @invite_requests.any? %>
-      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Your pending join requests</h2>
+      <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending join requests</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
         <% @invite_requests.each do |invite_request| %>
           <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
@@ -141,7 +170,7 @@
     <%# Latest HCB announcement %>
     <% if @latest_hcb_announcement %>
       <div class="flex flex-row w-full justify-between items-center">
-        <h2 class="heading h2 line-height-4 my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
+        <h2 class="heading h2 leading-[1.5] my-2 mt-4 mr-auto py-2 px-4 ml-0 pl-0 border-none">
           The latest from HCB
         </h2>
         <%= link_to event_announcement_overview_path(Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK)), class: "muted", target: :_blank do %>
@@ -156,15 +185,16 @@
 
     <%= render "static_pages/index/explore" %>
 
-    <% if current_user.organizer_position_contracts.sent.any? %>
-      <h2 class="w-full text-left mt-4 pb-0 border-none">Your pending contracts</h2>
-      <p class="text-left my0 w-100 muted">Contracts are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
+    <% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
+    <% if valid_contracts.any? %>
+      <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
+      <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
       <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
-        <% current_user.organizer_position_contracts.sent.each do |contract| %>
-          <%= link_to contract.user_signature_url, target: "_blank" do %>
+        <% valid_contracts.each do |contract| %>
+          <%= link_to contract_party_path(contract.party(:signee)), target: "_blank" do %>
             <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
               <%= status_badge "info" %>
-              <strong>Fiscal sponsorship contract for <%= contract.organizer_position_invite.event.name %></strong>
+              <strong>Fiscal sponsorship agreement for <%= contract.event.name %></strong>
               <small class="muted flex-grow" style="margin-left: 3.5px">
                 sent <%= time_ago_in_words contract.created_at %> ago
               </small>
@@ -174,6 +204,7 @@
       </ul>
     <% end %>
   <% end %>
+
   <% if auditor_signed_in? %>
     <%= turbo_frame_tag(:admin_tools, src: admin_tools_path, loading: :eager, target: "_top", class: "w-full") do %>
       <p>Loading admin tools</p>

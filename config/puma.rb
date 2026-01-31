@@ -42,5 +42,12 @@ plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
+# this shouldn't be needed anymore once we upgrade to Puma 7
+preload_app! unless ENV.fetch("RAILS_ENV", "development") == "development"
+
 # Report stats to AppSignal
 plugin :appsignal
+
+require_relative "../app/lib/credentials"
+
+Credentials.load if ENV["DOPPLER_TOKEN"]

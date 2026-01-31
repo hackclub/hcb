@@ -10,7 +10,7 @@
   <% button_hint = "This report has been approved by #{@event.name}, but it's still pending approval from the HCB team." if report.reimbursement_requested? %>
 
   <% unless (report.closed? && !report.payout_holding&.failed?) || member_viewing %>
-    <div class="flex items-center justify-between mt2 mb3" style="gap: 1rem;" id="actions">
+    <div class="flex items-center justify-between mt2 mb3 sm:max-w-sm lg:max-w-full" style="gap: 1rem;" id="actions">
       <div class="flex justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
@@ -20,10 +20,11 @@
                                     ["Standard expense", "standard", "Expense with a monetary amount."],
                                     ["Mileage expense", "mileage", "Expense for miles traveled based on the standard mileage rate."]
                                   ],
+                                  class: "w-full",
                                   button_icon: "plus",
                                   name: "type",
                                   button_container_options: { data: { "file-drop-target": "dropzone", action: "dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave" } },
-                                  template: ->(value) { "Add #{report.expenses.count > 0 ? "another" : "a"} #{value} expense" } %>
+                                  template: ->(value) { "Add #{value} expense" } %>
               <%= form.file_field :file,
                   multiple: true,
                   include_hidden: false,
@@ -65,7 +66,7 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <button class="btn bg-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
+            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -86,9 +87,9 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex justify-end">
-        <% if !user.payout_method.present? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !user.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
-            <%= link_to settings_payouts_path, class: "btn bg-warning", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
+            <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
               <%= report.payout_holding&.failed? || user.payout_method.present? ? "Edit" : "Add" %> payout information
               <% button_hint = capture do %>
@@ -106,7 +107,7 @@
             <% end %>
           <% elsif report.mismatched_currency? %>
             <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
-              <div class="btn bg-info disabled">
+              <div class="btn bg-info disabled whitespace-nowrap">
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
@@ -129,7 +130,7 @@
             <% end %>
           <% elsif !user.payout_method.present? %>
             <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
-              <div class="btn bg-info disabled">
+              <div class="btn bg-info disabled whitespace-nowrap">
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
@@ -150,7 +151,7 @@
             <% end %>
           <% end %>
         <% elsif !report.may_mark_submitted? && report.draft? %>
-          <div class="btn bg-info disabled">
+          <div class="btn bg-info disabled whitespace-nowrap">
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -170,7 +171,7 @@
             <% end %>
           </div>
         <% elsif report.draft? && report.currency == "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_cents, report.event) && !report.team_review_required? %>
-          <div class="btn bg-info disabled">
+          <div class="btn bg-info disabled whitespace-nowrap">
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -178,7 +179,7 @@
             <% end %>
           </div>
         <% elsif report.draft? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && !report.team_review_required? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance." } do %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning whitespace-nowrap", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance." } do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -186,7 +187,7 @@
             <% end %>
           <% end %>
         <% elsif report.initial_draft? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info", method: :post do %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -194,7 +195,7 @@
             <% end %>
           <% end %>
         <% elsif report.draft? %>
-          <button class="btn bg-info" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
+          <button class="btn bg-info whitespace-nowrap" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -212,7 +213,7 @@
             <% end %>
           </div>
         <% elsif report.may_mark_reimbursement_requested? && policy(report).request_reimbursement? %>
-          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
+          <%= link_to reimbursement_report_request_reimbursement_path(report), class: "btn bg-info whitespace-nowrap", data: { turbo_confirm: report.reimbursement_confirmation_message, turbo_method: :post } do %>
             <%= inline_icon "payment-transfer" %>
             Reimburse <%= report.amount_to_reimburse.format %>
           <% end %>
@@ -248,14 +249,14 @@
               <% end %>
             <% end %>
             <% if report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
-              <button class="btn bg-info" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
+              <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
               </button>
               <section data-behavior="modal" role="dialog" id="convert_to_wise_transfer" class="modal modal--scroll modal--wide bg-snow">
                 <%= modal_header "Process Wise reimbursement" %>
 
-                <button class="btn bg-info" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
+                <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="wise_approval" id="submit_button">
                   <%= inline_icon "attachment" %>
                   Preferred: Process as reimbursement report
                 </button>
@@ -295,14 +296,14 @@
                       Open <%= report.user.full_name %> on Wise
                     <% end %>
                   <% else %>
-                    <%= link_to "https://wise.com/send", class: "btn btn-small bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
+                    <%= link_to "https://wise.com/send", class: "btn btn-small !bg-[#9fe870] hover:brightness-90 text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank" do %>
                       <%= inline_icon "wise" %>
                       Open Wise
                     <% end %>
                   <% end %>
                 </div>
 
-                <%= render partial: "wise_information", locals: { report: } %>
+                <%= render partial: "reimbursement/reports/wise_information", locals: { report: } %>
 
                 <div class="flex flex-row items-start justify-start gap-2 my-4">
                   <span class="w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">2</span>
@@ -343,7 +344,7 @@
                 <% end %>
               </section>
             <% else %>
-              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info", method: :post, data: { turbo_confirm: } do %>
+              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
                 Approve <%= report.user.payout_method.human_kind %> reimbursement
               <% end %>
@@ -365,7 +366,7 @@
     <% end %>
   <% end %>
   <% if report.expenses.any? %>
-    <div class="card mt2 <%= "closed" if report.closed? || member_viewing %>">
+    <div class="card mt2 flex-1 <%= "closed" if report.closed? || member_viewing %>">
       <div id="summary">
         <div class="stat stat--small" style="flex-shrink: 0;">
           <span class="stat__label">Amount requested</span>
@@ -396,7 +397,7 @@
             <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
         <% end %>
-        <p class="mt0 mb0" id="summary-hint">
+        <p class="mt-1 mb0" id="summary-hint">
           <%= button_hint %>
         </p>
       </div>

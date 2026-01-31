@@ -4,7 +4,7 @@
   <%= modal_header "Followers" %>
   <ul class="grid gap-0 grid-cols-1 text-left w-full mt-2">
     <% event_follows.each do |event_follow| %>
-      <li class="overflow-visible flex flex-row justify-between items-center gap-2 last:!border-none py-1" style="border-bottom: 1px solid var(--smoke); ">
+      <li class="overflow-visible flex flex-row justify-between items-center gap-2 py-1 last:!border-none !border-neutral-200 dark:!border-gray-700" style="border-bottom: 1px solid">
         <span class="w-full flex gap-2 items-center align-middle">
           <%= user_mention event_follow.user %>
           <div class="flex-grow"></div>

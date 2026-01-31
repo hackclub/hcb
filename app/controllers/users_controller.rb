@@ -90,7 +90,7 @@ class UsersController < ApplicationController
 
   def logout_session
     begin
-      session = UserSession.find(params[:id])
+      session = User::Session.find(params[:id])
       authorize session.user
 
       session.update(signed_out_at: Time.now, expiration_at: Time.now)
@@ -369,6 +369,8 @@ class UsersController < ApplicationController
     # flash[:info] = "Verifying phone number"
     # redirect_to edit_user_path(current_user)
     render json: { message: "started verification successfully" }, status: :ok
+  rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   def complete_sms_auth_verification
@@ -384,6 +386,8 @@ class UsersController < ApplicationController
     # flash[:error] = "Invalid login code"
     # redirect_to edit_user_path(current_user)
     render json: { error: "invalid login code" }, status: :forbidden
+  rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   def toggle_sms_auth
@@ -394,6 +398,9 @@ class UsersController < ApplicationController
     else
       svc.enroll_sms_auth
     end
+    redirect_back_or_to security_user_path(current_user)
+  rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
+    flash[:error] = e.message
     redirect_back_or_to security_user_path(current_user)
   end
 

@@ -5,6 +5,10 @@ class EventPolicy < ApplicationPolicy
     user.present?
   end
 
+  def index_in_v4?
+    auditor_or_reader?
+  end
+
   # Event homepage
   def show?
     is_public || auditor_or_reader?
@@ -55,6 +59,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_member?
   end
 
+  def permit_merchant?
+    admin_or_member?
+  end
+
   def update?
     admin_or_manager?
   end
@@ -97,6 +105,10 @@ class EventPolicy < ApplicationPolicy
 
   def card_overview?
     show? && record.approved? && record.plan.cards_enabled?
+  end
+
+  def card_overview_in_v4?
+    show_in_v4? && card_overview?
   end
 
   def new_stripe_card?
@@ -151,6 +163,18 @@ class EventPolicy < ApplicationPolicy
     show? && record.plan.transfers_enabled?
   end
 
+  def transfers_in_v4?
+    show_in_v4? && transfers?
+  end
+
+  def card_grant_overview?
+    (is_public || auditor_or_reader?) && (record.plan.card_grants_enabled? || record.card_grants.any?)
+  end
+
+  def bulk_upload_card_grants?
+    admin_or_manager? && record.plan.card_grants_enabled?
+  end
+
   def promotions?
     auditor_or_reader?
   end
@@ -164,11 +188,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def employees?
-    auditor_or_reader?
+    auditor_or_reader? && Flipper.enabled?(:payroll_2025_02_13, record)
   end
 
   def sub_organizations?
     (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
+  end
+
+  def sub_organizations_in_v4?
+    auditor_or_reader? && sub_organizations?
   end
 
   def create_sub_organization?

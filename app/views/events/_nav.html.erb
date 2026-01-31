@@ -1,201 +1,33 @@
+<%= render "events/mobile_nav", selected: local_assigns[:selected] %>
+<% content_for(:header) do %>
+  <div class="flex gap-3 items-center lg:pt-4 flex-1">
+    <%= render partial: "logo" %>
+    <span class="-mx-1.5 text-xl opacity-40">/</span>
+    <%= render "events/title" %>
+  </div>
+<% end %>
+
 <% content_for(:nav) do %>
-  <%= render "events/title" %>
   <% if !@event&.demo_mode? %>
     <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
   <% end %>
 
-  <div>
-    <% admin_tool("m0 p0 badge mb2", "span") do %>
-      <span class="m0 badge bg-muted pointer" data-controller="clipboard" data-clipboard-text-value="<%= @event.name %>" data-action="click->clipboard#copy">
-        copy event name
-      </span>
+  <nav class="dock hidden sm:flex mt-4 font-medium">
+    <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>
+      <% if item[:section] %>
+        <span class="mx-1 dock__section"><%= item[:section] %></span>
+        <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <% else %>
+        <%= dock_item item[:name],
+            item[:path],
+            admin: item[:adminTool],
+            tooltip: item[:tooltip],
+            icon: item[:icon],
+            async_badge: item[:async_badge],
+            selected: item[:selected] %>
+      <% end %>
     <% end %>
-  </div>
-  <nav class="dock dock--desktop mt2 font-medium">
-    <%= dock_item "Home",
-                  event_path(id: @event.slug),
-                  tooltip: "See everything at-a-glance",
-                  icon: "home",
-                  selected: local_assigns[:selected] == :home if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && policy(@event).show? %>
-    <%= dock_item "Transactions",
-      event_transactions_path(event_id: @event.slug),
-      tooltip: "View your transactions",
-      icon: "transactions",
-      selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
-    <%= dock_item "Announcements",
-      event_announcement_overview_path(event_id: @event.slug),
-      tooltip: "View your announcements",
-      icon: "announcement",
-      selected: local_assigns[:selected] == :announcements if policy(@event).announcement_overview? %>
-    <% if policy(@event).activation_flow? %>
-      <% admin_tool("py0 pr0 overflow-visible w-fit") do %>
-        <%= dock_item "Activate",
-          event_activation_flow_path(event_id: @event.slug),
-          tooltip: "Activate this organization",
-          icon: "checkmark",
-          selected: local_assigns[:selected] == :activation_flow %>
-        <% end %>
-    <% end %>
-
-    <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
-      <h4 class="mb0 h5 font-medium muted">Receive</h4>
-      <hr>
-    <% end %>
-    <% if policy(@event).donation_overview? %>
-      <%= dock_item "Donations",
-        event_donation_overview_path(event_id: @event.slug),
-        tooltip: "Receive donations online",
-        icon: "support",
-        data: { tour_step: "donations" },
-        selected: local_assigns[:selected] == :donations %>
-    <% elsif @event.donation_page_available? %>
-      <%= dock_item "Donate",
-        start_donation_donations_path(event_name: @event.slug),
-        tooltip: "Support this organization",
-        icon: "support",
-        data: { tour_step: "donations" },
-        selected: local_assigns[:selected] == :donations %>
-    <% end %>
-    <%= dock_item "Invoices",
-      event_invoices_path(event_id: @event.slug),
-      tooltip: "Collect sponsor payments",
-      icon: "briefcase",
-      selected: local_assigns[:selected] == :invoices if policy(@event).invoices? %>
-    <%= dock_item "Account numbers",
-      account_number_event_path(@event),
-      tooltip: "Receive payouts from GoFundMe, Shopify, Venmo, and more",
-      icon: "bank-account",
-      selected: local_assigns[:selected] == :account_number if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-    <%= dock_item "Check deposits",
-      event_check_deposits_path(@event),
-      tooltip: "Deposit checks",
-      icon: "cheque",
-      selected: local_assigns[:selected] == :deposit_check if policy(@event.check_deposits.build).index? %>
-    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? %>
-      <h4 class="mb0 h5 font-medium muted">Spend</h4>
-      <hr>
-    <% end %>
-    <%= dock_item "Cards",
-      event_cards_overview_path(event_id: @event.slug),
-      tooltip: "Manage team HCB cards",
-      icon: "card",
-      data: { tour_step: "cards" },
-      selected: local_assigns[:selected] == :cards if policy(@event).card_overview? %>
-    <%= dock_item "Transfers",
-      event_transfers_path(event_id: @event.slug),
-      tooltip: "Send & transfer money",
-      icon: "payment-transfer",
-      selected: local_assigns[:selected] == :transfers if policy(@event).transfers? %>
-    <%= dock_item "Reimbursements",
-      event_reimbursements_path(event_id: @event.slug),
-      async_badge: event_reimbursements_pending_review_icon_path(@event),
-      tooltip: "Reimburse team members & volunteers",
-      icon: "attachment",
-      selected: local_assigns[:selected] == :reimbursements if policy(@event).reimbursements? %>
-    <%= dock_item "Contractors",
-      event_employees_path(event_id: @event.slug),
-      tooltip: "Manage payroll",
-      icon: "person-badge",
-      selected: local_assigns[:selected] == :payroll if Flipper.enabled?(:payroll_2025_02_13, @event) && policy(@event).employees? %>
-    <hr>
-    <%= dock_item "Team",
-      event_team_path(event_id: @event.slug),
-      tooltip: "Manage your team",
-      icon: "leader",
-      selected: local_assigns[:selected] == :team if policy(@event).show? %>
-    <%= if organizer_signed_in? && @event.approved?
-          dock_item "Perks",
-                event_promotions_path(event_id: @event.slug),
-                tooltip: (!policy(@event).promotions? ? "Your organization isn't eligible for promos and discounts." : "Receive promos & discounts"),
-                icon: "shirt",
-                data: { tour_step: "perks" },
-                disabled: !policy(@event).promotions?,
-                selected: local_assigns[:selected] == :promotions
-        end %>
-    <%= dock_item "Google #{content_tag(:span, 'Workspace', class: 'sm-hide md-hide')}",
-      event_g_suite_overview_path(event_id: @event.slug),
-      tooltip: (!policy(@event).g_suite_overview? ? "Your organization isn't eligible for Google Workspace." : @event.g_suites.any? ? "Manage domain Google Workspace" : Flipper.enabled?(:google_workspace, @event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"),
-      icon: "google",
-      disabled: !policy(@event).g_suite_overview?,
-      selected: local_assigns[:selected] == :google_workspace if organizer_signed_in? %>
-    <%= dock_item "Documents",
-      event_documents_path(event_id: @event.slug),
-      tooltip: "View legal documents and financial statements",
-      icon: "docs",
-      selected: local_assigns[:selected] == :documentation if policy(@event).documentation? %>
-    <%= dock_item "Sub-organizations",
-      event_sub_organizations_path(event_id: @event.slug),
-      tooltip: "Create & manage subsidiary organisations",
-      icon: "channels",
-      selected: local_assigns[:selected] == :sub_organizations if policy(@event).sub_organizations? %>
-    <%= dock_item "Settings",
-      edit_event_path(@event),
-      tooltip: "Edit organization settings",
-      icon: "settings",
-      disabled: !policy(@event).edit?,
-      selected: local_assigns[:selected] == :settings if organizer_signed_in?(as: :member) %>
-  </nav>
-  <nav class="dock dock--mobile">
-    <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !@event.demo_mode? && policy(@event).show? %>
-      <%= dock_item "Home",
-          event_path(id: @event.slug),
-          tooltip: "See everything at-a-glance",
-          icon: "home",
-          selected: local_assigns[:selected] == :home %>
-    <% end %>
-    <%= dock_item "Transactions",
-      event_transactions_path(event_id: @event.slug),
-      icon: "transactions",
-      selected: local_assigns[:selected] == :transactions if policy(@event).transactions? %>
-    <% if policy(@event).donation_overview? || policy(@event).invoices? || policy(@event).account_number? || policy(@event.check_deposits.build).index? %>
-      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:donations, :invoices, :account_number, :deposit_check] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="receive">
-        <div class="line-height-0 relative"><%= inline_icon "support", size: 32, class: "primary" %></div>
-        <span class="line-height-3">Receive</span>
-
-        <div class="menu__content" data-behavior="menu_content">
-          <h4 class="mb0 h5 muted left-align pl1 mt1">Receive</h4>
-          <div class="menu__divider"></div>
-          <% if policy(@event).donation_overview? %>
-            <%= link_to "Donations", event_donation_overview_path(@event) %>
-          <% elsif @event.donation_page_available? %>
-            <%= link_to "Donate", start_donation_donations_path(event_name: @event.slug) %>
-          <% end %>
-          <%= link_to "Invoices", event_invoices_path(@event) if policy(@event).invoices? %>
-          <%= link_to "Account numbers", account_number_event_path(@event) if policy(@event).account_number? && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-          <%= link_to "Check deposits", event_check_deposits_path(@event) if policy(@event.check_deposits.build).index? %>
-        </div>
-      </button>
-    <% end %>
-    <% if policy(@event).transfers? || policy(@event).reimbursements? || policy(@event).card_overview? %>
-      <button class="dock__item <%= "dock__item--selected" if local_assigns[:selected].in? [:cards, :transfers] %> bg-transparent border-none menu__toggle" data-behavior="menu_toggle" data-tour-step="spend">
-        <div class="line-height-0 relative"><%= inline_icon "card", size: 32, class: "primary" %></div>
-        <span class="line-height-3">Spend</span>
-
-        <div class="menu__content" data-behavior="menu_content">
-          <h4 class="mb0 h5 muted left-align pl1 mt1">Spend</h4>
-          <div class="menu__divider"></div>
-          <%= link_to "Cards", event_cards_overview_path(@event) if policy(@event).card_overview? %>
-          <%= link_to "Transfers", event_transfers_path(@event) if policy(@event).transfers? %>
-          <%= link_to "Reimbursements", event_reimbursements_path(@event) if policy(@event).reimbursements? %>
-        </div>
-      </button>
-    <% end %>
-    <button class="dock__item bg-transparent border-none menu__toggle" data-behavior="menu_toggle">
-      <div class="line-height-0 relative"><%= inline_icon "more", size: 32, class: "primary" %></div>
-      <span class="line-height-3">More</span>
-
-      <div class="menu__content" data-behavior="menu_content">
-        <h4 class="mb0 h5 muted left-align pl1 mt1">More</h4>
-        <div class="menu__divider"></div>
-        <%= link_to "Announcements", event_announcement_overview_path(event_id: @event.slug) if policy(@event).announcement_overview? %>
-        <%= link_to "Team", event_team_path(event_id: @event.slug) if policy(@event).show? %>
-        <%= link_to "Promotions & perks", event_promotions_path(event_id: @event.slug) if policy(@event).promotions? %>
-        <%= link_to "Google Workspace", event_g_suite_overview_path(event_id: @event.slug) if policy(@event).g_suite_overview? %>
-        <%= link_to "Documents", event_documents_path(event_id: @event.slug) if policy(@event).documentation? %>
-        <%= link_to "Sub-organizations", event_sub_organizations_path(event_id: @event.slug) if policy(@event).sub_organizations? %>
-        <%= link_to "Settings", edit_event_path(@event) if organizer_signed_in?(as: :member) %>
-      </div>
-    </button>
+    <%= render partial: "events/settings_dropdown" %>
   </nav>
 <% end %>
 <% content_for(:container) do %>

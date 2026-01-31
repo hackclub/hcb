@@ -1,19 +1,12 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "edit_nav", active: "actions" %>
+  <%= render "card_grants/edit_nav", active: "actions" %>
 
 <% if @card_grant.active? %>
-  <div class="mt3 grid gap-8 *:self-center max-lg:!grid-cols-[1fr] lg:!grid-cols-[max-content 1fr]">
-      <p class="my-0">Freeze this card to prevent further transaction activity. The card cannot be used again until defrosted by an organizer.</p>
-      <div class="w-max lg:justify-self-end lg:*:w-full"><%= render "stripe_cards/actions/freeze", stripe_card: @card_grant.stripe_card %></div>
-      <p class="my-0">By making a card one-time-use, the card will automatically lock after the recipient makes a purchase. The card cannot be used afterwards until defrosted by an organizer.</p>
-      <div class="w-max lg:justify-self-end lg:*:w-full"><%= render "card_grants/actions/toggle_one_time_use", card_grant: @card_grant %></div>
-      <p class="my-0">Converting to a reimbursement report allows the recipient to upload receipts and be reimbursed for purchases that have already happened. This will cancel the grant card.</p>
-      <div class="w-max lg:justify-self-end lg:*:w-full"><%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: @card_grant, label: @card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report" %></div>
-      <p class="my-0">Canceling the card will immediately return funds back to <%= @card_grant.event.name %>.
-      <div class="w-max lg:justify-self-end lg:*:w-full"><%= render "card_grants/actions/cancel", card_grant: @card_grant %></div>
-      <p class="my-0">If you've decided you no longer need to require pre-authorization for this grant, you can turn it off.</p>
-      <div class="w-max lg:justify-self-end lg:*:w-full"><%= render "card_grants/actions/disable_pre_authorization", card_grant: @card_grant %></div>
-  </div>
+    <%= render "stripe_cards/actions/freeze", stripe_card: @card_grant.stripe_card, label: "Freeze this card to prevent further transaction activity. The card cannot be used again until defrosted by an organizer." %>
+    <%= render "card_grants/actions/toggle_one_time_use", card_grant: @card_grant, label: "By making a card one-time-use, the card will automatically lock after the recipient makes a purchase. The card cannot be used afterwards until defrosted by an organizer." %>
+    <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: @card_grant, label: @card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report", subtitle: "Converting to a reimbursement report allows the recipient to upload receipts and be reimbursed for purchases that have already happened. This will cancel the grant card." %>
+    <%= render "card_grants/actions/cancel", card_grant: @card_grant, label: "Canceling the card will immediately return funds back to #{@card_grant.event.name}." %>
+    <%= render "card_grants/actions/disable_pre_authorization", card_grant: @card_grant, label: "If you've decided you no longer need to require pre-authorization for this grant, you can turn it off." %>
 <% end %>
 
 </turbo-frame>

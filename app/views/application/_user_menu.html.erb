@@ -1,0 +1,49 @@
+<div class="lg:w-72 px-3 gap-2 flex flex-col lg:p-1">
+  <div class="flex flex-row-reverse lg:flex-row items-center gap-2">
+    <div data-controller="menu" class="flex flex-1 min-w-1" data-menu-placement-value="bottom-end">
+      <% if signed_in? %>
+        <button
+          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          data-menu-target="toggle"
+          class="dock__item user-menu-trigger max-w-full !shadow-none lg:ml-2">
+          <%= avatar_for current_user, size: 28 if current_user %>
+          <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
+            <span class="truncate"><%= @current_user.name %></span>
+            <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= @current_user.email %></span>
+          </div>
+        </button>
+        <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 -mt-2 lg:mt-2 h5" data-menu-target="content" style="z-index: 999;">
+          <%= render partial: "application/theme_toggle" %>
+          <hr>
+          <% if signed_in? %>
+            <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
+            <%= link_to my_settings_path do %>
+              <%= inline_icon "settings", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
+              Settings
+            <% end %>
+            <%= link_to logout_users_path, method: :delete do %>
+              <%= inline_icon "door-leave", size: 23 %>
+              Sign out
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <%= link_to auth_users_path, class: "dock__item user-menu-trigger max-w-full" do %>
+          <%= inline_icon "door-enter", size: 28 %>
+          <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
+            <span class="truncate">Sign in</span>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="flex items-center -mr-2 lg:mr-1.5">
+      <%= render "application/support_button" unless @no_app_shell %>
+      <% if signed_in? %>
+        <%= render partial: "application/blog_widget" %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<%= render "application/command_bar" %>

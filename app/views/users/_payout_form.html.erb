@@ -1,6 +1,15 @@
 <%= form_with model: user, html: {
       "x-data": "{ country: #{user.payout_method.instance_of?(User::PayoutMethod::Wire) ? "'#{user.payout_method.recipient_country}'" : "null"} }"
     } do |form| %>
+  <% if user.full_name.blank? %>
+    <div class="heading h3 pb2 bold">Firstly, we need to know your name:</div>
+    <div class="field">
+      <%= form.label :full_name, "Your full legal name" %>
+      <%= form.text_field :full_name, required: true, placeholder: "Fiona Hacksworth" %>
+      <span class="muted">This should match the name on your bank account and will be printed on any checks issued to you.</span>
+    </div>
+  <% end %>
+
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options mb-4" style="max-width: none;">
@@ -22,9 +31,9 @@
       <%= user.payout_method.errors.full_messages.to_sentence %>.
     </p>
   <% end %>
-  <section data-behavior="check_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Check) %>">
     <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::Check) ? user.payout_method : User::PayoutMethod::Check.new do |form| %>
-      <%= render "callout",
+      <%= render "application/callout",
         type: "info",
         icon: "email",
         title: "Important information about mailed checks",
@@ -71,9 +80,9 @@
     <% end %>
   </section>
 
-  <section data-behavior="wire_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
+  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::Wire) %>">
     <%= form.fields_for :payout_method_wire, user.payout_method.instance_of?(User::PayoutMethod::Wire) ? user.payout_method : User::PayoutMethod::Wire.new do |form| %>
-      <%= render "callout",
+      <%= render "application/callout",
         type: "info",
         icon: "web",
         title: "Important information about Wire reimbursements",
@@ -95,9 +104,9 @@
   </section>
 
   <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-    <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= user.payout_method.try(:currency) ? "'#{user.payout_method.currency}'" : "null" %>, amount: null, account_type: <%= user.payout_method.try(:account_type) ? "'#{user.payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= user.payout_method.try(:use_same_email_for_interac) ? "'#{user.payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+    <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= user.payout_method.try(:currency) ? "'#{user.payout_method.currency}'" : "null" %>, amount: null, account_type: <%= user.payout_method.try(:account_type) ? "'#{user.payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= user.payout_method.try(:use_same_email_for_interac) ? "'#{user.payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
       <%= form.fields_for :payout_method_wise_transfer, user.payout_method.instance_of?(User::PayoutMethod::WiseTransfer) ? user.payout_method : User::PayoutMethod::WiseTransfer.new do |form| %>
-        <%= render "callout",
+        <%= render "application/callout",
           type: "info",
           icon: "wise",
           title: "Important information about Wise reimbursements",
@@ -124,12 +133,12 @@
     </section>
   <% end %>
 
-  <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
-    <%= render "callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
+  <section data-behavior="paypal_transfer_payout_method_inputs" class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::PaypalTransfer) %>">
+    <%= render "application/callout", type: "error", title: "Due to integration issues, transfers via PayPal are currently unavailable.", footer: :questions do %>
       Please update your payout method to either an ACH transfer or a mailed check.
     <% end %>
 
-    <%= render "callout",
+    <%= render "application/callout",
         type: "info",
         title: "Important info about PayPal reimbursements" do %>
         <p>PayPal will charge domestic recipients 3% on the money sent to them via a HCB reimbursement.</p>
@@ -161,7 +170,7 @@
   <% end %>
   <section
     data-behavior="ach_transfer_payout_method_inputs"
-    class="<%= "display-none-not-important" unless user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>"
+    class="<%= "hidden" unless user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) %>"
     x-data="
     {
       routingNumber: '<%= errored ? r_no : obfuscated_routing_number %>',
@@ -180,7 +189,7 @@
       }
     }">
     <%= form.fields_for :payout_method, user.payout_method.instance_of?(User::PayoutMethod::AchTransfer) ? user.payout_method : User::PayoutMethod::AchTransfer.new do |form| %>
-      <%= render "callout",
+      <%= render "application/callout",
         type: "info",
         icon: "payment-transfer",
         title: "Important information about ACH transfers",

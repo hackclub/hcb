@@ -1,0 +1,55 @@
+<% if organizer_signed_in? %>
+  <details class="dock" <%= "open" if @settings_tab.present? || local_assigns[:selected] == :settings %>>
+    <summary class="dock__item bg-none tooltipped tooltipped--e" aria-label="Edit organization settings">
+      <%= inline_icon "switches-mixed", size: 35, class: "ml-1 -mr-1" %>
+      <span class="-ml-1">Settings</span>
+      <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
+    </summary>
+    <%= dock_item "Organization",
+                  edit_event_path(@event, tab: "details"),
+                  selected: @settings_tab == "details" || (@settings_tab.nil? && local_assigns[:selected] == :settings),
+                  data: { turbo: true, turbo_action: "advance" } %>
+    <% unless @event.unapproved? %>
+      <%= dock_item "Donations",
+                    edit_event_path(@event, tab: "donations"),
+                    selected: @settings_tab == "donations",
+                    data: { turbo: true, turbo_action: "advance" } %>
+      <%= dock_item "Reimbursements",
+                    edit_event_path(@event, tab: "reimbursements"),
+                    selected: @settings_tab == "reimbursements",
+                    data: { turbo: true, turbo_action: "advance" } %>
+      <% if @event.plan.card_grants_enabled? %>
+        <%= dock_item "Card grants",
+                      edit_event_path(@event, tab: "card_grants"),
+                      tooltip: "Manage card grants",
+                      selected: @settings_tab == "card_grants",
+                      data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
+    <% end %>
+    <%= dock_item "Tags",
+                    edit_event_path(@event, tab: "tags"),
+                    selected: @settings_tab == "tags",
+                    data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Affiliations",
+                    edit_event_path(@event, tab: "affiliations"),
+                    selected: @settings_tab == "affiliations",
+                    data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Integrations",
+                    edit_event_path(@event, tab: "integrations"),
+                    selected: @settings_tab == "integrations",
+                    data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Feature previews",
+                  edit_event_path(@event, tab: "features"),
+                  selected: @settings_tab == "features",
+                  data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Audit log",
+                  edit_event_path(@event, tab: "audit_log"),
+                  selected: @settings_tab == "audit_log",
+                  data: { turbo: true, turbo_action: "advance" } %>
+    <%= dock_item "Admin",
+                  edit_event_path(@event, tab: "admin"),
+                  admin: true,
+                  selected: @settings_tab == "admin",
+                  data: { turbo: true, turbo_action: "advance" } %>
+  </details>
+<% end %>

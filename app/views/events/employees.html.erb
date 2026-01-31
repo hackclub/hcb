@@ -2,11 +2,13 @@
 <% page_md %>
 <%= render "events/nav", selected: :payroll %>
 
-<h1 class="heading flex">
+<h1 class="heading flex mb-0 border-0">
   <span class="flex-grow">Contractors</span>
-  <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
-    <%= inline_icon "plus" %>
-    Invite a contractor
+  <% if policy(@event.employees.build).new? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+      <%= inline_icon "plus" %>
+      Invite a contractor
+    <% end %>
   <% end %>
 </h1>
 
@@ -51,11 +53,11 @@
   <h2 class="w-full text-left mt-8 pb-0 border-none">All contractors</h2>
 <% end %>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1 my-3 w-full sm:w-auto") do |form| %>
-    <%= render "search", form: %>
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-3">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/search", form: %>
   <% end %>
-  <div style="text-align: center;">
+  <div class="filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["terminated", "onboarding"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Onboarding", "?filter=onboarding", class: "filterbar__item", "aria-selected": params[:filter] == "onboarding", role: "tab" %>
     <%= link_to "Terminated", "?filter=terminated", class: "filterbar__item", "aria-selected": params[:filter] == "terminated", role: "tab" %>

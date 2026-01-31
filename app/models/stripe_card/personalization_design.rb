@@ -27,7 +27,13 @@
 #
 class StripeCard
   class PersonalizationDesign < ApplicationRecord
+    DEFAULT_STRIPE_ID = "311"
+
     has_paper_trail
+
+    def self.default
+      find_by(id: DEFAULT_STRIPE_ID)
+    end
 
     include HasStripeDashboardUrl
     has_stripe_dashboard_url "issuing/personalization-designs", :stripe_id

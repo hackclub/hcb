@@ -1,5 +1,4 @@
 <% instance = expense.id %>
-
 <%= turbo_frame_tag "receipts_for_#{expense.id}" do %>
   <div class="w-100 h-100 flex">
     <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
@@ -22,7 +21,6 @@
           button.attr('disabled', 'disabled');
         "
       }) do |form| %>
-
       <% if expense.is_fee? %>
         <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
       <% elsif expense.receipts.any? %>
@@ -59,12 +57,9 @@
           <p class="center muted mt0 mb0">Or drag & drop your receipt here</p>
         </div>
       <% end %>
-
       <%= form.hidden_field :upload_method, value: "expense_report", data: { "file-drop-target" => "uploadMethod" } %>
-
       <%= form.hidden_field :receiptable_type, value: expense.class %>
       <%= form.hidden_field :receiptable_id, value: expense.id %>
-
       <%= form.file_field :file,
                           id: "file_#{expense.id}",
                           direct_upload: true,
@@ -77,11 +72,9 @@
                             "file-drop-target" => "fileInput",
                             "action"           => "change->form#submit"
                           } %>
-
     <% end %>
   </div>
 <% end %>
-
 <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
   <%= modal_header "Select receipt" %>
   <%= turbo_frame_tag "link_modal_#{expense.id}", src: link_modal_receipts_path(receiptable_type: "Reimbursement::Expense", receiptable_id: expense.id, streams: false) do %>

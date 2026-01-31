@@ -2,29 +2,33 @@
 <% page_md %>
 <% auto_discover_feed(@event) %>
 <%= render "events/nav", selected: :announcements %>
-<%= render "followers_modal", event_follows: @event.event_follows %>
 
-<h1 class="flex heading items-center">
-  <span class="flex-grow flex items-center flex-1">
+<h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
+  <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
     Announcements
-    <%= link_to event_feed_path(@event, format: :atom), class: "muted tooltipped tooltipped--e ml-2", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
-      <%= inline_icon "rss", size: 30 %>
-    <% end %>
-    <% if organizer_signed_in?(as: :reader) && @event.followers.any? %>
+    <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
+    <%= render "events/followers_modal", event_follows: @event.event_follows if show_followers_modal %>
+    <% if show_followers_modal %>
       <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
         <%= inline_icon "person", size: 20 %>
         <%= pluralize(@event.followers.count, "follower") %>
       <% end %>
     <% end %>
+    </span>
   </span>
 
-  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-  <% if organizer_signed_in?(as: :member) %>
-    <%= link_to event_announcements_new_path(@event), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
-      <%= inline_icon "plus" %>
-      Create
+  <div class="mt-1 sm:mt-0 flex items-center gap-2">
+    <%= link_to event_feed_path(@event, format: :atom), class: "pop tooltipped tooltipped--s", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
+      <%= inline_icon "rss", size: 30 %>
     <% end %>
-  <% end %>
+    <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_announcements_new_path(@event), class: "btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
+        <%= inline_icon "plus" %>
+        Create
+      <% end %>
+    <% end %>
+    </div>
 </h1>
 
 <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
@@ -32,15 +36,15 @@
   <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
 
   <% if @monthly_announcement.template_draft? && (DateTime.now > DateTime.now.end_of_month - 1.week) %>
-    <%= render "callout", type: "error", title: "Your scheduled monthly announcement is canceled", footer: :questions do %>
+    <%= render "application/callout", type: "error", title: "Your scheduled monthly announcement will be skipped", footer: :questions do %>
       <ul>
-        <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> has been canceled.</li>
+        <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> will be skipped.</li>
         <li>If you would like to keep this monthly announcement, <%= link_to "edit it", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
         <li>You can also disable sending monthly announcements in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
       </ul>
     <% end %>
   <% elsif !@monthly_announcement.published? %>
-    <%= render "callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
+    <%= render "application/callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
       <ul>
         <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
         <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
@@ -57,7 +61,7 @@
         It's quiet here...
       </h3>
       <% if organizer_signed_in?(as: :manager) %>
-        <p class="text-gray-500 my-1 max-w-sm">
+        <p class="text-gray-500 my-1 max-w-xs ">
           Create a new announcement to keep your followers up to date!
         </p>
         <% unless @event.is_public %>

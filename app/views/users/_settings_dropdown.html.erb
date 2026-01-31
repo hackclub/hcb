@@ -1,0 +1,36 @@
+<details class="dock" <%= "open" if local_assigns[:open] %>>
+  <summary class="dock__item tooltipped tooltipped--e" aria-label="Edit account settings">
+    <%= inline_icon "settings", size: 30, style: "padding: 0" %>
+    <span class="flex-grow">
+      Settings
+    </span>
+    <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
+  </summary>
+  <% use_my_path = (@user == current_user) || @user.nil? || !local_assigns[:open] %>
+  <%= dock_item "Account",
+                use_my_path ? my_settings_path : edit_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_home && local_assigns[:open] %>
+  <%= dock_item "Notifications",
+                use_my_path ? settings_notifications_path : notifications_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_notifications && local_assigns[:open] %>
+  <% if (@user || current_user)&.stripe_cardholder.present? %>
+    <%= dock_item "Billing address",
+                  use_my_path ? settings_address_path : address_user_path(@user || current_user),
+                  selected: local_assigns[:selected] == :settings_billing_address && local_assigns[:open] %>
+  <% end %>
+  <%= dock_item "Reimbursement payouts",
+                use_my_path ? settings_payouts_path : payouts_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_reimbursement_payouts && local_assigns[:open] %>
+  <%= dock_item "Security",
+                use_my_path ? settings_security_path : security_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_security && local_assigns[:open] %>
+  <%= dock_item "Feature previews",
+                use_my_path ? settings_previews_path : previews_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_feature_previews && local_assigns[:open] %>
+  <%= dock_item "Integrations",
+                use_my_path ? settings_integrations_path : integrations_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_integrations && local_assigns[:open] %>
+  <%= dock_item "Admin",
+                use_my_path ? settings_admin_path : admin_user_path(@user || current_user),
+                selected: local_assigns[:selected] == :settings_admin && local_assigns[:open], admin: true %>
+</details>

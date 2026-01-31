@@ -38,12 +38,12 @@
           <% if event.logo.attached? %>
             <div style="display: flex; gap: 8px; align-items: center;">
               <%= image_tag event.logo, height: 24, width: 24, class: "rounded display-inline align-bottom" %>
-              <strong class="h3 line-height-2 display-inline">
+              <strong class="h3 leading-[1.125] display-inline">
                 <%= event.name %>
               </strong>
             </div>
           <% else %>
-            <strong class="h3 line-height-2 display-inline">
+            <strong class="h3 leading-[1.125] display-inline">
               <%= event.name %>
             </strong>
           <% end %>
@@ -54,7 +54,7 @@
         <% if event.demo_mode? %>
           <div class="badge bg-info ml0 mb2" style="width: fit-content;">Playground Mode</div>
         <% end %>
-        <div class="h4 line-height-2 mb2 flex justify-between item-center">
+        <div class="h4 leading-[1.125] mb2 flex justify-between item-center">
           <span style="white-space: nowrap; gap: 4px;" class="flex items-center">
             <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
             <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>

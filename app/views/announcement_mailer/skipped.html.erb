@@ -1,0 +1,22 @@
+<p>
+  Hey<%= " all" if @emails.size > 1 %>,
+</p>
+
+<% scheduled_for_string = @scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}") %>
+
+<p>
+  Your monthly announcement that was scheduled to send on <%= scheduled_for_string %>
+  has been skipped since there is no recent activity to show in this announcement.
+</p>
+
+<p>
+  If you would like, you can keep this monthly announcement to be sent on <%= scheduled_for_string %> by <%= link_to "editing it on HCB", edit_announcement_url(@announcement) %>.
+</p>
+
+<%= render "announcement_mailer/explanation" %>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

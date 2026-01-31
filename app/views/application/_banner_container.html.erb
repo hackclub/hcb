@@ -1,0 +1,56 @@
+<div class="banner-container">
+  <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
+    <div class="w-100 px4 !bg-red transparency-banner px-4">
+      <p class="h5 medium center py-2 my-0 text-white text-xl">
+        ⚠️ Admin users are required to
+        <%= link_to("enable two-factor authentication", settings_security_path, class: "text-inherit") %>
+      </p>
+    </div>
+  <% end %>
+  <% if current_session&.impersonated? %>
+    <div class="w-100 px4 bg-white transparency-banner px-4">
+      <p class="h5 medium center py-2 my-0">
+        <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+      </p>
+    </div>
+  <% end %>
+  <% if current_user&.cards_locked? %>
+    <div class="w-100 px4 bg-white transparency-banner px-4">
+      <p class="h5 medium center py-2 my-0">
+        Your cards are currently locked because you have 10 or more missing receipts. <%= link_to "Manage your receipts", my_inbox_path %>
+      </p>
+    </div>
+  <% end %>
+  <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
+    <div class="w-100 px3 bg-white transparency-banner px-4" data-behavior="hide_iframe">
+      <p class="h5 font-medium text-center text-balance py-2 my-0">
+        This HCB organization has made their finances public.
+        Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=hcb-transparency&utm_content=banner", target: "_blank", class: "primary" %>
+      </p>
+    </div>
+  <% end %>
+
+  <% if @event&.financially_frozen? && !@no_app_shell && !@no_transparency_header %>
+    <% if @event.plan.is_a?(Event::Plan::Terminated) %>
+      <div class="w-full dev-banner dev-banner--info no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <p class="font-bold text-xl m0"><%= @event.name %> has been terminated, thanks for working with HCB!</p>
+        </div>
+      </div>
+    <% elsif @event&.contracts&.any? && @event&.contracts&.signed&.none? %>
+      <div class="w-full dev-banner dev-banner--info no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <p class="font-bold text-xl m0">
+            <%= @event.name %> is currently inactive on HCB; to activate the organization, a fiscal sponsorship contract must be signed.
+          </p>
+        </div>
+      </div>
+    <% else %>
+      <div class="w-full dev-banner no-underline">
+        <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
+          <p class="font-bold text-xl m0">⚠️ <%= @event.name %> is currently financially frozen, all incoming and outgoing transactions will be blocked.</p>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

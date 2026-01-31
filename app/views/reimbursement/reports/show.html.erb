@@ -23,13 +23,13 @@
       <span class="mr1 badge bg-muted">Review requested from <%= @report.reviewer.initial_name %></span>
     <% end %>
     <span class="ml0 badge bg-<%= @report.status_color %>"><%= @report.status_text %></span>
-    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;" do %>
+    <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;padding:0" do %>
       <%= link_to reimbursements_admin_index_path, class: "flex items-center justify-center", style: "transform: translateY(1px);" do %>
         <%= inline_icon "list", size: 28, color: "#ff8c37" %>
       <% end %>
     <% end %>
     <% if @report.payout_holding&.failed? %>
-      <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;", 'aria-label': "Cancel this reimbursement" do %>
+      <% admin_tool "w-fit p0 tooltipped tooltipped--w overflow-visible", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;padding:0", 'aria-label': "Cancel this reimbursement" do %>
         <%= link_to reimbursement_report_reverse_path(@report), class: "flex items-center justify-center", style: "transform: translateY(1px);", method: :post, data: { confirm: "After cancelling a reimbursement report, the user will NOT BE REIMBURSED. Only do this if we are no longer going to reimburse them." } do %>
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
@@ -45,6 +45,14 @@
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
                       'aria-label': "Delete this report.",
                       disabled: !policy(@report).destroy? %>
+    <% end %>
+    <% if @report.card_grant.present? %>
+      <%= pop_icon_to "card",
+                      @report.card_grant,
+                      icon_size: 26,
+                      class: "tooltipped tooltipped--w bg-info",
+                      style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
+                      'aria-label': "View the associated card grant." %>
     <% end %>
     <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
@@ -62,9 +70,9 @@
   </h2>
 </div>
 
-<section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow">
+<section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
-  <%= render "edit_form" %>
+  <%= render "reimbursement/reports/edit_form" %>
 </section>
 
 <section data-behavior="modal" role="dialog" id="request_changes" class="modal modal--scroll bg-snow">
@@ -173,7 +181,7 @@
       </strong>
     </div>
 
-    <%= render partial: "wise_information", locals: { report: @report } %>
+    <%= render partial: "reimbursement/reports/wise_information", locals: { report: @report } %>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <%= form_with(model: false, local: true, url: reimbursement_report_admin_send_wise_transfer_path(@report), method: :post) do |form| %>
@@ -206,12 +214,12 @@
 <% end %>
 
 <div id="expenses">
-  <%= render partial: "expenses", locals: { report: @report } %>
-  <%= render partial: "blankslate", locals: { report: @report } %>
+  <%= render partial: "reimbursement/reports/expenses", locals: { report: @report } %>
+  <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 
 <% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
-  <%= render "callout",
+  <%= render "application/callout",
       type: "info",
       icon: "wise",
       title: "Important information about Wise reimbursements",
@@ -235,9 +243,15 @@
   <% end %>
 <% end %>
 
-<%= render partial: "actions", locals: { report: @report, user: @user } %>
+<%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
-<%= render partial: "conversation" %>
+<% admin_tool("mt-4 p-3") do %>
+  <%= error_boundary fallback_text: "Failed to load payout information" do %>
+    <%= render partial: "reimbursement/reports/payout_information", locals: { report: @report } %>
+  <% end %>
+<% end %>
+
+<%= render partial: "reimbursement/reports/conversation" %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add payout information" %>

@@ -2,12 +2,10 @@
 <% page_md %>
 <% disabled = !policy(@user).update? %>
 
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_billing_address %>
+
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "address" %>
+  <%= render "settings_header", active: "address" %>
   <section>
     <p class="muted mt0 mb2">
       Merchants use this address to verify your identity on card transactions.

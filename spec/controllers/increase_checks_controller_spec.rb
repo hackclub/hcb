@@ -74,7 +74,7 @@ RSpec.describe IncreaseChecksController do
 
       post(:create, params:)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(response.body).to include("Confirm Access")
       expect(event.increase_checks).to be_empty
 

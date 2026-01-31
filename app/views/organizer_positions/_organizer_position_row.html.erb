@@ -1,26 +1,24 @@
 <tr>
   <td>
-    <div class="flex flex-wrap">
-      <%= format_date(organizer_position.created_at) %>
-      <% if auditor_signed_in? %>
-        <br>
-        <div class="warning m0">
-          Last active:
-          <% if organizer_position.user.last_seen_at.present? %>
-            <%= format_date(organizer_position.user.last_seen_at) %>
-          <% else %>
-            unknown
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+    <%= format_date(organizer_position.created_at) %>
+    <% if auditor_signed_in? %>
+      <br>
+      <div class="warning m0">
+        Last active:
+        <% if organizer_position.user.last_seen_at.present? %>
+          <%= format_date(organizer_position.user.last_seen_at) %>
+        <% else %>
+          unknown
+        <% end %>
+      </div>
+    <% end %>
   </td>
   <td>
     <%= user_mention organizer_position.user %>
   </td>
   <td><%= organizer_position.role.humanize %></td>
   <td>
-    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : "user@example.com", class: "inline-flex items-center g1 line-height-0") do %>
+    <%= copy_to_clipboard(organizer_signed_in? ? organizer_position.user.email : "user@example.com", class: "#{organizer_signed_in? ? "" : "pointer-events-none"} inline-flex items-center g1 line-height-0") do %>
       <%= inline_icon("email", size: 20) %>
       <%= organizer_signed_in? ? organizer_position.user.email : "Hidden" %>
     <% end %>
@@ -34,29 +32,26 @@
     <% end %>
   </td>
   <td>
-    <div class="flex items-center gap-4 justify-end">
+    <div class="flex items-center gap-2 justify-end">
     <% if admin_signed_in? %>
-      <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.organizer_position_contract.present? ? organizer_position.organizer_position_invite.organizer_position_contract.signed? ? "Contract signee" : "Pending signature, click to manage." : "No contract signature") %>">
+      <div class="line-height-0 tooltipped tooltipped--w" aria-label="<%= (organizer_position.organizer_position_invite.contract.present? ? organizer_position.organizer_position_invite.contract.signed? ? "Contract signee" : "Pending signature, click to manage." : "No contract signature") %>">
         <div class="warning">
-          <% if organizer_position.organizer_position_invite.organizer_position_contract&.signed? %>
-            <%= link_to organizer_position.organizer_position_invite.organizer_position_contract.document || event_documents_path(event: organizer_position.event), class: "success", data: { turbo_frame: "_top" } do %>
+          <% if organizer_position.organizer_position_invite.contract&.signed? %>
+            <%= link_to organizer_position.organizer_position_invite.contract.document || event_documents_path(event: organizer_position.event), class: "success", data: { turbo_frame: "_top" } do %>
               <%= inline_icon("docs-positive", size: 24) %>
             <% end %>
-          <% elsif organizer_position.organizer_position_invite.organizer_position_contract&.present? %>
+          <% elsif organizer_position.organizer_position_invite.contract&.present? %>
             <div data-controller="menu" data-menu-placement-value="bottom-start">
               <div class="primary pointer" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
                 <%= inline_icon("clock", size: 24) %>
               </div>
               <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                <%= link_to void_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
+                <%= link_to void_contract_path(organizer_position.organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
                   Void this contract
                 <% end %>
-                <%= link_to resend_to_user_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
-                  Resend to the user
-                <% end %>
-                <% if organizer_position.organizer_position_invite.organizer_position_contract.cosigner_email.present? %>
-                  <%= link_to resend_to_cosigner_organizer_position_contract_path(organizer_position.organizer_position_invite.organizer_position_contract), data: { turbo_method: :post } do %>
-                    Resend to the cosigner
+                <% organizer_position.organizer_position_invite.contract.parties.reject { |party| party.role == "hcb" }.each do |party| %>
+                  <%= link_to resend_contract_party_path(party), data: { turbo_method: :post } do %>
+                    Resend to the <%= party.role %>
                   <% end %>
                 <% end %>
               </div>
@@ -67,19 +62,19 @@
             <% end %>
             <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position.organizer_position_invite.id %>">
               <%= modal_header "Send a contract" %>
-              <%= render "organizer_position_contract/form", organizer_position_contract: OrganizerPosition::Contract.new(organizer_position_invite_id: organizer_position.organizer_position_invite.id) %>
+              <%= render "organizer_position_invites/contract_form", opi: organizer_position.organizer_position_invite %>
             </section>
           <% end %>
         </div>
       </div>
     <% end %>
-    <% if admin_signed_in? %>
+    <% if auditor_signed_in? %>
       <div class="tooltipped tooltipped--s" aria-label="Edit user's settings">
-        <%= pop_icon_to "controls", edit_user_path(organizer_position.user.slug), data: { turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+        <%= pop_icon_to "settings", admin_user_path(organizer_position.user), data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
       </div>
-      <% unless organizer_position.user == current_user || current_session&.impersonated? %>
+      <% unless organizer_position.user == current_user || current_session&.impersonated? || !admin_signed_in? %>
         <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
-          <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools rounded-full overflow-hidden" %>
+          <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
         </div>
       <% end %>
     <% end %>

@@ -7,7 +7,8 @@
     outline: none;
 
     &:not(.menu__toggle--arrowless):after {
-      bottom: -1px;
+      bottom: -15px;
+      animation: menu-arrow 0.15s ease forwards;
       left: 50%;
       transform: translateX(-50%);
       border: solid transparent;
@@ -22,9 +23,43 @@
     }
 
     &:not(.menu__toggle--arrowless):after {
-      border-bottom-color: map-get($palette, white);
+      border-bottom-color: lighten(map-get($palette, smoke), 1%);
       border-width: 10px;
     }
+  }
+}
+
+@keyframes menu-arrow {
+  from {
+    bottom: -27px;
+  }
+  to {
+    bottom: -15px;
+  }
+}
+
+.blog-menu {
+  animation: blog-menu 0.15s ease forwards;
+
+  @media (max-width: 1024px) {
+    animation: blog-menu-mobile 0.15s ease forwards;
+  }
+}
+
+@keyframes blog-menu {
+  from {
+    transform: translateY(-10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes blog-menu-mobile {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
   }
 }
 
@@ -34,18 +69,19 @@
   cursor: initial;
   min-width: 14rem;
   position: absolute;
+  font-size: 0.875rem;
   top: 100%;
   background-color: map-get($palette, white);
-  border-radius: 0.5rem;
-  box-shadow:
-    0 -2px 4px rgba(0, 0, 0, 0.0625),
-    0 6px 12px rgba(0, 0, 0, 0.125);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-menu);
   overflow: auto;
   z-index: 301;
 
   input[type='submit'].menu__action,
   button.menu__action {
-    background: transparent;
+    &:not(:hover) {
+      background: transparent;
+    }
     font-size: inherit;
     width: 100%;
     text-align: left;
@@ -86,10 +122,13 @@
       right: 0;
       bottom: 0;
     }
+  }
 
-    @media screen and (max-width: 32em) {
+  @media screen and (max-width: 32em) {
+    padding: 0.5rem;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    &:not(.menu__content--2) {
       padding: 1rem 0.5rem 3rem;
-      border-radius: 0.75rem 0.75rem 0 0;
       position: fixed;
       top: auto;
       bottom: 0;
@@ -97,12 +136,8 @@
       right: 0;
       margin: 0;
       border: 0;
-      box-shadow:
-        0 4px 8px 0 rgba(0, 0, 0, 0.25),
-        0 0 0 100vh rgba(0, 0, 0, 0.375);
       font-size: 1rem;
       z-index: 999;
-
       @supports (padding: calc(env(safe-area-inset-bottom))) {
         padding-bottom: calc(2rem + env(safe-area-inset-bottom));
       }
@@ -111,8 +146,8 @@
 
   hr {
     border: 0;
-    border-bottom: 1px solid map-get($palette, smoke);
-    margin: 0.5rem 0;
+    border-bottom: 0.5px solid map-get($palette, divider);
+    margin: 0.5rem -0.5rem;
   }
 
   &.menu__content--left {
@@ -154,6 +189,14 @@
   }
 }
 
+.menu__content .admin-tools .menu__action {
+  &:hover,
+  &:focus,
+  &:active {
+    background: rgba(map-get($palette, pending), 0.08);
+  }
+}
+
 .menu__content > a,
 .menu__action,
 .dropdown-button__menu label {
@@ -163,16 +206,16 @@
   }
   font-weight: 500;
   line-height: 1.5;
-  padding: 0.75rem 0.5rem;
+  padding: 0.5rem 0.5rem;
+  gap: 0.5rem;
+  min-height: 2rem;
   color: map-get($palette, black);
   position: relative;
   text-decoration: none;
   letter-spacing: 0;
-  background-color: transparent;
-  transition:
-    0.125s ease-in-out background-color,
-    0.125s ease-in-out color;
+  transition: 0.125s ease background-color;
   cursor: pointer;
+  border-radius: var(--radius-lg);
 
   &.menu__action--active::after {
     content: '✔';
@@ -180,43 +223,33 @@
     right: 0.5rem;
   }
 
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    @include gradient(info);
-    border-radius: 6px;
-    opacity: 0;
-    transition: opacity 125ms ease-in-out;
-  }
-
   .muted {
     transition: color 125ms ease-in-out;
   }
 
+  cursor: pointer;
+
   &:hover,
+  &.hovered,
   &:focus {
-    color: $white;
-
-    &:before {
-      opacity: 1;
+    transition-duration: 0s;
+    background-color: map-get($palette, selection);
+    &:active {
+      transition-duration: 0.125s;
+      background-color: darken(map-get($palette, selection), 5%);
     }
-
-    .muted {
-      color: $white;
+    [data-dark='true'] & {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      &:active {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+      }
     }
   }
 
   svg {
-    margin-right: 6px;
-  }
-
-  + .menu__action {
-    border-top: 1px solid map-get($palette, smoke);
+    fill: map-get($palette, muted);
+    width: 24px;
+    height: 24px;
   }
 }
 
@@ -235,11 +268,7 @@
   position: relative;
   height: 1px;
   background-color: $smoke;
-  margin: 0.5rem 0;
-
-  .menu__content--compact & {
-    margin: 0.25rem 0;
-  }
+  margin: 0.5rem -0.5rem;
 
   html[data-dark='true'] & {
     background-color: $slate;

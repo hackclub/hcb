@@ -23,7 +23,7 @@ class TopupStripeJob < ApplicationJob
     # money on Stripe Issuing is at least two weeks.
     # Ex. The money from a top-up today will be spent in no earlier than two
     #     weeks from now (FIFO order).
-    buffer = 200_000 * 100
+    buffer = 250_000 * 100
 
     # amount of money currently in stripe
     balances = StripeService::Balance.retrieve

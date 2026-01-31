@@ -122,7 +122,7 @@ describe AchTransfersController do
         }
       )
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(event.ach_transfers).to be_empty
       expect(response.body).to include("Confirm Access")
 

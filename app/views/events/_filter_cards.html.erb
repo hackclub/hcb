@@ -1,5 +1,5 @@
 <div class="flex items-center filter-menu">
-  <%= render partial: "filter_cards_menu" %>
+  <%= render partial: "events/filter_cards_menu" %>
 
   <% if @status || @user %>
     <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
@@ -8,7 +8,6 @@
   <% end %>
 
   <div class="filter-menu__chips">
-
     <% if @type %>
       <div class="badge badge-large bg-muted">
         <%= @type.humanize %>

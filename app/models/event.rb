@@ -214,6 +214,7 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+  scope :financially_frozen, -> { where(financially_frozen: true) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -292,7 +293,7 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -307,7 +308,7 @@ class Event < ApplicationRecord
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
-  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -438,6 +439,8 @@ class Event < ApplicationRecord
   validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
+
+  after_create :apply_plan_default_values
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
@@ -646,7 +649,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -701,9 +704,9 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
-  def reload
+  def reload(**args)
     @total_fee_payments_v2_cents = nil
-    super
+    super(**args)
   end
 
   def total_fee_payments_v2_cents
@@ -931,7 +934,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+    return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -966,6 +969,12 @@ class Event < ApplicationRecord
     unless eligible_for_indexing?
       self.is_indexable = false
     end
+  end
+
+  def apply_plan_default_values
+    return if plan&.default_values.blank?
+
+    update!(plan.default_values)
   end
 
   def stripe_transaction_merchant(transaction)

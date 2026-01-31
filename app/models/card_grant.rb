@@ -11,6 +11,7 @@
 #  category_lock              :string
 #  email                      :string           not null
 #  instructions               :text
+#  invite_message             :string
 #  keyword_lock               :string
 #  merchant_lock              :string
 #  one_time_use               :boolean
@@ -66,11 +67,13 @@ class CardGrant < ApplicationRecord
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
   has_one :pre_authorization
+  has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
   before_create :create_subledger
+  before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
@@ -85,14 +88,14 @@ class CardGrant < ApplicationRecord
   serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_recipient, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
   scope :expires_on, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') = ?", date) }
 
@@ -101,7 +104,9 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
-    if canceled? || expired?
+    if suspected_fraud?
+      "error"
+    elsif suspected_fraud? || canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
@@ -113,7 +118,9 @@ class CardGrant < ApplicationRecord
   end
 
   def state_text
-    if canceled?
+    if suspected_fraud?
+      "Fraudulent"
+    elsif canceled?
       "Canceled"
     elsif expired?
       "Expired"
@@ -129,10 +136,14 @@ class CardGrant < ApplicationRecord
   def status_badge_type
     s = state.to_sym
     return :success if s == :success
-    return :error if s == :muted
+    return :error if [:muted, :error].include?(s)
     return :warning if s == :info
 
     :muted
+  end
+
+  def suspected_fraud?
+    pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
@@ -162,7 +173,7 @@ class CardGrant < ApplicationRecord
 
   def withdraw!(amount_cents:, withdrawn_by: sent_by)
     raise ArgumentError, "Card grant should have a non-zero balance." if balance.zero?
-    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents >= balance.amount * 100
+    raise ArgumentError, "Card grant should have more money than being withdrawn." if amount_cents > balance.amount * 100
 
     custom_memo = "Withdrawal from grant to #{user.name}"
 
@@ -191,7 +202,7 @@ class CardGrant < ApplicationRecord
   end
 
   def visible_hcb_codes
-    ((stripe_card&.hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse!
+    ((stripe_card&.local_hcb_codes || []) + topup_disbursements.map(&:local_hcb_code) + withdrawal_disbursements.map(&:local_hcb_code)).sort_by(&:created_at).reverse
   end
 
   def expire!
@@ -231,15 +242,19 @@ class CardGrant < ApplicationRecord
   def create_stripe_card(ip_address)
     return if stripe_card.present?
 
-    self.stripe_card = StripeCardService::Create.new(
-      card_type: "virtual",
-      event_id:,
-      current_user: user,
-      ip_address:,
-      subledger:,
-    ).run
+    begin
+      self.stripe_card = StripeCardService::Create.new(
+        card_type: "virtual",
+        event_id:,
+        current_user: user,
+        ip_address:,
+        subledger:,
+      ).run
 
-    save!
+      save!
+    rescue Stripe::InvalidRequestError, Errors::StripeInvalidNameError => e
+      raise e.class, "This card could not be activated: #{e.message}"
+    end
   end
 
   def allowed_merchants
@@ -300,7 +315,8 @@ class CardGrant < ApplicationRecord
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
-      invite_message: "This reimbursement report replaces #{Rails.application.routes.url_helpers.url_for(self)}."
+      inviter: sent_by,
+      card_grant: self
     )
   end
 
@@ -332,6 +348,16 @@ class CardGrant < ApplicationRecord
 
   def send_email
     CardGrantMailer.with(card_grant: self).card_grant_notification.deliver_later
+  end
+
+  def set_defaults
+    # If it's blank, allow it to continue being blank. This likely means the
+    # user explicitly cleared the field in the UI.
+    # However, if it's `nil`, then use the default from the setting. The field
+    # was likely left unset via the API.
+    if self.invite_message.nil?
+      self.invite_message = setting.invite_message
+    end
   end
 
 end

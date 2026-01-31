@@ -2,12 +2,12 @@
 <% content_for(:page_class) { "bg-snow" } %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Sign in to HCB" do %>
+  <%= render "logins/header", label: "Sign in to HCB" do %>
     <%= @use_sms_auth ? "SMS" : "Email" %> code
   <% end %>
-  <%= render "badge", user: @login.user %>
+  <%= render "logins/badge", user: @login.user %>
   <%= render partial: "users/sms_auth_notice" %>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, we've just sent a login code to
     <% else %>
@@ -56,7 +56,7 @@
       <% if @login.webauthn_available? || @login.totp_available? || @login.backup_code_available? %>
         <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
       <% end %>
-      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn">
+      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn ml-auto">
         Continue
       </button>
     </div>
@@ -64,5 +64,5 @@
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>

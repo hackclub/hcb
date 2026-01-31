@@ -1,6 +1,15 @@
 import $ from 'jquery'
 import ReactRailsUJS from 'react_ujs'
 
+// Initialize Intl polyfill globally before any components load
+// This prevents "IntlPolyfill is not defined" errors
+import 'intl'
+import 'intl/locale-data/jsonp/en-US'
+
+// Explicitly import home components to ensure they're in the bundle
+// This prevents race conditions when loading via turbo frames
+import './components/home'
+
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
 ReactRailsUJS.useContext(componentRequireContext)

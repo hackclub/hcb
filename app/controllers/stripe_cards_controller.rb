@@ -79,7 +79,7 @@ class StripeCardsController < ApplicationController
     @show_card_details = params[:show_details] == "true"
     @event = @card.event
 
-    @hcb_codes = @card.hcb_codes
+    @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(25)
 
@@ -123,7 +123,7 @@ class StripeCardsController < ApplicationController
       stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
       stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
       stripe_shipping_address_country: sc[:stripe_shipping_address_country],
-      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
     ).run
 
     redirect_to new_card, flash: { success: "Card was successfully created." }

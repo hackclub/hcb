@@ -239,6 +239,73 @@ jobs:
         env:
           RAILS_ENV: test
         run: bundle exec rails zeitwerk:check
+  reversible_migrations:
+    name: Reversible Migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Get new migration versions
+        id: migrations
+        run: |
+          # Get migration files added in this PR compared to main
+          NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A origin/main...HEAD -- db/migrate/*.rb | sort)
+          if [ -z "$NEW_MIGRATIONS" ]; then
+            echo "No new migrations found"
+            echo "versions=" >> $GITHUB_OUTPUT
+          else
+            echo "New migrations found:"
+            echo "$NEW_MIGRATIONS"
+            # Extract versions (timestamps) from filenames
+            VERSIONS=$(echo "$NEW_MIGRATIONS" | sed 's/.*\/\([0-9]*\)_.*/\1/' | tac | tr '\n' ' ')
+            echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup database
+        if: steps.migrations.outputs.versions != ''
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundle exec rails db:create db:schema:load
+      - name: Test migration reversibility
+        if: steps.migrations.outputs.versions != ''
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: |
+          for VERSION in ${{ steps.migrations.outputs.versions }}; do
+            echo "Testing migration $VERSION..."
+            echo "  Rolling back..."
+            bundle exec rails db:migrate:down VERSION=$VERSION
+            echo "  Migrating up..."
+            bundle exec rails db:migrate:up VERSION=$VERSION
+            echo "  Migration $VERSION is reversible!"
+          done
   brakeman:
     name: Brakeman
     runs-on: ubuntu-latest

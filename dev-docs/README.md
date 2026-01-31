@@ -1,6 +1,6 @@
 # All About HCB
 
-HCB is a tool for hackers to hack on the real world, like GitHub, but for building with atoms and people, not bits and cycles. Thank you so much for contributing to the HCB database.
+HCB is a tool for hackers to hack on the real world, like GitHub, but for building with atoms and people, not bits and cycles. Thank you so much for contributing to the HCB codebase.
 
 ## Table of Contents
 - [Home](#)
@@ -93,8 +93,8 @@ HCB's operations team perform their work through the admin dashboard on HCB and 
 
 ### Deployment & Monitoring
 
-HCB is deployed on [Heroku](https://www.heroku.com/). We have two dynos, one for Rails and one for our [Sidekiq](https://github.com/sidekiq/sidekiq) workers. We handle errors using [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
+HCB is deployed on [Hetzner](https://www.hetzner.com/). We handle errors using [AppSignal](https://www.appsignal.com/). We also run [status.hackclub.com](https://status.hackclub.com/) using [Checkly](https://www.checklyhq.com/).
 
 ***
 
-![Laser cutting the HCB logo](https://cloud-kubwce40n-hack-club-bot.vercel.app/0hack_club_bank_laser.gif)
+![Laser cutting the HCB logo](/hcb_laser.gif)

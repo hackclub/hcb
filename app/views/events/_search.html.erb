@@ -1,6 +1,6 @@
 <%# locals: (form: nil, param: :q) %>
 
-<div class="input input-group max-w-none" tabindex="0">
+<div class="input input-group max-w-none h-[36px]" tabindex="0">
   <%= inline_icon "search" %>
   <%= form.text_field :q, placeholder: "Type / to search...", data: { behavior: "search" }, value: params[:q] %>
   <% if params[:q].present? %>

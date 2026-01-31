@@ -2,12 +2,9 @@
 <% page_md %>
 <% disabled = !policy(@user).update? %>
 
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_notifications %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_nav", active: "notifications" %>
+  <%= render "settings_header", active: "notifications" %>
   <section>
     <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
       <fieldset class="field">
@@ -50,7 +47,7 @@
         <p class="h5 muted mt-0 mb-3">
           Get a notification when there’s a charge on any of your cards.
         </p>
-        <div class="field field--options max-width-3 grid grid--narrow">
+        <div class="field field--options max-w-3xl grid grid--narrow">
           <%= form.radio_button :charge_notifications, :email_and_sms, disabled: %>
           <%= form.label :charge_notifications, value: :email_and_sms do %>
             <%= inline_icon "announcement", size: 28 %>

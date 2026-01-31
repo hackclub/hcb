@@ -1,19 +1,15 @@
 <% @has_header_image = @event.donation_header_image.attached? %>
 <% page_sm %>
 
-<div class="absolute top-0 right-0 m2">
-  <%= render partial: "application/theme_toggle", locals: { top: true } %>
-</div>
-
 <%= content_for(:header) do %>
-  <% if organizer_signed_in? %>
+  <% if policy(@event).update? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
       <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
         <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :donation_header_image do %>
           <div
             role="button"
-            class="muted pointer no-select tooltipped tooltipped--e line-height-0"
+            class="muted pointer select-none tooltipped tooltipped--e line-height-0"
             aria-label="<%= @has_header_image ? "Edit" : "Upload" %> header image">
             <%= inline_icon "photo", size: home_action_size %>
           </div>
@@ -23,7 +19,7 @@
         <%= link_to event_remove_header_image_path(@event), method: :post, data: { turbo_confirm: "Are you sure you want to remove this image?" } do %>
           <div
             role="button"
-            class="muted pointer ml1 no-select tooltipped tooltipped--e line-height-0"
+            class="muted pointer ml1 select-none tooltipped tooltipped--e line-height-0"
             aria-label="Remove header image">
             <%= inline_icon "view-close", size: home_action_size %>
           </div>

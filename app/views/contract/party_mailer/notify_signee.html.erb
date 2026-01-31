@@ -1,0 +1,32 @@
+<p>Hi there! 👋</p>
+
+<p>
+  We can't wait to have your project on HCB! You've been invited to sign a fiscal sponsorship agreement for <%= @contract.event.name %> on HCB.
+</p>
+
+<% if @contract.include_videos? %>
+  <p>
+    Before signing, please watch these two quick videos. They have important information about HCB and your project.
+  </p>
+
+  <p>
+    <strong>HCB Onboarding (#1): Introduction</strong>
+  </p>
+
+  <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk"><img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/ada1eb863bea8dddc918aca5439409c3e4400484_video1thumbnail.png" width="400px"></a>
+
+  <p>
+    <strong>HCB Onboarding (#2): Rules & Regulations</strong>
+  </p>
+
+  <a href="https://www.youtube.com/watch?v=LMh9FCm8iIE"><img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/838107794d36fa572e10a4b78aa4f1901399fe2a_video2thumbnail.png" width="400px"></a>
+<% end %>
+
+<p>
+  <%= link_to "Click here", contract_party_url(@party) %> to sign the agreement and get running on HCB!
+</p>
+
+<p>
+  Best,<br>
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> Team
+</p>

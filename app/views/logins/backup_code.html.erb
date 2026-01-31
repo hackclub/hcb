@@ -2,10 +2,10 @@
 <% content_for(:page_class) { "bg-snow" } %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Sign in to HCB" do %>
+  <%= render "logins/header", label: "Sign in to HCB" do %>
     Backup code
   <% end %>
-  <%= render "badge", user: @login.user %>
+  <%= render "logins/badge", user: @login.user %>
   <p>
     Please enter one of the backup codes you generated previously.
   </p>
@@ -29,5 +29,5 @@
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>

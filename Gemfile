@@ -108,15 +108,13 @@ gem "reverse_markdown" # public activity to discord
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations", "~> 1" # protects against risky migrations
-# [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
-#               2.x is incompatible with Postgres 11.
+gem "strong_migrations", "~> 2" # protects against risky migrations
 gem "xxhash" # fast hashing
 gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.2"
+gem "webauthn", "~> 3.4"
 
 gem "ahoy_matey" # analytics
 gem "blazer" # business intelligence tool/dashboard
@@ -202,7 +200,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-gem "public_activity"
+gem "public_activity", ">= 3.0.2"
 
 gem "console1984"
 gem "audits1984"
@@ -231,3 +229,8 @@ gem "prosemirror_to_html"
 
 gem "ed25519"
 gem "discordrb"
+
+gem "pghero", "~> 3.7"
+gem "pg_query", ">= 2"
+
+gem "intercom-rails"

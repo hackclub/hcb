@@ -31,7 +31,7 @@
   </div>
 </div>
 
-<% if @pre_authorization.approved? || @pre_authorization.fraudulent? %>
+<% if @pre_authorization.authorized? %>
   <div class="card flex flex-row gap-2 justify-between align-center mb3">
     <h3 class="flex flex-row items-center m-0">
       <%= inline_icon "checkmark", size: 24, class: "mr2 text-green" %>
@@ -41,10 +41,19 @@
   </div>
 <% end %>
 
+<% if @pre_authorization.fraudulent? && @pre_authorization.unauthorized? %>
+  <div class="card flex flex-row gap-2 justify-between align-center mb3">
+    <p class="flex flex-row items-center m-0">
+      <%= inline_icon "important", size: 24, class: "mr2 text-orange" %>
+      Your card grant has been flagged as fraudulent because it doesn't meet the given requirements. Please reach out to <%= @card_grant.event.name %> for support.
+    </p>
+  </div>
+<% end %>
+
 <% if @card_grant.instructions.present? %>
   <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
-      <%= @card_grant.instructions %>
+      <%= sanitize(MarkdownService.instance.renderer.render(@card_grant.instructions), scrubber: MarkdownScrubber.new) %>
     </p>
   <% end %>
 <% end %>
@@ -68,19 +77,19 @@
 
 <div class="flex justify-start flex-row gap-4">
   <% if @pre_authorization.draft? %>
-    <%= render partial: "screenshot_form", locals: {
+    <%= render partial: "card_grant/pre_authorizations/screenshot_form", locals: {
           upload_method: "attach_receipt_page",
           turbo: true
         } %>
   <% end %>
 
-  <%= render partial: "screenshot_list", locals: {
+  <%= render partial: "card_grant/pre_authorizations/screenshot_list", locals: {
         screenshots: @pre_authorization.screenshots.attachments,
         shimmer:
       } %>
 </div>
 
-<%= render partial: "screenshot_count", locals: {
+<%= render partial: "card_grant/pre_authorizations/screenshot_count", locals: {
       count: @pre_authorization.screenshots.count,
       card_grant: @card_grant,
       disabled: !@pre_authorization.draft?

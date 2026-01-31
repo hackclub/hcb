@@ -1,26 +1,27 @@
 
 
-  <section class="statset mb2 flex flex-row flex-wrap justify-start items-center gap-6">
-    <div class="stat stat--wide !w-max">
-      <span class="stat__label">Initial amount</span>
-      <span class="stat__value"><%= render_money_amount(@card_grant.amount) %></span>
+  <section class="flex items-center gap-2 flex-col sm:flex-row">
+    <div class="statset w-full">
+        <div class="stat !w-full">
+        <span class="stat__label">Initial amount</span>
+        <span class="stat__value"><%= render_money_amount(@card_grant.amount) %></span>
+      </div>
+      <div class="stat !w-full">
+        <span class="stat__label">Balance remaining</span>
+        <span class="stat__value"><%= render_money_amount(@card_grant.balance) %></span>
+      </div>
     </div>
-    <div class="stat stat--wide !w-max">
-      <span class="stat__label">Balance remaining</span>
-      <span class="stat__value"><%= render_money_amount(@card_grant.balance) %></span>
-    </div>
-    <div class="flex-grow"></div>
     <%= turbo_frame_tag "edit_balance_#{@card_grant.id}", src: edit_balance_event_card_grant_path(@card_grant) do %>
-      <div class="flex flex-row justify-start items-center gap-6">
+      <div class="flex flex-col justify-start items-center gap-2 min-w-[200px]">
           <%= link_to edit_topup_event_card_grant_path(@card_grant),
                       data: { turbo: true },
-                      class: "btn !w-max",
+                      class: "btn !w-full bg-success",
                       disabled: !policy(@card_grant).topup? do %>
               <%= inline_icon "plus", size: 20 %> Topup
           <% end %>
           <%= link_to edit_withdraw_event_card_grant_path(@card_grant),
                       data: { turbo: true },
-                      class: "btn bg-warning",
+                      class: "btn !w-full bg-primary",
                       disabled: !policy(@card_grant).withdraw? do %>
               <%= inline_icon "minus", size: 20 %> Withdraw
           <% end %>
@@ -32,7 +33,7 @@
         <%= link_to "Overview", edit_overview_event_card_grant_path(@card_grant), data: { turbo: true } %>
     <% end %>
     <%= settings_tab active: active == "purpose" do %>
-        <%= link_to "Purpose", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
+        <%= link_to "Purpose and instructions", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
     <% end %>
     <%= settings_tab active: active == "usage" do %>
         <%= link_to "Usage restrictions", edit_usage_restrictions_event_card_grant_path(@card_grant), data: { turbo: true } %>

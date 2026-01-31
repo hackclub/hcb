@@ -1,12 +1,17 @@
 #tooltip-container {
   position: absolute;
   padding: 0.25rem 0.75rem;
+  color: map-get($palette, white);
+  user-select: none;
   background-color: rgba(map-get($palette, black), 0.875);
+  [data-dark='true'] & {
+    color: map-get($palette, black);
+    background-color: rgba(map-get($palette, white), 0.67);
+  }
   border-radius: 0.5rem;
   box-shadow:
     0 0 2px 0 rgba(0, 0, 0, 0.0625),
     0 4px 8px 0 rgba(0, 0, 0, 0.125);
-  color: map-get($palette, white);
   font-family: $font-family;
   font-size: 0.875rem;
   font-weight: 500;

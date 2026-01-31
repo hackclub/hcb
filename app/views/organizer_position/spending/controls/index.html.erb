@@ -81,7 +81,7 @@
     <% end %>
   <% end %>
 
-  <%= render "callout", type: "info", title: "Spending controls are #{@active_control ? "enabled" : "disabled"} for #{@organizer_position.user.first_name}.", footer: spending_controls_callout_footer  do %>
+  <%= render "application/callout", type: "info", title: "Spending controls are #{@active_control ? "enabled" : "disabled"} for #{@organizer_position.user.first_name}.", footer: spending_controls_callout_footer  do %>
     <ul>
       <li>Spending controls let managers control and pre-authorize an amount to be spent by a user.</li>
       <li>Your organization's balance will not change when an allowance is created.</li>
@@ -90,7 +90,7 @@
   <% end %>
 <% else %>
   <% user_is_you = @organizer_position.user == current_user %>
-  <%= render "callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
+  <%= render "application/callout", type: "info", title: "#{user_is_you ? "You" : @organizer_position.user.name} can not have spending controls set for #{user_is_you ? "you" : "them"}, because #{user_is_you ? "you're" : "they're"} a #{@organizer_position.role}, not a member." do %>
     <ul class="m0">
       <li>Roles can be changed on the <%= link_to "team page", event_team_path(@event.slug) %>.</li>
       <% if @inactive_control_count.zero? %>
@@ -103,7 +103,7 @@
 <% end %>
 
 <% if @active_control %>
-  <div class="m-auto text-center mb-5">
+  <div class="m-auto text-center mb-5 filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["allowances", "transactions"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Allowances", "?filter=allowances", class: "filterbar__item", "aria-selected": params[:filter] == "allowances", role: "tab" %>
     <%= link_to "Transactions", "?filter=transactions", class: "filterbar__item", "aria-selected": params[:filter] == "transactions", role: "tab" %>

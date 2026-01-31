@@ -1,90 +1,77 @@
-<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
-
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
-    <title>
-      <%= "#{yield(:title)} –" if content_for?(:title) %>
-      HCB Admin
-    </title>
-
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+    <%= render "layouts/head", title_suffix: "HCB Admin", admin: true %>
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
-    <%= yield(:head) if content_for?(:head) %>
   </head>
-  <body>
+  <body class="bg-snow">
     <a class="skip-to-main" href="#main">Skip to main content</a>
-
     <% title = yield(:title) if content_for?(:title) %>
-
     <% nav = Admin::Nav.new(page_title: title) %>
 
-    <nav style="display: flex; flex-direction: column; background: var(--hcb-bg-2-5); gap: 0px">
-      <div style="width: 100%; display: flex; gap: 8px; align-items: center; font-size: 22px; padding: 8px; border-bottom: 1px solid var(--hcb-bg-2);">
-        <%= link_to root_path, class: "text-decoration-none", style: "height: 36px; margin-right: 8px;" do %>
-          <% logo_env = Rails.env.local? ? "development" : Rails.env %>
-          <%= image_tag user_birthday? ? "logo-party.gif" : by_season("logo-#{logo_env}.png", fall: "https://cloud-qmskqc293-hack-club-bot.vercel.app/0bank-pumpkin.png"),
-              name: "header-logo",
-              class: "logo",
-              height: @home_size || 36,
-              alt: "HCB logo" %>
-        <% end %>
+    <nav class="flex flex-col shadow-lg sticky top-0 backdrop-blur-lg z-10 bg-white/80 dark:!bg-[rgba(0,0,0,0.8)]">
+      <div class="p-6 pl-5 pb-2 flex items-center w-full gap-2">
+        <%= render "application/logo" %>
+
+        <span class="text-xl font-bold ml-1 hidden sm:inline-block">HCB Admin</span>
+        <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
 
         <% if title %>
-          <span>
-            <%= nav.active_section&.name || "Admin" %>
+          <% if nav.active_section&.name %>
+          <span class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
+            <%= nav.active_section&.name %>
           </span>
           <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
-          <b style="font-weight: 600;">
+          <% end %>
+          <span class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
             <%= title %>
-          </b>
+          </span>
         <% else %>
-          <b>
+          <b class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
             <%= current_user.access_level.capitalize %>
           </b>
         <% end %>
 
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
-          <%= render partial: "application/blog_widget" %>
           <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
-            <%= inline_icon "payment-docs", size: home_action_size %>
+            <%= inline_icon "receipt", size: home_action_size %>
           <% end %>
-          <%= render partial: "application/theme_toggle", locals: { top: true } %>
-          <%= button_to logout_users_path, method: :delete, style: "background: none; padding: 0px;", id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
+          <%= button_to logout_users_path, method: :delete, id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>
             <%= inline_icon "door-leave", size: home_action_size %>
           <% end %>
         </div>
       </div>
 
-      <div class="nav-row" style="width: 100%; display: flex; padding: 8px 0px;">
-        <% nav.sections.each do |section| %>
-          <details open class="admin-nav-item pb0">
-            <summary class="nav-item" style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>">
-              <%= section.name %>
-              <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit-content">
-                <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
-              </span>
-            </summary>
-            <div class="dropdown">
-              <div class="sub-items">
+      <div class="nav-row !border-gray-200 dark:!border-gray-700 overflow-x-auto" style="width: 100%; border-top:1px solid">
+        <div class="nav-row-scroll-container flex">
+          <% nav.sections.each do |section| %>
+            <div data-controller="menu" class="pb-0 sm:flex-1 shrink-0 flex item">
+              <button
+                type="button"
+                class="nav-item menu__toggle menu__toggle--arrowless flex-1 h-12 rounded-none bg-transparent"
+                style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>"
+                data-menu-target="toggle"
+                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                <%= section.name %>
+                <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
+                  <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
+                </span>
+              </button>
+              <div class="menu__content rounded-t-none -mt-2.5 admin-menu-content !bg-white/50 backdrop-blur-lg dark:!bg-[rgba(0,0,0,0.8)]" data-menu-target="content">
                 <% section.items.each do |item| %>
-                  <%= link_to item.path, style: item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" do %>
+                  <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
                     <%= item.name %>
-                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit-content">
+                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit ml-auto">
                       <%= item.count %>
                     </span>
                   <% end %>
+                  <div class="menu__divider last:hidden"></div>
                 <% end %>
               </div>
             </div>
-          </details>
-        <% end %>
+          <% end %>
+        </div>
       </div>
     </nav>
 
@@ -94,26 +81,6 @@
       <%= yield %>
     </div>
 
-    <%= render "application/footer" unless @no_app_shell || @hide_footer %>
     <%= render "application/command_bar" %>
-    <script>
-      document.addEventListener("turbo:load", () => {
-        const updateAdminDropdowns = () => {
-          let details = document.querySelectorAll(".admin-nav-item");
-          if(window.innerWidth >= 800){
-            details.forEach((detail) => {
-              detail.open = true;
-            });
-          }
-          else {
-            details.forEach((detail) => {
-              detail.open = false;
-            });
-          }
-        }
-        updateAdminDropdowns()
-        window.onresize = updateAdminDropdowns
-      })
-    </script>
   </body>
 </html>

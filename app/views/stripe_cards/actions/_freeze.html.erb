@@ -1,32 +1,38 @@
-<%# locals: (stripe_card:) %>
+<%# locals: (stripe_card:, label: "") %>
 
 <% if stripe_card&.stripe_status == 'inactive' %>
-  <% defrost_tooltip = "You can instantly re-freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
-  <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %>">
-    <%= link_to defrost_stripe_card_path(stripe_card),
-                method: :post,
-                class: "btn bg-accent",
-                disabled: !policy(stripe_card).defrost? do %>
-      <%= inline_icon "freeze" %> Defrost card
-    <% end %>
-  </div>
+  <% defrost_tooltip = "Instantly re-freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
+  <%= link_to defrost_stripe_card_path(stripe_card),
+              method: :post,
+              class: "btn btn--list-item",
+              disabled: !policy(stripe_card).defrost? do %>
+    <%= inline_icon "freeze" %>
+    <div>
+      <strong>Defrost</strong>
+      <p class="text-sm opacity-60"><%= policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %></p>
+    </div>
+  <% end %>
 <% elsif stripe_card&.stripe_status == 'active' %>
-  <% freeze_tooltip = "You can instantly defrost #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
-  <div class="tooltipped tooltipped--n" aria-label="<%= policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %>">
-    <%= link_to freeze_stripe_card_path(stripe_card),
-                method: :post,
-                class: "btn bg-accent",
-                disabled: !policy(stripe_card).freeze? do %>
-      <%= inline_icon "freeze" %> Freeze card
-    <% end %>
-  </div>
-<% else %>
-  <div class="tooltipped tooltipped--n" aria-label="This card cannot be frozen because it has not been activated">
-    <%= link_to "#",
-                method: :post,
-                class: "btn bg-accent",
-                disabled: true do %>
-      <%= inline_icon "freeze" %> Freeze card
-    <% end %>
-  </div>
+  <% freeze_tooltip = label.presence || "Instantly freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
+  <%= link_to freeze_stripe_card_path(stripe_card),
+              method: :post,
+              class: "btn btn--list-item",
+              disabled: !policy(stripe_card).freeze? do %>
+    <%= inline_icon "freeze" %>
+    <div>
+      <strong>Freeze</strong>
+      <p class="text-sm opacity-60"><%= policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %></p>
+    </div>
+  <% end %>
+<% elsif !stripe_card&.canceled? %>
+  <%= link_to "#",
+              method: :post,
+              class: "btn btn--list-item",
+              disabled: true do %>
+    <%= inline_icon "freeze" %>
+    <div>
+      <strong>Freeze</strong>
+      <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
+    </div>
+  <% end %>
 <% end %>

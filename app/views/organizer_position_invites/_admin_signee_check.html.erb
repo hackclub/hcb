@@ -3,26 +3,29 @@
 <div class="field field--select w-100"
      data-controller="form-hide-field"
      data-form-hide-field-condition-value="false">
-  <h3 class="mb2 mt1">Contracts</h3>
-  <%= form.select :is_signee,
-      [
-        ["📃 Contract Signee", "true"],
-        ["❌ Won't sign the contract", "false"],
-      ],
-      { include_blank: "Select a contract signee status",
-        selected: default_selected
-      },
-      { required: true, style: "width: 100%",
-        data: {
-          form_hide_field_target: "select",
-          action: "form-hide-field#toggle",
-        }
-      } %>
+  <div class="flex items-center justify-between">
+    <strong>Contract</strong>
+    <%= form.select :is_signee,
+        [
+          ["📃 Contract Signee", "true"],
+          ["❌ Won't sign the contract", "false"],
+        ],
+        { include_blank: "Select a contract signee status",
+          selected: default_selected
+        },
+        { required: true, style: "width: 100%",
+          data: {
+            form_hide_field_target: "select",
+            action: "form-hide-field#toggle",
+          }
+        } %>
+    </div>
 
-  <div data-form-hide-field-target="field">
-    <%= form.email_field :cosigner_email, placeholder: "Cosignee email (required if under 18)", class: "w-100 mt1" %>
+  <div class="flex items-center justify-between mt-2" data-form-hide-field-target="field">
+    <strong class="d-block">Cosigner Email</strong>
+    <%= form.email_field :cosigner_email, placeholder: "Required if under 18", class: "w-100" %>
   </div>
-  <div class="field field--checkbox">
+  <div class="field field--checkbox mt-2">
     <%= form.check_box :include_videos %>
     <%= form.label :include_videos, "Would you like us to include the onboarding videos?" %>
   </div>

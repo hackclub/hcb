@@ -1,5 +1,5 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "edit_nav", active: "purpose" %>
+  <%= render "card_grants/edit_nav", active: "purpose" %>
 
 <div class="flex gap-3">
   <div>
@@ -12,6 +12,17 @@
         </div>
       </div>
 
+      <div class="field">
+        <%= form.label :instructions, "Instructions (optional)", class: "bold" %>
+
+        <%= form.text_area :instructions, placeholder: "Please only purchase a soldering iron…", class: "min-h-[70px]" %>
+        <p class="h5 muted mt0 mb1">
+          <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+            <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+          <% end %>
+        </p>
+      </div>
+
       <div class="actions">
         <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
       </div>
@@ -20,7 +31,7 @@
   <div>
     <% if @card_grant.purpose.present? %>
       <%= form_with url: clear_purpose_card_grant_path(@card_grant), method: :post, class: "inline-block" do |form| %>
-        <button class="btn bg-error tooltipped tooltipped--s overflow-visible top-6 py-1.5 pl-2.5 pr-3" aria-label="Clear purpose" type="submit">⌫</button>
+        <button class="btn bg-error tooltipped tooltipped--s overflow-visible top-6 py-1.5 pl-2.5 pr-3" aria-label="Clear purpose" type="submit" data-turbo="false">⌫</button>
       <% end %>
     <% end %>
   </div>

@@ -1,14 +1,12 @@
 <%# locals: (stripe_card:) %>
 
 <% if stripe_card.stripe_status == "active" && policy(stripe_card).update? %>
-  <div class="tooltipped tooltipped--n" aria-label="Rename your card">
-    <%= link_to edit_stripe_card_path(stripe_card),
-                class: "btn bg-success",
-                data: { behavior: "modal_trigger", modal: "name_card" } do %>
-      <%= inline_icon "edit" %>
-      Name
-    <% end %>
-  </div>
+  <%= link_to edit_stripe_card_path(stripe_card),
+              class: "btn btn--list-item",
+              data: { behavior: "modal_trigger", modal: "name_card" } do %>
+    <%= inline_icon "edit" %>
+    Rename
+  <% end %>
 
   <%# Modal for naming card %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="name_card">

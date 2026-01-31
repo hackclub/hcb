@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -18,6 +18,7 @@ module PendingTransactionEngine
         @category = category
         @merchant = merchant
         @order_by = order_by
+        @subledger = subledger
       end
 
       def run
@@ -31,7 +32,7 @@ module PendingTransactionEngine
       end
 
       def canonical_pending_event_mappings
-        @canonical_pending_event_mappings ||= CanonicalPendingEventMapping.where(event_id: event.id, subledger_id: nil)
+        @canonical_pending_event_mappings ||= (@subledger ? CanonicalPendingEventMapping.where(event_id: event.id).where.not(subledger_id: nil) : CanonicalPendingEventMapping.where(event_id: event.id, subledger_id: nil))
       end
 
       def canonical_pending_transactions

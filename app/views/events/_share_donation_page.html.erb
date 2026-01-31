@@ -1,17 +1,21 @@
 <%= pop_icon_to "share", "javascript:void(0)", data: { behavior: "modal_trigger", modal: "share_donation_page" } %>
+<a href="<%= start_donation_donations_url(@event) %>" class="ml2 btn bg-success gap-2" target="_blank">
+  Donation page
+  <%= inline_icon "external", class: "!m-0" %>
+</a>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="share_donation_page">
   <div data-controller="tabs" data-tabs-default-tab-value="link">
-    <header class="pb-2">
+    <header class="pb-8">
       <%= modal_close %>
       <h2 class="mt-0 mb-4">Share</h2>
-      <div class="flex -mb-[13px] -mx-[35px] px-[23px]" style="border-bottom: 2px solid rgba(200, 200, 200, 0.3);">
-        <button id="link" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
-        <button id="qr" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
+      <div class="flex -mx-[35px] px-[23px] sm:-mb-3">
+        <button id="link" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Link</button>
+        <button id="qr" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">QR code</button>
         <% if @event.is_public? %>
-          <button id="donor_graph" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Donor&nbsp;graph</button>
+          <button id="donor_graph" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Donor&nbsp;graph</button>
         <% end %>
-        <button id="embed" class="bordered" data-tabs-target="btn" data-action="click->tabs#select">Embed</button>
+        <button id="embed" class="bordered h-10 !rounded-t-lg" data-tabs-target="btn" data-action="click->tabs#select">Embed</button>
       </div>
     </header>
 
@@ -62,15 +66,15 @@
           </div>
         </div>
         <div class="flex-1">
-          <div class="w-full iconsGrid grid grid-cols-5 sm:grid-cols-3 gap-2 w-fit *:bg-snow *:rounded-xl *:cursor-pointer">
-            <%= inline_icon "view-close", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('blank')" %>
-            <%= inline_icon "bank-account", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('icon')" %>
-            <%= inline_icon "support", size: 56, class: "p-2 sm:p-4 btn bg-muted aspect-square w-full h-auto", onclick: "changeCode('support')" %>
+          <div class="w-full iconsGrid grid grid-cols-5 sm:grid-cols-3 gap-2 w-fit *:p-2 *:sm:p-4 *:aspect-square *:w-full *:rounded-xl *:cursor-pointer">
+            <%= inline_icon "view-close", size: 56, class: "btn h-auto", onclick: "changeCode('blank')" %>
+            <%= inline_icon "bank-account", size: 56, class: "btn h-auto", onclick: "changeCode('icon')" %>
+            <%= inline_icon "support", size: 56, class: "btn h-auto", onclick: "changeCode('support')" %>
             <% if @event.logo.attached? %>
-              <%= image_tag @event.logo, slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('logo')" %>
+              <%= image_tag @event.logo, slot: "icon", class: "btn h-auto", onclick: "changeCode('logo')" %>
             <% end %>
-            <%= image_tag "logo-production.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank')" %>
-            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "p-2 sm:p-4 btn bg-muted aspect-square w-full", onclick: "changeCode('bank-dark')" %>
+            <%= image_tag "logo-production.svg", slot: "icon", class: "btn h-full", onclick: "changeCode('bank')" %>
+            <%= image_tag "logo-production-dark.svg", slot: "icon", class: "btn h-full", onclick: "changeCode('bank-dark')" %>
           </div>
           <button class="btn mt-2 w-full" onclick="saveActiveQRCodeAsImage()" id="downloadButton">Download</button>
         </div>
@@ -79,8 +83,8 @@
     <div data-tabs-target="tab" id="donor_graph" class="flex gap-4 flex-col sm:flex-row">
       <div class="flex-1">
         <p class="mt0">Use this image URL to show a donor graph on your website, GitHub repo, or anywhere in between.</p>
-        <pre class="bg-gray-200 dark:bg-gray-700">https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
-        <pre class="bg-gray-200 dark:bg-gray-700"><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
+        <pre class="bg-gray-200 dark:bg-gray-700 select-all">https://graph.hcb.hackclub.com/<%= @event.slug %></pre>
+        <pre class="bg-gray-200 dark:bg-gray-700 select-all"><%= html_escape(%(<img src="https://graph.hcb.hackclub.com/#{@event.slug}" alt="Donor graph for #{@event.name}">)) %></pre>
 
         <p class="muted text-sm">
           To use additional styling and image options,
@@ -95,7 +99,7 @@
     </div>
     <div data-tabs-target="tab" id="embed">
       <p class="mt0">Paste this HTML code into your website to embed your donation page. Feel free to change the styling.</p>
-      <pre class="bg-gray-200 dark:bg-gray-700"><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
+      <pre class="bg-gray-200 dark:bg-gray-700 select-all"><%= html_escape "<iframe src='#{start_donation_donations_url @event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='512px' allowfullscreen></iframe>".gsub("'", '"') %></pre>
     </div>
   </div>
 </section>

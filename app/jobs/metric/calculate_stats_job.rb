@@ -5,7 +5,9 @@ class Metric
     queue_as :metrics
 
     def perform
-      Metric::CalculateSingleJob.perform_later(Metric::Hcb::Stats)
+      stats = Metric::Hcb::Stats.instance
+
+      stats.populate!
     end
 
   end

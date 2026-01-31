@@ -5,7 +5,7 @@ module StaticPagesHelper
 
   def card_to(name, path, **options)
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit" : "bg-accent h-fit")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
                 badge_for "⏳", class: "bg-muted"
@@ -17,7 +17,7 @@ module StaticPagesHelper
     content_tag(:div, id: "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
                           [
-                            content_tag(:strong, name, class: "card-name"),
+                            content_tag(:strong, sanitize(name), class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
                             badge,

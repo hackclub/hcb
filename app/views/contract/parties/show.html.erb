@@ -1,0 +1,53 @@
+<% title "Sign your HCB agreement" %>
+
+<script src="https://cdn.docuseal.com/js/form.js"></script>
+
+<h2>Sign your HCB agreement</h2>
+
+<div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) %>">
+  <div class="max-h-[75vh] overflow-scroll md:col-span-3">
+    <docuseal-form
+      id="docusealForm"
+      data-src="<%= @party.docuseal_signature_url %>"
+      data-with-title="false"
+      data-action="completed->contract#completed declined->contract#void">
+    </docuseal-form>
+  </div>
+  <div class="md:col-span-2 max-h-[75vh]">
+    <%= render "application/callout", title: "Questions about the HCB agreement?", type: "info", class: "mt-0 max-h-full overflow-y-scroll", footer: :questions do %>
+      <p>
+        <span class="font-bold">Why do I need to sign this agreement?</span><br>
+        This Fiscal Sponsorship Agreement sets the terms and conditions of your usage of HCB. It allows your project to use HCB's 501(c)(3) nonprofit status and defines a restricted fund for your project.
+      </p>
+
+      <p>
+        <span class="font-bold">Can my organization have a registered 501(c)(3) or sponsored project alongside fiscal sponsorship with HCB?</span><br>
+        No, if you have a sponsored project/organization with HCB it cannot be registered somewhere else. All funds for that project/organization have to run through HCB.<br><br>
+        You can start the process of registering your own 501(c)(3) while being fiscally sponsored, but once you get your own Determination Letter with an EIN from the IRS, you will have to terminate your fiscal sponsorship.
+      </p>
+
+      <p>
+        <span class="font-bold">Am I opening myself up to any tax liabilities by signing this contract?</span><br>
+        Nope! Your non-profit will operate as a project under the The Hack Foundation. We will take care of all tax related obligations. All you need to do is upload receipts!
+      </p>
+
+      <p>
+        <span class="font-bold">How does IP ownership work?</span><br>
+        When you become fiscally sponsored by Hack Club, the IP for your organization would be linked to the account created for you on HCB. By legally claiming ownership of IP through our fiscal sponsorship agreement, it protects your organization from the chance of losing work in the event of a team member leaving. An example of this would be if the team member who designed your website decided to move away from your organization, legally they wouldn't be able to take the site/their other work for your organization with them.<br><br>
+        There are also laws around nonprofit intellectual property solely being claimed under the EIN that the nonprofit is operating through. This is primarily to prevent the chance that a nonprofit's IP is being used or claimed for for-profit purposes. Because you are operating under the same EIN as Hack Club through fiscal sponsorship, we claim legal responsibility for it through our name for you.<br><br>
+        We don't own the IP to take credit for your work or use it in a way to discredit the full control you have over your organization! There are also no restrictions on how you can use your IP while partnering with us. If you were to decide to leave HCB at any point, the IP will always follow the legal owners of your organization.<br><br>
+      </p>
+
+      <p>
+        <span class="font-bold">If the project wishes to become its own 501(c)(3) Non-Profit, will the assets be transferred to the new org?</span><br>
+        Yes! However, Any IP developed using 501(c)3 nonprofit donor money must be owned by a 501(c)3 entity. This is why Hack Club has ownership while you are fiscally sponsored since we are the 501(c)3 entity. This does not apply to any IP developed before you were fiscally sponsored.<br><br>
+        This is also why there is ambiguity around the termination. If you terminate and have a 501(c)3 successor (either you gain the status yourself or you find another fiscal sponsor) we transfer all assets (including IP and any funds) to that 501(c)3. If you do not then we can't transfer assets or funds.<br><br>
+      </p>
+
+      <p>
+        <span class="font-bold">How does this clause interact with IP, code, and materials created before signing the agreement?</span>
+        Anything pre-existing can stay as is.
+      </p>
+    <% end %>
+  </div>
+</div>

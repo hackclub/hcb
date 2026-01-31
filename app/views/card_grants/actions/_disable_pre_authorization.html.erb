@@ -1,15 +1,19 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, label: "") %>
 
-<% pre_authorization_tooltip = if policy(card_grant).disable_pre_authorization?
+<% pre_authorization_tooltip = if label.presence
+                                 label
+                               elsif policy(card_grant).disable_pre_authorization?
                                  "Disable pre-authorizations for this grant"
                                else
                                  "You don't have permission to perform this action"
                                end %>
-<div class="tooltipped tooltipped--n" aria-label="<%= pre_authorization_tooltip %>">
-  <%= link_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-              method: :post,
-              class: "btn bg-warning",
-              disabled: !policy(card_grant).disable_pre_authorization? do %>
-    <%= inline_icon "pre-authorization", size: 20 %> Disable pre-authorization
-  <% end %>
-</div>
+<%= link_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+            method: :post,
+            class: "btn btn--list-item",
+            disabled: !policy(card_grant).disable_pre_authorization? do %>
+  <%= inline_icon "pre-authorization", size: 20 %>
+  <div>
+    <p><strong>Disable pre-authorization</strong></p>
+    <p class="text-sm opacity-60"><%= pre_authorization_tooltip %></p>
+  </div>
+<% end %>

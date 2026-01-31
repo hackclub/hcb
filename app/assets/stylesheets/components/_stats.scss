@@ -1,66 +1,78 @@
 .stat {
-  display: block;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   font-variant-numeric: tabular-nums;
+
+  @media (max-width: 56em) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
 }
 
 .stat__value {
-  font-size: 3rem;
+  white-space: nowrap;
+  font-size: 2rem;
   line-height: 1;
-  margin-bottom: 0.25rem;
+  margin: 0; // reset browser default on <dd>
+  font-weight: 600;
   --unit: '$';
+
+  @media (max-width: 56em) {
+    font-size: 1.5rem;
+  }
 }
 
 .stat:not(.stat--plain) .stat__value:before {
   content: var(--unit);
-  color: map-get($palette, muted);
-  font-size: 1.5rem;
-  vertical-align: top;
+}
+
+.stat__value--no-space:before {
+  margin-right: -5px;
 }
 
 .stat__label {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
+  opacity: 0.75;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .stat--small {
-  display: inline-block;
+  .stat__label {
+    opacity: 0.6;
+  }
 
   .stat__value {
-    font-size: 2rem;
-
-    &:before {
-      font-size: 1.125rem;
-    }
+    font-weight: 400;
+    opacity: 0.85;
   }
 }
 
 // Set of 4 stats, like the main event & invoices pages
 .statset {
-  display: grid;
-  grid-gap: 0.5rem;
-  align-items: end; // bottom-align stats of varying sizes
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 1rem;
+  background-color: #ffffff;
 
-  // On iPhone SE/super small screens, 1 column. Most phones, 2 columns
-  @media screen and (max-width: 48em) and (min-width: 24em) {
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 1rem;
-
-    .statset__wide:last-child {
-      grid-row: 2;
-    }
+  [data-dark='true'] & {
+    background-color: var(--darker);
   }
 
-  // On larger screens, 4 columns
-  @media (min-width: 48em) {
-    grid-gap: 1rem;
-    // First stat is larger than the rest
-    grid-template-columns: 3fr 2fr 2fr 2fr;
+  box-shadow: var(--shadow-border-sm);
+  border-radius: var(--radius-md);
+  text-align: center;
+
+  @media (max-width: 56em) {
+    flex-direction: column;
   }
 }
 
-@media screen and (min-width: 24em) and (max-width: 32em) {
+@media screen and (min-width: 24em) and (max-width: 56em) {
   // "aux" stats are small & go the right of the first, large stat
   .statset__aux {
     grid-row: 1;

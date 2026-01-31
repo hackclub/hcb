@@ -43,6 +43,7 @@ RSpec.describe CardGrantsController do
       {
         amount_cents: "123.45",
         email: "recipient@example.com",
+        invite_message: "this is a really cool card grant",
         keyword_lock: "some keywords",
         purpose: "Raffle prize",
         one_time_use: "true",

@@ -2,16 +2,16 @@
   <a
     href="https://blog.hcb.hackclub.com"
     target="_blank"
-    class="relative muted pointer tooltipped tooltipped--s"
+    class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
     aria-label="See what’s new with HCB"
     id="changelog-icon"
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-    <%= inline_icon "rep", size: home_action_size %>
-    <span class="badge !bg-red !text-white hidden absolute top-[-15px] right-[-4px] block m-0 py-[2px] px-1" data-blog-target="badge"></span>
+    <%= inline_icon "rep", style: "transform:scale(1.25)", size: home_action_size %>
+    <span class="badge !bg-red !text-white hidden absolute top-[-15px] right-[-4px] m-0 py-[2px] px-1" data-blog-target="badge"></span>
   </a>
   <div
-    class="absolute top-10 card py-3 px-0 w-80 z-10 flex flex-col items-center justify-start leading-normal hidden"
+    class="absolute top-10 card py-3 px-0 w-80 z-10 flex-col items-center justify-start leading-normal hidden blog-menu"
     data-menu-target="content">
     <p class="font-bold text-lg my-0 pb-3 w-full text-center">✨ What's new?</p>
 

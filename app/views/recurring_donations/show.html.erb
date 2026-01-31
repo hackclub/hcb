@@ -41,15 +41,15 @@
 <% end %>
 
 <div class="card mb3 center mt4">
-  <h3 class="mt0 flex left-align items-start justify-between regular muted border-none">
-    <span><strong class="black"><%= @recurring_donation.name(show_anonymous: true) %>'s</strong> <% "anonymous " if @recurring_donation.anonymous? %>donation of<br>
+  <h3 class="mt0 flex text-left items-start justify-between regular muted border-none">
+    <span><strong class="black"><%= @recurring_donation.name(show_anonymous: true) %>’s</strong> <% "anonymous " if @recurring_donation.anonymous? %>donation of<br>
     <strong class="black"><%= render_money @recurring_donation.amount %></strong> per month to<br>
     <strong class="black"><%= link_to_if @recurring_donation.event.is_public?, @recurring_donation.event.name, @recurring_donation.event, target: "_blank" %></strong></span>
 
     <div class="badge bg-<%= @recurring_donation.status_badge_color %> mt1 h4"><%= @recurring_donation.stripe_status.humanize %></div>
   </h3>
 
-  <section class="details left-align">
+  <section class="details text-left">
     <p>
       <strong>Payment method</strong>
       <span class="flex items-center">
@@ -87,7 +87,7 @@
   </section>
 
   <% unless @recurring_donation.canceled? %>
-    <div class="actions left-align">
+    <div class="actions text-left">
       <%= button_to "Cancel donation", cancel_recurring_donation_path(@recurring_donation.url_hash), method: :post, class: "btn bg-error", data: { confirm: "Are you sure you'd like to stop donating to #{@recurring_donation.event.name}?" } %>
     </div>
   <% end %>

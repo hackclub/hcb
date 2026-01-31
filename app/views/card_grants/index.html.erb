@@ -1,0 +1,35 @@
+<% title "Card grants for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :card_grants %>
+
+<h1 class="flex heading items-center gap-2 flex-col sm:flex-row mb-2 border-0">
+  <span class="flex-grow flex items-center flex-1">
+    Card grants
+    <%= badge_for @event.card_grants.active.count, class: "bg-muted" %>
+  </span>
+
+  <% if organizer_signed_in?(as: :member) %>
+    <%= render "card_grants/create_modal" %>
+    <div class="flex gap-2 items-center">
+      <% if policy(@event).bulk_upload_card_grants? %>
+        <%= link_to event_card_grants_bulk_upload_path(@event), class: "btn btn--primary" do %>
+          <%= inline_icon "share" %>
+          Upload a CSV
+        <% end %>
+      <% end %>
+      <%= link_to new_event_card_grant_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_card_grant" }, disabled: !policy(@event.card_grants.build).create? do %>
+        <%= inline_icon "card-add" %>
+        Send a grant
+      <% end %>
+    </div>
+  <% end %>
+</h1>
+
+<%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
+  <%= render "application/loading_container", klass: "mt-8" %>
+<% end %>
+
+<h2 class="heading mt4 pb1">Card grant transactions</h2>
+<%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
+  <%= render "application/loading_container", klass: "mt-8" %>
+<% end %>

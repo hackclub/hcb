@@ -88,7 +88,7 @@ class PreviewLink extends React.Component {
               readOnly={true}
               name="prefill-url"
               type="text"
-              className="!border-0 p-0 min-h-0 flex-1"
+              className="!border-0 p-0 min-h-0 flex-1 !shadow-none select-all"
               style={{ maxWidth: '100%' }}
               ref={c => (this.inputField = c)}
             />
@@ -118,7 +118,7 @@ class PreviewLink extends React.Component {
                   step="0.01"
                   min="0.01"
                   type="number"
-                  className="!border-0 p-0 flex-1"
+                  className="!border-0 p-0 flex-1 !shadow-none"
                   style={{ minHeight: 0, padding: 0 }}
                   name="prefill-amount"
                   onChange={this.handleChange}

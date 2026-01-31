@@ -119,7 +119,7 @@ PayPal transfers are a unique type of transfer. It may look like HCB automatical
 
 An admin then fills in this form:
 
-<img src="https://cloud-18ao7zohk-hack-club-bot.vercel.app/0image.png" width="291px" />
+<img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/5fced0ca3ada544b_image.png" width="291px" />
 
 A request is made to `AdminController#set_paypal_transfer` which uses [`CanonicalTransactionService::SetEvent`](https://github.com/hackclub/hcb/blob/main/app/services/canonical_transaction_service/set_event.rb), `CanonicalPendingTransactionService::Settle.new` to map it to an event and settle it’s associated pending transaction. Lastly, there’s this line:
 

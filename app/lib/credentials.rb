@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# explicitly require these because credentials.rb is sometimes called in a context when rails isn't loaded, e.g. config/puma.rb
+require "uri"
+require "net/http"
+
 # See https://github.com/hackclub/hcb/pull/8073.
 # For production & GitHub actions, credentials are synced using https://docs.doppler.com/docs/github-actions and https://docs.doppler.com/docs/heroku.
 # Locally, use a `DOPPLER_TOKEN` (https://docs.doppler.com/docs/service-tokens) to load in environment variables.

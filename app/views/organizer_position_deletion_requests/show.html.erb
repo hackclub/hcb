@@ -2,129 +2,167 @@
 <% page_sm %>
 <%= render "events/nav" if @event %>
 
-<article class="card mt3">
-  <div class="mb2">
-    <%= link_to "Back", organizer_position_deletion_requests_path, class: "breadcrumb" %>
-  </div>
+<div class="flex flex-col">
+  <article class="card mt-6">
+    <div class="mb2">
+      <%= link_to "Back",
+                  organizer_position_deletion_requests_path,
+                  class: "breadcrumb" %>
+    </div>
 
-  <h1 class="h2 mt0">Deletion request</h1>
+    <h1 class="h2 mt0">Deletion request</h1>
 
-  <div class="details">
+    <div class="details">
+      <p>
+        <strong>Organization</strong>
+        <%= @opdr.event.name %> <%= "(DELETED)" if @opdr.event.deleted? %>
+      </p>
+
+      <p>
+        <strong>Submitted by</strong>
+        <%= user_mention @opdr.submitted_by %>
+      </p>
+
+      <p>
+        <strong>Submitter email</strong>
+        <%= copy_to_clipboard(@opdr.submitted_by.email) do %>
+          <%= @opdr.submitted_by.email %>
+        <% end %>
+      </p>
+
+      <p>
+        <strong>Requesting deletion for</strong>
+        <%= user_mention @opdr.organizer_position.user %>
+      </p>
+
+      <p>
+        <strong>User email</strong>
+        <%= copy_to_clipboard(@opdr.organizer_position.user.email) do %>
+          <%= @opdr.organizer_position.user.email %>
+        <% end %>
+      </p>
+
+      <p>
+        <strong>Submitted at</strong>
+        <%= format_datetime @opdr.created_at %>
+      </p>
+
+      <p>
+        <strong>Contract signee?</strong>
+        <%= @opdr.organizer_position.signee? ? "Yes" : "No" %>
+      </p>
+
+      (Please <%= link_to "check the contract",
+                          event_documents_path(@opdr.event.id) %>
+      before processing a deletion request.)
+
+      <p>
+        <strong>Reason for deletion</strong>
+        <%= @opdr.reason %>
+      </p>
+    </div>
+
+    <% warning_emoji = capture do %>
+      <%# ⚠️ Emoji doesn't render with our default font stack %>
+      <span style="font-family: initial;">⚠️</span>
+    <% end %>
+
     <p>
-      <strong>Organization</strong>
-      <%= @opdr.event.name %> <%= "(DELETED)" if @opdr.event.deleted? %>
-    </p>
-
-    <p>
-      <strong>Submitted by</strong>
-      <%= user_mention @opdr.submitted_by %>
-    </p>
-
-    <p>
-      <strong>Submitter email</strong>
-      <%= copy_to_clipboard(@opdr.submitted_by.email) do %>
-        <%= @opdr.submitted_by.email %>
+      <% if @opdr.organizer_missing_receipts.any? %>
+        <%= warning_emoji %>
+        <strong>
+          <%= @opdr.organizer_missing_receipts.count %>
+          missing receipt(s) on Stripe cards
+        </strong>
+      <% else %>
+        ✅ <strong>No missing receipts on Stripe cards</strong>
       <% end %>
     </p>
 
     <p>
-      <strong>Requesting deletion for</strong>
-      <%= user_mention @opdr.organizer_position.user %>
-    </p>
-
-    <p>
-      <strong>User email</strong>
-      <%= copy_to_clipboard(@opdr.organizer_position.user.email) do %>
-        <%= @opdr.organizer_position.user.email %>
+      <% if @opdr.organizer_active_cards.any? %>
+        <%= warning_emoji %>
+        <strong>
+          <%= @opdr.organizer_active_cards.count %> active Stripe card(s)
+        </strong>
+      <% else %>
+        ✅ <strong>No active Stripe cards</strong>
       <% end %>
     </p>
 
-    <p>
-      <strong>Submitted at</strong>
-      <%= format_datetime @opdr.created_at %>
-    </p>
-
-    <p>
-      <strong>Contract signee?</strong>
-      <%= @opdr.organizer_position.signee? ? "Yes" : "No" %>
-    </p>
-
-    (Please <%= link_to "check the contract", event_documents_path(@opdr.event.id) %> before processing a deletion request.)
-
-    <p>
-      <strong>Reason for deletion</strong>
-      <%= @opdr.reason %>
-    </p>
-  </div>
-
-  <% warning_emoji = capture do %>
-    <%# ⚠️ Emoji doesn't render with our default font stack %>
-    <span style="font-family: initial;">⚠️</span>
-  <% end %>
-
-  <p>
-    <% if @opdr.organizer_missing_receipts.any? %>
-      <%= warning_emoji %>
-      <strong>
-        <%= @opdr.organizer_missing_receipts.count %>
-        missing receipt(s) on Stripe cards
-      </strong>
-    <% else %>
-      ✅ <strong>No missing receipts on Stripe cards</strong>
+    <% if @opdr.organizer_last_signee? %>
+      <p class="error bold">
+        <%= inline_icon "important",
+                        size: 24,
+                        style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
+        Woah! This user is THE LAST organizer that has signed the fiscal
+        sponsorship contract for this organization! Are you sure you want
+        to remove them?
+      </p>
+    <% elsif @opdr.organizer_position.signee? %>
+      <p class="warning">
+        <%= inline_icon "important",
+                        size: 24,
+                        style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
+        Woah! This user has signed the fiscal sponsorship contract for this
+        organization. Are you sure you want to remove them?
+        <% signee_count_after_removal = @opdr.event.signees.size - 1 %>
+        (<%= signee_count_after_removal %>
+        <%= "signee".pluralize(signee_count_after_removal) %> will remain)
+      </p>
     <% end %>
-  </p>
 
-  <p>
-    <% if @opdr.organizer_active_cards.any? %>
-      <%= warning_emoji %>
-      <strong>
-        <%= @opdr.organizer_active_cards.count %> active Stripe card(s)
-      </strong>
+    <% if @opdr.organizer_position.deleted_at.nil? %>
+      <%= link_to "Delete organizer ⚠️☣☠",
+                  organizer_path(@opdr.organizer_position.id),
+                  method: :delete,
+                  data: {
+                    confirm: "You are about to remove " \
+                             "#{@opdr.organizer_position.user.initial_name} " \
+                             "from #{@opdr.event.name}. This has PERMANENT " \
+                             "consequences (e.g. canceled cards). " \
+                             "#{"⚠️ They are the last signee for this organization! " \
+                               "This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}" \
+                             "Are you sure you want to do this?"
+                  },
+                  class: "btn bg-error mr1" %>
     <% else %>
-      ✅ <strong>No active Stripe cards</strong>
+      <p><strong>Organizer is marked as deleted</strong></p>
     <% end %>
-  </p>
+
+    <% if @opdr.under_review? %>
+      <%= link_to "Close Request",
+                  organizer_position_deletion_request_close_path(@opdr.id),
+                  method: :post,
+                  data: {
+                    confirm: "This will mark the request as processed. " \
+                              "Only continue if no follow-up is needed for this request."
+                  },
+                  class: "btn bg-accent" %>
+    <% else %>
+      <%= link_to "Open Request",
+                  organizer_position_deletion_request_open_path(@opdr.id),
+                  method: :post,
+                  data: { confirm: "This will re-open the request." },
+                  class: "btn bg-info" %>
+    <% end %>
+  </article>
 
   <% if @opdr.organizer_last_signee? %>
     <p class='error bold'>
       <%= inline_icon "important", size: 24, style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
-      Woah! This user is THE LAST organizer that has signed the fiscal sponsorship contract for this
+      Woah! This user is THE LAST organizer that has signed the fiscal sponsorship agreement for this
       organization! Are you sure you want to remove them?
     </p>
   <% elsif @opdr.organizer_position.signee? %>
     <p class='warning'>
       <%= inline_icon "important", size: 24, style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
-      Woah! This user has signed the fiscal sponsorship contract for this
+      Woah! This user has signed the fiscal sponsorship agreement for this
       organization. Are you sure you want to remove them?
       <% signee_count_after_removal = @opdr.event.signees.size - 1 %>
       (<%= signee_count_after_removal %> <%= "signee".pluralize(signee_count_after_removal) %> will remain)
     </p>
   <% end %>
-
-  <% if @opdr.organizer_position.deleted_at.nil? %>
-    <%= link_to "Delete organizer ⚠️☣☠",
-      organizer_path(@opdr.organizer_position.id),
-      method: :delete,
-      data: { confirm: "You are about to remove #{@opdr.organizer_position.user.initial_name} from #{@opdr.event.name}. This has PERMANENT consequences (e.g. canceled cards). #{"⚠️ They are the last signee for this organization! This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}Are you sure you want to do this?" },
-      class: "btn bg-error mr1" %>
-  <% else %>
-    <p><strong>Organizer is marked as deleted</strong></p>
-  <% end %>
 </div>
-
-<% if @opdr.under_review? %>
-  <%= link_to "Close Request",
-    organizer_position_deletion_request_close_path(@opdr.id),
-    method: :post,
-    data: { confirm: "This will mark the request as processed. Only continue if no follow-up is needed for this request." },
-    class: "btn bg-accent" %>
-<% else %>
-  <%= link_to "Open Request",
-    organizer_position_deletion_request_open_path(@opdr.id),
-    method: :post,
-    data: { confirm: "This will re-open the request." },
-    class: "btn bg-info" %>
-<% end %>
-</article>
 
 <%= render "comments/comments" %>

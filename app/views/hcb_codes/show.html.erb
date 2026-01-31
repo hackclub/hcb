@@ -11,15 +11,15 @@
   </div>
 
   <% if @hcb_code.accepts_receipts? %>
-    <% admin_tool("mt1") do %>
+    <% admin_tool("mt1 p-3") do %>
       💌 Bonjour!
       <%= mail_to @hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
     <% end %>
-    <% admin_tool("mt1") do %>
+    <% admin_tool("mt1 p-3") do %>
       🌸 Aloha!
       <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@hcb_code) %>
     <% end %>
-    <% admin_tool("mt1") do %>
+    <% admin_tool("mt1 p-3") do %>
       ☎️ moshi moshi?
       <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), method: :post %>
     <% end %>
@@ -49,7 +49,7 @@
   <%= render "comments/list", comments: @hcb_code.comments %>
   <%= render "comments/form", commentable: @hcb_code %>
 
-  <% admin_tool("mt2") do %>
+  <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>
     <%= render partial: "hcb_codes/pending_transaction_history" %>
   <% end %>

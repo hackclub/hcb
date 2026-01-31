@@ -1,30 +1,30 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "edit_nav", active: "overview" %>
+  <%= render "card_grants/edit_nav", active: "overview" %>
 
-<section class="details details--wide pb2 details--tall">
-    <p>
-      <strong>Grant sent to</strong>
-      <span><%= mail_to @card_grant.user.email %></span>
-    </p>
-    <p>
-      <strong>Expires on</strong>
-      <span><%= format_date @card_grant.expires_on %></span>
-    </p>
+  <section class="details details--wide pb2 details--tall">
+      <p>
+        <strong>Grant sent to</strong>
+        <span><%= mail_to @card_grant.user.email %> (<%= copy_to_clipboard(@card_grant.user.public_id, class: "w-fit", tooltip_direction: "e") %>)</span>
+      </p>
+      <p>
+        <strong>Expires on</strong>
+        <span><%= format_date @card_grant.expires_on %></span>
+      </p>
 
-    <p>
-      <strong>One time use?</strong>
-      <span><%= @card_grant.one_time_use ? "Yes" : "No" %></span>
-    </p>
-    <p>
-      <strong>Allowed merchants</strong>
-      <% if @card_grant.allowed_merchants.any? %>
-        <span class="font-mono h5"><%= @card_grant.allowed_merchant_names.join(", ") %><br>
-          (IDs: <%= @card_grant.allowed_merchants.join(", ") %>)</span>
-    <% else %>
-        <span>All merchants allowed</span>
-      <% end %>
-    </p>
+      <p>
+        <strong>One time use?</strong>
+        <span><%= @card_grant.one_time_use ? "Yes" : "No" %></span>
+      </p>
+      <p>
+        <strong>Allowed merchants</strong>
+        <% if @card_grant.allowed_merchants.any? %>
+          <span class="font-mono h5"><%= @card_grant.allowed_merchant_names.join(", ") %><br>
+            (IDs: <%= @card_grant.allowed_merchants.join(", ") %>)</span>
+      <% else %>
+          <span>All merchants allowed</span>
+        <% end %>
+      </p>
 
-</section>
+  </section>
 
 </turbo-frame>

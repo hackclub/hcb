@@ -3,11 +3,40 @@
 class CardGrantsController < ApplicationController
   include SetEvent
 
-  skip_before_action :signed_in_user, only: [:show, :spending]
+  skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
 
-  before_action :set_event, only: %i[new create]
-  before_action :set_card_grant, except: %i[new create]
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
+
+  def index
+    authorize @event, :card_grant_overview?
+  end
+
+  def card_index
+    authorize @event, :card_grant_overview?
+
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    card_grants_page = (params[:page] || 1).to_i
+    card_grants_per_page = (params[:per] || 20).to_i
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
+      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+      "card_grants.created_at DESC"
+    )
+    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+  end
+
+  def transaction_index
+    authorize @event, :card_grant_overview?
+
+    @subledger = true
+  end
 
   def new
     @card_grant = @event.card_grants.build(email: params[:email])
@@ -21,7 +50,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -49,7 +78,52 @@ class CardGrantsController < ApplicationController
     end
 
     flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
-    redirect_to event_transfers_path(@event)
+    redirect_back_or_to event_transfers_path(@event)
+  end
+
+  def bulk_upload_form
+    authorize @event, :bulk_upload_card_grants?
+  end
+
+  def bulk_upload
+    authorize @event, :bulk_upload_card_grants?
+
+    unless params[:csv_file].present?
+      flash[:error] = "Please select a CSV file to upload"
+      render :bulk_upload_form, status: :unprocessable_entity
+      return
+    end
+
+    result = CardGrantService::BulkCreate.new(
+      event: @event,
+      csv_file: params[:csv_file],
+      sent_by: current_user
+    ).run
+
+    if result.success?
+      flash[:success] = "Successfully sent #{result.card_grants.count} grants!"
+      redirect_to event_card_grant_overview_path(@event)
+    else
+      flash.now[:error] = result.errors.join(". ")
+      render :bulk_upload_form, status: :unprocessable_entity
+    end
+  rescue DisbursementService::Create::UserError => e
+    flash.now[:error] = e.message
+    render :bulk_upload_form, status: :unprocessable_entity
+  end
+
+  def bulk_upload_template
+    authorize @event, :bulk_upload_card_grants?
+
+    csv_content = CSV.generate do |csv|
+      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+    end
+
+    send_data csv_content,
+              filename: "card_grants_template.csv",
+              type: "text/csv",
+              disposition: "attachment"
   end
 
   def edit_overview
@@ -80,11 +154,28 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def permit_merchant
+    authorize @card_grant
+
+    merchant_lock = @card_grant.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: card_grant_path(@card_grant) and return
+    end
+
+    merchant_lock << params[:merchant]
+    @card_grant.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: card_grant_path(@card_grant)
+  end
+
+
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
-      flash[:success] = "Grant's purpose has been successfully updated!"
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+      flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
@@ -94,8 +185,9 @@ class CardGrantsController < ApplicationController
 
   def clear_purpose
     authorize @card_grant, :update?
-    @card_grant.update(purpose: nil)
-    redirect_back fallback_location: card_grant_url(@card_grant)
+    @card_grant.update!(purpose: nil)
+    flash[:success] = "Purpose has been successfully cleared!"
+    redirect_to card_grant_url(@card_grant)
   end
 
   def show
@@ -131,7 +223,7 @@ class CardGrantsController < ApplicationController
 
     @event = @card_grant.event
     @card = @card_grant.stripe_card
-    @hcb_codes = @card&.hcb_codes
+    @hcb_codes = @card&.local_hcb_codes
 
     @frame = params[:frame].present?
     @force_no_popover = @frame

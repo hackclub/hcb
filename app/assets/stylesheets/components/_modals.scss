@@ -6,13 +6,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10;
-  background-color: rgba(0, 0, 0, 0.375);
-  background-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.125),
-    rgba(0, 0, 0, 0.375)
-  );
+  z-index: 12;
+  background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
 }
@@ -22,11 +17,9 @@
 
 .modal {
   background-color: $white;
-  box-shadow:
-    0 2px 4px 0 rgba(0, 0, 0, 0.125),
-    0 12px 24px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-modal);
   padding: 2rem 1rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-2xl);
   overflow: hidden;
   display: none;
   margin: auto;
@@ -35,17 +28,23 @@
   position: relative;
   z-index: 2;
   text-align: left;
+  transform: scale(0.9);
+  transition: transform 0.2s ease-in-out;
+
+  .jquery-modal:not(:not([style*='opacity: 1'])) & {
+    transform: scale(1);
+  }
 
   &.modal--popover {
     position: absolute;
     right: 0px;
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.9);
     bottom: 0px;
     max-width: 800px;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0rem;
     width: 66vw;
-    transition: transform 0.1s ease-in-out;
+    transition: transform 0.2s;
 
     .jquery-modal:not(:not([style*='opacity: 1'])) & {
       transform: translateX(0%);
@@ -56,8 +55,8 @@
     }
 
     @media (min-width: 48em) {
-      height: calc(100vh - 24px);
-      border-radius: 8px;
+      height: calc(100dvh - 24px);
+      border-radius: var(--radius-xl);
       margin: 12px;
     }
 
@@ -146,7 +145,7 @@
   }
 
   &.bg-snow header {
-    border-bottom: 1px solid rgba(48, 48, 48, 0.125);
+    border-bottom: 0.5px solid rgba(48, 48, 48, 0.125);
   }
 
   &:not(.modal--popover) > footer,
@@ -172,18 +171,20 @@
   }
 
   &.bg-snow footer {
-    border-top: 1px solid rgba(48, 48, 48, 0.125);
+    border-top: 0.5px solid rgba(48, 48, 48, 0.125);
   }
 }
 
 .modal__close {
   float: right;
-  width: 28px;
-  height: 28px;
-  background-color: #fff !important;
+  width: 32px;
+  height: 32px;
+  cursor: pointer !important;
+  background-color: transparent !important;
 
   @media (min-width: 32em) {
-    margin: -14px; // half the size
+    margin: -10px;
+    margin-left: -15px;
   }
 
   @media screen and (max-width: 32em) {
@@ -197,12 +198,15 @@
 
 .modal__external {
   float: right;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer !important;
+  background-color: transparent !important;
   transform: translateX(-38px);
 
   @media (min-width: 32em) {
-    margin: -14px; // half the size
+    margin: -10px;
+    margin-right: -15px;
   }
 
   @media screen and (max-width: 32em) {
