@@ -23,7 +23,12 @@
 <template x-if="type == 'first'">
   <div class="field">
     <%= form.label :size, "Size" %>
-    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+    <div class="flex items-center" x-data="{ people: '' }">
+      <div class="input flex gap-2 items-center justify-between py-0">
+        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", value: affiliation.size, disabled:, "x-model": "people" %>
+        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -42,7 +47,12 @@
 <template x-if="type == 'vex'">
   <div class="field">
     <%= form.label :size, "Size" %>
-    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+    <div class="flex items-center" x-data="{ people: '' }">
+      <div class="input flex gap-2 items-center justify-between py-0">
+        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", value: affiliation.size, disabled:, "x-model": "people" %>
+        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -55,7 +65,12 @@
 <template x-if="type == 'hack_club'">
   <div class="field">
     <%= form.label :size, "Size" %>
-    <%= form.number_field :size, { required: true, placeholder: 0, value: affiliation.size, disabled: } %>
+    <div class="flex items-center" x-data="{ people: '' }">
+      <div class="input flex gap-2 items-center justify-between py-0">
+        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", value: affiliation.size, disabled:, "x-model": "people" %>
+        <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
+      </div>
+    </div>
   </div>
 </template>
 
