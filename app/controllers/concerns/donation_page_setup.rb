@@ -43,7 +43,7 @@ module DonationPageSetup
 
     @monthly = params[:monthly].present? || params[:tier_id].present?
     @skip_layout_og_tags = true
-    
+
     if @monthly
       @recurring_donation = event.recurring_donations.build(
         name: params[:name],
