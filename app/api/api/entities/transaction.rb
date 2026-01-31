@@ -27,6 +27,15 @@ module Api
           # amount_cents of 0 (zero) since there are two equal, by opposite,
           # Canonical Transactions. Therefore, for the API, we are overriding the
           # default amount_cents exposure defined in the LinkedObjectBase.
+
+          # should be removed post-migration
+          if hcb_code.outgoing_disbursement? && org == hcb_code.outgoing_disbursement.disbursement.source_event &&
+             !(hcb_code.outgoing_disbursement.disbursement.source_subledger_id && hcb_code.outgoing_disbursement.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
+            next -hcb_code.outgoing_disbursement.disbursement.amount
+          elsif hcb_code.outgoing_disbursement?
+            next hcb_code.outgoing_disbursement.disbursement.amount
+          end
+
           next hcb_code.incoming_disbursement.amount if hcb_code.incoming_disbursement?
           next hcb_code.outgoing_disbursement.amount if hcb_code.outgoing_disbursement?
           next hcb_code.donation.amount if hcb_code.donation?

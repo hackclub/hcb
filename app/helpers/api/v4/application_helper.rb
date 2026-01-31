@@ -33,7 +33,13 @@ module Api
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
+        if tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.source_event
+          return -tx.outgoing_disbursement.disbursement.amount
+        elsif tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.destination_event
+          return tx.outgoing_disbursement.disbursement.amount # incoming that needs a backfill
+        end
+
+        # return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
         return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
