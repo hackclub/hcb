@@ -380,6 +380,11 @@ class CanonicalTransaction < ApplicationRecord
     nil # TODO
   end
 
+  def disbursement
+    Rails.error.unexpected "CanonicalTransaction#disbursement accessed"
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
+  end
+
   def outgoing_disbursement
     return linked_object if linked_object.is_a?(Disbursement::Outgoing)
 

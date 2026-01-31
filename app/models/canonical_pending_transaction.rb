@@ -262,7 +262,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     Rails.error.unexpected "CanonicalPendingTransaction#disbursement accessed"
     return nil unless raw_pending_outgoing_disbursement_transaction || raw_pending_incoming_disbursement_transaction
 
-    linked_object
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
   def incoming_disbursement
