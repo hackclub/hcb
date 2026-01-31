@@ -29,7 +29,7 @@ module EventMappingEngine
             hcb_code = ::HcbCode.find_by(short_code:)
             next unless hcb_code
 
-            next unless guess_event_id(hcb_code, ct)
+            next unless guess_event_id(hcb_code)
 
             ActiveRecord::Base.transaction do
               ct.update_column(:hcb_code, hcb_code.hcb_code)
@@ -38,8 +38,8 @@ module EventMappingEngine
 
               attrs = {
                 canonical_transaction_id: ct.id,
-                event_id: guess_event_id(hcb_code, ct),
-                subledger_id: guess_subledger_id(hcb_code, ct)
+                event_id: guess_event_id(hcb_code),
+                subledger_id: guess_subledger_id(hcb_code)
               }
               ::CanonicalEventMapping.create!(attrs)
             end
@@ -52,7 +52,7 @@ module EventMappingEngine
           ::CanonicalTransaction.unmapped.with_short_code.order("date asc")
         end
 
-        def guess_event_id(hcb_code, ct)
+        def guess_event_id(hcb_code)
           return hcb_code.outgoing_disbursement.event.id if hcb_code.outgoing_disbursement?
           return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.event.try(:id) if hcb_code.events.length == 1
@@ -60,7 +60,7 @@ module EventMappingEngine
           raise ArgumentError, "attempted to map a transaction with HCB short codes to a multi-event HCB code"
         end
 
-        def guess_subledger_id(hcb_code, ct)
+        def guess_subledger_id(hcb_code)
           return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
           return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
