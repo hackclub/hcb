@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION hcb_code_type(hcb_code text) RETURNS text
     WHEN '400' THEN 'check'
     WHEN '401' THEN 'increase_check'
     WHEN '402' THEN 'check_deposit'
-    WHEN '500' THEN 'disbursement'
+    WHEN '500' THEN 'outgoing_disbursement'
     WHEN '550' THEN 'incoming_disbursement'
     WHEN '600' THEN 'stripe_card'
     WHEN '601' THEN 'stripe_force_capture'
