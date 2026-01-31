@@ -380,6 +380,18 @@ class CanonicalTransaction < ApplicationRecord
     nil # TODO
   end
 
+  def outgoing_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Outgoing)
+  
+    nil
+  end
+
+  def incoming_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Incoming)
+  
+    nil
+  end
+
   def unique_bank_identifier
     @unique_bank_identifier ||= transaction_source.try(:unique_bank_identifier)
   end
