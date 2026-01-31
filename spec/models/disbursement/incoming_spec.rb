@@ -73,12 +73,14 @@ RSpec.describe Disbursement::Incoming, type: :model do
       expect(incoming.canonical_transactions).to include(ct)
     end
 
-    it "does not include transactions with the outgoing hcb_code" do
-      ct = create(:canonical_transaction)
-      ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+    # We want this functionality in the future, but we contradict this behavior
+    # for the time being to aid in the migration
+    # it "does not include transactions with the outgoing hcb_code" do
+    #   ct = create(:canonical_transaction)
+    #   ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
 
-      expect(incoming.canonical_transactions).not_to include(ct)
-    end
+    #   expect(incoming.canonical_transactions).not_to include(ct)
+    # end
   end
 
   describe "delegation" do
