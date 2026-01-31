@@ -23,7 +23,6 @@ module TransactionGroupingEngine
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
-      DISBURSEMENT_CODE = "500" # Legacy, will be removed in favor of OUTGOING_DISBURSEMENT_CODE
       OUTGOING_DISBURSEMENT_CODE = "500"
       INCOMING_DISBURSEMENT_CODE = "550"
       STRIPE_CARD_CODE = "600"

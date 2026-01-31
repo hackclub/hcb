@@ -338,7 +338,7 @@ class HcbCode < ApplicationRecord
   def disbursement?
     Rails.error.unexpected "HcbCode#disbursement? accessed"
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
   end
 
   def outgoing_disbursement?
