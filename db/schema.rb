@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_28_060550) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1341,7 +1341,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_060550) do
 
   create_table "hcb_codes", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "event_id"
     t.text "hcb_code", null: false
+    t.bigint "subledger_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
     t.datetime "updated_at", null: false
