@@ -23,11 +23,11 @@ class Disbursement
     end
 
     def canonical_transactions
-      @canonical_transactions ||= disbursement.local_hcb_code.canonical_transactions.where("amount_cents > 0")
+      @canonical_transactions ||= disbursement.canonical_transactions.where("amount_cents > 0")
     end
 
     def canonical_pending_transactions
-      @canonical_pending_transactions ||= disbursement.local_hcb_code.canonical_pending_transactions.where("amount_cents > 0")
+      @canonical_pending_transactions ||= disbursement.canonical_pending_transactions.where("amount_cents > 0")
     end
 
     def pending_expired?
