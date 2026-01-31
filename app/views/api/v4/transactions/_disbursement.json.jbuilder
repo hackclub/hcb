@@ -3,7 +3,10 @@
 json.id disbursement.public_id
 json.memo disbursement.local_hcb_code.memo
 json.status disbursement.v4_api_state
-json.transaction_id disbursement.local_hcb_code.public_id
+# `transaction_id` will eventually be deprecated
+json.transaction_id disbursement.outgoing_hcb_code.public_id
+json.outgoing_transaction_id disbursement.outgoing_hcb_code.public_id
+json.incoming_transaction_id disbursement.incoming_hcb_code.public_id
 json.amount_cents disbursement.amount
 
 json.from do
