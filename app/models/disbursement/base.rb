@@ -8,6 +8,7 @@ class Disbursement
       attr_reader :disbursement
 
       delegate :id, :name, :source_event, :destination_event,
+               :destination_subledger, :source_subledger,
                :fulfilled?, :reviewing?, :state,
                :requested_by, :card_grant, :inter_event_transfer?,
                :processed?, :pending?, :rejected?, :scheduled?, :may_mark_rejected?,
