@@ -106,7 +106,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def user_in_event?
-    OrganizerPosition.role_at_least?(user, record, :reader)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def authorized_to_activate?
