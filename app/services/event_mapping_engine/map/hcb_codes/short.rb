@@ -42,6 +42,10 @@ module EventMappingEngine
                 subledger_id: guess_subledger_id(hcb_code, ct)
               }
               ::CanonicalEventMapping.create!(attrs)
+
+              if hcb_code.outgoing_disbursement? && ct.amount_cents.positive?
+                ct.update_column(:hcb_code, hcb_code.disbursement.incoming_hcb_code)
+              end
             end
           end
         end
