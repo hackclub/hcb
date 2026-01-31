@@ -92,17 +92,17 @@ class CardGrantPolicy < ApplicationPolicy
   private
 
   def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def sender_admin_or_manager?
     return true if record.sent_by.nil? # May be nil if used to authorize after build on #new page.
 
-    record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
+    record.sent_by.admin? || OrganizerPosition.role_at_least?(record.sent_by, record.event, :manager)
   end
 
   def user_in_event?
