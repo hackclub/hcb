@@ -335,7 +335,15 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE
+    [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+  end
+
+  def outgoing_disbursement?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE
+  end
+
+  def incoming_disbursement?
+    hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE
   end
 
   def card_grant?
