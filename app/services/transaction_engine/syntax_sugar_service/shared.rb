@@ -122,11 +122,11 @@ module TransactionEngine
       end
 
       def outgoing_disbursement?
-        @canonical_transaction.local_hcb_code.outgoing_disbursement?
+        @canonical_transaction.local_hcb_code&.outgoing_disbursement?
       end
 
       def incoming_disbursement?
-        @canonical_transaction.local_hcb_code.incoming_disbursement?
+        @canonical_transaction.local_hcb_code&.incoming_disbursement?
       end
 
     end
