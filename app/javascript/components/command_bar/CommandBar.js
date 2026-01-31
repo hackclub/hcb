@@ -9,6 +9,7 @@ import {
   useRegisterActions,
   Priority,
   useKBar,
+  useMatches,
 } from 'kbar'
 import { initalActions, adminActions, generateEventActions } from './actions'
 import { KBarInput } from './input'
@@ -69,6 +70,19 @@ const animatorStyle = {
   boxShadow: 'var(--shadow-modal)',
 }
 
+function EmptyState() {
+  const { results } = useMatches()
+
+  return (
+    results.length === 0 && (
+      <div className="text-center font-semibold pt-4 pb-5">
+        <img src="/dino_leaping_for_money.svg" className="dino-svg mb-4 mx-auto w-100 block max-w-40" />
+        No results found
+      </div>
+    )
+  )
+}
+
 function SearchAndResults() {
   const [actions, setActions] = useState([])
   const { search, searching, searched, searchedFor, currentRootActionId } =
@@ -113,21 +127,21 @@ function SearchAndResults() {
         ),
         ...(search != ''
           ? [
-              {
-                id: 'search',
-                name: 'Search',
-                keywords: 'search',
-                icon: <Icon glyph="search" size={16} />,
-                priority: Priority.HIGH,
-              },
-              {
-                id: `results: ${search}`,
-                parent: currentRootActionId,
-                name: `Loading...`,
-                keywords: search,
-                priority: Priority.HIGH,
-              },
-            ]
+            {
+              id: 'search',
+              name: 'Search',
+              keywords: 'search',
+              icon: <Icon glyph="search" size={16} />,
+              priority: Priority.HIGH,
+            },
+            {
+              id: `results: ${search}`,
+              parent: currentRootActionId,
+              name: `Loading...`,
+              keywords: search,
+              priority: Priority.HIGH,
+            },
+          ]
           : []),
       ])
     }
@@ -211,18 +225,16 @@ function SearchAndResults() {
         defaultPlaceholder={'Search for organizations, pages, actions...'}
         placeholder={
           searched && actions.filter(x => x.id == 'result').length > 0
-            ? `Successfully found ${
-                actions.filter(x => x.id == 'result').length
-              } result${
-                actions.filter(x => x.id == 'result').length > 1 ? 's' : ''
-              }.`
+            ? `Successfully found ${actions.filter(x => x.id == 'result').length
+            } result${actions.filter(x => x.id == 'result').length > 1 ? 's' : ''
+            }.`
             : searched && actions.filter(x => x.error).length > 0
               ? searchedFor
               : searched &&
-                  actions.filter(
-                    x =>
-                      x.id == 'search' && x.parent == `results: ${searchedFor}`
-                  ).length > 0
+                actions.filter(
+                  x =>
+                    x.id == 'search' && x.parent == `results: ${searchedFor}`
+                ).length > 0
                 ? 'Found 0 results.'
                 : null
         }
@@ -230,6 +242,7 @@ function SearchAndResults() {
         searched={searched}
       />
       <RenderResults />
+      <EmptyState />
     </KBarAnimator>
   )
 }
