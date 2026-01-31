@@ -13,7 +13,7 @@
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", class: "flex gap-1", style: "flex-grow: 1"  do %>
     <% if form %>
         <%= form_with model: hcb_code, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
-          <div class="flex items-center">
+          <div class="flex items-center w-screen">
             <%= form.hidden_field :inline, value: "true" %>
             <%= form.hidden_field :prepended_to_memo, value: prepended_to_memo %>
             <%= form.hidden_field :location, value: location %>
