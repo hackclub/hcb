@@ -198,7 +198,7 @@ module TransactionGroupingEngine
         [
           HCB_CODE,
           OUTGOING_DISBURSEMENT_CODE,
-          disbursement.id
+          outgoing_disbursement.id
         ].join(SEPARATOR)
       end
 
@@ -210,7 +210,7 @@ module TransactionGroupingEngine
         [
           HCB_CODE,
           INCOMING_DISBURSEMENT_CODE,
-          disbursement.id
+          incoming_disbursement.id
         ].join(SEPARATOR)
       end
 
