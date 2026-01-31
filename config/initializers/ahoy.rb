@@ -11,4 +11,4 @@ Ahoy.api = true
 # see https://github.com/ankane/ahoy#geocoding
 Ahoy.geocode = false
 
-Ahoy.exclude_method = -> (controller, request) { true }
+Ahoy.exclude_method = ->(controller, request) { true }
