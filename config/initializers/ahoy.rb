@@ -10,3 +10,5 @@ Ahoy.api = true
 # we recommend configuring local geocoding first
 # see https://github.com/ankane/ahoy#geocoding
 Ahoy.geocode = false
+
+Ahoy.exclude_method = -> (controller, request) { true }
