@@ -163,8 +163,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
-  before_update { self.joined_as_teenager = joined_as_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -431,12 +431,12 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def teenager?
+  def is_teenager?
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
   end
 
-  def joined_as_teenager?
+  def was_teenager_on_join?
     age_on(created_at)&.<=(18)
   end
 
@@ -656,7 +656,7 @@ class User < ApplicationRecord
     # Skip if user ever updated their seasonal_themes_enabled setting
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
-    self.seasonal_themes_enabled = teenager?
+    self.seasonal_themes_enabled = is_teenager?
   end
 
   def send_onboarded_email
