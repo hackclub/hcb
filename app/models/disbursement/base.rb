@@ -15,7 +15,9 @@ class Disbursement
                :state_text, :state_icon,
                :special_appearance, :special_appearance_name, :special_appearance?,
                :transferred_at, :created_at, :scheduled_on,
-               :fulfilled_by, :fee_waived?, :to_param, :special_appearance_memo, to: :disbursement
+               :fulfilled_by, :fee_waived?, :to_param, :special_appearance_memo,
+               :v4_api_state, :outgoing_disbursement, :incoming_disbursement,
+               to: :disbursement
     end
 
     def initialize(disbursement)
