@@ -8,6 +8,10 @@ class Disbursement
       disbursement.incoming_hcb_code
     end
 
+    def local_hcb_code
+      HcbCode.find_or_create_by(hcb_code:)
+    end
+
     def event
       disbursement.destination_event
     end
