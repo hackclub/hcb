@@ -165,7 +165,7 @@ class Ledger
     end
 
     def write_amount_cents
-      update(amount_cents: calculate_amount_cents)
+      self.amount_cents = calculate_amount_cents
     end
 
   end
