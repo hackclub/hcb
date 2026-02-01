@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_185350) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_193432) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1524,6 +1524,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_185350) do
     t.bigint "mapped_by_id"
     t.boolean "on_primary_ledger", null: false
     t.datetime "updated_at", null: false
+    t.index ["ledger_id", "ledger_item_id"], name: "index_ledger_mappings_on_ledger_and_item", unique: true
     t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
     t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
     t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"

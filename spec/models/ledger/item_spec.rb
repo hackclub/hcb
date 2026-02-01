@@ -170,5 +170,139 @@ RSpec.describe Ledger::Item, type: :model do
         expect(item.errors[:primary_ledger]).to include("can't be blank")
       end
     end
+
+    describe "one primary mapping constraint" do
+      it "allows an item to have exactly one primary mapping" do
+        primary_ledger = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger.save(validate: false)
+
+        item = Ledger::Item.new(
+          amount_cents: 1000,
+          memo: "Test",
+          date: Time.current
+        )
+        item.save(validate: false)
+
+        mapping = Ledger::Mapping.create!(
+          ledger: primary_ledger,
+          ledger_item: item,
+          on_primary_ledger: true
+        )
+
+        item.reload
+        expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
+        expect(item.primary_mapping).to eq(mapping)
+      end
+
+      it "does not allow an item to have multiple primary mappings" do
+        primary_ledger1 = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger1.save(validate: false)
+
+        primary_ledger2 = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger2.save(validate: false)
+
+        item = Ledger::Item.new(
+          amount_cents: 1000,
+          memo: "Test",
+          date: Time.current
+        )
+        item.save(validate: false)
+
+        # Create first primary mapping
+        Ledger::Mapping.create!(
+          ledger: primary_ledger1,
+          ledger_item: item,
+          on_primary_ledger: true
+        )
+
+        # Try to create second primary mapping - should fail
+        mapping2 = Ledger::Mapping.new(
+          ledger: primary_ledger2,
+          ledger_item: item,
+          on_primary_ledger: true
+        )
+
+        expect(mapping2).not_to be_valid
+        expect(mapping2.errors[:ledger_item_id]).to include("is already mapped on a primary ledger")
+      end
+
+      it "allows an item to have one primary mapping and multiple non-primary mappings" do
+        primary_ledger = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger.save(validate: false)
+
+        non_primary_ledger1 = ::Ledger.new(primary: false)
+        non_primary_ledger1.save(validate: false)
+
+        non_primary_ledger2 = ::Ledger.new(primary: false)
+        non_primary_ledger2.save(validate: false)
+
+        item = Ledger::Item.new(
+          amount_cents: 1000,
+          memo: "Test",
+          date: Time.current
+        )
+        item.save(validate: false)
+
+        # Create primary mapping
+        primary_mapping = Ledger::Mapping.create!(
+          ledger: primary_ledger,
+          ledger_item: item,
+          on_primary_ledger: true
+        )
+
+        # Create first non-primary mapping
+        non_primary_mapping1 = Ledger::Mapping.create!(
+          ledger: non_primary_ledger1,
+          ledger_item: item,
+          on_primary_ledger: false
+        )
+
+        # Create second non-primary mapping
+        non_primary_mapping2 = Ledger::Mapping.create!(
+          ledger: non_primary_ledger2,
+          ledger_item: item,
+          on_primary_ledger: false
+        )
+
+        item.reload
+        expect(item.ledger_mappings.count).to eq(3)
+        expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
+        expect(item.ledger_mappings.where(on_primary_ledger: false).count).to eq(2)
+        expect(item.primary_mapping).to eq(primary_mapping)
+      end
+
+      it "enforces one primary mapping at database level" do
+        primary_ledger1 = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger1.save(validate: false)
+
+        primary_ledger2 = ::Ledger.new(primary: true, event: create(:event))
+        primary_ledger2.save(validate: false)
+
+        item = Ledger::Item.new(
+          amount_cents: 1000,
+          memo: "Test",
+          date: Time.current
+        )
+        item.save(validate: false)
+
+        # Create first primary mapping
+        Ledger::Mapping.create!(
+          ledger: primary_ledger1,
+          ledger_item: item,
+          on_primary_ledger: true
+        )
+
+        # Try to create second primary mapping with validation bypassed
+        # Should fail at database level due to unique index
+        expect {
+          mapping2 = Ledger::Mapping.new(
+            ledger: primary_ledger2,
+            ledger_item: item,
+            on_primary_ledger: true
+          )
+          mapping2.save(validate: false)
+        }.to raise_error(ActiveRecord::RecordNotUnique)
+      end
+    end
   end
 end

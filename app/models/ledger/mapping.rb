@@ -14,6 +14,7 @@
 #
 # Indexes
 #
+#  index_ledger_mappings_on_ledger_and_item      (ledger_id,ledger_item_id) UNIQUE
 #  index_ledger_mappings_on_ledger_id            (ledger_id)
 #  index_ledger_mappings_on_ledger_item_id       (ledger_item_id)
 #  index_ledger_mappings_on_mapped_by_id         (mapped_by_id)
@@ -36,22 +37,11 @@ class Ledger::Mapping < ApplicationRecord
 
   belongs_to :mapped_by, class_name: "User", optional: true
 
-  validate :ledger_item_on_one_primary_ledger
+  validates :ledger_item_id, uniqueness: { scope: :ledger_id, message: "is already mapped to this ledger" }
+  validates :ledger_item_id, uniqueness: { conditions: -> { where(on_primary_ledger: true) }, message: "is already mapped on a primary ledger" }, if: :on_primary_ledger?
   validate :on_primary_ledger_matches_ledger_primary
 
   private
-
-  def ledger_item_on_one_primary_ledger
-    return unless on_primary_ledger?
-
-    existing = Ledger::Mapping.where(ledger_item:, on_primary_ledger: true)
-                              .excluding(self)
-                              .exists?
-
-    if existing
-      errors.add(:ledger_item, "is already mapped on a primary ledger")
-    end
-  end
 
   def on_primary_ledger_matches_ledger_primary
     if on_primary_ledger? != ledger.primary?

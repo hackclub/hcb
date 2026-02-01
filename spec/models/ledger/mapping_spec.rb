@@ -98,7 +98,7 @@ RSpec.describe Ledger::Mapping, type: :model do
     end
   end
 
-  describe "ledger_item uniqueness on primary ledger" do
+  describe "ledger_item uniqueness per ledger" do
     let(:user) { create(:user) }
     let!(:primary_ledger) do
       l = ::Ledger.new(primary: true, event: create(:event))
@@ -141,12 +141,12 @@ RSpec.describe Ledger::Mapping, type: :model do
         )
 
         expect(mapping2).not_to be_valid
-        expect(mapping2.errors[:ledger_item]).to include("is already mapped on a primary ledger")
+        expect(mapping2.errors[:ledger_item_id]).to include("is already mapped on a primary ledger")
       end
     end
 
     context "when on_primary_ledger is false" do
-      it "allows multiple mappings of same ledger_item on non-primary ledgers" do
+      it "does not allow multiple mappings of same ledger_item to the same ledger" do
         # Create first mapping on non-primary
         Ledger::Mapping.create!(
           ledger: non_primary_ledger,
@@ -155,7 +155,7 @@ RSpec.describe Ledger::Mapping, type: :model do
           mapped_by: user
         )
 
-        # Create second mapping with same ledger_item on non-primary
+        # Try to create second mapping with same ledger_item to the same ledger
         mapping2 = Ledger::Mapping.new(
           ledger: non_primary_ledger,
           ledger_item: ledger_item,
@@ -163,7 +163,8 @@ RSpec.describe Ledger::Mapping, type: :model do
           mapped_by: user
         )
 
-        expect(mapping2).to be_valid
+        expect(mapping2).not_to be_valid
+        expect(mapping2.errors[:ledger_item_id]).to include("is already mapped to this ledger")
       end
 
       it "allows mapping on non-primary even if already mapped on primary" do
@@ -223,7 +224,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
-    it "allows duplicate ledger_item_id when on_primary_ledger is false" do
+    it "enforces uniqueness per ledger at database level" do
       # Create first mapping on non-primary
       Ledger::Mapping.create!(
         ledger: non_primary_ledger,
@@ -232,7 +233,7 @@ RSpec.describe Ledger::Mapping, type: :model do
         mapped_by: user
       )
 
-      # Create second mapping - should succeed
+      # Try to create duplicate with validation bypassed - should fail at DB level
       expect {
         mapping2 = Ledger::Mapping.new(
           ledger: non_primary_ledger,
@@ -241,7 +242,7 @@ RSpec.describe Ledger::Mapping, type: :model do
           mapped_by: user
         )
         mapping2.save(validate: false)
-      }.not_to raise_error
+      }.to raise_error(ActiveRecord::RecordNotUnique)
     end
 
     it "enforces on_primary_ledger matches ledger.primary at database level" do
