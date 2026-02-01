@@ -24,7 +24,7 @@ end
 json.code hcb_code.hcb_i1
 json.missing_receipt hcb_code.missing_receipt?(@event)
 json.lost_receipt hcb_code.no_or_lost_receipt?
-json.appearance hcb_code.disbursement.special_appearance_name if hcb_code.disbursement&.special_appearance? && amount.positive?
+json.appearance hcb_code.incoming_disbursement.special_appearance_name if hcb_code.incoming_disbursement&.special_appearance?
 
 if current_user&.auditor?
   json._debug do
@@ -39,7 +39,8 @@ if policy(hcb_code).show?
   json.invoice        { json.partial! "api/v4/transactions/invoice",        invoice:        hcb_code.invoice                      } if hcb_code.invoice?
   json.check          { json.partial! "api/v4/transactions/check",          check:          hcb_code.check                        } if hcb_code.check?
   json.check          { json.partial! "api/v4/transactions/check",          check:          hcb_code.increase_check               } if hcb_code.increase_check?
-  json.transfer       { json.partial! "api/v4/transactions/disbursement",   disbursement:   hcb_code.disbursement                 } if hcb_code.disbursement?
+  json.transfer       { json.partial! "api/v4/transactions/disbursement",   disbursement:   hcb_code.incoming_disbursement        } if hcb_code.incoming_disbursement?
+  json.transfer       { json.partial! "api/v4/transactions/disbursement",   disbursement:   hcb_code.outgoing_disbursement        } if hcb_code.outgoing_disbursement?
   json.ach_transfer   { json.partial! "api/v4/transactions/ach_transfer",   ach_transfer:   hcb_code.ach_transfer                 } if hcb_code.ach_transfer?
   json.check_deposit  { json.partial! "api/v4/transactions/check_deposit",  check_deposit:  hcb_code.check_deposit                } if hcb_code.check_deposit?
   json.wise_transfer  { json.partial! "api/v4/transactions/wise_transfer",  wise_transfer:  hcb_code.wise_transfer                } if hcb_code.wise_transfer?

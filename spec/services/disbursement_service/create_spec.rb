@@ -59,7 +59,7 @@ RSpec.describe DisbursementService::Create do
     expect(cpt_incoming.custom_memo).to be_nil
     expect(cpt_incoming.date).to eq(Date.current)
     expect(cpt_incoming.fronted).to eq(false)
-    expect(cpt_incoming.hcb_code).to eq("HCB-500-#{disbursement.id}")
+    expect(cpt_incoming.hcb_code).to eq("HCB-550-#{disbursement.id}")
     expect(cpt_incoming.category).to be_nil
   end
 
