@@ -25,7 +25,7 @@ RSpec.describe Ledger::Mapping, type: :model do
 
       mapping = Ledger::Mapping.new(
         ledger: ledger,
-        ledger_item: create(:ledger_item, :without_primary_ledger),
+        ledger_item: create(:ledger_item),
         on_primary_ledger: false
         # Note: No mapped_by set
       )
@@ -37,7 +37,7 @@ RSpec.describe Ledger::Mapping, type: :model do
 
   describe "on_primary_ledger matches ledger.primary" do
     let(:user) { create(:user) }
-    let(:ledger_item) { create(:ledger_item, :without_primary_ledger) }
+    let(:ledger_item) { create(:ledger_item) }
 
     context "when on_primary_ledger is true" do
       it "is valid if ledger.primary is true" do
@@ -110,7 +110,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       l.save(validate: false)
       l
     end
-    let!(:ledger_item) { create(:ledger_item, :without_primary_ledger) }
+    let!(:ledger_item) { create(:ledger_item) }
 
     context "when on_primary_ledger is true" do
       it "allows first mapping of a ledger_item on primary ledger" do
@@ -201,7 +201,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       l.save(validate: false)
       l
     end
-    let!(:ledger_item) { create(:ledger_item, :without_primary_ledger) }
+    let!(:ledger_item) { create(:ledger_item) }
 
     it "enforces uniqueness at database level for primary ledger mappings" do
       # Create first mapping
@@ -250,10 +250,10 @@ RSpec.describe Ledger::Mapping, type: :model do
       expect {
         mapping = Ledger::Mapping.new(
           ledger: primary_ledger,
-          ledger_item: create(:ledger_item, :without_primary_ledger),
-          on_primary_ledger: false  # Mismatch! ledger.primary is true
+          ledger_item: create(:ledger_item),
+          on_primary_ledger: false # Mismatch! ledger.primary is true
         )
-        mapping.save(validate: false)  # Bypass application validation
+        mapping.save(validate: false) # Bypass application validation
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
 
@@ -262,10 +262,10 @@ RSpec.describe Ledger::Mapping, type: :model do
       expect {
         mapping = Ledger::Mapping.new(
           ledger: non_primary_ledger,
-          ledger_item: create(:ledger_item, :without_primary_ledger),
-          on_primary_ledger: true  # Mismatch! ledger.primary is false
+          ledger_item: create(:ledger_item),
+          on_primary_ledger: true # Mismatch! ledger.primary is false
         )
-        mapping.save(validate: false)  # Bypass application validation
+        mapping.save(validate: false) # Bypass application validation
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end

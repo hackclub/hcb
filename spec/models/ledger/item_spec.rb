@@ -108,25 +108,24 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.errors[:date]).to include("can't be blank")
     end
 
-    describe "primary_ledger validation" do
-      it "requires a primary_ledger" do
+    describe "primary_ledger association" do
+      it "can be created without a primary_ledger" do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
           date: Time.current
         )
-        # No primary mapping created
-        expect(item).not_to be_valid
-        expect(item.errors[:primary_ledger]).to include("can't be blank")
+        expect(item).to be_valid
+        expect(item.primary_ledger).to be_nil
       end
 
-      it "is valid when primary_ledger is present" do
-        item = create(:ledger_item)
+      it "can have a primary_ledger when mapped" do
+        item = create(:ledger_item, :with_primary_ledger)
         expect(item).to be_valid
         expect(item.primary_ledger).to be_present
       end
 
-      it "is valid when explicitly given a primary_ledger through mapping" do
+      it "primary_ledger is accessible through mapping" do
         primary_ledger = ::Ledger.new(primary: true, event: create(:event))
         primary_ledger.save(validate: false)
 
@@ -148,7 +147,10 @@ RSpec.describe Ledger::Item, type: :model do
         expect(item.primary_ledger).to eq(primary_ledger)
       end
 
-      it "is not valid with only non-primary ledger mappings" do
+      # I can't think of a use case for this right now, but in theory there's
+      # no reason why we can't support it. Potential use case might be admin
+      # ledger audits that includes unmapped (to primary ledger) transactions
+      it "can have only non-primary ledger mappings" do
         non_primary_ledger = ::Ledger.new(primary: false)
         non_primary_ledger.save(validate: false)
 
@@ -157,7 +159,7 @@ RSpec.describe Ledger::Item, type: :model do
           memo: "Test",
           date: Time.current
         )
-        item.save(validate: false)
+        item.save!
 
         Ledger::Mapping.create!(
           ledger: non_primary_ledger,
@@ -166,8 +168,9 @@ RSpec.describe Ledger::Item, type: :model do
         )
 
         item.reload
-        expect(item).not_to be_valid
-        expect(item.errors[:primary_ledger]).to include("can't be blank")
+        expect(item).to be_valid
+        expect(item.primary_ledger).to be_nil
+        expect(item.all_ledgers).to contain_exactly(non_primary_ledger)
       end
     end
 
@@ -244,27 +247,28 @@ RSpec.describe Ledger::Item, type: :model do
         item.save(validate: false)
 
         # Create primary mapping
-        primary_mapping = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: primary_ledger,
           ledger_item: item,
           on_primary_ledger: true
         )
 
         # Create first non-primary mapping
-        non_primary_mapping1 = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: non_primary_ledger1,
           ledger_item: item,
           on_primary_ledger: false
         )
 
         # Create second non-primary mapping
-        non_primary_mapping2 = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: non_primary_ledger2,
           ledger_item: item,
           on_primary_ledger: false
         )
 
         item.reload
+        primary_mapping = item.ledger_mappings.find_by(on_primary_ledger: true)
         expect(item.ledger_mappings.count).to eq(3)
         expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
         expect(item.ledger_mappings.where(on_primary_ledger: false).count).to eq(2)

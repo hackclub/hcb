@@ -27,13 +27,13 @@ class Ledger
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
     has_one :primary_ledger, through: :primary_mapping, source: :ledger, class_name: "::Ledger"
-    # validates_presence_of :primary_ledger
 
     has_many :canonical_transactions, foreign_key: "ledger_item_id"
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id"
+    has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     validates_presence_of :amount_cents, :memo, :date
-    
+  
     after_create_commit :map_to_ledger
     after_create_commit :write_amount_cents
 
