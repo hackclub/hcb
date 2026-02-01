@@ -777,6 +777,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
@@ -968,6 +969,45 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.datetime "updated_at", null: false
     t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state"
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
+    t.integer "annual_budget_cents"
+    t.datetime "approved_at"
+    t.integer "committed_amount_cents"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.boolean "currently_fiscally_sponsored"
+    t.text "description"
+    t.bigint "event_id"
+    t.string "funding_source"
+    t.integer "last_page_viewed"
+    t.datetime "last_viewed_at"
+    t.string "name"
+    t.text "notes"
+    t.string "planning_duration"
+    t.text "political_description"
+    t.string "project_category"
+    t.string "referral_code"
+    t.string "referrer"
+    t.datetime "rejected_at"
+    t.datetime "submitted_at"
+    t.boolean "teen_led"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "website_url"
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -1343,9 +1383,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
-    t.bigint "subledger_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
+    t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
@@ -2570,6 +2610,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.index ["uploaded_by_id"], name: "index_w9s_on_uploaded_by_id"
   end
 
+  create_table "walkthroughs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.string "key", null: false
+    t.integer "progress", default: 0
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["event_id"], name: "index_walkthroughs_on_event_id"
+    t.index ["user_id", "event_id", "key"], name: "index_walkthroughs_on_user_id_and_event_id_and_key", unique: true
+    t.index ["user_id"], name: "index_walkthroughs_on_user_id"
+  end
+
   create_table "webauthn_credentials", force: :cascade do |t|
     t.integer "authenticator_type"
     t.datetime "created_at", null: false
@@ -2715,6 +2767,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
@@ -2827,6 +2881,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
   add_foreign_key "w9s", "users", column: "uploaded_by_id"
+  add_foreign_key "walkthroughs", "events"
+  add_foreign_key "walkthroughs", "users"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"

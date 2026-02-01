@@ -1,6 +1,7 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Send a wire" %>
+<% subtitle "From #{@event.name}" %>
 
 <% if @event.present? && !policy(@event).create_transfer? %>
   <%= render partial: "events/unauthorized_callout", locals: { action: "send a wire" } %>
