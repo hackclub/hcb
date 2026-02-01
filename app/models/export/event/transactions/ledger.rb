@@ -41,7 +41,7 @@ class Export
         end
 
         def content
-          journal = ::LedgerJournal::Journal.new
+          journal = ::Ledger::Journal.new
           event.canonical_transactions.order("date desc").each do |ct|
             clean_amount = public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents
 
@@ -57,12 +57,12 @@ class Export
               elsif merchant
                 category = "CardCharge"
               end
-              journal.transactions << ::LedgerJournal::Transaction.new(
+              journal.transactions << ::Ledger::Transaction.new(
                 date: ct.date,
                 payee: ct.local_hcb_code.memo,
                 metadata:,
                 postings: [
-                  ::LedgerJournal::Posting.new(account: "Expenses:#{category}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
+                  ::Ledger::Posting.new(account: "Expenses:#{category}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
                 ]
               )
             else
@@ -73,11 +73,11 @@ class Export
               elsif hcb_code.invoice?
                 income_type = "Invoice"
               end
-              journal.transactions << ::LedgerJournal::Transaction.new(
+              journal.transactions << ::Ledger::Transaction.new(
                 date: ct.date,
                 payee: ct.local_hcb_code.memo,
                 postings: [
-                  ::LedgerJournal::Posting.new(account: "Income:#{income_type}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
+                  ::Ledger::Posting.new(account: "Income:#{income_type}", currency: "USD", amount: BigDecimal(clean_amount, 2) / 100)
                 ]
               )
             end
