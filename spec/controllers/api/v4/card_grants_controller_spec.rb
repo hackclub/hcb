@@ -21,6 +21,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "creates a card grant" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
@@ -109,6 +110,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "reports validation errors" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
@@ -136,6 +138,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "handles downstream errors" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
