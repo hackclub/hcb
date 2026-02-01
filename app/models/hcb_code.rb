@@ -689,7 +689,7 @@ class HcbCode < ApplicationRecord
 
     nil
   end
-  
+
   def write_event_and_subledger_id
     update(event_id: events.first&.id, subledger_id: subledgers.first&.id,)
   end
