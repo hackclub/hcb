@@ -230,6 +230,9 @@ class Disbursement < ApplicationRecord
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
   end
 
+  def outgoing_disbursement = Disbursement::Outgoing.new(self)
+  def incoming_disbursement = Disbursement::Incoming.new(self)
+
   # this method will be removed from disbursement, and we will have to go through IncomingDisbursement or OutgoingDisbursement
   def local_hcb_code
     @local_hcb_code ||= begin
@@ -257,6 +260,10 @@ class Disbursement < ApplicationRecord
 
   def fulfilled?
     deposited?
+  end
+
+  def inter_event_transfer?
+    !source_subledger_id && !destination_subledger_id
   end
 
   def filter_data

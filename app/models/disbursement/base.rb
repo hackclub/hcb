@@ -8,8 +8,14 @@ class Disbursement
       attr_reader :disbursement
 
       delegate :id, :name, :source_event, :destination_event,
+               :destination_subledger, :source_subledger, :to_model,
                :fulfilled?, :reviewing?, :state,
-               to: :disbursement
+               :requested_by, :card_grant, :inter_event_transfer?,
+               :processed?, :pending?, :rejected?, :scheduled?, :may_mark_rejected?,
+               :state_text, :state_icon,
+               :special_appearance, :special_appearance_name, :special_appearance?,
+               :transferred_at, :created_at, :scheduled_on,
+               :fulfilled_by, :fee_waived?, :to_param, :special_appearance_memo, to: :disbursement
     end
 
     def initialize(disbursement)
