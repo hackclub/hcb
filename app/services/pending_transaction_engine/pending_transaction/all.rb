@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false, declined_or_reversed: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -19,6 +19,7 @@ module PendingTransactionEngine
         @merchant = merchant
         @order_by = order_by
         @subledger = subledger
+        @declined_or_reversed = declined_or_reversed
       end
 
       def run
@@ -45,9 +46,14 @@ module PendingTransactionEngine
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
                                                          order_by_mapped_at ? :canonical_pending_event_mapping : nil,
                                                          { local_hcb_code: included_local_hcb_code_associations }])
-                                              .unsettled
-                                              .where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
-                                              .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
+            if @declined_or_reversed
+              cpts = cpts.declined
+            else
+              cpts = cpts.unsettled
+            end
+
+            cpts = cpts.where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
+                       .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
 
             if @user || @merchant
               cpts = cpts.joins("LEFT JOIN raw_pending_stripe_transactions on raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")

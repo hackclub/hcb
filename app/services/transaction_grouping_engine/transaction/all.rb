@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false, declined_or_reversed: false)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -19,6 +19,7 @@ module TransactionGroupingEngine
         @merchant = merchant
         @order_by = order_by
         @subledger = subledger
+        @declined_or_reversed = declined_or_reversed
       end
 
       def run
@@ -219,6 +220,37 @@ module TransactionGroupingEngine
       def canonical_transactions_grouped_sql
         order_by_mapped_at = @order_by == :mapped_at
 
+        if @declined_or_reversed
+          declined_sql = <<~SQL
+            except ( -- hide pending transactions that have settled.
+                  select
+                    cpsm.canonical_pending_transaction_id
+                  from
+                    canonical_pending_settled_mappings cpsm
+                )
+            intersect ( -- include pending transactions that have been declined.
+                  select
+                    cpdm.canonical_pending_transaction_id
+                  from
+                    canonical_pending_declined_mappings cpdm
+                )
+          SQL
+        else
+          declined_sql = <<~SQL
+            except ( -- hide pending transactions that have either settled or been declined.
+                  select
+                    cpsm.canonical_pending_transaction_id
+                  from
+                    canonical_pending_settled_mappings cpsm
+                  union
+                  select
+                    cpdm.canonical_pending_transaction_id
+                  from
+                    canonical_pending_declined_mappings cpdm
+                )
+          SQL
+        end
+
         pt_group_sql = <<~SQL
           select
             array_agg(pt.id) as pt_ids
@@ -243,17 +275,7 @@ module TransactionGroupingEngine
               where
                 #{ActiveRecord::Base.sanitize_sql_for_conditions(["cpem.event_id = ?", @event_id])}
                 and cpem.subledger_id is #{@subledger ? "not null" : "null"}
-              except ( -- hide pending transactions that have either settled or been declined.
-                select
-                  cpsm.canonical_pending_transaction_id
-                from
-                  canonical_pending_settled_mappings cpsm
-                union
-                select
-                  cpdm.canonical_pending_transaction_id
-                from
-                  canonical_pending_declined_mappings cpdm
-              )
+              #{declined_sql}
             )
             and
             not exists ( -- hide pt if there are ct in its hcb code (handles edge case of unsettled PT)
@@ -270,6 +292,7 @@ module TransactionGroupingEngine
             #{merchant_modifier}
           group by
             coalesce(pt.hcb_code, cast(pt.id as text)) -- handle edge case when hcb_code is null
+          #{"having sum(pt.amount_cents) = 0" if @declined_or_reversed} -- only include zero-amount transactions when filtering for declined/reversed
         SQL
 
         ct_group_sql = <<~SQL
@@ -301,6 +324,7 @@ module TransactionGroupingEngine
             #{merchant_modifier}
           group by
             coalesce(ct.hcb_code, cast(ct.id as text)) -- handle edge case when hcb_code is null
+          #{"having sum(ct.amount_cents) = 0" if @declined_or_reversed} -- only include zero-amount transactions when filtering for declined/reversed
         SQL
 
         canonical_pending_transactions_select = <<~SQL
