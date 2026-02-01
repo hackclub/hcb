@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -28,7 +28,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -38,7 +38,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - name: Install Yarn
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -68,9 +68,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - run: yarn install
@@ -81,9 +81,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - run: yarn install
@@ -117,7 +117,7 @@ jobs:
           - 6379:6379
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -127,14 +127,14 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -209,7 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -219,14 +219,14 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -258,7 +258,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install Poppler
@@ -311,7 +311,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
