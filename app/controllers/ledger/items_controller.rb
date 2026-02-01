@@ -7,9 +7,14 @@ class Ledger
 
       authorize @item
     rescue ActiveRecord::RecordNotFound
-      raise unless Transaction.with_deleted.where(id: params[:id]).exists? || CanonicalTransaction.where(id: params[:id]).exists?
-      skip_authorization
-      redirect_to transaction_path(params[:id])
+      # Maintain backward compatibility for old v1 transaction engine URLs. They
+      # used to also live at `/transactions/*`
+      if Transaction.with_deleted.where(id: params[:id]).exists? || CanonicalTransaction.where(id: params[:id]).exists?
+        skip_authorization
+        return redirect_to transaction_path(params[:id])
+      end
+
+      raise
     end
   end
 
