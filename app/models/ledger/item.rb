@@ -27,9 +27,9 @@ class Ledger
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
     has_one :primary_ledger, through: :primary_mapping, source: :ledger, class_name: "::Ledger"
-    validates_presence_of :primary_ledger
+    has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
-    validates_presence_of :amount_cents, :memo, :date, :primary_ledger
+    validates_presence_of :amount_cents, :memo, :date
 
     monetize :amount_cents
 

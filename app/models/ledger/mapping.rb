@@ -44,6 +44,12 @@ class Ledger::Mapping < ApplicationRecord
   private
 
   def on_primary_ledger_matches_ledger_primary
+    # IMPORTANT: The composite foreign key fk_ledger_mappings_primary_match
+    # enforces that on_primary_ledger matches ledger.primary at the database
+    # level. It works by creating a FK on (ledger_id, on_primary_ledger) that
+    # references (id, primary) in the ledgers table. This ensures the
+    # combination of values must exist in ledgers, which means on_primary_ledger
+    # MUST equal ledger.primary.
     if on_primary_ledger? != ledger.primary?
       errors.add(:on_primary_ledger, "must match ledger's primary status")
     end
