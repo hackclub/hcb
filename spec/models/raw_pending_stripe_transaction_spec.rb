@@ -35,9 +35,10 @@ RSpec.describe RawPendingStripeTransaction, type: :model do
     end
 
     it "returns the card grant when one exists" do
+      event = create(:event, :with_positive_balance)
       stripe_card_id = raw_pending_stripe_transaction.stripe_transaction["card"]["id"]
-      sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id)
-      card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+      sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id, event:)
+      card_grant = create(:card_grant, stripe_card: sc, event:)
 
       expect(raw_pending_stripe_transaction.likely_card_grant).to eq(card_grant)
     end

@@ -24,11 +24,12 @@ RSpec.describe RawStripeTransaction, type: :model do
     end
 
     it "returns the card grant when one exists" do
-      stripe_card_id = raw_stripe_transaction.stripe_transaction["card"]
-      sc = StripeCard.find_by(stripe_id: stripe_card_id)
-      card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+      event = create(:event, :with_positive_balance)
+      sc = create(:stripe_card, :with_stripe_id, event:)
+      rst = create(:raw_stripe_transaction, stripe_card: sc)
+      card_grant = create(:card_grant, stripe_card: sc, event:)
 
-      expect(raw_stripe_transaction.likely_card_grant).to eq(card_grant)
+      expect(rst.likely_card_grant).to eq(card_grant)
     end
   end
 

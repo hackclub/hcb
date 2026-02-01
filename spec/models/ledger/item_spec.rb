@@ -357,10 +357,10 @@ RSpec.describe Ledger::Item, type: :model do
 
     context "with a stripe card canonical transaction that has a card grant" do
       it "returns the card grant" do
-        rst = create(:raw_stripe_transaction)
-        stripe_card_id = rst.stripe_transaction["card"]
-        sc = StripeCard.find_by(stripe_id: stripe_card_id)
-        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        event = create(:event, :with_positive_balance)
+        sc = create(:stripe_card, :with_stripe_id, event:)
+        rst = create(:raw_stripe_transaction, stripe_card: sc)
+        card_grant = create(:card_grant, stripe_card: sc, event:)
         ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
         expect(item.calculate_card_grant).to eq(card_grant)
@@ -369,10 +369,11 @@ RSpec.describe Ledger::Item, type: :model do
 
     context "with a pending stripe transaction that has a card grant" do
       it "returns the card grant" do
+        event = create(:event, :with_positive_balance)
         rpst = create(:raw_pending_stripe_transaction)
         stripe_card_id = rpst.stripe_transaction["card"]["id"]
-        sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id)
-        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id, event:)
+        card_grant = create(:card_grant, stripe_card: sc, event:)
         cpt = create(:canonical_pending_transaction, raw_pending_stripe_transaction: rpst, ledger_item: item)
 
         expect(item.calculate_card_grant).to eq(card_grant)
@@ -410,10 +411,10 @@ RSpec.describe Ledger::Item, type: :model do
 
     context "when a card grant can be calculated" do
       it "creates a primary ledger and mapping for the card grant" do
-        rst = create(:raw_stripe_transaction)
-        stripe_card_id = rst.stripe_transaction["card"]
-        sc = StripeCard.find_by(stripe_id: stripe_card_id)
-        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        event = create(:event, :with_positive_balance)
+        sc = create(:stripe_card, :with_stripe_id, event:)
+        rst = create(:raw_stripe_transaction, stripe_card: sc)
+        card_grant = create(:card_grant, stripe_card: sc, event:)
         ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
         item.map_to_ledger
