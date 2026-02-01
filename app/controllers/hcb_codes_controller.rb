@@ -54,7 +54,7 @@ class HcbCodesController < ApplicationController
       render :show
     end
   rescue Pundit::NotAuthorizedError => e
-    if @hcb_code.stripe_card.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
+    if @hcb_code.stripe_card&.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
       redirect_to card_grant_path(@hcb_code.stripe_card.card_grant, frame: params[:frame])
     else
       if @hcb_code.outgoing_disbursement?
