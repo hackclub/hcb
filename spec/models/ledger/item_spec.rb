@@ -247,27 +247,28 @@ RSpec.describe Ledger::Item, type: :model do
         item.save(validate: false)
 
         # Create primary mapping
-        primary_mapping = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: primary_ledger,
           ledger_item: item,
           on_primary_ledger: true
         )
 
         # Create first non-primary mapping
-        non_primary_mapping1 = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: non_primary_ledger1,
           ledger_item: item,
           on_primary_ledger: false
         )
 
         # Create second non-primary mapping
-        non_primary_mapping2 = Ledger::Mapping.create!(
+        Ledger::Mapping.create!(
           ledger: non_primary_ledger2,
           ledger_item: item,
           on_primary_ledger: false
         )
 
         item.reload
+        primary_mapping = item.ledger_mappings.find_by(on_primary_ledger: true)
         expect(item.ledger_mappings.count).to eq(3)
         expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
         expect(item.ledger_mappings.where(on_primary_ledger: false).count).to eq(2)
