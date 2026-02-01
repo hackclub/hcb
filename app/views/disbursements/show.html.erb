@@ -9,9 +9,15 @@
 <% if @disbursement.local_hcb_code %>
   <% admin_tool("mt1") do %>
     <p>
-      <strong>HCB Code:</strong>
+      <strong>Outgoing HCB Code:</strong>
       <span>
-        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_disbursement.local_hcb_code)) %>
+      </span>
+    </p>
+    <p>
+      <strong>Incoming HCB Code:</strong>
+      <span>
+        <%= link_to(@disbursement.incoming_hcb_code, hcb_code_path(@disbursement.incoming_disbursement.local_hcb_code)) %>
       </span>
     </p>
   <% end %>
