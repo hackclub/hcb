@@ -251,9 +251,9 @@ RSpec.describe Ledger::Mapping, type: :model do
         mapping = Ledger::Mapping.new(
           ledger: primary_ledger,
           ledger_item: create(:ledger_item),
-          on_primary_ledger: false  # Mismatch! ledger.primary is true
+          on_primary_ledger: false # Mismatch! ledger.primary is true
         )
-        mapping.save(validate: false)  # Bypass application validation
+        mapping.save(validate: false) # Bypass application validation
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
 
@@ -263,9 +263,9 @@ RSpec.describe Ledger::Mapping, type: :model do
         mapping = Ledger::Mapping.new(
           ledger: non_primary_ledger,
           ledger_item: create(:ledger_item),
-          on_primary_ledger: true  # Mismatch! ledger.primary is false
+          on_primary_ledger: true # Mismatch! ledger.primary is false
         )
-        mapping.save(validate: false)  # Bypass application validation
+        mapping.save(validate: false) # Bypass application validation
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end

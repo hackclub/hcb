@@ -16,6 +16,7 @@ class Ledger
 
       raise
     end
+
   end
 
 end
