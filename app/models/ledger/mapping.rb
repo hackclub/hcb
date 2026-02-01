@@ -55,4 +55,5 @@ class Ledger::Mapping < ApplicationRecord
       errors.add(:on_primary_ledger, "must match ledger's primary status")
     end
   end
+
 end
