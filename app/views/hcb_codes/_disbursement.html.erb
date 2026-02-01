@@ -5,21 +5,36 @@
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span>
-      <%= @source.name %>
-      <span class="regular muted">
-        <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
-          transferred
-        <% elsif disbursement.processed? || disbursement.pending? %>
-          transferring
-        <% else %>
-          transfer of
-        <% end %>
+    <% if @hcb_code.outgoing_disbursement? %>
+      <span>
+        <span class="regular muted">
+          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
+            Transfer of
+          <% elsif disbursement.processed? || disbursement.pending? %>
+            Transferring
+          <% else %>
+            Transfer of
+          <% end %>
+        </span>
+        <span class="regular"><%= render_money disbursement.amount.abs %></span>
+        <span class="regular muted">to</span>
+        <%= @destination.name %>
       </span>
-      <span class="regular"><%= render_money disbursement.amount %></span>
-      <span class="regular muted">to</span>
-      <%= @destination.name %>
-    </span>
+    <% else %>
+      <span>
+        <%= @source.name %>
+        <span class="regular muted">
+          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
+            transferred
+          <% elsif disbursement.processed? || disbursement.pending? %>
+            transferring
+          <% else %>
+            transfer of
+          <% end %>
+        </span>
+        <span class="regular"><%= render_money disbursement.amount %></span>
+      </span>
+    <% end %>
     <span class="badge h4 bg-<%= disbursement.state %> order-1">
       <%= disbursement.state_text.humanize %>
       <%= inline_icon disbursement.state_icon, size: 20 if disbursement.state_icon %>
@@ -44,6 +59,17 @@
         <%= user_mention disbursement.fulfilled_by %>
       <% end %>
     <% end %>
+
+    <div>
+      <strong>Direction</strong>
+      <% if @hcb_code.outgoing_disbursement? %>
+        <% incoming_hcb_code = disbursement.disbursement.incoming_disbursement.local_hcb_code %>
+        <%= link_to_if HcbCodePolicy.new(current_user, incoming_hcb_code).show?, "Outgoing →", hcb_code_path(incoming_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{@destination.name}" %>
+      <% else %>
+        <% outgoing_hcb_code = disbursement.disbursement.outgoing_disbursement.local_hcb_code %>
+        <%= link_to_if HcbCodePolicy.new(current_user, outgoing_hcb_code).show?, "⇢ Incoming", hcb_code_path(outgoing_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{@source.name}" %>
+      <% end %>
+    </div>
 
     <% if disbursement.processed? %>
       <div>
@@ -82,13 +108,14 @@
     <% else %>
       <p>
         <strong>From</strong>
-        <%= link_to @source.name, @source, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, @source).show?, @source.name, @source, target: "_top" %>
       </p>
 
       <p>
         <strong>To</strong>
-        <%= link_to @destination.name, @destination, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, @destination).show?, @destination.name, @destination, target: "_top" %>
       </p>
+
     <% end %>
 
     <p>

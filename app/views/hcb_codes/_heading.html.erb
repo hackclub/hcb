@@ -17,7 +17,7 @@
     <div class="flex-1"></div>
     <%= pop_icon_to "edit",
         edit_hcb_code_path(hcb_code),
-        class: "align-middle tooltipped tooltipped--s", "aria-label": "Rename",
+        class: "align-middle tooltipped tooltipped--s -mt-1", "aria-label": "Rename",
         data: { turbo: true } if organizer_signed_in?(as: :member) %>
     <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: } %>
   <% end %>

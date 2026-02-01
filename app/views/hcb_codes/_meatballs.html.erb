@@ -10,7 +10,7 @@
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 
 <% if (disputable || flagable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
-  <div data-controller="menu" data-menu-placement-value="bottom-end">
+  <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mt-1">
     <%= pop_icon_to "more",
         "#",
         class: "align-middle", "aria-label": "More Options",
