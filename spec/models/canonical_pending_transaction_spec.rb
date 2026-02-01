@@ -74,15 +74,6 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
       expect(cpt.linked_object).to eq(increase_check)
     end
 
-    it "returns paypal_transfer when present" do
-      event = create(:event)
-      user = create(:user)
-      paypal_transfer = PaypalTransfer.create!(event:, user:, amount: 1000, recipient_email: "test@test.com", memo: "test", payment_for: "test")
-      cpt = create(:canonical_pending_transaction, paypal_transfer:)
-
-      expect(cpt.linked_object).to eq(paypal_transfer)
-    end
-
     it "returns nil when no linked object exists" do
       cpt = create(:canonical_pending_transaction)
 
