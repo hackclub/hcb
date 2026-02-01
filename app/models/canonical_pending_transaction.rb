@@ -160,7 +160,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     create_ledger_item!(memo:, amount_cents:)
   end
 
-  after_commit do
+  after_commit if: -> { ledger_item.present? } do
     ledger_item.recalulate_amount_cents
   end
 
