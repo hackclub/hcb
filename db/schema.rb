@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_080820) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_084833) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1505,6 +1505,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_080820) do
     t.index ["status"], name: "index_invoices_on_status"
     t.index ["stripe_invoice_id"], name: "index_invoices_on_stripe_invoice_id", unique: true
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
+  end
+
+  create_table "ledger_items", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "marked_no_or_lost_receipt_at"
+    t.text "short_code"
+    t.datetime "updated_at", null: false
   end
 
   create_table "ledgers", force: :cascade do |t|

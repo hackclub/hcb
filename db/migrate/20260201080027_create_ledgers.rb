@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateLedgers < ActiveRecord::Migration[8.0]
   def change
     create_table :ledgers do |t|
@@ -22,4 +24,5 @@ class CreateLedgers < ActiveRecord::Migration[8.0]
                          name: "ledgers_owner_rules",
                          validate: false
   end
+
 end

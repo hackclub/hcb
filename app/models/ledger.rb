@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger < ApplicationRecord
+  def self.table_name_prefix = "ledger_"
+
   # Possible owners for a primary ledger
   belongs_to :event, optional: true
   belongs_to :card_grant, optional: true
