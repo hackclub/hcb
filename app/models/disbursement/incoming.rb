@@ -18,6 +18,10 @@ class Disbursement
       disbursement.destination_subledger
     end
 
+    def card_grant # this should be deprecated. 
+      subledger&.card_grant
+    end
+
     def transaction_category
       disbursement.destination_transaction_category
     end

@@ -14,13 +14,19 @@
 #  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
 #
 # Indexes
 #
 #  index_canonical_transactions_on_date                (date)
 #  index_canonical_transactions_on_hcb_code            (hcb_code)
+#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
 #  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
@@ -116,6 +122,8 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+
   before_create do
     ledger_item_id ||= begin
       if short_code.present?
@@ -134,12 +142,12 @@ class CanonicalTransaction < ApplicationRecord
     end
   end
 
-  after_create unless: -> { ledger_item.present? } do
-    create_ledger_item!(memo:, amount_cents:)
+  before_create unless: -> { ledger_item.present? } do
+    create_ledger_item!(memo:, amount_cents:, date: created_at)
   end
   
   after_commit if: -> { ledger_item.present? } do
-    ledger_item.recalulate_amount_cents
+    ledger_item.write_amount_cents
   end
 
   after_create :write_hcb_code

@@ -20,6 +20,10 @@ class Disbursement
       disbursement.source_subledger
     end
 
+    def card_grant
+      subledger&.card_grant
+    end
+
     def transaction_category
       disbursement.source_transaction_category
     end
