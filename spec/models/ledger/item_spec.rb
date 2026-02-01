@@ -247,7 +247,7 @@ RSpec.describe Ledger::Item, type: :model do
         item.save(validate: false)
 
         # Create primary mapping
-        Ledger::Mapping.create!(
+        primary_mapping = Ledger::Mapping.create!(
           ledger: primary_ledger,
           ledger_item: item,
           on_primary_ledger: true
@@ -268,7 +268,6 @@ RSpec.describe Ledger::Item, type: :model do
         )
 
         item.reload
-        primary_mapping = item.ledger_mappings.find_by(on_primary_ledger: true)
         expect(item.ledger_mappings.count).to eq(3)
         expect(item.ledger_mappings.where(on_primary_ledger: true).count).to eq(1)
         expect(item.ledger_mappings.where(on_primary_ledger: false).count).to eq(2)
