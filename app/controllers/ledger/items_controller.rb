@@ -7,7 +7,7 @@ class Ledger
 
       authorize @item
     rescue ActiveRecord::RecordNotFound
-      raise unless Transaction.with_deleted.find_by(id: params[:id]).present? || CanonicalTransaction.find_by(id: params[:id]).present?
+      raise unless Transaction.with_deleted.where(id: params[:id]).exists? || CanonicalTransaction.where(id: params[:id]).exists?
       skip_authorization
       redirect_to transaction_path(params[:id])
     end
