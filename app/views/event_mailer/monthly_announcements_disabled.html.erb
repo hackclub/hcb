@@ -1,0 +1,14 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (an <%= @event.ancestor_organizer_positions.map(&:user).include?(@whodunnit) ? "organization manager" : "HCB admin" %>) has disabled monthly announcements for <%= @event.name %>.
+  Any monthly announcements that have already been published will remain published,
+  but the current monthly announcement draft has been discarded.
+</p>
+
+<p>Managers can re-enable monthly announcements at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
