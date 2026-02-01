@@ -21,9 +21,10 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (ledger_id => ledgers.id)
-#  fk_rails_...  (ledger_item_id => ledger_items.id)
-#  fk_rails_...  (mapped_by_id => users.id)
+#  fk_ledger_mappings_primary_match  ([ledger_id, on_primary_ledger] => ledgers[id, primary])
+#  fk_rails_...                      (ledger_id => ledgers.id)
+#  fk_rails_...                      (ledger_item_id => ledger_items.id)
+#  fk_rails_...                      (mapped_by_id => users.id)
 #
 class Ledger::Mapping < ApplicationRecord
   self.table_name = "ledger_mappings"

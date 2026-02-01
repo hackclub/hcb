@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_091500) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_185350) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1538,6 +1538,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_091500) do
     t.datetime "updated_at", null: false
     t.index ["card_grant_id"], name: "index_ledgers_on_card_grant_id"
     t.index ["event_id"], name: "index_ledgers_on_event_id"
+    t.index ["id", "primary"], name: "index_ledgers_on_id_and_primary", unique: true
     t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
   end
 
@@ -2795,6 +2796,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_091500) do
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
+  add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
   add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"

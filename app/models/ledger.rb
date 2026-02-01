@@ -13,8 +13,9 @@
 #
 # Indexes
 #
-#  index_ledgers_on_card_grant_id  (card_grant_id)
-#  index_ledgers_on_event_id       (event_id)
+#  index_ledgers_on_card_grant_id   (card_grant_id)
+#  index_ledgers_on_event_id        (event_id)
+#  index_ledgers_on_id_and_primary  (id,primary) UNIQUE
 #
 # Foreign Keys
 #
