@@ -77,6 +77,8 @@ RSpec.describe Api::V4::CardGrantsController do
               "memo"           => "Grant to recipient",
               "status"         => "completed",
               "transaction_id" => disbursement.local_hcb_code.public_id,
+              "outgoing_transaction_id" => disbursement.outgoing_disbursement.local_hcb_code.public_id,
+              "incoming_transaction_id" => disbursement.incoming_disbursement.local_hcb_code.public_id,
               "amount_cents"   => 123_45,
               "card_grant_id"  => card_grant.public_id,
               "from"           => serialized_event,
