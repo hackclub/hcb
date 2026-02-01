@@ -14,7 +14,7 @@ class Disbursement
                :processed?, :pending?, :rejected?, :scheduled?, :may_mark_rejected?,
                :state_text, :state_icon,
                :special_appearance, :special_appearance_name, :special_appearance?,
-               :transferred_at, :created_at, :scheduled_on,
+               :transferred_at, :created_at, :scheduled_on, :errored?, :rejected?,
                :fulfilled_by, :fee_waived?, :to_param, :special_appearance_memo, to: :disbursement
     end
 
