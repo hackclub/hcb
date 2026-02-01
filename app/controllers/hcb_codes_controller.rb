@@ -56,14 +56,12 @@ class HcbCodesController < ApplicationController
   rescue Pundit::NotAuthorizedError => e
     if @hcb_code.stripe_card&.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
       redirect_to card_grant_path(@hcb_code.stripe_card.card_grant, frame: params[:frame])
-    else
-      if @hcb_code.outgoing_disbursement?
-        incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
-        if HcbCodePolicy.new(current_user, incoming_hcb_code).show?
-          return redirect_to hcb_code_path(incoming_hcb_code.hashid)
-        end
+    elsif @hcb_code.outgoing_disbursement?
+      incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
+      if HcbCodePolicy.new(current_user, incoming_hcb_code).show?
+         redirect_to hcb_code_path(incoming_hcb_code.hashid)
       end
-
+    else
       raise unless @event.is_public? && !params[:redirect_to_sign_in]
 
       if @hcb_code.canonical_transactions.any?
