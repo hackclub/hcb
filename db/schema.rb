@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_193432) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1507,6 +1507,42 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
   end
 
+  create_table "ledger_items", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "date", null: false
+    t.datetime "marked_no_or_lost_receipt_at"
+    t.text "memo", null: false
+    t.text "short_code"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "ledger_mappings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "mapped_by_id"
+    t.boolean "on_primary_ledger", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ledger_id", "ledger_item_id"], name: "index_ledger_mappings_on_ledger_and_item", unique: true
+    t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
+    t.index ["mapped_by_id"], name: "index_ledger_mappings_on_mapped_by_id"
+  end
+
+  create_table "ledgers", force: :cascade do |t|
+    t.bigint "card_grant_id"
+    t.datetime "created_at", null: false
+    t.bigint "event_id"
+    t.boolean "primary", null: false
+    t.datetime "updated_at", null: false
+    t.index ["card_grant_id"], name: "index_ledgers_on_card_grant_id"
+    t.index ["event_id"], name: "index_ledgers_on_event_id"
+    t.index ["id", "primary"], name: "index_ledgers_on_id_and_primary", unique: true
+    t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
+  end
+
   create_table "lob_addresses", force: :cascade do |t|
     t.string "address1"
     t.string "address2"
@@ -2759,6 +2795,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_mappings", "ledger_items"
+  add_foreign_key "ledger_mappings", "ledgers"
+  add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
+  add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
+  add_foreign_key "ledgers", "card_grants"
+  add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
