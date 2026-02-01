@@ -65,6 +65,51 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     end
   end
 
+  describe "#linked_object" do
+    it "returns increase_check when present" do
+      event = create(:event)
+      increase_check = IncreaseCheck.create!(event:, amount: 1000, recipient_name: "Test", recipient_address_line1: "123 St", recipient_address_city: "NYC", recipient_address_state: "NY", recipient_address_zip: "10001")
+      cpt = create(:canonical_pending_transaction, increase_check:)
+
+      expect(cpt.linked_object).to eq(increase_check)
+    end
+
+    it "returns paypal_transfer when present" do
+      event = create(:event)
+      user = create(:user)
+      paypal_transfer = PaypalTransfer.create!(event:, user:, amount: 1000, recipient_email: "test@test.com", memo: "test", payment_for: "test")
+      cpt = create(:canonical_pending_transaction, paypal_transfer:)
+
+      expect(cpt.linked_object).to eq(paypal_transfer)
+    end
+
+    it "returns nil when no linked object exists" do
+      cpt = create(:canonical_pending_transaction)
+
+      expect(cpt.linked_object).to be_nil
+    end
+  end
+
+  describe "ledger_item auto-creation" do
+    it "creates a ledger_item on create when none is provided" do
+      cpt = create(:canonical_pending_transaction)
+
+      expect(cpt.ledger_item).to be_present
+      expect(cpt.ledger_item.memo).to eq(cpt.memo)
+      expect(cpt.ledger_item.amount_cents).to eq(cpt.amount_cents)
+    end
+
+    it "does not create a ledger_item when one is already provided" do
+      existing_item = Ledger::Item.new(memo: "Existing", amount_cents: 500, date: Time.current)
+      existing_item.save(validate: false)
+
+      cpt = create(:canonical_pending_transaction, ledger_item: existing_item)
+
+      expect(cpt.ledger_item).to eq(existing_item)
+      expect(Ledger::Item.count).to eq(1)
+    end
+  end
+
   describe "#search_memo" do
     context "when the memo is a partial match for the search query" do
       it "still finds the transaction" do

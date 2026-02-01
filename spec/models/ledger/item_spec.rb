@@ -305,4 +305,174 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
   end
+
+  describe "#calculate_event" do
+    let(:item) do
+      i = Ledger::Item.new(amount_cents: 1000, memo: "Test", date: Time.current)
+      i.save(validate: false)
+      i
+    end
+
+    it "returns nil when there are no transactions" do
+      expect(item.calculate_event).to be_nil
+    end
+
+    context "with a stripe card canonical transaction" do
+      it "returns the event from the stripe card" do
+        rst = create(:raw_stripe_transaction)
+        stripe_card_id = rst.stripe_transaction["card"]
+        sc = StripeCard.find_by(stripe_id: stripe_card_id)
+        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+        expect(item.calculate_event).to eq(sc.event)
+      end
+    end
+
+    context "with a pending stripe transaction" do
+      it "returns the event from the pending stripe card" do
+        rpst = create(:raw_pending_stripe_transaction)
+        stripe_card_id = rpst.stripe_transaction["card"]["id"]
+        sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id)
+        cpt = create(:canonical_pending_transaction, raw_pending_stripe_transaction: rpst, ledger_item: item)
+
+        expect(item.calculate_event).to eq(sc.event)
+      end
+    end
+  end
+
+  describe "#calculate_card_grant" do
+    let(:item) do
+      i = Ledger::Item.new(amount_cents: 1000, memo: "Test", date: Time.current)
+      i.save(validate: false)
+      i
+    end
+
+    it "returns nil when there are no transactions" do
+      expect(item.calculate_card_grant).to be_nil
+    end
+
+    context "with a stripe card canonical transaction that has a card grant" do
+      it "returns the card grant" do
+        rst = create(:raw_stripe_transaction)
+        stripe_card_id = rst.stripe_transaction["card"]
+        sc = StripeCard.find_by(stripe_id: stripe_card_id)
+        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+        expect(item.calculate_card_grant).to eq(card_grant)
+      end
+    end
+
+    context "with a pending stripe transaction that has a card grant" do
+      it "returns the card grant" do
+        rpst = create(:raw_pending_stripe_transaction)
+        stripe_card_id = rpst.stripe_transaction["card"]["id"]
+        sc = create(:stripe_card, :with_stripe_id, stripe_id: stripe_card_id)
+        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        cpt = create(:canonical_pending_transaction, raw_pending_stripe_transaction: rpst, ledger_item: item)
+
+        expect(item.calculate_card_grant).to eq(card_grant)
+      end
+    end
+  end
+
+  describe "#map_to_ledger" do
+    let(:item) do
+      i = Ledger::Item.new(amount_cents: 1000, memo: "Test", date: Time.current)
+      i.save(validate: false)
+      i
+    end
+
+    it "returns nil when no event or card grant can be calculated" do
+      expect(item.map_to_ledger).to be_nil
+      expect(item.primary_ledger).to be_nil
+    end
+
+    context "when an event can be calculated" do
+      it "creates a primary ledger and mapping for the event" do
+        rst = create(:raw_stripe_transaction)
+        stripe_card_id = rst.stripe_transaction["card"]
+        sc = StripeCard.find_by(stripe_id: stripe_card_id)
+        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+        item.map_to_ledger
+        item.reload
+
+        expect(item.primary_ledger).to be_present
+        expect(item.primary_ledger.primary?).to be true
+        expect(item.primary_ledger.event).to eq(sc.event)
+      end
+    end
+
+    context "when a card grant can be calculated" do
+      it "creates a primary ledger and mapping for the card grant" do
+        rst = create(:raw_stripe_transaction)
+        stripe_card_id = rst.stripe_transaction["card"]
+        sc = StripeCard.find_by(stripe_id: stripe_card_id)
+        card_grant = create(:card_grant, stripe_card: sc, event: sc.event)
+        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+        item.map_to_ledger
+        item.reload
+
+        expect(item.primary_ledger).to be_present
+        expect(item.primary_ledger.primary?).to be true
+        expect(item.primary_ledger.card_grant).to eq(card_grant)
+      end
+    end
+
+    it "reuses an existing ledger for the same event" do
+      event = create(:event)
+      existing_ledger = Ledger.create!(primary: true, event:)
+
+      rst = create(:raw_stripe_transaction, stripe_card: create(:stripe_card, :with_stripe_id, event:))
+      ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+      item.map_to_ledger
+      item.reload
+
+      expect(item.primary_ledger).to eq(existing_ledger)
+    end
+
+    it "is idempotent" do
+      rst = create(:raw_stripe_transaction)
+      ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+
+      item.map_to_ledger
+      expect { item.map_to_ledger }.not_to change { Ledger::Mapping.count }
+    end
+  end
+
+  describe "#calculate_amount_cents" do
+    let(:item) do
+      i = Ledger::Item.new(amount_cents: 0, memo: "Test", date: Time.current)
+      i.save(validate: false)
+      i
+    end
+
+    it "returns 0 when there are no transactions" do
+      expect(item.calculate_amount_cents).to eq(0)
+    end
+
+    it "sums canonical transaction amounts" do
+      create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
+      create(:canonical_transaction, amount_cents: -300, ledger_item_id: item.id)
+
+      expect(item.calculate_amount_cents).to eq(-800)
+    end
+  end
+
+  describe "#write_amount_cents" do
+    it "updates amount_cents from calculate_amount_cents" do
+      item = Ledger::Item.new(amount_cents: 999, memo: "Test", date: Time.current)
+      item.save(validate: false)
+
+      create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
+
+      item.write_amount_cents
+      item.reload
+
+      expect(item.amount_cents).to eq(-500)
+    end
+  end
 end
