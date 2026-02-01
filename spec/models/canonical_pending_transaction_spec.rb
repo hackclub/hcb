@@ -68,7 +68,7 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
   describe "#linked_object" do
     it "returns increase_check when present" do
       event = create(:event)
-      increase_check = IncreaseCheck.create!(event:, amount: 1000, recipient_name: "Test", recipient_address_line1: "123 St", recipient_address_city: "NYC", recipient_address_state: "NY", recipient_address_zip: "10001")
+      increase_check = IncreaseCheck.create!(event:, amount: 1000, recipient_name: "Test", address_line1: "123 St", address_city: "NYC", address_state: "NY", address_zip: "10001")
       cpt = create(:canonical_pending_transaction, increase_check:)
 
       expect(cpt.linked_object).to eq(increase_check)
