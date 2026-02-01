@@ -33,9 +33,14 @@
   <%= render partial: "hcb_codes/stripe_card", locals: {} %>
 <% end %>
 
-<%# disbursement %>
-<% if @hcb_code.disbursement? && @hcb_code.disbursement.present? %>
-  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.disbursement } %>
+<%# outgoing disbursement %>
+<% if @hcb_code.outgoing_disbursement? && @hcb_code.outgoing_disbursement.present? %>
+  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.outgoing_disbursement } %>
+<% end %>
+
+<%# incoming disbursement %>
+<% if @hcb_code.incoming_disbursement? && @hcb_code.incoming_disbursement.present? %>
+  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.incoming_disbursement } %>
 <% end %>
 
 <%# bank fee %>
