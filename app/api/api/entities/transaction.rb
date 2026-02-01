@@ -116,7 +116,13 @@ module Api
           },
           {
             entity: Entities::Transfer,
-            hcb_method: :disbursement
+            hcb_method: -> (hcb_code) do
+              if hcb_code.outgoing_disbursement?
+                hcb_code.outgoing_disbursement.disbursement
+              else
+                hcb_code.incoming_disbursement.disbursement
+              end
+            end
           },
           {
             entity: Entities::WireTransfer,
