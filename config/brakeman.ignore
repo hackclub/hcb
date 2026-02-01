@@ -51,7 +51,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
-      "line": 83,
+      "line": 88,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(WiseTransfer.find(params[:id]).wise_id, WiseTransfer.find(params[:id]).wise_url, :target => \"_blank\")",
       "render_path": [
@@ -195,70 +195,6 @@
     },
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 2,
-      "fingerprint": "7c9ae4f5245c156ca383daec57b3c0a7cf88681a787ff39a54a4026486f3d929",
-      "check_name": "CrossSiteScripting",
-      "message": "Unescaped model attribute",
-      "file": "app/views/application/_admin_viewer.html.erb",
-      "line": 9,
-      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
-      "code": "ap(admin_inspectable_attributes(Admin::LedgerAudit::Task.find(params[:id]).hcb_code.donation))",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "Admin::LedgerAudits::TasksController",
-          "method": "show",
-          "line": 13,
-          "file": "app/controllers/admin/ledger_audits/tasks_controller.rb",
-          "rendered": {
-            "name": "admin/ledger_audits/tasks/show",
-            "file": "app/views/admin/ledger_audits/tasks/show.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "admin/ledger_audits/tasks/show",
-          "line": 29,
-          "file": "app/views/admin/ledger_audits/tasks/show.html.erb",
-          "rendered": {
-            "name": "hcb_codes/_rich_metadata",
-            "file": "app/views/hcb_codes/_rich_metadata.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "hcb_codes/_rich_metadata",
-          "line": 3,
-          "file": "app/views/hcb_codes/_rich_metadata.html.erb",
-          "rendered": {
-            "name": "hcb_codes/transaction_types/_donation",
-            "file": "app/views/hcb_codes/transaction_types/_donation.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "hcb_codes/transaction_types/_donation",
-          "line": 5,
-          "file": "app/views/hcb_codes/transaction_types/_donation.html.erb",
-          "rendered": {
-            "name": "application/_admin_viewer",
-            "file": "app/views/application/_admin_viewer.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "application/_admin_viewer"
-      },
-      "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": ""
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "842304376abd28273945166e54498133accb7cdfb9c731061649ff771c4c3a18",
       "check_name": "LinkToHref",
@@ -298,7 +234,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
-      "line": 97,
+      "line": 102,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
       "render_path": [
@@ -426,6 +362,70 @@
         79
       ],
       "note": "These urls are being set by stripe calls to point to the real stripe invoice urls."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "b6cd6d311c7315e162f5ea02227650137030c6eb44ac30d73e9294c5641f523c",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped model attribute",
+      "file": "app/views/application/_admin_viewer.html.erb",
+      "line": 9,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "ap(admin_inspectable_attributes(Admin::LedgerAudit::Task.find(params[:id]).hcb_code.donation))",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "Admin::LedgerAudits::TasksController",
+          "method": "show",
+          "line": 13,
+          "file": "app/controllers/admin/ledger_audits/tasks_controller.rb",
+          "rendered": {
+            "name": "admin/ledger_audits/tasks/show",
+            "file": "app/views/admin/ledger_audits/tasks/show.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "admin/ledger_audits/tasks/show",
+          "line": 29,
+          "file": "app/views/admin/ledger_audits/tasks/show.html.erb",
+          "rendered": {
+            "name": "hcb_codes/_rich_metadata",
+            "file": "app/views/hcb_codes/_rich_metadata.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/_rich_metadata",
+          "line": 3,
+          "file": "app/views/hcb_codes/_rich_metadata.html.erb",
+          "rendered": {
+            "name": "hcb_codes/transaction_types/_donation",
+            "file": "app/views/hcb_codes/transaction_types/_donation.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/transaction_types/_donation",
+          "line": 5,
+          "file": "app/views/hcb_codes/transaction_types/_donation.html.erb",
+          "rendered": {
+            "name": "application/_admin_viewer",
+            "file": "app/views/application/_admin_viewer.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "application/_admin_viewer"
+      },
+      "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -587,6 +587,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-01-12 23:56:02 +0000",
+  "updated": "2026-02-01 05:54:32 +0000",
   "brakeman_version": "6.2.2"
 }
