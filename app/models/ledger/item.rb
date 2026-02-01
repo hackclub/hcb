@@ -132,7 +132,7 @@ class Ledger
           return card_grant
         end
 
-        if (card_grant = ct.linked_object.try(:card_grant))
+        if (card_grant = ct.linked_object.try(:subledger).try(:card_grant))
           return card_grant
         end
       end
@@ -142,7 +142,7 @@ class Ledger
           return card_grant
         end
 
-        if (card_grant = cpt.linked_object.try(:card_grant))
+        if (card_grant = ct.linked_object.try(:subledger).try(:card_grant))
           return card_grant
         end
       end
