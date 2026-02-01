@@ -573,13 +573,12 @@ Rails.application.routes.draw do
       post "unapprove"
     end
   end
-  
+  resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show]
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
-
-  resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
 
   resources :employees do
     post "terminate"
