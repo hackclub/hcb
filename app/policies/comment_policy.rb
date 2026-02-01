@@ -3,7 +3,7 @@
 class CommentPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.auditor?
+      if user&.auditor?
         scope.all
       else
         scope.not_admin_only
