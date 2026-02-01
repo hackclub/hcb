@@ -21,7 +21,12 @@ class Ledger
     hashid_config salt: Credentials.fetch(:HASHID_SALT)
     has_paper_trail
 
-    validates_presence_of :amount_cents, :memo, :date
+    has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
+    has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id
+    has_one :primary_ledger, through: :primary_mapping, source: :ledger, class_name: "::Ledger"
+    validates_presence_of :primary_ledger
+
+    validates_presence_of :amount_cents, :memo, :date, :primary_ledger
 
   end
 

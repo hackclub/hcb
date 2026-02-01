@@ -13,6 +13,65 @@ RSpec.describe Ledger, type: :model do
       ledger = Ledger.new
       expect(ledger).to respond_to(:card_grant)
     end
+
+    it "has many mappings" do
+      ledger = Ledger.new
+      expect(ledger).to respond_to(:mappings)
+    end
+
+    it "has many items through mappings" do
+      ledger = Ledger.new
+      expect(ledger).to respond_to(:items)
+    end
+
+    describe "items association" do
+      let(:ledger) do
+        l = Ledger.new(primary: false)
+        l.save(validate: false)
+        l
+      end
+      let(:item1) { create(:ledger_item, memo: "Item 1") }
+      let(:item2) { create(:ledger_item, memo: "Item 2") }
+      let(:item3) { create(:ledger_item, memo: "Item 3") }
+
+      it "returns items associated through mappings" do
+        Ledger::Mapping.create!(
+          ledger: ledger,
+          ledger_item: item1,
+          on_primary_ledger: false
+        )
+        Ledger::Mapping.create!(
+          ledger: ledger,
+          ledger_item: item2,
+          on_primary_ledger: false
+        )
+
+        expect(ledger.items).to contain_exactly(item1, item2)
+      end
+
+      it "returns empty array when no mappings exist" do
+        expect(ledger.items).to be_empty
+      end
+
+      it "only returns items mapped to this specific ledger" do
+        other_ledger = Ledger.new(primary: false)
+        other_ledger.save(validate: false)
+
+        Ledger::Mapping.create!(
+          ledger: ledger,
+          ledger_item: item1,
+          on_primary_ledger: false
+        )
+        Ledger::Mapping.create!(
+          ledger: other_ledger,
+          ledger_item: item2,
+          on_primary_ledger: false
+        )
+
+        expect(ledger.items).to contain_exactly(item1)
+        expect(other_ledger.items).to contain_exactly(item2)
+      end
+    end
   end
 
   describe "owner validation" do

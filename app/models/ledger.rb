@@ -32,8 +32,10 @@ class Ledger < ApplicationRecord
   # Possible owners for a primary ledger
   belongs_to :event, optional: true
   belongs_to :card_grant, optional: true
-
   validate :validate_owner_based_on_primary
+
+  has_many :mappings, class_name: "Ledger::Mapping"
+  has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
 
   private
 
