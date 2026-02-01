@@ -543,7 +543,9 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transactions, only: [:index, :show, :edit, :update]
+  resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
+  get "/transactions/*path", to: redirect("/deprecated/transactions/%{path}", status: 302)
+
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
