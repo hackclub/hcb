@@ -5,5 +5,7 @@ class Ledger
     def show?
       true
     end
+
   end
+
 end

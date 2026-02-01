@@ -544,8 +544,6 @@ Rails.application.routes.draw do
   end
 
   resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
-  get "/transactions/*path", to: redirect("/deprecated/transactions/%{path}", status: 302)
-
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
@@ -575,8 +573,12 @@ Rails.application.routes.draw do
       post "unapprove"
     end
   end
-
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
+  scope module: :ledger, as: :ledger do
+    resources :items, path: "transactions", only: [:show]
+  end
+  resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
   resources :employees do
     post "terminate"
