@@ -1,7 +1,28 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: ledgers
+#
+#  id            :bigint           not null, primary key
+#  primary       :boolean          not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  card_grant_id :bigint
+#  event_id      :bigint
+#
+# Indexes
+#
+#  index_ledgers_on_card_grant_id  (card_grant_id)
+#  index_ledgers_on_event_id       (event_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (card_grant_id => card_grants.id)
+#  fk_rails_...  (event_id => events.id)
+#
 class Ledger < ApplicationRecord
-  def self.table_name_prefix = "ledger_"
+  self.table_name = "ledgers"
 
   # Possible owners for a primary ledger
   belongs_to :event, optional: true
