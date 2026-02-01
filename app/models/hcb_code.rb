@@ -705,8 +705,8 @@ class HcbCode < ApplicationRecord
     nil
   end
 
-  def write_event_and_subledger_id
-    update(event_id: events.first&.id, subledger_id: subledgers.first&.id,)
+  def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
+    update(event_id: event&.id, subledger_id: subledger&.id)
   end
 
 end
