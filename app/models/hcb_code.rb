@@ -49,6 +49,9 @@ class HcbCode < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
 
+  scope :on_main_ledger, -> { where(subledger_id: nil) }
+  scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
+
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
 
