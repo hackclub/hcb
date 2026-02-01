@@ -35,7 +35,9 @@ class Ledger
     validates_presence_of :amount_cents, :memo, :date
 
     before_create :map_to_ledger
-    before_create :write_amount_cents
+    before_create do
+      self.amount_cents = calculate_amount_cents
+    end
 
     monetize :amount_cents
 
@@ -165,7 +167,7 @@ class Ledger
     end
 
     def write_amount_cents
-      self.amount_cents = calculate_amount_cents
+      update(amount_cents: calculate_amount_cents)
     end
 
   end
