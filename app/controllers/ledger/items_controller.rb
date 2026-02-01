@@ -3,7 +3,7 @@
 class Ledger
   class ItemsController < ApplicationController
     def show
-      @item = Ledger::Item.find(params[:id])
+      @item = Ledger::Item.find_by_hashid!(params[:id])
 
       authorize @item
     end
