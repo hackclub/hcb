@@ -43,7 +43,7 @@ module EventMappingEngine
               }
 
               if hcb_code.outgoing_disbursement? && ct.amount_cents.positive?
-                ct.update_column(:hcb_code, hcb_code.disbursement.disbursement.incoming_hcb_code)
+                ct.update_column(:hcb_code, hcb_code.outgoing_disbursement.disbursement.incoming_hcb_code)
               end
 
               ::CanonicalEventMapping.create!(attrs)
