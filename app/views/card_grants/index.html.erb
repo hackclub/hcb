@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :card_grants %>
 
+<% if @event.card_grants.active.any? %>
 <h1 class="flex heading items-center gap-2 flex-col sm:flex-row mb-2 border-0">
   <span class="flex-grow flex items-center flex-1">
     Card grants
@@ -32,4 +33,41 @@
 <h2 class="heading mt4 pb1">Card grant transactions</h2>
 <%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
   <%= render "application/loading_container", klass: "mt-8" %>
+<% end %>
+<% else %>
+
+ <%= render "events/blankslate_page",
+    title: "Card grants",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "card",
+        title: "Easily issue spendable cards to anyone",
+        description: "No processing checks, reviewing receipts, or managing multiple payment methods—just deposit funds once"
+      },
+      {
+        icon: "view",
+        title: "No reimbursement hassles",
+        description: "Recipients spend grant money directly using cards instead of submitting expense reports to you"
+      },
+      {
+        icon: "docs",
+        title: "Verify receipts",
+        description: "Recipients must submit receipts for all card transactions, ensuring accountability and transparency."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
+        <%= inline_icon "card-add" %>
+        Order a card
+      <% end %>
+    <% end %>
+
+  <% end %>
 <% end %>

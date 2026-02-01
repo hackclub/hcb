@@ -1,0 +1,29 @@
+<div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-20 px-3">
+  <div class="flex flex-col justify-center col-span-2">
+    <h1 class="heading border-0 mb-0">
+      <%= title %>
+    </h1>
+
+    <div class="-mx-4">
+      <% hints.each do |point| %>
+        <div class="btn btn--list-item pointer-events-none items-start">
+          <%= inline_icon point[:icon], class: "mt-1" %>
+          <div>
+            <strong><%= point[:title] %></strong>
+            <p class="text-sm opacity-60"><%= point[:description] %></p>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <%= yield %>
+  </div>
+  <div class="col-span-3 flex items-center justify-center">
+    <div class="card p-0 card--breakdown">
+      <img src="<%= screenshots[:light] %>" alt="Illustration" class="w-full h-auto dark:hidden">
+      <img src="<%= screenshots[:dark] %>" alt="Illustration" class="w-full h-auto hidden dark:block">
+      <div class="p-2 pt-0 text-center">
+        <%= yield(:caption) if content_for?(:caption) %>
+      </div>
+    </div>
+  </div>
+</div>
