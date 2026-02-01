@@ -370,6 +370,10 @@ Doorkeeper.configure do
   #   puts "AFTER HOOK FIRED! #{request}, #{response}"
   # end
 
+  after_successful_strategy_response do |_request, response|
+    response.token&.update_column(:ip_address, Current.request_ip)
+  end
+
   # Hook into Authorization flow in order to implement Single Sign Out
   # or add any other functionality. Inside the block you have an access
   # to `controller` (authorizations controller instance) and `context`
@@ -457,4 +461,11 @@ Doorkeeper.configure do
   # WWW-Authenticate Realm (default: "Doorkeeper").
   #
   # realm "Doorkeeper"
+end
+
+# Captures request IP on token creation
+Rails.application.config.to_prepare do
+  Doorkeeper::TokensController.prepend_before_action(
+    -> { Current.request_ip = request.remote_ip }, only: :create
+  )
 end
