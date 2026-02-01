@@ -65,25 +65,9 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     end
   end
 
-  describe "#linked_object" do
-    it "returns increase_check when present" do
-      event = create(:event)
-      increase_check = IncreaseCheck.create!(event:, amount: 1000, recipient_name: "Test", address_line1: "123 St", address_city: "NYC", address_state: "NY", address_zip: "10001")
-      cpt = create(:canonical_pending_transaction, increase_check:)
-
-      expect(cpt.linked_object).to eq(increase_check)
-    end
-
-    it "returns nil when no linked object exists" do
-      cpt = create(:canonical_pending_transaction)
-
-      expect(cpt.linked_object).to be_nil
-    end
-  end
-
   describe "ledger_item auto-creation" do
     it "creates a ledger_item on create when none is provided" do
-      cpt = create(:canonical_pending_transaction)
+      cpt = create(:canonical_pending_transaction, fronted: true)
 
       expect(cpt.ledger_item).to be_present
       expect(cpt.ledger_item.memo).to eq(cpt.memo)

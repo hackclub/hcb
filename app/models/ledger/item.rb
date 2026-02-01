@@ -28,8 +28,8 @@ class Ledger
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_ledger, through: :primary_mapping, source: :ledger, class_name: "::Ledger"
 
-    has_many :canonical_transactions, foreign_key: "ledger_item_id"
-    has_many :canonical_pending_transactions, foreign_key: "ledger_item_id"
+    has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     validates_presence_of :amount_cents, :memo, :date
