@@ -160,6 +160,10 @@ class CanonicalPendingTransaction < ApplicationRecord
     create_ledger_item!(memo:, amount_cents:)
   end
 
+  after_commit do
+    ledger_item.recalulate_amount_cents
+  end
+
   def pending_expired?
     unsettled? && created_at < 5.days.ago
   end
@@ -394,9 +398,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   def column_transaction_id
     raw_pending_column_transaction&.column_id
   end
-
-  after_create_commit do
-    ledger
 
   private
 
