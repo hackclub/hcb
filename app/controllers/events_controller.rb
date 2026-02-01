@@ -1303,7 +1303,8 @@ class EventsController < ApplicationController
       demo_mode: event.demo_mode,
       member:,
       features: {
-        subevents: event.subevents_enabled?
+        subevents: event.subevents_enabled?,
+        card_grants: policy(event).card_grant_overview?
       }
     }
   end
