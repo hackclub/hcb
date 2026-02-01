@@ -10,6 +10,8 @@
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  event_id                     :bigint
+#  subledger_id                 :bigint
 #
 # Indexes
 #
@@ -43,6 +45,12 @@ class HcbCode < ApplicationRecord
 
   has_one :personal_transaction, required: false
   has_one :pin, required: false
+
+  belongs_to :event, optional: true
+  belongs_to :subledger, optional: true
+
+  scope :on_main_ledger, -> { where(subledger_id: nil) }
+  scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -103,7 +111,7 @@ class HcbCode < ApplicationRecord
     return :ach if ach_transfer?
     return :check if check? || increase_check?
     return :card_grant if card_grant?
-    return :disbursement if disbursement?
+    return :disbursement if outgoing_disbursement? || incoming_disbursement?
     return :card_charge if stripe_card?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
@@ -118,7 +126,7 @@ class HcbCode < ApplicationRecord
     return "ACH" if ach_transfer?
     return "Bank fee" if bank_fee?
     return "Card grant" if card_grant?
-    return "Transfer" if disbursement?
+    return "Transfer" if outgoing_disbursement? || incoming_disbursement?
 
     t = type || :transaction
     t = :transaction if unknown?
@@ -142,6 +150,18 @@ class HcbCode < ApplicationRecord
 
       canonical_pending_transactions.sum(:amount_cents)
     end
+  end
+
+  # this replicates our balance calculation
+  def smart_amount_cents
+    sum = canonical_transactions.sum(:amount_cents)
+    sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
+    if event&.can_front_balance?
+      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+      settled_ct_sum = canonical_transactions.sum(:amount_cents)
+      sum += [fronted_pt_sum - settled_ct_sum, 0].max
+    end
+    sum
   end
 
   def amount_cents_by_event(event)
@@ -189,11 +209,11 @@ class HcbCode < ApplicationRecord
   end
 
   def subledger
-    subledgers.first
+    super || subledgers.first
   end
 
   def event
-    events.first
+    super || events.first
   end
 
   def events
@@ -212,7 +232,8 @@ class HcbCode < ApplicationRecord
           ach_transfer.try(:event).try(:id),
           check.try(:event).try(:id),
           increase_check.try(:event).try(:id),
-          disbursement.try(:event).try(:id),
+          outgoing_disbursement.try(:event).try(:id),
+          incoming_disbursement.try(:event).try(:id),
           check_deposit.try(:event).try(:id),
           bank_fee.try(:event).try(:id),
         ].compact.uniq)
@@ -335,7 +356,9 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    [::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    Rails.error.unexpected "HcbCode#disbursement? accessed"
+
+    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
   end
 
   def outgoing_disbursement?
@@ -347,7 +370,8 @@ class HcbCode < ApplicationRecord
   end
 
   def card_grant?
-    disbursement? && disbursement&.card_grant.present?
+    # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
   def grant?
@@ -399,7 +423,31 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
-    @disbursement ||= Disbursement.find_by(id: hcb_i2) if disbursement?
+    Rails.error.unexpected "HcbCode#disbursement accessed"
+    return nil unless disbursement?
+
+    @disbursement ||= begin
+      raw = Disbursement.find_by(id: hcb_i2)
+      return nil unless raw
+
+      if outgoing_disbursement?
+        outgoing_disbursement
+      else
+        incoming_disbursement
+      end
+    end
+  end
+
+  def incoming_disbursement
+    return nil unless incoming_disbursement?
+
+    Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
+  end
+
+  def outgoing_disbursement
+    return nil unless outgoing_disbursement?
+
+    Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
   end
 
   def card_grant
@@ -633,7 +681,8 @@ class HcbCode < ApplicationRecord
     return ach_transfer&.creator if ach_transfer?
     return check&.creator if check?
     return increase_check&.user if increase_check?
-    return disbursement&.requested_by if disbursement?
+    return outgoing_disbursement&.requested_by if outgoing_disbursement?
+    return incoming_disbursement&.requested_by if incoming_disbursement?
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
@@ -654,6 +703,10 @@ class HcbCode < ApplicationRecord
     return invoice.sponsor.name if invoice?
 
     nil
+  end
+
+  def write_event_and_subledger_id
+    update(event_id: events.first&.id, subledger_id: subledgers.first&.id,)
   end
 
 end

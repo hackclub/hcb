@@ -23,7 +23,6 @@ module TransactionGroupingEngine
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
-      DISBURSEMENT_CODE = "500" # Legacy, will be removed in favor of OUTGOING_DISBURSEMENT_CODE
       OUTGOING_DISBURSEMENT_CODE = "500"
       INCOMING_DISBURSEMENT_CODE = "550"
       STRIPE_CARD_CODE = "600"
@@ -53,7 +52,8 @@ module TransactionGroupingEngine
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
-        return disbursement_hcb_code if disbursement
+        return outgoing_disbursement_hcb_code if outgoing_disbursement
+        return incoming_disbursement_hcb_code if incoming_disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
@@ -193,16 +193,28 @@ module TransactionGroupingEngine
         @check_deposit ||= @ct_or_cp.check_deposit
       end
 
-      def disbursement_hcb_code
+      def outgoing_disbursement_hcb_code
         [
           HCB_CODE,
-          DISBURSEMENT_CODE,
-          disbursement.id
+          OUTGOING_DISBURSEMENT_CODE,
+          outgoing_disbursement.id
         ].join(SEPARATOR)
       end
 
-      def disbursement
-        @disbursement ||= @ct_or_cp.disbursement
+      def outgoing_disbursement
+        @outgoing_disbursement ||= @ct_or_cp.outgoing_disbursement
+      end
+
+      def incoming_disbursement_hcb_code
+        [
+          HCB_CODE,
+          INCOMING_DISBURSEMENT_CODE,
+          incoming_disbursement.id
+        ].join(SEPARATOR)
+      end
+
+      def incoming_disbursement
+        @incoming_disbursement ||= @ct_or_cp.incoming_disbursement
       end
 
       def reimbursement_expense_payout
