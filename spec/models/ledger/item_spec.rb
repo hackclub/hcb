@@ -45,6 +45,7 @@ RSpec.describe Ledger::Item, type: :model do
           on_primary_ledger: true
         )
 
+        item.reload
         expect(item.primary_ledger).to eq(primary_ledger)
       end
 
