@@ -116,7 +116,7 @@ module Api
           },
           {
             entity: Entities::Transfer,
-            hcb_method: -> (hcb_code) do
+            hcb_method: ->(hcb_code) do
               if hcb_code.outgoing_disbursement?
                 hcb_code.outgoing_disbursement.disbursement
               else
