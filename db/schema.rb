@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_084833) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_091500) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1515,6 +1515,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_084833) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "ledger_mappings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "mapped_by_id"
+    t.boolean "on_primary_ledger", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
+    t.index ["mapped_by_id"], name: "index_ledger_mappings_on_mapped_by_id"
+  end
+
   create_table "ledgers", force: :cascade do |t|
     t.bigint "card_grant_id"
     t.datetime "created_at", null: false
@@ -2778,6 +2791,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_084833) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_mappings", "ledger_items"
+  add_foreign_key "ledger_mappings", "ledgers"
+  add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
