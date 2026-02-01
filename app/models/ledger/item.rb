@@ -33,9 +33,9 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     validates_presence_of :amount_cents, :memo, :date
-  
-    after_create_commit :map_to_ledger
-    after_create_commit :write_amount_cents
+
+    before_create :map_to_ledger
+    before_create :write_amount_cents
 
     monetize :amount_cents
 
@@ -51,10 +51,10 @@ class Ledger
         settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
         amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
       end
-      
+
       amount_cents
     end
-    
+
     def calculate_event
       # Transactions sent to an organisation's unique Column account number
       # Also covers ACH transfers, wires, etc. which are sent using this number.
@@ -65,19 +65,13 @@ class Ledger
           column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
         )
         return column_account_number.event if column_account_number
-      end
-      
-      # Map transactions on Stripe cards.
-      canonical_transactions.each do |ct|
-        if ct.raw_stripe_transaction.present?
-          if (event = ct.raw_stripe_transaction.likely_event)
-            return event
-          end
-        end
-      end
 
-      # Fallback, see if any linked objects have an event.
-      canonical_transactions.each do |ct|
+        # Map transactions on Stripe cards.
+        if ct.raw_stripe_transaction.present? && (event = ct.raw_stripe_transaction.likely_event)
+          return event
+        end
+
+        # Fallback, see if any linked objects have an event.
         if (event = ct.linked_object.try(:event))
           return event
         end
@@ -111,35 +105,31 @@ class Ledger
         end
 
         # Map transactions on Stripe cards.
-        if cpt.raw_pending_stripe_transaction.present?
-          if (event = cpt.raw_pending_stripe_transaction.likely_event)
-            return event
-          end
+        if cpt.raw_pending_stripe_transaction.present? && (event = cpt.raw_pending_stripe_transaction.likely_event)
+          return event
         end
 
         # Use the Column account number on `raw_pending_column_transaction`
-        # Currently the only `raw_pending_column_transaction`s are when someone 
+        # Currently the only `raw_pending_column_transaction`s are when someone
         # sends an ACH or wire to an organisation's account numbers
-        if cpt.raw_pending_column_transaction
-          column_account_number = Column::AccountNumber.find_by(
-            column_id: cpt.raw_pending_column_transaction.column_transaction["account_number_id"]
-          )
-          return column_account_number.event if column_account_number
-        end
+        next unless cpt.raw_pending_column_transaction
+
+        column_account_number = Column::AccountNumber.find_by(
+          column_id: cpt.raw_pending_column_transaction.column_transaction["account_number_id"]
+        )
+        return column_account_number.event if column_account_number
       end
 
       nil
     end
-    
+
     # CardGrant calculation is significantly simpler.
     # At the moment, only disbursements & Stripe card transactions
     # can exitst on CardGrant's ledger.
     def calculate_card_grant
       canonical_transactions.each do |ct|
-        if ct.raw_stripe_transaction.present?
-          if (card_grant = ct.raw_stripe_transaction.likely_card_grant)
-            return card_grant
-          end
+        if ct.raw_stripe_transaction.present? && (card_grant = ct.raw_stripe_transaction.likely_card_grant)
+          return card_grant
         end
 
         if (card_grant = ct.linked_object.try(:card_grant))
@@ -148,10 +138,8 @@ class Ledger
       end
 
       canonical_pending_transactions.each do |cpt|
-        if cpt.raw_pending_stripe_transaction.present?
-          if (card_grant = cpt.raw_pending_stripe_transaction.likely_card_grant)
-            return card_grant
-          end
+        if cpt.raw_pending_stripe_transaction.present? && (card_grant = cpt.raw_pending_stripe_transaction.likely_card_grant)
+          return card_grant
         end
 
         if (card_grant = cpt.linked_object.try(:card_grant))
@@ -161,7 +149,7 @@ class Ledger
 
       nil
     end
-    
+
     def map_to_ledger
       if card_grant = calculate_card_grant
         ledger = Ledger.find_or_create_by!(primary: true, card_grant:)
@@ -175,7 +163,7 @@ class Ledger
         mapping.on_primary_ledger = true
       end
     end
-    
+
     def write_amount_cents
       update(amount_cents: calculate_amount_cents)
     end

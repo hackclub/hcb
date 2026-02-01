@@ -32,10 +32,6 @@ module TransactionEngine
 
           return likely_donation if donation?
 
-          # return outgoing_disbursement if outgoing_disbursement?
-
-          # return incoming_disbursement if incoming_disbursement?
-
           return likely_bank_fee if outgoing_bank_fee?
 
           return reimbursement_expense_payout if reimbursement_expense_payout
@@ -161,14 +157,6 @@ module TransactionEngine
         return nil unless potential_donation_payouts.present?
 
         potential_donation_payouts.first.donation
-      end
-
-      def outgoing_disbursement
-        @canonical_transaction.local_hcb_code.outgoing_disbursement
-      end
-
-      def incoming_disbursement
-        @canonical_transaction.local_hcb_code.incoming_disbursement
       end
 
       def reimbursement_expense_payout

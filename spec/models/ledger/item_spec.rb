@@ -444,7 +444,7 @@ RSpec.describe Ledger::Item, type: :model do
       ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
       item.map_to_ledger
-      expect { item.map_to_ledger }.not_to change { Ledger::Mapping.count }
+      expect { item.map_to_ledger }.not_to(change { Ledger::Mapping.count })
     end
   end
 

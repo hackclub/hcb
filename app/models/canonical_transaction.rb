@@ -126,19 +126,19 @@ class CanonicalTransaction < ApplicationRecord
 
   before_create do
     self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
-      li.id
-    elsif linked_object.present?
-      linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
-    elsif raw_stripe_transaction&.stripe_authorization_id
-      rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
-      rpst&.canonical_pending_transaction&.ledger_item_id
-    end
+                              li.id
+                            elsif linked_object.present?
+                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                            elsif raw_stripe_transaction&.stripe_authorization_id
+                              rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
+                              rpst&.canonical_pending_transaction&.ledger_item_id
+                            end
   end
 
   before_create unless: -> { ledger_item.present? } do
     create_ledger_item!(memo:, amount_cents:, date: created_at)
   end
-  
+
   after_commit if: -> { ledger_item.present? } do
     ledger_item.write_amount_cents
   end
