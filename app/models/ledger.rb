@@ -24,6 +24,10 @@
 class Ledger < ApplicationRecord
   self.table_name = "ledgers"
 
+  include Hashid::Rails
+  hashid_config salt: Credentials.fetch(:HASHID_SALT)
+  has_paper_trail
+
   # Possible owners for a primary ledger
   belongs_to :event, optional: true
   belongs_to :card_grant, optional: true

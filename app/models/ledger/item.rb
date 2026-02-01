@@ -19,6 +19,7 @@ class Ledger
 
     include Hashid::Rails
     hashid_config salt: Credentials.fetch(:HASHID_SALT)
+    has_paper_trail
 
     validates_presence_of :amount_cents, :memo, :date
 

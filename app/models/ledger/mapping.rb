@@ -28,6 +28,8 @@
 class Ledger::Mapping < ApplicationRecord
   self.table_name = "ledger_mappings"
 
+  has_paper_trail
+
   belongs_to :ledger, class_name: "::Ledger"
   belongs_to :ledger_item, class_name: "Ledger::Item"
 
