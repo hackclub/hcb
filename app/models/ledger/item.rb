@@ -35,9 +35,6 @@ class Ledger
     validates_presence_of :amount_cents, :memo, :date
 
     after_create_commit :map_to_ledger
-    before_create do
-      self.amount_cents = calculate_amount_cents
-    end
 
     monetize :amount_cents
 
