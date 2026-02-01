@@ -7,7 +7,7 @@ class Disbursement
     included do
       attr_reader :disbursement
 
-      delegate :id, :name, :source_event, :destination_event,
+      delegate :id, :name, :source_event, :destination_event, :public_id,
                :destination_subledger, :source_subledger, :to_model,
                :fulfilled?, :reviewing?, :state,
                :requested_by, :card_grant, :inter_event_transfer?,
