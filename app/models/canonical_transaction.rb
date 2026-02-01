@@ -137,7 +137,7 @@ class CanonicalTransaction < ApplicationRecord
       
       if raw_stripe_transaction.present?
         rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
-        return rpst.canonical_pending_transaction.ledger_item_id
+        return rpst&.canonical_pending_transaction&.ledger_item_id
       end
     end
   end
