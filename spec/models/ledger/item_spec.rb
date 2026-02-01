@@ -398,8 +398,9 @@ RSpec.describe Ledger::Item, type: :model do
         rst = create(:raw_stripe_transaction)
         stripe_card_id = rst.stripe_transaction["card"]
         sc = StripeCard.find_by(stripe_id: stripe_card_id)
-        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+        create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
+        item.reload
         item.map_to_ledger
         item.reload
 
@@ -415,8 +416,9 @@ RSpec.describe Ledger::Item, type: :model do
         sc = create(:stripe_card, :with_stripe_id, event:)
         rst = create(:raw_stripe_transaction, stripe_card: sc)
         card_grant = create(:card_grant, stripe_card: sc, event:)
-        ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+        create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
+        item.reload
         item.map_to_ledger
         item.reload
 
@@ -431,8 +433,9 @@ RSpec.describe Ledger::Item, type: :model do
       existing_ledger = Ledger.create!(primary: true, event:)
 
       rst = create(:raw_stripe_transaction, stripe_card: create(:stripe_card, :with_stripe_id, event:))
-      ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+      create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
+      item.reload
       item.map_to_ledger
       item.reload
 
@@ -441,8 +444,9 @@ RSpec.describe Ledger::Item, type: :model do
 
     it "is idempotent" do
       rst = create(:raw_stripe_transaction)
-      ct = create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+      create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
 
+      item.reload
       item.map_to_ledger
       expect { item.map_to_ledger }.not_to(change { Ledger::Mapping.count })
     end
