@@ -27,7 +27,7 @@
 #  fk_rails_...                      (ledger_item_id => ledger_items.id)
 #  fk_rails_...                      (mapped_by_id => users.id)
 #
-module Ledger
+class Ledger
   class Mapping < ApplicationRecord
     self.table_name = "ledger_mappings"
 
