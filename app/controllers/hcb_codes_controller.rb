@@ -59,7 +59,7 @@ class HcbCodesController < ApplicationController
     elsif @hcb_code.outgoing_disbursement?
       incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
       if HcbCodePolicy.new(current_user, incoming_hcb_code).show?
-         redirect_to hcb_code_path(incoming_hcb_code.hashid)
+        redirect_to hcb_code_path(incoming_hcb_code.hashid)
       end
     else
       raise unless @event.is_public? && !params[:redirect_to_sign_in]
