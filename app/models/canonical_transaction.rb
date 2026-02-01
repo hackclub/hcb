@@ -125,20 +125,13 @@ class CanonicalTransaction < ApplicationRecord
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
 
   before_create do
-    ledger_item_id ||= begin
-      if short_code.present?
-        ledger_item = Ledger::Item.find_by(short_code:)
-        return ledger_item.id if ledger_item
-      end
-      
-      if linked_object.present?
-        return linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
-      end
-      
-      if raw_stripe_transaction&.stripe_authorization_id
-        rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
-        return rpst.canonical_pending_transaction.ledger_item_id if rpst.present?
-      end
+    self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
+      li.id
+    elsif linked_object.present?
+      linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+    elsif raw_stripe_transaction&.stripe_authorization_id
+      rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
+      rpst&.canonical_pending_transaction&.ledger_item_id
     end
   end
 
