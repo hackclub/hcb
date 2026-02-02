@@ -183,7 +183,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
