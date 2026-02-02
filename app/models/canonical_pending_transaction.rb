@@ -162,7 +162,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
 
   after_create_commit unless: -> { ledger_item.present? } do
-    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at))
+    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code))
   end
 
   after_commit if: -> { ledger_item.present? } do
