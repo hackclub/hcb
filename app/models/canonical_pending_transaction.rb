@@ -170,6 +170,11 @@ class CanonicalPendingTransaction < ApplicationRecord
     ledger_item.write_amount_cents!
   end
 
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+  end
+
   def pending_expired?
     unsettled? && created_at < 5.days.ago
   end
