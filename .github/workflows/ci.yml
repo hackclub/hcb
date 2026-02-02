@@ -298,14 +298,20 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
         run: |
-          for VERSION in ${{ steps.migrations.outputs.versions }}; do
-            echo "Testing migration $VERSION..."
-            echo "  Rolling back..."
-            bundle exec rails db:migrate:down VERSION=$VERSION
-            echo "  Migrating up..."
-            bundle exec rails db:migrate:up VERSION=$VERSION
-            echo "  Migration $VERSION is reversible!"
-          done
+          # Get the oldest new migration version
+          VERSIONS="${{ steps.migrations.outputs.versions }}"
+          OLDEST_VERSION=$(echo "$VERSIONS" | awk '{print $NF}')
+
+          echo "========================================="
+          echo "Rolling back all new migrations..."
+          bundle exec rails db:migrate VERSION=$((OLDEST_VERSION - 1))
+
+          echo "========================================="
+          echo "Re-applying all migrations..."
+          bundle exec rails db:migrate
+
+          echo "========================================="
+          echo "✅ All migrations are reversible!"
   brakeman:
     name: Brakeman
     runs-on: ubuntu-latest
