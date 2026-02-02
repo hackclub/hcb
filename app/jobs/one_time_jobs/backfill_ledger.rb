@@ -28,6 +28,7 @@ module OneTimeJobs
     end
 
     def backfill_ledger_items
+      # TODO: set HcbCode#ledger_item_id during backfill, and exclude from query below
       hcb_codes = HcbCode
                   .includes(
                     :canonical_transactions,
