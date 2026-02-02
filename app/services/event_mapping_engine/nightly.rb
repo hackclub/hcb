@@ -24,7 +24,7 @@ module EventMappingEngine
 
     private
 
-    def map_column_account_number_transactions! # done
+    def map_column_account_number_transactions!
       CanonicalTransaction.unmapped.likely_column_account_number.find_each(batch_size: 100) do |ct|
         column_account_number = Column::AccountNumber.find_by(column_id: ct.raw_column_transaction.column_transaction["account_number_id"])
         next unless column_account_number
@@ -33,11 +33,11 @@ module EventMappingEngine
       end
     end
 
-    def map_stripe_transactions! # done
+    def map_stripe_transactions!
       ::EventMappingEngine::Map::StripeTransactions.new(start_date: @start_date).run
     end
 
-    def map_check_deposits! # done
+    def map_check_deposits!
       CanonicalTransaction.unmapped.with_column_transaction_type("check.outgoing_debit").find_each(batch_size: 100) do |ct|
         check_deposit = ct.check_deposit
         next unless check_deposit
@@ -46,15 +46,15 @@ module EventMappingEngine
       end
     end
 
-    def map_stripe_top_ups! # fall through
+    def map_stripe_top_ups!
       ::EventMappingEngine::Map::StripeTopUps.new.run
     end
 
-    def map_svb_sweep_transactions! # fall through
+    def map_svb_sweep_transactions!
       ::EventMappingEngine::Map::SvbSweepTransactions.new.run
     end
 
-    def map_interest_payments! # fall through
+    def map_interest_payments!
       return unless Rails.env.production?
 
       CanonicalTransaction.unmapped.increase_interest.find_each(batch_size: 100) do |ct|
