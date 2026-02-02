@@ -575,6 +575,7 @@ Rails.application.routes.draw do
   end
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
 
+  resources :ledgers, only: [:show]
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show]
   end
