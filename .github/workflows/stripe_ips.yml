@@ -8,7 +8,7 @@ jobs:
   update-and-commit:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - name: "Sync with Stripe"
         run: |
           curl -o config/stripe_ips_webhooks.txt https://stripe.com/files/ips/ips_webhooks.txt

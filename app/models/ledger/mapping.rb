@@ -58,5 +58,4 @@ class Ledger
 
   end
 
-
 end

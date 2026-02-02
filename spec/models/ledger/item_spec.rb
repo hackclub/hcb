@@ -308,4 +308,37 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
   end
+
+  describe "#calculate_amount_cents" do
+    let(:item) do
+      i = Ledger::Item.new(amount_cents: 0, memo: "Test", date: Time.current)
+      i.save(validate: false)
+      i
+    end
+
+    it "returns 0 when there are no transactions" do
+      expect(item.calculate_amount_cents).to eq(0)
+    end
+
+    it "sums canonical transaction amounts" do
+      create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
+      create(:canonical_transaction, amount_cents: -300, ledger_item_id: item.id)
+
+      expect(item.calculate_amount_cents).to eq(-800)
+    end
+  end
+
+  describe "#write_amount_cents!" do
+    it "updates amount_cents from calculate_amount_cents" do
+      item = Ledger::Item.new(amount_cents: 999, memo: "Test", date: Time.current)
+      item.save(validate: false)
+
+      create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
+
+      item.write_amount_cents!
+      item.reload
+
+      expect(item.amount_cents).to eq(-500)
+    end
+  end
 end
