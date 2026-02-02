@@ -10,7 +10,7 @@ module OneTimeJobs
     end
 
     def backfill_event_ledgers
-      collection = Event.missing(:ledger)
+      collection = Event.where.missing(:ledger)
       puts "Backfilling Ledger on #{collection.count} Events"
 
       collection.find_each do |event|
@@ -19,7 +19,7 @@ module OneTimeJobs
     end
 
     def backfill_card_grant_ledgers
-      collection = CardGrant.missing(:ledger)
+      collection = CardGrant.where.missing(:ledger)
       puts "Backfilling Ledger on #{collection.count} CardGrants"
 
       collection.find_each do |card_grant|
