@@ -11,7 +11,7 @@ class Ledger
     # Expected to return an ActiveRecord::Relation of Ledger::Item
     def execute(ledger_id: nil)
       # TODO: (WARNING) We're currently using AR `where` syntax, but WILL change
-      apply_query(ledger_id.present? ? Ledger::Item.where(ledger_id: ledger_id) : Ledger::Item, @query_hash)
+      apply_query(ledger_id.present? ? Ledger::Item.where(ledger_id: ledger_id) : Ledger::Item.all, @query_hash)
     end
 
     def self.sanitize_query(query_hash)
@@ -35,11 +35,14 @@ class Ledger
               relation = apply_query(relation, sub_query)
             end
           elsif operator == "or"
-            sub_relation = Ledger::Item.none
+            sub_relation = nil
 
             value.each do |sub_query|
-              sub_relation = apply_query(sub_relation, sub_query, "or")
+              branch = apply_query(Ledger::Item.all, sub_query, "and")
+              sub_relation = sub_relation.nil? ? branch : sub_relation.or(branch)
             end
+
+            sub_relation ||= Ledger::Item.none
 
             if context == "and"
               relation = relation.merge(sub_relation)
@@ -47,12 +50,11 @@ class Ledger
               relation = relation.or(sub_relation)
             end
           elsif operator == "not"
+            sub_relation = apply_query(Ledger::Item.all, value, "and")
             if context == "and"
-              sub_relation = apply_query(Ledger::Item.all, value, "and")
-              relation = relation.exclude(sub_relation)
+              relation = relation.where.not(id: sub_relation.select(:id))
             else
-              sub_relation = apply_query(Ledger::Item.none, value, "and")
-              relation = relation.or(Ledger::Item.exclude(sub_relation))
+              relation = relation.or(Ledger::Item.where.not(id: sub_relation.select(:id)))
             end
           else
             raise Ledger::Query::QueryError.new("Unsupported logical operator: #{operator}")
@@ -108,12 +110,15 @@ class Ledger
         when "$lte"
           return relation.where("#{key} <= ?", operand)
         end
-      elsif operand.is_a?(String)
+      elsif operand.is_a?(Array)
         case operator.to_s
         when "$in"
           return relation.where(key => operand)
         when "$nin"
           return relation.where.not(key => operand)
+        end
+      elsif operand.is_a?(String)
+        case operator.to_s
         when "$ilike"
           return relation.where("#{key} ILIKE ?", operand)
         when "$like"
