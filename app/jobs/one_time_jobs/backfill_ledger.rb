@@ -6,6 +6,7 @@ module OneTimeJobs
     def perform
       backfill_event_ledgers
       backfill_card_grant_ledgers
+      backfill_ledger_items
     end
 
     def backfill_event_ledgers
@@ -23,6 +24,37 @@ module OneTimeJobs
 
       collection.find_each do |card_grant|
         card_grant.create_ledger!(primary: true)
+      end
+    end
+
+    def backfill_ledger_items
+      events = Event.joins(:ledger).includes(:ledger)
+      puts "Backfilling Ledger::Items from HCB codes on #{events.count} Events"
+
+      events.find_each do |event|
+        event.hcb_codes.in_batches do |batch|
+          batch.each do |hcb_code|
+            if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
+              ledger = card_grant.ledger
+              next unless ledger
+            else
+              ledger = event.ledger
+            end
+
+            item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
+              li.amount_cents = hcb_code.amount_cents
+              li.memo = hcb_code.memo
+              li.date = hcb_code.date || hcb_code.created_at
+              li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
+            end
+
+            Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: item) do |mapping|
+              mapping.on_primary_ledger = true
+            end
+
+            item.write_amount_cents!
+          end
+        end
       end
     end
 
