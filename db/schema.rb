@@ -12,8 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
-  create_schema "fivetran_metadata"
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -473,6 +472,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
+    t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
   create_table "card_grants", force: :cascade do |t|
@@ -485,6 +485,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.string "email", null: false
     t.bigint "event_id", null: false
     t.text "instructions"
+    t.string "invite_message"
     t.string "keyword_lock"
     t.string "merchant_lock"
     t.boolean "one_time_use"
@@ -1046,6 +1047,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.string "name", null: false
     t.string "purpose"
     t.datetime "updated_at", null: false
+    t.index ["name", "purpose"], name: "index_event_tags_on_name_and_purpose", unique: true
   end
 
   create_table "event_tags_events", id: false, force: :cascade do |t|
@@ -1345,9 +1347,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
+    t.bigint "subledger_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
-    t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
@@ -1517,7 +1519,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
-    t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
   create_table "ledger_mappings", force: :cascade do |t|
@@ -2036,7 +2037,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
 
   create_table "referral_attributions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "referral_link_id"
+    t.bigint "referral_link_id", null: false
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -2045,8 +2046,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
-
-  add_check_constraint "referral_attributions", "referral_link_id IS NOT NULL", name: "referral_attributions_referral_link_id_null", validate: false
 
   create_table "referral_links", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -2063,7 +2062,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
   create_table "referral_programs", force: :cascade do |t|
     t.string "background_image_url"
     t.datetime "created_at", null: false
-    t.bigint "creator_id"
+    t.bigint "creator_id", null: false
     t.text "login_body_text"
     t.string "login_header_text"
     t.string "login_text_color"
@@ -2072,8 +2071,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_referral_programs_on_creator_id"
   end
-
-  add_check_constraint "referral_programs", "creator_id IS NOT NULL", name: "referral_programs_creator_id_null", validate: false
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
     t.string "aasm_state"
@@ -2747,14 +2744,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
+  add_foreign_key "emburse_card_requests", "emburse_cards"
   add_foreign_key "emburse_card_requests", "events"
   add_foreign_key "emburse_card_requests", "users", column: "creator_id"
   add_foreign_key "emburse_card_requests", "users", column: "fulfilled_by_id"
   add_foreign_key "emburse_cards", "events"
-  add_foreign_key "emburse_cards", "events"
   add_foreign_key "emburse_cards", "users"
-  add_foreign_key "emburse_cards", "users"
+  add_foreign_key "emburse_transactions", "emburse_cards"
   add_foreign_key "emburse_transactions", "events"
+  add_foreign_key "emburse_transfers", "emburse_cards"
   add_foreign_key "emburse_transfers", "events"
   add_foreign_key "emburse_transfers", "users", column: "creator_id"
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
@@ -2889,7 +2887,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
        RETURNS text
        LANGUAGE sql
        IMMUTABLE STRICT
-      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '550'::text THEN 'incoming_disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
+      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'outgoing_disbursement'::text WHEN '550'::text THEN 'incoming_disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
   SQL
 
 end
