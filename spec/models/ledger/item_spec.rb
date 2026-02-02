@@ -310,7 +310,7 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "#map_to_ledger" do
+  describe "#map!" do
     let(:item) do
       i = Ledger::Item.new(amount_cents: 1000, memo: "Test", date: Time.current)
       i.save(validate: false)
@@ -318,7 +318,7 @@ RSpec.describe Ledger::Item, type: :model do
     end
 
     it "returns nil when no event or card grant can be calculated" do
-      expect(item.map_to_ledger).to be_nil
+      expect(item.map!).to be_nil
       expect(item.primary_ledger).to be_nil
     end
 
@@ -328,7 +328,7 @@ RSpec.describe Ledger::Item, type: :model do
         allow(item).to receive(:calculate_card_grant).and_return(nil)
         allow(item).to receive(:calculate_event).and_return(event)
 
-        item.map_to_ledger
+        item.map!
         item.reload
 
         expect(item.primary_ledger).to be_present
@@ -343,7 +343,7 @@ RSpec.describe Ledger::Item, type: :model do
         card_grant = create(:card_grant, event:)
         allow(item).to receive(:calculate_card_grant).and_return(card_grant)
 
-        item.map_to_ledger
+        item.map!
         item.reload
 
         expect(item.primary_ledger).to be_present
@@ -359,7 +359,7 @@ RSpec.describe Ledger::Item, type: :model do
       allow(item).to receive(:calculate_card_grant).and_return(nil)
       allow(item).to receive(:calculate_event).and_return(event)
 
-      item.map_to_ledger
+      item.map!
       item.reload
 
       expect(item.primary_ledger).to eq(existing_ledger)
@@ -370,8 +370,8 @@ RSpec.describe Ledger::Item, type: :model do
       allow(item).to receive(:calculate_card_grant).and_return(nil)
       allow(item).to receive(:calculate_event).and_return(event)
 
-      item.map_to_ledger
-      expect { item.map_to_ledger }.not_to(change { Ledger::Mapping.count })
+      item.map!
+      expect { item.map! }.not_to(change { Ledger::Mapping.count })
     end
   end
 
