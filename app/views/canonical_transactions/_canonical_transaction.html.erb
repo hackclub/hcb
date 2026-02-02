@@ -5,8 +5,8 @@
 <% type = Rails.cache.fetch("#{ct.hcb_code}/cached_type", expires_in: 12.hours) { ct.local_hcb_code.type } %>
 
 <% special_appearance = Rails.cache.fetch("ct_#{ct.hcb_code}/special_appearance", expires_in: 12.hours) do
-     if !ct.amount.negative? && ct.local_hcb_code.disbursement&.special_appearance?
-       ct.local_hcb_code.disbursement.special_appearance.to_json # stored as json as that's what rails caching supports!
+     if ct.local_hcb_code.incoming_disbursement&.special_appearance?
+       ct.local_hcb_code.incoming_disbursement.special_appearance.to_json # stored as json as that's what rails caching supports!
      else
        nil
      end
@@ -76,7 +76,7 @@
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
               <% if Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } && !organizer_signed_in? %>
-                <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
+                <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(ct.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
                   <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
@@ -295,9 +295,9 @@
 <% end %>
 
 <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
-    <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), external_link: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant)) %>
-    <%= turbo_frame_tag "spending_#{ct.local_hcb_code.disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.disbursement.card_grant, params: { frame: true }), loading: :lazy do %>
+  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
+    <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), external_link: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant)) %>
+    <%= turbo_frame_tag "spending_#{ct.local_hcb_code.outgoing_disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant, params: { frame: true }), loading: :lazy do %>
       <strong>Loading...</strong>
     <% end %>
   </section>

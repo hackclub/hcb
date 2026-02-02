@@ -1,0 +1,63 @@
+<% title "Ledger #{@ledger.hashid}" %>
+
+<section class="details mb-4">
+  <div>
+    <strong>Type</strong>
+    <span><%= @ledger.primary? ? "Primary Ledger" : "Non-Primary Ledger" %></span>
+  </div>
+
+  <% if @ledger.event %>
+    <div>
+      <strong>Event</strong>
+      <span><%= link_to @ledger.event.name, event_path(@ledger.event) %></span>
+    </div>
+  <% end %>
+
+  <% if @ledger.card_grant %>
+    <div>
+      <strong>Card Grant</strong>
+      <span><%= link_to @ledger.card_grant.name, card_grant_path(@ledger.card_grant) %></span>
+    </div>
+  <% end %>
+
+  <div>
+    <strong>Balance</strong>
+    <span><%= @ledger.balance.format %></span>
+  </div>
+
+  <div>
+    <strong>Total Items</strong>
+    <span><%= @items.total_count %></span>
+  </div>
+</section>
+
+<h2>Ledger Items</h2>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @items, entry_name: "item" %>
+  </div>
+  <%= paginate @items %>
+</div>
+
+<% if @items.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Memo</th>
+        <th>Amount</th>
+        <th>Short Code</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render partial: "ledger/item", collection: @items, as: :item %>
+    </tbody>
+  </table>
+
+  <%= paginate @items %>
+<% else %>
+  <%= blankslate "This ledger has no items yet" %>
+<% end %>

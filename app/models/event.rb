@@ -378,6 +378,9 @@ class Event < ApplicationRecord
   has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
   accepts_nested_attributes_for :event_scoped_tags_events
 
+  has_one :ledger, -> { where(primary: true) }, inverse_of: :event
+  after_create :create_ledger
+  has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits

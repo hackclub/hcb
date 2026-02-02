@@ -38,7 +38,7 @@ module TransactionEngine
       end
 
       def handle_emburse_refund
-        return (raw_emburse_transaction.bank_account_description || raw_emburse_transaction.merchant_description).to_s.upcase if amount_cents > 0 && raw_emburse_transaction.present?
+        return (raw_emburse_transaction.bank_account_description || raw_emburse_transaction.merchant_description).to_s.upcase.presence if amount_cents > 0 && raw_emburse_transaction.present?
       end
 
       def handle_solely_from_memo
