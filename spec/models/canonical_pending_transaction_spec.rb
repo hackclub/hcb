@@ -67,7 +67,7 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
 
   describe "ledger_item auto-creation" do
     it "creates a ledger_item on create when none is provided" do
-      cpt = create(:canonical_pending_transaction, fronted: true, amount_cents: -999)
+      cpt = create(:canonical_pending_transaction, amount_cents: -999)
 
       expect(cpt.ledger_item).to be_present
       expect(cpt.ledger_item.memo).to eq(cpt.memo)
