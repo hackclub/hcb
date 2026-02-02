@@ -134,12 +134,3 @@ class Ledger
   end
 
 end
-
-
-Ledger::Query.new({
-  "memo": "Initial transaction",
-  "$or": [
-    { "amount_cents": 1 },
-    { "amount_cents": { "$eq": 10000} }
-  ]
-}).execute
