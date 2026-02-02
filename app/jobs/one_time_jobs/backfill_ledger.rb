@@ -28,7 +28,12 @@ module OneTimeJobs
     end
 
     def backfill_ledger_items
-      hcb_codes = HcbCode.includes(:canonical_transactions, :canonical_pending_transactions).where.not(canonical_transactions: [], canonical_pending_transactions: [])
+      hcb_codes = HcbCode
+                    .includes(
+                      :canonical_transactions,
+                      :canonical_pending_transactions,
+                      subledger: { card_grant: :ledger }
+                    ).where.not(canonical_transactions: [], canonical_pending_transactions: [])
       puts "Backfilling Ledger::Items from #{hcb_codes.count} HcbCodes"
 
       hcb_codes.find_each do |hcb_code|
