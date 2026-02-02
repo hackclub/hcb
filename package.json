@@ -11,7 +11,7 @@
     "@appsignal/plugin-breadcrumbs-console": "^1.1.37",
     "@appsignal/plugin-path-decorator": "^1.0.17",
     "@appsignal/stimulus": "^1.0.20",
-    "@babel/core": "^7.28.4",
+    "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@csstools/postcss-sass": "^5.1.1",
