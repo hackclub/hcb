@@ -75,7 +75,8 @@ class CommentsController < ApplicationController
 
   COMMENTABLE_TYPE_MAP = [AchTransfer, EmburseCardRequest, EmburseTransaction,
                           EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
-                          OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant].index_by(&:to_s).freeze
+                          OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
+                          Ledger::Item].index_by(&:to_s).freeze
 
   # Given a route "/transactions/25/comments", this method sets @commentable to
   # Transaction with ID 25

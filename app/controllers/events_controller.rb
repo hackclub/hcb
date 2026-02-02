@@ -280,7 +280,7 @@ class EventsController < ApplicationController
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
-      @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+      @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
@@ -759,7 +759,7 @@ class EventsController < ApplicationController
           csv << %w[ID Name Slug Balance]
 
           @event.subevents.find_each do |e|
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0].map { |value| SafeCsv.sanitize(value) }
           end
         end
 
@@ -971,8 +971,8 @@ class EventsController < ApplicationController
         "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id }
+        "settled" => ->(t) { t.local_hcb_code.outgoing_disbursement&.inter_event_transfer? || t.local_hcb_code.incoming_disbursement&.inter_event_transfer? },
+        "pending" => ->(t) { t.local_hcb_code.outgoing_disbursement&.inter_event_transfer? || t.local_hcb_code.incoming_disbursement&.inter_event_transfer? }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },
