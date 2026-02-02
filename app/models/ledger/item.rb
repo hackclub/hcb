@@ -147,7 +147,7 @@ class Ledger
       nil
     end
 
-    def map_to_ledger
+    def map_to_ledger!
       if card_grant = calculate_card_grant
         ledger = Ledger.find_or_create_by!(primary: true, card_grant:)
       elsif event = calculate_event
