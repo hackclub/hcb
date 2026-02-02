@@ -16,7 +16,8 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_hcb_code  (hcb_code) UNIQUE
+#  index_hcb_codes_on_hcb_code    (hcb_code) UNIQUE
+#  index_hcb_codes_on_short_code  (short_code) UNIQUE
 #
 # Foreign Keys
 #

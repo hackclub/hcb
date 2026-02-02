@@ -13,6 +13,10 @@
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #
+# Indexes
+#
+#  index_ledger_items_on_short_code  (short_code) UNIQUE
+#
 class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
