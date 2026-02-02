@@ -209,7 +209,7 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.4"
+gem "ahoy_email", "~> 3.0"
 
 gem "email_reply_parser"
 
