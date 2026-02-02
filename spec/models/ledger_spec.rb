@@ -179,8 +179,14 @@ RSpec.describe Ledger, type: :model do
       end
 
       it "allows primary with card_grant owner" do
-        # Skip foreign key for this test since we don't want to trigger card_grant side effects
-        skip "Requires actual card_grant which triggers disbursement logic"
+        # Stub transfer_money to avoid disbursement side effects
+        allow_any_instance_of(CardGrant).to receive(:transfer_money)
+
+        card_grant = create(:card_grant)
+        # CardGrant automatically creates a ledger, so just verify it exists
+        expect(card_grant.ledger).to be_present
+        expect(card_grant.ledger.primary?).to be true
+        expect(card_grant.ledger.persisted?).to be true
       end
     end
 
@@ -225,8 +231,19 @@ RSpec.describe Ledger, type: :model do
       end
 
       it "enforces that a card_grant can only have one primary ledger" do
-        # Skip this test for now since card_grant creation triggers complex side effects
-        skip "Requires actual card_grant which triggers disbursement logic"
+        # Stub transfer_money to avoid disbursement side effects
+        allow_any_instance_of(CardGrant).to receive(:transfer_money)
+
+        card_grant = create(:card_grant)
+
+        # CardGrant automatically creates a ledger after creation
+        expect(card_grant.ledger).to be_present
+
+        # Try to create second primary ledger for same card_grant - should fail
+        expect {
+          ledger2 = Ledger.new(primary: true, card_grant: card_grant)
+          ledger2.save(validate: false)
+        }.to raise_error(ActiveRecord::RecordNotUnique)
       end
     end
   end
