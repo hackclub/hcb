@@ -1347,6 +1347,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
+    t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
     t.bigint "subledger_id"
@@ -2795,6 +2796,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
   add_foreign_key "hcb_code_pins", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
+  add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
