@@ -13,6 +13,7 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
 #  payout_method_type            :string
 #  phone_number                  :text
@@ -41,6 +42,8 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
+  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
+
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -160,7 +163,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -185,6 +189,8 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
+  validate :email_not_in_blacklisted_domains, on: :create
+
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
@@ -425,9 +431,13 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def teenager?
+  def is_teenager?
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
+  end
+
+  def was_teenager_on_join?
+    age_on(created_at)&.<=(18)
   end
 
   def last_seen_at
@@ -646,11 +656,18 @@ class User < ApplicationRecord
     # Skip if user ever updated their seasonal_themes_enabled setting
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
-    self.seasonal_themes_enabled = teenager?
+    self.seasonal_themes_enabled = is_teenager?
   end
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def email_not_in_blacklisted_domains
+    domain = email.split("@").last.downcase
+    if BLACKLISTED_DOMAINS.include?(domain)
+      errors.add(:email, "is invalid. Please use a different email address.")
+    end
   end
 
 end

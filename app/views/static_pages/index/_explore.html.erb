@@ -1,6 +1,6 @@
 <%# EXPLORE HACK CLUB %>
 
-<% if current_user.teenager? %>
+<% if current_user.is_teenager? %>
   <div class="flex flex-row w-full justify-between items-center">
     <h2 class="heading h2 leading-[1.5] my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
       Explore Hack Club
@@ -15,7 +15,7 @@
     <%= link_to "https://campfire.hackclub.com/?ref=hcb", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
       <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/ceb2d2a5233f2ec844d4524312d21e0ccd89dbf5_campfire.png')">
         <div class="flex gap-2 items-center">
-          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/f7ec2e06722382802ef561e29438d1a81fe23b21_campfire-square.png" height="24" weight="24" class="rounded align-bottom" alt="Shiba logo">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/f7ec2e06722382802ef561e29438d1a81fe23b21_campfire-square.png" height="24" weight="24" class="rounded align-bottom" alt="Campfire logo">
           <strong class="text-xl leading-tight">
             Campfire
           </strong>
@@ -71,7 +71,7 @@
     <%= link_to "https://flagship.hackclub.com/?utm_source=c-hcb", style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
       <li class="card card--hover flex flex-col h-full mx-auto card--background-image" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/214670fa15a4c366_footer_2.png')">
         <div class="flex gap-2 items-center">
-          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/2de1ef0d2b0822b6_marsh2-flip.png" height="24" weight="24" class="rounded align-bottom" alt="Shiba logo">
+          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/2de1ef0d2b0822b6_marsh2-flip.png" height="24" weight="24" class="rounded align-bottom" alt="Campfire Flagship logo">
           <strong class="text-xl leading-tight">
             Campfire Flagship
           </strong>

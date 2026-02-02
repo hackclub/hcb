@@ -42,7 +42,7 @@ function extractId(dataTransfer) {
 export default class extends Controller {
   static targets = ['fileInput', 'dropzone', 'form', 'uploadMethod']
   static values = {
-    title: String,
+    title: { type: String, default: 'Drop to add a receipt' },
     linking: { type: Boolean, default: false },
     globalPaste: { type: Boolean, default: false },
     receiptable: String,

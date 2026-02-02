@@ -63,6 +63,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_member?
   end
 
+  def permit_merchant?
+    admin_or_member?
+  end
+
   def update?
     admin_or_manager?
   end

@@ -1,6 +1,6 @@
 <%# locals: (form:, field_name:, disabled:, events:, default_event:, lazy_load_balances: false, sending: false, receiving: false, allow_custom_events: false) %>
 
-<div class="field" data-controller="organization-select">
+<div class="field flex-1" data-controller="organization-select">
   <%= form.label field_name, sending ? "From" : "To" %>
   <select name="disbursement[<%= field_name %>]" id="disbursement_<%= field_name %>" <%= "disabled" if disabled %> class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer disabled:cursor-default" data-organization-select-target="dropdown">
     <option value>Select one...</option>
