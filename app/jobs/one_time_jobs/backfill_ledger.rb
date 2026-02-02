@@ -50,6 +50,11 @@ module OneTimeJobs
           mapping.on_primary_ledger = true
         end
 
+        hcb_code.canonical_transaction.update_all(ledger_item_id: item.id)
+        hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
+
+        item.reload
+
         item.write_amount_cents!
       end
     end
