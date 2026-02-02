@@ -172,9 +172,10 @@ RSpec.describe Ledger, type: :model do
 
       it "allows primary with event owner" do
         event = create(:event)
-        ledger = Ledger.new(primary: true, event: event)
-        ledger.save(validate: false)
-        expect(ledger.persisted?).to be true
+        # Event automatically creates a ledger, so just verify it exists
+        expect(event.ledger).to be_present
+        expect(event.ledger.primary?).to be true
+        expect(event.ledger.persisted?).to be true
       end
 
       it "allows primary with card_grant owner" do
@@ -213,9 +214,8 @@ RSpec.describe Ledger, type: :model do
       it "enforces that an event can only have one primary ledger" do
         event = create(:event)
 
-        # Create first primary ledger for event
-        ledger1 = Ledger.create!(primary: true, event: event)
-        expect(ledger1.persisted?).to be true
+        # Event automatically creates a ledger after creation
+        expect(event.ledger).to be_present
 
         # Try to create second primary ledger for same event - should fail
         expect {
@@ -228,6 +228,38 @@ RSpec.describe Ledger, type: :model do
         # Skip this test for now since card_grant creation triggers complex side effects
         skip "Requires actual card_grant which triggers disbursement logic"
       end
+    end
+  end
+
+  describe "#balance_cents" do
+    let(:ledger) do
+      l = Ledger.new(primary: false)
+      l.save(validate: false)
+      l
+    end
+
+    it "returns zero when ledger has no items" do
+      expect(ledger.balance_cents).to eq(0)
+    end
+
+    it "returns the sum of all item amounts" do
+      item1 = create(:ledger_item, amount_cents: 1000)
+      item2 = create(:ledger_item, amount_cents: 2500)
+      item3 = create(:ledger_item, amount_cents: -500)
+
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item1, on_primary_ledger: false)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item2, on_primary_ledger: false)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item3, on_primary_ledger: false)
+
+      expect(ledger.balance_cents).to eq(3000)
+    end
+
+    it "returns a Money object" do
+      item = create(:ledger_item, amount_cents: 1000)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: false)
+
+      expect(ledger.balance).to be_a(Money)
+      expect(ledger.balance.cents).to eq(1000)
     end
   end
 end
