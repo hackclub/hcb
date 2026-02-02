@@ -28,7 +28,7 @@ class Ledger
     include Commentable
     include Receiptable
 
-    has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id"
+    has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
