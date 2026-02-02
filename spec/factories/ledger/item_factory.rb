@@ -10,8 +10,7 @@ FactoryBot.define do
 
     trait :with_primary_ledger do
       after(:create) do |item|
-        primary_ledger = ::Ledger.new(primary: true, event: FactoryBot.create(:event))
-        primary_ledger.save(validate: false)
+        primary_ledger = FactoryBot.create(:event).ledger
 
         Ledger::Mapping.create!(
           ledger: primary_ledger,
