@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1521,6 +1521,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
+    t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["date"], name: "index_ledger_items_on_date"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 

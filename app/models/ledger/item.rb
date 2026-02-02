@@ -15,7 +15,9 @@
 #
 # Indexes
 #
-#  index_ledger_items_on_short_code  (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents  (amount_cents)
+#  index_ledger_items_on_date          (date)
+#  index_ledger_items_on_short_code    (short_code) UNIQUE
 #
 class Ledger
   class Item < ApplicationRecord
