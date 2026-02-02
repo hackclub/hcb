@@ -39,6 +39,7 @@ module OneTimeJobs
                     subledger: { card_grant: :ledger },
                     event: :ledger
                   )
+                  .where.missing(:ledger_item)
                   .where(event_id: 183) # only backfill HQ for noe
       total = hcb_codes.count
       puts "Backfilling Ledger::Items from #{total} HcbCodes"
@@ -71,6 +72,7 @@ module OneTimeJobs
           item.reload
 
           item.write_amount_cents!
+          hcb_code.update!(ledger_item: item)
 
           processed += 1
           if processed % 100 == 0
