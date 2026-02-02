@@ -55,7 +55,7 @@ class CardGrant < ApplicationRecord
   include Commentable
 
   belongs_to :event
-  has_one :ledger, -> { where(primary: true) }
+  has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true
   belongs_to :user, optional: true
