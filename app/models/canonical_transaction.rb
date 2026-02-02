@@ -130,7 +130,7 @@ class CanonicalTransaction < ApplicationRecord
                             elsif linked_object.present?
                               linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
                             elsif raw_stripe_transaction&.stripe_authorization_id
-                              rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
                               rpst&.canonical_pending_transaction&.ledger_item_id
                             end
   end
