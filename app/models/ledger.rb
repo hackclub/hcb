@@ -39,6 +39,8 @@ class Ledger < ApplicationRecord
   has_many :mappings, class_name: "Ledger::Mapping"
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
 
+  monetize def balance_cents = items.sum(:amount_cents)
+
   def can_front_balance?
     event&.can_front_balance? || false
   end
