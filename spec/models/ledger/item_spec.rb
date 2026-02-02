@@ -471,14 +471,14 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "#write_amount_cents" do
+  describe "#write_amount_cents!" do
     it "updates amount_cents from calculate_amount_cents" do
       item = Ledger::Item.new(amount_cents: 999, memo: "Test", date: Time.current)
       item.save(validate: false)
 
       create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
 
-      item.write_amount_cents
+      item.write_amount_cents!
       item.reload
 
       expect(item.amount_cents).to eq(-500)

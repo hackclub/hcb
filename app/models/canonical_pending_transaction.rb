@@ -161,12 +161,13 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
 
-  before_create unless: -> { ledger_item.present? } do
-    create_ledger_item!(memo:, amount_cents:, date: created_at)
+  after_create_commit unless: -> { ledger_item.present? } do
+    ledger_item = create_ledger_item!(memo:, amount_cents: 0, date: created_at)
+    ledger_item.write_amount_cents!
   end
 
   after_commit if: -> { ledger_item.present? } do
-    ledger_item.write_amount_cents
+    ledger_item.write_amount_cents!
   end
 
   def pending_expired?

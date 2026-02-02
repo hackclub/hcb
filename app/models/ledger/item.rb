@@ -163,7 +163,7 @@ class Ledger
       end
     end
 
-    def write_amount_cents
+    def write_amount_cents!
       update(amount_cents: calculate_amount_cents)
     end
 
