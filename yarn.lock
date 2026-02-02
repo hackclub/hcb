@@ -38,12 +38,12 @@
   dependencies:
     "@appsignal/javascript" "=1.6.1"
 
-"@appsignal/plugin-path-decorator@^1.0.17":
-  version "1.0.17"
-  resolved "https://registry.yarnpkg.com/@appsignal/plugin-path-decorator/-/plugin-path-decorator-1.0.17.tgz#1791635396e99b7840b115175a6985cfc7b9b465"
-  integrity sha512-i5U+J5i0mjR2u410d4pSr03TMcvgJMt0Mokkmkr61fGw/hkMYfuqineAYBBynt4WNOoTOMue9VRX26DbtJ0ADA==
+"@appsignal/plugin-path-decorator@^1.0.18":
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/@appsignal/plugin-path-decorator/-/plugin-path-decorator-1.0.18.tgz#3bc39306100b11bf61a3ac2a14e234066ebf7b5c"
+  integrity sha512-KCm5Lq3eQ4gJ0lAWjp2Ns1/szbXTm/eC5kS45fOEQXIwJycM/w2QB2TO+gtmo98DU5tQdq+1xoFQNDHUB4D17Q==
   dependencies:
-    "@appsignal/javascript" "=1.6.0"
+    "@appsignal/javascript" "=1.6.1"
 
 "@appsignal/stimulus@^1.0.20":
   version "1.0.20"
