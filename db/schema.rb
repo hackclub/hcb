@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -384,6 +384,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.boolean "fronted", default: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "paypal_transfer_id"
     t.bigint "raw_pending_bank_fee_transaction_id"
@@ -403,6 +404,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
+    t.index ["ledger_item_id"], name: "index_canonical_pending_transactions_on_ledger_item_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
     t.index ["raw_pending_bank_fee_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id"
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
@@ -428,12 +430,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.date "date", null: false
     t.text "friendly_memo"
     t.text "hcb_code"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "transaction_source_id"
     t.string "transaction_source_type"
     t.datetime "updated_at", null: false
     t.index ["date"], name: "index_canonical_transactions_on_date"
     t.index ["hcb_code"], name: "index_canonical_transactions_on_hcb_code"
+    t.index ["ledger_item_id"], name: "index_canonical_transactions_on_ledger_item_id"
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
@@ -777,7 +781,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
-    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
@@ -969,45 +972,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.datetime "updated_at", null: false
     t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
     t.index ["event_id"], name: "index_event_affiliations_on_event_id"
-  end
-
-  create_table "event_applications", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "address_city"
-    t.string "address_country"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_postal_code"
-    t.string "address_state"
-    t.string "airtable_record_id"
-    t.string "airtable_status"
-    t.integer "annual_budget_cents"
-    t.datetime "approved_at"
-    t.integer "committed_amount_cents"
-    t.string "cosigner_email"
-    t.datetime "created_at", null: false
-    t.boolean "currently_fiscally_sponsored"
-    t.text "description"
-    t.bigint "event_id"
-    t.string "funding_source"
-    t.integer "last_page_viewed"
-    t.datetime "last_viewed_at"
-    t.string "name"
-    t.text "notes"
-    t.string "planning_duration"
-    t.text "political_description"
-    t.string "project_category"
-    t.string "referral_code"
-    t.string "referrer"
-    t.datetime "rejected_at"
-    t.datetime "submitted_at"
-    t.boolean "teen_led"
-    t.datetime "under_review_at"
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.string "website_url"
-    t.index ["event_id"], name: "index_event_applications_on_event_id"
-    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -1383,11 +1347,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
+    t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
+    t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -1545,6 +1511,47 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.index ["status"], name: "index_invoices_on_status"
     t.index ["stripe_invoice_id"], name: "index_invoices_on_stripe_invoice_id", unique: true
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
+  end
+
+  create_table "ledger_items", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "date", null: false
+    t.datetime "marked_no_or_lost_receipt_at"
+    t.text "memo", null: false
+    t.text "short_code"
+    t.datetime "updated_at", null: false
+    t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["date"], name: "index_ledger_items_on_date"
+    t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
+  end
+
+  create_table "ledger_mappings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "mapped_by_id"
+    t.boolean "on_primary_ledger", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ledger_id", "ledger_item_id"], name: "index_ledger_mappings_on_ledger_and_item", unique: true
+    t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
+    t.index ["mapped_by_id"], name: "index_ledger_mappings_on_mapped_by_id"
+  end
+
+  create_table "ledgers", force: :cascade do |t|
+    t.bigint "card_grant_id"
+    t.datetime "created_at", null: false
+    t.bigint "event_id"
+    t.boolean "primary", null: false
+    t.datetime "updated_at", null: false
+    t.index ["card_grant_id"], name: "index_ledgers_on_card_grant_id"
+    t.index ["card_grant_id"], name: "index_ledgers_unique_card_grant", unique: true, where: "(card_grant_id IS NOT NULL)"
+    t.index ["event_id"], name: "index_ledgers_on_event_id"
+    t.index ["event_id"], name: "index_ledgers_unique_event", unique: true, where: "(event_id IS NOT NULL)"
+    t.index ["id", "primary"], name: "index_ledgers_on_id_and_primary", unique: true
+    t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
   end
 
   create_table "lob_addresses", force: :cascade do |t|
@@ -2610,18 +2617,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
     t.index ["uploaded_by_id"], name: "index_w9s_on_uploaded_by_id"
   end
 
-  create_table "walkthroughs", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "event_id", null: false
-    t.string "key", null: false
-    t.integer "progress", default: 0
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["event_id"], name: "index_walkthroughs_on_event_id"
-    t.index ["user_id", "event_id", "key"], name: "index_walkthroughs_on_user_id_and_event_id_and_key", unique: true
-    t.index ["user_id"], name: "index_walkthroughs_on_user_id"
-  end
-
   create_table "webauthn_credentials", force: :cascade do |t|
     t.integer "authenticator_type"
     t.datetime "created_at", null: false
@@ -2720,7 +2715,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "canonical_pending_event_mappings", "events"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
+  add_foreign_key "canonical_pending_transactions", "ledger_items"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "canonical_transactions", "ledger_items"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
@@ -2767,8 +2764,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
   add_foreign_key "event_affiliations", "events"
-  add_foreign_key "event_applications", "events"
-  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
@@ -2803,6 +2798,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "hcb_code_pins", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
+  add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
@@ -2813,6 +2809,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_mappings", "ledger_items"
+  add_foreign_key "ledger_mappings", "ledgers"
+  add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
+  add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
+  add_foreign_key "ledgers", "card_grants"
+  add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
@@ -2881,8 +2883,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_204827) do
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
   add_foreign_key "w9s", "users", column: "uploaded_by_id"
-  add_foreign_key "walkthroughs", "events"
-  add_foreign_key "walkthroughs", "users"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
   add_foreign_key "wires", "users"

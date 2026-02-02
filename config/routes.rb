@@ -543,7 +543,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transactions, only: [:index, :show, :edit, :update]
+  resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
@@ -573,8 +573,13 @@ Rails.application.routes.draw do
       post "unapprove"
     end
   end
-
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
+  resources :ledgers, only: [:show]
+  scope module: :ledger, as: :ledger do
+    resources :items, path: "transactions", only: [:show]
+  end
+  resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
   resources :employees do
     post "terminate"
@@ -602,15 +607,6 @@ Rails.application.routes.draw do
     collection do
       get "export"
     end
-    post "reject"
-    post "cancel"
-  end
-
-  resources :emburse_transfers, except: [:new, :create] do
-    collection do
-      get "export"
-    end
-    post "accept"
     post "reject"
     post "cancel"
   end

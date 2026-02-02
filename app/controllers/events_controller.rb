@@ -759,7 +759,7 @@ class EventsController < ApplicationController
           csv << %w[ID Name Slug Balance]
 
           @event.subevents.find_each do |e|
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0].map { |value| SafeCsv.sanitize(value) }
           end
         end
 

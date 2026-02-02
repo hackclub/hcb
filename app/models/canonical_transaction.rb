@@ -14,13 +14,19 @@
 #  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
 #
 # Indexes
 #
 #  index_canonical_transactions_on_date                (date)
 #  index_canonical_transactions_on_hcb_code            (hcb_code)
+#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
 #  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
@@ -115,6 +121,33 @@ class CanonicalTransaction < ApplicationRecord
   validates :custom_memo, presence: true, allow_nil: true
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
+
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+
+  before_create do
+    self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
+                              li.id
+                            elsif linked_object.present?
+                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                            elsif raw_stripe_transaction&.stripe_authorization_id
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
+                              rpst&.canonical_pending_transaction&.ledger_item_id
+                            end
+  end
+
+  after_create_commit unless: -> { ledger_item.present? } do
+    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+  end
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+    ledger_item.write_amount_cents!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+  end
 
   after_create :write_hcb_code
   after_create_commit :write_system_event

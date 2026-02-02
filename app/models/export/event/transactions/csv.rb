@@ -66,11 +66,11 @@ class Export
         end
 
         def header
-          ::CSV::Row.new(headers, headers.map(&:to_s), true)
+          SafeCsv::Row.new(headers, headers.map(&:to_s), true)
         end
 
         def row(ct)
-          ::CSV::Row.new(
+          SafeCsv::Row.new(
             headers,
             [
               ct.date,

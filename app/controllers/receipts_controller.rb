@@ -239,7 +239,7 @@ class ReceiptsController < ApplicationController
 
   RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
-                          Reimbursement::Expense::Fee, Api::Models::CardCharge].index_by(&:to_s).freeze
+                          Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item].index_by(&:to_s).freeze
 
   def find_receiptable
     return unless params[:receiptable_type].present?
