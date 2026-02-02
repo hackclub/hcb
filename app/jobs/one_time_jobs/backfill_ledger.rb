@@ -52,6 +52,16 @@ module OneTimeJobs
               mapping.on_primary_ledger = true
             end
 
+            hcb_code.canonical_transactions.each do |ct|
+              ct.update_column(:ledger_item_id, item.id)
+            end
+            
+            hcb_code.canonical_pending_transactions.each do |cpt|
+              cpt.update_column(:ledger_item_id, item.id)
+            end
+
+            item.reload
+
             item.write_amount_cents!
           end
         end
