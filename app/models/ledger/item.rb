@@ -34,8 +34,6 @@ class Ledger
 
     validates_presence_of :amount_cents, :memo, :date
 
-    after_create_commit :map_to_ledger
-
     monetize :amount_cents
 
     def receipt_required?

@@ -136,7 +136,8 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   after_create_commit unless: -> { ledger_item.present? } do
-    ledger_item = create_ledger_item!(memo:, amount_cents: 0, date: created_at)
+    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at))
+    ledger_item.map_to_ledger!
     ledger_item.write_amount_cents!
   end
 

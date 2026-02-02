@@ -162,7 +162,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
 
   after_create_commit unless: -> { ledger_item.present? } do
-    ledger_item = create_ledger_item!(memo:, amount_cents: 0, date: created_at)
+    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at))
+    ledger_item.map_to_ledger!
     ledger_item.write_amount_cents!
   end
 
