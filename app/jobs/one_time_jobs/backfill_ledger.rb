@@ -29,21 +29,23 @@ module OneTimeJobs
 
     def backfill_ledger_items
       hcb_codes = HcbCode
-                    .includes(
-                      :canonical_transactions,
-                      :canonical_pending_transactions,
-                      subledger: { card_grant: :ledger },
-                      event: :ledger
-                    ).where.not(canonical_transactions: [], canonical_pending_transactions: [])
-      puts "Backfilling Ledger::Items from #{hcb_codes.count} HcbCodes"
+                  .includes(
+                    :canonical_transactions,
+                    :canonical_pending_transactions,
+                    subledger: { card_grant: :ledger },
+                    event: :ledger
+                  ).where.not(canonical_transactions: [], canonical_pending_transactions: [])
+      total = hcb_codes.count
+      puts "Backfilling Ledger::Items from #{total} HcbCodes"
 
+      processed = 0
       hcb_codes.find_each do |hcb_code|
         if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
           ledger = card_grant.ledger
-          next unless ledger # TODO: is there a case?
         else
-          ledger = event.ledger
+          ledger = hcb_code.event&.ledger
         end
+        next unless ledger
 
         item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
           li.amount_cents = hcb_code.amount_cents
@@ -56,13 +58,20 @@ module OneTimeJobs
           mapping.on_primary_ledger = true
         end
 
-        hcb_code.canonical_transaction.update_all(ledger_item_id: item.id)
+        hcb_code.canonical_transactions.update_all(ledger_item_id: item.id)
         hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
 
         item.reload
 
         item.write_amount_cents!
+
+        processed += 1
+        if processed % 100 == 0
+          puts "Processed #{processed} / #{total} HcbCodes (#{(processed.to_f / total * 100).round(1)}%)"
+        end
       end
+
+      puts "Completed! Processed #{processed} / #{total} HcbCodes"
     end
 
   end
