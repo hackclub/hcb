@@ -5,7 +5,7 @@ FactoryBot.define do
     amount_cents { 1000 }
     memo { "Test ledger item" }
     date { Time.current }
-    short_code { "J3PDG" }
+    short_code { ::HcbCodeService::Generate::ShortCode.new.run }
     marked_no_or_lost_receipt_at { nil }
 
     trait :with_primary_ledger do

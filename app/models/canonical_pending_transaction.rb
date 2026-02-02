@@ -16,6 +16,7 @@
 #  updated_at                                       :datetime         not null
 #  check_deposit_id                                 :bigint
 #  increase_check_id                                :bigint
+#  ledger_item_id                                   :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
@@ -37,6 +38,7 @@
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
+#  index_canonical_pending_transactions_on_ledger_item_id           (ledger_item_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
 #  index_canonical_pending_transactions_on_wire_id                  (wire_id)
 #  index_canonical_pending_transactions_on_wise_transfer_id         (wise_transfer_id)
@@ -54,6 +56,7 @@
 #
 # Foreign Keys
 #
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
 #
 class CanonicalPendingTransaction < ApplicationRecord
@@ -156,6 +159,17 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   attr_writer :stripe_cardholder
 
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+
+  after_create_commit unless: -> { ledger_item.present? } do
+    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+  end
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+    ledger_item.write_amount_cents!
+  end
+
   def pending_expired?
     unsettled? && created_at < 5.days.ago
   end
@@ -255,6 +269,13 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return increase_check if increase_check
+    return paypal_transfer if paypal_transfer
+    return wire if wire
+    return wise_transfer if wise_transfer
+    return check_deposit if check_deposit
+    return reimbursement_expense_payout if reimbursement_expense_payout
+    return reimbursement_payout_holding if reimbursement_payout_holding
 
     nil
   end

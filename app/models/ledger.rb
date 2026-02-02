@@ -39,6 +39,10 @@ class Ledger < ApplicationRecord
   has_many :mappings, class_name: "Ledger::Mapping"
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
 
+  def can_front_balance?
+    event&.can_front_balance? || false
+  end
+
   private
 
   def validate_owner_based_on_primary

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -384,6 +384,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.boolean "fronted", default: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "paypal_transfer_id"
     t.bigint "raw_pending_bank_fee_transaction_id"
@@ -403,6 +404,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
+    t.index ["ledger_item_id"], name: "index_canonical_pending_transactions_on_ledger_item_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
     t.index ["raw_pending_bank_fee_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id"
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
@@ -428,12 +430,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.date "date", null: false
     t.text "friendly_memo"
     t.text "hcb_code"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "transaction_source_id"
     t.string "transaction_source_type"
     t.datetime "updated_at", null: false
     t.index ["date"], name: "index_canonical_transactions_on_date"
     t.index ["hcb_code"], name: "index_canonical_transactions_on_hcb_code"
+    t.index ["ledger_item_id"], name: "index_canonical_transactions_on_ledger_item_id"
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
@@ -1343,11 +1347,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
-    t.bigint "subledger_id"
+    t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
+    t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
+    t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -1515,6 +1521,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
+    t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["date"], name: "index_ledger_items_on_date"
+    t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
   create_table "ledger_mappings", force: :cascade do |t|
@@ -2706,7 +2715,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
   add_foreign_key "canonical_pending_event_mappings", "events"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
+  add_foreign_key "canonical_pending_transactions", "ledger_items"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "canonical_transactions", "ledger_items"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
@@ -2787,6 +2798,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
   add_foreign_key "hcb_code_pins", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
+  add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
