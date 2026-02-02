@@ -316,8 +316,8 @@ class Event
 
       affiliations.each do |affiliation|
         affiliation_copy = affiliation.dup
-        affiliation.affiliable = event
-        affiliation.save!
+        affiliation_copy.affiliable = event
+        affiliation_copy.save!
       end
 
       self
