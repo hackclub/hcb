@@ -55,9 +55,10 @@ class Ledger
     def write_amount_cents!
       update(amount_cents: calculate_amount_cents)
     end
-    
+
     def map!
-      Ledger::Mapper.new(ledger_item: self).run 
+      Ledger::Mapper.new(ledger_item: self).run
+      write_amount_cents!
     end
 
   end
