@@ -1625,8 +1625,6 @@ class AdminController < Admin::BaseController
         Event.negatives.size
       when :fee_reimbursements
         FeeReimbursement.unprocessed.size
-      when :emburse_transfers
-        EmburseTransfer.under_review.size
       when :g_suite_accounts
         GSuiteAccount.under_review.size
       when :transactions
@@ -1662,7 +1660,6 @@ class AdminController < Admin::BaseController
     pending_task :ach_transfers
     pending_task :negative_events
     pending_task :fee_reimbursements
-    pending_task :emburse_transfers
     pending_task :emburse_transactions
     pending_task :g_suite_accounts
     pending_task :transactions

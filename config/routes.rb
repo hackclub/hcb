@@ -611,15 +611,6 @@ Rails.application.routes.draw do
     post "cancel"
   end
 
-  resources :emburse_transfers, except: [:new, :create] do
-    collection do
-      get "export"
-    end
-    post "accept"
-    post "reject"
-    post "cancel"
-  end
-
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
 
   resources :donations, only: [:show, :update] do
