@@ -11,11 +11,16 @@
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #  event_id                     :bigint
+#  ledger_item_id               :bigint
 #  subledger_id                 :bigint
 #
 # Indexes
 #
 #  index_hcb_codes_on_hcb_code  (hcb_code) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
 #
 class HcbCode < ApplicationRecord
   has_paper_trail
@@ -48,6 +53,8 @@ class HcbCode < ApplicationRecord
 
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
+
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
