@@ -43,7 +43,7 @@ class Ledger
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
       amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-      if primary_ledger&.event&.can_front_balance?
+      if primary_ledger&.can_front_balance?
         fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
         settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
         amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
