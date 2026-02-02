@@ -141,7 +141,6 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.write_amount_cents!
   end
 
   after_create :write_hcb_code

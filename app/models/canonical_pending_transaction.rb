@@ -167,7 +167,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.write_amount_cents!
   end
 
   def pending_expired?
