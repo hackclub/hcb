@@ -58,7 +58,7 @@ gem "aasm" # state machine
 gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
-gem "friendly_id", "~> 5.5.1" # slugs
+gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
 gem "active_storage_validations", "3.0.1" # file validations

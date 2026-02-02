@@ -348,7 +348,7 @@ GEM
       rack-session (>= 1.0.2, < 3.0.0)
       sanitize (< 8)
     foreman (0.88.1)
-    friendly_id (5.5.1)
+    friendly_id (5.6.0)
       activerecord (>= 4.0.0)
     fugit (1.11.2)
       et-orbi (~> 1, >= 1.2.11)
@@ -844,7 +844,7 @@ GEM
       execjs (>= 0.3.0, < 3)
     thor (1.4.0)
     tilt (2.6.1)
-    timeout (0.4.3)
+    timeout (0.6.0)
     tpm-key_attestation (0.14.1)
       bindata (~> 2.4)
       openssl (> 2.0)
@@ -966,7 +966,7 @@ DEPENDENCIES
   flipper-active_record
   flipper-ui
   foreman
-  friendly_id (~> 5.5.1)
+  friendly_id (~> 5.6.0)
   fx
   geo_pattern
   geocoder
