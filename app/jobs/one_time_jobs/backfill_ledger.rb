@@ -39,39 +39,45 @@ module OneTimeJobs
       puts "Backfilling Ledger::Items from #{total} HcbCodes"
 
       processed = 0
+      errors = 0
       hcb_codes.find_each do |hcb_code|
-        if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
-          ledger = card_grant.ledger
-        else
-          ledger = hcb_code.event&.ledger
-        end
-        next unless ledger
+        begin
+          if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
+            ledger = card_grant.ledger
+          else
+            ledger = hcb_code.event&.ledger
+          end
+          next unless ledger
 
-        item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
-          li.amount_cents = hcb_code.amount_cents
-          li.memo = hcb_code.memo
-          li.date = hcb_code.date || hcb_code.created_at
-          li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
-        end
+          item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
+            li.amount_cents = hcb_code.amount_cents
+            li.memo = hcb_code.memo
+            li.date = hcb_code.date || hcb_code.created_at
+            li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
+          end
 
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+          Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: item) do |mapping|
+            mapping.on_primary_ledger = true
+          end
 
-        hcb_code.canonical_transactions.update_all(ledger_item_id: item.id)
-        hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
+          hcb_code.canonical_transactions.update_all(ledger_item_id: item.id)
+          hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
 
-        item.reload
+          item.reload
 
-        item.write_amount_cents!
+          item.write_amount_cents!
 
-        processed += 1
-        if processed % 100 == 0
-          puts "Processed #{processed} / #{total} HcbCodes (#{(processed.to_f / total * 100).round(1)}%)"
+          processed += 1
+          if processed % 100 == 0
+            puts "Processed #{processed} / #{total} HcbCodes (#{(processed.to_f / total * 100).round(1)}%)"
+          end
+        rescue => e
+          errors += 1
+          puts "ERROR: Failed to process HcbCode##{hcb_code.id} - #{e.class}: #{e.message}"
         end
       end
 
-      puts "Completed! Processed #{processed} / #{total} HcbCodes"
+      puts "Completed! Processed #{processed} / #{total} HcbCodes (#{errors} errors)"
     end
 
   end
