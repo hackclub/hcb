@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_02_033114) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1347,11 +1347,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
-    t.bigint "subledger_id"
+    t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
+    t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
+    t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -1519,6 +1521,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
+    t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
   create_table "ledger_mappings", force: :cascade do |t|
@@ -2793,6 +2796,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_01_234218) do
   add_foreign_key "hcb_code_pins", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
+  add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
