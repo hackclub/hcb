@@ -30,12 +30,16 @@ module OneTimeJobs
     def backfill_ledger_items
       # TODO: set HcbCode#ledger_item_id during backfill, and exclude from query below
       hcb_codes = HcbCode
+                  .left_joins(:canonical_transactions, :canonical_pending_transactions)
+                  .where("canonical_transactions.id IS NOT NULL OR canonical_pending_transactions.id IS NOT NULL")
+                  .distinct
                   .includes(
                     :canonical_transactions,
                     :canonical_pending_transactions,
                     subledger: { card_grant: :ledger },
                     event: :ledger
-                  ).where.not(canonical_transactions: [], canonical_pending_transactions: [])
+                  )
+                  .where(event_id: 183) # only backfill HQ for noe
       total = hcb_codes.count
       puts "Backfilling Ledger::Items from #{total} HcbCodes"
 
