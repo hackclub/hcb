@@ -298,13 +298,29 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
         run: |
-          # Get the oldest new migration version
           VERSIONS="${{ steps.migrations.outputs.versions }}"
-          OLDEST_VERSION=$(echo "$VERSIONS" | awk '{print $NF}')
+
+          # Ensure all migrations are applied first
+          echo "========================================="
+          echo "Applying all migrations to get to latest state..."
+          bundle exec rails db:migrate
+
+          # Get the oldest new migration version
+          OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+
+          # Get all migration versions from files, find the one right before OLDEST_NEW
+          ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+          ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
 
           echo "========================================="
           echo "Rolling back all new migrations..."
-          bundle exec rails db:migrate VERSION=$((OLDEST_VERSION - 1))
+          if [ -z "$ROLLBACK_TO" ]; then
+            echo "Rolling back to empty database (no migrations before the new ones)..."
+            bundle exec rails db:migrate VERSION=0
+          else
+            echo "Rolling back to VERSION=$ROLLBACK_TO..."
+            bundle exec rails db:migrate VERSION=$ROLLBACK_TO
+          fi
 
           echo "========================================="
           echo "Re-applying all migrations..."
