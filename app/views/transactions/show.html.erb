@@ -133,13 +133,6 @@
       <% end %>
     <% end %>
 
-    <% if @transaction.emburse_transfer %>
-      <p>
-        <strong>Transfer Request</strong>
-        <%= link_to "View", emburse_transfer_path(@transaction.emburse_transfer) %>
-      </p>
-    <% end %>
-
   </section>
 
   <% if @transaction&.disbursement %>

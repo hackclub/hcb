@@ -41,8 +41,7 @@ RSpec.describe Ledger::Mapping, type: :model do
 
     context "when on_primary_ledger is true" do
       it "is valid if ledger.primary is true" do
-        ledger = ::Ledger.new(primary: true, event: create(:event))
-        ledger.save(validate: false)
+        ledger = create(:event).ledger
 
         mapping = Ledger::Mapping.new(
           ledger: ledger,
@@ -83,8 +82,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       end
 
       it "is not valid if ledger.primary is true" do
-        ledger = ::Ledger.new(primary: true, event: create(:event))
-        ledger.save(validate: false)
+        ledger = create(:event).ledger
 
         mapping = Ledger::Mapping.new(
           ledger: ledger,
@@ -101,9 +99,7 @@ RSpec.describe Ledger::Mapping, type: :model do
   describe "ledger_item uniqueness per ledger" do
     let(:user) { create(:user) }
     let!(:primary_ledger) do
-      l = ::Ledger.new(primary: true, event: create(:event))
-      l.save(validate: false)
-      l
+      create(:event).ledger
     end
     let!(:non_primary_ledger) do
       l = ::Ledger.new(primary: false)
@@ -192,9 +188,7 @@ RSpec.describe Ledger::Mapping, type: :model do
   describe "database constraint" do
     let(:user) { create(:user) }
     let!(:primary_ledger) do
-      l = ::Ledger.new(primary: true, event: create(:event))
-      l.save(validate: false)
-      l
+      create(:event).ledger
     end
     let!(:non_primary_ledger) do
       l = ::Ledger.new(primary: false)

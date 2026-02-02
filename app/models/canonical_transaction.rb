@@ -130,7 +130,7 @@ class CanonicalTransaction < ApplicationRecord
                             elsif linked_object.present?
                               linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
                             elsif raw_stripe_transaction&.stripe_authorization_id
-                              rpst = RawPendingStripeTransaction.find_by(raw_stripe_transaction.stripe_authorization_id)
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
                               rpst&.canonical_pending_transaction&.ledger_item_id
                             end
   end
@@ -142,6 +142,11 @@ class CanonicalTransaction < ApplicationRecord
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
     ledger_item.write_amount_cents!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
   end
 
   after_create :write_hcb_code

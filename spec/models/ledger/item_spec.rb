@@ -21,9 +21,8 @@ RSpec.describe Ledger::Item, type: :model do
 
     describe "primary_ledger association" do
       let(:primary_ledger) do
-        l = ::Ledger.new(primary: true, event: create(:event))
-        l.save(validate: false)
-        l
+        # Event automatically creates a primary ledger
+        create(:event).ledger
       end
       let(:non_primary_ledger) do
         l = ::Ledger.new(primary: false)
@@ -126,8 +125,7 @@ RSpec.describe Ledger::Item, type: :model do
       end
 
       it "primary_ledger is accessible through mapping" do
-        primary_ledger = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger.save(validate: false)
+        primary_ledger = create(:event).ledger
 
         item = Ledger::Item.new(
           amount_cents: 1000,
@@ -176,8 +174,7 @@ RSpec.describe Ledger::Item, type: :model do
 
     describe "one primary mapping constraint" do
       it "allows an item to have exactly one primary mapping" do
-        primary_ledger = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger.save(validate: false)
+        primary_ledger = create(:event).ledger
 
         item = Ledger::Item.new(
           amount_cents: 1000,
@@ -198,11 +195,8 @@ RSpec.describe Ledger::Item, type: :model do
       end
 
       it "does not allow an item to have multiple primary mappings" do
-        primary_ledger1 = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger1.save(validate: false)
-
-        primary_ledger2 = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger2.save(validate: false)
+        primary_ledger1 = create(:event).ledger
+        primary_ledger2 = create(:event).ledger
 
         item = Ledger::Item.new(
           amount_cents: 1000,
@@ -230,8 +224,7 @@ RSpec.describe Ledger::Item, type: :model do
       end
 
       it "allows an item to have one primary mapping and multiple non-primary mappings" do
-        primary_ledger = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger.save(validate: false)
+        primary_ledger = create(:event).ledger
 
         non_primary_ledger1 = ::Ledger.new(primary: false)
         non_primary_ledger1.save(validate: false)
@@ -275,11 +268,8 @@ RSpec.describe Ledger::Item, type: :model do
       end
 
       it "enforces one primary mapping at database level" do
-        primary_ledger1 = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger1.save(validate: false)
-
-        primary_ledger2 = ::Ledger.new(primary: true, event: create(:event))
-        primary_ledger2.save(validate: false)
+        primary_ledger1 = create(:event).ledger
+        primary_ledger2 = create(:event).ledger
 
         item = Ledger::Item.new(
           amount_cents: 1000,

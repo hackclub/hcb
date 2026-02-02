@@ -49,7 +49,7 @@ RSpec.describe Ledger::Mapper do
 
     it "reuses an existing ledger for the same event" do
       event = create(:event)
-      existing_ledger = Ledger.create!(primary: true, event:)
+      existing_ledger = event.ledger # Event automatically creates a ledger
 
       allow(mapper).to receive(:calculate_card_grant).and_return(nil)
       allow(mapper).to receive(:calculate_event).and_return(event)

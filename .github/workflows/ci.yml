@@ -46,7 +46,7 @@ jobs:
       - name: Run Lint
         run: bin/lint -c
       - name: Comment suggested changes
-        uses: parkerbxyz/suggest-changes@v2.0.0
+        uses: parkerbxyz/suggest-changes@v3.0.3
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
@@ -161,7 +161,7 @@ jobs:
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
         run: bundle exec rspec --tag ~skip
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: simplecov-report
           path: coverage/coverage.json
@@ -183,7 +183,7 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update

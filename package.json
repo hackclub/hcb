@@ -9,11 +9,11 @@
     "@alpinejs/persist": "^3.15.0",
     "@appsignal/javascript": "^1.5.0",
     "@appsignal/plugin-breadcrumbs-console": "^1.1.37",
-    "@appsignal/plugin-path-decorator": "^1.0.17",
+    "@appsignal/plugin-path-decorator": "^1.0.18",
     "@appsignal/stimulus": "^1.0.20",
-    "@babel/core": "^7.28.4",
+    "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.28.3",
-    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-react": "^7.28.5",
     "@csstools/postcss-sass": "^5.1.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@floating-ui/dom": "^1.7.4",
@@ -75,7 +75,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.4.0",
-    "prettier": "^3.6.2"
+    "prettier": "^3.8.1"
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",

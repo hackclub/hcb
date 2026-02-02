@@ -12,7 +12,7 @@ jobs:
       - name: "Sync with Stripe"
         run: |
           curl -o config/stripe_ips_webhooks.txt https://stripe.com/files/ips/ips_webhooks.txt
-      - uses: "peter-evans/create-pull-request@v7"
+      - uses: "peter-evans/create-pull-request@v8"
         with:
           add-paths: "config/stripe_ips_webhooks.txt"
           commit-message: "[Automated] Update `config/stripe_ips_webhooks.txt`"
