@@ -32,7 +32,8 @@ module OneTimeJobs
                     .includes(
                       :canonical_transactions,
                       :canonical_pending_transactions,
-                      subledger: { card_grant: :ledger }
+                      subledger: { card_grant: :ledger },
+                      event: :ledger
                     ).where.not(canonical_transactions: [], canonical_pending_transactions: [])
       puts "Backfilling Ledger::Items from #{hcb_codes.count} HcbCodes"
 
