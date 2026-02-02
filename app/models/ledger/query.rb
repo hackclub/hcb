@@ -2,16 +2,21 @@
 
 class Ledger
   class Query
+    PERMITTED_COLUMNS = %w[memo amount_cents date].freeze
+
     def initialize(query_hash)
+      raise Ledger::Query::QueryError.new("Query must be a Hash") unless query_hash.is_a?(Hash)
+
       @query_hash = self.class.sanitize_query(query_hash)
 
       # TODO: handle authorization
     end
 
     # Expected to return an ActiveRecord::Relation of Ledger::Item
-    def execute(ledger_id: nil)
-      # TODO: (WARNING) We're currently using AR `where` syntax, but WILL change
-      apply_query(ledger_id.present? ? Ledger::Item.where(ledger_id: ledger_id) : Ledger::Item.all, @query_hash)
+    def execute(ledgers: [])
+      results = apply_query(relation: Ledger::Item.all, query: @query_hash)
+      results = results.where(ledger: ledgers) if ledgers.any?
+      results
     end
 
     def self.sanitize_query(query_hash)
@@ -21,10 +26,8 @@ class Ledger
 
     private
 
-    def apply_query(raw_relation, query_hash, context = "and")
-      relation = raw_relation.clone
-
-      query_hash.each do |key, value|
+    def apply_query(relation:, query:, context: "and")
+      query.each do |key, value|
         key = key.to_s
 
         if key.starts_with?("$")
@@ -32,13 +35,13 @@ class Ledger
 
           if operator == "and"
             value.each do |sub_query|
-              relation = apply_query(relation, sub_query)
+              relation = apply_query(relation:, query: sub_query)
             end
           elsif operator == "or"
             sub_relation = nil
 
             value.each do |sub_query|
-              branch = apply_query(Ledger::Item.all, sub_query, "and")
+              branch = apply_query(relation: Ledger::Item.all, query: sub_query, context: "and")
               sub_relation = sub_relation.nil? ? branch : sub_relation.or(branch)
             end
 
@@ -50,7 +53,7 @@ class Ledger
               relation = relation.or(sub_relation)
             end
           elsif operator == "not"
-            sub_relation = apply_query(Ledger::Item.all, value, "and")
+            sub_relation = apply_query(relation: Ledger::Item.all, query: value, context: "and")
             if context == "and"
               relation = relation.where.not(id: sub_relation.select(:id))
             else
@@ -93,12 +96,16 @@ class Ledger
     end
 
     def sanitize_column(column_name)
-      safe_column = Ledger::Item.column_names.find { |col| col == column_name.to_s }
+      safe_column = PERMITTED_COLUMNS.find { |col| col == column_name.to_s }
 
       raise Ledger::Query::QueryError.new("Invalid column name: #{column_name}") unless safe_column.present?
+
+      safe_column
     end
 
-    def apply_partial_predicate(relation, operator, key, operand)
+    def apply_partial_predicate(relation, operator, raw_key, operand)
+      key = sanitize_column(raw_key)
+
       if operand.is_a?(Numeric)
         case operator.to_s
         when "$gt"
@@ -116,13 +123,6 @@ class Ledger
           return relation.where(key => operand)
         when "$nin"
           return relation.where.not(key => operand)
-        end
-      elsif operand.is_a?(String)
-        case operator.to_s
-        when "$ilike"
-          return relation.where("#{key} ILIKE ?", operand)
-        when "$like"
-          return relation.where("#{key} ILIKE ?", operand)
         end
       end
 
