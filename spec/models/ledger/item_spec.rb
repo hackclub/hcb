@@ -395,30 +395,25 @@ RSpec.describe Ledger::Item, type: :model do
 
     context "when an event can be calculated" do
       it "creates a primary ledger and mapping for the event" do
-        rst = create(:raw_stripe_transaction)
-        stripe_card_id = rst.stripe_transaction["card"]
-        sc = StripeCard.find_by(stripe_id: stripe_card_id)
-        create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+        event = create(:event)
+        allow(item).to receive(:calculate_card_grant).and_return(nil)
+        allow(item).to receive(:calculate_event).and_return(event)
 
-        item.reload
         item.map_to_ledger
         item.reload
 
         expect(item.primary_ledger).to be_present
         expect(item.primary_ledger.primary?).to be true
-        expect(item.primary_ledger.event).to eq(sc.event)
+        expect(item.primary_ledger.event).to eq(event)
       end
     end
 
     context "when a card grant can be calculated" do
       it "creates a primary ledger and mapping for the card grant" do
         event = create(:event, :with_positive_balance)
-        sc = create(:stripe_card, :with_stripe_id, event:)
-        rst = create(:raw_stripe_transaction, stripe_card: sc)
-        card_grant = create(:card_grant, stripe_card: sc, event:)
-        create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+        card_grant = create(:card_grant, event:)
+        allow(item).to receive(:calculate_card_grant).and_return(card_grant)
 
-        item.reload
         item.map_to_ledger
         item.reload
 
@@ -432,10 +427,9 @@ RSpec.describe Ledger::Item, type: :model do
       event = create(:event)
       existing_ledger = Ledger.create!(primary: true, event:)
 
-      rst = create(:raw_stripe_transaction, stripe_card: create(:stripe_card, :with_stripe_id, event:))
-      create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+      allow(item).to receive(:calculate_card_grant).and_return(nil)
+      allow(item).to receive(:calculate_event).and_return(event)
 
-      item.reload
       item.map_to_ledger
       item.reload
 
@@ -443,10 +437,10 @@ RSpec.describe Ledger::Item, type: :model do
     end
 
     it "is idempotent" do
-      rst = create(:raw_stripe_transaction)
-      create(:canonical_transaction, transaction_source: rst, ledger_item_id: item.id)
+      event = create(:event)
+      allow(item).to receive(:calculate_card_grant).and_return(nil)
+      allow(item).to receive(:calculate_event).and_return(event)
 
-      item.reload
       item.map_to_ledger
       expect { item.map_to_ledger }.not_to(change { Ledger::Mapping.count })
     end
