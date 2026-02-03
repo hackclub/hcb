@@ -4,8 +4,10 @@ class Ledger
   class Query
     PERMITTED_COLUMNS = %w[memo amount_cents date].freeze
 
+    class Error < ArgumentError; end
+
     def initialize(query_hash)
-      raise Ledger::Query::QueryError.new("Query must be a Hash") unless query_hash.is_a?(Hash)
+      raise Ledger::Query::Error.new("Query must be a Hash") unless query_hash.is_a?(Hash)
 
       @query_hash = self.class.sanitize_query(query_hash)
 
@@ -65,7 +67,7 @@ class Ledger
               relation = relation.or(Ledger::Item.where.not(id: sub_relation.select(:id)))
             end
           else
-            raise Ledger::Query::QueryError.new("Unsupported logical operator: #{operator}")
+            raise Ledger::Query::Error.new("Unsupported logical operator: #{operator}")
           end
 
         else
@@ -103,7 +105,7 @@ class Ledger
     def column_index(column_name)
       safe_column = PERMITTED_COLUMNS.index(column_name.to_s)
 
-      raise Ledger::Query::QueryError.new("Invalid column name: #{column_name}") unless safe_column.present?
+      raise Ledger::Query::Error.new("Invalid column name: #{column_name}") unless safe_column.present?
 
       safe_column
     end
@@ -137,7 +139,7 @@ class Ledger
       when "$ne"
         relation.where.not(key => operand)
       else
-        raise Ledger::Query::QueryError.new("Unsupported operator: #{operator}")
+        raise Ledger::Query::Error.new("Unsupported operator: #{operator}")
       end
     end
 
