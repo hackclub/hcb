@@ -211,7 +211,7 @@ class Event
       authorize @application
 
       if @application.ready_to_submit?
-        @application.submit!
+        @application.mark_submitted!
         confetti!
         redirect_to application_path(@application)
       else

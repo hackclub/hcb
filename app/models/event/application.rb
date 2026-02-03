@@ -91,7 +91,7 @@ class Event
       state :draft, initial: true
       state :submitted
       # An application can be submitted but not yet under review if it is pending on signee or cosigner signatures
-      # Adults (>18) will skip straight to under_review, as they do not sign until they have been approved
+      # Adults (>18) will immediately advance to under_review, as they do not sign until they have been approved
       state :under_review
       state :approved
       state :rejected
@@ -99,8 +99,12 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          create_contract
-          Event::ApplicationMailer.with(application: self).confirmation.deliver_later
+          if user.teenager?
+            create_contract
+            Event::ApplicationMailer.with(application: self).confirmation.deliver_later
+          else
+            mark_under_review!
+          end
         end
       end
 
@@ -232,14 +236,6 @@ class Event
       end
 
       !missing_fields && !user.onboarding?
-    end
-
-    def submit!
-      if user.teenager?
-        mark_submitted!
-      else
-        mark_under_review!
-      end
     end
 
     def response_time
