@@ -45,7 +45,7 @@ class Event
     alias_method :review?, :show?
 
     def submission?
-      (record.user == user || user.auditor?) && record.submitted_at.present?
+      (record.user == user || user.auditor?) && !record.draft?
     end
 
     alias_method :submit?, :update?

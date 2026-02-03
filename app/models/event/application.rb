@@ -262,7 +262,7 @@ class Event
     end
 
     def sync_to_airtable
-      return unless submitted_at.present?
+      return if draft?
 
       app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
       app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
@@ -288,7 +288,7 @@ class Event
       app["Accommodations"] = notes
       app["(Adults) Political Activity"] = political_description
       app["Referral Code"] = referral_code
-      app["HCB Status"] = aasm_state.humanize if submitted_at.present?
+      app["HCB Status"] = aasm_state.humanize unless draft?
       app["Synced from HCB at"] = Time.current
 
       app.save
