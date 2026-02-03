@@ -42,7 +42,7 @@
       <%= form.label :website_url do %>
         Website URL <span class="text-primary">*</span>
       <% end %>
-      <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
+      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field">
