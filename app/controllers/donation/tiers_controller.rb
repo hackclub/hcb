@@ -22,7 +22,7 @@ class Donation
 
     def set_index
       tier = Donation::Tier.find_by(id: params[:id])
-      authorize tier.event, :update?
+      authorize tier, :update?
 
       index = params[:index]
 
@@ -46,8 +46,6 @@ class Donation
     end
 
     def create
-      authorize @event, :update?
-
       @tier = @event.donation_tiers.new(
         name: "Untitled tier",
         amount_cents: 1000,
@@ -55,6 +53,8 @@ class Donation
         sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1,
         published: false
       )
+      
+      authorize @tier, :create?
       @tier.save!
 
       announcement = Announcement::Templates::NewDonationTier.new(
@@ -68,11 +68,18 @@ class Donation
     end
 
     def update
-      authorize @event, :update?
+      tiers = []
       params[:tiers]&.each do |id, tier_data|
         tier = @event.donation_tiers.find_by(id: id)
-        next unless tier
+        authorize tier, :update?
+        tiers << tier
+      end
 
+      puts "THESE ARE THE TIERS"
+      puts params[:tiers].inspect
+
+      tiers.each do |tier|
+        tier_data = params[:tiers][tier.id.to_s]
         tier.update(
           name: tier_data[:name],
           description: tier_data[:description],
@@ -87,8 +94,9 @@ class Donation
     end
 
     def destroy
-      authorize @event, :update?
       @tier = @event.donation_tiers.find(params[:format])
+      authorize @tier, :destroy?
+
       @tier.destroy
       redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
