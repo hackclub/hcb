@@ -13,7 +13,6 @@ class Event
           name: params[:type],
           metadata: @metadata,
           affiliable: @affiliable,
-          event_id: @affiliable.id # since this is non-null, remove later
         }
       )
 
