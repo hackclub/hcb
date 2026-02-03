@@ -286,21 +286,21 @@ RSpec.describe Ledger::Query, type: :model do
   describe "error handling" do
     it "raises on unsupported logical operator" do
       query = { "$xor" => [{ amount_cents: 100 }] }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::QueryError, /Unsupported logical operator/)
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported logical operator/)
     end
 
     it "raises on unsupported comparison operator" do
       query = { amount_cents: { "$regex" => ".*" } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::QueryError, /Unsupported operator/)
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported operator/)
     end
 
     it "raises on non-hash query" do
-      expect { described_class.new("invalid") }.to raise_error(Ledger::Query::QueryError, /must be a Hash/)
+      expect { described_class.new("invalid") }.to raise_error(Ledger::Query::Error, /must be a Hash/)
     end
 
     it "raises on invalid column name" do
       query = { invalid_column: 100 }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::QueryError, /Invalid column name/)
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Invalid column name/)
     end
   end
 
