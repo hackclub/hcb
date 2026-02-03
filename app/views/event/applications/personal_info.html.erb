@@ -14,7 +14,7 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6" x-data="{ minor: <%= @application.user.age&.<(18) %> }">
+  <div class="card mb-6" x-data="{ minor: <%= @application.user.age&.<(18) || false %> }">
     <div class="md:flex gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
