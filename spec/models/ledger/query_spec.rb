@@ -163,11 +163,11 @@ RSpec.describe Ledger::Query, type: :model do
     context "$and" do
       it "combines conditions with AND" do
         result = execute_query({
-          "$and" => [
-            { amount_cents: { "$gt" => 100 } },
-            { amount_cents: { "$lt" => 300 } }
-          ]
-        })
+                                 "$and" => [
+                                   { amount_cents: { "$gt" => 100 } },
+                                   { amount_cents: { "$lt" => 300 } }
+                                 ]
+                               })
 
         expect(result.to_sql).to match(/amount_cents > 100/)
         expect(result.to_sql).to match(/amount_cents < 300/)
@@ -186,11 +186,11 @@ RSpec.describe Ledger::Query, type: :model do
     context "$or" do
       it "combines conditions with OR" do
         result = execute_query({
-          "$or" => [
-            { amount_cents: 0 },
-            { amount_cents: 500 }
-          ]
-        })
+                                 "$or" => [
+                                   { amount_cents: 0 },
+                                   { amount_cents: 500 }
+                                 ]
+                               })
 
         expect(result.to_sql).to match(/OR/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_f))
@@ -227,14 +227,15 @@ RSpec.describe Ledger::Query, type: :model do
       it "$and containing $or" do
         # amount > 100 AND (memo = 'alpha refund' OR memo = 'beta payment')
         result = execute_query({
-          "$and" => [
-            { amount_cents: { "$gt" => 100 } },
-            { "$or" => [
-              { memo: "alpha refund" },
-              { memo: "beta payment" }
-            ] }
-          ]
-        })
+                                 "$and" => [
+                                   { amount_cents: { "$gt" => 100 } },
+                                   { "$or" => [
+                                     { memo: "alpha refund" },
+                                     { memo: "beta payment" }
+                                   ]
+}
+                                 ]
+                               })
 
         expect(result.to_sql).to match(/amount_cents > 100/)
         expect(result.to_sql).to match(/OR/)
@@ -245,17 +246,19 @@ RSpec.describe Ledger::Query, type: :model do
         # (amount >= 100 AND amount <= 100) OR (amount >= 300 AND amount <= 300)
         # Effectively: amount = 100 OR amount = 300
         result = execute_query({
-          "$or" => [
-            { "$and" => [
-              { amount_cents: { "$gte" => 100 } },
-              { amount_cents: { "$lte" => 100 } }
-            ] },
-            { "$and" => [
-              { amount_cents: { "$gte" => 300 } },
-              { amount_cents: { "$lte" => 300 } }
-            ] }
-          ]
-        })
+                                 "$or" => [
+                                   { "$and" => [
+                                     { amount_cents: { "$gte" => 100 } },
+                                     { amount_cents: { "$lte" => 100 } }
+                                   ]
+},
+                                   { "$and" => [
+                                     { amount_cents: { "$gte" => 300 } },
+                                     { amount_cents: { "$lte" => 300 } }
+                                   ]
+}
+                                 ]
+                               })
 
         expect(result.to_sql).to match(/OR/)
         expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_g))
@@ -264,14 +267,15 @@ RSpec.describe Ledger::Query, type: :model do
       it "deeply nested query" do
         # (amount = 0) OR (amount > 100 AND memo = 'gamma payment')
         result = execute_query({
-          "$or" => [
-            { amount_cents: 0 },
-            { "$and" => [
-              { amount_cents: { "$gt" => 100 } },
-              { memo: "gamma payment" }
-            ] }
-          ]
-        })
+                                 "$or" => [
+                                   { amount_cents: 0 },
+                                   { "$and" => [
+                                     { amount_cents: { "$gt" => 100 } },
+                                     { memo: "gamma payment" }
+                                   ]
+}
+                                 ]
+                               })
 
         expect(result.to_sql).to match(/OR/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_f))
@@ -342,11 +346,11 @@ RSpec.describe Ledger::Query, type: :model do
     it "filters with multiple field conditions" do
       # amount > 0 AND memo contains 'payment' (using $in for specific values)
       result = execute_query({
-        "$and" => [
-          { amount_cents: { "$gt" => 0 } },
-          { memo: { "$in" => ["alpha payment", "beta payment", "gamma payment", "delta payment"] } }
-        ]
-      })
+                               "$and" => [
+                                 { amount_cents: { "$gt" => 0 } },
+                                 { memo: { "$in" => ["alpha payment", "beta payment", "gamma payment", "delta payment"] } }
+                               ]
+                             })
 
       expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_f, item_g))
     end
@@ -355,11 +359,11 @@ RSpec.describe Ledger::Query, type: :model do
       # NOT(amount = 100) AND memo IS NOT NULL
       # Since all memos are non-null, this effectively just excludes items with amount_cents = 100
       result = execute_query({
-        "$and" => [
-          { "$not" => { amount_cents: 100 } },
-          { memo: { "$ne" => nil } }
-        ]
-      })
+                               "$and" => [
+                                 { "$not" => { amount_cents: 100 } },
+                                 { memo: { "$ne" => nil } }
+                               ]
+                             })
 
       # All items except item_b and item_g (which have amount_cents = 100)
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f))
@@ -368,11 +372,11 @@ RSpec.describe Ledger::Query, type: :model do
     it "handles $or with $not" do
       # amount = 0 OR NOT(memo = 'gamma payment')
       result = execute_query({
-        "$or" => [
-          { amount_cents: 0 },
-          { "$not" => { memo: "gamma payment" } }
-        ]
-      })
+                               "$or" => [
+                                 { amount_cents: 0 },
+                                 { "$not" => { memo: "gamma payment" } }
+                               ]
+                             })
 
       # item_a (amount=0) + all items except item_f (gamma payment)
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_d, item_e, item_g))
