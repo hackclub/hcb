@@ -11,22 +11,15 @@
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  affiliable_id   :bigint           not null
-#  event_id        :bigint           not null
 #
 # Indexes
 #
 #  index_event_affiliations_on_affiliable  (affiliable_type,affiliable_id)
-#  index_event_affiliations_on_event_id    (event_id)
-#
-# Foreign Keys
-#
-#  fk_rails_...  (event_id => events.id)
 #
 class Event
   class Affiliation < ApplicationRecord
     include Hashid::Rails
 
-    belongs_to :event
     belongs_to :affiliable, polymorphic: true
 
     store_accessor :metadata, :league, :team_number, :size, :venue_name
