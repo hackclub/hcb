@@ -320,6 +320,8 @@ class Event
         affiliation_copy.save!
       end
 
+      Event::ApplicationMailer.with(application: self).activated.deliver_later
+
       self
     end
 

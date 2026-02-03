@@ -18,6 +18,10 @@ class Event
       Event::ApplicationMailer.with(application: Event::Application.last).rejected
     end
 
+    def activated
+      Event::ApplicationMailer.with(application: Event::Application.where.not(event: nil).last).activated
+    end
+
   end
 
 end
