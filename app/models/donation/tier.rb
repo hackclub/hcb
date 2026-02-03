@@ -29,6 +29,7 @@ class Donation
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
     validate :maximum_tiers_limit
+    validate :amount_divisible_by_100
 
     default_scope { order(sort_index: :asc) }
 
@@ -41,6 +42,13 @@ class Donation
 
       errors.add(:base, "Organization can only have 10 donation tiers")
     end
+
+    def amount_divisible_by_100
+      if amount_cents.present? && amount_cents % 100 != 0
+        errors.add(:amount_cents, "must be divisible by 100")
+      end
+    end
+
 
   end
 
