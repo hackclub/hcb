@@ -39,7 +39,7 @@
         disabled: %>
       <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_affiliation_<%= affiliation.id %>">
         <%= modal_header("Edit affiliation") %>
-        <%= form_with(url: affiliation_path(affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}' }" }) do |form| %>
+        <%= form_with(url: affiliation_path(affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}', disabled: #{disabled} }" }) do |form| %>
           <%= render "events/settings/affiliation_form", affiliation:, form: %>
         <% end %>
       </section>
