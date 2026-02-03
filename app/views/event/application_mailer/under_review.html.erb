@@ -1,6 +1,6 @@
 <p>Hi <%= @application.user.name %>,</p>
 
-<p>Thank you for <%= @application.user.teenager? "signing the HCB Fiscal Sponsorship Agreement!" : "applying to HCB, Hack Club's fiscal sponsorship program!" %></p>
+<p>Thank you for <%= @application.user.teenager? ? "signing the HCB Fiscal Sponsorship Agreement!" : "applying to HCB, Hack Club's fiscal sponsorship program!" %></p>
 
 <p>You'll hear from us within <%= @application.response_time %> regarding your application for <%= @application.name %>.</p>
 
