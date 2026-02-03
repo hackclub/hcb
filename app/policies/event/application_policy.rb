@@ -32,7 +32,9 @@ class Event
 
     def update?
       return true if user.admin?
-      return record.user == user if record.draft?
+      # Cosigner email is the only field we want to let users update once they've submitted,
+      # but not after they've been activated
+      return record.user == user if record.draft? || (record.changed == ["cosigner_email"] && record.event.nil?)
 
       false
     end

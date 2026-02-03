@@ -155,7 +155,7 @@ class Event
       authorize @application
       @application.record_pageview(:agreement)
 
-      @contract = @application.contract || @application.create_contract
+      @contract = @application.contract
       @party = @contract.party :signee
     end
 
@@ -169,9 +169,11 @@ class Event
     end
 
     def update
+      @application.assign_attributes(application_params)
+
       authorize @application
 
-      @application.update!(application_params)
+      @application.save!
 
       if user_params.present?
         success = current_user.update(user_params)
@@ -179,6 +181,18 @@ class Event
           render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
           return
         end
+      end
+
+      if application_params[:cosigner_email].present? && @application.contract.present?
+        if @application.cosigner_email_previously_changed?
+          @application.contract.mark_voided!
+          @application.create_contract
+        else
+          @application.contract.party(:cosigner).notify
+        end
+
+        flash[:success] = "Resent agreement to parent"
+        return redirect_back_or_to application_path(@application)
       end
 
       if params[:autosave] != "true"

@@ -100,7 +100,6 @@ class Event
         after do
           if user.teenager?
             app_contract = contract || create_contract
-            app_contract.party(:cosigner)&.notify
           end
           Event::ApplicationMailer.with(application: self).confirmation.deliver_later
         end
@@ -214,6 +213,7 @@ class Event
       end
 
       contract.send!
+      contract.party(:cosigner)&.notify
 
       contract
     end
