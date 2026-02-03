@@ -15,7 +15,11 @@ class Ledger
     # Expected to return an ActiveRecord::Relation of Ledger::Item
     def execute(ledgers: [])
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
-      results = results.where(ledger: ledgers) if ledgers.any?
+
+      if ledgers.any?
+        results = results.merge(Ledger::Item.joins(:ledger_mappings).where(ledger_mappings: { ledger_id: ledgers }).distinct)
+      end
+
       results
     end
 
@@ -33,11 +37,12 @@ class Ledger
         if key.starts_with?("$")
           operator = key[1..]
 
-          if operator == "and"
+          case operator
+          when "and"
             value.each do |sub_query|
               relation = apply_query(relation:, query: sub_query)
             end
-          elsif operator == "or"
+          when "or"
             sub_relation = nil
 
             value.each do |sub_query|
@@ -52,7 +57,7 @@ class Ledger
             else
               relation = relation.or(sub_relation)
             end
-          elsif operator == "not"
+          when "not"
             sub_relation = apply_query(relation: Ledger::Item.all, query: value, context: "and")
             if context == "and"
               relation = relation.where.not(id: sub_relation.select(:id))
