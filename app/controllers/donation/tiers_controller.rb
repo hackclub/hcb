@@ -12,9 +12,7 @@ class Donation
     end
 
     def start
-      return not_found unless @event.donation_page_available?
-
-      authorize @event, :show?
+      authorize @event, :donation_page?
 
       return unless build_donation_page!(event: @event, params:, request:)
 
