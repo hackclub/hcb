@@ -32,6 +32,10 @@ class Event
       mail to: @application.user.email_address_with_name, subject: "#{@application.name} has been activated on HCB!"
     end
 
+    def approved
+      mail to: @application.user.email_address_with_name, subject: "[Action Needed] #{@application.name} has been approved"
+    end
+
   end
 
 end
