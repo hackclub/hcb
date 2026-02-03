@@ -10,7 +10,7 @@ export default class extends ApplicationController {
   static debounces = ['save']
 
   connect() {
-    useDebounce(this, { wait: 500 })
+    useDebounce(this, { wait: 750 })
   }
 
   save() {
