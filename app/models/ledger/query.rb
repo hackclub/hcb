@@ -100,8 +100,8 @@ class Ledger
       relation
     end
 
-    def sanitize_column(column_name)
-      safe_column = PERMITTED_COLUMNS.find { |col| col == column_name.to_s }
+    def column_index(column_name)
+      safe_column = PERMITTED_COLUMNS.index(column_name.to_s)
 
       raise Ledger::Query::QueryError.new("Invalid column name: #{column_name}") unless safe_column.present?
 
@@ -109,7 +109,7 @@ class Ledger
     end
 
     def apply_partial_predicate(relation, operator, raw_key, operand)
-      key = sanitize_column(raw_key)
+      key = PERMITTED_COLUMNS[column_index(raw_key)]
 
       if operand.is_a?(Numeric)
         case operator.to_s
