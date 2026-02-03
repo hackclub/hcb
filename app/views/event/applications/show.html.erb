@@ -38,13 +38,15 @@
               <% if step[:label] == "Sign agreement" && @application.contract.present? %>
                 <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">
                   <% if @application.contract.party(:signee).pending? %>
-                    <a href="<%= agreement_application_path(@application) %>" class="btn">Sign the agreement</a>
+                    <% link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
                   <% end %>
 
                   <% if @application.contract.party(:cosigner)&.pending? %>
                     <button class="btn" data-behavior="modal_trigger" data-modal="parent_agreement">Manage parent's agreement</button>
                   <% end %>
                 </div>
+              <% elsif step[:label] == "Start spending" && @application.event.present? %>
+                <%= link_to "Go to your new organization!", @application.event, class: "btn" %>
               <% end %>
             <% end %>
           </div>
