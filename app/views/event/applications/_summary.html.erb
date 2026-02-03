@@ -120,6 +120,20 @@
         <p class="text-sm muted mb-1">Parent email</p>
         <p class="mb-0"><%= application.cosigner_email %></p>
       </div>
+
+      <% admin_tool "p-2" do %>
+        <p class="mt-0 mb-2"><strong>Parent email updates</strong></p>
+        <ul class="list-reset m-0">
+          <% field = "cosigner_email" %>
+          <% @application.versions.reverse.select { |version| version.changeset[field]&.any?(&:present?) }.map do |version| %>
+            <% change = version.changeset[field] %>
+            <li>
+              <%= format_date version.created_at %>:
+              <%= render_audit_log_value(field, change[0], color: "primary") %> → <%= render_audit_log_value(field, change[1], color: "success") %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
     <% end %>
   </div>
 </div>
