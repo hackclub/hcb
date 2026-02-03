@@ -122,15 +122,13 @@
       <%= form.text_area :notes, class: "w-full max-w-full" %>
     </div>
 
-    <% if @application.user.teenager? %>
-      <div class="field col-span-2" x-show="minor">
-        <%= form.label :cosigner_email do %>
-          Parent email <span class="text-primary">*</span>
-        <% end %>
-        <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
-        <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", "x-bind:required": "minor" %>
-      </div>
-    <% end %>
+    <div class="field col-span-2" x-show="minor">
+      <%= form.label :cosigner_email do %>
+        Parent email <span class="text-primary">*</span>
+      <% end %>
+      <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
+      <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", "x-bind:required": "minor" %>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
