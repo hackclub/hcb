@@ -38,7 +38,7 @@
               <% if step[:label] == "Sign agreement" && @application.contract.present? %>
                 <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">
                   <% if @application.contract.party(:signee).pending? %>
-                    <% link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
+                    <%= link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
                   <% end %>
 
                   <% if @application.contract.party(:cosigner)&.pending? %>
