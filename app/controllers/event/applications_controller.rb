@@ -3,6 +3,7 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
+    after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
     skip_before_action :redirect_to_onboarding
@@ -35,7 +36,6 @@ class Event
 
       # Signees are redirected to this page right after signing, so let's make sure we have updated data
       @application.contract&.party(:signee)&.sync_with_docuseal
-      @application.record_pageview(:show)
 
       contract_description = if @application.contract.nil?
                                "We'll send you our fiscal sponsorship agreement, which sets the terms and conditions of your usage of HCB."
@@ -132,7 +132,6 @@ class Event
 
     def submission
       authorize @application
-      @application.record_pageview(:submission)
     end
 
     def create
@@ -148,17 +147,14 @@ class Event
 
     def personal_info
       authorize @application
-      @application.record_pageview(:personal_info)
     end
 
     def project_info
       authorize @application
-      @application.record_pageview(:project_info)
     end
 
     def agreement
       authorize @application
-      @application.record_pageview(:agreement)
 
       @contract = @application.contract
       @party = @contract.party :signee
@@ -166,7 +162,6 @@ class Event
 
     def review
       authorize @application
-      @application.record_pageview(:review)
     end
 
     def edit
@@ -235,6 +230,12 @@ class Event
 
     def user_params
       params.require(:event_application).permit(:full_name, :preferred_name, :phone_number, :birthday)
+    end
+
+    def record_pageview
+      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s)
+        @application&.record_pageview(action_name.to_s)
+      end
     end
 
   end
