@@ -175,19 +175,19 @@
               <div>
                 <div data-application-autosave-target="savingIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
                   <%= inline_icon "cloud-upload", size: 24, class: "align-top text-muted" %>
-                  <p class="font-medium my-0 text-sm">
+                  <p class="font-medium my-0 text-sm hidden sm:block">
                     Saving your application
                   </p>
                 </div>
                 <div data-application-autosave-target="savedIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
                   <%= inline_icon "checkmark", size: 24, class: "align-top text-green" %>
-                  <p class="font-medium my-0 text-sm">
+                  <p class="font-medium my-0 text-sm hidden sm:block">
                     Application saved
                   </p>
                 </div>
                 <div data-application-autosave-target="errorIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
                   <%= inline_icon "important", size: 24, class: "align-top text-orange" %>
-                  <p class="font-medium my-0 text-sm">
+                  <p class="font-medium my-0 text-sm hidden sm:block">
                     Error saving application
                   </p>
                 </div>
