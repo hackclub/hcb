@@ -29,7 +29,7 @@ class Event
     end
 
     def activated
-      mail to: @application.user.email_address_with_name, subject: "#{@application.name} has been activated on HCB!"
+      mail to: @application.user.email_address_with_name, subject: "[#{@application.name}] Welcome to HCB!"
     end
 
     def approved
