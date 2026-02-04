@@ -24,6 +24,8 @@
 #  index_logins_on_user_session_id      (user_session_id)
 #
 class Login < ApplicationRecord
+  self.ignored_columns = ["referral_program_id"]
+
   include AASM
   include Hashid::Rails
 
@@ -33,7 +35,6 @@ class Login < ApplicationRecord
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })
 
-  belongs_to :referral_program, class_name: "Referral::Program", optional: true
   belongs_to :referral_link, class_name: "Referral::Link", optional: true
 
   has_encrypted :browser_token

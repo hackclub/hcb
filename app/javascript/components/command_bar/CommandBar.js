@@ -9,6 +9,7 @@ import {
   useRegisterActions,
   Priority,
   useKBar,
+  useMatches,
 } from 'kbar'
 import { initalActions, adminActions, generateEventActions } from './actions'
 import { KBarInput } from './input'
@@ -67,6 +68,22 @@ const animatorStyle = {
   borderRadius: 'var(--radius-xl)',
   overflow: 'hidden',
   boxShadow: 'var(--shadow-modal)',
+}
+
+function EmptyState() {
+  const { results } = useMatches()
+
+  return (
+    results.length === 0 && (
+      <div className="text-center font-semibold pt-4 pb-5">
+        <img
+          src="/dino_leaping_for_money.svg"
+          className="dino-svg mb-4 mx-auto w-100 block max-w-40"
+        />
+        No results found
+      </div>
+    )
+  )
 }
 
 function SearchAndResults() {
@@ -230,6 +247,7 @@ function SearchAndResults() {
         searched={searched}
       />
       <RenderResults />
+      <EmptyState />
     </KBarAnimator>
   )
 }

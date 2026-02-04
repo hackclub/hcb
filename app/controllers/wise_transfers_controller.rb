@@ -11,6 +11,7 @@ class WiseTransfersController < ApplicationController
     @wise_transfer = @event.wise_transfers.build
 
     authorize @wise_transfer
+    render layout: "transfer"
   end
 
   def create

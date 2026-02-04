@@ -2,25 +2,27 @@
 
 class Event
   class AffiliationsController < ApplicationController
-    include SetEvent
-
-    before_action :set_event, only: :create
+    # these actions are called before the user has completed their profile during the application process
+    skip_before_action :redirect_to_onboarding
+    before_action :set_affiliable, only: :create
     before_action :set_metadata, only: [:create, :update]
 
     def create
-      authorize @event, policy_class: AffiliationPolicy
+      authorize @affiliable, policy_class: AffiliationPolicy
 
-      affiliation = @event.affiliations.build(
+      affiliation = Event::Affiliation.new(
         {
           name: params[:type],
-          metadata: @metadata
+          metadata: @metadata,
+          affiliable: @affiliable,
+          event_id: @affiliable.id # since this is non-null, remove later
         }
       )
 
       unless affiliation.save
         flash[:error] = affiliation.errors.full_messages.to_sentence.presence || "Failed to create affiliation."
       end
-      redirect_back fallback_location: @event
+      redirect_back fallback_location: @affiliable
     end
 
     def update
@@ -30,7 +32,7 @@ class Event
 
       affiliation.update(name: params[:type], metadata: @metadata)
 
-      redirect_back fallback_location: @event
+      redirect_back fallback_location: affiliation.affiliable
     end
 
     def destroy
@@ -39,10 +41,19 @@ class Event
       authorize affiliation
 
       affiliation.destroy!
-      redirect_back fallback_location: @event
+      redirect_back fallback_location: affiliation.affiliable
     end
 
     private
+
+    def set_affiliable
+      case params[:affiliable_type]
+      when "Event"
+        @affiliable = Event.find(params[:affiliable_id])
+      when "Event::Application"
+        @affiliable = Event::Application.find(params[:affiliable_id])
+      end
+    end
 
     def set_metadata
       case params[:type]

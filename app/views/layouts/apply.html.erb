@@ -1,0 +1,239 @@
+<% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
+<% @home_size = 50 %>
+<% page_full %>
+
+<% help_element = capture do %>
+  <div class="card flex flex-col gap-3 card--sunken mb-7">
+    <div class="flex flex-row items-center justify-start gap-2">
+      <%= inline_icon "help", size: 28 %>
+      <h3 class="text-lg my-0">Need help?</h3>
+    </div>
+    <p class="my-0">You can email questions to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> or give us a call at <%= link_to "+1 (844) 237-2290", "tel:+18442372290", class: "text-nowrap" %>.</p>
+  </div>
+<% end %>
+
+<!DOCTYPE html>
+
+<html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.github_url %> -->
+  <head>
+    <title><%= yield(:title).concat(" –") if content_for?(:title) %> HCB</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
+    <%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+    <%= stylesheet_link_tag "application", media: "all", 'data-turbo-track': "reload" %>
+    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
+
+    <%= render "application/helpscout_beacon" %>
+
+    <% if Rails.env.production? %>
+      <script
+        defer
+        data-domain="hcb.hackclub.com"
+        src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
+    <% end %>
+
+    <% unless Rails.env.production? %>
+      <meta name="turbo-prefetch" content="false">
+    <% end %>
+
+    <% if Rails.env.production? %>
+      <script>
+          console.log(`%c                    -*%@@%*-
+                .=#@@@@@@@@@@#=.
+            .=%@@@@@*-..-*@@@@@%=.
+          -#@@@@@+:        :+@@@@@#-
+        :*@@@@@*:              :*@@@@@*:
+      =%@@@@#-                    -#@@@@%=.
+    *@@@@@+.                        .+@@@@@*
+    *@@*-   *@@*      *@@*      *@@*   :*@@*
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            @@@@      @@@@      @@@@
+            *@@*      *@@*      *@@*
+
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+      *@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*
+
+            Come hack on HCB with us!
+         ${<%= Rails.configuration.constants.github_url.to_json.html_safe %>}
+    `, 'color: #ec3750; font-weight: bold; font-size: 10px;')
+        </script>
+    <% end %>
+
+    <meta name="format-detection" content="telephone=no">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+    <% if content_for?(:favicon) %>
+      <%= yield :favicon %>
+    <% elsif user_birthday? %>
+      <link rel="icon" type="image/png" href="/favicon-party.gif">
+    <% else %>
+      <link
+        rel="icon"
+        type="image/png"
+        sizes="32x32"
+        href="/favicon-<%= Rails.env %>-32x32.png">
+      <link
+        rel="icon"
+        type="image/png"
+        sizes="16x16"
+        href="/favicon-<%= Rails.env %>-16x16.png">
+    <% end %>
+
+    <link rel="manifest" href="/site.webmanifest">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
+
+    <meta name="msapplication-TileColor" content="#ec3750">
+
+    <style>
+      html,
+      body {
+          overflow-x: hidden
+      }
+
+      @media (min-width: 640px) {
+
+          html,
+          body {
+              height: 100vh;
+              margin: 0;
+              padding: 0;
+          }
+      }
+    </style>
+
+    <%= yield(:head) if content_for?(:head) %>
+    <% img = "/brand/hcb-icon-icon-original.png" %>
+
+    <meta name="twitter:card" content="summary">
+    <meta property="og:image" content="<%= img %>">
+    <meta name="twitter:image" content="<%= img %>">
+    <meta property="og:site_name" content="HCB">
+    <meta property="og:url" content="https://hcb.hackclub.com">
+    <meta property="og:title" content="Sign in">
+    <meta name="twitter:title" content="Sign in">
+    <meta property="og:description" content="Sign in to HCB.">
+    <meta name="twitter:description" content="Sign in to HCB.">
+    <meta name="description" content="Sign in to HCB.">
+  </head>
+
+  <body
+    class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %> ">
+    <%# LET THERE BE SNOW %>
+    <% if winter? %>
+      <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
+      <%= react_component "holiday/Snow", {}, { style: "height:0px" } %>
+    <% end %>
+
+    <div id="tooltip-container"></div>
+
+    <%# ghosts and ghouls %>
+    <% if fall? %>
+      <img
+        src=" https: cloud-iuqyduosh-hack-club-bot.vercel.app 0image.png "
+        alt=" oOoOoOoOo "
+        class=" flying-spook ghost ">
+      <img
+        src=" https: cloud-fy14iajlp-hack-club-bot.vercel.app 0image__50_-removebg-preview.png "
+        alt=" witch orpheus "
+        class=" flying-spook ">
+    <% end %>
+
+    <%= yield(:header) %>
+
+    <main
+      class="container <%= content_for :container_class %> h-screen"
+      style="<%= content_for :container_style %>">
+      <div class="flex flex-col h-full max-h-dvh overflow-hidden" data-controller="application-autosave">
+        <div class="flex flex-col">
+          <div class="flex flex-row items-center justify-between p-4 gap-4 bg-snow dark:bg-darkless md:*:w-full md:*:flex-1">
+            <div class="flex flex-row items-center justify-start gap-4">
+              <%= render partial: "application/logo" %>
+              <div class="flex flex-col items-start justify-start">
+                <h2 class="m-0">Apply for HCB</h2>
+                <h3 class="text-sm muted m-0">Turn your ideas into reality</h3>
+              </div>
+            </div>
+            <div class="flex flex-row justify-center">
+              <div class="w-max">
+                <%= render "application/flash" unless @hide_flash %>
+              </div>
+            </div>
+            <div class="pr-3 flex flex-row-reverse gap-8 items-center flex-shrink-0">
+              <div>
+                <div data-application-autosave-target="savingIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
+                  <%= inline_icon "cloud-upload", size: 24, class: "align-top text-muted" %>
+                  <p class="font-medium my-0 text-sm hidden sm:block">
+                    Saving your application
+                  </p>
+                </div>
+                <div data-application-autosave-target="savedIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
+                  <%= inline_icon "checkmark", size: 24, class: "align-top text-green" %>
+                  <p class="font-medium my-0 text-sm hidden sm:block">
+                    Application saved
+                  </p>
+                </div>
+                <div data-application-autosave-target="errorIndicator" class="flex flex-row-reverse items-center justify-start gap-1 text-darkless dark:text-smoke" style="display: none;">
+                  <%= inline_icon "important", size: 24, class: "align-top text-orange" %>
+                  <p class="font-medium my-0 text-sm hidden sm:block">
+                    Error saving application
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <% if content_for?(:progress).present? %>
+            <div class="bg-smoke dark:bg-slate h-1">
+              <div class="bg-primary h-1" style="width: <%= yield(:progress) %>%"></div>
+            </div>
+          <% else %>
+            <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke dark:border-slate"></div>
+          <% end %>
+        </div>
+        <div class="flex-1 overflow-auto p-6 relative" style="margin-left: calc(100vw - 100%)">
+          <% if content_for?(:info_pane) %>
+            <div class="flex flex-col md:flex-row gap-6 lg:gap-4">
+              <div class="md:sticky md:top-0 md:h-[75vh] flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
+                <%= yield(:info_pane) %>
+
+                <div class="hidden md:block">
+                  <%= help_element %>
+                </div>
+              </div>
+              <div class="flex flex-col items-center flex-grow">
+                <div class="md:max-w-[600px] w-full">
+                  <%= yield %>
+
+                  <div class="block md:hidden">
+                    <%= help_element %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% else %>
+            <%= yield %>
+          <% end %>
+        </div>
+        <% if @application.present? || content_for?(:footer) %>
+          <div class="p-4 flex flex-row justify-between border-solid border-t-2 border-x-0 border-b-0 border-smoke dark:border-slate dark:bg-darkless">
+            <%= yield(:footer) %>
+          </div>
+        <% end %>
+      </div>
+    </main>
+
+    <%= render "application/fullstory" %>
+  </body>
+</html>
