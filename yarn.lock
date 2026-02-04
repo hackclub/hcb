@@ -6452,6 +6452,11 @@ source-map@~0.7.4:
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.7.4.tgz#a9bbe705c9d8846f4e08ff6765acf0f1b0898656"
   integrity sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==
 
+stimulus-use@^0.52.3:
+  version "0.52.3"
+  resolved "https://registry.yarnpkg.com/stimulus-use/-/stimulus-use-0.52.3.tgz#d6f35fa93277274957a2ed98a7b04b4d702cb1d6"
+  integrity sha512-stZ5dID6FUrGCR/ChWUa0FT5Z8iqkzT6lputOAb50eF+Ayg7RzJj4U/HoRlp2NV333QfvoRidru9HLbom4hZVw==
+
 "string-width-cjs@npm:string-width@^4.2.0":
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"

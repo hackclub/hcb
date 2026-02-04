@@ -79,10 +79,12 @@ class User < ApplicationRecord
     reimbursement_report: 1,
     organizer_position_invite: 2,
     card_grant: 3,
-    grant: 4
+    grant: 4,
+    application_form: 5
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, class_name: "User::Session", dependent: :destroy
@@ -567,6 +569,16 @@ class User < ApplicationRecord
     @discord_bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
 
     @discord_account ||= @discord_bot.user(discord_id)
+  end
+
+  def only_draft_application?
+    return false unless events.none? && card_grants.none? &&
+                        organizer_position_invites.none? && contracts.none? &&
+                        reimbursement_reports.none?
+
+    apps = applications.limit(2).to_a
+
+    apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
   end
 
   private
