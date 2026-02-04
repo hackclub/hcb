@@ -572,9 +572,13 @@ class User < ApplicationRecord
   end
 
   def only_draft_application?
-    @user.events.none? && @user.card_grants.none? &&
-    @user.organizer_position_invites.none? && @user.contracts.none? &&
-    @user.reimbursement_reports.none? && @user.applications.draft.one?
+    return false unless @user.events.none? && @user.card_grants.none? &&
+                        @user.organizer_position_invites.none? && @user.contracts.none? &&
+                        @user.reimbursement_reports.none?
+
+    applications = @user.applications.limit(2).to_a
+
+    applications.size == 1 && (applications.first.draft? || applications.first.submitted? || applications.first.under_review?)
   end
 
   private
