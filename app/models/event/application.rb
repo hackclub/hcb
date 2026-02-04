@@ -210,7 +210,7 @@ class Event
 
     def create_contract
       if name.nil? || description.nil?
-        raise StandardError.new("Cannot create a contract for application #{id}: missing name and/or description")
+        raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
 
       ActiveRecord::Base.transaction do
