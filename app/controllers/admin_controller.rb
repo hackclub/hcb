@@ -758,6 +758,7 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
 
     @applications = Event::Application.all
+    @applications = @applications.search_name(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'submitted' DESC"),
