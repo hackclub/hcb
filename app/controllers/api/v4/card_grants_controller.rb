@@ -33,9 +33,7 @@ module Api
           sent_by = found_user
         end
 
-        expiration_at = params[:expiration_at].to_datetime if params[:expiration_at]
-
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:, expiration_at:))
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
 
         authorize @card_grant
 
