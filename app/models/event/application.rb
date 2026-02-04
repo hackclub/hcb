@@ -286,7 +286,7 @@ class Event
       app["Address Country"] = address_country
       app["Event Location"] = address_country
       app["How did you hear about HCB?"] = referrer
-      app["Accommodations"] = notes
+      app["Accommodations"] = accessibility_notes
       app["(Adults) Political Activity"] = political_description
       app["Referral Code"] = referral_code
       app["HCB Status"] = aasm_state.humanize unless draft?
