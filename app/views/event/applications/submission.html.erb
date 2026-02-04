@@ -12,15 +12,12 @@
       </h2>
 
       <p class="m-0 text-lg muted">
-        <% submitted_at = @application.submitted_at.in_time_zone(current_session.timezone.presence || Time.zone.name) %>
-        Submitted on <%= submitted_at.strftime("%B #{submitted_at.day.ordinalize}") %> at <%= submitted_at.strftime("%l:%M%p").downcase %>
+        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%p").downcase %>
 
         <% if @application.approved_at? %>
-          <% approved_at = @application.approved_at.in_time_zone(current_session.timezone.presence || Time.zone.name) %>
-          <br>Approved on <%= approved_at.strftime("%B #{approved_at.day.ordinalize}") %> at <%= approved_at.strftime("%l:%M%p").downcase %>
+          <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%p").downcase %>
         <% elsif @application.rejected_at? %>
-          <% rejected_at = @application.rejected_at.in_time_zone(current_session.timezone.presence || Time.zone.name) %>
-          <br>Rejected on <%= rejected_at.strftime("%B #{rejected_at.day.ordinalize}") %> at <%= rejected_at.strftime("%l:%M%p").downcase %>
+          <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%p").downcase %>
         <% end %>
       </p>
     </div>
