@@ -125,7 +125,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate!
+      @application.activate_event!
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end

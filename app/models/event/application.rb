@@ -314,7 +314,7 @@ class Event
       end
     end
 
-    def activate!
+    def activate_event!
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
