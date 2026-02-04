@@ -55,6 +55,9 @@ class Event
   class Application < ApplicationRecord
     has_paper_trail
 
+    include PgSearch::Model
+    pg_search_scope :search_name, against: :name
+
     include AASM
     include Contractable
 
