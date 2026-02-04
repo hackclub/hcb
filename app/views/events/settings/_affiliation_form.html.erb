@@ -92,4 +92,4 @@
   </div>
 </template>
 
-<%= form.submit (affiliation.new_record? ? "Add affiliation" : "Update").to_s, "x-bind:disabled": "disabled || type === ''" %>
+<%= form.submit (affiliation.new_record? ? "Save affiliation" : "Update").to_s, "x-bind:disabled": "disabled || type === ''", "x-on:click": "type = ''" %>
