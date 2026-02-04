@@ -108,7 +108,7 @@
 <h3 style="margin-top: 24px;">What do I need to do?</h3>
 
 <p>
-  <%= @contract.party(:signee).user.name %> has requested that you <%= link_to "sign the fiscal sponsorship agreement", contract_party_url(@party) %> to get their project started. This will allow them to start raising money for <%= @contract.event_name %>.
+  <%= @contract.party(:signee).user.name %> has requested that you <%= link_to "sign the fiscal sponsorship agreement", contract_party_url(@party) %> to get their project started. This is required to move forward with <%= @contract.event_name %>.
 </p>
 
 <p>You can learn more about HCB <%= link_to "on our website", "https://hackclub.com/fiscal-sponsorship?utm_source=cosigner_learn_more&utm_medium=email&utm_campaign=cosigner_email" %>, and our team is around if you have any questions. Just reply to this email.</p>
