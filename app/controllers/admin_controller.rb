@@ -752,6 +752,21 @@ class AdminController < Admin::BaseController
     @wise_transfer = WiseTransfer.find(params[:id])
   end
 
+  def applications
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+
+    @applications = Event::Application.all
+    @applications = @applications.search_name(@q) if @q
+
+    @applications = @applications.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'submitted' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
+      "created_at desc"
+    )
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20

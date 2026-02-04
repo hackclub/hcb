@@ -40,6 +40,7 @@ class Contract
     validates :role, uniqueness: { scope: :contract }
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
+    validate :email_cannot_change_after_sign
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
     normalizes :external_email, with: ->(external_email) { external_email.strip.downcase }
@@ -51,7 +52,7 @@ class Contract
       event :mark_signed do
         transitions from: :pending, to: :signed
         after do
-          contract.on_party_signed
+          contract.on_party_signed(self)
         end
 
       end
@@ -84,13 +85,27 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event.name}'s agreement as HCB Operations"
+        "Sign the #{contract.event_name}'s agreement as HCB Operations"
+      elsif cosigner?
+        "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
       else
-        "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
+        "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
+      end
+    end
+
+    # We may miss a webhook or load a page before we've received the webhook,
+    # so we can manually sync the party with this method!
+    def sync_with_docuseal
+      if pending? && docuseal_submission&.[]("status") == "completed"
+        mark_signed!
       end
     end
 
     private
+
+    def docuseal_submission
+      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
 
     def signee_is_user
       if signee? && user.nil?
@@ -101,6 +116,12 @@ class Contract
     def contract_is_pending
       unless contract.pending?
         errors.add(:contract, "cannot have parties added after it is sent")
+      end
+    end
+
+    def email_cannot_change_after_sign
+      if self["aasm_state"] == "signed" && (user_changed? || external_email_changed?)
+        errors.add(:base, "The signing party cannot change after it has signed the contract")
       end
     end
 

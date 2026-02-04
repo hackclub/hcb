@@ -1,0 +1,31 @@
+<p>Hi <%= @application.user.name %>,</p>
+
+<p>
+  <% if @application.name.present? %>
+    Your application for <%= @application.name %> hasn't been submitted yet.
+  <% else %>
+    Your HCB application hasn't been submitted yet.
+  <% end %>
+  <% if @application.ready_to_submit? %>
+    You've already filled out the required fields, but you still need to submit your application.
+  <% else %>
+    It only takes a few more minutes to complete your application.
+  <% end %>
+</p>
+
+<%= link_to "Continue your application →", application_url(@application), style: "border: 0; border-radius: 6px; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.125); cursor: pointer; display: inline-flex; font-size: 1rem; font-weight: 600; justify-content: center; align-items: center; height: 36px; letter-spacing: 0; overflow: hidden; padding: 0 1rem; position: relative; text-align: center; text-decoration: none; user-select: none; min-height: 36px; background-color: #74B3E7; color: #121519 !important; margin: 12px 0px;" %>
+
+<p>If you have any questions, we're here to help! Just reply to this email or reach out to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>.</p>
+
+<p>
+  Warmly,<br>
+  The HCB team
+</p>
+
+<div style="background: #F8F8F8; padding: 16px; border-radius: 8px; margin: 32px -16px 12px -16px;">
+  <h4 style="margin: 0px;">Did you know?</h4>
+  <p><%= @tip %></p>
+  <p style="margin-bottom: 0px;">
+    <%= link_to "Learn more about HCB's features →", "https://hackclub.com/fiscal-sponsorship?utm_source=application_incomplete&utm_medium=email&utm_campaign=application_incomplete", style: "color: #646464" %>
+  </p>
+</div>

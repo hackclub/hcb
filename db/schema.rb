@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_03_031519) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -970,6 +970,46 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_03_031519) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.text "accessibility_notes"
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
+    t.integer "annual_budget_cents"
+    t.datetime "approved_at"
+    t.integer "committed_amount_cents"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.boolean "currently_fiscally_sponsored"
+    t.text "description"
+    t.bigint "event_id"
+    t.string "funding_source"
+    t.string "last_page_viewed"
+    t.datetime "last_viewed_at"
+    t.string "name"
+    t.string "planning_duration"
+    t.text "political_description"
+    t.string "project_category"
+    t.string "referral_code"
+    t.string "referrer"
+    t.datetime "rejected_at"
+    t.datetime "submitted_at"
+    t.integer "team_size"
+    t.boolean "teen_led"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "website_url"
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -2761,6 +2801,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_03_031519) do
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
+  add_foreign_key "event_applications", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"

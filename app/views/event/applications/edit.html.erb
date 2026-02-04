@@ -1,0 +1,194 @@
+<% title "Edit application" %>
+
+<div class="flex flex-col items-center flex-grow">
+  <div class="md:max-w-[600px] w-full my-3 space-y-8 pb-5">
+    <%= form_with model: @application, url: application_path(@application, return_to: submission_application_path(@application), confirm: true), method: :patch, id: "edit_application_#{@application.id}", class: "space-y-8" do |form| %>
+
+      <div class="card card--outline">
+        <h3 class="text-2xl my-0 mb-6">Project Information</h3>
+
+        <div class="field" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>' }">
+          <%= form.label :name do %>
+            Project name <span class="text-primary">*</span>
+          <% end %>
+          <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true %>
+        </div>
+
+        <div class="field">
+          <%= form.label :description do %>
+            Tell us about your project <span class="text-primary">*</span>
+          <% end %>
+          <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
+          <%= form.text_area :description, class: "w-full max-w-full", required: true %>
+        </div>
+
+        <div class="field">
+          <%= form.label :has_website do %>
+            Do you have a website? <span class="text-primary">*</span>
+          <% end %>
+          <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true } %>
+        </div>
+
+        <div class="field" x-show="has_website === 'true'">
+          <%= form.label :website_url do %>
+            Website URL <span class="text-primary">*</span>
+          <% end %>
+          <%= form.url_field :website_url, placeholder: "hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" } %>
+        </div>
+
+        <div class="field">
+          <%= form.label :has_political do %>
+            Is your project involved with political activity? <span class="text-primary">*</span>
+          <% end %>
+          <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
+          <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true } %>
+        </div>
+
+        <div class="field" x-show="has_political === 'true'">
+          <%= form.label :political_description do %>
+            Please describe the political activity your project is involved in <span class="text-primary">*</span>
+          <% end %>
+          <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field" %>
+        </div>
+      </div>
+
+      <div class="card" x-data="{ minor: <%= @application.user.teenager? %> }">
+        <h3 class="text-2xl my-0 mb-6">Personal Information</h3>
+
+        <div class="md:flex gap-2">
+          <div class="field flex-1">
+            <%= form.label :full_name do %>
+              Full name <span class="text-primary">*</span>
+            <% end %>
+            <%= form.text_field :full_name, value: @application.user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+          </div>
+          <div class="field flex-1">
+            <%= form.label :preferred_name, "Preferred name (optional)" %>
+            <%= form.text_field :preferred_name, value: @application.user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
+          </div>
+        </div>
+
+        <div class="md:flex items-center gap-2">
+          <div class="field flex-1">
+            <%= form.label :phone_number do %>
+              Mobile phone number <span class="text-primary">*</span>
+            <% end %>
+            <%= form.hidden_field :phone_number, value: @application.user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+            <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" required="required">
+          </div>
+          <div class="field flex-1">
+            <div class="inline-flex items-center justify-between w-full gap-1">
+              <%= form.label :birthday do %>
+                Birthday <span class="text-primary">*</span>
+              <% end %>
+              <div class="info tooltipped tooltipped--w h-[18px]" aria-label="We collect user birthdays because we work with financials and have a responsibility to know our users. We also work with teenagers and need to know which users are under 18 as there are certain laws that protect them.">
+                <%= inline_icon "info", size: 18 %>
+              </div>
+            </div>
+            <div class="flex gap-2 onboarding" x-on:change="minor = new Date() - new Date([...$el.children].map(c => c.selectedOptions[0].label).join(' ')) < 568_025_136_000">
+              <%= form.date_select :birthday,
+                                    { start_year: Date.today.year,
+                                      end_year: Date.today.year - 100,
+                                      order: [:month, :day, :year],
+                                      prompt: @application.user.birthday.nil?,
+                                      default: @application.user.birthday.presence
+                                    },
+                                    { required: true } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-[-0.25rem] mb-4 rounded-b-lg h-2 border-solid border-smoke dark:border-slate border-t-0 w-full relative">
+          <div class="absolute max-w-full w-max bottom-0 left-1/2 bg-white dark:bg-darkless px-2 muted text-sm -translate-x-1/2 translate-y-1/2">Changes made here will also update this user's HCB profile</div>
+        </div>
+
+        <hr class="col-span-2 mt-5 invisible mb-4">
+
+        <div>
+          <h4 class="text-lg my-0 mb-4">Address</h4>
+
+          <%= form.label :address_line1 do %>
+            Street address <span class="text-primary">*</span>
+          <% end %>
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <div class="field mb-0">
+              <%= form.text_field :address_line1, placeholder: "8605 Santa Monica Blvd", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.text_field :address_line2, placeholder: "Suite 86294" %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_city do %>
+                City <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_city, placeholder: "West Hollywood", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_state do %>
+                State <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_state, placeholder: "CA", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_postal_code do %>
+                Zip code <span class="text-primary">*</span>
+              <% end %>
+              <%= form.text_field :address_postal_code, placeholder: "90069", required: true %>
+            </div>
+            <div class="field mb-0">
+              <%= form.label :address_country do %>
+                Country <span class="text-primary">*</span>
+              <% end %>
+              <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]" } %>
+            </div>
+          </div>
+        </div>
+
+        <hr class="col-span-2 mt-5 invisible mb-4">
+
+        <div>
+          <h4 class="text-lg my-0 mb-4">Additional Information</h4>
+
+          <div class="field">
+            <%= form.label :referrer do %>
+              How did you hear about HCB? <span class="text-primary">*</span>
+            <% end %>
+            <%= form.text_field :referrer, class: "w-full !max-w-full", required: true %>
+          </div>
+
+          <div class="field">
+            <%= form.label :referral_code, "Referral code" %>
+            <%= form.text_field :referral_code, class: "w-full !max-w-full" %>
+          </div>
+
+          <div class="field">
+            <%= form.label :accessibility_notes, "Accessibility needs" %>
+            <%= form.text_area :accessibility_notes, class: "w-full max-w-full" %>
+          </div>
+
+          <% if @application.user.teenager? %>
+            <div class="field col-span-2" x-show="minor">
+              <%= form.label :cosigner_email do %>
+                Parent email <span class="text-primary">*</span>
+              <% end %>
+              <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
+              <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", "x-bind:required": "minor" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+    <% end %>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<%= javascript_include_tag "phone_input.js" %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", submission_application_path(@application), class: "btn bg-muted" %>
+  <% admin_tool do %>
+    <button class="btn bg-blue" form="edit_application_<%= @application.id %>">Save changes</button>
+  <% end %>
+<% end %>

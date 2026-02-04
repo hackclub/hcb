@@ -1,12 +1,17 @@
 <% turbo_page_requires_reload if params[:require_reload].present? %>
-<% title "Sign #{@signup ? "up" : "in"}" %>
+<% title_text = @for_application ? "Verify your email" : @signup ? "Sign up for HCB" : "Sign in to HCB" %>
+<% title title_text %>
 
-<div class="flex flex-col flex-1 justify-center max-w-md w-full">
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
+<div class="flex flex-col flex-1 justify-center w-full <%= @for_application ? "card" : "max-w-md" %>">
   <div class="my-auto">
-    <%= render "logins/header", label: "Hack Club" do %>
-      Sign <%= @signup ? "up for" : "in to" %> HCB
+    <%= render "logins/header", label: @for_application ? "Apply for HCB" : "Hack Club" do %>
+      <%= title_text %>
     <% end %>
-    <%= form_tag logins_path, class: "mt-1", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
+    <%= form_tag logins_path, class: "mt-1", id: "login", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
       <div data-webauthn-auth-target="error" class="mb2 display-none">
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
       </div>
@@ -14,10 +19,14 @@
       <%= hidden_field_tag :referral_link_id, @referral_link.slug if @referral_link %>
       <%= email_field_tag :email, @prefill_email, placeholder: "Enter your email...", autofocus: true, autocomplete: "username", class: "!max-w-full w-full", style: "padding: 12px 15px", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
       <div class="flex justify-between items-center gap-4">
-        <% if @signup %>
-          <%= link_to "Sign in", auth_users_path(return_to: @return_to), class: "mt-3" %>
+        <% if @for_application %>
+          <span></span>
         <% else %>
-          <%= link_to "Sign up", auth_users_path(signup: true, return_to: @return_to), class: "mt-3" %>
+          <% if @signup %>
+            <%= link_to "Sign in", auth_users_path(return_to: @return_to), class: "mt-3" %>
+          <% else %>
+            <%= link_to "Sign up", auth_users_path(signup: true, return_to: @return_to), class: "mt-3" %>
+          <% end %>
         <% end %>
         <button data-webauthn-auth-target="continueButton" type="submit" class="mt-4 gap-2 btn">
           Continue
@@ -28,4 +37,14 @@
   </div>
   <%= render partial: "logins/environment_banner" %>
 </div>
-<%= render partial: "logins/footer", locals: { whats_hcb: true } %>
+
+<% unless @for_application %>
+  <%= render partial: "logins/footer", locals: { whats_hcb: true } %>
+<% end %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", new_application_path, class: "btn bg-muted" %>
+  <button data-webauthn-auth-target="continueButton" type="submit" class="btn" form="login">
+    Continue →
+  </button>
+<% end %>
