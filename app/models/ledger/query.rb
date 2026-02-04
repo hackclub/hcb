@@ -132,7 +132,7 @@ class Ledger
       when "$ne"
         relation.where.not(key => operand)
       else
-        raise Ledger::Query::Error.new("Unsupported operator: #{operator}")
+        raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
       end
     end
 

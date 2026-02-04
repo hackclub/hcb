@@ -291,7 +291,7 @@ RSpec.describe Ledger::Query, type: :model do
 
     it "raises on unsupported comparison operator" do
       query = { amount_cents: { "$regex" => ".*" } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported operator/)
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator/)
     end
 
     it "raises on non-hash query" do
