@@ -1,7 +1,0 @@
-<%= turbo_frame_tag :merchants_filter do %>
-  <% @merchants.each do |merchant| %>
-    <div class="flex items-center">
-      <%= link_to(merchant[:name], event_ledger_path(@event, upsert_query_params(merchant: merchant[:id])), class: "flex-auto menu__action #{"menu__action--active" if @merchant == merchant[:id]}", data: { turbo_prefetch: "false" }) %>
-    </div>
-  <% end %>
-<% end %>

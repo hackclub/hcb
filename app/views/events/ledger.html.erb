@@ -1,8 +1,8 @@
 <% cache_if @cacheable, "#{@event.id}_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
-    <%= render partial: "events/filter" %>
+    <%= render "events/filter", filters: @filters %>
     <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
-      <div class="table-container mt-4" data-tour-step="transactions">
+      <div class="table-container" data-tour-step="transactions">
         <table>
           <thead>
           <tr>

@@ -30,9 +30,13 @@ class EventPolicy < ApplicationPolicy
   alias_method :users_chart?, :show?
   alias_method :transaction_heatmap?, :show?
 
+  alias_method :user_select?, :show?
+  alias_method :tag_select?, :show?
+  alias_method :merchant_select?, :show?
+  alias_method :category_select?, :show?
+
   alias_method :transactions?, :show?
   alias_method :ledger?, :transactions?
-  alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
     user&.admin?

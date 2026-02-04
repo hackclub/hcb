@@ -1,5 +1,5 @@
-<div class="flex items-center filter-menu">
-  <%= render "events/filters/menu", filters: %>
+<div class="flex items-center filter-menu mb-2">
+  <%= render "events/filters/menu", base_url: defined?(base_url) ? base_url : nil, vertical: defined?(vertical) ? vertical : false, filters: %>
   <%= link_to nil,
               class: "-ml-2 pop muted tooltipped tooltipped--s",
               aria: { label: "Clear filters" },
@@ -8,7 +8,8 @@
   <% end %>
 
   <div class="filter-menu__chips">
-    <% filters.each do |filter| %>
+    <%= yield %>
+    <% filters.reject { |f| ["user_select", "tag_select", "merchant_select"].include?(f[:type]) }.each do |filter| %>
       <% if params[filter[:key]] %>
         <div class="badge badge-large bg-muted">
           <%= params[filter[:key]].humanize %>
@@ -22,6 +23,16 @@
     <% end %>
 
     <% filters.select { |f| f[:type] == "amount_range" }.each do |filter| %>
+      <% if params[:direction] %>
+        <div class="badge badge-large bg-muted">
+          <%= params[:direction].humanize %>
+          <%= link_to upsert_query_params("direction" => nil),
+            class: "flex items-center",
+            data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
       <% ["less_than", "greater_than"].each do |suffix| %>
         <% param_key = "#{filter[:key_base]}_#{suffix}" %>
         <% if params[param_key].present? %>

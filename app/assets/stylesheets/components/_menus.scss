@@ -153,40 +153,6 @@
   &.menu__content--left {
     left: 0;
   }
-
-  input[type='text'] {
-    font-size: inherit !important;
-    padding: 0.25rem 0.5rem !important;
-    min-height: 0;
-    font-weight: 500;
-    color: map-get($palette, black);
-
-    &::placeholder {
-      font-weight: 500;
-    }
-
-    &:not(:focus)::placeholder {
-      opacity: 1;
-      color: map-get($palette, black);
-    }
-
-    &:focus {
-      background: $snow;
-    }
-
-    &:not(:focus) {
-      cursor: pointer;
-      border-color: transparent;
-    }
-
-    &:hover:not(:focus) {
-      @include gradient(info);
-
-      &::placeholder {
-        color: $white;
-      }
-    }
-  }
 }
 
 .menu__content .admin-tools .menu__action {

@@ -1,0 +1,26 @@
+<%= turbo_frame_tag :user_select do %>
+  <%= form_with url: event_user_select_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
+    <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10", data: { action: "input->form#submit", form_target: "input" } %>
+    <button type="submit" class="pop muted">
+      <%= inline_icon "search" %>
+    </button>
+    <% request.query_parameters.except(:search).each do |key, value| %>
+      <%= hidden_field_tag key, value %>
+    <% end %>
+  <% end %>
+
+  <% @users.each do |user| %>
+    <%= link_to user.full_name,
+        upsert_query_params_from_url(params[:url], params[:filter_key] => user.id),
+        class: "menu__action !border-none #{'menu__action--active' if params[:selected] == user.id.to_s}",
+        data: { turbo_frame: "_top" } %>
+  <% end %>
+
+  <% if @users.empty? %>
+    <p class="muted italic p-1 pr-10">
+      <%= @search ? "We couldn't find any users with your search term" : "No users found" %>
+    </p>
+  <% end %>
+
+  <%= paginate @users %>
+<% end %>

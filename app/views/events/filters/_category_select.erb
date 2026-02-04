@@ -1,0 +1,21 @@
+<%= turbo_frame_tag :category_select do %>
+  <%= form_with url: event_category_select_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
+    <%= f.text_field :search, value: params[:search], placeholder: "Search", class: "w-full pr-10 shadow-none", data: { action: "input->form#submit", form_target: "input" } %>
+      <button type="submit" class="pop muted">
+        <%= inline_icon "search" %>
+      </button>
+      <% request.query_parameters.except(:search).each do |key, value| %>
+        <%= hidden_field_tag key, value %>
+      <% end %>
+  <% end %>
+  <% @categories.each do |category| %>
+    <div class="flex items-center">
+      <%= link_to(category.definition.label, upsert_query_params_from_url(params[:url], category: category.slug), class: "flex-auto menu__action #{"menu__action--active" if @category == category}", data: { turbo_frame: "_top" }) %>
+    </div>
+  <% end %>
+  <% if @categories.empty? %>
+    <p class="muted italic p-1 pr-10">
+      <%= @search ? "We couldn't find any categories with your search term" : "No categories found" %>
+    </p>
+  <% end %>
+<% end %>
