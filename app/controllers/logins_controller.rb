@@ -32,7 +32,7 @@ class LoginsController < ApplicationController
 
     if params[:referral_link_id].present?
       referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
-      login = user.logins.create(referral_program: referral_link&.program, referral_link:)
+      login = user.logins.create(referral_link:)
     else
       login = user.logins.create
     end
@@ -222,7 +222,7 @@ class LoginsController < ApplicationController
       if params[:id]
         @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
         @referral_link = @login.referral_link
-        @referral_program = @login.referral_program
+        @referral_program = @referral_link&.program
         unless valid_browser_token?
           # error! browser token doesn't match the cookie.
           flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
