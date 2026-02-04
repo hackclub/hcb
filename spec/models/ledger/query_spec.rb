@@ -277,7 +277,7 @@ RSpec.describe Ledger::Query, type: :model do
                                  ]
                                })
 
-        expect(result.to_sql).to match(/OR/)
+        expect(result.to_sql).to match(/amount_cents.*OR.*\(.*amount_cents.*AND.*memo.*\)/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_f))
       end
     end
