@@ -31,7 +31,7 @@ class LoginsController < ApplicationController
 
     if params[:referral_link_id].present?
       referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
-      login = user.logins.create(referral_program: referral_link&.program, referral_link:)
+      login = user.logins.create(referral_link:)
     else
       login = user.logins.create
     end
