@@ -11,7 +11,7 @@
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  affiliable_id   :bigint           not null
-#  event_id        :bigint           not null
+#  event_id        :bigint
 #
 # Indexes
 #
