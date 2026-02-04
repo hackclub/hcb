@@ -9,9 +9,15 @@
 <% if @disbursement.local_hcb_code %>
   <% admin_tool("mt1") do %>
     <p>
-      <strong>HCB Code:</strong>
+      <strong>Outgoing HCB Code:</strong>
       <span>
-        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_disbursement.local_hcb_code)) %>
+      </span>
+    </p>
+    <p>
+      <strong>Incoming HCB Code:</strong>
+      <span>
+        <%= link_to(@disbursement.incoming_hcb_code, hcb_code_path(@disbursement.incoming_disbursement.local_hcb_code)) %>
       </span>
     </p>
   <% end %>
@@ -83,7 +89,7 @@
         <%= format_datetime @disbursement.created_at %>
       </p>
 
-      <% if @hcb_code.disbursement.scheduled_on.present? %>
+      <% if @disbursement.scheduled_on.present? %>
         <% admin_tool("", "p") do %>
           <strong>Scheduled for</strong>
           <%= @disbursement.scheduled_on.strftime("%B %e, %Y") %>

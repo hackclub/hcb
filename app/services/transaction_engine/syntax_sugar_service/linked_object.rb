@@ -32,8 +32,6 @@ module TransactionEngine
 
           return likely_donation if donation?
 
-          return likely_disbursement if disbursement?
-
           return likely_bank_fee if outgoing_bank_fee?
 
           return reimbursement_expense_payout if reimbursement_expense_payout
@@ -159,12 +157,6 @@ module TransactionEngine
         return nil unless potential_donation_payouts.present?
 
         potential_donation_payouts.first.donation
-      end
-
-      def likely_disbursement
-        return nil unless event
-
-        Disbursement.where(id: likely_disbursement_id).first
       end
 
       def reimbursement_expense_payout

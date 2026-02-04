@@ -1,69 +1,96 @@
-<% @destination = @hcb_code.disbursement.destination_event %>
-<% @source = @hcb_code.disbursement.source_event %>
-<% @subledger = @hcb_code.disbursement.destination_subledger || @hcb_code.disbursement.source_subledger %>
+<%# locals: (disbursement:) %>
+<% @destination = disbursement.destination_event %>
+<% @source = disbursement.source_event %>
+<% @subledger = disbursement.destination_subledger || disbursement.source_subledger %>
 
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span>
-      <%= @source.name %>
-      <span class="regular muted">
-        <% if @hcb_code.disbursement.fulfilled? || (@destination.can_front_balance? && (@hcb_code.disbursement.processed? || @hcb_code.disbursement.pending?)) %>
-          transferred
-        <% elsif @hcb_code.disbursement.processed? || @hcb_code.disbursement.pending? %>
-          transferring
-        <% else %>
-          transfer of
-        <% end %>
+    <% if @hcb_code.outgoing_disbursement? %>
+      <span>
+        <span class="regular muted">
+          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
+            Transfer of
+          <% elsif disbursement.processed? || disbursement.pending? %>
+            Transferring
+          <% else %>
+            Transfer of
+          <% end %>
+        </span>
+        <span class="regular"><%= render_money disbursement.amount.abs %></span>
+        <span class="regular muted">to</span>
+        <%= @destination.name %>
       </span>
-      <span class="regular"><%= render_money @hcb_code.disbursement.amount %></span>
-      <span class="regular muted">to</span>
-      <%= @destination.name %>
-    </span>
-    <span class="badge h4 bg-<%= @hcb_code.disbursement.state %> order-1">
-      <%= @hcb_code.disbursement.state_text.humanize %>
-      <%= inline_icon @hcb_code.disbursement.state_icon, size: 20 if @hcb_code.disbursement.state_icon %>
+    <% else %>
+      <span>
+        <%= @source.name %>
+        <span class="regular muted">
+          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
+            transferred
+          <% elsif disbursement.processed? || disbursement.pending? %>
+            transferring
+          <% else %>
+            transfer of
+          <% end %>
+        </span>
+        <span class="regular"><%= render_money disbursement.amount %></span>
+      </span>
+    <% end %>
+    <span class="badge h4 bg-<%= disbursement.state %> order-1">
+      <%= disbursement.state_text.humanize %>
+      <%= inline_icon disbursement.state_icon, size: 20 if disbursement.state_icon %>
     </span>
   <% end %>
 
   <section class="hcb-code--details">
-    <% unless @hcb_code.disbursement.requested_by.nil? %>
+    <% unless disbursement.requested_by.nil? %>
       <div>
-        <% if @hcb_code.disbursement.reviewing? || @hcb_code.disbursement.rejected? %>
+        <% if disbursement.reviewing? || disbursement.rejected? %>
           <strong>Requested by</strong>
         <% else %>
           <strong>Sent by</strong>
         <% end %>
-        <%= user_mention @hcb_code.disbursement.requested_by %>
+        <%= user_mention disbursement.requested_by %>
       </div>
     <% end %>
 
-    <% unless @hcb_code.disbursement.fulfilled_by.nil? %>
+    <% unless disbursement.fulfilled_by.nil? %>
       <% admin_tool("", "div") do %>
         <strong>Fulfilled by</strong>
-        <%= user_mention @hcb_code.disbursement.fulfilled_by %>
+        <%= user_mention disbursement.fulfilled_by %>
       <% end %>
     <% end %>
 
-    <% if @hcb_code.disbursement.processed? %>
+    <div>
+      <strong>Direction</strong>
+      <% if @hcb_code.outgoing_disbursement? %>
+        <% incoming_hcb_code = disbursement.disbursement.incoming_disbursement.local_hcb_code %>
+        <%= link_to_if HcbCodePolicy.new(current_user, incoming_hcb_code).show?, "Outgoing →", hcb_code_path(incoming_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{@destination.name}" %>
+      <% else %>
+        <% outgoing_hcb_code = disbursement.disbursement.outgoing_disbursement.local_hcb_code %>
+        <%= link_to_if HcbCodePolicy.new(current_user, outgoing_hcb_code).show?, "⇢ Incoming", hcb_code_path(outgoing_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{@source.name}" %>
+      <% end %>
+    </div>
+
+    <% if disbursement.processed? %>
       <div>
         <strong>Transferred at</strong>
-        <%= format_datetime @hcb_code.disbursement.transferred_at %>
+        <%= format_datetime disbursement.transferred_at %>
       </div>
     <% else %>
       <div>
         <strong>Requested at</strong>
-        <%= format_datetime @hcb_code.disbursement.created_at %>
-        <% if @hcb_code.disbursement.scheduled_on.present? && !@hcb_code.disbursement.processed? %>
+        <%= format_datetime disbursement.created_at %>
+        <% if disbursement.scheduled_on.present? && !disbursement.processed? %>
           <% admin_tool("", "div") do %>
             <strong>Scheduled at</strong>
-            <%= @hcb_code.disbursement.scheduled_on.strftime("%B %e, %Y") %>
+            <%= disbursement.scheduled_on.strftime("%B %e, %Y") %>
           <% end %>
         <% end %>
       </div>
     <% end %>
     <% admin_tool("", "div") do %>
       <strong>Disbursement ID</strong>
-      <%= link_to @hcb_code.disbursement.id, @hcb_code.disbursement %>
+      <%= link_to disbursement.id, disbursement %>
     <% end %>
 
   </section>
@@ -81,25 +108,26 @@
     <% else %>
       <p>
         <strong>From</strong>
-        <%= link_to @source.name, @source, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, @source).show?, @source.name, @source, target: "_top" %>
       </p>
 
       <p>
         <strong>To</strong>
-        <%= link_to @destination.name, @destination, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, @destination).show?, @destination.name, @destination, target: "_top" %>
       </p>
+
     <% end %>
 
     <p>
       <strong>Reason</strong>
-      <%= @hcb_code.disbursement.name %>
+      <%= disbursement.name %>
     </p>
 
-    <% if @hcb_code.disbursement.fulfilled? %>
+    <% if disbursement.fulfilled? %>
       <p>
         <strong>Confirmation letter</strong>
           <span class="muted">
-            <a href="/disbursements/<%= @hcb_code.disbursement.id %>/confirmation.pdf" target="_blank">
+            <a href="/disbursements/<%= disbursement.id %>/confirmation.pdf" target="_blank">
             <%= "View confirmation letter" %>
             </a>
           </span>
@@ -112,15 +140,15 @@
 
   <% if @event.can_front_balance? %>
     <section class="hcb-code--footer">
-      <% if @hcb_code.disbursement.may_mark_rejected? %>
+      <% if disbursement.may_mark_rejected? %>
         <% admin_tool "w-fit" do %>
-          <%= button_to "Process", disbursement_process_admin_path(@hcb_code.disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+          <%= button_to "Process", disbursement_process_admin_path(disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
         <% end %>
       <% end %>
 
-      <% if @hcb_code.disbursement.scheduled? %>
+      <% if disbursement.scheduled? %>
         <% admin_tool "w-fit" do %>
-          <%= button_to "Cancel transfer", disbursement_cancel_path(@hcb_code.disbursement), class: "btn bg-error" %>
+          <%= button_to "Cancel transfer", disbursement_cancel_path(disbursement), class: "btn bg-error" %>
         <% end %>
       <% end %>
 

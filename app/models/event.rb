@@ -378,6 +378,9 @@ class Event < ApplicationRecord
   has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
   accepts_nested_attributes_for :event_scoped_tags_events
 
+  has_one :ledger, -> { where(primary: true) }, inverse_of: :event
+  after_create :create_ledger
+  has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -392,6 +395,8 @@ class Event < ApplicationRecord
 
   has_one :column_account_number, class_name: "Column::AccountNumber"
   delegate :account_number, :routing_number, :bic_code, to: :column_account_number, allow_nil: true
+
+  has_one :application
 
   has_many :grants
 
@@ -867,7 +872,7 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+    organizer_positions.joins(:user).count { |op| op.user.is_teenager? && op.user.active? }
   end
 
   def subevents_enabled?

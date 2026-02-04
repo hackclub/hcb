@@ -1,0 +1,139 @@
+<%# locals: (application:, allow_edits: false) %>
+
+<% blank = capture do %>
+  <em>Blank</em>
+<% end %>
+
+<div>
+  <div class="flex items-center justify-between gap-4 mb-4">
+    <h3 class="text-2xl my-0">Project Information</h3>
+    <% admin_tool_if(!allow_edits) do %>
+      <%= link_to allow_edits ? project_info_application_path(application) : edit_application_path(application), class: "btn text-sm flex items-center gap-1" do %>
+        <%= inline_icon "edit", size: 16 %>
+        Edit
+      <% end %>
+    <% end %>
+  </div>
+  <div class="card card--breakdown p-4 space-y-4">
+    <div>
+      <p class="text-sm muted mb-1 mt-0">Project name</p>
+      <p class="mb-0 font-medium"><%= application.name.present? ? application.name : blank %></p>
+    </div>
+    <div>
+      <p class="text-sm muted mb-1">Project description</p>
+      <p class="mb-0 whitespace-pre-wrap"><%= application.description.present? ? application.description : blank %></p>
+    </div>
+    <div>
+      <p class="text-sm muted mb-1">Website</p>
+      <p class="mb-0"><%= application.website_url.present? ? "Yes" : "No" %></p>
+      <% if application.website_url.present? %>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.website_url %></p>
+      <% end %>
+    </div>
+    <div>
+      <p class="text-sm muted mb-1">Political activity involvement</p>
+      <p class="mb-0"><%= application.political_description.present? ? "Yes" : "No" %></p>
+      <% if application.political_description.present? %>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.political_description %></p>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="flex items-center justify-between gap-4 mb-4">
+    <h3 class="text-2xl my-0">Personal Information</h3>
+    <% admin_tool_if(!allow_edits) do %>
+      <%= link_to allow_edits ? personal_info_application_path(application) : edit_application_path(application), class: "btn text-sm flex items-center gap-1" do %>
+        <%= inline_icon "edit", size: 16 %>
+        Edit
+      <% end %>
+    <% end %>
+  </div>
+  <div class="card card--breakdown p-4 space-y-4 mb-6">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm muted mb-1 mt-0">Full name</p>
+        <p class="mb-0"><%= application.user.full_name.present? ? application.user.full_name : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1 mt-0">Email</p>
+        <p class="mb-0"><%= application.user.email.present? ? application.user.email : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Phone number</p>
+        <p class="mb-0"><%= application.user.phone_number.present? ? application.user.phone_number : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Birthday</p>
+        <p class="mb-0"><%= application.user.birthday.present? ? application.user.birthday.strftime("%B %-d, %Y") : blank %></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm muted mb-1">Street address</p>
+        <p class="mb-0"><%= application.address_line1.present? ? application.address_line1 : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Line 2</p>
+        <p class="mb-0"><%= application.address_line2.present? ? application.address_line2 : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">City</p>
+        <p class="mb-0"><%= application.address_city.present? ? application.address_city : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">State</p>
+        <p class="mb-0"><%= application.address_state.present? ? application.address_state : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Zip code</p>
+        <p class="mb-0"><%= application.address_postal_code.present? ? application.address_postal_code : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Country</p>
+        <p class="mb-0"><%= application.address_country.present? ? application.address_country : blank %></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm muted mb-1">How did you hear about HCB?</p>
+        <p class="mb-0"><%= application.referrer.present? ? application.referrer : blank %></p>
+      </div>
+      <div>
+        <p class="text-sm muted mb-1">Referral code</p>
+        <p class="mb-0"><%= application.referral_code.present? ? application.referral_code : blank %></p>
+      </div>
+    </div>
+
+    <% if application.accessibility_notes.present? %>
+      <div>
+        <p class="text-sm muted mb-1">Accessibility needs</p>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.accessibility_notes %></p>
+      </div>
+    <% end %>
+
+    <% if application.user.teenager? && application.cosigner_email.present? %>
+      <div>
+        <p class="text-sm muted mb-1">Parent email</p>
+        <p class="mb-0"><%= application.cosigner_email %></p>
+      </div>
+
+      <% admin_tool "p-2" do %>
+        <p class="mt-0 mb-2"><strong>Parent email updates</strong></p>
+        <ul class="list-reset m-0">
+          <% field = "cosigner_email" %>
+          <% @application.versions.reverse.select { |version| version.changeset[field]&.any?(&:present?) }.map do |version| %>
+            <% change = version.changeset[field] %>
+            <li>
+              <%= format_date version.created_at %>:
+              <%= render_audit_log_value(field, change[0], color: "primary") %> → <%= render_audit_log_value(field, change[1], color: "success") %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+</div>

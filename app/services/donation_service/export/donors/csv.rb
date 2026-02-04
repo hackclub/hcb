@@ -59,7 +59,7 @@ module DonationService
             donor["email"],
             donor["total_amount_cents"],
             donor["latest_recurring_donation_id"].present? && (RecurringDonation.where(email: donor["email"], event_id: @event.id).active.any? ? "ACTIVE" : "INACTIVE")
-          ]
+          ].map { |value| SafeCsv.sanitize(value) }
         end
 
       end
