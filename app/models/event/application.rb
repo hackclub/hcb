@@ -66,6 +66,7 @@ class Event
     belongs_to :event, optional: true
 
     has_many :affiliations, as: :affiliable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable
 
     validate :cosigner_cannot_change_after_sign
 
@@ -197,10 +198,6 @@ class Event
 
     def political?
       political_description.present? && political_description.strip.length.positive?
-    end
-
-    def contract
-      contracts.where.not(aasm_state: :voided).last
     end
 
     def contract_notify_when_sent
