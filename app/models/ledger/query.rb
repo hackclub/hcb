@@ -2,7 +2,7 @@
 
 class Ledger
   class Query
-    PERMITTED_COLUMNS = %w[memo amount_cents date].freeze
+    PERMITTED_COLUMNS_MAP = %w[memo amount_cents date].index_by(&:to_s).freeze
 
     class Error < ArgumentError; end
 
@@ -102,16 +102,9 @@ class Ledger
       relation
     end
 
-    def column_index(column_name)
-      safe_column = PERMITTED_COLUMNS.index(column_name.to_s)
-
-      raise Ledger::Query::Error.new("Invalid column name: #{column_name}") unless safe_column.present?
-
-      safe_column
-    end
-
     def apply_partial_predicate(relation, operator, raw_key, operand)
-      key = PERMITTED_COLUMNS[column_index(raw_key)]
+      key = PERMITTED_COLUMNS_MAP[raw_key]
+      raise Ledger::Query::Error.new("Invalid column name: #{raw_key}") unless key.present?
 
       if operand.is_a?(Numeric)
         case operator.to_s
