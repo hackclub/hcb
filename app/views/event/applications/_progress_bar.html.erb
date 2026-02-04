@@ -3,7 +3,7 @@
 <% last_completed_index = steps.rindex { |step| step[:completed] } || -1 %>
 <% steps = steps.map.with_index { |step, index| step.merge(state: index < last_completed_index ? :completed : index == last_completed_index ? :last_completed : index == last_completed_index + 1 ? :active : :pending) } %>
 
-<div class="mb-4 w-max rounded-full bg-smoke dark:bg-darkless snow bold flex flex-row overflow-hidden items-stretch text-black border-solid border-white dark:border-darker border-1">
+<div class="self-center mb-4 w-max rounded-full bg-smoke dark:bg-darkless snow bold flex flex-row overflow-hidden items-stretch text-black border-solid border-white dark:border-darker border-1">
   <% steps.each do |step| %>
     <% background = { completed: "muted", last_completed: "muted", active: "primary", pending: "smoke dark:bg-darkless" }[step[:state]] %>
     <% text_color = { completed: "snow", last_completed: "snow", active: "snow", pending: "black" }[step[:state]] %>
