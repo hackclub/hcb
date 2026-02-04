@@ -39,7 +39,6 @@
       <h2>Tasks</h2>
       <ul class="grid text-left w-100 mt0" id="task-grid">
         <%= card_to "Applications (Airtable)", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
-        <%= card_to "Applications (HCB)", applications_admin_index_path, badge: 0 %>
         <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
         <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
         <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
@@ -57,6 +56,7 @@
       <h2>Info</h2>
       <ul class="grid text-left w-100 mt0" id="info-grid">
         <%= card_to "Organizations", events_admin_index_path, badge: Event.approved.count, subtle_badge: true %>
+        <%= card_to "Applications (HCB)", applications_admin_index_path, badge: Event::Application.under_review.count %>
         <%= card_to "Users", users_admin_index_path %>
         <%= card_to "Donations", donations_admin_index_path %>
         <%= card_to "Invoices", invoices_admin_index_path %>
