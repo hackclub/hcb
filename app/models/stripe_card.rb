@@ -64,7 +64,7 @@ class StripeCard < ApplicationRecord
   has_paper_trail
 
   validate :within_card_limit, on: :create
-  validates :subledger, uniqueness: true
+  validates :subledger, uniqueness: true, allow_nil: true
 
   after_create_commit :notify_user, unless: :skip_notify_user
 
