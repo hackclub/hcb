@@ -5,7 +5,7 @@
 # Table name: event_applications
 #
 #  id                           :bigint           not null, primary key
-#  aasm_state                   :string
+#  aasm_state                   :string           not null
 #  address_city                 :string
 #  address_country              :string
 #  address_line1                :string
@@ -20,7 +20,7 @@
 #  currently_fiscally_sponsored :boolean
 #  description                  :text
 #  funding_source               :string
-#  last_page_viewed             :integer
+#  last_page_viewed             :string
 #  last_viewed_at               :datetime
 #  name                         :string
 #  notes                        :text
@@ -87,12 +87,12 @@ class Event
     end
 
     enum :last_page_viewed, {
-      show: 0,
-      project_info: 1,
-      personal_info: 2,
-      review: 3,
-      agreement: 4,
-      submission: 5
+      show: "show",
+      project_info: "project_info",
+      personal_info: "personal_info",
+      review: "review",
+      agreement: "agreement",
+      submission: "submission"
     }
 
     aasm timestamps: true do

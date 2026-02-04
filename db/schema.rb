@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -975,7 +975,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
   end
 
   create_table "event_applications", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "address_city"
     t.string "address_country"
     t.string "address_line1"
@@ -993,7 +993,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.text "description"
     t.bigint "event_id"
     t.string "funding_source"
-    t.integer "last_page_viewed"
+    t.string "last_page_viewed"
     t.datetime "last_viewed_at"
     t.string "name"
     t.text "notes"
