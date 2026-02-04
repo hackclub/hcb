@@ -125,7 +125,7 @@ GEM
       faraday-net_http_persistent
       net-http-persistent
     android_key_attestation (0.3.0)
-    annotaterb (4.16.0)
+    annotaterb (4.21.0)
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
     api-pagination (6.0.0)
