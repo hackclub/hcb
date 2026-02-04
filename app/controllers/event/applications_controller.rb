@@ -89,7 +89,11 @@ class Event
       if @application.airtable_url.present?
         redirect_to @application.airtable_url, allow_other_host: true
       else
-        flash[:error] = "This application has not been synced to Airtable yet."
+        if @application.submitted_at.nil?
+          flash[:error] = "This application has not been synced to Airtable yet."
+        else
+          flash[:error] = "Something went wrong. This application was not synced to Airtable."
+        end
         redirect_to application_path(@application)
       end
     end
