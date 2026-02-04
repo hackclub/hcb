@@ -64,7 +64,7 @@
           <div data-tabs-target="tab" id="type">
             <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire", "wise_transfer"].each do |type| %>
               <div class="flex items-center">
-                <%= link_to(event_ledger_path(@event, upsert_query_params(type:)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
+                <%= link_to(event_ledger_path(@event, upsert_query_params(type:, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @type == type}", data: { turbo_prefetch: "false" }) do %>
                   <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
                 <% end %>
               </div>
@@ -118,7 +118,7 @@
               </div>
               <% ["expenses", "revenue"].each do |direction| %>
                 <div class="flex items-center">
-                  <%= link_to(event_ledger_path(@event, upsert_query_params(direction:)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
+                  <%= link_to(event_ledger_path(@event, upsert_query_params(direction:, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @direction == direction}", data: { turbo_prefetch: "false" }) do %>
                     <%= direction.humanize %>
                   <% end %>
                 </div>
