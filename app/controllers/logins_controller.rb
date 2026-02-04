@@ -182,7 +182,7 @@ class LoginsController < ApplicationController
           end
         end
 
-        if @user.only_draft_application?
+        if @user.only_draft_application? && return_path.blank?
           redirect_to application_path(@user.applications.first)
         else
           redirect_to(return_path || root_path)
