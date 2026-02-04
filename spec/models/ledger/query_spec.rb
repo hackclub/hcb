@@ -298,9 +298,9 @@ RSpec.describe Ledger::Query, type: :model do
       expect { described_class.new("invalid") }.to raise_error(Ledger::Query::Error, /must be a Hash/)
     end
 
-    it "raises on invalid column name" do
+    it "raises on invalid field name" do
       query = { invalid_column: 100 }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Invalid column name/)
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Invalid field name/)
     end
   end
 

@@ -104,7 +104,7 @@ class Ledger
 
     def apply_partial_predicate(relation, operator, raw_key, operand)
       key = PERMITTED_COLUMNS_MAP[raw_key]
-      raise Ledger::Query::Error.new("Invalid column name: #{raw_key}") unless key.present?
+      raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
       if operand.is_a?(Numeric)
         case operator.to_s
