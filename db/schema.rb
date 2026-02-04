@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2301,7 +2301,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
     t.index ["stripe_cardholder_id"], name: "index_stripe_cards_on_stripe_cardholder_id"
     t.index ["stripe_id"], name: "index_stripe_cards_on_stripe_id", unique: true
-    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id"
+    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id", unique: true
   end
 
   create_table "stripe_service_fees", force: :cascade do |t|
