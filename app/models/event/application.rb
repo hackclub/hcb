@@ -67,6 +67,7 @@ class Event
 
     has_many :affiliations, as: :affiliable
 
+    after_save :check_cosigner_update
     after_commit :sync_to_airtable
 
     monetize :annual_budget_cents, allow_nil: true
@@ -301,6 +302,13 @@ class Event
 
     def record_pageview(last_page_viewed)
       update!(last_viewed_at: Time.current, last_page_viewed:)
+    end
+
+    def check_cosigner_update
+      if contract.present? && cosigner_email_previously_changed?
+        contract.mark_voided!
+        create_contract
+      end
     end
 
     def activate!

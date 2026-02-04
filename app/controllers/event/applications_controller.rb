@@ -185,10 +185,8 @@ class Event
       end
 
       if application_params[:cosigner_email].present? && @application.contract.present?
-        if @application.cosigner_email_previously_changed?
-          @application.contract.mark_voided!
-          @application.create_contract
-        else
+        # The case where the cosigner email changed is handled by an after_save callback
+        unless @application.cosigner_email_previously_changed?
           @application.contract.party(:cosigner).notify
         end
 
