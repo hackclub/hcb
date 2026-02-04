@@ -124,6 +124,11 @@ module StaticPagesHelper
     }
   end
 
+  def apply_form_url(user = current_user, **query_params)
+    query_params = { userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web" }.merge(query_params) # allow method arguments to override default.
+    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form(query_params.compact)}"
+  end
+
   def render_permissions(permissions, depth = 0)
     capture do
       permissions.each_with_index do |(k, v), i|

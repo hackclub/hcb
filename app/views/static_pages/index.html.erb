@@ -107,7 +107,7 @@
 
         <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
 
-        <%= link_to apply_path do %>
+        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
           <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
             <div class="center">
               <div class="pop success mx-auto flex mb-1">
@@ -134,7 +134,7 @@
         <span>
           You aren't a part of an organization yet, looking to start one?
         </span>
-        <%= link_to apply_path, class: "btn bg-success mt2" do %>
+        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
           <%= inline_icon "plus" %>
           New organization
         <% end %>
