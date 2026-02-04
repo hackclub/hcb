@@ -60,6 +60,7 @@ class Event
 
     include PublicIdentifiable
     set_public_id_prefix :app
+    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
