@@ -1626,7 +1626,7 @@ class AdminController < Admin::BaseController
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
-        1
+        pending_identity_vault_verifications_task_size
       when :emburse_card_requests
         EmburseCardRequest.under_review.size
       when :emburse_transactions
