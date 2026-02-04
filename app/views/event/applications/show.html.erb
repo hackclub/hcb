@@ -2,6 +2,11 @@
 
 <% if @application.draft? %>
   <%= render partial: "begin", locals: { application: @application } %>
+<% elsif @application.rejected? %>
+  <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+    <h2 class="text-3xl md:text-4xl m-0">Your application has been reviewed</h2>
+    <p>A status update on your application has been emailed to <%= @application.user.email %>.</p>
+  </div>
 <% else %>
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
     <%= render partial: "progress_bar", locals: { steps: @steps } %>
