@@ -260,7 +260,7 @@ RSpec.describe Ledger::Query, type: :model do
                                  ]
                                })
 
-        expect(result.to_sql).to match(/OR/)
+        expect(result.to_sql).to match(/amount_cents.*AND.*amount_cents.*OR.*amount_cents.*AND.*amount_cents/)
         expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_g))
       end
 
