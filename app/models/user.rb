@@ -576,9 +576,9 @@ class User < ApplicationRecord
                         organizer_position_invites.none? && contracts.none? &&
                         reimbursement_reports.none?
 
-    applications = applications.limit(2).to_a
+    apps = applications.limit(2).to_a
 
-    applications.size == 1 && (applications.first.draft? || applications.first.submitted? || applications.first.under_review?)
+    apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
   end
 
   private
