@@ -70,10 +70,6 @@ class Contract
       "https://docuseal.co/s/#{external_id}"
     end
 
-    def docuseal_submission
-      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
-    end
-
     def docuseal_role
       case role
       when "signee"
@@ -106,6 +102,10 @@ class Contract
     end
 
     private
+
+    def docuseal_submission
+      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
 
     def signee_is_user
       if signee? && user.nil?
