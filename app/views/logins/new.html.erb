@@ -1,5 +1,6 @@
 <% turbo_page_requires_reload if params[:require_reload].present? %>
-<% title "Sign #{@signup ? "up" : "in"}" %>
+<% title_text = @for_application ? "Verify your email" : @signup ? "Sign up for HCB" : "Sign in to HCB" %>
+<% title title_text %>
 
 <% content_for :info_pane do %>
   <%= render partial: "apply_info_pane" %>
@@ -8,11 +9,7 @@
 <div class="flex flex-col flex-1 justify-center w-full <%= @for_application ? "card" : "max-w-md" %>">
   <div class="my-auto">
     <%= render "logins/header", label: @for_application ? "Apply for HCB" : "Hack Club" do %>
-      <% if @for_application %>
-        Verify your email
-      <% else %>
-        Sign <%= @signup ? "up for" : "in to" %> HCB
-      <% end %>
+      <%= title_text %>
     <% end %>
     <%= form_tag logins_path, class: "mt-1", id: "login", 'data-action': "webauthn-auth#submit", 'data-webauthn-auth-target': "authForm" do %>
       <div data-webauthn-auth-target="error" class="mb2 display-none">
