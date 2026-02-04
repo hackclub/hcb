@@ -9,7 +9,7 @@
 
   <% if @event.application.present? %>
     <% admin_tool "p-3" do %>
-      <%= link_to "Go to organization's application", submission_application_path(@event.application)%>
+      <%= link_to "Go to organization's application", submission_application_path(@event.application) %>
     <% end %>
   <% end %>
 
