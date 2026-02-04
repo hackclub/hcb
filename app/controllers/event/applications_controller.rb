@@ -226,7 +226,7 @@ class Event
     end
 
     def application_params
-      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size)
+      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size, :funding_source)
     end
 
     def user_params
