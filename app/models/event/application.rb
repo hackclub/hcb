@@ -67,6 +67,8 @@ class Event
 
     has_many :affiliations, as: :affiliable
 
+    validate :cosigner_cannot_change_after_sign
+
     after_save :check_cosigner_update
     after_commit :sync_to_airtable
 
@@ -338,6 +340,14 @@ class Event
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
+    end
+
+    private
+
+    def cosigner_cannot_change_after_sign
+      if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
+        errors.add(:cosigner_email, "cannot change after the cosigner has signed")
+      end
     end
 
   end

@@ -40,6 +40,7 @@ class Contract
     validates :role, uniqueness: { scope: :contract }
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
+    validate :email_cannot_change_after_sign
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
     normalizes :external_email, with: ->(external_email) { external_email.strip.downcase }
@@ -115,6 +116,12 @@ class Contract
     def contract_is_pending
       unless contract.pending?
         errors.add(:contract, "cannot have parties added after it is sent")
+      end
+    end
+
+    def email_cannot_change_after_sign
+      if self["aasm_state"] == "signed" && (user_changed? || external_email_changed?)
+        errors.add(:base, "The signing party cannot change after it has signed the contract")
       end
     end
 
