@@ -6,6 +6,7 @@
 #
 #  id                           :bigint           not null, primary key
 #  aasm_state                   :string           not null
+#  accessibility_notes          :text
 #  address_city                 :string
 #  address_country              :string
 #  address_line1                :string
@@ -23,7 +24,6 @@
 #  last_page_viewed             :string
 #  last_viewed_at               :datetime
 #  name                         :string
-#  notes                        :text
 #  planning_duration            :string
 #  political_description        :text
 #  project_category             :string

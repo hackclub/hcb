@@ -976,6 +976,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
 
   create_table "event_applications", force: :cascade do |t|
     t.string "aasm_state", null: false
+    t.text "accessibility_notes"
     t.string "address_city"
     t.string "address_country"
     t.string "address_line1"
@@ -996,7 +997,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_060052) do
     t.string "last_page_viewed"
     t.datetime "last_viewed_at"
     t.string "name"
-    t.text "notes"
     t.string "planning_duration"
     t.text "political_description"
     t.string "project_category"

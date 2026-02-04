@@ -31,7 +31,7 @@ class CreateEventApplications < ActiveRecord::Migration[8.0]
       t.string :referrer
       t.string :referral_code
 
-      t.text :notes
+      t.text :accessibility_notes
 
       t.string :last_page_viewed
       t.datetime :last_viewed_at
