@@ -571,6 +571,12 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def only_draft_application?
+    @user.events.none? && @user.card_grants.none? &&
+    @user.organizer_position_invites.none? && @user.contracts.none? &&
+    @user.reimbursement_reports.none? && @user.applications.draft.one?
+  end
+
   private
 
   def update_stripe_cardholder

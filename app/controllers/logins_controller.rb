@@ -182,7 +182,7 @@ class LoginsController < ApplicationController
           end
         end
 
-        if @user.events.none? && @user.card_grants.none? && @user.organizer_position_invites.none? && @user.contracts.none? && @user.applications.one?
+        if @user.only_draft_application?
           redirect_to application_path(@user.applications.first)
         else
           redirect_to(return_path || root_path)
