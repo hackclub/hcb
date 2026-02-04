@@ -132,10 +132,10 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teenager: params[:teen_led].presence), require_reload: true) and return
+        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teenager] == "true"))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
       @application.save!
 
       redirect_to project_info_application_path(@application)
