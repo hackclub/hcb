@@ -213,16 +213,17 @@ class Event
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
 
+      fs_contract = nil
       ActiveRecord::Base.transaction do
-        contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
-        contract.parties.create!(user:, role: :signee)
-        contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
+        fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        fs_contract.parties.create!(user:, role: :signee)
+        fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      contract.send!
-      contract.party(:cosigner)&.notify
+      fs_contract.send!
+      fs_contract.party(:cosigner)&.notify
 
-      contract
+      fs_contract
     end
 
     def ready_to_submit?
