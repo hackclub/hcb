@@ -12,12 +12,12 @@
       </h2>
 
       <p class="m-0 text-lg muted">
-        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%p").downcase %>
+        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
 
         <% if @application.approved_at? %>
-          <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%p").downcase %>
+          <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
         <% elsif @application.rejected_at? %>
-          <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%p").downcase %>
+          <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%P") %>
         <% end %>
       </p>
     </div>
