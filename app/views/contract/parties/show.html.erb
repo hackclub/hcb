@@ -13,14 +13,7 @@
 <% end %>
 
 <div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
-  <div class="max-h-[75vh] overflow-scroll md:col-span-3">
-    <docuseal-form
-      id="docusealForm"
-      data-src="<%= @party.docuseal_signature_url %>"
-      data-with-title="false"
-      data-action="completed->contract#completed declined->contract#void">
-    </docuseal-form>
-  </div>
+  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: "md:col-span-3" } %>
   <div class="md:col-span-2 max-h-[75vh]">
     <% if @contract.contractable.is_a?(Event::Application) && @party.hcb? %>
       <p class="text-center">Sign the contract before activating the organization</p>
