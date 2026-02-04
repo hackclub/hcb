@@ -4,10 +4,11 @@ class LoginsController < ApplicationController
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
+  before_action :set_for_application
   before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
 
-  layout "login"
+  layout ->{ @for_application ? "apply" : "login" }
 
   after_action only: [:new] do
     # Allow indexing login page
@@ -27,7 +28,7 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
+    user = User.create_with(creation_method: @for_application ? :application_form : :login).find_or_create_by!(email: params[:email])
 
     if params[:referral_link_id].present?
       referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
@@ -166,7 +167,7 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.present?
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
-      elsif @user.full_name.blank? || @user.phone_number.blank?
+      elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@for_application
         redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
@@ -180,7 +181,12 @@ class LoginsController < ApplicationController
             return_path = root_path
           end
         end
-        redirect_to(return_path || root_path)
+
+        if @user.only_draft_application? && return_path.blank?
+          redirect_to application_path(@user.applications.first)
+        else
+          redirect_to(return_path || root_path)
+        end
       end
     else
       if @login.sms_available? || @login.email_available?
@@ -202,6 +208,14 @@ class LoginsController < ApplicationController
   end
 
   private
+
+  def set_for_application
+    path = URI(params[:return_to] || "").path
+
+    @for_application = path.starts_with?("/applications")
+  rescue URI::InvalidURIError
+    @for_application = false
+  end
 
   def set_login
     begin

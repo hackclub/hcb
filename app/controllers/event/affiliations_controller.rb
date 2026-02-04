@@ -2,6 +2,8 @@
 
 class Event
   class AffiliationsController < ApplicationController
+    # these actions are called before the user has completed their profile during the application process
+    skip_before_action :redirect_to_onboarding
     before_action :set_affiliable, only: :create
     before_action :set_metadata, only: [:create, :update]
 
@@ -48,6 +50,8 @@ class Event
       case params[:affiliable_type]
       when "Event"
         @affiliable = Event.find(params[:affiliable_id])
+      when "Event::Application"
+        @affiliable = Event::Application.find(params[:affiliable_id])
       end
     end
 

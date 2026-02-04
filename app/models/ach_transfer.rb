@@ -107,7 +107,7 @@ class AchTransfer < ApplicationRecord
   validates(
     :invoiced_at,
     comparison: {
-      less_than_or_equal_to: ->(ach_transfer) { ach_transfer.created_at || Date.today },
+      less_than_or_equal_to: ->(ach_transfer) { ach_transfer.created_at || Date.current },
       message: "cannot be after the transfer creation date"
     },
     allow_nil: true,

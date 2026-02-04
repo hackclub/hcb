@@ -36,30 +36,30 @@ RSpec.describe DisbursementService::Create do
 
     pending_outgoing = disbursement.raw_pending_outgoing_disbursement_transaction
     expect(pending_outgoing.amount_cents).to eq(-123_45)
-    expect(pending_outgoing.date_posted).to eq(Date.today)
+    expect(pending_outgoing.date_posted).to eq(Date.current)
 
     cpt_outgoing = pending_outgoing.canonical_pending_transaction
     expect(cpt_outgoing.event).to eq(source_event)
     expect(cpt_outgoing.amount_cents).to eq(-123_45)
     expect(cpt_outgoing.memo).to eq("Outgoing transfer")
     expect(cpt_outgoing.custom_memo).to be_nil
-    expect(cpt_outgoing.date).to eq(Date.today)
+    expect(cpt_outgoing.date).to eq(Date.current)
     expect(cpt_outgoing.fronted).to eq(false)
     expect(cpt_outgoing.hcb_code).to eq("HCB-500-#{disbursement.id}")
     expect(cpt_outgoing.category).to be_nil
 
     pending_incoming = disbursement.raw_pending_incoming_disbursement_transaction
     expect(pending_incoming.amount_cents).to eq(123_45)
-    expect(pending_incoming.date_posted).to eq(Date.today)
+    expect(pending_incoming.date_posted).to eq(Date.current)
 
     cpt_incoming = pending_incoming.canonical_pending_transaction
     expect(cpt_incoming.event).to eq(destination_event)
     expect(cpt_incoming.amount_cents).to eq(123_45)
     expect(cpt_incoming.memo).to eq("Incoming transfer")
     expect(cpt_incoming.custom_memo).to be_nil
-    expect(cpt_incoming.date).to eq(Date.today)
+    expect(cpt_incoming.date).to eq(Date.current)
     expect(cpt_incoming.fronted).to eq(false)
-    expect(cpt_incoming.hcb_code).to eq("HCB-500-#{disbursement.id}")
+    expect(cpt_incoming.hcb_code).to eq("HCB-550-#{disbursement.id}")
     expect(cpt_incoming.category).to be_nil
   end
 

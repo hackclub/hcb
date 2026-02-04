@@ -4,36 +4,39 @@ require "rails_helper"
 
 RSpec.describe HcbCode, type: :model do
   describe "disbursement integration" do
-    describe "#disbursement?" do
+    describe "#outgoing_disbursement?" do
       it "returns true for HCB-500-* codes" do
         disbursement = create(:disbursement)
         hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-500-#{disbursement.id}")
 
-        expect(hcb_code.disbursement?).to be true
+        expect(hcb_code.outgoing_disbursement?).to be true
       end
 
-      it "returns false for non-disbursement codes" do
-        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-600-123")
+      it "returns false for HCB-550-* codes" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-550-#{disbursement.id}")
 
-        expect(hcb_code.disbursement?).to be false
+        expect(hcb_code.outgoing_disbursement?).to be false
       end
     end
 
-    describe "#disbursement" do
-      it "returns the correct Disbursement record" do
+    describe "#incoming_disbursement?" do
+      it "returns true for HCB-550-* codes" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-550-#{disbursement.id}")
+
+        expect(hcb_code.incoming_disbursement?).to be true
+      end
+
+      it "returns false for HCB-500-* codes" do
         disbursement = create(:disbursement)
         hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-500-#{disbursement.id}")
 
-        expect(hcb_code.disbursement).to eq(disbursement)
-      end
-
-      it "returns nil for non-disbursement codes" do
-        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-600-123")
-
-        expect(hcb_code.disbursement).to be_nil
+        expect(hcb_code.incoming_disbursement?).to be false
       end
     end
 
+    # The goal is to deprecate this method entirely with the disbursement splitting work
     describe "#events" do
       context "with a disbursement that has canonical pending transactions" do
         let(:source_event) { create(:event) }
@@ -68,8 +71,14 @@ RSpec.describe HcbCode, type: :model do
           create(:disbursement, source_event: source_event, event: destination_event)
         end
 
-        it "falls back to the disbursement's destination event" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        it "falls back to the disbursement's source event for outgoing hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
+
+          expect(hcb_code.events).to include(source_event)
+        end
+
+        it "falls back to the disbursement's destination event for incoming hcb_code" do
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.incoming_hcb_code)
 
           expect(hcb_code.events).to include(destination_event)
         end
@@ -100,9 +109,16 @@ RSpec.describe HcbCode, type: :model do
     end
 
     describe "#type" do
-      it "returns :disbursement for disbursement codes" do
+      it "returns :disbursement for outgoing disbursement codes" do
         disbursement = create(:disbursement)
-        hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(hcb_code.type).to eq(:disbursement)
+      end
+
+      it "returns :disbursement for incoming disbursement codes" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
 
         expect(hcb_code.type).to eq(:disbursement)
       end
@@ -128,7 +144,7 @@ RSpec.describe HcbCode, type: :model do
                               updated_at: Time.current
                             })
 
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+          hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
 
           expect(hcb_code.type).to eq(:card_grant)
         end
@@ -138,7 +154,7 @@ RSpec.describe HcbCode, type: :model do
     describe "#humanized_type" do
       it "returns 'Transfer' for disbursements" do
         disbursement = create(:disbursement)
-        hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
 
         expect(hcb_code.humanized_type).to eq("Transfer")
       end
@@ -163,7 +179,7 @@ RSpec.describe HcbCode, type: :model do
                             updated_at: Time.current
                           })
 
-        hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
 
         expect(hcb_code.humanized_type).to eq("Card grant")
       end
