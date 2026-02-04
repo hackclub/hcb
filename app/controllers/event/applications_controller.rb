@@ -51,7 +51,8 @@ class Event
                                "Our team will sign and finalize the contract soon."
                              end
 
-      contract_signed = @application.contract&.party(:signee)&.signed? && !@application.contract&.party(:cosigner)&.pending? && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
+      # We allow teenagers to receive and sign the contract while applying. Adults must wait for HCB Operations' review.
+      contract_signed = @application.contract.parties.not_hcb.all?(&:signed?) && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
       contract_step = {
         label: "Sign agreement",
         shorthand: "Sign",
