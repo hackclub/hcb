@@ -166,7 +166,7 @@
                 <h3 class="text-sm muted m-0">Turn your ideas into reality</h3>
               </div>
             </div>
-            <div class="flex flex-row justify-center">
+            <div class="flex-row justify-center hidden md:flex">
               <div class="w-max">
                 <%= render "application/flash" unless @hide_flash %>
               </div>
@@ -192,6 +192,11 @@
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+          <div class="flex-row justify-center flex md:hidden bg-snow dark:bg-darkless">
+            <div class="w-max">
+              <%= render "application/flash", klass: "mb-2" unless @hide_flash %>
             </div>
           </div>
           <% if content_for?(:progress).present? %>
