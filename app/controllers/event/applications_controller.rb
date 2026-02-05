@@ -116,7 +116,7 @@ class Event
       authorize @application
 
       @application.mark_rejected!
-      Event::ApplicationMailer.with(application: self, rejection_message:).rejected.deliver_later
+      Event::ApplicationMailer.with(application: @application, rejection_message: params[:rejection_message]).rejected.deliver_later
 
       flash[:success] = "Application rejected."
       redirect_back_or_to application_path(@application)
