@@ -10,5 +10,5 @@ class SetCurrentRequestIp
     Current.request_ip = request.remote_ip
     @app.call(env)
   end
-end
 
+end
