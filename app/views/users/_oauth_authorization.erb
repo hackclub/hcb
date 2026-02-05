@@ -49,22 +49,22 @@
       </tbody>
     </table>
   <% end %>
-  <% latest_token_with_ip = authorization.tokens.select { |t| t.ip_address.present? }.max_by(&:created_at) %>
-  <% if latest_token_with_ip.present? %>
-    <% if latest_token_with_ip.latitude.present? && latest_token_with_ip.longitude.present? %>
-      <img class="w-full rounded mt-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= latest_token_with_ip.latitude %>&longitude=<%= latest_token_with_ip.longitude %>">
+  <% latest_token = authorization.tokens.max_by(&:created_at) %>
+  <% if latest_token.present? %>
+    <% if latest_token.latitude.present? && latest_token.longitude.present? %>
+      <img class="w-full rounded mt-3 aspect-square" src="https://maps.hackclub.com/api/shipping?latitude=<%= latest_token.latitude %>&longitude=<%= latest_token.longitude %>">
     <% else %>
       <div class="w-full rounded mt-3 aspect-square bg-smoke dark:bg-black opacity-50 flex items-center justify-center text-xl">
         Location unavailable
       </div>
     <% end %>
-    <% if latest_token_with_ip.ip_address.present? %>
+    <% if latest_token.ip_address.present? %>
       <div class="flex items-center mt-2">
-        <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= latest_token_with_ip.ip_address %>"><%= latest_token_with_ip.ip_address %></code>
+        <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= latest_token.ip_address %>"><%= latest_token.ip_address %></code>
       </div>
     <% end %>
     <p class="regular italic muted text-sm m-0 mt-1">
-      <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago latest_token_with_ip.created_at %>
+      <%= authorization.authorization_count == 1 ? "Authorized" : "Last authorized" %> <%= local_time_ago latest_token.created_at %>
     </p>
   <% end %>
 </div>

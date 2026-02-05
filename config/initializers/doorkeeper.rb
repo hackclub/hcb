@@ -462,10 +462,3 @@ Doorkeeper.configure do
   #
   # realm "Doorkeeper"
 end
-
-# Captures request IP on token creation
-Rails.application.config.to_prepare do
-  Doorkeeper::TokensController.prepend_before_action(
-    -> { Current.request_ip = request.remote_ip }, only: :create
-  )
-end
