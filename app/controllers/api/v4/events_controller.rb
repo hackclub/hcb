@@ -22,13 +22,6 @@ module Api
         parent_event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
         authorize parent_event, :create_sub_organization?
 
-        if params[:email].blank? || params[:name].blank?
-          messages = []
-          messages << "Organizer email is required" if params[:email].blank?
-          messages << "Organization name is required" if params[:name].blank?
-          render json: { error: "invalid_operation", messages: }, status: :bad_request and return
-        end
-
         # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
         poc_id = current_user.admin? ? current_user.id : User.system_user.id
 

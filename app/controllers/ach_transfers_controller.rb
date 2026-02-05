@@ -43,6 +43,7 @@ class AchTransfersController < ApplicationController
   def new
     @ach_transfer = AchTransfer.new(event: @event)
     authorize @ach_transfer
+    render layout: "transfer"
   end
 
   # POST /ach_transfers

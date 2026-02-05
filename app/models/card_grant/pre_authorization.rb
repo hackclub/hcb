@@ -34,6 +34,7 @@ class CardGrant
 
     belongs_to :card_grant
     has_one :event, through: :card_grant
+    has_one :card_grant_setting, through: :card_grant
     has_one :user, through: :card_grant
 
     include Turbo::Broadcastable
@@ -83,8 +84,8 @@ class CardGrant
     def status_badge_type(organizer: false)
       return :muted if draft?
       return :pending if submitted?
-      return :success if approved? || (fraudulent? && !organizer)
-      return :error if fraudulent? && organizer
+      return :success if approved? || (fraudulent? && authorized? && !organizer)
+      return :error if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
       return :error if rejected?
 
       :muted
@@ -93,8 +94,9 @@ class CardGrant
     def status_text(organizer: false)
       return "Draft" if draft?
       return "Under review" if submitted?
-      return "Approved" if approved? || (fraudulent? && !organizer)
-      return "Flagged as fraudulent" if fraudulent? && organizer
+      return "Approved" if approved? || (fraudulent? && authorized? && !organizer)
+      return "Flagged as fraudulent" if (fraudulent? && authorized? && organizer) || (fraudulent? && unauthorized?)
+
       return "Rejected" if rejected?
 
       aasm_state.humanize
@@ -103,7 +105,7 @@ class CardGrant
     def analyze!
       conn = Faraday.new url: "https://api.openai.com" do |c|
         c.request :json
-        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI, :PRE_AUTHORIZATION) }
         c.response :json
         c.response :raise_error
       end
@@ -121,9 +123,9 @@ class CardGrant
         valid_purchase // a boolean value indicating whether the purchase is a valid use of funds based on the purpose provided. This should be true or false.
         fraud_rating // a number between 1 and 10, where 1 is very likely to be valid and 10 is very likely to be fraudulent.
 
-        Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. Here are the instructions provided to the user:
+        Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. #{"The purpose of the grant is '#{card_grant.purpose}'." if card_grant.purpose.present?} Here are the instructions provided to the user:
 
-        #{card_grant.instructions}
+        #{card_grant.instructions.presence || "No specific instructions were provided."}
       PROMPT
 
       response = conn.post("/v1/responses", {
@@ -143,7 +145,7 @@ class CardGrant
                                  content: [
                                    {
                                      type: "input_text",
-                                     text: "The user was given the following instructions:\n\n#{card_grant.instructions}\n\nThe user provided the following URL: #{product_url}"
+                                     text: "The user provided the following URL: #{product_url}. Analyze and respond with the required JSON.",
                                    },
                                    screenshots.map { |screenshot|
                                      {
@@ -186,6 +188,13 @@ class CardGrant
 
       broadcast_refresh_to self
     rescue Faraday::Error => e
+      # If OpenAI rejects the image as invalid, mark as fraudulent
+      if e.response_body&.include?("does not represent a valid image")
+        mark_fraudulent!
+        broadcast_refresh_to self
+        return
+      end
+
       # Modify the original exception to append the response body to the message
       # so these are easier to debug
       raise(e.exception(<<~MSG))
@@ -195,11 +204,11 @@ class CardGrant
     end
 
     def unauthorized?
-      draft? || submitted? || rejected?
+      draft? || submitted? || rejected? || (card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
     def authorized?
-      approved? || fraudulent?
+      approved? || (!card_grant_setting.block_suspected_fraud? && fraudulent?)
     end
 
   end

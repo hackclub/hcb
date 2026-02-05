@@ -752,6 +752,21 @@ class AdminController < Admin::BaseController
     @wise_transfer = WiseTransfer.find(params[:id])
   end
 
+  def applications
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+
+    @applications = Event::Application.all
+    @applications = @applications.search_name(@q) if @q
+
+    @applications = @applications.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'submitted' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
+      "created_at desc"
+    )
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -1283,11 +1298,11 @@ class AdminController < Admin::BaseController
         require "csv"
 
         csv = Enumerator.new do |y|
-          y << ::CSV::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
-          y << ::CSV::Row.new(header_syms, @headers, true).to_s
+          y << SafeCsv::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
+          y << SafeCsv::Row.new(header_syms, @headers, true).to_s
 
           @rows.each do |row|
-            y << ::CSV::Row.new(header_syms, row).to_s
+            y << SafeCsv::Row.new(header_syms, row).to_s
           end
         end
 
@@ -1625,8 +1640,6 @@ class AdminController < Admin::BaseController
         Event.negatives.size
       when :fee_reimbursements
         FeeReimbursement.unprocessed.size
-      when :emburse_transfers
-        EmburseTransfer.under_review.size
       when :g_suite_accounts
         GSuiteAccount.under_review.size
       when :transactions
@@ -1662,7 +1675,6 @@ class AdminController < Admin::BaseController
     pending_task :ach_transfers
     pending_task :negative_events
     pending_task :fee_reimbursements
-    pending_task :emburse_transfers
     pending_task :emburse_transactions
     pending_task :g_suite_accounts
     pending_task :transactions

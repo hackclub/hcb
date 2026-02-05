@@ -11,6 +11,11 @@ module Api
         transfer
         bank_account_transaction
         card_charge
+        wire_transfer
+        wise_transfer
+        check_deposit
+        reimbursed_expense
+        hcb_fee
       ].freeze
 
       when_expanded do
@@ -22,12 +27,17 @@ module Api
           # amount_cents of 0 (zero) since there are two equal, by opposite,
           # Canonical Transactions. Therefore, for the API, we are overriding the
           # default amount_cents exposure defined in the LinkedObjectBase.
-          if hcb_code.disbursement? && org == hcb_code.disbursement.source_event &&
-             !(hcb_code.disbursement.source_subledger_id && hcb_code.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
-            next -hcb_code.disbursement.amount
-          elsif hcb_code.disbursement?
-            next hcb_code.disbursement.amount
+
+          # should be removed post-migration
+          if hcb_code.outgoing_disbursement? && org == hcb_code.outgoing_disbursement.disbursement.source_event &&
+             !(hcb_code.outgoing_disbursement.disbursement.source_subledger_id && hcb_code.outgoing_disbursement.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
+            next -hcb_code.outgoing_disbursement.disbursement.amount
+          elsif hcb_code.outgoing_disbursement?
+            next hcb_code.outgoing_disbursement.disbursement.amount
           end
+
+          next hcb_code.incoming_disbursement.amount if hcb_code.incoming_disbursement?
+          next hcb_code.outgoing_disbursement.amount if hcb_code.outgoing_disbursement?
           next hcb_code.donation.amount if hcb_code.donation?
           next hcb_code.invoice.item_amount if hcb_code.invoice?
           next -hcb_code.ach_transfer.amount if hcb_code.ach_transfer?
@@ -106,7 +116,33 @@ module Api
           },
           {
             entity: Entities::Transfer,
-            hcb_method: :disbursement
+            hcb_method: ->(hcb_code) do
+              if hcb_code.outgoing_disbursement?
+                hcb_code.outgoing_disbursement.disbursement
+              else
+                hcb_code.incoming_disbursement.disbursement
+              end
+            end
+          },
+          {
+            entity: Entities::WireTransfer,
+            hcb_method: :wire
+          },
+          {
+            entity: Entities::WiseTransfer,
+            hcb_method: :wise_transfer
+          },
+          {
+            entity: Entities::CheckDeposit,
+            hcb_method: :check_deposit
+          },
+          {
+            entity: Entities::ReimbursedExpense,
+            hcb_method: :reimbursement_expense_payout
+          },
+          {
+            entity: Entities::HcbFee,
+            hcb_method: :bank_fee
           },
         ].each do |linked_type|
           entity = linked_type[:entity]
@@ -143,6 +179,12 @@ module Api
           :transfer
         when :unknown # rename "unknown" to "bank_account_transaction"
           :bank_account_transaction
+        when :wire # rename "wire" to "wire_transfer"
+          :wire_transfer
+        when :reimbursement_expense_payout # rename to "reimbursed_expense"
+          :reimbursed_expense
+        when :bank_fee # rename to "hcb_fee"
+          :hcb_fee
         else
           type
         end

@@ -32,13 +32,20 @@
         selected: item[:selected] %>
     <% end %>
     <div>
-      <%= render "users/settings_dropdown", local_assigns: %>
+      <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
     </div>
+    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+      <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <div>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
+      </div>
+    <% end %>
   </nav>
 
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">
-      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
+      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background-color: #ec3750; background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
         <span class="flex-auto flex justify-between items-center">
           <span>Check out your <a href="/wrapped" target="_blank" class="primary nowrap" style="color: white;" id="bank-wrapped-link"><strong>HCB Wrapped</strong></a> for <%= Metric.year %>!</span>
         </span>
@@ -53,7 +60,7 @@
     </script>
   <% end %>
 
-  <% if (current_user.teenager? && current_user.only_card_grant_user?) %>
+  <% if (current_user.is_teenager? && current_user.only_card_grant_user?) %>
     <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 <% end %>

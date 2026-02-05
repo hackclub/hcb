@@ -59,6 +59,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_member?
   end
 
+  def permit_merchant?
+    admin_or_member?
+  end
+
   def update?
     admin_or_manager?
   end
@@ -184,7 +188,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def employees?
-    auditor_or_reader?
+    auditor_or_reader? && Flipper.enabled?(:payroll_2025_02_13, record)
   end
 
   def sub_organizations?

@@ -21,7 +21,7 @@ module CardGrantService
     end
 
     REQUIRED_HEADERS = %w[email amount_cents].freeze
-    OPTIONAL_HEADERS = %w[purpose one_time_use invite_message].freeze
+    OPTIONAL_HEADERS = %w[purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories].freeze
     ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
     MAX_ERRORS_TO_DISPLAY = 10
     MAX_FILE_SIZE_BYTES = 1.megabyte
@@ -185,6 +185,11 @@ module CardGrantService
         purpose: get_field(row, header_mapping, "purpose")&.strip.presence,
         one_time_use: parse_boolean(get_field(row, header_mapping, "one_time_use")),
         invite_message: get_field(row, header_mapping, "invite_message")&.strip.presence,
+        merchant_lock: parse_comma_separated(get_field(row, header_mapping, "merchant_lock")),
+        category_lock: parse_comma_separated(get_field(row, header_mapping, "category_lock")),
+        keyword_lock: get_field(row, header_mapping, "keyword_lock")&.strip.presence,
+        banned_merchants: parse_comma_separated(get_field(row, header_mapping, "banned_merchants")),
+        banned_categories: parse_comma_separated(get_field(row, header_mapping, "banned_categories")),
         sent_by: @sent_by,
       )
     end
@@ -193,6 +198,12 @@ module CardGrantService
       return false if value.blank?
 
       %w[true 1 yes].include?(value.to_s.strip.downcase)
+    end
+
+    def parse_comma_separated(value)
+      return nil if value.blank?
+
+      value.to_s.split(",").map(&:strip).reject(&:blank?)
     end
 
   end

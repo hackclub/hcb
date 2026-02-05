@@ -1,0 +1,103 @@
+<% title "Your application for #{@application.name}" %>
+
+<div class="w-full flex flex-grow flex-col items-center">
+  <div class="md:max-w-[800px] w-full space-y-8 pb-5">
+    <div class="flex flex-col mt-2">
+      <span class="badge bg-<%= @application.status_color %> m-0 w-max">
+        <%= @application.aasm_state.humanize %>
+      </span>
+
+      <h2 class="text-4xl mt-2">
+        <%= current_user == @application.user ? "Your" : "#{@application.user.name}'s" %> application for <%= @application.name %>
+      </h2>
+
+      <p class="m-0 text-lg muted">
+        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+
+        <% if @application.approved_at? %>
+          <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
+        <% elsif @application.rejected_at? %>
+          <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%P") %>
+        <% end %>
+      </p>
+    </div>
+
+    <% admin_tool do %>
+      <div class="card">
+        <h2 class="mt-0"><%= user_mention @application.user, class: "align-bottom mr-0" %>'s application details</h2>
+        <hr class="my-1">
+        <section class="details details--wide">
+          <p>
+            <strong>Airtable ID</strong>
+            <code><%= @application.airtable_record_id %></code>
+          </p>
+          <p>
+            <strong>Airtable status</strong>
+            <span class="badge w-max m-0 bg-muted"><%= @application.airtable_status %></span>
+          </p>
+        </section>
+      </div>
+    <% end %>
+
+    <%= render "event/applications/summary", application: @application, allow_edits: false %>
+
+    <h3 class="muted !mt-12">Questions about your application?</h3>
+    <p class="muted !mt-2">Reach out to the HCB team at <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>. We're here to help!</p>
+  </div>
+</div>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+  <div class="flex items-center justify-end gap-4">
+    <% admin_tool do %>
+      <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
+    <% end %>
+    <% if @application.may_mark_approved? %>
+      <% admin_tool do %>
+        <%= button_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.user.teenager?}" %>
+      <% end %>
+    <% elsif @application.approved? && (party = @application.contract&.party(:hcb))&.pending? %>
+      <% admin_tool do %>
+        <%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success" %>
+      <% end %>
+    <% end %>
+    <% if @application.may_mark_rejected? %>
+      <% admin_tool do %>
+        <button type="button" class="btn bg-primary tooltipped tooltipped--w" data-behavior="modal_trigger" data-modal="reject_application" aria-label="Reject this application and send a rejection email">
+          Reject
+        </button>
+
+        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="reject_application">
+          <%= modal_header "Reject application" %>
+          <h3 class="text-lg">Choose a template</h3>
+          <div class="flex flex-col gap-3">
+            <% @application.rejection_messages.each do |key, value| %>
+              <details>
+                <summary><%= key.to_s.humanize.titleize %> rejection message</summary>
+
+                <%= form_with model: false, url: admin_reject_application_path(@application), method: :post, class: "card mt-2" do |form| %>
+                  <div class="field">
+                    <div class="flex flex-row items-center justify-between">
+                      <%= form.label :rejection_message, "Rejection message" %>
+                      <span class="h5 muted m-0">
+                        <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+                          <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+                        <% end %>
+                      </span>
+                    </div>
+                    <p class="h5 muted mt-0 mb-1">
+                      This message will be sent to the applicant in the rejection email
+                    </p>
+                    <%= form.text_area :rejection_message, value:, class: "min-h-[300px] w-full max-w-full" %>
+                  </div>
+                  <%= form.submit "Reject", class: "btn bg-primary" %>
+                </details>
+              <% end %>
+
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

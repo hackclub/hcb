@@ -1,6 +1,10 @@
 <p>Hi there! 👋</p>
 
-<% if @invite.event.demo_mode? == false || @invite.initial? == false %>
+<% if @invite.organizer_position_invite_request.present? %>
+  <p>
+    Your request to join <%= @invite.event.name %> has been approved as a <%= @invite.role %>!
+  </p>
+<% elsif @invite.event.demo_mode? == false || @invite.initial? == false %>
   <p>
     <% if @invite.contracts.where(aasm_state: :signed).any? %>
       Thank you for signing the HCB contract!

@@ -121,13 +121,14 @@ module TransactionEngine
         memo_upcase.gsub(FEE_REFUND_MEMO_PART1, "").gsub(FEE_REFUND_MEMO_PART2, "").split(" ")[0]
       end
 
-      def disbursement?
-        memo_upcase.include?(DISBURSEMENT_MEMO_PART1)
+      def outgoing_disbursement?
+        @canonical_transaction.local_hcb_code&.outgoing_disbursement?
       end
 
-      def likely_disbursement_id
-        memo_upcase.gsub(DISBURSEMENT_MEMO_PART1, "").split(" ")[0]
+      def incoming_disbursement?
+        @canonical_transaction.local_hcb_code&.incoming_disbursement?
       end
+
     end
   end
 end

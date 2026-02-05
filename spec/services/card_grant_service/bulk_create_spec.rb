@@ -46,6 +46,37 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(bob_grant.one_time_use).to be true
       end
 
+      it "creates card grants with lock fields" do
+        csv_content = <<~CSV
+          email,amount_cents,merchant_lock,category_lock,keyword_lock,banned_merchants,banned_categories
+          alice@example.com,1000,"123,456","grocery_stores_supermarkets,fast_food_restaurants","\\AHCB-.*\\z","789","gambling"
+          bob@example.com,2000,,,,,
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(2)
+
+        alice_grant = result.card_grants.find { |g| g.email == "alice@example.com" }
+        expect(alice_grant.merchant_lock).to eq(["123", "456"])
+        expect(alice_grant.category_lock).to eq(["grocery_stores_supermarkets", "fast_food_restaurants"])
+        expect(alice_grant.keyword_lock).to eq("\\AHCB-.*\\z")
+        expect(alice_grant.banned_merchants).to eq(["789"])
+        expect(alice_grant.banned_categories).to eq(["gambling"])
+
+        bob_grant = result.card_grants.find { |g| g.email == "bob@example.com" }
+        expect(bob_grant.merchant_lock).to eq([])
+        expect(bob_grant.category_lock).to eq([])
+        expect(bob_grant.keyword_lock).to be_nil
+        expect(bob_grant.banned_merchants).to eq([])
+        expect(bob_grant.banned_categories).to eq([])
+      end
+
       it "sends emails after successful creation" do
         csv_content = <<~CSV
           email,amount_cents

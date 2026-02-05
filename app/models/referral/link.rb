@@ -40,7 +40,7 @@ module Referral
     def new_teenagers
       attributions.joins(:user)
                   .where("EXTRACT(EPOCH FROM (referral_attributions.created_at - users.created_at)) < 60*60")
-                  .where("users.teenager = true")
+                  .where("users.joined_as_teenager = true")
                   .map(&:user)
                   .uniq
     end

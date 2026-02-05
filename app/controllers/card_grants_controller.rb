@@ -23,7 +23,10 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :subledger).order(created_at: :desc)
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
+      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+      "card_grants.created_at DESC"
+    )
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
@@ -113,8 +116,8 @@ class CardGrantsController < ApplicationController
     authorize @event, :bulk_upload_card_grants?
 
     csv_content = CSV.generate do |csv|
-      csv << %w[email amount_cents purpose one_time_use invite_message]
-      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!"]
+      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
     end
 
     send_data csv_content,
@@ -151,11 +154,28 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def permit_merchant
+    authorize @card_grant
+
+    merchant_lock = @card_grant.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: card_grant_path(@card_grant) and return
+    end
+
+    merchant_lock << params[:merchant]
+    @card_grant.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: card_grant_path(@card_grant)
+  end
+
+
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
-      flash[:success] = "Grant's purpose has been successfully updated!"
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+      flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
@@ -165,8 +185,9 @@ class CardGrantsController < ApplicationController
 
   def clear_purpose
     authorize @card_grant, :update?
-    @card_grant.update(purpose: nil)
-    redirect_back fallback_location: card_grant_url(@card_grant)
+    @card_grant.update!(purpose: nil)
+    flash[:success] = "Purpose has been successfully cleared!"
+    redirect_to card_grant_url(@card_grant)
   end
 
   def show

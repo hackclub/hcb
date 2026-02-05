@@ -20,6 +20,7 @@
 #  submitted_at               :datetime
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
+#  card_grant_id              :bigint
 #  event_id                   :bigint
 #  invited_by_id              :bigint
 #  reviewer_id                :bigint
@@ -27,6 +28,7 @@
 #
 # Indexes
 #
+#  index_reimbursement_reports_on_card_grant_id  (card_grant_id)
 #  index_reimbursement_reports_on_event_id       (event_id)
 #  index_reimbursement_reports_on_invited_by_id  (invited_by_id)
 #  index_reimbursement_reports_on_reviewer_id    (reviewer_id)
@@ -59,6 +61,7 @@ module Reimbursement
 
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
+    belongs_to :card_grant, optional: true
 
     has_paper_trail ignore: :expense_number
 
@@ -96,6 +99,8 @@ module Reimbursement
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
     end
 
+    after_commit :invalidate_cached_data # do this after commit for expense touch-ing
+
     aasm timestamps: true do
       state :draft, initial: true
       state :submitted
@@ -108,7 +113,7 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+            user.payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
               expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
@@ -330,8 +335,14 @@ module Reimbursement
       maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
 
+    def minimum_wire_amount_cents
+      return event.minimum_wire_amount_cents unless card_grant.present?
+
+      500_00
+    end
+
     def below_minimum_amount?
-      user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < event.minimum_wire_amount_cents
+      user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
     end
 
     def from_public_reimbursement_form?
@@ -342,6 +353,12 @@ module Reimbursement
       @wise_transfer_quote_amount ||= WiseTransfer.generate_quote(amount)
     rescue
       Money.from_cents(0)
+    end
+
+    def cached_wise_transfer_quote_amount
+      Rails.cache.fetch("cached_wise_transfer_quote_amount_#{id}", expires_in: 3.days) do
+        wise_transfer_quote_amount
+      end
     end
 
     def wise_transfer_quote_without_fees_amount
@@ -431,6 +448,12 @@ module Reimbursement
 
     def payout_method_allowed?
       user.payout_method.present? && !user.payout_method.unsupported?
+    end
+
+    def invalidate_cached_data
+      Rails.cache.delete("cached_wise_transfer_quote_amount_#{id}")
+
+      true
     end
 
   end

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -386,6 +386,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.boolean "fronted", default: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "paypal_transfer_id"
     t.bigint "raw_pending_bank_fee_transaction_id"
@@ -405,6 +406,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.index ["check_deposit_id"], name: "index_canonical_pending_transactions_on_check_deposit_id"
     t.index ["hcb_code"], name: "index_canonical_pending_transactions_on_hcb_code"
     t.index ["increase_check_id"], name: "index_canonical_pending_transactions_on_increase_check_id"
+    t.index ["ledger_item_id"], name: "index_canonical_pending_transactions_on_ledger_item_id"
     t.index ["paypal_transfer_id"], name: "index_canonical_pending_transactions_on_paypal_transfer_id"
     t.index ["raw_pending_bank_fee_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id"
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
@@ -430,12 +432,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.date "date", null: false
     t.text "friendly_memo"
     t.text "hcb_code"
+    t.bigint "ledger_item_id"
     t.text "memo", null: false
     t.bigint "transaction_source_id"
     t.string "transaction_source_type"
     t.datetime "updated_at", null: false
     t.index ["date"], name: "index_canonical_transactions_on_date"
     t.index ["hcb_code"], name: "index_canonical_transactions_on_hcb_code"
+    t.index ["ledger_item_id"], name: "index_canonical_transactions_on_ledger_item_id"
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
@@ -459,6 +463,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   create_table "card_grant_settings", force: :cascade do |t|
     t.string "banned_categories"
     t.string "banned_merchants"
+    t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
@@ -467,7 +472,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.string "merchant_lock"
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
-    t.index ["event_id"], name: "index_card_grant_settings_on_event_id"
+    t.string "support_message"
+    t.string "support_url"
+    t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
   create_table "card_grants", force: :cascade do |t|
@@ -479,6 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "expiration_at"
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
@@ -552,8 +560,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.bigint "event_id", null: false
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
-    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx"
-    t.index ["event_id"], name: "index_column_account_numbers_on_event_id"
+    t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
   create_table "column_statements", force: :cascade do |t|
@@ -632,6 +640,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.string "external_email"
+    t.string "external_id"
     t.string "role", null: false
     t.datetime "signed_at"
     t.datetime "updated_at", null: false
@@ -957,12 +966,53 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   end
 
   create_table "event_affiliations", force: :cascade do |t|
+    t.bigint "affiliable_id", null: false
+    t.string "affiliable_type", null: false
     t.datetime "created_at", null: false
-    t.bigint "event_id", null: false
     t.jsonb "metadata", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_event_affiliations_on_event_id"
+    t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.text "accessibility_notes"
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
+    t.integer "annual_budget_cents"
+    t.datetime "approved_at"
+    t.integer "committed_amount_cents"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.boolean "currently_fiscally_sponsored"
+    t.text "description"
+    t.bigint "event_id"
+    t.string "funding_source"
+    t.string "last_page_viewed"
+    t.datetime "last_viewed_at"
+    t.string "name"
+    t.string "planning_duration"
+    t.text "political_description"
+    t.string "project_category"
+    t.string "referral_code"
+    t.string "referrer"
+    t.datetime "rejected_at"
+    t.datetime "submitted_at"
+    t.integer "team_size"
+    t.boolean "teen_led"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "website_url"
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -1336,11 +1386,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
 
   create_table "hcb_codes", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.bigint "event_id"
     t.text "hcb_code", null: false
+    t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.text "short_code"
+    t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
+    t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -1500,6 +1554,47 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
   end
 
+  create_table "ledger_items", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "date", null: false
+    t.datetime "marked_no_or_lost_receipt_at"
+    t.text "memo", null: false
+    t.text "short_code"
+    t.datetime "updated_at", null: false
+    t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["date"], name: "index_ledger_items_on_date"
+    t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
+  end
+
+  create_table "ledger_mappings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "mapped_by_id"
+    t.boolean "on_primary_ledger", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ledger_id", "ledger_item_id"], name: "index_ledger_mappings_on_ledger_and_item", unique: true
+    t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
+    t.index ["mapped_by_id"], name: "index_ledger_mappings_on_mapped_by_id"
+  end
+
+  create_table "ledgers", force: :cascade do |t|
+    t.bigint "card_grant_id"
+    t.datetime "created_at", null: false
+    t.bigint "event_id"
+    t.boolean "primary", null: false
+    t.datetime "updated_at", null: false
+    t.index ["card_grant_id"], name: "index_ledgers_on_card_grant_id"
+    t.index ["card_grant_id"], name: "index_ledgers_unique_card_grant", unique: true, where: "(card_grant_id IS NOT NULL)"
+    t.index ["event_id"], name: "index_ledgers_on_event_id"
+    t.index ["event_id"], name: "index_ledgers_unique_event", unique: true, where: "(event_id IS NOT NULL)"
+    t.index ["id", "primary"], name: "index_ledgers_on_id_and_primary", unique: true
+    t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
+  end
+
   create_table "lob_addresses", force: :cascade do |t|
     t.string "address1"
     t.string "address2"
@@ -1535,12 +1630,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
     t.bigint "referral_link_id"
-    t.bigint "referral_program_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
-    t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -1617,24 +1710,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.index ["user_code"], name: "index_oauth_device_grants_on_user_code", unique: true
   end
 
-  create_table "organizer_position_contracts", force: :cascade do |t|
-    t.string "aasm_state"
-    t.string "cosigner_email"
-    t.datetime "created_at", null: false
-    t.datetime "deleted_at"
-    t.bigint "document_id"
-    t.string "external_id"
-    t.integer "external_service"
-    t.boolean "include_videos", default: false, null: false
-    t.bigint "organizer_position_invite_id", null: false
-    t.integer "purpose", default: 0
-    t.datetime "signed_at"
-    t.datetime "updated_at", null: false
-    t.datetime "void_at"
-    t.index ["document_id"], name: "index_organizer_position_contracts_on_document_id"
-    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_ab1516f568"
-  end
-
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
@@ -1669,9 +1744,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   create_table "organizer_position_invite_requests", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
+    t.bigint "organizer_position_invite_id"
     t.bigint "organizer_position_invite_link_id", null: false
     t.bigint "requester_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["organizer_position_invite_id"], name: "idx_on_organizer_position_invite_id_0bf62e304a"
     t.index ["organizer_position_invite_link_id"], name: "idx_on_organizer_position_invite_link_id_241807b5ee"
     t.index ["requester_id"], name: "index_organizer_position_invite_requests_on_requester_id"
   end
@@ -1783,6 +1860,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.integer "amount_cents"
     t.string "column_report_id"
     t.jsonb "column_transaction"
+    t.jsonb "column_transfer"
     t.datetime "created_at", null: false
     t.date "date_posted"
     t.text "description"
@@ -2009,6 +2087,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
+    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
@@ -2092,6 +2171,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
 
   create_table "reimbursement_reports", force: :cascade do |t|
     t.string "aasm_state"
+    t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
@@ -2110,6 +2190,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.datetime "submitted_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
@@ -2220,7 +2301,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
     t.index ["stripe_cardholder_id"], name: "index_stripe_cards_on_stripe_cardholder_id"
     t.index ["stripe_id"], name: "index_stripe_cards_on_stripe_id", unique: true
-    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id"
+    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id", unique: true
   end
 
   create_table "stripe_service_fees", force: :cascade do |t|
@@ -2529,6 +2610,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.string "discord_id"
     t.text "email", null: false
     t.string "full_name"
+    t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
     t.bigint "payout_method_id"
     t.string "payout_method_type"
@@ -2611,6 +2693,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
     t.jsonb "recipient_information"
     t.string "recipient_name", null: false
     t.text "return_reason"
+    t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
@@ -2671,7 +2754,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "canonical_pending_event_mappings", "events"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_pending_transactions"
   add_foreign_key "canonical_pending_settled_mappings", "canonical_transactions"
+  add_foreign_key "canonical_pending_transactions", "ledger_items"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
+  add_foreign_key "canonical_transactions", "ledger_items"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
@@ -2717,7 +2802,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
-  add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"
@@ -2752,6 +2838,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "hcb_code_pins", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
+  add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
@@ -2762,6 +2849,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_mappings", "ledger_items"
+  add_foreign_key "ledger_mappings", "ledgers"
+  add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
+  add_foreign_key "ledger_mappings", "users", column: "mapped_by_id"
+  add_foreign_key "ledgers", "card_grants"
+  add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
@@ -2773,6 +2866,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
   add_foreign_key "organizer_position_invite_links", "users", column: "creator_id"
   add_foreign_key "organizer_position_invite_links", "users", column: "deactivator_id"
   add_foreign_key "organizer_position_invite_requests", "organizer_position_invite_links"
+  add_foreign_key "organizer_position_invite_requests", "organizer_position_invites"
   add_foreign_key "organizer_position_invite_requests", "users", column: "requester_id"
   add_foreign_key "organizer_position_invites", "events"
   add_foreign_key "organizer_position_invites", "organizer_positions"
@@ -2839,7 +2933,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_05_000001) do
        RETURNS text
        LANGUAGE sql
        IMMUTABLE STRICT
-      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
+      RETURN CASE split_part(hcb_code, '-'::text, 2) WHEN '000'::text THEN 'unknown'::text WHEN '001'::text THEN 'unknown_temporary'::text WHEN '100'::text THEN 'invoice'::text WHEN '200'::text THEN 'donation'::text WHEN '201'::text THEN 'partner_donation'::text WHEN '300'::text THEN 'ach_transfer'::text WHEN '310'::text THEN 'wire'::text WHEN '350'::text THEN 'paypal_transfer'::text WHEN '360'::text THEN 'wise_transfer'::text WHEN '400'::text THEN 'check'::text WHEN '401'::text THEN 'increase_check'::text WHEN '402'::text THEN 'check_deposit'::text WHEN '500'::text THEN 'outgoing_disbursement'::text WHEN '550'::text THEN 'incoming_disbursement'::text WHEN '600'::text THEN 'stripe_card'::text WHEN '601'::text THEN 'stripe_force_capture'::text WHEN '610'::text THEN 'stripe_service_fee'::text WHEN '700'::text THEN 'bank_fee'::text WHEN '701'::text THEN 'incoming_bank_fee'::text WHEN '702'::text THEN 'fee_revenue'::text WHEN '710'::text THEN 'expense_payout'::text WHEN '712'::text THEN 'payout_holding'::text WHEN '900'::text THEN 'outgoing_fee_reimbursement'::text ELSE NULL::text END
   SQL
 
 end

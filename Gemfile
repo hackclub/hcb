@@ -58,7 +58,7 @@ gem "aasm" # state machine
 gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
-gem "friendly_id", "~> 5.5.1" # slugs
+gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
 gem "active_storage_validations", "3.0.1" # file validations
@@ -114,7 +114,7 @@ gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.2"
+gem "webauthn", "~> 3.4"
 
 gem "ahoy_matey" # analytics
 gem "blazer" # business intelligence tool/dashboard
@@ -200,8 +200,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-# We are waiting for a new `public_activity` release that includes https://github.com/public-activity/public_activity/pull/387
-gem "public_activity", github: "public-activity/public_activity", ref: "29bbd6e788950b5528c512bb8361071f187f3230"
+gem "public_activity", ">= 3.0.2"
 
 gem "console1984"
 gem "audits1984"
@@ -210,7 +209,7 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.4"
+gem "ahoy_email", "~> 3.0"
 
 gem "email_reply_parser"
 
@@ -233,3 +232,5 @@ gem "discordrb"
 
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
+
+gem "intercom-rails"

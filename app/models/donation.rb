@@ -341,7 +341,7 @@ class Donation < ApplicationRecord
   end
 
   def avatar(size = 128)
-    gravatar_url(email, name, email.sum, size) unless anonymous?
+    gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
   end
 
   private

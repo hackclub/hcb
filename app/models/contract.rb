@@ -71,7 +71,9 @@ class Contract < ApplicationRecord
     event :mark_sent do
       transitions from: :pending, to: :sent
       after do
-        parties.not_hcb.each(&:notify)
+        if contractable.contract_notify_when_sent
+          parties.not_hcb.each(&:notify)
+        end
       end
     end
 
@@ -95,6 +97,8 @@ class Contract < ApplicationRecord
     docuseal: 0,
     manual: 999 # used to backfill contracts
   }, prefix: :sent_with
+
+  scope :not_voided, -> { where.not(aasm_state: :voided) }
 
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
@@ -128,19 +132,29 @@ class Contract < ApplicationRecord
   end
 
   def event
-    contractable.contract_event
+    contractable.contract_event if contractable.respond_to?(:contract_event)
+  end
+
+  def event_name
+    event&.name || prefills["name"]
+  end
+
+  def redirect_path
+    contractable.contract_redirect_path
   end
 
   def party(role)
     parties.find_by(role:)
   end
 
-  def on_party_signed
+  def on_party_signed(party)
     if parties.all?(&:signed?)
       mark_signed!
     elsif parties.not_hcb.all?(&:signed?)
       party(:hcb).notify
     end
+
+    contractable.on_contract_party_signed(party)
   end
 
   # Adding this back temporarily while we work on fixing missing parties
@@ -168,6 +182,18 @@ class Contract < ApplicationRecord
     end
 
     update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+
+    submitters = docuseal_document["submitters"]
+
+    parties.each do |party|
+      slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
+
+      if slug.present?
+        party.update!(external_id: slug)
+      else
+        Rails.error.unexpected("Contract Party (#{party.id}) role and/or slug missing in DocuSeal.")
+      end
+    end
   end
 
   def archive_on_docuseal!
@@ -175,7 +201,7 @@ class Contract < ApplicationRecord
   end
 
   def one_non_void_contract
-    if contractable.contracts.where.not(aasm_state: :voided).excluding(self).any?
+    if contractable.contracts.not_voided.excluding(self).any?
       self.errors.add(:base, "source already has a contract!")
     end
   end
