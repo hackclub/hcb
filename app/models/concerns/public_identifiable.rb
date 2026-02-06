@@ -78,11 +78,11 @@ module PublicIdentifiable
     def find_by_public_id(public_id)
       components = PublicIdentifiable.parse_components(public_id)
       return unless components
-    
+
       prefix = components[:prefix].to_s
       # Prefix must match this model's prefix
       return unless prefix == get_public_id_prefix
-    
+
       find_by_hashid(components[:hashid])
     end
 
@@ -96,6 +96,7 @@ module PublicIdentifiable
     def get_public_id_prefix
       return self.public_id_prefix.to_s.downcase if self.public_id_prefix.present?
 
-      raise NotImplementedError, "The #{self.class.name} model includes PublicIdentifiable module, but set_public_id_prefix hasn't been called."    end
+      raise NotImplementedError, "The #{self.class.name} model includes PublicIdentifiable module, but set_public_id_prefix hasn't been called."
+    end
   end
 end
