@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -227,7 +227,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.text "token_ciphertext"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
+    t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -484,6 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "expiration_at"
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
@@ -967,12 +970,50 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.bigint "affiliable_id", null: false
     t.string "affiliable_type", null: false
     t.datetime "created_at", null: false
-    t.bigint "event_id", null: false
     t.jsonb "metadata", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["affiliable_type", "affiliable_id"], name: "index_event_affiliations_on_affiliable"
-    t.index ["event_id"], name: "index_event_affiliations_on_event_id"
+  end
+
+  create_table "event_applications", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.text "accessibility_notes"
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "airtable_record_id"
+    t.string "airtable_status"
+    t.integer "annual_budget_cents"
+    t.datetime "approved_at"
+    t.integer "committed_amount_cents"
+    t.string "cosigner_email"
+    t.datetime "created_at", null: false
+    t.boolean "currently_fiscally_sponsored"
+    t.text "description"
+    t.bigint "event_id"
+    t.string "funding_source"
+    t.string "last_page_viewed"
+    t.datetime "last_viewed_at"
+    t.string "name"
+    t.string "planning_duration"
+    t.text "political_description"
+    t.string "project_category"
+    t.string "referral_code"
+    t.string "referrer"
+    t.datetime "rejected_at"
+    t.datetime "submitted_at"
+    t.integer "team_size"
+    t.boolean "teen_led"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.string "website_url"
+    t.index ["event_id"], name: "index_event_applications_on_event_id"
+    t.index ["user_id"], name: "index_event_applications_on_user_id"
   end
 
   create_table "event_configurations", force: :cascade do |t|
@@ -1590,12 +1631,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
     t.bigint "referral_link_id"
-    t.bigint "referral_program_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
-    t.index ["referral_program_id"], name: "index_logins_on_referral_program_id"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -2263,7 +2302,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
     t.index ["replacement_for_id"], name: "index_stripe_cards_on_replacement_for_id"
     t.index ["stripe_cardholder_id"], name: "index_stripe_cards_on_stripe_cardholder_id"
     t.index ["stripe_id"], name: "index_stripe_cards_on_stripe_id", unique: true
-    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id"
+    t.index ["subledger_id"], name: "index_stripe_cards_on_subledger_id", unique: true
   end
 
   create_table "stripe_service_fees", force: :cascade do |t|
@@ -2764,7 +2803,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_02_051032) do
   add_foreign_key "emburse_transfers", "users", column: "fulfilled_by_id"
   add_foreign_key "employee_payments", "employees"
   add_foreign_key "employees", "events"
-  add_foreign_key "event_affiliations", "events"
+  add_foreign_key "event_applications", "events"
+  add_foreign_key "event_applications", "users"
   add_foreign_key "event_configurations", "events"
   add_foreign_key "event_follows", "events"
   add_foreign_key "event_follows", "users"

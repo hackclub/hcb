@@ -45,7 +45,7 @@
 
   <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">
-      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background-color: #ec3750; background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
+      <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background-color: #ec3750; background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
         <span class="flex-auto flex justify-between items-center">
           <span>Check out your <a href="/wrapped" target="_blank" class="primary nowrap" style="color: white;" id="bank-wrapped-link"><strong>HCB Wrapped</strong></a> for <%= Metric.year %>!</span>
         </span>

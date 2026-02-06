@@ -1,0 +1,12 @@
+<p>Hi <%= @application.user.name %>,</p>
+
+<p>Thank you for <%= @application.user.teenager? ? "signing the HCB Fiscal Sponsorship Agreement!" : "applying to HCB, Hack Club's fiscal sponsorship program!" %></p>
+
+<p>You'll hear from us within <%= @application.response_time %> regarding your application for <%= @application.name %>.</p>
+
+<p>
+  Warmly,<br>
+  The HCB Team
+</p>
+
+<p><em>P.S. Want to learn more about organizations that run with HCB? Check out <a href="https://hackclub.com/fiscal-sponsorship/directory/">our directory</a>!</em></p>
