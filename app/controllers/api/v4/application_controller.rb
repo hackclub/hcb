@@ -38,6 +38,10 @@ module Api
         end
 
         @current_user = current_token&.user
+
+        if @current_user&.locked?
+          return render json: { error: "user_locked" }, status: :forbidden
+        end
       end
 
       def require_admin!
