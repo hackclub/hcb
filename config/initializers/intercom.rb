@@ -1,12 +1,8 @@
 # frozen_string_literal: true
 
-class IntercomUser
+IntercomUser = Data.define(:id, :email, :name) do
   def self.from_authenticated_user(user)
-    {
-      id: user.public_id,
-      email: user.email,
-      name: user.name,
-    }
+    new(user.public_id, user.email, user.name)
   end
 
 end
