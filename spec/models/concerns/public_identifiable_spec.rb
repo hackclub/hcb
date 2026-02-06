@@ -32,7 +32,6 @@ RSpec.describe PublicIdentifiable do
     end
 
     it "has keys that match model prefixes" do
-      # Verify that each model's prefix matches its key in the registry
       described_class.models.each do |prefix, model_class|
         expect(model_class.get_public_id_prefix).to eq(prefix.to_s),
                                                     "#{model_class.name} has prefix '#{model_class.get_public_id_prefix}' but is registered under '#{prefix}'"
@@ -140,7 +139,6 @@ RSpec.describe PublicIdentifiable do
 
   describe "auto-configuration" do
     it "sets prefix from MODELS registry when model is loaded" do
-      # Verify that models have their prefix set automatically
       described_class.models.each do |prefix, model_class|
         expect(model_class.public_id_prefix).to eq(prefix.to_s),
                                                 "#{model_class.name} should have prefix '#{prefix}' auto-configured"
@@ -159,7 +157,6 @@ RSpec.describe PublicIdentifiable do
       end
 
       it "returns nil when prefix doesn't match model" do
-        # Try to find a user with an org prefix
         result = User.find_by_public_id("org_abc123")
 
         expect(result).to be_nil

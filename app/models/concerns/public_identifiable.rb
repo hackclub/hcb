@@ -4,9 +4,7 @@
 module PublicIdentifiable
   extend ActiveSupport::Concern
 
-  # Central registry for public ID lookup
-  # Models still call set_public_id_prefix, this is just for admin lookup tool
-  # Lazy-loaded to avoid circular dependencies during Rails initialization
+  # Central registry for public ID for admin lookup tool
   def self.models
     @models ||= {
       ach: AchTransfer,
@@ -54,8 +52,7 @@ module PublicIdentifiable
     return unless public_id.is_a?(String)
 
     components = public_id.split("_", 2)
-    return unless components.size == 2
-    return if components.first.blank? || components.last.blank?
+    return unless components.size == 2 && components.all?(&:present?)
 
     {
       prefix: components.first.to_s.downcase.to_sym,
@@ -63,7 +60,6 @@ module PublicIdentifiable
     }
   end
 
-  # Module-level lookup - single interface for admin tools
   def self.find_by_public_id(public_id)
     return unless (components = parse_components(public_id))
 
@@ -80,13 +76,13 @@ module PublicIdentifiable
     end
 
     def find_by_public_id(public_id)
-      # Return unless we were able to extract the components
-      return unless (components = PublicIdentifiable.parse_components(public_id))
-
-      # Prefix must match this model's prefix to prevent cross-model lookup (e.g., "usr_abc123" should not be found by Event)
-      return unless components[:prefix].to_s == self.get_public_id_prefix
-
-      # ex. 'org_h1izp'
+      components = PublicIdentifiable.parse_components(public_id)
+      return unless components
+    
+      prefix = components[:prefix].to_s
+      # Prefix must match this model's prefix
+      return unless prefix == get_public_id_prefix
+    
       find_by_hashid(components[:hashid])
     end
 
@@ -100,7 +96,6 @@ module PublicIdentifiable
     def get_public_id_prefix
       return self.public_id_prefix.to_s.downcase if self.public_id_prefix.present?
 
-      raise NotImplementedError, "The #{self.class.name} model includes PublicIdentifiable module, but has not configure it's prefix in `PublicIdentifiable.models`."
-    end
+      raise NotImplementedError, "The #{self.class.name} model includes PublicIdentifiable module, but set_public_id_prefix hasn't been called."    end
   end
 end

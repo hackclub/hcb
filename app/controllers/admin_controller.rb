@@ -1456,8 +1456,9 @@ class AdminController < Admin::BaseController
     @public_id = params[:public_id]&.strip
     return unless @public_id.present?
 
-    # Return if record is found
-    return if (@record = PublicIdentifiable.find_by_public_id(@public_id))
+    @record = PublicIdentifiable.find_by_public_id(@public_id)
+
+    return if @record.present?
 
     # Handle error
     components = PublicIdentifiable.parse_components(@public_id)
