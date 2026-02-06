@@ -11,11 +11,17 @@
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #  event_id                     :bigint
+#  ledger_item_id               :bigint
 #  subledger_id                 :bigint
 #
 # Indexes
 #
-#  index_hcb_codes_on_hcb_code  (hcb_code) UNIQUE
+#  index_hcb_codes_on_hcb_code    (hcb_code) UNIQUE
+#  index_hcb_codes_on_short_code  (short_code) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
 #
 class HcbCode < ApplicationRecord
   has_paper_trail
@@ -48,6 +54,8 @@ class HcbCode < ApplicationRecord
 
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
+
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
@@ -158,7 +166,7 @@ class HcbCode < ApplicationRecord
     sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
     if event&.can_front_balance?
       fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-      settled_ct_sum = canonical_transactions.sum(:amount_cents)
+      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
       sum += [fronted_pt_sum - settled_ct_sum, 0].max
     end
     sum
@@ -705,8 +713,8 @@ class HcbCode < ApplicationRecord
     nil
   end
 
-  def write_event_and_subledger_id
-    update(event_id: events.first&.id, subledger_id: subledgers.first&.id,)
+  def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
+    update(event_id: event&.id, subledger_id: subledger&.id)
   end
 
 end

@@ -8,6 +8,7 @@ class HcbCodesController < ApplicationController
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+    authorize @hcb_code
     @event =
       begin
         # Attempt to retrieve the event using the context of the
@@ -30,8 +31,6 @@ class HcbCodesController < ApplicationController
 
     hcb = @hcb_code.hcb_code
     hcb_id = @hcb_code.hashid
-
-    authorize @hcb_code
 
     return not_found if @hcb_code.unused?
 
@@ -60,6 +59,8 @@ class HcbCodesController < ApplicationController
       incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
       if signed_in? && HcbCodePolicy.new(current_user, incoming_hcb_code).show?
         redirect_to hcb_code_path(incoming_hcb_code.hashid)
+      else
+        raise
       end
     else
       raise unless @event.is_public? && !params[:redirect_to_sign_in]

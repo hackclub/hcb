@@ -10,6 +10,7 @@
 #  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
+#  expiration_at              :datetime
 #  instructions               :text
 #  invite_message             :string
 #  keyword_lock               :string
@@ -55,6 +56,8 @@ class CardGrant < ApplicationRecord
   include Commentable
 
   belongs_to :event
+  has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
+  after_create :create_ledger
   belongs_to :subledger, optional: true
   belongs_to :stripe_card, optional: true
   belongs_to :user, optional: true
@@ -76,6 +79,10 @@ class CardGrant < ApplicationRecord
   before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
+
+  before_create do
+    self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
+  end
 
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }

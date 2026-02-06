@@ -231,6 +231,7 @@ Rails.application.routes.draw do
       post "stripe_card_personalization_design_create", to: "admin#stripe_card_personalization_design_create"
       get "checks", to: "admin#checks"
       get "increase_checks", to: "admin#increase_checks"
+      get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
       get "wise_transfers", to: "admin#wise_transfers"
@@ -543,7 +544,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transactions, only: [:index, :show, :edit, :update]
+  resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
@@ -573,8 +574,13 @@ Rails.application.routes.draw do
       post "unapprove"
     end
   end
-
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
+  resources :ledgers, only: [:show]
+  scope module: :ledger, as: :ledger do
+    resources :items, path: "transactions", only: [:show]
+  end
+  resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
   resources :employees do
     post "terminate"
@@ -602,15 +608,6 @@ Rails.application.routes.draw do
     collection do
       get "export"
     end
-    post "reject"
-    post "cancel"
-  end
-
-  resources :emburse_transfers, except: [:new, :create] do
-    collection do
-      get "export"
-    end
-    post "accept"
     post "reject"
     post "cancel"
   end
@@ -844,6 +841,29 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: :event do
+    get "apply", to: "applications#apply"
+
+    resources :applications, only: [:index, :create, :show, :new, :update] do
+      collection do
+        get "start", to: "applications#create"
+      end
+
+      member do
+        get "personal_info"
+        get "project_info"
+        get "agreement"
+        get "review"
+        get "submission"
+        get "airtable"
+        get "edit"
+        post "submit"
+        post "admin_approve"
+        post "admin_reject"
+        post "admin_activate"
+      end
+    end
+  end
   resources :affiliations, only: [:create, :update, :destroy], module: :event
 
   get "/events" => "events#index"
