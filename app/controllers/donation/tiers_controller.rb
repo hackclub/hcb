@@ -53,7 +53,7 @@ class Donation
         sort_index: @event.donation_tiers.maximum(:sort_index).to_i + 1,
         published: false
       )
-      
+
       authorize @tier, :create?
       @tier.save!
 

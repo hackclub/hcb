@@ -1,6 +1,5 @@
 class Donation
   class TierPolicy < ApplicationPolicy
-
     def can_update_event?
       EventPolicy.new(user, record.event).edit?
     end
@@ -12,4 +11,5 @@ class Donation
 
 
   end
+
 end
