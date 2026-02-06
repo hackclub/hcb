@@ -8,6 +8,7 @@ class IntercomUser
       name: user.name,
     }
   end
+
 end
 
 IntercomRails.config do |config|
