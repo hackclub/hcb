@@ -220,6 +220,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
     t.bigint "application_id"
     t.datetime "created_at", null: false
     t.integer "expires_in"
+    t.inet "ip_address"
     t.string "refresh_token"
     t.datetime "revoked_at"
     t.string "scopes"
@@ -227,7 +228,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
     t.text "token_ciphertext"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
