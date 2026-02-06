@@ -75,9 +75,6 @@ class Donation
         tiers << tier
       end
 
-      puts "THESE ARE THE TIERS"
-      puts params[:tiers].inspect
-
       tiers.each do |tier|
         tier_data = params[:tiers][tier.id.to_s]
         tier.update(
