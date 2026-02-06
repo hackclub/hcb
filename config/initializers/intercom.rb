@@ -24,8 +24,19 @@ IntercomRails.config do |config|
   # If it is `current_user` or `@user`, then you can ignore this
   #
   # config.user.current = Proc.new { current_user }
-  config.user.current = [proc { current_user }]
-
+  class IntercomUser
+    def self.from_authenticated_user(user)
+      {
+        id: user.public_id,
+        email: user.email,
+        name: user.name,
+      }
+    end
+  end
+  
+  config.user.current = Proc.new do
+    IntercomUser.from_authenticated_user(current_user)
+  end
   # == Include for logged out Users
   # If set to true, include the Intercom messenger on all pages, regardless of whether
   # The user model class (set below) is present.
