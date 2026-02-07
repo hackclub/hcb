@@ -21,8 +21,8 @@ class FeeRevenue < ApplicationRecord
 
   has_many :bank_fees
 
-  # Eagerly create HcbCode object
-  after_create :local_hcb_code
+  include HasHcbCode
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE, eager_create: true
 
   aasm do
     state :pending, initial: true

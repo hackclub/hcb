@@ -187,9 +187,6 @@ class AchTransfer < ApplicationRecord
     self.company_name = "HCB (Hack Club)" # Column requires "Hack Club" to be included in the company_name for all outgoing ACHs
   end
 
-  # Eagerly create HcbCode object
-  after_create :local_hcb_code
-
   after_create unless: -> { scheduled_on.present? } do
     create_raw_pending_outgoing_ach_transaction!(amount_cents: -amount, date_posted: scheduled_on || created_at)
     raw_pending_outgoing_ach_transaction.create_canonical_pending_transaction!(
@@ -342,13 +339,8 @@ class AchTransfer < ApplicationRecord
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE, eager_create: true
 
   def estimated_arrival
     # https://column.com/docs/ach/timing
