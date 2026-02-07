@@ -92,7 +92,7 @@ class TopupStripeJob < ApplicationJob
       statement_descriptor: "Stripe Top-up"
     )
 
-    puts "Just created a topup for #{limited_topup_amount}"
+    Rails.logger.info "Just created a topup for #{limited_topup_amount}"
 
     StatsD.increment("stripe_issuing_topup", limited_topup_amount)
   end
