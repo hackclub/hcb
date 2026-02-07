@@ -117,12 +117,7 @@
         <%= button_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id),
               class: "bg-transparent border-none cursor-pointer link-reset muted",
               form: { "data-turbo" => (defined?(turbo) ? turbo : "false").to_s },
-              params: {
-                popover: local_assigns[:popover],
-                show_receipt_button: local_assigns[:show_receipt_button],
-                show_author_img: local_assigns[:show_author_img],
-                ledger_instance: @ledger_instance,
-              }.compact do %>
+              params: { ledger_instance: @ledger_instance }.compact do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>
