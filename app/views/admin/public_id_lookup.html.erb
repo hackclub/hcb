@@ -1,0 +1,61 @@
+<% title "Public ID Lookup" %>
+
+<h1>Public ID Lookup</h1>
+
+<p class="muted">
+  Look up any object by its public ID. Public IDs have a format like
+  <code>org_abc123</code>, <code>usr_xyz789</code>, etc.
+</p>
+
+<%= form_with(local: true, url: public_id_lookup_admin_index_path, method: :get) do |form| %>
+  <div class="flex items-center gap-2">
+    <%= form.text_field :public_id, value: @public_id, placeholder: "org_abc123", required: true, autofocus: true, class: "flex-1" %>
+    <%= form.submit "Look up", class: "btn" %>
+  </div>
+<% end %>
+
+<% if @public_id.present? %>
+  <hr style="margin: 2rem 0;">
+
+  <% if @error %>
+    <div class="card bg-error text-white mb-4">
+      <strong>Error:</strong> <%= @error %>
+    </div>
+  <% elsif @record %>
+    <table class="mt-3">
+      <thead>
+      <tr>
+        <th>Attribute</th>
+        <th>Value</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><strong>Public ID</strong></td>
+        <td><code><%= @record.public_id %></code></td>
+      </tr>
+      <tr>
+        <td><strong>Model Name</strong></td>
+        <td><code><%= @record.class.name %></code></td>
+      </tr>
+
+      <%# Using raw values from database to prevent leaking encrypted values %>
+      <% attribute_values = @record.attributes_before_type_cast.slice(*@record.class.columns.map(&:name)) %>
+      <% attribute_values.each do |attr, value| %>
+        <tr>
+          <td><strong><%= attr %></strong></td>
+          <td>
+            <% if attr.ends_with?("ciphertext") %>
+              <i class="muted">Encrypted</i>
+            <% elsif value.nil? %>
+              <i class="muted">nil</i>
+            <% else %>
+              <%= value %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  <% end %>
+<% end %>
