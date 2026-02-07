@@ -78,7 +78,7 @@ class TopupStripeJob < ApplicationJob
     StatsD.gauge("stripe_issuing_available_issuing_balance", available, sample_rate: 1.0)
     StatsD.gauge("stripe_issuing_pending_issuing_balance", pending, sample_rate: 1.0)
 
-    puts "topup amount == #{topup_amount}"
+    Rails.logger.info "topup amount == #{topup_amount}"
     return unless topup_amount >= 5_000 * 100
 
     # The maximum amount for a single top-up is $300k
