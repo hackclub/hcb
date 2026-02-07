@@ -1230,7 +1230,7 @@ class EventsController < ApplicationController
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
     end
 
-    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?)
+    @ledger_filters_disabled = !signed_in?
     has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
     if @ledger_filters_disabled && has_filters
       render plain: "Invalid parameters. Please try again", status: :bad_request

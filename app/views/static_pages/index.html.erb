@@ -20,17 +20,6 @@
   <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<div class="card mb-6 mt-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
-  <div class="flex-1">
-    <p class="my-0 text-lg font-[700]">HCB has gotten a visual refresh!</p>
-    <p class="my-0 text-md max-w-2xl">The HCB you know and love has a fresh new look. We're hoping it makes HCB easier to use and navigate, and we'd love to hear your feedback.</p>
-  </div>
-  <%= link_to "https://forms.hackclub.com/hcb-feedback", class: "btn" do %>
-    <%= inline_icon "message-new", size: 16, class: "mr-1" %>
-    Share feedback
-  <% end %>
-</div>
-
 <% if @applications.any? %>
   <div class="my-2 ml-0 py-2 flex flex-row items-end justify-between">
     <h2 class="heading h2 line-height-4 m-0 p-0 border-none">Applications</h2>

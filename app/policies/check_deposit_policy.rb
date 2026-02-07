@@ -46,7 +46,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def auditor_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    auditor? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
   end
 
   def user_who_can_transfer?

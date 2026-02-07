@@ -139,6 +139,11 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
+        after do |rejection_message|
+          if rejection_message.present?
+            Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
+          end
+        end
       end
     end
 
