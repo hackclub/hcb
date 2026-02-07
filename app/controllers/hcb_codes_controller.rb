@@ -202,7 +202,7 @@ class HcbCodesController < ApplicationController
     can_dispute, error_reason = ::HcbCodeService::CanDispute.new(hcb_code: @hcb_code).run
 
     if can_dispute
-      redirect_to disputed_transactions_airtable_form_url(embed: false, hcb_code: @hcb_code, user: @current_user), allow_other_host: true
+      redirect_to disputed_transactions_airtable_form_url(embed: false, hcb_code: @hcb_code, user: Current.user), allow_other_host: true
     else
       redirect_to @hcb_code, flash: { error: error_reason }
     end
