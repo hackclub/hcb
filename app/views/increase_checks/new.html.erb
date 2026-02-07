@@ -2,9 +2,9 @@
 <% title "Send a check" %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Contact information" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Address" %>
-  <%= render "events/transfer_step_item", number: 3, label: "Payment information" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Contact information" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Address" %>
+  <%= render "events/transfers/step_item", number: 3, label: "Payment information" %>
 <% end %>
 
 <% content_for :header do %>
@@ -135,7 +135,7 @@
           class: "!max-w-full" %>
       </div>
 
-      <%= render "events/notify_transfer_recipient", form: form, disabled: disabled %>
+      <%= render "events/transfers/notify_recipient", form: form, disabled: disabled %>
     </div>
   </div>
 
@@ -359,7 +359,7 @@
         </div>
       </div>
 
-      <%= render "events/transfer_attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
   </div>
 

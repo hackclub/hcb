@@ -1,10 +1,10 @@
 <% title "Send an ACH transfer" %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
   <% admin_tool do %>
-    <%= render "events/transfer_step_item", number: 3, label: "Admin" %>
+    <%= render "events/transfers/step_item", number: 3, label: "Admin" %>
   <% end %>
 <% end %>
 
