@@ -1,8 +1,6 @@
 <%# locals: (card_grant:) %>
 
-<div class="statset mb-2">
-  <div class="stat">
-    <span class="stat__label">Balance remaining</span>
-    <span class="stat__value"><%= card_grant.balance.format(symbol: false) %></span>
-  </div>
+<div class="card card--homepage mb-2 px-5">
+  <p class="eyebrow my-0 opacity-50">Balance remaining</p>
+  <span class="stat__value"><%= card_grant.balance.format(symbol: false) %></span>
 </div>
