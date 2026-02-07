@@ -86,7 +86,7 @@ class FeeReimbursement < ApplicationRecord
   end
 
   def process
-    processed_at = DateTime.now
+    update!(processed_at: DateTime.now)
   end
 
   def transfer_amount

@@ -371,13 +371,8 @@ class Invoice < ApplicationRecord
     sponsor.name
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
