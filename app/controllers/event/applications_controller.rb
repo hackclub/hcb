@@ -12,7 +12,7 @@ class Event
 
     def index
       skip_authorization
-      @applications = current_user.applications
+      @applications = current_user.active_applications
     end
 
     def apply
@@ -216,6 +216,15 @@ class Event
         flash[:error] = "This application is not ready to submit"
         redirect_to review_application_path(@application)
       end
+    end
+
+    def archive
+      authorize @application
+
+      @application.archive!
+      flash[:success] = "Application archived"
+
+      redirect_to applications_path
     end
 
     private

@@ -31,7 +31,7 @@
   <% end %>
 </div>
 
-<% if current_user.applications.in_progress.any? %>
+<% if @applications.any? %>
   <div class="my-2 ml-0 py-2 flex flex-row items-end justify-between">
     <h2 class="heading h2 line-height-4 m-0 p-0 border-none">Applications</h2>
     <%= link_to applications_path, class: "flex items-center shrink-0 no-underline" do %>
@@ -41,7 +41,7 @@
   </div>
 
   <div class="grid grid--wide mb-12 pb-2">
-    <% current_user.applications.in_progress.each do |application| %>
+    <% @applications.each do |application| %>
       <%= render partial: "event/applications/application_card", locals: { application: } %>
     <% end %>
   </div>
@@ -149,7 +149,7 @@
             <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
               <span>
                 <%= status_badge "info" %>
-                <strong><%= invite.event.name %></strong>
+                <strong><%= invite.event&.name %></strong>
               </span>
             </li>
           <% end %>

@@ -14,6 +14,8 @@
       <div class="flex flex-row items-center justify-between mt-3">
         <% if application.next_step.present? %>
           <p class="m-0">Next step: <strong><%= application.next_step %></strong></p>
+        <% elsif application.rejected? %>
+          <p class="m-0">Your application was rejected</p>
         <% else %>
           <p class="m-0">We're reviewing your application</p>
         <% end %>

@@ -16,6 +16,7 @@
 #  airtable_status              :string
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
+#  archived_at                  :datetime
 #  committed_amount_cents       :integer
 #  cosigner_email               :string
 #  currently_fiscally_sponsored :boolean
@@ -85,6 +86,9 @@ class Event
       Event::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
       Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
     end
+
+    scope :not_archived, -> { where(archived_at: nil) }
+    scope :archived, -> { where.not(archived_at: nil) }
 
     enum :last_page_viewed, {
       show: "show",
@@ -188,6 +192,13 @@ class Event
       return "Sign the fiscal sponsorship agreement" if submitted?
       return "Start spending!" if approved?
       return "" if rejected?
+    end
+
+    def archive_action_name
+      return "Archive application" if rejected? || approved?
+      return "Withdraw application" if submitted? || under_review?
+
+      "Cancel application"
     end
 
     def completion_percentage
@@ -341,6 +352,14 @@ class Event
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
+    end
+
+    def archive!
+      update!(archived_at: Time.current)
+    end
+
+    def archived?
+      archived_at.present?
     end
 
     private
