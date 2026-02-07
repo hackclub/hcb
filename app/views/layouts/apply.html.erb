@@ -201,7 +201,7 @@
           </div>
           <% if content_for?(:progress).present? %>
             <div class="bg-smoke dark:bg-slate h-1">
-              <div class="bg-primary h-1" style="width: <%= yield(:progress) %>%"></div>
+              <div class="bg-primary h-1 transition-[width] duration-500 ease-in-out" style="width: <%= yield(:progress) %>%"></div>
             </div>
           <% else %>
             <div class="h-0 border-solid border-y-0 border-x-0 border-b-2 border-smoke dark:border-slate"></div>
