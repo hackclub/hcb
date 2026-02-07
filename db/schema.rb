@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -220,6 +220,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "application_id"
     t.datetime "created_at", null: false
     t.integer "expires_in"
+    t.inet "ip_address"
     t.string "refresh_token"
     t.datetime "revoked_at"
     t.string "scopes"
@@ -227,7 +228,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.text "token_ciphertext"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
@@ -2087,7 +2087,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
-    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
+    t.index ["user_id", "referral_link_id"], name: "index_referral_attributions_on_user_id_and_referral_link_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
