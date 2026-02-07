@@ -1,0 +1,36 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @whodunnit.preferred_name.presence || @whodunnit.full_name %> (an <%= @event.ancestor_organizer_positions.map(&:user).include?(@whodunnit) ? "organization manager" : "HCB admin" %>) has enabled transparency mode for <%= @event.name %>.
+  With transparency mode enabled:
+</p>
+
+<ul>
+  <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your organization.</li>
+  <li>None of HCB&apos;s pages will change for signed in team members.</li>
+  <li>We&apos;ll do our best to redact contact info, but we can&apos;t guarantee it doesn't show up in these
+    fields:
+    <ul>
+      <li>Transaction display names</li>
+      <li>Sponsor company names</li>
+      <li>ACH transfer recipients</li>
+      <li>Check recipients</li>
+    </ul>
+  </li>
+  <li>Your <%= link_to "announcements page", event_announcement_overview_url(@event) %> will always be visible.</li>
+</ul>
+
+<p>
+  Managers can disable transparency mode at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.
+</p>
+
+<p>
+  Additionally, managers can enable monthly announcements in <%= link_to "your organization settings", edit_event_url(@event) %>.
+  If enabled, HCB will generate a new announcement each month that includes summarized data about your organization from the past month.
+  For more information, check out <%= link_to "our blog post", "https://blog.hcb.hackclub.com/posts/monthly-announcements" %>.
+</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>
