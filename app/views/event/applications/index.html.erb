@@ -1,22 +1,19 @@
+<h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Applications</h2>
 
-<% if @applications.any? %>
-  <h2 class="heading h2 line-height-4 mt-0 ml-0 py-2 px-4 border-none">Applications</h2>
+<div class="grid grid--wide mb-12 pb-2 px-4">
+  <% @applications.each do |application| %>
+    <%= render partial: "event/applications/application_card", locals: { application: } %>
+  <% end %>
 
-  <div class="grid grid--wide mb-12 pb-2 px-4">
-    <% current_user.applications.each do |application| %>
-      <%= render partial: "event/applications/application_card", locals: { application: } %>
-    <% end %>
-
-    <%= link_to new_application_path do %>
-      <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
-        <div class="center">
-          <div class="pop success mx-auto flex mb-1">
-            <%= inline_icon "plus", size: 28 %>
-          </div>
-          New organization
+  <%= link_to new_application_path do %>
+    <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
+      <div class="center">
+        <div class="pop success mx-auto flex mb-1">
+          <%= inline_icon "plus", size: 28 %>
         </div>
-      </li>
-    <% end %>
+        New organization
+      </div>
+    </li>
+  <% end %>
 
-  </div>
-<% end %>
+</div>

@@ -12,7 +12,7 @@ class Event
 
     def index
       skip_authorization
-      @applications = current_user.applications
+      @applications = current_user.active_applications
     end
 
     def apply
@@ -45,7 +45,7 @@ class Event
                                else
                                  "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
                                end
-                             elsif @application.contract.party(:signee).pending?
+                             elsif @application.contract.party(:signee)&.pending?
                                "You (#{@application.user.email}) need to sign the agreement before we can review your application."
                              else
                                "Our team will sign and finalize the contract soon."
@@ -215,6 +215,15 @@ class Event
         flash[:error] = "This application is not ready to submit"
         redirect_to review_application_path(@application)
       end
+    end
+
+    def archive
+      authorize @application
+
+      @application.archive!
+      flash[:success] = "Application archived"
+
+      redirect_to applications_path
     end
 
     private
