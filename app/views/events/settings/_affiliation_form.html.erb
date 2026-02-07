@@ -92,4 +92,11 @@
   </div>
 </template>
 
-<%= form.submit (affiliation.new_record? ? "Save affiliation" : "Update").to_s, "x-bind:disabled": "disabled || type === ''" %>
+<% if affiliation.new_record? %>
+  <div class="flex flex-row items-center justify-between" x-show="type !== ''">
+    <%= form.submit "Save affiliation", "x-bind:disabled": "disabled" %>
+    <button type="button" class="btn btn-secondary" "x-bind:disabled" : "disabled" x-on:click="type = ''">Cancel</button>
+  </div>
+<% else %>
+  <%= form.submit "Update", "x-bind:disabled": "disabled || type === ''" %>
+<% end %>

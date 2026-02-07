@@ -227,7 +227,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.text "token_ciphertext"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
+    t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end

@@ -135,6 +135,11 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
+        after do |rejection_message|
+          if rejection_message.present?
+            Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
+          end
+        end
       end
     end
 
@@ -286,7 +291,7 @@ class Event
       app["Address Country"] = address_country
       app["Event Location"] = address_country
       app["How did you hear about HCB?"] = referrer
-      app["Accommodations"] = notes
+      app["Accommodations"] = accessibility_notes
       app["(Adults) Political Activity"] = political_description
       app["Referral Code"] = referral_code
       app["HCB Status"] = aasm_state.humanize unless draft?
