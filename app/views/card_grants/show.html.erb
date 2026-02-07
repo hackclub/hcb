@@ -44,7 +44,9 @@
       <% if @card_grant.stripe_card %>
         <div class="sm:max-w-[300px]">
           <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
-          <div class="-mt-2"></div>
+          <% unless @card_grant.canceled? %>
+            <div class="-mt-2"></div>
+          <% end %>
           <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>

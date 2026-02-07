@@ -1,7 +1,7 @@
 <%# locals: (stripe_card:, label: "") %>
 
 <% if stripe_card&.stripe_status == 'inactive' %>
-  <% defrost_tooltip = "Instantly re-freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
+  <% defrost_tooltip = "Instantly re-freeze anytime" %>
   <%= link_to defrost_stripe_card_path(stripe_card),
               method: :post,
               class: "btn btn--list-item",
@@ -13,7 +13,7 @@
     </div>
   <% end %>
 <% elsif stripe_card&.stripe_status == 'active' %>
-  <% freeze_tooltip = label.presence || "Instantly freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
+  <% freeze_tooltip = label.presence || "Instantly defrost anytime" %>
   <%= link_to freeze_stripe_card_path(stripe_card),
               method: :post,
               class: "btn btn--list-item",

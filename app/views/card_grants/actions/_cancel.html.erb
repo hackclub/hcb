@@ -1,6 +1,6 @@
 <%# locals: (card_grant:, label: "") %>
 
-<% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
+<% cancel_tooltip = policy(card_grant).cancel? ? "Cancel grant and return funds to the organization" : "You don't have permission to perform this action" %>
 <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
             method: :post,
             data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },

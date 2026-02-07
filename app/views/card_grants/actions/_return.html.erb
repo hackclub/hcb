@@ -1,6 +1,6 @@
 <%# locals: (card_grant:) %>
 
-<% return_tooltip = "Cancel this grant and return funds to the organization" %>
+<% return_tooltip = "Cancel grant and return funds to the organization" %>
 <%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn btn--list-item" do %>
   <%= inline_icon "support", size: 20 %>
   <div>
@@ -21,6 +21,6 @@
     </ul>
 
     <p>Are you sure you want to return this grant to <strong><%= card_grant.event.name %></strong>?</p>
-    <%= form.submit "I understand. Return #{card_grant.balance.format} grant", class: "btn bg-error" %>
+    <%= form.submit "I understand. Return #{card_grant.balance.format} grant", class: "btn bg-primary w-full" %>
   <% end %>
 </div>
