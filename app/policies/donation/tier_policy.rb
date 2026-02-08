@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Donation
   class TierPolicy < ApplicationPolicy
     def can_update_event?
