@@ -115,8 +115,7 @@ class Event
     def admin_reject
       authorize @application
 
-      @application.mark_rejected!
-      Event::ApplicationMailer.with(application: self, rejection_message:).rejected.deliver_later
+      @application.mark_rejected!(params[:rejection_message])
 
       flash[:success] = "Application rejected."
       redirect_back_or_to application_path(@application)

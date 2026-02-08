@@ -12,20 +12,16 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  referral_link_id         :bigint
-#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_referral_link_id     (referral_link_id)
-#  index_logins_on_referral_program_id  (referral_program_id)
-#  index_logins_on_user_id              (user_id)
-#  index_logins_on_user_session_id      (user_session_id)
+#  index_logins_on_referral_link_id  (referral_link_id)
+#  index_logins_on_user_id           (user_id)
+#  index_logins_on_user_session_id   (user_session_id)
 #
 class Login < ApplicationRecord
-  self.ignored_columns = ["referral_program_id"]
-
   include AASM
   include Hashid::Rails
 

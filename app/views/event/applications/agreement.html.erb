@@ -16,13 +16,8 @@
   </div>
 <% end %>
 
-<div class="max-h-[50vh] md:max-h-[75vh] overflow-scroll mb-6" data-controller="contract" data-contract-advance-path-value="<%= application_path(@application) %>">
-  <docuseal-form
-    id="docusealForm"
-    data-src="<%= @party.docuseal_signature_url %>"
-    data-with-title="false"
-    data-action="completed->contract#completed declined->contract#void">
-  </docuseal-form>
+<div data-controller="contract" data-contract-advance-path-value="<%= application_path(@application) %>">
+  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party } %>
 </div>
 
 <% content_for :footer do %>
