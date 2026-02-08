@@ -26,16 +26,12 @@ class Donation
 
       index = params[:index]
 
-      # get all the tiers as an array
       tiers = tier.event.donation_tiers.order(:sort_index).to_a
-
       return head status: :bad_request if index < 0 || index >= tiers.size
 
-      # switch the position *in the in-memory array*
       tiers.delete tier
       tiers.insert index, tier
 
-      # persist the sort order
       ActiveRecord::Base.transaction do
         tiers.each_with_index do |op, idx|
           op.update(sort_index: idx)
@@ -62,9 +58,17 @@ class Donation
         author: current_user
       ).create
 
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: { text: "Donation tier created successfully.", link: edit_announcement_path(announcement), link_text: "Create an announcement!" } }
+      redirect_back fallback_location: edit_event_path(@event.slug),
+                    flash: {
+                      success: {
+                        text: "Donation tier created successfully.",
+                        link: edit_announcement_path(announcement),
+                        link_text: "Create an announcement!"
+                      }
+                    }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+      redirect_back fallback_location: edit_event_path(@event.slug),
+                    flash: { error: e.message }
     end
 
     def update
@@ -76,18 +80,20 @@ class Donation
       end
 
       tiers.each do |tier|
-        tier_data = params[:tiers][tier.id.to_s]
-        tier.update(
-          name: tier_data[:name],
-          description: tier_data[:description],
-          amount_cents: (tier_data[:amount_cents].to_f * 100).to_i,
-          published: ActiveRecord::Type::Boolean.new.cast(tier_data[:published])
+        data = tier_params(tier.id)
+
+        tier.update!(
+          name: data[:name],
+          description: data[:description],
+          amount_cents: (data[:amount_cents].to_f * 100).to_i,
+          published: ActiveRecord::Type::Boolean.new.cast(data[:published])
         )
       end
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+      redirect_back fallback_location: edit_event_path(@event.slug),
+                    flash: { error: e.message }
     end
 
     def destroy
@@ -95,9 +101,20 @@ class Donation
       authorize @tier, :destroy?
 
       @tier.destroy
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { success: "Donation tiers updated successfully." }
+      redirect_back fallback_location: edit_event_path(@event.slug),
+                    flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug), flash: { error: e.message }
+      redirect_back fallback_location: edit_event_path(@event.slug),
+                    flash: { error: e.message }
+    end
+
+    private
+
+    def tier_params(id)
+      params
+        .require(:tiers)
+        .require(id.to_s)
+        .permit(:name, :description, :amount_cents, :published)
     end
 
   end

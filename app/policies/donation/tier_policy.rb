@@ -3,7 +3,7 @@
 class Donation
   class TierPolicy < ApplicationPolicy
     def can_update_event?
-      EventPolicy.new(user, record.event).edit?
+      EventPolicy.new(user, record.event).update?
     end
 
     alias_method :set_index?, :can_update_event?
