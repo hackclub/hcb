@@ -192,7 +192,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym,
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -807,12 +807,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
-        "https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -1206,18 +1206,23 @@ class EventsController < ApplicationController
 
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
-    @type = params[:type]
+    @type = params[:type].presence
     @start_date = params[:start].presence
     @end_date = params[:end].presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
-    @merchant = params[:merchant]
-    @direction = params[:direction]
+    @merchant = params[:merchant].presence
+    @direction = params[:direction].presence
     @category = TransactionCategory.find_by(slug: params[:category])
+    @subledger = params[:subledger].presence
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    if @subledger
+      @users = User.where(id: @event.card_grants.select(:user_id)).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    else
+      @users = @event.users.with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    end
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -1225,7 +1230,7 @@ class EventsController < ApplicationController
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
     end
 
-    @ledger_filters_disabled = !(organizer_signed_in? || auditor_signed_in?)
+    @ledger_filters_disabled = !signed_in?
     has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
     if @ledger_filters_disabled && has_filters
       render plain: "Invalid parameters. Please try again", status: :bad_request
@@ -1251,7 +1256,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date",
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions

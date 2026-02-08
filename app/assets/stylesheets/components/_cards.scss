@@ -19,7 +19,7 @@
 
   &.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, smoke), 0.75);
+    background-color: rgba(map-get($palette, smoke), 0.5);
   }
 
   &.b--warning {
@@ -253,7 +253,7 @@ a.card {
 }
 
 .card--sunset {
-  background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
 }
 
 #card-pin {

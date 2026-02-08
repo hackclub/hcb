@@ -12,16 +12,14 @@
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  referral_link_id         :bigint
-#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_referral_link_id     (referral_link_id)
-#  index_logins_on_referral_program_id  (referral_program_id)
-#  index_logins_on_user_id              (user_id)
-#  index_logins_on_user_session_id      (user_session_id)
+#  index_logins_on_referral_link_id  (referral_link_id)
+#  index_logins_on_user_id           (user_id)
+#  index_logins_on_user_session_id   (user_session_id)
 #
 class Login < ApplicationRecord
   include AASM
@@ -33,7 +31,6 @@ class Login < ApplicationRecord
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })
 
-  belongs_to :referral_program, class_name: "Referral::Program", optional: true
   belongs_to :referral_link, class_name: "Referral::Link", optional: true
 
   has_encrypted :browser_token

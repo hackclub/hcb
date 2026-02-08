@@ -396,6 +396,8 @@ class Event < ApplicationRecord
   has_one :column_account_number, class_name: "Column::AccountNumber"
   delegate :account_number, :routing_number, :bic_code, to: :column_account_number, allow_nil: true
 
+  has_one :application
+
   has_many :grants
 
   has_one_attached :donation_header_image
