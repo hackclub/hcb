@@ -108,6 +108,15 @@ class HcbCode < ApplicationRecord
     @date ||= ct.try(:date) || pt.try(:date)
   end
 
+  def datetime
+    @datetime ||=
+      pt.try(:raw_pending_stripe_transaction).try { |rpst| rpst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      pt.try(:created_at) ||
+      ct.try(:raw_stripe_transaction).try { |rst| rst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      ct.try(:raw_column_transaction).try { |rct| rct.column_transaction["effective_at"]&.then { |t| Time.parse(t) } } ||
+      ct.try(:created_at)
+  end
+
   def has_pending_expired?
     canonical_pending_transactions.pending_expired.any?
   end
