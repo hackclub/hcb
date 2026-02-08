@@ -77,4 +77,8 @@ class Fee < ApplicationRecord
     end
   end
 
+  after_commit do
+    event.update_pending_bank_fee
+  end
+
 end
