@@ -46,6 +46,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Wire < ApplicationRecord
+  include HasIdempotencyKey
   has_paper_trail
 
   include PgSearch::Model

@@ -130,6 +130,7 @@ class WiseTransfersController < ApplicationController
             :address_state,
             :wise_id,
             :wise_recipient_id,
+            :idempotency_key,
             { file: [] }] + WiseTransfer.recipient_information_accessors
 
     keys << :usd_amount if current_user.admin?

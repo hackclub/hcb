@@ -2,7 +2,8 @@
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}", data: { controller: "submit-once", action: "submit->submit-once#submit" } }) do |form| %>
+  <%= form.hidden_field :idempotency_key, value: SecureRandom.uuid %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section">
@@ -79,7 +80,7 @@
       </div>
     <% end %>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> data-submit-once-target="button">
       Send transfer
       <%= inline_icon "send" %>
     </button>

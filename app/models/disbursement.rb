@@ -47,6 +47,7 @@
 #  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement < ApplicationRecord
+  include HasIdempotencyKey
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name]
 

@@ -20,8 +20,10 @@
         payment_recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event),
         editing: @wire.address_line1.present?,
         country: @wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"
-      }.to_json)})"
+      }.to_json)})",
+      data: { controller: "submit-once", action: "submit->submit-once#submit" }
 }) do |form| %>
+  <%= form.hidden_field :idempotency_key, value: SecureRandom.uuid %>
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
@@ -141,7 +143,7 @@
       <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> data-submit-once-target="button">
       Send wire
       <%= inline_icon "send" %>
     </button>

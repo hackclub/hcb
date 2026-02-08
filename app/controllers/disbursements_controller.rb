@@ -92,6 +92,7 @@ class DisbursementsController < ApplicationController
       fronted: @source_event.plan.front_disbursements_enabled?,
       source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
       destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
+      idempotency_key: disbursement_params[:idempotency_key],
     ).run
 
     if disbursement_params[:file]
@@ -216,6 +217,7 @@ class DisbursementsController < ApplicationController
       :amount,
       :name,
       :scheduled_on,
+      :idempotency_key,
       { file: [] }
     ]
 

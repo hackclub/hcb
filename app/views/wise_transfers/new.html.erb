@@ -28,10 +28,12 @@
       model: [@event, @wise_transfer],
       local: true,
       html: {
-        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
+        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }",
+        data: { controller: "submit-once", action: "submit->submit-once#submit" }
       }
     ) do |form| %>
 
+  <%= form.hidden_field :idempotency_key, value: SecureRandom.uuid %>
   <%= form_errors(@wise_transfer, "wise transfer", "We couldn't send this") %>
 
   <div data-scroll-seek-target="section">
@@ -101,7 +103,7 @@
     </div>
   </div>
 
-  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
+  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full" data-submit-once-target="button">
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
   </button>
   <p class="muted mt-3 text-center text-sm">

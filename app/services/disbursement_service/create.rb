@@ -23,7 +23,8 @@ module DisbursementService
       skip_auto_approve: false,
       fronted: false,
       source_transaction_category_slug: nil,
-      destination_transaction_category_slug: nil
+      destination_transaction_category_slug: nil,
+      idempotency_key: nil
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -41,6 +42,7 @@ module DisbursementService
       @fronted = fronted
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
+      @idempotency_key = idempotency_key
     end
 
     def run
@@ -102,7 +104,8 @@ module DisbursementService
         requested_by:,
         should_charge_fee: @should_charge_fee,
         source_transaction_category:,
-        destination_transaction_category:
+        destination_transaction_category:,
+        idempotency_key: @idempotency_key
       }
     end
 
