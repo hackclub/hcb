@@ -112,63 +112,54 @@
   </p>
 <% end %>
 <% else %>
-  <div class="grid grid-cols-5 h-[calc(100vh-60px)] gap-20 px-3">
-    <div class="flex flex-col justify-center col-span-2">
-      <h1 class="heading border-0 mb-0">
-        Reimbursements
-      </h1>
-
-      <div class="-mx-4">
-        <div class="btn btn--list-item pointer-events-none items-start">
-          <%= inline_icon "send", class: "mt-1" %>
-            <div>
-              <strong>Manage out-of-pocket expenses</strong>
-              <p class="text-sm opacity-60">
-                Easily track and reimburse expenses incurred by your team members during events.
-              </p>
-            </div>
-        </div>
-        <div class="btn btn--list-item pointer-events-none items-start">
-          <%= inline_icon "payment", class: "mt-1" %>
-            <div>
-              <strong>
-                Four different methods
-              </strong>
-              <p class="text-sm opacity-60">
-                Reimburse via ACH, mailed checks, Wise, or Wire transfers to suit your team's needs.
-              </p>
-            </div>
-        </div>
-        <div class="btn btn--list-item pointer-events-none items-start">
-          <%= inline_icon "copy", class: "mt-1" %>
-            <div>
-              <strong>Upload receipts</strong>
-              <p class="text-sm opacity-60">
-                Organize and store expense receipts to track each expense easily.
-              </p>
-            </div>
-        </div>
-      </div>
-
-      <% if organizer_signed_in?(as: :member) %>
-        <%= link_to new_event_invoice_path(event_id: @event.slug),
-            class: "btn btn--icon bg-success mt-3",
-            data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
-          <%= inline_icon "send" %>
-          Send an invoice
-        <% end %>
+ <%= render "events/blankslate_page",
+      title: "Reimbursements",
+      screenshots: {
+        light: "https://user-cdn.hackclub-assets.com/019c3c7a-827e-779a-80bd-505c00c0f793/hcb.hackclub.com_hq_reimbursements.png",
+        dark: "https://user-cdn.hackclub-assets.com/019c3c7a-6f5b-7e30-aada-7f7ee823679e/hcb.hackclub.com_hq_reimbursements%20(1).png"
+      },
+      hints: [
+        {
+          icon: "send",
+          title: "Manage out-of-pocket expenses",
+          description: "Easily track and reimburse expenses incurred by your team members during events."
+        },
+        {
+          icon: "payment",
+          title: "Four different methods",
+          description: "Reimburse via ACH, mailed checks, Wise, or Wire transfers to suit your team's needs."
+        },
+        {
+          icon: "copy",
+          title: "Upload receipts",
+          description: "Organize and store expense receipts to track each expense easily."
+        }
+      ] do %>
+      <% content_for :caption do %>
+        <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
       <% end %>
-    </div>
-    <div class="col-span-3 flex items-center justify-center">
-      <div class="card p-0 card--breakdown">
-        <img src="https://user-cdn.hackclub-assets.com/019c3c7a-827e-779a-80bd-505c00c0f793/hcb.hackclub.com_hq_reimbursements.png" alt="Invoice illustration" class="w-full h-auto dark:hidden">
-        <img src="https://user-cdn.hackclub-assets.com/019c3c7a-6f5b-7e30-aada-7f7ee823679e/hcb.hackclub.com_hq_reimbursements%20(1).png" alt="Invoice illustration" class="w-full h-auto hidden dark:block">
-        <div class="p-2 pt-0 text-center">
-          <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
-        </div>
-      </div>
-    </div>
-  </div>
+
+          <%= pop_icon_to "settings",
+        edit_event_path(@event, tab: "reimbursements"),
+        data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
+        class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
+    <% if @event.public_reimbursement_page_available? %>
+      <%= pop_icon_to "external",
+          reimbursement_start_reimbursement_report_url(@event),
+          target: "_blank",
+          class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
+    <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= pop_icon_to "plus",
+            "#",
+            class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
+            "aria-label": "New report",
+            data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
+      <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+          <%= inline_icon "plus" %> New
+      <% end %>
+    <% end %>
+  <% end %>
 <% end %>
 
 <%= form_with(model: Reimbursement::Report, class: "display-none", method: :post, url: quick_expense_reimbursement_reports_path, data: { controller: "file-drop form", "file-drop-title-value": "Drop to start a report." }) do |form| %>
