@@ -3,8 +3,6 @@
 class Announcement
   module Templates
     class DonationGoalReached
-      include ApplicationHelper
-
       def initialize(event:, author:)
         @event = event
         @author = author
@@ -24,7 +22,7 @@ class Announcement
               content: [
                 {
                   type: "text",
-                  text: "Thank you for your support and generosity! After #{distance_of_time_in_words @event.donation_goal.tracking_since, DateTime.now}, we've reached our donation goal of #{render_money @event.donation_goal.amount_cents}. With this funding, we'll be able to better work towards our mission.",
+                  text: "Thank you for your support and generosity! After #{ApplicationController.helpers.distance_of_time_in_words @event.donation_goal.tracking_since, DateTime.now}, we've reached our donation goal of #{ApplicationController.helpers.render_money @event.donation_goal.amount_cents}. With this funding, we'll be able to better work towards our mission.",
                 },
               ],
             },

@@ -81,9 +81,8 @@ class DonationPayout < ApplicationRecord
 
   # Description when displaying a payout in a form dropdown for associating
   # transactions.
-  include ApplicationHelper # for render_money helper
   def dropdown_description
-    "##{self.id} | #{render_money self.amount} (#{self.donation.event.name}, #{self.donation.name(show_anonymous: true)})"
+    "##{self.id} | #{ApplicationController.helpers.render_money self.amount} (#{self.donation.event.name}, #{self.donation.name(show_anonymous: true)})"
   end
 
   private

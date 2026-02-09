@@ -321,7 +321,7 @@ class Transaction < ApplicationRecord
                                      .where.not(deleted_at: nil)
                                      .select { |t| self.name.start_with?(t.name) }
 
-    return unless matching_deleted_tx.count == 1
+    return unless matching_deleted_tx.one?
 
     previous = matching_deleted_tx[0]
 
@@ -419,7 +419,7 @@ class Transaction < ApplicationRecord
     }
 
     # if there's exactly one match, pick that one
-    return unless payouts_matching_prefix.count == 1
+    return unless payouts_matching_prefix.one?
 
     payout = payouts_matching_prefix[0]
 
@@ -467,7 +467,7 @@ class Transaction < ApplicationRecord
     }
 
     # if there's exactly one match, pick that one
-    return unless payouts_matching_prefix.count == 1
+    return unless payouts_matching_prefix.one?
 
     payout = payouts_matching_prefix[0]
 
@@ -515,11 +515,9 @@ class Transaction < ApplicationRecord
 
     # we don't use Event.find here because it will raise
     # an exception if the ID doesn't exist.
-    matching_events = Event.where(id: event_id)
+    event = Event.find_by(id: event_id)
 
-    return unless matching_events.count == 1
-
-    event = matching_events[0]
+    return unless event
 
     self.fee_relationship = FeeRelationship.new(
       event_id: event.id,
@@ -538,7 +536,7 @@ class Transaction < ApplicationRecord
                                .unpaired.where(load_amount: -self.amount)
                                .order(accepted_at: :desc)
 
-    return unless unpaired_matching_amount.count == 1
+    return unless unpaired_matching_amount.one?
 
     emburse_transfer = unpaired_matching_amount[0]
 
@@ -559,7 +557,7 @@ class Transaction < ApplicationRecord
     potential_event_name = /(.*)GitHub Grant.*/.match(self.name)[1].strip
     matching_events = Event.where(name: potential_event_name)
 
-    return unless matching_events.count == 1
+    return unless matching_events.one?
 
     event = matching_events[0]
 
@@ -582,7 +580,7 @@ class Transaction < ApplicationRecord
                                .order(approved_at: :desc)
                                .in_transit
 
-    return unless unpaired_matching_amount.count > 0
+    return unless unpaired_matching_amount.any?
 
     matched_ach = unpaired_matching_amount[0]
 
@@ -632,11 +630,9 @@ class Transaction < ApplicationRecord
 
     # we don't use Event.find here because it will raise
     # an exception if the ID doesn't exist.
-    matching_disbursements = Disbursement.where(id: disbursement_id)
+    disbursement = Disbursement.find_by(id: disbursement_id)
 
-    return unless matching_disbursements.count == 1
-
-    disbursement = matching_disbursements[0]
+    return unless disbursement
     # if money coming in, it's for destination event. otherwise,
     # it's for source event
     event = self.amount > 0 ? disbursement.event : disbursement.source_event

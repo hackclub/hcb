@@ -284,7 +284,7 @@ class StripeCard < ApplicationRecord
   end
 
   def self.new_from_stripe_id(params)
-    raise ArgumentError.new("Only numbers are allowed") unless params[:stripe_id].is_a?(String)
+    raise ArgumentError, "Only numbers are allowed" unless params[:stripe_id].is_a?(String)
 
     card = self.new(params)
     card.sync_from_stripe!

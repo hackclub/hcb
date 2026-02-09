@@ -65,7 +65,7 @@ module TransactionEngine
 
         def fmt_date(date)
           unless date.methods.include? :strftime
-            raise ArgumentError.new("Only dates are allowed")
+            raise ArgumentError, "Only dates are allowed"
           end
 
           date.strftime(::Partners::Plaid::Transactions::Get::DATE_FORMAT)

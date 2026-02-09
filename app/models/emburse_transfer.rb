@@ -115,9 +115,9 @@ class EmburseTransfer < ApplicationRecord
     fulfilled_by.nil?
   end
 
-  include ApplicationHelper
   def description
-    "#{self.id} (#{render_money self.load_amount}, #{time_ago_in_words self.created_at} ago, #{self.event.name})"
+    helpers = ApplicationController.helpers
+    "#{self.id} (#{helpers.render_money self.load_amount}, #{helpers.time_ago_in_words self.created_at} ago, #{self.event.name})"
   end
 
   private

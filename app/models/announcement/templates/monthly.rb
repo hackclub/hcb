@@ -3,8 +3,6 @@
 class Announcement
   module Templates
     class Monthly
-      include ApplicationHelper
-
       def initialize(event:, author:)
         @event = event
         @author = author

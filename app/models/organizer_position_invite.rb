@@ -233,7 +233,7 @@ class OrganizerPositionInvite < ApplicationRecord
       deliver if organizer_position.nil?
 
       # Unfreeze the event if this is the first signed contract
-      if event.contracts.signed.count == 1
+      if event.contracts.signed.one?
         event.update!(financially_frozen: false)
       end
 

@@ -771,7 +771,7 @@ class Event < ApplicationRecord
   end
 
   def generate_stripe_card_designs
-    raise ArgumentError.new("This method requires a stripe_card_logo to be attached.") unless stripe_card_logo.attached?
+    raise ArgumentError, "This method requires a stripe_card_logo to be attached." unless stripe_card_logo.attached?
 
     ActiveRecord::Base.transaction do
       stripe_card_personalization_designs.update(stale: true)

@@ -54,7 +54,6 @@ class User < ApplicationRecord
 
   include Turbo::Broadcastable
 
-  include ApplicationHelper
   prepend MemoWise
 
   include PublicActivity::Model

@@ -3,8 +3,6 @@
 class Announcement
   module Templates
     class NewDonationTier
-      include ApplicationHelper
-
       def initialize(donation_tier:, author:)
         @donation_tier = donation_tier
         @author = author
@@ -33,7 +31,7 @@ class Announcement
               content: [
                 { type: "text", marks: [{ type: "bold" }], text: @donation_tier.name },
                 { type: "text", text: " for " },
-                { type: "text", marks: [{ type: "bold" }], text: render_money(@donation_tier.amount_cents) },
+                { type: "text", marks: [{ type: "bold" }], text: ApplicationController.helpers.render_money(@donation_tier.amount_cents) },
                 { type: "hardBreak" },
                 { type: "text", marks: [{ type: "italic" }], text: @donation_tier.description.presence || "Description" },
               ],

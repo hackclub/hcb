@@ -75,9 +75,8 @@ class InvoicePayout < ApplicationRecord
 
   # Description when displaying a payout in a form dropdown for associating
   # transactions.
-  include ApplicationHelper # for render_money helper
   def dropdown_description
-    "##{self.id} (#{render_money self.amount}, #{self.invoice&.sponsor&.event&.name}, inv ##{self.invoice&.id} for #{self.invoice&.sponsor&.name})"
+    "##{self.id} (#{ApplicationController.helpers.render_money self.amount}, #{self.invoice&.sponsor&.event&.name}, inv ##{self.invoice&.id} for #{self.invoice&.sponsor&.name})"
   end
 
   private

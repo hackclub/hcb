@@ -44,7 +44,7 @@ module GSuiteService
 
     def mx_primary_valid?
       check_dns Resolv::DNS::Resource::IN::MX do |records|
-        return records.map(&:exchange).map(&:to_s).map(&:downcase).include?(VALID_MX)
+        return records.map { |r| r.exchange.to_s.downcase }.include?(VALID_MX)
       end
     end
 
@@ -52,14 +52,14 @@ module GSuiteService
       domain = "alt#{i}.aspmx.l.google.com"
       define_method "mx_alt#{i}_valid?" do
         check_dns Resolv::DNS::Resource::IN::MX do |records|
-          return records.map(&:exchange).map(&:to_s).map(&:downcase).include?(domain)
+          return records.map { |r| r.exchange.to_s.downcase }.include?(domain)
         end
       end
     end
 
     def spf_valid?
       check_dns Resolv::DNS::Resource::IN::TXT do |records|
-        return records.map(&:data).map(&:downcase).any? do |record|
+        return records.map { |r| r.data.downcase }.any? do |record|
           record.include?(VALID_SPF_HEADER) && record.include?(VALID_SPF)
         end
       end

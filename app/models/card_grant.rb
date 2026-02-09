@@ -158,7 +158,7 @@ class CardGrant < ApplicationRecord
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)
-    raise ArgumentError.new("Topups must be positive.") unless amount_cents.positive?
+    raise ArgumentError, "Topups must be positive." unless amount_cents.positive?
 
     custom_memo = "Topup of grant to #{user.name}"
 
@@ -173,8 +173,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      update_disbursement_memo!(disbursement, custom_memo)
     end
   end
 
@@ -195,8 +194,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      update_disbursement_memo!(disbursement, custom_memo)
     end
   end
 
@@ -231,8 +229,7 @@ class CardGrant < ApplicationRecord
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
     ).run
-    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    update_disbursement_memo!(disbursement, custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -328,6 +325,11 @@ class CardGrant < ApplicationRecord
   end
 
   private
+
+  def update_disbursement_memo!(disbursement, custom_memo)
+    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
+    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+  end
 
   def create_card_grant_setting
     CardGrantSetting.find_or_create_by!(event_id:)

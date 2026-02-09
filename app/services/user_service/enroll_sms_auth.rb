@@ -13,7 +13,7 @@ module UserService
     def start_verification
       # This shouldn't be possible because to enroll in SMS auth, your phone number should be reformatted already
       # doing this here to be safe.
-      raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
+      raise ArgumentError, "phone number for user: #{@user.id} not in E.164 format" unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
       disallow_fresh_users
 

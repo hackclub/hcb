@@ -4,7 +4,7 @@ module ExportService
   module Reimbursement
     class Csv
       def initialize(event_id:, public_only:)
-        raise ArgumentError.new("Organizers only") if public_only
+        raise ArgumentError, "Organizers only" if public_only
 
         @event = Event.find(event_id)
       end
