@@ -324,6 +324,7 @@ class Event
 
       self.with_lock do
         raise ArgumentError.new("Event was already created") if event.present?
+
         poc = contract.party(:hcb).user
 
         Event.create!(
