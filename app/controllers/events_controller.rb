@@ -1036,7 +1036,7 @@ class EventsController < ApplicationController
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
-      params_hash[:hidden_at] = DateTime.now
+      params_hash[:hidden_at] = Time.current
     elsif params_hash[:hidden] == "0" && @event.hidden_at.present?
       params_hash[:hidden_at] = nil
     end
