@@ -343,9 +343,10 @@ class Event
           affiliation_copy.affiliable = event
           affiliation_copy.save!
         end
-
-        Event::ApplicationMailer.with(application: self).activated.deliver_later
+        
       end
+
+      Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
     end
