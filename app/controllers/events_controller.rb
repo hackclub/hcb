@@ -361,6 +361,7 @@ class EventsController < ApplicationController
     elsif fixed_user_event_params[:hidden] == "0" && @event.hidden_at.present?
       fixed_user_event_params[:hidden_at] = nil
     end
+    fixed_user_event_params.delete(:hidden)
 
     plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
