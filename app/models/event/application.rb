@@ -322,7 +322,8 @@ class Event
     def activate_event!
       raise "Contract must be signed before activation" unless contract.signed?
 
-      ActiveRecord::Base.transaction do
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
         poc = contract.party(:hcb).user
 
         Event.create!(
