@@ -282,11 +282,9 @@ module ApplicationHelper
     stripe_obj = begin
       record.stripe_obj
     rescue Stripe::InvalidRequestError
-      Rails.logger.warn "Can't access stripe object, skipping"
-      nil
+      puts "Can't access stripe object, skipping"
     rescue NoMethodError
-      Rails.logger.warn "Not a stripe object, skipping"
-      nil
+      puts "Not a stripe object, skipping"
     end
 
     if stripe_obj.nil?

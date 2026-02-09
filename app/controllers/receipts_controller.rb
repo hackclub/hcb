@@ -348,6 +348,10 @@ class ReceiptsController < ApplicationController
       end
     end
 
+    # if @frame
+    #   streams.append(turbo_stream.close_modal)
+    # end
+
     unless params[:upload_method] == :transaction_page
       streams.append(turbo_stream.refresh_link_modals)
     end

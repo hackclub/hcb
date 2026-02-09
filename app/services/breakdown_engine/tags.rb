@@ -35,6 +35,10 @@ module BreakdownEngine
 
       threshold = total_amount * 0.05
 
+      # if you do not care about threshold when there are very few tags,
+      # you can early return here:
+      # return tags if tags.size < 10
+
       if threshold > 0
         big_tags, small_tags = tags.partition { |tag| tag[:value] >= threshold }
 

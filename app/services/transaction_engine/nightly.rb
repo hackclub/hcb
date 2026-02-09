@@ -35,7 +35,7 @@ module TransactionEngine
     def import_raw_plaid_transactions!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
         Rails.error.handle do
-          Rails.logger.info "raw_plaid_transactions: #{bank_account_id}"
+          puts "raw_plaid_transactions: #{bank_account_id}"
 
           ::TransactionEngine::RawPlaidTransactionService::Plaid::Import.new(bank_account_id:, start_date: @start_date).run
         end
