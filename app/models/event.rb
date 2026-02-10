@@ -369,6 +369,7 @@ class Event < ApplicationRecord
 
   has_many :fees
   has_many :bank_fees
+  has_one :pending_bank_fee, -> { where(aasm_state: :pending) }, class_name: "BankFee"
 
   has_many :tags, -> { includes(:hcb_codes) }
   has_and_belongs_to_many :event_tags
@@ -914,6 +915,13 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def update_pending_bank_fee
+    bank_fee = pending_bank_fee || bank_fees.build(aasm_state: :pending, amount_cents: 0)
+    bank_fee.amount_cents = bank_fee.amount_cents + fee_balance_v2_cents
+    bank_fee.save!
+    bank_fee
   end
 
   private
