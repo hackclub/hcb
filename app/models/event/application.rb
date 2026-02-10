@@ -281,6 +281,13 @@ class Event
       end
     end
 
+    def check_cosigner_update
+      if contract.present? && cosigner_email_previously_changed?
+        contract.mark_voided!
+        create_contract
+      end
+    end
+
     def airtable_url
       return nil unless airtable_record_id.present?
 
@@ -336,13 +343,6 @@ class Event
 
     def schedule_airtable_sync
       Event::ApplicationSyncToAirtableJob.perform_later(self)
-    end
-
-    def check_cosigner_update
-      if contract.present? && cosigner_email_previously_changed?
-        contract.mark_voided!
-        create_contract
-      end
     end
 
     def cosigner_cannot_change_after_sign
