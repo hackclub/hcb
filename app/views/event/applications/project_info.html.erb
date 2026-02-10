@@ -1,0 +1,134 @@
+<% title "Tell us about your project" %>
+
+<% content_for :progress, 25 %>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Tell us about your project
+    </h2>
+
+    <p class="mt-0 text-lg muted">Help our team understand your mission</p>
+  </div>
+<% end %>
+
+<div class=" mb-6">
+<%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
+  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>' }">
+
+    <div class="field">
+      <%= form.label :name do %>
+        Project name <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :description do %>
+        Tell us about your project <span class="text-primary">*</span>
+      <% end %>
+      <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
+      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :has_website do %>
+        Do you have a website? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+    </div>
+
+    <div class="field" x-show="has_website === 'true'">
+      <%= form.label :website_url do %>
+        Website URL <span class="text-primary">*</span>
+      <% end %>
+      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
+    </div>
+
+    <div class="field">
+      <%= form.label :has_political do %>
+        Is your project involved with political activity? <span class="text-primary">*</span>
+      <% end %>
+      <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+    </div>
+
+    <div class="field" x-show="has_political === 'true'">
+      <%= form.label :political_description do %>
+        Please describe the political activity your project is involved in <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", "x-bind:disabled": "teenager == null" %>
+    </div>
+
+    <div class="field" x-show="teenager == 'false' || teenager == false">
+      <%= form.label :planning_duration do %>
+        How long have you been planning your project? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+    </div>
+
+    <div class="field" x-show="teenager == 'false' || teenager == false">
+      <%= form.label :team_size do %>
+        How many people are on your team? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+    </div>
+
+    <div class="flex flex-row w-full gap-4 mt-4">
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
+        <%= form.label :annual_budget do %>
+          Annual budget <span class="text-primary">*</span>
+        <% end %>
+
+        <div class="flex items-center">
+          <div class="input flex gap-2 items-center py-0">
+            <span class="bold muted">$</span>
+            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
+        <%= form.label :committed_amount do %>
+          Committed amount <span class="text-primary">*</span>
+        <% end %>
+        <div class="flex items-center">
+          <div class="input flex gap-2 items-center py-0">
+            <span class="bold muted">$</span>
+            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field m-0 mt-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
+      <%= form.label :funding_source do %>
+        What is the source of your funding? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
+    </div>
+
+  </div>
+
+<% end %>
+
+<%= turbo_frame_tag :affiliations_settings do %>
+  <h3 class="mb2">Affiliations</h3>
+
+  <div class="card mb3">
+    <% affiliation = Event::Affiliation.new(affiliable: @application) %>
+    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: '', disabled: #{!policy(affiliation).update?} }", "x-init": "$watch('type', val => (val ? document.getElementById('submit_application').setAttribute('data-turbo-confirm', 'You have an unsaved affiliation. Are you sure you want to continue?') : document.getElementById('submit_application').removeAttribute('data-turbo-confirm')))", "@turbo:submit-end": "type = ''" }) do |form| %>
+      <%= render "events/settings/affiliation_form", affiliation:, form: %>
+    <% end %>
+  </div>
+
+  <%= render partial: "events/settings/affiliation", collection: @application.affiliations %>
+<% end %>
+</div>
+
+<% content_for :footer do %>
+  <div class="flex flex-row-reverse justify-between items-center w-full">
+    <button id="submit_application" class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
+    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+  </div>
+<% end %>

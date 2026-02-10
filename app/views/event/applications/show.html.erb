@@ -1,0 +1,95 @@
+<% title @application.draft? ? "Apply" : "Application status" %>
+
+<% if @application.draft? %>
+  <%= render partial: "begin", locals: { application: @application } %>
+<% elsif @application.rejected? %>
+  <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+    <h2 class="text-3xl md:text-4xl m-0">Your application has been reviewed</h2>
+    <p>A status update on your application has been emailed to <%= @application.user.email %>.</p>
+  </div>
+<% else %>
+  <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+    <%= render partial: "progress_bar", locals: { steps: @steps } %>
+    <h2 class="text-3xl md:text-4xl m-0">
+      <% if @application.approved? %>
+        Your application has been approved!
+      <% else %>
+        Your application has been submitted!
+      <% end %>
+    </h2>
+
+    <h3 class="m-0 muted">
+      <% if !@application.approved? || @application.contract.party(:signee).pending? || @application.contract.party(:cosigner)&.pending? %>
+        Here's what's next for <%= @application.name %>
+      <% elsif @application.approved? && @application.contract.party(:hcb).pending? %>
+        HCB is finalizing your contact
+      <% else %>
+        You're ready to start spending
+      <% end %>
+    </h3>
+  </div>
+  <div class="flex flex-col mt-9 items-center justify-start">
+    <div class="flex flex-col gap-3 w-full max-w-4xl">
+      <% @steps[1..].each_with_index do |step, index| %>
+        <div class="flex flex-row gap-3 items-start justify-start">
+          <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+            <%= index + 1 %>
+          </div>
+          <div>
+            <h3 class="mb-0 mt-1"><%= step[:name] %></h3>
+            <% unless step[:completed] %>
+              <p class="my-1"><%= step[:description] %></p>
+
+              <% if step[:label] == "Sign agreement" && @application.contract.present? %>
+                <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">
+                  <% if @application.contract.party(:signee).pending? %>
+                    <%= link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
+                  <% end %>
+
+                  <% if @application.contract.party(:cosigner)&.pending? %>
+                    <button class="btn" data-behavior="modal_trigger" data-modal="parent_agreement">Manage parent's agreement</button>
+                  <% end %>
+                </div>
+              <% elsif step[:label] == "Start spending" && @application.event.present? %>
+                <%= link_to "Go to your new organization!", @application.event, class: "btn" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% content_for :footer do %>
+    <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
+
+    <div class="w-full flex-grow flex items-center justify-end gap-4">
+      <% admin_tool do %>
+        <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
+      <% end %>
+      <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
+    </div>
+  <% end %>
+
+  <% if @application.contract&.party(:cosigner)&.present? %>
+    <section data-behavior="modal" role="dialog" id="parent_agreement" class="modal modal--scroll">
+      <%= modal_header "Manage parent's agreement" %>
+      <p>
+        The fiscal sponsorship agreement has been sent to <span class="font-bold"><%= @application.cosigner_email %></span> for them to sign.
+        You can change your parent or legal guardian's email here, or resend it to the same address.
+        <% if @application.contract.party(:signee).signed? %>
+          <span class="font-bold">If you change the email, you'll need to sign the agreement again.</span>
+        <% end %>
+      </p>
+
+      <%= form_with model: @application, url: application_path(@application), method: :patch do |form| %>
+        <%= form.label :cosigner_email do %>
+          Parent email <span class="text-primary">*</span>
+        <% end %>
+        <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
+        <%= form.email_field :cosigner_email, required: true, placeholder: "orpheus@hackclub.com" %>
+        <%= form.submit "Resend parent's agreement", class: "btn mt-2" %>
+      <% end %>
+    </section>
+  <% end %>
+<% end %>

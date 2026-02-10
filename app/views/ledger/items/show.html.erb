@@ -1,0 +1,40 @@
+<section class="details">
+  <div>
+    <strong>
+      Memo
+    </strong>
+    <span>
+      <%= @item.memo %>
+    </span>
+  </div>
+  <div>
+    <strong>
+      Amount
+    </strong>
+    <span>
+      <%= @item.amount.format %>
+    </span>
+  </div>
+  <div>
+    <strong>
+      Date
+    </strong>
+    <div>
+      <%= @item.date.strftime("%b %e, %Y") %>
+  </div>
+</section>
+
+<%= render "comments/list", comments: @item.comments %>
+<%= render "comments/form", commentable: @item %>
+
+<ul class="grid grid--medium-narrow text-left w-100 mt-4 receipts_list">
+  <%= render partial: "receipts/receipt", collection: @item.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true } %>
+</ul>
+
+<%= render partial: "receipts/form_v3", locals: {
+      receiptable: @receiptable = @item,
+      enable_linking: true,
+      upload_method: "transaction_page",
+      include_spacing: true,
+      turbo: true
+    } %>

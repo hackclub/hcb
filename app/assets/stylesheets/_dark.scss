@@ -252,7 +252,7 @@ html[data-dark='true'] {
 
   .card.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, dark), 0.75);
+    background-color: rgba(map-get($palette, dark), 0.5);
   }
 
   .admin-tools::before {
@@ -292,7 +292,7 @@ html[data-dark='true'] {
   }
 
   .card--sunset {
-    background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/cc0d90d3c01af31f_image.png');
+    background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/cc0d90d3c01af31f_image.png');
   }
 
   .badge {

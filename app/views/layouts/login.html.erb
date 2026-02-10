@@ -22,7 +22,7 @@
             <%= render partial: "application/logo" %>
           </div>
           <div class="mt-4">
-            <%= render "application/flash" unless @hide_flash %>
+            <%= render "application/flash", klass: "mb1" unless @hide_flash %>
           </div>
           <%= yield %>
         </div>

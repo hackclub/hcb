@@ -5,7 +5,7 @@
 
 <h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
-    <% if current_user.hack_clubber? || current_user.teenager? %>
+    <% if current_user.hack_clubber? || current_user.is_teenager? %>
       <a
         class="text-base caps muted block no-underline"
         href="https://github.com/hackclub/hcb-expansions/tree/main#hcb-what-does-it-stand-for"
@@ -20,16 +20,21 @@
   <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<div class="card mb-6 mt-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
-  <div class="flex-1">
-    <p class="my-0 text-lg font-[700]">HCB has gotten a visual refresh!</p>
-    <p class="my-0 text-md max-w-2xl">The HCB you know and love has a fresh new look. We're hoping it makes HCB easier to use and navigate, and we'd love to hear your feedback.</p>
+<% if current_user.applications.in_progress.any? %>
+  <div class="my-2 ml-0 py-2 flex flex-row items-end justify-between">
+    <h2 class="heading h2 line-height-4 m-0 p-0 border-none">Applications</h2>
+    <%= link_to applications_path, class: "flex items-center shrink-0 no-underline" do %>
+      View all applications
+      <%= inline_icon "view-forward" %>
+    <% end %>
   </div>
-  <%= link_to "https://forms.hackclub.com/hcb-feedback", class: "btn" do %>
-    <%= inline_icon "message-new", size: 16, class: "mr-1" %>
-    Share feedback
-  <% end %>
-</div>
+
+  <div class="grid grid--wide mb-12 pb-2">
+    <% current_user.applications.in_progress.each do |application| %>
+      <%= render partial: "event/applications/application_card", locals: { application: } %>
+    <% end %>
+  </div>
+<% end %>
 
 <% if current_user.card_grants.activated.size > 0 %>
   <h2 class="user-home-section">Your grants</h2>
@@ -91,7 +96,7 @@
 
         <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
 
-        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
+        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
           <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
             <div class="center">
               <div class="pop success mx-auto flex mb-1">
@@ -118,7 +123,7 @@
         <span>
           You aren't a part of an organization yet, looking to start one?
         </span>
-        <%= link_to apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
+        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
           <%= inline_icon "plus" %>
           New organization
         <% end %>
@@ -194,7 +199,7 @@
           <%= link_to contract_party_path(contract.party(:signee)), target: "_blank" do %>
             <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
               <%= status_badge "info" %>
-              <strong>Fiscal sponsorship agreement for <%= contract.event.name %></strong>
+              <strong>Fiscal sponsorship agreement for <%= contract.event_name %></strong>
               <small class="muted flex-grow" style="margin-left: 3.5px">
                 sent <%= time_ago_in_words contract.created_at %> ago
               </small>
