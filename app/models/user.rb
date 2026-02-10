@@ -85,7 +85,6 @@ class User < ApplicationRecord
 
   has_many :logins
   has_many :applications, class_name: "Event::Application", inverse_of: :user
-  has_many :active_applications, ->(user) { where(event: user.events, archived_at: nil) }, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, class_name: "User::Session", dependent: :destroy

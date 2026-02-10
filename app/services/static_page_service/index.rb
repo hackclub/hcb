@@ -27,7 +27,7 @@ module StaticPageService
     end
 
     def applications
-      @current_user.active_applications
+      @current_user.applications.active
     end
 
     # Counts

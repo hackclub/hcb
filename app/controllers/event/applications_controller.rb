@@ -12,7 +12,7 @@ class Event
 
     def index
       skip_authorization
-      @applications = current_user.active_applications
+      @applications = current_user.applications.active
     end
 
     def apply
