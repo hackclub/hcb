@@ -3,6 +3,12 @@
     <h1 class="heading border-0 mb-0">
       <%= title %>
     </h1>
+    <% if support_article.present? %>
+      <%= link_to support_article, target: "_blank", class: "-mt-1 mb-2 no-underline inline-flex items-center gap-1" do %>
+        Learn more in our help center
+        <%= inline_icon "external", size: 24 %>
+      <% end %>
+    <% end %>
 
     <div class="-mx-4">
       <% hints.each do |point| %>

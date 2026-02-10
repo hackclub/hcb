@@ -191,6 +191,7 @@
 <% else %>
   <%= render "events/blankslate_page",
     title: "Donations",
+    support_article: "https://help.hcb.hackclub.com/en/articles/13370938-in-what-ways-can-i-edit-my-donation-page",
     screenshots: {
       light: "https://user-cdn.hackclub-assets.com/019c3c6f-f02f-7df4-8ee9-25bbeb451e77/hcb.hackclub.com_hq_donations.png",
       dark: "https://user-cdn.hackclub-assets.com/019c3c6f-dfd0-76b4-ac51-94f9143eb01a/hcb.hackclub.com_hq_donations%20(1).png"
@@ -213,7 +214,7 @@
       }
     ] do %>
     <% content_for :caption do %>
-      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/donations" target="_blank" class="underline">our HQ's donations!</a></span>
     <% end %>
     <div class="flex gap-2">
       <%= render partial: "events/share_donation_page", blankslate: true %>
