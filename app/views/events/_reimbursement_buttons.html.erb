@@ -9,12 +9,7 @@
       class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
 <% end %>
 <% if organizer_signed_in?(as: :member) %>
-  <%= pop_icon_to "plus",
-        "#",
-        class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
-        "aria-label": "New report",
-        data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
-  <%= link_to "#", class: "btn bg-success xs-hide w-full", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+  <%= link_to "#", class: "btn bg-success w-full", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
       <%= inline_icon "plus" %> New
   <% end %>
 <% end %>
