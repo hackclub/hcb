@@ -1001,7 +1001,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_07_224547) do
     t.string "name"
     t.string "planning_duration"
     t.text "political_description"
-    t.boolean "previous_application"
+    t.boolean "previously_applied"
     t.string "project_category"
     t.string "referral_code"
     t.string "referrer"

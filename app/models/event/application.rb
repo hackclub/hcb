@@ -16,6 +16,7 @@
 #  airtable_status              :string
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
+#  archived_at                  :datetime
 #  committed_amount_cents       :integer
 #  cosigner_email               :string
 #  currently_fiscally_sponsored :boolean
@@ -26,6 +27,7 @@
 #  name                         :string
 #  planning_duration            :string
 #  political_description        :text
+#  previously_applied           :boolean
 #  project_category             :string
 #  referral_code                :string
 #  referrer                     :string
