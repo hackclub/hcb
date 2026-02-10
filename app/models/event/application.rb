@@ -204,13 +204,6 @@ class Event
       return "" if rejected?
     end
 
-    def archive_action_name
-      return "Archive application" if rejected? || approved?
-      return "Withdraw application" if submitted? || under_review?
-
-      "Cancel application"
-    end
-
     def completion_percentage
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"

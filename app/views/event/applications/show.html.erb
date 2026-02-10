@@ -9,7 +9,7 @@
   </div>
   <% content_for :footer do %>
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
-    <%= button_to @application.archive_action_name, archive_application_path(@application), class: "btn btn--destroy" %>
+    <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy" %>
   <% end %>
 <% else %>
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">

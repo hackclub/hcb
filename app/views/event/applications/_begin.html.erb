@@ -75,7 +75,7 @@
       <div class="flex items-center justify-start gap-4">
         <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
         <% if @application.present? %>
-          <%= button_to @application.archive_action_name, archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to cancel this application? It will be removed from your dashboard and you will no longer be able to edit it." } %>
+          <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to cancel this application? It will be removed from your dashboard and you will no longer be able to edit it." } %>
         <% end %>
       </div>
     <% else %>
