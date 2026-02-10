@@ -84,7 +84,7 @@ class CardGrant < ApplicationRecord
     self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
 
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates :email, email_with_tld: true
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
   delegate :balance, to: :subledger
