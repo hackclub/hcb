@@ -39,6 +39,10 @@ class Event
       false
     end
 
+    def archive?
+      user.admin? || record.user == user
+    end
+
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
     alias_method :agreement?, :show?
