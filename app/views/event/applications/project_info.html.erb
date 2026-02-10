@@ -113,6 +113,12 @@
       <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
     </div>
 
+    <div class="field m-0 mt-4">
+      <%= form.label :previously_applied do %>
+        Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], @application.previously_applied.to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+    </div>
   </div>
 
 <% end %>
