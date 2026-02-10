@@ -14,7 +14,7 @@
         <% if organizer_signed_in?(ancestor, as: :reader) %>
           <%= link_to ancestor.name, ancestor %>
         <% else %>
-          <%= link_to "javascript:void(0)", class: "pointer-events-none opacity-50" do %>
+          <%= link_to "javascript:void(0)", class: "pointer-events-none opacity-50", aria: { disabled: true }, tabindex: -1 do %>
             <%= ancestor.name %>
             <%= inline_icon "channel-private", class: "ml-auto opacity-75 !fill-inherit" %>
           <% end %>
