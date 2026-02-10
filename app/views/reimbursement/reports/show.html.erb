@@ -127,6 +127,10 @@
   </article>
 <% end %>
 
+<% if @report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) && (!@report.aasm_state.in?(["reimbursed", "reversed", "rejected"]) || (@report.reimbursed_at && @report.reimbursed_at > Date.new(2026, 2, 9)) %>
+  <%= render "wise_transfers/delay_warning" %>
+<% end %>
+
 <% if @report.draft? %>
   <section class="hidden md:flex items-start justify-center mt2 mb2" style="gap: 16px; position: relative;">
     <article class="card w-100">
