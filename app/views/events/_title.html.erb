@@ -11,7 +11,14 @@
     <div class="menu__content menu__content--switcher h5" data-menu-target="content">
       <span class="muted font-medium h5 pl-2 p-1 m0">Parent <%= "organization".pluralize(parent_events.count) %></span>
       <% parent_events.each do |ancestor| %>
-        <%= link_to ancestor.name, ancestor %>
+        <% if organizer_signed_in?(ancestor, as: :reader) %>
+          <%= link_to ancestor.name, ancestor %>
+        <% else %>
+          <%= link_to "javascript:void(0)", class: "pointer-events-none opacity-50" do %>
+            <%= ancestor.name %>
+            <%= inline_icon "channel-private", class: "ml-auto opacity-75 !fill-inherit" %>
+          <% end %>
+        <% end %>
       <% end %>
     </div>
   </div>
