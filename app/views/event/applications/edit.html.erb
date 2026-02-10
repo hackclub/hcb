@@ -16,7 +16,12 @@
 
         <div class="field">
           <%= form.label :description do %>
-            Tell us about your project <span class="text-primary">*</span>
+            <% if @application.teen_led? %>
+              Tell us about your project
+            <% else %>
+              Describe your mission's charitable purpose
+            <% end %>
+            <span class="text-primary">*</span>
           <% end %>
           <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
           <%= form.text_area :description, class: "w-full max-w-full", required: true %>
@@ -74,7 +79,7 @@
               Mobile phone number <span class="text-primary">*</span>
             <% end %>
             <%= form.hidden_field :phone_number, value: @application.user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-            <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" required="required">
+            <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" required>
           </div>
           <div class="field flex-1">
             <div class="inline-flex items-center justify-between w-full gap-1">

@@ -241,7 +241,7 @@ class Event
     end
 
     def record_pageview
-      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s)
+      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
       end
     end

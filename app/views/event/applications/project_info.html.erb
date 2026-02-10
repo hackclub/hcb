@@ -25,7 +25,12 @@
 
     <div class="field">
       <%= form.label :description do %>
-        Tell us about your project <span class="text-primary">*</span>
+        <% if @application.teen_led? %>
+          Tell us about your project
+        <% else %>
+          Describe your mission's charitable purpose
+        <% end %>
+        <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
       <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
@@ -71,7 +76,7 @@
       <%= form.label :team_size do %>
         How many people are on your team? <span class="text-primary">*</span>
       <% end %>
-      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false", step: 1, min: 1 %>
     </div>
 
     <div class="flex flex-row w-full gap-4 mt-4">
@@ -129,6 +134,6 @@
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">
     <button id="submit_application" class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
-    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+    <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
   </div>
 <% end %>
