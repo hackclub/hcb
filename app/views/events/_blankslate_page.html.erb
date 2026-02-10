@@ -29,9 +29,11 @@
     <div class="card p-0 card--breakdown">
       <img src="<%= screenshots[:light] %>" alt="Illustration" class="w-full h-auto dark:hidden">
       <img src="<%= screenshots[:dark] %>" alt="Illustration" class="w-full h-auto hidden dark:block">
-      <div class="p-2 pt-0 text-center">
-        <%= yield(:caption) if content_for?(:caption) %>
-      </div>
+      <% if content_for?(:caption) %>
+        <div class="p-2 pt-0 text-center">
+          <%= yield(:caption) %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>
