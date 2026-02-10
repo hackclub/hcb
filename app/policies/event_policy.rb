@@ -207,6 +207,10 @@ class EventPolicy < ApplicationPolicy
     show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
+  def donation_page?
+    record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
+  end
+
   def invoices?
     show? && record.approved? && record.plan.invoices_enabled?
   end

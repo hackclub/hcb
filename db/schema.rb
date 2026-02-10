@@ -784,6 +784,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_07_224547) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
