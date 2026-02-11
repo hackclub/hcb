@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -988,6 +988,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
     t.string "airtable_status"
     t.integer "annual_budget_cents"
     t.datetime "approved_at"
+    t.datetime "archived_at"
     t.integer "committed_amount_cents"
     t.string "cosigner_email"
     t.datetime "created_at", null: false
@@ -1000,6 +1001,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
     t.string "name"
     t.string "planning_duration"
     t.text "political_description"
+    t.boolean "previously_applied"
     t.string "project_category"
     t.string "referral_code"
     t.string "referrer"
@@ -2536,6 +2538,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_201808) do
     t.datetime "created_at", null: false
     t.integer "recipient_country"
     t.jsonb "recipient_information"
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 
