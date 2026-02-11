@@ -760,7 +760,7 @@ class EventsController < ApplicationController
 
           @event.subevents.includes(:scoped_tags).find_each do |e|
             tags_for_parent = e.scoped_tags.select { |tag| tag.parent_event_id == e.parent_id }
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join(", ")].map { |value| SafeCsv.sanitize(value) }
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join("|")].map { |value| SafeCsv.sanitize(value) }
           end
         end
 
