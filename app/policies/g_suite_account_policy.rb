@@ -10,7 +10,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def show?
-    user.auditor? || (record.event.users.include?(user) && !record.g_suite.revocation.present?)
+    user.auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.g_suite.revocation.present?)
   end
 
   def reset_password?

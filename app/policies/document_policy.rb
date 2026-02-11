@@ -35,7 +35,7 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def download?
-    user.auditor? || record.event.nil? || record.event.users.include?(user)
+    user.auditor? || record.event.nil? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def fiscal_sponsorship_letter?

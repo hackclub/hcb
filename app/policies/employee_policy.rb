@@ -40,7 +40,7 @@ class EmployeePolicy < ApplicationPolicy
   end
 
   def team_member
-    record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def employee

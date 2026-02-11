@@ -34,7 +34,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def user?
-    record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def check_deposits_enabled?
