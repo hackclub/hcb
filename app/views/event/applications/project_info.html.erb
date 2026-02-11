@@ -79,7 +79,7 @@
       <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false", step: 1, min: 1 %>
     </div>
 
-    <div class="flex flex-row w-full gap-4 mt-4">
+    <div class="flex flex-row w-full gap-4 my-4">
       <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
         <%= form.label :annual_budget do %>
           Annual budget <span class="text-primary">*</span>
@@ -106,14 +106,14 @@
       </div>
     </div>
 
-    <div class="field m-0 mt-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
+    <div class="field m-0 my-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
       <%= form.label :funding_source do %>
         What is the source of your funding? <span class="text-primary">*</span>
       <% end %>
       <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
     </div>
 
-    <div class="field m-0 mt-4">
+    <div class="field m-0">
       <%= form.label :previously_applied do %>
         Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
       <% end %>
