@@ -188,7 +188,7 @@ class User < ApplicationRecord
     message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
   }
 
-  validates :email, uniqueness: true, presence: true
+  validates :email, uniqueness: true, presence: true, email_with_tld: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
   validate :email_not_in_blacklisted_domains, on: :create
