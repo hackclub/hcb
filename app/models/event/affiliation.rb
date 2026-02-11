@@ -21,6 +21,8 @@ class Event
     self.ignored_columns += ["event_id"]
     include Hashid::Rails
 
+    include ActionView::Helpers::TextHelper
+
     belongs_to :affiliable, polymorphic: true
 
     store_accessor :metadata, :league, :team_number, :size, :venue_name
@@ -48,6 +50,14 @@ class Event
 
     def is_hack_club?
       name == "hack_club"
+    end
+
+    def size
+      super&.to_i
+    end
+
+    def to_s
+      [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
     end
 
   end
