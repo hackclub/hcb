@@ -12,4 +12,5 @@ class EmailWithTldValidator < ActiveModel::EachValidator
       record.errors.add(attribute, options[:message] || "must be a valid email address with a domain")
     end
   end
+
 end
