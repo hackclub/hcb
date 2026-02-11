@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -220,6 +220,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.bigint "application_id"
     t.datetime "created_at", null: false
     t.integer "expires_in"
+    t.inet "ip_address"
     t.string "refresh_token"
     t.datetime "revoked_at"
     t.string "scopes"
@@ -227,7 +228,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.text "token_ciphertext"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.inet "ip_address"
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
@@ -502,11 +502,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
+    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id", unique: true
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
-    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id"
-    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id"
+    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id", unique: true
+    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id", unique: true
     t.index ["user_id"], name: "index_card_grants_on_user_id"
   end
 
@@ -990,6 +990,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.string "airtable_status"
     t.integer "annual_budget_cents"
     t.datetime "approved_at"
+    t.datetime "archived_at"
     t.integer "committed_amount_cents"
     t.string "cosigner_email"
     t.datetime "created_at", null: false
@@ -1002,6 +1003,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.string "name"
     t.string "planning_duration"
     t.text "political_description"
+    t.boolean "previously_applied"
     t.string "project_category"
     t.string "referral_code"
     t.string "referrer"
@@ -2089,7 +2091,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
-    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
+    t.index ["user_id", "referral_link_id"], name: "index_referral_attributions_on_user_id_and_referral_link_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
@@ -2538,6 +2540,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_06_204711) do
     t.datetime "created_at", null: false
     t.integer "recipient_country"
     t.jsonb "recipient_information"
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 

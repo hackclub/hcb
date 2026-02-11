@@ -12,7 +12,7 @@ class Event
 
     def index
       skip_authorization
-      @applications = current_user.applications
+      @applications = current_user.applications.active
     end
 
     def apply
@@ -45,7 +45,7 @@ class Event
                                else
                                  "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
                                end
-                             elsif @application.contract.party(:signee).pending?
+                             elsif @application.contract.party(:signee)&.pending?
                                "You (#{@application.user.email}) need to sign the agreement before we can review your application."
                              else
                                "Our team will sign and finalize the contract soon."
@@ -217,6 +217,15 @@ class Event
       end
     end
 
+    def archive
+      authorize @application
+
+      @application.archive!
+      flash[:success] = "Application archived"
+
+      redirect_to applications_path
+    end
+
     private
 
     def set_application
@@ -232,7 +241,7 @@ class Event
     end
 
     def record_pageview
-      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s)
+      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
       end
     end

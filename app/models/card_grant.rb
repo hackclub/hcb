@@ -30,11 +30,11 @@
 #
 # Indexes
 #
-#  index_card_grants_on_disbursement_id  (disbursement_id)
+#  index_card_grants_on_disbursement_id  (disbursement_id) UNIQUE
 #  index_card_grants_on_event_id         (event_id)
 #  index_card_grants_on_sent_by_id       (sent_by_id)
-#  index_card_grants_on_stripe_card_id   (stripe_card_id)
-#  index_card_grants_on_subledger_id     (subledger_id)
+#  index_card_grants_on_stripe_card_id   (stripe_card_id) UNIQUE
+#  index_card_grants_on_subledger_id     (subledger_id) UNIQUE
 #  index_card_grants_on_user_id          (user_id)
 #
 # Foreign Keys
@@ -84,6 +84,10 @@ class CardGrant < ApplicationRecord
     self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
 
+  validates :disbursement, uniqueness: true, allow_nil: true
+  validates :stripe_card, uniqueness: true, allow_nil: true
+  validates :subledger, uniqueness: true, allow_nil: true
+
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
@@ -104,7 +108,7 @@ class CardGrant < ApplicationRecord
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
-  scope :expires_on, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') = ?", date) }
+  scope :expires_on, ->(date) { joins(:card_grant_setting).where("DATE(card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day')) = ?", date) }
 
   monetize :amount_cents
 
