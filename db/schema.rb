@@ -500,11 +500,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
+    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id", unique: true
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
-    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id"
-    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id"
+    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id", unique: true
+    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id", unique: true
     t.index ["user_id"], name: "index_card_grants_on_user_id"
   end
 
