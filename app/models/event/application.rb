@@ -16,6 +16,7 @@
 #  airtable_status              :string
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
+#  archived_at                  :datetime
 #  committed_amount_cents       :integer
 #  cosigner_email               :string
 #  currently_fiscally_sponsored :boolean
@@ -26,6 +27,7 @@
 #  name                         :string
 #  planning_duration            :string
 #  political_description        :text
+#  previously_applied           :boolean
 #  project_category             :string
 #  referral_code                :string
 #  referrer                     :string
@@ -69,15 +71,17 @@ class Event
     belongs_to :event, optional: true
 
     has_many :affiliations, as: :affiliable
-    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     validate :cosigner_cannot_change_after_sign
 
     after_save :check_cosigner_update
-    after_commit :sync_to_airtable
+    after_commit :schedule_airtable_sync
 
     monetize :annual_budget_cents, allow_nil: true
     monetize :committed_amount_cents, allow_nil: true
+
+    include Rails.application.routes.url_helpers
 
     after_create_commit do
       Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
@@ -85,6 +89,11 @@ class Event
       Event::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
       Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
     end
+
+    scope :not_archived, -> { where(archived_at: nil) }
+    scope :archived, -> { where.not(archived_at: nil) }
+
+    scope :active, -> { where(archived_at: nil, event_id: nil) }
 
     enum :last_page_viewed, {
       show: "show",
@@ -267,39 +276,11 @@ class Event
       end
     end
 
-    def sync_to_airtable
-      return if draft?
-
-      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
-      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
-      app ||= ApplicationsTable.new("HCB Application ID" => hashid)
-
-      app["First Name"] = user.first_name
-      app["Last Name"] = user.last_name
-      app["Email Address"] = user.email
-      app["Phone Number"] = user.phone_number
-      app["Date of Birth"] = user.birthday
-      app["Event Name"] = name
-      app["Event Website"] = website_url
-      app["Zip Code"] = address_postal_code
-      app["Tell us about your event"] = description
-      app["Have you used HCB for any previous events?"] = user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
-      app["Teenager Led?"] = user.teenager?
-      app["Address Line 1"] = address_line1
-      app["City"] = address_city
-      app["State"] = address_state
-      app["Address Country"] = address_country
-      app["Event Location"] = address_country
-      app["How did you hear about HCB?"] = referrer
-      app["Accommodations"] = accessibility_notes
-      app["(Adults) Political Activity"] = political_description
-      app["Referral Code"] = referral_code
-      app["HCB Status"] = aasm_state.humanize unless draft?
-      app["Synced from HCB at"] = Time.current
-
-      app.save
-
-      update_columns(airtable_record_id: app.id, airtable_status: app["Status"])
+    def check_cosigner_update
+      if contract.present? && cosigner_email_previously_changed?
+        contract.mark_voided!
+        create_contract
+      end
     end
 
     def airtable_url
@@ -310,13 +291,6 @@ class Event
 
     def record_pageview(last_page_viewed)
       update!(last_viewed_at: Time.current, last_page_viewed:)
-    end
-
-    def check_cosigner_update
-      if contract.present? && cosigner_email_previously_changed?
-        contract.mark_voided!
-        create_contract
-      end
     end
 
     def activate_event!
@@ -348,7 +322,23 @@ class Event
       self
     end
 
+    def archive!
+      update!(archived_at: Time.current)
+    end
+
+    def archived?
+      archived_at.present?
+    end
+
+    def respondent_url
+      url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
     private
+
+    def schedule_airtable_sync
+      Event::ApplicationSyncToAirtableJob.perform_later(self)
+    end
 
     def cosigner_cannot_change_after_sign
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
