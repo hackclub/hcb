@@ -84,9 +84,9 @@ class CardGrant < ApplicationRecord
     self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
 
-  validates :disbursement, uniqueness: true
+  validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
-  validates :subledger, uniqueness: true
+  validates :subledger, uniqueness: true, allow_nil: true
 
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
