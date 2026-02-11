@@ -39,11 +39,11 @@ class DocumentPolicy < ApplicationPolicy
   end
 
   def fiscal_sponsorship_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?)
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || user.auditor?)
   end
 
   def verification_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (record.users.include?(user) || user.auditor?) && record.account_number.present?
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || user.auditor?) && record.account_number.present?
   end
 
   def toggle_archive?
