@@ -71,7 +71,7 @@ class Event
     belongs_to :event, optional: true
 
     has_many :affiliations, as: :affiliable
-    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     validate :cosigner_cannot_change_after_sign
 
