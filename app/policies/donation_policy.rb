@@ -30,7 +30,7 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def update?
-    OrganizerPosition.find_by(user:, event: record.event)&.manager? || user&.admin?
+    OrganizerPosition.role_at_least?(user, record.event, :manager) || user&.admin?
   end
 
   def refund?

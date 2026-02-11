@@ -1,4 +1,4 @@
-<% member_viewing = !OrganizerPosition.find_by(user: current_user, event: report.event)&.manager? && current_user != report.user && !admin_signed_in? %>
+<% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
 
 <div class="flex flex-col-reverse" id="action-wrapper">
   <%# Using a reverse column flex container, we can

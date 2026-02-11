@@ -43,7 +43,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
     return true if user&.admin?
 
     revocation = record.is_a?(GSuite) ? record.revocation : record&.g_suite&.revocation
-    OrganizerPosition.find_by(user:, event: record.event)&.manager? && !revocation&.revoked?
+    OrganizerPosition.role_at_least?(user, record.event, :manager) && !revocation&.revoked?
   end
 
 end
