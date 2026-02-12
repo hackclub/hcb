@@ -51,6 +51,7 @@ class DonationsController < ApplicationController
     return unless build_donation_page!(event: @event, params:, request:)
 
     authorize @donation
+    @hide_flash = true
 
     render "donations/start_donation"
   end
