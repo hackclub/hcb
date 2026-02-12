@@ -13,11 +13,10 @@ class User
   module PayoutMethod
     class PaypalTransfer < ApplicationRecord
       include Shared
+      include ValidatesRecipientEmail
 
       self.table_name = "user_payout_method_paypal_transfers"
-      validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
       validates_presence_of :recipient_email
-      normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
       def kind
         "paypal_transfer"

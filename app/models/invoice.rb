@@ -110,6 +110,8 @@ class Invoice < ApplicationRecord
   include AASM
 
   include Freezable
+  include HasHcbCode
+  set_hcb_code_type :INVOICE_CODE
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
@@ -369,14 +371,6 @@ class Invoice < ApplicationRecord
 
   def smart_memo
     sponsor.name
-  end
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def canonical_transactions

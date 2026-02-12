@@ -56,6 +56,8 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include Payment
+  include HasHcbCode
+  set_hcb_code_type :INCREASE_CHECK_CODE
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -240,14 +242,6 @@ class IncreaseCheck < ApplicationRecord
   end
 
   alias_attribute :name, :recipient_name
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
 
   def sent?
     approved?

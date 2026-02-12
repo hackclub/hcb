@@ -29,6 +29,8 @@
 #
 class CheckDeposit < ApplicationRecord
   include Freezable
+  include HasHcbCode
+  set_hcb_code_type :CHECK_DEPOSIT_CODE
   has_paper_trail
 
   include PublicIdentifiable
@@ -112,14 +114,6 @@ class CheckDeposit < ApplicationRecord
     ProcessColumnCheckDepositJob.perform_later(check_deposit: self)
 
     create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
-  end
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def state

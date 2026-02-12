@@ -50,8 +50,11 @@ class WiseTransfer < ApplicationRecord
 
   include AASM
   include Freezable
+  include HasHcbCode
+  set_hcb_code_type :WISE_TRANSFER_CODE
 
   include HasWiseRecipient
+  include ValidatesRecipientEmail
 
   include PublicIdentifiable
   set_public_id_prefix :wse
@@ -100,9 +103,6 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates_presence_of :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
-  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
-
   # Flowchart: https://www.figma.com/board/Hf3wy2qhR8rH9OAYUCrkoQ/Wise-transfer-flowchart?node-id=0-1&t=nBQqJBuASTxeCObj-1
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
@@ -152,10 +152,6 @@ class WiseTransfer < ApplicationRecord
   validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE}-#{id}"
-  end
 
   def admin_dropdown_description
     "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"

@@ -3,6 +3,8 @@
 class EmployeesController < ApplicationController
   include SetEvent
 
+  before_action :set_employee, only: [:show, :onboard, :terminate, :destroy]
+
   def create
     @event = Event.friendly.find(employee_params[:event_id])
     user = User.find_or_create_by!(email: employee_params[:email])
@@ -18,14 +20,12 @@ class EmployeesController < ApplicationController
   end
 
   def show
-    @employee = Employee.find(params[:id])
     @event = @employee.event
     @frame = params[:frame].present?
     authorize @employee
   end
 
   def onboard
-    @employee = Employee.find(params[:employee_id])
     authorize @employee
     @employee.update(gusto_id: params[:gusto_id])
     @employee.mark_onboarded!
@@ -33,20 +33,22 @@ class EmployeesController < ApplicationController
   end
 
   def terminate
-    @employee = Employee.find(params[:employee_id])
     authorize @employee
     @employee.mark_terminated!
     redirect_to admin_signed_in? ? employees_admin_index_path : event_employees_path(@employee.event)
   end
 
   def destroy
-    @employee = Employee.find(params[:id])
     authorize @employee
     @employee.destroy
     redirect_to admin_signed_in? ? employees_admin_index_path : event_employees_path(@employee.event)
   end
 
   private
+
+  def set_employee
+    @employee = Employee.find(params[:employee_id] || params[:id])
+  end
 
   def employee_params
     params.require(:employee).permit(:event_id, :email).compact_blank

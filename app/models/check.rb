@@ -50,6 +50,8 @@ class Check < ApplicationRecord
   set_public_id_prefix :chk
 
   include AASM
+  include HasHcbCode
+  set_hcb_code_type :CHECK_CODE
 
   include PgSearch::Model
   pg_search_scope :search_recipient, associated_against: { lob_address: :name, event: :name }, against: [:memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "checks.created_at"
@@ -178,14 +180,6 @@ class Check < ApplicationRecord
 
   def smart_memo
     lob_address.try(:name).try(:upcase)
-  end
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def canonical_transactions

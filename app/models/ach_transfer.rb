@@ -67,6 +67,8 @@ class AchTransfer < ApplicationRecord
   include Payoutable
   include Payment
   include Freezable
+  include HasHcbCode
+  set_hcb_code_type :ACH_TRANSFER_CODE
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -342,13 +344,6 @@ class AchTransfer < ApplicationRecord
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
 
   def estimated_arrival
     # https://column.com/docs/ach/timing

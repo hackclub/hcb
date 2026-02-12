@@ -3,8 +3,9 @@
 class CanonicalPendingTransactionsController < ApplicationController
   include TurboStreamFlash
 
+  before_action :set_canonical_pending_transaction
+
   def show
-    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
     authorize @canonical_pending_transaction
 
     # Comments
@@ -12,8 +13,6 @@ class CanonicalPendingTransactionsController < ApplicationController
   end
 
   def edit
-    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
-
     authorize @canonical_pending_transaction
 
     @event = @canonical_pending_transaction.event
@@ -21,8 +20,6 @@ class CanonicalPendingTransactionsController < ApplicationController
   end
 
   def update
-    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
-
     authorize @canonical_pending_transaction
 
     @canonical_pending_transaction.update!(canonical_pending_transaction_params)
@@ -33,10 +30,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
   end
 
-
   def set_category
-    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
-
     authorize @canonical_pending_transaction
 
     slug = params.dig(:canonical_pending_transaction, :category_slug)
@@ -62,6 +56,10 @@ class CanonicalPendingTransactionsController < ApplicationController
   end
 
   private
+
+  def set_canonical_pending_transaction
+    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
+  end
 
   def canonical_pending_transaction_params
     if admin_signed_in?

@@ -35,6 +35,9 @@ class PaypalTransfer < ApplicationRecord
 
   include AASM
   include Payoutable
+  include ValidatesRecipientEmail
+  include HasHcbCode
+  set_hcb_code_type :PAYPAL_TRANSFER_CODE
 
   belongs_to :event
   belongs_to :user
@@ -104,9 +107,6 @@ class PaypalTransfer < ApplicationRecord
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
-  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
-
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
 
   validate on: :create do
@@ -133,16 +133,8 @@ class PaypalTransfer < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE}-#{id}"
-  end
-
   def admin_dropdown_description
     "#{ApplicationController.helpers.render_money(amount_cents)} to #{recipient_email} from #{event.name}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
 end

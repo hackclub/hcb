@@ -65,6 +65,8 @@ class Donation < ApplicationRecord
   include AASM
   include Freezable
   include UsersHelper
+  include HasHcbCode
+  set_hcb_code_type :DONATION_CODE
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -272,14 +274,6 @@ class Donation < ApplicationRecord
 
   def smart_memo
     anonymous? ? "Anonymous Donor" : name.to_s
-  end
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def canonical_pending_transaction

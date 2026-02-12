@@ -2,8 +2,10 @@
 
 class HcbCode
   class SubscriptionsController < ApplicationController
+    include LoadsHcbCode
+
     def transactions
-      @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+      @hcb_code = find_hcb_code
 
       authorize @hcb_code, :show?
 

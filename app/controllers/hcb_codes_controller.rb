@@ -2,12 +2,13 @@
 
 class HcbCodesController < ApplicationController
   include TagsHelper
+  include LoadsHcbCode
 
   skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
   skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
 
   def show
-    @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+    @hcb_code = find_hcb_code
     authorize @hcb_code
     @event =
       begin
@@ -83,7 +84,7 @@ class HcbCodesController < ApplicationController
   end
 
   def edit
-    @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+    @hcb_code = find_hcb_code
     @event = @hcb_code.event
     @ai_memo = params[:display_ai_memo] == "true" ? @hcb_code.suggested_memos.last : nil
 
@@ -124,7 +125,7 @@ class HcbCodesController < ApplicationController
   end
 
   def update
-    @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+    @hcb_code = find_hcb_code
 
     authorize @hcb_code
     hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)

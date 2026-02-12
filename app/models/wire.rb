@@ -60,11 +60,14 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
   include Payment
+  include HasHcbCode
+  set_hcb_code_type :WIRE_CODE
 
   include PublicIdentifiable
   set_public_id_prefix :wir
 
   include HasWireRecipient
+  include ValidatesRecipientEmail
 
   def payment_recipient_attributes
     %i[address_line1 address_line2 address_city address_state address_postal_code recipient_country account_number bic_code recipient_information]
@@ -91,9 +94,6 @@ class Wire < ApplicationRecord
   end
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
-  normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
-
   validate on: :create do
     if !user.admin? && usd_amount_cents < Event.find(event.id).minimum_wire_amount_cents
       errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
@@ -166,10 +166,6 @@ class Wire < ApplicationRecord
   end
 
   alias_attribute :name, :recipient_name
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE}-#{id}"
-  end
 
   def admin_dropdown_description
     "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"

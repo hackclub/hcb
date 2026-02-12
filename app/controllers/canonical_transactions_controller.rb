@@ -4,17 +4,16 @@ require "csv"
 
 class CanonicalTransactionsController < ApplicationController
   include TurboStreamFlash
-  def show
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
 
+  before_action :set_canonical_transaction
+
+  def show
     authorize @canonical_transaction
 
     redirect_to transaction_url(params[:id])
   end
 
   def edit
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
     authorize @canonical_transaction
 
     @event = @canonical_transaction.event
@@ -22,8 +21,6 @@ class CanonicalTransactionsController < ApplicationController
   end
 
   def set_custom_memo
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
     authorize @canonical_transaction
 
     @canonical_transaction.update!(params.require(:canonical_transaction).permit(:custom_memo))
@@ -35,8 +32,6 @@ class CanonicalTransactionsController < ApplicationController
   end
 
   def set_category
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
     authorize @canonical_transaction
 
     slug = params.dig(:canonical_transaction, :category_slug)
@@ -64,9 +59,7 @@ class CanonicalTransactionsController < ApplicationController
   def waive_fee
     authorize CanonicalTransaction
 
-    ct = CanonicalTransaction.find(params[:id])
-
-    fee = ct.fee
+    fee = @canonical_transaction.fee
     fee.amount_cents_as_decimal = 0
     fee.reason = :revenue_waived
     fee.save!
@@ -77,12 +70,10 @@ class CanonicalTransactionsController < ApplicationController
   def unwaive_fee
     authorize CanonicalTransaction
 
-    ct = CanonicalTransaction.find(params[:id])
+    raise ArgumentError unless @canonical_transaction.amount_cents > 0
 
-    raise ArgumentError unless ct.amount_cents > 0
-
-    fee = ct.fee
-    fee.amount_cents_as_decimal = BigDecimal(ct.amount_cents.to_s) * BigDecimal(ct.event.revenue_fee.to_s)
+    fee = @canonical_transaction.fee
+    fee.amount_cents_as_decimal = BigDecimal(@canonical_transaction.amount_cents.to_s) * BigDecimal(@canonical_transaction.event.revenue_fee.to_s)
 
     fee.reason = :revenue
     fee.save!
@@ -93,13 +84,17 @@ class CanonicalTransactionsController < ApplicationController
   def mark_bank_fee
     authorize CanonicalTransaction
 
-    ct = CanonicalTransaction.find(params[:id])
-
-    fee = ct.fee
+    fee = @canonical_transaction.fee
     fee.reason = :hack_club_fee
     fee.save!
 
     redirect_to transaction_url(params[:id])
+  end
+
+  private
+
+  def set_canonical_transaction
+    @canonical_transaction = CanonicalTransaction.find(params[:id])
   end
 
 end
