@@ -39,8 +39,7 @@
           <%# Date issued %>
           <td>
             <%= format_date c.created_at %>
-            <% card_popover_title = c.initially_activated ? "Card #{c.last_four}" : "Inactive card" %>
-          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && { behavior: "modal_trigger", modal: "shared_popover", popover_title: card_popover_title, popover_src: c.popover_path, popover_frame_id: "stripe_card_#{c.public_id}", popover_state_url: url_for(c), popover_external_link: url_for(c), popover_size: "sm" } if organizer_signed_in? && !@event.demo_mode %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !@event.demo_mode %>
           </td>
         </tr>
 

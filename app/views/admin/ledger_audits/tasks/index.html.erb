@@ -33,8 +33,7 @@
             </span>
           </td>
           <td>
-            <% audit_popover_title = hcb_code.pretty_title(show_event_name: false, show_amount: true) %>
-            <%= link_to hcb_code.memo, "#", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: audit_popover_title, popover_src: hcb_code.popover_path, popover_frame_id: hcb_code.public_id, popover_state_url: hcb_code_path(hcb_code), popover_external_link: url_for(hcb_code) } %>
+            <%= link_to hcb_code.memo, "#", data: hcb_code_popover_data(hcb_code) %>
           </td>
           <td>
             <%= render_money hcb_code.amount_cents %>

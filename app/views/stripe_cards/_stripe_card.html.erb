@@ -1,5 +1,7 @@
-<% sc_popover_title = stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card" %>
-<a class="text-decoration-none" <% if @show_card_popovers %> data-behavior="modal_trigger" data-modal="shared_popover" data-popover-title="<%= sc_popover_title %>" data-popover-src="<%= stripe_card.popover_path %>" data-popover-frame-id="stripe_card_<%= stripe_card.public_id %>" data-popover-state-url="<%= stripe_card_path(stripe_card) %>" data-popover-external-link="<%= url_for(stripe_card) %>" data-popover-size="sm" <% end %> data-turbo-frame="_top" href="<%= (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
+<% sc_href = (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>
+<% sc_data = { turbo_frame: "_top" } %>
+<% sc_data.merge!(stripe_card_popover_data(stripe_card)) if @show_card_popovers %>
+<%= link_to sc_href, class: "text-decoration-none", data: sc_data do %>
 
   <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless defined? headless %>
   <% if stripe_card.canceled? %>
@@ -20,5 +22,5 @@
       <%= stripe_card.name %>
     <% end %>
   </div>
-</a>
+<% end %>
 

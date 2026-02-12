@@ -154,8 +154,7 @@
           </td>
           <td style="text-align: right;">
             <%= render_money(d.amount) %>
-            <% donation_popover_title = "#{d.name} donated #{render_money(d.amount)}" %>
-            <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: donation_popover_title, popover_src: d.local_hcb_code.popover_path, popover_frame_id: d.local_hcb_code.public_id, popover_state_url: hcb_code_url(d.local_hcb_code.hashid), popover_state_title: "#{d.name} invoiced for #{render_money(d.amount)}", popover_external_link: hcb_code_url(d.local_hcb_code.hashid) } if organizer_signed_in? %>
+            <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && popover_data(title: "#{d.name} donated #{render_money(d.amount)}", src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.local_hcb_code.hashid), external_link: hcb_code_url(d.local_hcb_code.hashid), state_title: "#{d.name} invoiced for #{render_money(d.amount)}") if organizer_signed_in? %>
           </td>
         </tr>
       <% end %>

@@ -1,9 +1,8 @@
-<% @show_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
+<% @show_popovers = popovers_enabled? && organizer_signed_in? %>
 <% if @event.pinned_hcb_codes.any? %>
   <div class="flex gap-4 my-2 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
-      <% pin_popover_title = pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false) %>
-      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: pin_popover_title, popover_src: pin.hcb_code.local_hcb_code.popover_path, popover_frame_id: pin.hcb_code.local_hcb_code.public_id, popover_state_url: hcb_code_path(pin.hcb_code.local_hcb_code), popover_external_link: url_for(pin.hcb_code.local_hcb_code) } : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
+      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? hcb_code_popover_data(pin.hcb_code.local_hcb_code) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
           <%= form_for(
                 pin.hcb_code,

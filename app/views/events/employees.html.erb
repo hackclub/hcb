@@ -69,8 +69,7 @@
 <% else %>
   <div class="grid grid-cols-1 lg:grid-cols-2">
     <% @employees.each do |employee| %>
-      <% employee_popover_title = "#{employee.user.name}'s payroll" %>
-      <%= link_to employee_path(employee), class: "card card--hover", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: employee_popover_title, popover_src: employee.popover_path, popover_frame_id: "employee_#{employee.hashid}", popover_state_url: employee_path(employee), popover_external_link: employee_path(employee) } do %>
+      <%= link_to employee_path(employee), class: "card card--hover", data: popovers_enabled? && employee_popover_data(employee) do %>
         <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
           <strong class="h4 flex-grow"><%= employee.user.name %></strong>
           <span class="block"><%= employee.aasm_state.humanize %></span>
