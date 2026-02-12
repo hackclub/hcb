@@ -33,7 +33,7 @@ class OrganizerPositionPolicy < ApplicationPolicy
 
   def admin_or_manager?
     user&.admin? ||
-      OrganizerPosition.find_by(user:, event: record.event)&.manager? # This is not just `record`!
+      OrganizerPosition.role_at_least?(user, record.event, :manager) # This is not just `record`!
   end
 
   def admin_or_contract_signee?

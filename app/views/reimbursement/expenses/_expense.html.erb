@@ -1,5 +1,5 @@
 <%# locals: (expense:, new: false) -%>
-<% read_only = !OrganizerPosition.find_by(user: current_user, event: expense.report.event)&.manager? && current_user != expense.report.user && !admin_signed_in? %>
+<% read_only = !OrganizerPosition.role_at_least?(current_user, expense.report.event, :manager) && current_user != expense.report.user && !admin_signed_in? %>
 <%= turbo_frame_tag expense do %>
   <div
     data-controller="expense-form"
