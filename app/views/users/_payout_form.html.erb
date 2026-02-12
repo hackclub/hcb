@@ -17,9 +17,7 @@
 
       <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email" %>
 
-      <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
-      <% end %>
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
 
       <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web" do %>
         <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
