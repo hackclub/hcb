@@ -63,7 +63,7 @@ class Event < ApplicationRecord
 
   include Hashid::Rails
   hashid_config salt: ""
-  
+
   extend FriendlyId
 
   include PublicIdentifiable
