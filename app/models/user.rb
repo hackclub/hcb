@@ -183,6 +183,17 @@ class User < ApplicationRecord
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
+  validate :must_be_13_or_older, if: :will_save_change_to_birthday?
+
+  def must_be_13_or_older
+    return if birthday.blank?
+
+    calculated_age = age_on(Date.current)
+    if calculated_age && calculated_age < 13
+    errors.add(:birthday, "You must be at least 13 years old")
+    end
+  end
+
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
     message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
