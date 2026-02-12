@@ -39,7 +39,7 @@
             <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in?, id: "user_locked" %>
           </div>
 
-          <div class="field field--checkbox" id="freeze-cards-field" style="<%= 'display:none;' if @user.locked? %>">
+          <div class="field field--checkbox" id="freeze-cards-field" style="<%= "display:none;" if @user.locked? %>">
             <%= form.label :freeze_cards, "Also freeze all of this user's active cards" %>
             <%= form.check_box :freeze_cards, checked: true %>
             <% active_card_count = @user.stripe_cards.active.count %>
