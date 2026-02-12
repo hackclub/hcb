@@ -226,7 +226,7 @@ class Event
     end
 
     def contract_notify_hcb?
-      false
+      !teen_led?
     end
 
     def create_contract
