@@ -32,7 +32,23 @@
     <% else %>
       <% card_grant = Rails.cache.fetch("tx_#{hcb_code.hcb_code}/card_grant", expires_in: 12.hours) { hcb_code.card_grant? } %>
       <% details_link = card_grant ? spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant) : url_for(hcb_code) %>
-      <% modal = card_grant ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
+      <% if card_grant %>
+        <% popover_data = {
+          title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event),
+          src: spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant, params: { frame: true }),
+          frame_id: "spending_#{hcb_code.outgoing_disbursement.card_grant.public_id}",
+          state_url: spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant),
+          external_link: spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant)
+        } %>
+      <% else %>
+        <% popover_data = {
+          title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event),
+          src: hcb_code.popover_path(ledger_instance: ledger_instance),
+          frame_id: hcb_code.public_id,
+          state_url: hcb_code_path(hcb_code),
+          external_link: url_for(hcb_code)
+        } %>
+      <% end %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
               data-controller="navigation"
@@ -52,7 +68,7 @@
             </span>
         </span>
       <% end %>
-      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
+      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: popover_data[:title], popover_src: popover_data[:src], popover_frame_id: popover_data[:frame_id], popover_state_url: popover_data[:state_url], popover_external_link: popover_data[:external_link] } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
         <%= render "hcb_codes/memo_stream", hcb_code: %>
       <% end %>

@@ -61,14 +61,7 @@
 
       <tbody>
         <% @transfers.each do |d| %>
-          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && !d.is_a?(CardGrant) %>
-            <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transfer_modal_<%= d.hcb_code %>" data-state-url="<%= hcb_code_url(d.hcb_code) %>" data-state-title="Transfer of <%= render_money(d.local_hcb_code.amount_cents_by_event(@event).abs) %>">
-              <%= modal_header("Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}", external_link: hcb_code_url(d.hcb_code)) %>
-              <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
-                <%= render partial: "application/loading_container" %>
-              <% end %>
-            </section>
-          <% end %>
+          <% transfer_popover_title = !d.is_a?(CardGrant) ? "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" : nil %>
           <tr class="<%= "clickable" if organizer_signed_in? && !d.is_a?(CardGrant) %>">
             <td class="transaction__icon">
               <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -159,7 +152,7 @@
                   <%= render "events/card_grant_actions", card_grant: d %>
                 <% else %>
                   <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                  <%= link_to d.is_a?(CardGrant) ? "Details" : "", hcb_code_url(d.hcb_code), class: d.is_a?(CardGrant) ? "" : "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) ? { behavior: "modal_trigger", modal: "transfer_modal_#{d.hcb_code}" } : nil %>
+                  <%= link_to d.is_a?(CardGrant) ? "Details" : "", hcb_code_url(d.hcb_code), class: d.is_a?(CardGrant) ? "" : "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && transfer_popover_title ? { behavior: "modal_trigger", modal: "shared_popover", popover_title: transfer_popover_title, popover_src: d.local_hcb_code.popover_path, popover_frame_id: d.local_hcb_code.public_id, popover_state_url: hcb_code_url(d.hcb_code), popover_external_link: hcb_code_url(d.hcb_code) } : nil %>
                 <% end %>
               <% end %>
             </td>

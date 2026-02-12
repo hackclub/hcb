@@ -33,7 +33,8 @@
             </span>
           </td>
           <td>
-            <%= link_to hcb_code.memo, "#", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "hcb_code_details_#{hcb_code.id}" } %>
+            <% audit_popover_title = hcb_code.pretty_title(show_event_name: false, show_amount: true) %>
+            <%= link_to hcb_code.memo, "#", data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: audit_popover_title, popover_src: hcb_code.popover_path, popover_frame_id: hcb_code.public_id, popover_state_url: hcb_code_path(hcb_code), popover_external_link: url_for(hcb_code) } %>
           </td>
           <td>
             <%= render_money hcb_code.amount_cents %>
@@ -48,70 +49,6 @@
       <% end %>
     </tbody>
   </table>
-
-  <% @tasks.each do |task| %>
-    <% hcb_code = task.hcb_code %>
-    <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="hcb_code_details_<%= hcb_code.id %>" data-state-url="<%= hcb_code_path(hcb_code) %>" data-state-title="<%= hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount)) %>">
-      <%= modal_header(hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount)), external_link: url_for(hcb_code)) %>
-      <%= turbo_frame_tag hcb_code.public_id, src: hcb_code.popover_path, loading: :lazy do %>
-        <div class="shimmer mb1 mt3">
-          <div class="shimmer__border"></div>
-          <div class="shimmer__main">
-            <article class="card pb0 h-100">
-              <h2 class="h2 mt0 mx0 border-none flex items-center justify-between">
-                <span class="flex-auto">
-                  <span class="align-middle"
-                        data-controller="navigation"
-                        data-action="dblclick->navigation#navigate"
-                        data-navigation-location-param="<%= my_inbox_path %>"
-                        data-navigation-frame-param="2">
-                    <%= hcb_code.humanized_type %>
-                    <span class="regular muted">for $-</span>
-                  </span>
-                </span>
-              </h2>
-
-              <section class="hcb-code--details">
-                <p>
-                  <strong>Card</strong> -
-                </p>
-                <p>
-                  <strong>Spender</strong> -
-                </p>
-                <p>
-                  <strong>Spent</strong> -
-                </p>
-                <p>
-                  <strong>Settled after</strong> -
-                </p>
-              </section>
-
-              <section class="details details--wide pt2 pb2 details--tall">
-                <p>
-                  <strong>Merchant</strong>
-                  <action data-behavior="modal_trigger" data-modal="merchant_details" class="pointer" tabindex="0">
-                    <span class="inline-flex">
-                      -
-                      <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-                    </span>
-                  </action>
-                </p>
-                <p>
-                  <strong>Charge method</strong>
-                  <action data-behavior="modal_trigger" data-modal="verification_details" class="pointer" tabindex="0">
-                    <span>
-                      -
-                      <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-                    </span>
-                  </action>
-                </p>
-              </section>
-            </article>
-          </div>
-        </div>
-      <% end %>
-    </section>
-  <% end %>
 
   <%= paginate @tasks %>
 

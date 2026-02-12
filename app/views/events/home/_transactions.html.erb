@@ -27,27 +27,24 @@
 
       <% if organizer_signed_in? %>
         <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
+        <% rt_popover_title = transaction.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) %>
         <a
           style="height:60px"
           class="homepage-transaction <%= "clickable" if popover_enabled %>"
           href="<%= url_for(transaction.local_hcb_code) %>"
           data-behavior="modal_trigger"
-          data-modal="transaction_details_<%= transaction.local_hcb_code.__id__ %>">
+          data-modal="shared_popover"
+          data-popover-title="<%= rt_popover_title %>"
+          data-popover-src="<%= transaction.local_hcb_code.popover_path %>"
+          data-popover-frame-id="<%= transaction.local_hcb_code.public_id %>"
+          data-popover-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>"
+          data-popover-external-link="<%= url_for(transaction.local_hcb_code) %>">
           <%= rendered_transaction %>
         </a>
       <% else %>
         <div class="homepage-transaction cursor-[unset]" style="height:60px">
           <%= rendered_transaction %>
         </div>
-      <% end %>
-
-      <% if Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= transaction.local_hcb_code.__id__ %>" data-state-url="<%= hcb_code_path(transaction.local_hcb_code) %>" data-state-title="<%= transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event: @event) %>">
-          <%= modal_header(transaction.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event: @event), external_link: url_for(transaction.local_hcb_code)) %>
-          <%= turbo_frame_tag transaction.local_hcb_code.public_id, src: transaction.local_hcb_code.popover_path, loading: :lazy do %>
-            <%= render partial: "application/loading_container" %>
-          <% end %>
-        </section>
       <% end %>
     <% end %>
   </div>

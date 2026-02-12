@@ -76,9 +76,10 @@
           <%= turbo_frame_tag "#{ct.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
               <% if Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } && !organizer_signed_in? %>
-                <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
+                <%= link_to(transaction_memo(ct), spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), popover_src: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant, params: { frame: true }), popover_frame_id: "spending_#{ct.local_hcb_code.outgoing_disbursement.card_grant.public_id}", popover_state_url: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant), popover_state_title: transaction_memo(ct), popover_external_link: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant) }) %>
               <% elsif (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
-                <%= link_to url_for(ct.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
+                <% tx_pretty_title = ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:) %>
+                <%= link_to url_for(ct.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "shared_popover", popover_title: tx_pretty_title, popover_src: ct.local_hcb_code.popover_path(transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance), popover_frame_id: ct.local_hcb_code.public_id, popover_state_url: hcb_code_path(ct.local_hcb_code), popover_external_link: url_for(ct.local_hcb_code) } do %>
                   <%= render "hcb_codes/memo", hcb_code: ct.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 <% end %>
               <% else %>
@@ -224,81 +225,3 @@
   <% end %>
 </tr>
 
-<% if (ct.local_hcb_code.stripe_card? && ct.subledger&.present?) || (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && event.present?) %>
-  <% pretty_title = Rails.cache.fetch(["ct_#{ct.hcb_code}", "pretty_title", defined?(show_event_name), defined?(show_amount), event], expires_in: 30.minutes) do
-       ct.local_hcb_code.pretty_title(show_event_name: defined?(show_event_name), show_amount: defined?(show_amount), event:)
-     end %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= instance %>" data-state-url="<%= hcb_code_path(ct.local_hcb_code) %>" data-state-title="<%= pretty_title %>">
-    <%= modal_header(pretty_title, external_link: url_for(ct.local_hcb_code)) %>
-    <%= turbo_frame_tag ct.local_hcb_code.public_id, src: ct.local_hcb_code.popover_path(transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance), loading: :lazy, target: "_top" do %>
-      <div class="shimmer mb1 mt3">
-        <div class="shimmer__border"></div>
-        <div class="shimmer__main">
-          <article class="card pb0 h-100">
-            <h2 class="h2 mt0 mx0 border-none flex items-center justify-between">
-              <span class="flex-auto">
-                <%= pop_icon_to "edit",
-                    my_inbox_path,
-                    class: "mr2 align-middle", "aria-label": "Rename transaction",
-                    data: { turbo: true } if organizer_signed_in?(as: :member) %>
-                <span class="align-middle"
-                      data-controller="navigation"
-                      data-action="dblclick->navigation#navigate"
-                      data-navigation-location-param="<%= my_inbox_path %>"
-                      data-navigation-frame-param="2">
-                  <%= Rails.cache.fetch("ct_#{ct.hcb_code}/humanized_type", expires_in: 12.hours) { ct.local_hcb_code.humanized_type } %>
-                  <span class="regular muted">for $-</span>
-                </span>
-              </span>
-            </h2>
-
-            <section class="hcb-code--details">
-              <p>
-                <strong>Card</strong> -
-              </p>
-              <p>
-                <strong>Spender</strong> -
-              </p>
-              <p>
-                <strong>Spent</strong> -
-              </p>
-              <p>
-                <strong>Settled after</strong> -
-              </p>
-            </section>
-
-            <section class="details details--wide pt2 pb2 details--tall">
-              <p>
-                <strong>Merchant</strong>
-                <action data-behavior="modal_trigger" data-modal="merchant_details" class="pointer" tabindex="0">
-                  <span class="inline-flex">
-                    -
-                    <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-                  </span>
-                </action>
-              </p>
-              <p>
-                <strong>Charge method</strong>
-                <action data-behavior="modal_trigger" data-modal="verification_details" class="pointer" tabindex="0">
-                  <span>
-                    -
-                    <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
-                  </span>
-                </action>
-              </p>
-            </section>
-          </article>
-        </div>
-      </div>
-    <% end %>
-  </section>
-<% end %>
-
-<% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) || !organizer_signed_in?) && Rails.cache.fetch("tx_#{ct.hcb_code}/card_grant", expires_in: 12.hours) { ct.local_hcb_code.card_grant? } %>
-  <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="card_grant_details_<%= instance %>" data-state-url="<%= spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant) %>" data-state-title="<%= transaction_memo(ct) %>">
-    <%= modal_header(ct.local_hcb_code.pretty_title(show_event_name: false, show_amount: true, event:), external_link: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant)) %>
-    <%= turbo_frame_tag "spending_#{ct.local_hcb_code.outgoing_disbursement.card_grant.public_id}", src: spending_card_grant_path(ct.local_hcb_code.outgoing_disbursement.card_grant, params: { frame: true }), loading: :lazy do %>
-      <strong>Loading...</strong>
-    <% end %>
-  </section>
-<% end %>

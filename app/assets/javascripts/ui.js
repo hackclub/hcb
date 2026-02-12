@@ -5,6 +5,49 @@ const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+const populateSharedPopover = (trigger) => {
+  const popover = document.getElementById('shared_popover')
+  if (!popover) return
+
+  const title = trigger.dataset.popoverTitle || ''
+  const src = trigger.dataset.popoverSrc || ''
+  const frameId = trigger.dataset.popoverFrameId || ''
+  const stateUrl = trigger.dataset.popoverStateUrl || ''
+  const stateTitle = trigger.dataset.popoverStateTitle || title
+  const externalLink = trigger.dataset.popoverExternalLink || ''
+  const size = trigger.dataset.popoverSize || ''
+
+  popover.dataset.stateUrl = stateUrl
+  popover.dataset.stateTitle = stateTitle
+
+  const titleEl = document.getElementById('shared_popover_title')
+  if (titleEl) titleEl.textContent = title
+
+  const extLink = document.getElementById('shared_popover_external_link')
+  if (extLink) {
+    if (externalLink) {
+      extLink.href = externalLink
+      extLink.style.display = ''
+    } else {
+      extLink.style.display = 'none'
+    }
+  }
+
+  popover.classList.toggle('modal--popover--sm', size === 'sm')
+
+  const body = document.getElementById('shared_popover_body')
+  if (body) {
+    body.innerHTML = ''
+    if (src && frameId) {
+      const frame = document.createElement('turbo-frame')
+      frame.id = frameId
+      frame.src = src
+      frame.setAttribute('target', '_top')
+      body.appendChild(frame)
+    }
+  }
+}
+
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
     const controlOrCommandClick = e.ctrlKey || e.metaKey
@@ -12,6 +55,9 @@ const loadModals = element => {
       if (controlOrCommandClick) return
       e.preventDefault()
       e.stopPropagation()
+    }
+    if ($(this).data('modal') === 'shared_popover') {
+      populateSharedPopover(this)
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
@@ -740,6 +786,13 @@ $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
   if (document.documentElement.dataset.returnToStateUrl) {
     window.history.pushState(null, '', document.documentElement.dataset.returnToStateUrl);
     document.title = document.documentElement.dataset.returnToStateTitle;
+  }
+});
+
+$(document).on($.modal.AFTER_CLOSE, function (event, modal) {
+  if (modal?.elm?.[0]?.id === 'shared_popover') {
+    const body = document.getElementById('shared_popover_body')
+    if (body) body.innerHTML = ''
   }
 });
 

@@ -1,4 +1,5 @@
-<a class="text-decoration-none" <% if @show_card_popovers %> data-behavior="modal_trigger" data-modal="card_popover_<%= stripe_card.id %>" <% end %> data-turbo-frame="_top" href="<%= (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
+<% sc_popover_title = stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card" %>
+<a class="text-decoration-none" <% if @show_card_popovers %> data-behavior="modal_trigger" data-modal="shared_popover" data-popover-title="<%= sc_popover_title %>" data-popover-src="<%= stripe_card.popover_path %>" data-popover-frame-id="stripe_card_<%= stripe_card.public_id %>" data-popover-state-url="<%= stripe_card_path(stripe_card) %>" data-popover-external-link="<%= url_for(stripe_card) %>" data-popover-size="sm" <% end %> data-turbo-frame="_top" href="<%= (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (local_assigns[:href] || stripe_card_path(stripe_card)) : "javascript:;" %>">
 
   <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless defined? headless %>
   <% if stripe_card.canceled? %>
@@ -21,11 +22,3 @@
   </div>
 </a>
 
-<% if @show_card_popovers %>
-  <section class="modal modal--scroll modal--popover modal--popover--sm bg-snow" data-behavior="modal" role="dialog" id="card_popover_<%= stripe_card.id %>" data-state-url="<%= stripe_card_path(stripe_card) %>" data-state-title="<%= stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card" %>">
-    <%= modal_header(stripe_card.initially_activated ? "Card #{stripe_card.last_four}" : "Inactive card", external_link: url_for(stripe_card)) %>
-    <%= turbo_frame_tag "stripe_card_#{stripe_card.public_id}", src: stripe_card.popover_path, loading: :lazy do %>
-      <%= render partial: "application/loading_container" %>
-    <% end %>
-  </section>
-<% end %>

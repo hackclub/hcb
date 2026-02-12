@@ -39,24 +39,10 @@
           <%# Date issued %>
           <td>
             <%= format_date c.created_at %>
-            <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && { behavior: "modal_trigger", modal: "card_popover_#{c.id}" } if organizer_signed_in? && !@event.demo_mode %>
+            <% card_popover_title = c.initially_activated ? "Card #{c.last_four}" : "Inactive card" %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && { behavior: "modal_trigger", modal: "shared_popover", popover_title: card_popover_title, popover_src: c.popover_path, popover_frame_id: "stripe_card_#{c.public_id}", popover_state_url: url_for(c), popover_external_link: url_for(c), popover_size: "sm" } if organizer_signed_in? && !@event.demo_mode %>
           </td>
         </tr>
-
-        <% if @show_card_popovers %>
-          <% popover_title = c.initially_activated ? "Card #{c.last_four}" : "Inactive card" %>
-          <section
-            class='modal modal--scroll modal--popover modal--popover--sm bg-snow'
-            data-behavior='modal' role='dialog' id='card_popover_<%= c.id %>'
-            data-state-url='<%= url_for(c) %>'
-            data-state-title='<%= popover_title %>'>
-
-            <%= modal_header(popover_title, external_link: url_for(c)) %>
-            <%= turbo_frame_tag "stripe_card_#{c.public_id}", src: c.popover_path, loading: :lazy do %>
-              <%= render partial: "application/loading_container" %>
-            <% end %>
-          </section>
-        <% end %>
 
       <% end %>
       </tbody>
