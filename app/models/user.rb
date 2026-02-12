@@ -46,6 +46,9 @@ class User < ApplicationRecord
 
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :usr
 

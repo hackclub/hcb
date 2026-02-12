@@ -43,7 +43,10 @@ module Reimbursement
     belongs_to :approved_by, class_name: "User", optional: true
     include AASM
     include Receiptable
+
     include Hashid::Rails
+    hashid_config salt: ""
+
     has_paper_trail
     acts_as_paranoid
 

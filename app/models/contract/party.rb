@@ -25,7 +25,6 @@ class Contract
   class Party < ApplicationRecord
     include AASM
     include Hashid::Rails
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     acts_as_paranoid
     has_paper_trail

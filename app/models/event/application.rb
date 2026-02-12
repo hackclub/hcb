@@ -63,9 +63,10 @@ class Event
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true

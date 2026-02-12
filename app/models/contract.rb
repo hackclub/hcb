@@ -33,7 +33,9 @@
 #
 class Contract < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
 
   acts_as_paranoid
   has_paper_trail

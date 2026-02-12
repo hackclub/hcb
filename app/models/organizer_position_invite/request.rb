@@ -27,6 +27,8 @@
 class OrganizerPositionInvite
   class Request < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
+
     include AASM
 
     belongs_to :organizer_position_invite, optional: true

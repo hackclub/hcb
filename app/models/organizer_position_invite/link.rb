@@ -28,6 +28,7 @@
 class OrganizerPositionInvite
   class Link < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     DEFAULT_EXPIRATION = 30.days
 

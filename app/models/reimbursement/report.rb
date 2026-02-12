@@ -44,6 +44,9 @@ module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
 
+    include Hashid::Rails
+    hashid_config salt: ""
+
     include PublicIdentifiable
     set_public_id_prefix :rmr
 
@@ -83,6 +86,7 @@ module Reimbursement
     include AASM
     include Commentable
     include Hashid::Rails
+    hashid_config salt: ""
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event&.id }, only: [:create]

@@ -23,7 +23,9 @@
 #
 class Login < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
 
   belongs_to :user
   belongs_to :user_session, class_name: "User::Session", optional: true

@@ -47,6 +47,8 @@
 #
 class CardGrant < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+  
   has_paper_trail
 
   include PublicIdentifiable
