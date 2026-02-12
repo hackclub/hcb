@@ -37,6 +37,54 @@
         <p class="mb-0 whitespace-pre-wrap"><%= application.political_description %></p>
       <% end %>
     </div>
+    <% unless application.teen_led? %>
+      <div>
+        <p class="text-sm muted mb-1">Team size</p>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.team_size.present? ? application.team_size : blank %></p>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm muted mb-1 mt-0">Annual budget</p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.annual_budget.present? ? application.annual_budget.format : blank %></p>
+        </div>
+        <div>
+          <p class="text-sm muted mb-1 mt-0">Committed amount</p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.committed_amount.present? ? application.committed_amount.format : blank %></p>
+        </div>
+      </div>
+      <% if application.committed_amount&.positive? %>
+        <div>
+          <p class="text-sm muted mb-1">Funding source</p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.funding_source.present? ? application.funding_source : blank %></p>
+        </div>
+      <% end %>
+      <div>
+        <p class="text-sm muted mb-1">Previously applied to HCB</p>
+        <p class="mb-0">
+          <% if @application.previously_applied == true %>
+            Yes
+          <% elsif @application.previously_applied == false %>
+            No
+          <% else %>
+            <%= blank %>
+          <% end %>
+        </p>
+      </div>
+    <% end %>
+    <div>
+      <p class="text-sm muted mb-1">Affiliations</p>
+      <% if application.affiliations.any? && false %>
+        <ul class="list-disc list-inside my-0 pl-5">
+          <% application.affiliations.each do |affiliation| %>
+            <li><%= affiliation %></li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="mb-0">
+          No affiliations added for any VEX teams, FIRST teams, or Hack Club chapters
+        </p>
+      <% end %>
+    </div>
   </div>
 </div>
 
