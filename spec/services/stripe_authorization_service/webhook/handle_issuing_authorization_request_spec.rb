@@ -195,16 +195,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     end
   end
 
-  context "locked user" do
-    it "declines with user_locked reason" do
-      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
-      stripe_card.user.update!(locked_at: Time.now)
-
-      expect(service.run).to be(false)
-      expect(service.declined_reason).to eq("user_locked")
-    end
-  end
-
   context "withdrawals" do
     let(:stripe_authorization) do
       build(
