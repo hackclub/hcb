@@ -190,7 +190,7 @@ class User < ApplicationRecord
 
     calculated_age = age_on(Date.current)
     if calculated_age && calculated_age < 13
-    errors.add(:birthday, "You must be at least 13 years old")
+      errors.add(:birthday, "You must be at least 13 years old")
     end
   end
 
