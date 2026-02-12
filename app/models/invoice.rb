@@ -193,7 +193,7 @@ class Invoice < ApplicationRecord
   before_create :set_defaults
 
   after_create_commit -> {
-    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+    unless OrganizerPosition.role_at_least?(creator, event, :manager)
       InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
     end
   }

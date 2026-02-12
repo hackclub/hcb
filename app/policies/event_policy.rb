@@ -224,7 +224,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def receive_grant?
-    record.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def audit_log?

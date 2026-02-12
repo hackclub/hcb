@@ -470,6 +470,7 @@ class UsersController < ApplicationController
             :address_state,
             :address_postal_code,
             :recipient_country,
+            :recipient_name,
             :bic_code,
             :account_number
           ] + Wire.recipient_information_accessors
