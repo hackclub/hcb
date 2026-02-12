@@ -6,7 +6,7 @@ json.parent_id event.parent&.public_id
 json.name event.name
 json.country event.country
 json.slug event.slug
-json.financially_frozen event.financially_frozen
+json.financially_frozen event.financially_frozen?
 json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
 json.donation_page_available event.donation_page_available?
 json.playground_mode event.demo_mode?
