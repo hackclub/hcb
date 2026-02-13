@@ -85,7 +85,7 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event_name}'s agreement as HCB Operations"
+        "Sign #{contract.event_name}'s agreement as HCB Operations"
       elsif cosigner?
         "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
       else
