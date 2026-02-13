@@ -2,7 +2,14 @@
 
 <p>
   Welcome to HCB! You're now able to log into HCB and access your new organization, <%= link_to @application.name, @application.event %>!
+  Here are some next steps for you:
 </p>
+
+<ul>
+  <li><%= link_to "Invite other members of your team", event_team_url(@application.event) %>: You can invite them as managers, members, or readers. <%= link_to "Read more about roles on HCB here.", roles_url %></li>
+  <li><%= link_to "Configure your donation page", edit_event_url(@application.event, tab: "donations") %>: You can set a custom message to show on this page, add a donation goal, or enable donation tiers.</li>
+  <li><%= link_to "Order a card", event_cards_overview_url(@application.event) %>: You can order a virtual or a plastic card that you can use to spend your funds.</li>
+</ul>
 
 <p>The signed fiscal sponsorship contract is available for you to <%= link_to "download here", document_download_url(@application.contract.document) %>.</p>
 
