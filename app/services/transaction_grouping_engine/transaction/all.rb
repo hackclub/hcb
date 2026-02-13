@@ -105,9 +105,10 @@ module TransactionGroupingEngine
       end
 
       def user_modifier
-        return "" unless @user&.stripe_cardholder&.stripe_id.present?
+        return "" unless @user.present? && @user.all? { |u| u&.stripe_cardholder&.stripe_id.present? }
 
-        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user.stripe_cardholder.stripe_id])
+        stripe_ids = @user.map { |u| u.stripe_cardholder.stripe_id }
+        ActiveRecord::Base.sanitize_sql_array(["and raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", stripe_ids])
       end
 
       def category_modifier

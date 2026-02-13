@@ -4,8 +4,33 @@ module ApplicationHelper
   include ActionView::Helpers
 
   def upsert_query_params(**new_params)
-    params = request.query_parameters || {}
-    params.merge(new_params)
+    params_hash = (request.query_parameters || {}).deep_dup.stringify_keys
+    new_params.each do |raw_key, value|
+      key = raw_key.to_s
+      case value
+      when nil
+        params_hash.delete(key)
+
+      when Array
+        params_hash[key] = value.compact
+
+      when Hash
+        current = Array(params_hash[key])
+        if value.key?(:remove)
+          current -= Array(value[:remove]).compact
+        end
+
+        if value.key?(:add)
+          Array(value[:add]).compact.each do |v|
+            current << v unless current.include?(v)
+          end
+        end
+        current.empty? ? params_hash.delete(key) : params_hash[key] = current
+      else
+        params_hash[key] = value
+      end
+    end
+    params_hash
   end
 
   def render_money(amount, opts = {})

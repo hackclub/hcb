@@ -77,7 +77,8 @@ module PendingTransactionEngine
             end
 
             if @user
-              cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' = ?", @user&.stripe_cardholder&.stripe_id)
+              user_ids = Array(@user).map { |u| u.respond_to?(:stripe_cardholder) ? u.stripe_cardholder&.stripe_id : u }
+              cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", user_ids)
             end
 
             if @minimum_amount
