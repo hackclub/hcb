@@ -58,7 +58,7 @@
       <% end %>
     <% elsif @application.approved? && (party = @application.contract&.party(:hcb))&.pending? %>
       <% admin_tool do %>
-        <%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success" %>
+        <p class="<%= "tooltipped" if @application.contract&.party(:signee).pending? %> my-0" aria-label="The contract is not yet ready for HCB to sign"><%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success pointer-events-none", disabled: @application.contract&.party(:signee).pending? %></p>
       <% end %>
     <% end %>
     <% if @application.may_mark_rejected? %>
