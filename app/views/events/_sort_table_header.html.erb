@@ -1,0 +1,24 @@
+<% if organizer_signed_in? %>
+  <% direction =
+       if params[:sort] == sort
+         params[:direction] == "asc" ? "desc" : "asc"
+       elsif params[:sort].nil? && defined?(default) && default
+         params[:direction].present? ? params[:direction] : "desc"
+       else
+         "desc"
+       end %>
+  <%= link_to upsert_query_params(
+        sort: sort,
+        direction: direction
+      ),
+    class: [
+      "sort-button",
+      ("sort-button--active" if params[:sort] == sort || (params[:sort].nil? && defined?(default) && default)),
+      ("sort-button--right" if defined?(right) && right)
+    ].compact.join(" ") do %>
+  <%= display || sort.humanize %>
+  <%= inline_icon(params[:direction] == "desc" ? "down-caret" : "up-caret", size: 16) %>
+<% end %>
+<% else %>
+  <%= display || sort.humanize %>
+<% end %>
