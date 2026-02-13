@@ -4,7 +4,7 @@ class Event
   class ApplicationReminderJob < ApplicationJob
     queue_as :low
     def perform(application, tip_number)
-      return unless application.draft?
+      return unless application.draft? && !application.archived?
 
       Event::ApplicationMailer.with(application:, tip_number:).incomplete.deliver_later
     end
