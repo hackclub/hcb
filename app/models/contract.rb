@@ -150,7 +150,7 @@ class Contract < ApplicationRecord
   def on_party_signed(party)
     if parties.all?(&:signed?)
       mark_signed!
-    elsif parties.not_hcb.all?(&:signed?)
+    elsif parties.not_hcb.all?(&:signed?) && contractable.contract_notify_hcb?
       party(:hcb).notify
     end
 

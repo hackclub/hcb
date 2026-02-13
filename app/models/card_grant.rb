@@ -117,7 +117,7 @@ class CardGrant < ApplicationRecord
   def state
     if suspected_fraud?
       "error"
-    elsif suspected_fraud? || canceled? || expired?
+    elsif canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
