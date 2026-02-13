@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-IntercomUser = Data.define(:id, :email, :name) do
+# Proxied keys pulled from here:
+# https://github.com/intercom/intercom-rails/blob/1fe37fae947c8de8ba0c5c7f36a0d7f74be1c839/lib/intercom-rails/proxy/user.rb#L7-L10
+IntercomUser = Data.define(:id, :email, :name, :created_at) do
   def self.from_authenticated_user(user)
-    new(user.public_id, user.email, user.name)
+    new(user.public_id, user.email, user.name, user.created_at)
   end
 
 end
