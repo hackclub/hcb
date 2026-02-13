@@ -167,18 +167,11 @@ class Wire < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted? # don't access local_hcb_code before saving.
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def usd_amount_cents
