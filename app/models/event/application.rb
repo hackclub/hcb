@@ -297,7 +297,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!
+    def activate_event!(tags: [])
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
@@ -306,7 +306,8 @@ class Event
         name:,
         country: address_country,
         point_of_contact_id: poc.id,
-        application: self
+        application: self,
+        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) }
       )
 
       service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
@@ -336,6 +337,16 @@ class Event
 
     def respondent_url
       url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
     end
 
     private

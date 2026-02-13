@@ -124,7 +124,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!
+      @application.activate_event!(tags: params[:tags])
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
