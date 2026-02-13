@@ -30,5 +30,10 @@ module Contractable
       # This method can be overwritten in specific classes to set the path that contract-related routes should redirect to
       "/"
     end
+
+    def contract_notify_hcb?
+      # This method can be overwritten in specific classes to disable sending HCB's notification when all other parties have signed
+      true
+    end
   end
 end
