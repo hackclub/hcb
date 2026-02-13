@@ -80,6 +80,15 @@ export const generateEventActions = data => {
       icon: <Icon glyph="card" size={16} />,
       parent: event.slug,
     })),
+    ...data
+      .filter(e => e.features.card_grants)
+      .map(event => ({
+        id: `${event.slug}-card-grants`,
+        name: 'Card grants',
+        perform: navigate(`/${event.slug}/card_grants`),
+        icon: <Icon glyph="bag" size={16} />,
+        parent: event.slug,
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transfers`,
       name: 'Transfers',
