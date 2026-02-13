@@ -1,167 +1,318 @@
 # frozen_string_literal: true
 
-require "rails_helper"
+class CardGrantsController < ApplicationController
+  include SetEvent
 
-RSpec.describe Api::V4::CardGrantsController do
-  render_views
+  skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
+  skip_after_action :verify_authorized, only: [:show, :spending]
 
-  describe "#create" do
-    def card_grant_params
-      {
-        amount_cents: "123_45",
-        email: "recipient@example.com",
-        keyword_lock: "some keywords",
-        purpose: "Raffle prize",
-        one_time_use: "true",
-        pre_authorization_required: "true",
-        instructions: "Here's a card grant for your raffle prize"
-      }
-    end
+  before_action :set_event, only: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
+  before_action :set_card_grant, except: [:new, :create, :index, :card_index, :transaction_index, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
 
-    it "creates a card grant" do
-      user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
-      event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
-      create(:card_grant_setting, event:)
-      create(:organizer_position, user:, event:)
-
-      token = create(:api_token, user:)
-      request.headers["Authorization"] = "Bearer #{token.token}"
-
-      # `UsersHelper#profile_picture_for` uses `gravatar_url` if the user
-      # hasn't uploaded an image. The background colour for the Gravatar
-      # fallback image is determined by the user's ID, which makes the
-      # response value unpredictable.
-      allow_any_instance_of(UsersHelper).to receive(:gravatar_url).and_return("https://gravatar.com/avatar/stubbed")
-
-      post(:create, params: { event_id: event.friendly_id, **card_grant_params, expand: "disbursements" }, as: :json)
-
-      expect(response).to have_http_status(:created)
-      card_grant = event.card_grants.sole
-      disbursement = card_grant.disbursement
-      recipient = card_grant.user
-
-      serialized_event = {
-        "id"                                => event.public_id,
-        "parent_id"                         => nil,
-        "name"                              => "Test Event",
-        "slug"                              => "test-event",
-        "background_image"                  => nil,
-        "country"                           => nil,
-        "created_at"                        => event.created_at.iso8601(3),
-        "fee_percentage"                    => 0.0,
-        "financially_frozen"                => false,
-        "icon"                              => nil,
-        "donation_page_available"           => true,
-        "playground_mode"                   => false,
-        "playground_mode_meeting_requested" => false,
-        "transparent"                       => true
-      }
-
-      expect(response.parsed_body).to eq(
-        {
-          "id"                         => card_grant.public_id,
-          "amount_cents"               => 123_45,
-          "card_id"                    => nil,
-          "one_time_use"               => true,
-          "pre_authorization_required" => true,
-          "status"                     => "active",
-          "allowed_categories"         => [],
-          "allowed_merchants"          => [],
-          "category_lock"              => [],
-          "merchant_lock"              => [],
-          "purpose"                    => "Raffle prize",
-          "keyword_lock"               => "some keywords",
-          "email"                      => "recipient@example.com",
-          "expires_on"                 => card_grant.expires_on.iso8601(3),
-          "disbursements"              => [
-            {
-              "id"                      => disbursement.public_id,
-              "memo"                    => "Grant to recipient",
-              "status"                  => "completed",
-              "transaction_id"          => disbursement.local_hcb_code.public_id,
-              "outgoing_transaction_id" => disbursement.outgoing_disbursement.local_hcb_code.public_id,
-              "incoming_transaction_id" => disbursement.incoming_disbursement.local_hcb_code.public_id,
-              "amount_cents"            => 123_45,
-              "card_grant_id"           => card_grant.public_id,
-              "from"                    => serialized_event,
-              "to"                      => serialized_event,
-              "sender"                  => {
-                "id"       => user.public_id,
-                "name"     => "Orpheus D",
-                "email"    => "orpheus@hackclub.com",
-                "admin"    => false,
-                "auditor"  => false,
-                "avatar"   => "https://gravatar.com/avatar/stubbed",
-                "birthday" => nil,
-              },
-            }
-          ],
-          "organization"               => serialized_event,
-          "user"                       => {
-            "id"      => recipient.public_id,
-            "name"    => "recipient",
-            "admin"   => false,
-            "auditor" => false,
-            "avatar"  => "https://gravatar.com/avatar/stubbed",
-          },
-        }
-      )
-    end
-
-    it "reports validation errors" do
-      user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
-      event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
-      create(:card_grant_setting, event:)
-      create(:organizer_position, user:, event:)
-
-      token = create(:api_token, user:)
-      request.headers["Authorization"] = "Bearer #{token.token}"
-
-      post(
-        :create,
-        params: {
-          event_id: event.friendly_id,
-          **card_grant_params,
-          purpose: "This is a very long purpose that should exceed the 30 character limit",
-        },
-        as: :json
-      )
-
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.parsed_body).to eq(
-        {
-          "error"    => "invalid_operation",
-          "messages" => ["Purpose is too long (maximum is 30 characters)"]
-        }
-      )
-    end
-
-    it "handles downstream errors" do
-      user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
-      event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
-      create(:card_grant_setting, event:)
-      create(:organizer_position, user:, event:)
-
-      token = create(:api_token, user:)
-      request.headers["Authorization"] = "Bearer #{token.token}"
-
-      post(
-        :create,
-        params: {
-          event_id: event.friendly_id,
-          **card_grant_params,
-          amount_cents: 12_345_67,
-        },
-        as: :json
-      )
-
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(response.parsed_body).to eq(
-        {
-          "error"    => "invalid_operation",
-          "messages" => ["You don't have enough money to make this disbursement."]
-        }
-      )
-    end
+  def index
+    authorize @event, :card_grant_overview?
   end
+
+  def card_index
+    authorize @event, :card_grant_overview?
+
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    card_grants_page = (params[:page] || 1).to_i
+    card_grants_per_page = (params[:per] || 20).to_i
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
+      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+      "card_grants.created_at DESC"
+    )
+    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+  end
+
+  def transaction_index
+    authorize @event, :card_grant_overview?
+
+    @subledger = true
+  end
+
+  def new
+    @card_grant = @event.card_grants.build(email: params[:email])
+
+    authorize @card_grant
+
+    @event.create_card_grant_setting! unless @event.card_grant_setting.present?
+
+    @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
+  end
+
+  def create
+    params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+
+    authorize @card_grant
+
+    begin
+      # There's no way to save a card grant without potentially triggering an
+      # exception as under the hood it calls `DisbursementService::Create` and a
+      # number of other methods (e.g. `save!`) which either succeed or raise.
+      @card_grant.save!
+    rescue => e
+      case e
+      when ActiveRecord::RecordInvalid
+        # We expect to encounter validation errors from `CardGrant`, but anything
+        # else is the result of downstream logic which shouldn't fail.
+        raise e unless e.record.is_a?(CardGrant)
+
+        flash[:error] = @card_grant.errors.full_messages.to_sentence
+      when DisbursementService::Create::UserError
+        flash[:error] = e.message
+      else
+        raise e
+      end
+
+      render(:new, status: :unprocessable_entity)
+      return
+    end
+
+    flash[:success] = "Successfully sent a grant to #{@card_grant.email}!"
+    redirect_back_or_to event_transfers_path(@event)
+  end
+
+  def bulk_upload_form
+    authorize @event, :bulk_upload_card_grants?
+  end
+
+  def bulk_upload
+    authorize @event, :bulk_upload_card_grants?
+
+    unless params[:csv_file].present?
+      flash[:error] = "Please select a CSV file to upload"
+      render :bulk_upload_form, status: :unprocessable_entity
+      return
+    end
+
+    result = CardGrantService::BulkCreate.new(
+      event: @event,
+      csv_file: params[:csv_file],
+      sent_by: current_user
+    ).run
+
+    if result.success?
+      flash[:success] = "Successfully sent #{result.card_grants.count} grants!"
+      redirect_to event_card_grant_overview_path(@event)
+    else
+      flash.now[:error] = result.errors.join(". ")
+      render :bulk_upload_form, status: :unprocessable_entity
+    end
+  rescue DisbursementService::Create::UserError => e
+    flash.now[:error] = e.message
+    render :bulk_upload_form, status: :unprocessable_entity
+  end
+
+  def bulk_upload_template
+    authorize @event, :bulk_upload_card_grants?
+
+    csv_content = CSV.generate do |csv|
+      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+    end
+
+    send_data csv_content,
+              filename: "card_grants_template.csv",
+              type: "text/csv",
+              disposition: "attachment"
+  end
+
+  def edit_overview
+    authorize @card_grant
+  end
+
+  def edit_purpose
+    authorize @card_grant
+  end
+
+  def edit_actions
+    authorize @card_grant
+  end
+
+  def edit_balance
+    authorize @card_grant
+  end
+
+  def edit_usage_restrictions
+    authorize @card_grant
+  end
+
+  def edit_topup
+    authorize @card_grant
+  end
+
+  def edit_withdraw
+    authorize @card_grant
+  end
+
+  def permit_merchant
+    authorize @card_grant
+
+    merchant_lock = @card_grant.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: card_grant_path(@card_grant) and return
+    end
+
+    merchant_lock << params[:merchant]
+    @card_grant.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: card_grant_path(@card_grant)
+  end
+
+
+  def update
+    authorize @card_grant
+
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+      flash[:success] = "Card grant has been successfully updated!"
+    else
+      flash[:error] = @card_grant.errors.full_messages.to_sentence
+    end
+
+    redirect_to card_grant_url(@card_grant)
+  end
+
+  def clear_purpose
+    authorize @card_grant, :update?
+    @card_grant.update!(purpose: nil)
+    flash[:success] = "Purpose has been successfully cleared!"
+    redirect_to card_grant_url(@card_grant)
+  end
+
+  def show
+    if !signed_in?
+      url_queries = { return_to: card_grant_path(@card_grant) }
+      url_queries[:email] = params[:email] if params[:email]
+      return redirect_to auth_users_path(url_queries), flash: { info: "To continue, please sign in with the email you received the grant." }
+    end
+
+    authorize @card_grant
+
+    if @card_grant.pre_authorization&.unauthorized? && !organizer_signed_in?
+      return redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card_grant.visible_hcb_codes
+
+    @show_card_details = params[:show_details] == "true"
+
+    @frame = params[:frame].present?
+    @force_no_popover = @frame
+
+    render :show, layout: !@frame
+
+  rescue Pundit::NotAuthorizedError
+    redirect_to auth_users_path(return_to: card_grant_path(@card_grant), error: "unauthorised_card_grant")
+  end
+
+  def spending
+    authorize @card_grant
+
+    @event = @card_grant.event
+    @card = @card_grant.stripe_card
+    @hcb_codes = @card&.local_hcb_codes
+
+    @frame = params[:frame].present?
+    @force_no_popover = @frame
+
+    if organizer_signed_in? && !@frame
+      # If trying to view spending page outside a frame, redirect to the show page
+      return redirect_to @card_grant
+    end
+
+    render :spending, layout: !@frame
+  end
+
+  def activate
+    authorize @card_grant
+
+    @card_grant.create_stripe_card(request.remote_ip)
+
+    redirect_to @card_grant
+  rescue Stripe::InvalidRequestError => e
+    redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
+  rescue Errors::StripeInvalidNameError => e
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def cancel
+    authorize @card_grant
+
+    disbursement = @card_grant.cancel!(current_user)
+
+    redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
+  end
+
+  def topup
+    authorize @card_grant
+
+    @card_grant.topup!(amount_cents: Monetize.parse(params[:amount]).cents, topped_up_by: current_user)
+
+    redirect_to @card_grant, flash: { success: "Successfully topped up grant." }
+  rescue DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def withdraw
+    authorize @card_grant
+
+    @card_grant.withdraw!(amount_cents: Monetize.parse(params[:amount]).cents, withdrawn_by: current_user)
+
+    redirect_to @card_grant, flash: { success: "Successfully withdrew from grant." }
+
+  rescue => e
+    Rails.error.report(e) unless e.is_a?(ArgumentError)
+
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def convert_to_reimbursement_report
+    authorize @card_grant
+
+    report = @card_grant.convert_to_reimbursement_report!
+
+    redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
+  end
+
+  def toggle_one_time_use
+    authorize @card_grant
+
+    @card_grant.update(one_time_use: !@card_grant.one_time_use)
+
+    redirect_to @card_grant, flash: { success: "#{@card_grant.one_time_use ? "Enabled" : "Disabled"} one time use for this card grant." }
+  end
+
+  def disable_pre_authorization
+    authorize @card_grant
+
+    @card_grant.pre_authorization&.destroy!
+    @card_grant.update(pre_authorization_required: false)
+
+    redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
+  end
+
+  def edit
+    authorize @card_grant
+  end
+
+  private
+
+  def set_card_grant
+    @card_grant = CardGrant.find_by_hashid!(params.require(:id))
+    @event = @card_grant.event
+  end
+
 end
