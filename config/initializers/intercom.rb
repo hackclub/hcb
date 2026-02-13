@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Proxied keys pulled from here:
+# https://github.com/intercom/intercom-rails/blob/1fe37fae947c8de8ba0c5c7f36a0d7f74be1c839/lib/intercom-rails/proxy/user.rb#L7-L10
+IntercomUser = Data.define(:id, :email, :name, :created_at) do
+  def self.from_authenticated_user(user)
+    new(user.public_id, user.email, user.name, user.created_at)
+  end
+
+end
+
 IntercomRails.config do |config|
   # == Intercom app_id
   #
@@ -24,8 +33,9 @@ IntercomRails.config do |config|
   # If it is `current_user` or `@user`, then you can ignore this
   #
   # config.user.current = Proc.new { current_user }
-  config.user.current = [proc { current_user }]
-
+  config.user.current = proc do
+    IntercomUser.from_authenticated_user(current_user)
+  end
   # == Include for logged out Users
   # If set to true, include the Intercom messenger on all pages, regardless of whether
   # The user model class (set below) is present.

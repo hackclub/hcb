@@ -241,13 +241,8 @@ class IncreaseCheck < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE
 
   def sent?
     approved?
