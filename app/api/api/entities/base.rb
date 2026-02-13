@@ -36,18 +36,6 @@ module Api
         "api_v3_#{self.object_type.pluralize}_path"
       end
 
-      # FOR DEVELOPMENT TESTING
-      # if Rails.env.development?
-      #   expose :_options do
-      #     expose :hide do |obj, opt|
-      #       opt[:hide]
-      #     end
-      #     expose :expand do |obj, opt|
-      #       opt[:expand]
-      #     end
-      #   end
-      # end
-
       private
 
       def url_for_attached(attachment, transformations = nil)

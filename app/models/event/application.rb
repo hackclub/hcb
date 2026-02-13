@@ -225,6 +225,10 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
+    def contract_notify_hcb?
+      !teen_led?
+    end
+
     def create_contract
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")

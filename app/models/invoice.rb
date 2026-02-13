@@ -193,7 +193,7 @@ class Invoice < ApplicationRecord
   before_create :set_defaults
 
   after_create_commit -> {
-    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+    unless OrganizerPosition.role_at_least?(creator, event, :manager)
       InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
     end
   }
@@ -371,13 +371,8 @@ class Invoice < ApplicationRecord
     sponsor.name
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
