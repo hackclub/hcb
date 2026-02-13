@@ -300,25 +300,29 @@ class Event
     def activate_event!
       raise "Contract must be signed before activation" unless contract.signed?
 
-      poc = contract.party(:hcb).user
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
 
-      Event.create!(
-        name:,
-        country: address_country,
-        point_of_contact_id: poc.id,
-        application: self
-      )
+        poc = contract.party(:hcb).user
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
-      invite = service.model
-      service.run!
+        Event.create!(
+          name:,
+          country: address_country,
+          point_of_contact_id: poc.id,
+          application: self
+        )
 
-      invite.accept(application_contract: contract)
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        invite = service.model
+        service.run!
 
-      affiliations.each do |affiliation|
-        affiliation_copy = affiliation.dup
-        affiliation_copy.affiliable = event
-        affiliation_copy.save!
+        invite.accept(application_contract: contract)
+
+        affiliations.each do |affiliation|
+          affiliation_copy = affiliation.dup
+          affiliation_copy.affiliable = event
+          affiliation_copy.save!
+        end
       end
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
