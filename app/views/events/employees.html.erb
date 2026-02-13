@@ -6,8 +6,8 @@
     <%= render "events/blankslate_page",
     title: "Contractors",
     screenshots: {
-      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
-      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+      light: "https://cdn.hackclub.com/019c562c-4ea3-7799-8e04-951af832dca6/hcb.hackclub.com_devhacks_employees__4_.png",
+      dark: "https://cdn.hackclub.com/019c562c-4cb2-7209-b2b0-9a4b8cb68f8b/hcb.hackclub.com_devhacks_employees__5_.png",
     },
     hints: [
       {
@@ -27,10 +27,10 @@
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
     <% end %>
 
-    <% if organizer_signed_in?(as: :member) %>
-      <%= link_to event_transfers_new_path(event_id: @event.slug), class: "w-full btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
-        <%= inline_icon "payment-transfer" %>
-        Send
+    <% if policy(@event.employees.build).new? %>
+      <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+        <%= inline_icon "plus" %>
+        Invite a contractor
       <% end %>
     <% end %>
 
@@ -98,35 +98,33 @@
   </div>
 </div>
 
-<% if @employees.blank? %>
-  <%= blankslate "No contractors created." %>
-<% else %>
-  <div class="grid grid-cols-1 lg:grid-cols-2">
-    <% @employees.each do |employee| %>
-      <%= link_to employee_path(employee), class: "card card--hover", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "employee_#{employee.hashid}" } do %>
-        <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
-          <strong class="h4 flex-grow"><%= employee.user.name %></strong>
-          <span class="block"><%= employee.aasm_state.humanize %></span>
-        </div>
-        <span class="block flex">
-          <span class="flex-grow"><%= employee.user.email %></span>
-          <% unless employee.onboarding? %>
-            <strong><%= render_money employee.payments.paid.or(employee.payments.approved).sum(:amount_cents) %> earned</strong>
-          <% end %>
-        </span>
-      <% end %>
-
-       <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="employee_<%= employee.hashid %>" data-state-url="<%= employee_path(employee) %>" data-state-title="<%= "#{employee.user.name}'s payroll" %>">
-          <%= modal_header("#{employee.user.name}'s payroll", external_link: employee_path(employee)) %>
-          <%= turbo_frame_tag "employee_#{employee.hashid}", src: employee.popover_path, loading: :lazy do %>
-            <%= render partial: "application/loading_container" %>
-          <% end %>
-        </section>
-      <% end %>
-
+<div class="grid grid-cols-1 lg:grid-cols-2">
+  <% @employees.each do |employee| %>
+    <%= link_to employee_path(employee), class: "card card--hover", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "employee_#{employee.hashid}" } do %>
+      <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
+        <strong class="h4 flex-grow"><%= employee.user.name %></strong>
+        <span class="block"><%= employee.aasm_state.humanize %></span>
+      </div>
+      <span class="block flex">
+        <span class="flex-grow"><%= employee.user.email %></span>
+        <% unless employee.onboarding? %>
+          <strong><%= render_money employee.payments.paid.or(employee.payments.approved).sum(:amount_cents) %> earned</strong>
+        <% end %>
+      </span>
     <% end %>
-  </div>
+
+      <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+      <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="employee_<%= employee.hashid %>" data-state-url="<%= employee_path(employee) %>" data-state-title="<%= "#{employee.user.name}'s payroll" %>">
+        <%= modal_header("#{employee.user.name}'s payroll", external_link: employee_path(employee)) %>
+        <%= turbo_frame_tag "employee_#{employee.hashid}", src: employee.popover_path, loading: :lazy do %>
+          <%= render partial: "application/loading_container" %>
+        <% end %>
+      </section>
+    <% end %>
+
+  <% end %>
+</div>
+
 <% end %>
 
 <section data-behavior="modal" role="dialog" id="invite" class="modal modal--scroll bg-snow">
@@ -145,4 +143,3 @@
     </div>
   <% end %>
 </section>
-<% end %>
