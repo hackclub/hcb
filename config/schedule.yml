@@ -79,6 +79,10 @@ invoice_opens_to_paids_job:
   cron: "30 * * * *" # run every hour
   class: "Invoice::OpensToPaidsJob"
 
+invoice_mark_depositeds_job:
+  cron: "30 * * * *" # run every hour
+  class: "Invoice::MarkDepositedsJob"
+
 donation_nightly_job:
   cron: "*/30 * * * *" # run every 30 minutes
   class: "Donation::NightlyJob"
