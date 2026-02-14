@@ -299,6 +299,7 @@ class Event
     end
 
     def activate_event!
+      contract.party(:hcb).sync_with_docuseal
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
