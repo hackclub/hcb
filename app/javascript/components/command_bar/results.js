@@ -3,7 +3,6 @@
 import React from 'react'
 import { KBarResults, useMatches } from 'kbar'
 import { Guide } from './search/guide'
-
 export function RenderResults() {
   const { results, rootActionId } = useMatches()
   return (
@@ -38,7 +37,7 @@ export function RenderResults() {
             ) : item == 'search_guide' || item.id?.startsWith('results:') ? (
               <Guide />
             ) : (
-              'Loading...'
+              <div className="loader-s"></div>
             )}
           </div>
         ) : (
