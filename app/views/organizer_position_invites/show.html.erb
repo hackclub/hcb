@@ -29,14 +29,15 @@
 
   <div class="flex justify-center items-center flex-wrap mt-3 gap-2">
     <%= link_to "Reject", organizer_position_invite_reject_path(@invite), method: :post, class: "btn bg-error" %>
-    <% if @invite.contract && !@invite.contract.signed? %>
+    <% if @invite.contract && !@invite.contract.party(:signee).signed? %>
       <% if @invite.contract.party(:signee).present? %>
         <%= link_to "View pending contract", contract_party_path(@invite.contract.party(:signee)), class: "btn bg-accent" %>
       <% else %>
         <%= link_to "View pending contract", @invite.contract.signee_docuseal_url, class: "btn bg-accent" %>
       <% end %>
     <% else %>
-      <%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success" %>
+      <% disabled = !@invite.contract.signed? %>
+      <p class="tooltipped my-0" aria-label="<%= "The contract must be signed before you can accept this invite" if disabled %>"><%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success #{"pointer-events-none" if disabled}", disabled: %></p>
     <% end %>
   </div>
 </main>
