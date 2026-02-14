@@ -5,8 +5,7 @@ class LedgersController < ApplicationController
     @ledger = Ledger.find_by_hashid!(params[:id])
     authorize @ledger
 
-    # TODO: Replace with Ledger::Query
-    @items = @ledger.items.order(date: :desc, created_at: :desc).page(params[:page])
+    @items = Ledger::Query.new({}).execute(ledgers: [@ledger]).order(date: :desc, id: :desc).page(params[:page])
   end
 
 end
