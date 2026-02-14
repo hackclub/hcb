@@ -66,16 +66,16 @@ class OrganizerPosition < ApplicationRecord
     return true if user&.admin?
 
     if role.to_s == "reader"
-      return event.ancestor_organizer_positions.reader_access.where(user:).exists?
+      return event.ancestor_organizer_positions&.reader_access&.where(user:)&.exists?
     end
 
     if role.to_s == "member"
       # Only check direct organizer positions, unless the user is a manager of an ancestor
-      return event.organizer_positions.member_access.where(user:).exists? || event.ancestor_organizer_positions.manager_access.where(user:).exists?
+      return event.organizer_positions.member_access.where(user:).exists? || event.ancestor_organizer_positions&.manager_access&.where(user:)&.exists?
     end
 
     if role.to_s == "manager"
-      return event.ancestor_organizer_positions.manager_access.where(user:).exists?
+      return event.ancestor_organizer_positions&.manager_access&.where(user:)&.exists?
     end
 
     false

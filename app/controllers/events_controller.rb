@@ -287,7 +287,7 @@ class EventsController < ApplicationController
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
 
     if @event.parent
-      ops = @event.ancestor_organizer_positions.includes(:user)
+      ops = @event.ancestor_organizer_positions&.includes(:user)
       users = ops.map(&:user).uniq
 
       access_levels = users.filter_map do |user|
