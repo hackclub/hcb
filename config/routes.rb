@@ -793,6 +793,7 @@ Rails.application.routes.draw do
           post "clear_screenshots"
           post "organizer_approve"
           post "organizer_reject"
+          post "organizer_request_resubmit"
         end
       end
     end
