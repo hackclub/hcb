@@ -36,7 +36,7 @@
         <%= link_to "View pending contract", @invite.contract.signee_docuseal_url, class: "btn bg-accent" %>
       <% end %>
     <% else %>
-      <% disabled = !@invite.contract.signed? %>
+      <% disabled = !@invite.contract&.signed? %>
       <p class="tooltipped my-0" aria-label="<%= "The contract must be signed before you can accept this invite" if disabled %>"><%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success #{"pointer-events-none" if disabled}", disabled: %></p>
     <% end %>
   </div>
