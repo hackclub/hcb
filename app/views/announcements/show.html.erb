@@ -6,6 +6,8 @@
 <% page_md %>
 <%= render "events/nav", selected: :announcements %>
 
+<% show_blocks_callout = !@announcement.published? && @announcement.blocks.any? %>
+
 <h1 class="heading">
   <span class="flex flex-grow items-center"><%= heading %></span>
 </h1>
@@ -20,7 +22,7 @@
   <% end %>
 <% end %>
 
-<div class="flex justify-between items-center pb-4">
+<div class="flex justify-between items-center <%= "pb-4" unless show_blocks_callout %>">
   <p class="italic my-0">
     <%= @announcement.published? ? "Published" : "Drafted" %> by <%= user_mention @announcement.author %> on <%= (@announcement.draft? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
   </p>
@@ -50,6 +52,16 @@
     <% end %>
   </div>
 </div>
+
+<% if show_blocks_callout %>
+  <%= render "callout", type: "info", title: "This announcement contains blocks", footer: :questions do %>
+    <ul>
+      <li>Blocks are sections of your announcement that automatically update with the latest data from HCB.</li>
+      <li>You can change block options by editing the announcement and clicking the blue edit icon in the top-right corner of any block.
+      <li>Add new blocks by selecting a block from the HCB dropdown menu when editing an announcement.</li>
+    </ul>
+  <% end %>
+<% end %>
 
 <%= turbo_frame_tag :post_editor do %>
   <% if editing %>

@@ -819,11 +819,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :edit, :update, :show] do
-      member do
-        post "refresh"
-      end
-    end
+    resources :blocks, only: [:create, :edit, :update, :show]
   end
 
   scope module: "organizer_position_invite" do
