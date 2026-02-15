@@ -449,6 +449,8 @@ class Event < ApplicationRecord
 
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
+
+    Onboarding::GettingStartedEmailJob.set(wait: 1.hour).perform_later(self)
   end
 
   before_validation do
