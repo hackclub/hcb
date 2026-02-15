@@ -460,6 +460,15 @@ class Event < ApplicationRecord
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
+  after_update if: :is_public_previously_changed? do
+    whodunnit = User.find(self.versions.where_object_changes(is_public:).last.whodunnit)
+    if is_public
+      EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
+    else
+      EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
+    end
+  end
+
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
   after_destroy_commit do

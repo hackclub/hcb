@@ -22,4 +22,20 @@ class EventMailerPreview < ActionMailer::Preview
       .negative_balance
   end
 
+  def transparency_mode_enabled
+    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_enabled
+  end
+
+  def monthly_announcements_enabled
+    EventMailer.with(event: Announcement.monthly_for(Date.today).first.event, whodunnit: Event.first.users.first).monthly_announcements_enabled
+  end
+
+  def transparency_mode_disabled
+    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_disabled
+  end
+
+  def monthly_announcements_disabled
+    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).monthly_announcements_disabled
+  end
+
 end
