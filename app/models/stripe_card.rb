@@ -64,6 +64,7 @@ class StripeCard < ApplicationRecord
   has_paper_trail
 
   validate :within_card_limit, on: :create
+  validate :subledger_and_card_grant
   validates :subledger, uniqueness: true, allow_nil: true
 
   after_create_commit :notify_user, unless: :skip_notify_user
@@ -465,6 +466,10 @@ class StripeCard < ApplicationRecord
     if event_cards_today > 20
       errors.add(:base, "Your organization has been rate-limited from creating new cards. Please try again tomorrow; for help, email hcb@hackclub.com.")
     end
+  end
+
+  def subledger_and_card_grant
+    (subledger.present? && card_grant.present?) || (subledger.nil? && card_grant.nil?)
   end
 
 end
