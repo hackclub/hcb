@@ -1,5 +1,6 @@
 <% disabled = !policy(@event).create_transfer? %>
 <% title "Send a check" %>
+<% subtitle "From #{@event.name}" %>
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfer_step_item", number: 1, label: "Contact information" %>

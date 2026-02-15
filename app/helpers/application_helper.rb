@@ -278,6 +278,10 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
