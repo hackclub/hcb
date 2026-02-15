@@ -121,6 +121,8 @@
           We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
         <% end %>
 
+        <%= render "wise_transfers/delay_warning" %>
+
         <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: false } %>
 
         <div class="field">

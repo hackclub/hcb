@@ -90,6 +90,8 @@
     </section>
 
     <% unless @hcb_code.pt.settled? %>
+      <%= render "wise_transfers/delay_warning" %>
+
       <section class="card__banner relative bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
         <%= inline_icon "wise", size: 16 %>
         <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
