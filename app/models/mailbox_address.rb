@@ -30,7 +30,7 @@ class MailboxAddress < ApplicationRecord
   belongs_to :user
   validates :user, uniqueness: { scope: [:aasm_state, :user_id, :discarded_at], message: "can only have one mailbox address previewed/active at a time" }
 
-  validates :address, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates :address, presence: true, uniqueness: true, email_with_tld: true
   validates :address, format: { with: VALIDATION_REGEX, message: "must conform to correct format" }
 
   before_validation do

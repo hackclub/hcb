@@ -91,7 +91,7 @@ class Wire < ApplicationRecord
   end
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates :recipient_email, email_with_tld: true
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do

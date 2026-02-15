@@ -15,7 +15,7 @@ class User
       include Shared
 
       self.table_name = "user_payout_method_paypal_transfers"
-      validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+      validates :recipient_email, email_with_tld: true
       validates_presence_of :recipient_email
       normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
