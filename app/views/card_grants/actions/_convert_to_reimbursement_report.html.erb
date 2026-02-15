@@ -1,7 +1,7 @@
 <%# locals: (card_grant:, label: "Create reimbursement report", subtitle: "") %>
 
 <% if card_grant.card_grant_setting.reimbursement_conversions_enabled? && card_grant.balance.positive? %>
-  <% reimbursement_tooltip = policy(card_grant).convert_to_reimbursement_report? ? "Cancel this grant and open a reimbursement report with remaining funds" : "You don't have permission to perform this action" %>
+  <% reimbursement_tooltip = policy(card_grant).convert_to_reimbursement_report? ? "Cancel grant and opens reimbursement with remainder" : "You don't have permission to perform this action" %>
   <%= link_to convert_to_reimbursement_report_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
               method: :post,
               data: { confirm: "Are you sure? This will cancel your card grant and convert it into a reimbursement report." },
