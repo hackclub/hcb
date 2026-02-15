@@ -37,6 +37,22 @@ module ApplicationHelper
     render_money(amount, opts)
   end
 
+  # Convert an amount in a given currency to USD
+  # @param amount_cents [Integer] The amount in cents
+  # @param currency [String] The currency code (e.g., "EUR", "GBP")
+  # @return [Money] The equivalent amount in USD
+  def convert_to_usd(amount_cents, currency)
+    return Money.from_cents(amount_cents, "USD") if currency == "USD"
+
+    eu_bank = EuCentralBank.new
+    if Rails.env.test?
+      eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
+    else
+      eu_bank.update_rates
+    end
+    eu_bank.exchange(amount_cents, currency, "USD")
+  end
+
   def render_transaction_amount(amount)
     if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
       content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
