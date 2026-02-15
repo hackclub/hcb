@@ -465,6 +465,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
+    t.datetime "created_at"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
     t.string "invite_message"
@@ -474,6 +475,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
+    t.datetime "updated_at"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
