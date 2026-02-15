@@ -36,8 +36,31 @@
 
           <div class="field field--checkbox">
             <%= form.label :locked, "Lock user from signing into HCB" %>
-            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
+            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in?, id: "user_locked" %>
           </div>
+
+          <div class="field field--checkbox" id="freeze-cards-field" style="<%= "display:none;" if @user.locked? %>">
+            <%= form.label :freeze_cards, "Also freeze all of this user's active cards" %>
+            <%= form.check_box :freeze_cards, checked: true %>
+            <% active_card_count = @user.stripe_cards.active.count %>
+            <% if active_card_count > 0 %>
+              <small class="muted"><%= active_card_count %> active card(s) will be frozen</small>
+            <% else %>
+              <small class="muted">This user has no active cards</small>
+            <% end %>
+          </div>
+
+          <script>
+            document.addEventListener("DOMContentLoaded", function() {
+              var lockCheckbox = document.getElementById("user_locked");
+              var freezeField = document.getElementById("freeze-cards-field");
+              if (lockCheckbox && freezeField) {
+                lockCheckbox.addEventListener("change", function() {
+                  freezeField.style.display = this.checked ? "" : "none";
+                });
+              }
+            });
+          </script>
 
           <div class="field field--checkbox">
             <%= form.label :running_balance_enabled, "Show running balance?" %>

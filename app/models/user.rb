@@ -352,13 +352,22 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
-  def lock!
+  def lock!(freeze_cards: false)
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
     user_sessions.destroy_all
     # Invalidate all API tokens
     api_tokens.accessible.update_all(revoked_at: Time.current)
+
+    # Optionally freeze all active Stripe cards
+    if freeze_cards
+      stripe_cards.active.each do |card|
+        card.freeze!(frozen_by: User.system_user)
+      rescue => e
+        Rails.error.report(e, context: { user_id: id, card_id: card.id }, severity: :error)
+      end
+    end
   end
 
   def unlock!
