@@ -2,32 +2,14 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
+<% if @reports.any? %>
 <h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
   <span class="flex-grow">Reimbursements</span>
   <div class="flex items-center gap-2">
     <%= pop_icon_to "download",
                   reimbursements_exports_path(@event, format: :csv),
                   class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
-    <%= pop_icon_to "settings",
-        edit_event_path(@event, tab: "reimbursements"),
-        data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
-        class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
-    <% if @event.public_reimbursement_page_available? %>
-      <%= pop_icon_to "external",
-          reimbursement_start_reimbursement_report_url(@event),
-          target: "_blank",
-          class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
-    <% end %>
-    <% if organizer_signed_in?(as: :member) %>
-      <%= pop_icon_to "plus",
-            "#",
-            class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
-            "aria-label": "New report",
-            data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
-      <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
-          <%= inline_icon "plus" %> New
-      <% end %>
-    <% end %>
+    <%= render "reimbursement_buttons" %>
   </div>
 </h1>
 
@@ -109,6 +91,37 @@
   <p class="italic muted text-center">
     <%= page_entries_info @reports, entry_name: "reports" %>.
   </p>
+<% end %>
+<% else %>
+ <%= render "events/blankslate_page",
+      title: "Reimbursements",
+      support_article: "https://help.hcb.hackclub.com/en/articles/13370866-how-do-i-request-reimbursements",
+      screenshots: {
+        light: "https://user-cdn.hackclub-assets.com/019c3c7a-827e-779a-80bd-505c00c0f793/hcb.hackclub.com_hq_reimbursements.png",
+        dark: "https://user-cdn.hackclub-assets.com/019c3c7a-6f5b-7e30-aada-7f7ee823679e/hcb.hackclub.com_hq_reimbursements%20(1).png"
+      },
+      hints: [
+        {
+          icon: "send",
+          title: "Manage out-of-pocket expenses",
+          description: "Easily track and reimburse expenses incurred by your team members during events."
+        },
+        {
+          icon: "payment",
+          title: "Four different methods",
+          description: "Reimburse via ACH, mailed checks, Wise, or Wire transfers to suit your team's needs."
+        },
+        {
+          icon: "copy",
+          title: "Upload receipts",
+          description: "Organize and store expense receipts to track each expense easily."
+        }
+      ] do %>
+    <div class="flex items-center gap-2">
+      <%= render partial: "reimbursement/reports/create_form" %>
+      <%= render partial: "reimbursement_buttons" %>
+    </div>
+  <% end %>
 <% end %>
 
 <%= form_with(model: Reimbursement::Report, class: "display-none", method: :post, url: quick_expense_reimbursement_reports_path, data: { controller: "file-drop form", "file-drop-title-value": "Drop to start a report." }) do |form| %>

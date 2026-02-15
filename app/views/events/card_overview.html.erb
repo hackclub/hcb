@@ -2,6 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
+<% if @event.stripe_cards.any? %>
 <% if current_user.try(:full_name).try(:blank?) %>
 
   <h1 class="heading">
@@ -48,13 +49,6 @@
     <% end %>
   <% end %>
 
-  <% if organizer_signed_in? %>
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
-      <%= modal_header "Order a card" %>
-      <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
-    </section>
-  <% end %>
-
   <% if @view == "list" %>
     <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
   <% else %>
@@ -91,4 +85,48 @@
     </section>
   <% end %>
 
+<% end %>
+<% else %>
+ <%= render "events/blankslate_page",
+    title: "Cards",
+    support_article: "https://help.hcb.hackclub.com/en/articles/13356182-how-do-i-spend-my-money-on-hcb-and-use-hcb-cards",
+    screenshots: {
+      light: "https://user-cdn.hackclub-assets.com/019c3c72-e7a5-7cf8-b207-f03b9071a748/hcb.hackclub.com_hq_cards%20(1).png",
+      dark: "https://cdn.hackclub.com/019c3c73-25d9-79b3-b1ae-08bc8e7cb88b/hcb.hackclub.com_hq_cards.png"
+    },
+    hints: [
+      {
+        icon: "card",
+        title: "Order physical and virtual cards",
+        description: "Easily order physical and virtual cards for your organization to streamline spending and manage expenses."
+      },
+      {
+        icon: "view",
+        title: "Control spending with ease",
+        description: "Set spending limits and monitor transactions in real-time to ensure responsible use of funds."
+      },
+      {
+        icon: "docs",
+        title: "Simplify expense tracking",
+        description: "Automatically categorize and track expenses, making budgeting and financial reporting a breeze."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/cards" target="_blank" class="underline">how we utilize cards on HQ!</a></span>
+    <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
+        <%= inline_icon "card-add" %>
+        Order a card
+      <% end %>
+    <% end %>
+
+  <% end %>
+<% end %>
+
+<% if organizer_signed_in? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
+    <%= modal_header "Order a card" %>
+    <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
+  </section>
 <% end %>

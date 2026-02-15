@@ -3,6 +3,44 @@
 <%= render "events/nav", selected: :transfers %>
 <%= render "card_grants/create_modal" %>
 
+<% if @transfers.empty? %>
+  <%= render "events/blankslate_page",
+    title: "Transfers",
+    screenshots: {
+      light: "https://user-cdn.hackclub-assets.com/019c3c78-d39e-7433-8ff7-5d30be89ada7/hcb.hackclub.com_hq_transfers%20(1).png",
+      dark: "https://user-cdn.hackclub-assets.com/019c3c78-a1f5-7107-b798-63ace68178d7/hcb.hackclub.com_hq_transfers.png",
+    },
+    hints: [
+      {
+        icon: "payment-transfer",
+        title: "Send money where it needs to go",
+        description: "Use transfers to pay vendors, reimburse organizers, and send funds to partners directly from your event account."
+      },
+      {
+        icon: "receipt",
+        title: "Keep clean records",
+        description: "Each transfer is tracked with amounts, recipients, and notes so you always know where your event’s money is going."
+      },
+      {
+        icon: "up-caret",
+        title: "Support your event’s operations",
+        description: "Cover prizes, travel, supplies, and other expenses quickly and securely by sending transfers instead of handling cash."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/transfers" target="_blank" class="underline">how we do transfers on HQ!</a></span>
+    <% end %>
+
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to event_transfers_new_path(event_id: @event.slug), class: "w-full btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+        <%= inline_icon "payment-transfer" %>
+        Send
+      <% end %>
+    <% end %>
+
+  <% end %>
+
+<% else %>
 <h1 class="heading border-0 mb-0">
   <span class="flex items-center">
     Transfers
@@ -172,6 +210,8 @@
   </article>
 <% else %>
   <%= blankslate "No transfers yet" %>
+<% end %>
+
 <% end %>
 
 <% if organizer_signed_in? %>

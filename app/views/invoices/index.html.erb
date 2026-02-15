@@ -2,96 +2,131 @@
 <% page_md %>
 <%= render "events/nav", selected: :invoices %>
 
-<h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
-  <span class="flex items-center">
-    Invoices
-    <%= badge_for @invoices.size, class: "bg-muted" %>
-  </span>
-
-  <% if organizer_signed_in?(as: :member) %>
-    <%= link_to new_event_invoice_path(event_id: @event.slug),
-        class: "!ml-0 sm:!ml-auto btn btn--icon bg-success",
-        data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
-      <%= inline_icon "send" %>
-      Send an invoice
-    <% end %>
-  <% end %>
-</h1>
-
-<% if organizer_signed_in? %>
-  <%= render "invoices/modal" %>
-<% end %>
-
-<div class="statset mb-2">
-  <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
-    <span class="stat__label">Total invoiced</span>
-    <span class="stat__value"><%= render_money_amount @stats[:total] %></span>
-  </div>
-  <div class="stat stat--small">
-    <span class="stat__label">Already received</span>
-    <span class="stat__value"><%= render_money_amount @stats[:paid] %></span>
-  </div>
-  <div class="stat stat--small tooltipped tooltipped--s" aria-label="This excludes archived invoices">
-    <span class="stat__label">Unpaid</span>
-    <span class="stat__value"><%= render_money_amount @stats[:unpaid] %></span>
-  </div>
-  <div class="stat stat--small">
-    <span class="stat__label">On the way</span>
-    <span class="stat__value"><%= render_money_amount @stats[:pending] %></span>
-  </div>
-</div>
-
-<div class="flex items-center gap-2">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/search", form: %>
-  <% end %>
-
-  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
-</div>
-
-<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
-
 <% if @invoices.size > 0 %>
-<article class="table-container">
-<table>
-  <thead>
-    <tr>
-      <th>Status</th>
-      <th>Date</th>
-      <th>To</th>
-      <th class="text-right">Amount</th>
-    </tr>
-  </thead>
+  <h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
+    <span class="flex items-center">
+      Invoices
+      <%= badge_for @invoices.size, class: "bg-muted" %>
+    </span>
 
-  <tbody>
-    <% @invoices.each do |i| %>
-      <tr class="clickable">
-        <td>
-          <span class="ml0 badge bg-<%= i.state %>"><%= i.state_text %></span>
-        </td>
-        <td>
-          <%= format_date i.created_at %>
-        </td>
-        <td>
-          <%= i.sponsor.name %>
-        </td>
-        <td style="text-align: right;">
-          <%= render_money(i.item_amount) %>
-          <%= link_to "", hcb_code_url(i.local_hcb_code.hashid), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{i.local_hcb_code.hashid}" } if organizer_signed_in? %>
-        </td>
-      </tr>
-      <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-        <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(i.local_hcb_code.hashid) %>" data-state-title="<%= "#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}" %>">
-          <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
-          <%= turbo_frame_tag i.local_hcb_code.public_id, src: i.local_hcb_code.popover_path, loading: :lazy do %>
-            <%= render partial: "application/loading_container" %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to new_event_invoice_path(event_id: @event.slug),
+          class: "!ml-0 sm:!ml-auto btn btn--icon bg-success",
+          data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+        <%= inline_icon "send" %>
+        Send an invoice
+      <% end %>
+      <%= render "invoices/modal" %>
+    <% end %>
+  </h1>
+
+  <div class="statset mb-2">
+    <div class="stat tooltipped tooltipped--s" aria-label="This excludes archived invoices">
+      <span class="stat__label">Total invoiced</span>
+      <span class="stat__value"><%= render_money_amount @stats[:total] %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Already received</span>
+      <span class="stat__value"><%= render_money_amount @stats[:paid] %></span>
+    </div>
+    <div class="stat stat--small tooltipped tooltipped--s" aria-label="This excludes archived invoices">
+      <span class="stat__label">Unpaid</span>
+      <span class="stat__value"><%= render_money_amount @stats[:unpaid] %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">On the way</span>
+      <span class="stat__value"><%= render_money_amount @stats[:pending] %></span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/search", form: %>
+    <% end %>
+
+    <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+  </div>
+
+  <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Date</th>
+          <th>To</th>
+          <th class="text-right">Amount</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% @invoices.each do |i| %>
+          <tr class="clickable">
+            <td>
+              <span class="ml0 badge bg-<%= i.state %>"><%= i.state_text %></span>
+            </td>
+            <td>
+              <%= format_date i.created_at %>
+            </td>
+            <td>
+              <%= i.sponsor.name %>
+            </td>
+            <td style="text-align: right;">
+              <%= render_money(i.item_amount) %>
+              <%= link_to "", hcb_code_url(i.local_hcb_code.hashid), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{i.local_hcb_code.hashid}" } if organizer_signed_in? %>
+            </td>
+          </tr>
+          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+            <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= i.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(i.local_hcb_code.hashid) %>" data-state-title="<%= "#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}" %>">
+              <%= modal_header("#{i.sponsor.name} invoiced for #{render_money(i.item_amount)}", external_link: hcb_code_url(i.local_hcb_code.hashid)) %>
+              <%= turbo_frame_tag i.local_hcb_code.public_id, src: i.local_hcb_code.popover_path, loading: :lazy do %>
+                <%= render partial: "application/loading_container" %>
+              <% end %>
+            </section>
           <% end %>
-        </section>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% else %>
+  <%= render "events/blankslate_page",
+    title: "Invoices",
+    support_article: "https://help.hcb.hackclub.com/en/articles/13370940-what-are-invoices",
+    screenshots: {
+      light: "https://user-cdn.hackclub-assets.com/019c3c6d-7bf6-7727-a408-d6e64aec72c4/hcb.hackclub.com_hcb_yXHEvYE%20(3).png",
+      dark: "https://user-cdn.hackclub-assets.com/019c3c6d-8e47-7c2c-8f84-9d1171f27519/hcb.hackclub.com_hcb_yXHEvYE%20(2).png",
+    },
+    hints: [
+      {
+        icon: "send",
+        title: "Request payments professionally",
+        description: "Bill someone for an event sponsorship, workshop fee, or project work."
+      },
+      {
+        icon: "payment",
+        title: "Seamlessly accept payments",
+        description: "Include a payment link where people can pay with a card or bank account. Money flows directly into your HCB balance, and you'll see exactly when it arrives."
+      },
+      {
+        icon: "copy",
+        title: "Keep financial records clean",
+        description: "Track every invoice you've sent, monitor payment status, stay organized as your organization grows."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= link_to new_event_invoice_path(event_id: @event.slug),
+          class: "btn btn--icon bg-success mt-3",
+          data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+        <%= inline_icon "send" %>
+        Send an invoice
       <% end %>
     <% end %>
-  </tbody>
-</table>
-</article>
-<% else %>
-  <%= blankslate "No invoices yet" %>
+    <% if organizer_signed_in? %>
+      <%= render "invoices/modal" %>
+    <% end %>
+  <% end %>
 <% end %>

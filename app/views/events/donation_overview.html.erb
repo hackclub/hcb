@@ -2,7 +2,8 @@
 <% page_md %>
 <%= render "events/nav", selected: :donations %>
 
-<h1 class="heading gap-2 border-0 mb-2">
+<% if @donations.any? %>
+<h1 class="heading gap-2 border-0 mb-2" data-controller="walkthrough" data-walkthrough-key-value="donations">
   <span class="flex items-center flex-grow">
     Donations
     <%= badge_for @donations.count, class: "bg-muted" %>
@@ -185,4 +186,38 @@
       <strong>Loading...</strong>
     <% end %>
   </section>
+<% end %>
+</div>
+<% else %>
+  <%= render "events/blankslate_page",
+    title: "Donations",
+    support_article: "https://help.hcb.hackclub.com/en/articles/13370938-in-what-ways-can-i-edit-my-donation-page",
+    screenshots: {
+      light: "https://user-cdn.hackclub-assets.com/019c3c6f-f02f-7df4-8ee9-25bbeb451e77/hcb.hackclub.com_hq_donations.png",
+      dark: "https://user-cdn.hackclub-assets.com/019c3c6f-dfd0-76b4-ac51-94f9143eb01a/hcb.hackclub.com_hq_donations%20(1).png"
+    },
+    hints: [
+      {
+        icon: "friend",
+        title: "Turn supporters into funders",
+        description: "Create a custom donation page in minutes. Share the link on social media, your website, or anywhere your community gathers."
+      },
+      {
+        icon: "support",
+        title: "Make giving effortless",
+        description: "Donors enter their amount, pay securely, and they're done. You can suggest donation tiers or let people contribute whatever feels right."
+      },
+      {
+        icon: "payment",
+        title: "Grow sustainable funding",
+        description: "Track who's supporting your work and enable recurring donations so supporters can contribute monthly."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/donations" target="_blank" class="underline">our HQ's donations!</a></span>
+    <% end %>
+    <div class="flex gap-2">
+      <%= render partial: "events/share_donation_page", blankslate: true %>
+    </div>
+  <% end %>
 <% end %>
