@@ -88,6 +88,7 @@
       <ul class="grid text-left w-100 mt0" id="other-grid">
         <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
         <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
+        <%= card_to "Public ID lookup", public_id_lookup_path %>
         <%= card_to "Pending ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
         <%= card_to "Account numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
         <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>

@@ -1450,6 +1450,26 @@ class AdminController < Admin::BaseController
     @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
+  def public_id_lookup
+    @public_id = params[:public_id]&.strip
+    return unless @public_id.present?
+
+    @record = PublicIdentifiable.find_by_public_id(@public_id)
+
+    return if @record.present?
+
+    # Handle error
+    components = PublicIdentifiable.parse_components(@public_id)
+
+    if components.nil?
+      @error = "Invalid public ID format. Expected format: org_abc123, usr_xyz789, etc."
+    elsif PublicIdentifiable.models[components[:prefix]].nil?
+      @error = "Unknown prefix '#{components[:prefix]}'. This prefix does not match any known model."
+    else
+      @error = "Record not found. The #{PublicIdentifiable.models[components[:prefix]].name} with public ID '#{@public_id}' does not exist."
+    end
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

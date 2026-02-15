@@ -181,6 +181,12 @@ module Admin
             path: new_teenagers_leaderboard_admin_index_path,
             count: 0, # I think this would be expensive to calculate
             count_type: :records,
+          ),
+          make_item(
+            name: "Public ID Lookup",
+            path: public_id_lookup_admin_index_path,
+            count: 0,
+            count_type: :records,
           )
         ]
       )
