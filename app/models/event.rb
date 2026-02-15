@@ -62,6 +62,8 @@ class Event < ApplicationRecord
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   include PublicIdentifiable

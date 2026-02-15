@@ -46,6 +46,9 @@ class Check < ApplicationRecord
   has_paper_trail skip: [:description] # ciphertext columns will still be tracked
   has_encrypted :description
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :chk
 

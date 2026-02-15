@@ -24,7 +24,9 @@
 #
 class Employee < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
 
   has_paper_trail
   acts_as_paranoid
