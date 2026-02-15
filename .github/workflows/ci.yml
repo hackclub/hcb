@@ -46,7 +46,7 @@ jobs:
       - name: Run Lint
         run: bin/lint -c
       - name: Comment suggested changes
-        uses: parkerbxyz/suggest-changes@v3.0.3
+        uses: parkerbxyz/suggest-changes@v3.0.4
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
