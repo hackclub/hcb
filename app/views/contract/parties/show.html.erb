@@ -2,24 +2,31 @@
 
 <script src="https://cdn.docuseal.com/js/form.js"></script>
 
-<h2>Sign your HCB agreement</h2>
-
-<% admin_tool do %>
-  <div class="flex flex-row gap-3 items-center justify-start">
-    <% if @contract.contractable.is_a?(Event::Application) %>
-      <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn" %>
-    <% end %>
-  </div>
-<% end %>
+<h2><%= @party.hcb? ? "Sign #{@contract.event_name}'s agreement as HCB Operations" : "Sign your HCB agreement" %></h2>
 
 <div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
   <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: "md:col-span-3" } %>
   <div class="md:col-span-2 max-h-[75vh]">
     <% if @contract.contractable.is_a?(Event::Application) && @party.hcb? %>
-      <p class="text-center">Sign the contract before activating the organization</p>
-      <%= button_to admin_activate_application_path(@contract.contractable), method: :post, class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } do %>
-        Activate
-      <% end %>
+      <div class="card">
+        <div class="flex flex-row gap-3 items-center justify-start mb-2">
+          <% if @contract.contractable.is_a?(Event::Application) %>
+            <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn" %>
+          <% end %>
+        </div>
+        <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
+          <div class="field">
+            <%= form.label "Tags" %>
+            <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
+          </div>
+
+          <% if @party.pending? %>
+            <p>Sign the contract before activating the organization</p>
+          <% end %>
+
+          <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
+        <% end %>
+      </div>
     <% else %>
       <%= render partial: "contract_faq" %>
     <% end %>
