@@ -8,8 +8,8 @@
           class="dock__item user-menu-trigger max-w-full !shadow-none lg:ml-2">
           <%= avatar_for current_user, size: 28 if current_user %>
           <div class="text-left flex-1 truncate hidden lg:block" style="flex:1;overflow: hidden;">
-            <span class="truncate"><%= @current_user.name %></span>
-            <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= @current_user.email %></span>
+            <span class="truncate"><%= Current.user.name %></span>
+            <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= Current.user.email %></span>
           </div>
         </button>
         <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 -mt-2 lg:mt-2 h5" data-menu-target="content" style="z-index: 999;">
