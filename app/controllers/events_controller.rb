@@ -743,10 +743,11 @@ class EventsController < ApplicationController
           # We include the public ID because our partners iterate this CSV to
           # access organizations via the V3 API. The public ID serves has a
           # robust, immutable identifier compared to slugs.
-          csv << %w[ID Name Slug Balance]
+          csv << %w[ID Name Slug Balance Tags]
 
-          @event.subevents.find_each do |e|
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0].map { |value| SafeCsv.sanitize(value) }
+          @event.subevents.includes(:scoped_tags).find_each do |e|
+            tags_for_parent = e.scoped_tags.select { |tag| tag.parent_event_id == e.parent_id }
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join("|")].map { |value| SafeCsv.sanitize(value) }
           end
         end
 
