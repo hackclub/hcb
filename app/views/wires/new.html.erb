@@ -7,8 +7,8 @@
 <% end %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment information" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
@@ -79,7 +79,7 @@
         <%= form.label :recipient_email, "Email" %>
         <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
       </div>
-      <%= render "events/notify_transfer_recipient", form:, disabled: %>
+      <%= render "events/transfers/notify_recipient", form:, disabled: %>
 
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
@@ -138,7 +138,7 @@
         </div>
       </template>
 
-      <%= render "events/transfer_attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
 
     <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>

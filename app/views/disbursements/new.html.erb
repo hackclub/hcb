@@ -22,10 +22,10 @@
 <% end %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Transfer details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Transfer details" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
   <% if auditor_signed_in? || admin_signed_in? %>
-    <%= render "events/transfer_step_item", number: 3, label: "Admin" %>
+    <%= render "events/transfers/step_item", number: 3, label: "Admin" %>
   <% end %>
 <% end %>
 
