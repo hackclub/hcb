@@ -19,13 +19,11 @@
             <strong>Mailed check</strong>
             <small>United States</small>
           <% end %>
-          <% if Flipper.enabled?(:wise_transfers_2025_07_31, current_user) %>
-            <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" }, disabled: true do %>
-              <%= inline_icon "wise", size: 28 %>
-              <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Preview</div>
-              <strong>Wise transfer</strong>
-              <small>International</small>
-            <% end %>
+          <%= link_to new_event_wise_transfer_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" }, disabled: true do %>
+            <%= inline_icon "wise", size: 28 %>
+            <div class="badge badge--corner bg-warning m1 mt0" style="width: fit-content;">Preview</div>
+            <strong>Wise transfer</strong>
+            <small>International</small>
           <% end %>
           <%= link_to new_event_wire_path(@event), class: "text-decoration-none btn--form-option relative overflow-hidden", data: { turbo_frame: "_top" } do %>
             <%= inline_icon "web", size: 28 %>

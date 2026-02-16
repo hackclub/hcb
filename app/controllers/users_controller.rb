@@ -21,11 +21,16 @@ class UsersController < ApplicationController
                                                :complete_sms_auth_verification,
                                                :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
-
+  before_action :set_user, only: [
+    :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
+    :edit_security, :edit_notifications, :edit_integrations,
+    :generate_totp, :enable_totp, :disable_totp,
+    :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
+    :edit_admin, :admin_details
+  ]
   wrap_parameters format: :url_encoded_form
 
   def show
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     redirect_to admin_user_path(@user)
   end
 
@@ -125,30 +130,25 @@ class UsersController < ApplicationController
   end
 
   def edit
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     set_onboarding
     authorize @user
   end
 
   def edit_address
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
     authorize @user
   end
 
   def edit_payout
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
   end
 
   def edit_featurepreviews
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
   end
 
   def edit_security
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     show_impersonated_sessions = auditor_signed_in? || current_session.impersonated?
     @sessions = show_impersonated_sessions ? @user.user_sessions : @user.user_sessions.not_impersonated
     @sessions = @sessions.not_expired
@@ -179,17 +179,14 @@ class UsersController < ApplicationController
   end
 
   def edit_notifications
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
   end
 
   def edit_integrations
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
   end
 
   def generate_totp
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @user.totp&.mark_expired!
     @user.unverified_totp&.destroy!
@@ -197,7 +194,6 @@ class UsersController < ApplicationController
   end
 
   def enable_totp
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @totp = @user.unverified_totp
     if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
@@ -211,41 +207,33 @@ class UsersController < ApplicationController
   end
 
   def disable_totp
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @user.totp&.mark_expired!
     redirect_back_or_to security_user_path(@user)
   end
 
   def generate_backup_codes
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @previewed_backup_codes = @user.generate_backup_codes!
   end
 
   def activate_backup_codes
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @user.activate_backup_codes!
     redirect_back_or_to security_user_path(@user)
   end
 
   def disable_backup_codes
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
     authorize @user
     @user.disable_backup_codes!
     redirect_back_or_to security_user_path(@user)
   end
 
   def edit_admin
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-
     authorize @user
   end
 
   def admin_details
-    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
-
     # User Information
     @invoices = Invoice.where(creator: @user)
     @check_deposits = CheckDeposit.where(created_by: @user)
@@ -405,6 +393,10 @@ class UsersController < ApplicationController
   end
 
   private
+
+  def set_user
+    @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+  end
 
   def set_shown_private_feature_previews
     @shown_private_feature_previews = params[:classified_top_secret]&.split(",") || []
