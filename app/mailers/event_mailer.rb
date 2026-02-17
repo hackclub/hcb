@@ -53,6 +53,11 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_disabled
+    @visible_pages = []
+    @visible_pages << { name: "donation page", link: start_donation_donations_url(@event) } if @event.donation_page_available?
+    @visible_pages << { name: "public reimbursements page", link: reimbursement_start_reimbursement_report_url(@event) } if @event.public_reimbursement_page_enabled?
+    @visible_pages << { name: "announcements page", link: event_announcement_overview_url(@event) } if @event.announcements.published.any?
+    
     mail to: @emails, subject: "#{@event.name} has disabled transparency mode"
   end
 
