@@ -3,6 +3,7 @@
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
   before_action { @emails = @event.organizer_contact_emails }
+  before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -48,17 +49,14 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_enabled
-    @whodunnit = params[:whodunnit]
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
   def transparency_mode_disabled
-    @whodunnit = params[:whodunnit]
     mail to: @emails, subject: "#{@event.name} has disabled transparency mode"
   end
 
   def monthly_announcements_enabled
-    @whodunnit = params[:whodunnit]
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
@@ -67,8 +65,14 @@ class EventMailer < ApplicationMailer
   end
 
   def monthly_announcements_disabled
-    @whodunnit = params[:whodunnit]
     mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+  end
+
+  private
+
+  def set_whodunnit
+    @whodunnit = params[:whodunnit]
+    @is_manager = @event.ancestor_organizer_positions.map(&:user).include?(@whodunnit)
   end
 
 end
