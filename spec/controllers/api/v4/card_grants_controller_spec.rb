@@ -21,6 +21,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "creates a card grant" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
@@ -41,12 +42,14 @@ RSpec.describe Api::V4::CardGrantsController do
 
       serialized_event = {
         "id"                                => event.public_id,
+        "parent_id"                         => nil,
         "name"                              => "Test Event",
         "slug"                              => "test-event",
         "background_image"                  => nil,
         "country"                           => nil,
         "created_at"                        => event.created_at.iso8601(3),
         "fee_percentage"                    => 0.0,
+        "financially_frozen"                => false,
         "icon"                              => nil,
         "donation_page_available"           => true,
         "playground_mode"                   => false,
@@ -69,17 +72,20 @@ RSpec.describe Api::V4::CardGrantsController do
           "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
+          "expires_on"                 => card_grant.expires_on.iso8601(3),
           "disbursements"              => [
             {
-              "id"             => disbursement.public_id,
-              "memo"           => "Grant to recipient",
-              "status"         => "completed",
-              "transaction_id" => disbursement.local_hcb_code.public_id,
-              "amount_cents"   => 123_45,
-              "card_grant_id"  => card_grant.public_id,
-              "from"           => serialized_event,
-              "to"             => serialized_event,
-              "sender"         => {
+              "id"                      => disbursement.public_id,
+              "memo"                    => "Grant to recipient",
+              "status"                  => "completed",
+              "transaction_id"          => disbursement.local_hcb_code.public_id,
+              "outgoing_transaction_id" => disbursement.outgoing_disbursement.local_hcb_code.public_id,
+              "incoming_transaction_id" => disbursement.incoming_disbursement.local_hcb_code.public_id,
+              "amount_cents"            => 123_45,
+              "card_grant_id"           => card_grant.public_id,
+              "from"                    => serialized_event,
+              "to"                      => serialized_event,
+              "sender"                  => {
                 "id"       => user.public_id,
                 "name"     => "Orpheus D",
                 "email"    => "orpheus@hackclub.com",
@@ -105,6 +111,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "reports validation errors" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
@@ -132,6 +139,7 @@ RSpec.describe Api::V4::CardGrantsController do
     it "handles downstream errors" do
       user = create(:user, full_name: "Orpheus the Dinosaur", email: "orpheus@hackclub.com")
       event = create(:event, :with_positive_balance, name: "Test Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)

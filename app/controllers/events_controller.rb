@@ -56,10 +56,6 @@ class EventsController < ApplicationController
     rescue Pundit::NotAuthorizedError
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
-
-    if !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) && !(params[:event_home_page_redesign_2024_09_21] && auditor_signed_in?) || @event.demo_mode?
-      redirect_to event_transactions_path(@event.slug)
-    end
   end
 
   def transaction_heatmap
@@ -97,7 +93,7 @@ class EventsController < ApplicationController
     canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
     all_transactions = [*pending_transactions, *canonical_transactions]
 
-    @recent_transactions = all_transactions.first(5)
+    @recent_transactions = all_transactions.first(6)
 
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
@@ -126,7 +122,7 @@ class EventsController < ApplicationController
   def recent_activity
     authorize @event
 
-    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(5)
+    @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
 
     render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
   end
@@ -163,10 +159,6 @@ class EventsController < ApplicationController
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
 
-    if !signed_in? && !@event.holiday_features
-      @hide_seasonal_decorations = true
-    end
-
     if flash[:popover]
       @popover = flash[:popover]
       flash.delete(:popover)
@@ -200,7 +192,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym,
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
 
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
@@ -288,7 +280,7 @@ class EventsController < ApplicationController
     @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
-      @all_positions = @all_positions.select { |op| op.user.teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
+      @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
@@ -315,9 +307,13 @@ class EventsController < ApplicationController
 
   # GET /events/1/edit
   def edit
+    authorize @event
+    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
+      return redirect_to edit_event_path(@event.slug, tab: "details")
+    end
+
     @settings_tab = params[:tab]
     @frame = params[:frame]
-    authorize @event
     @activities_before = params[:activities_before] || Time.now
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
@@ -325,6 +321,22 @@ class EventsController < ApplicationController
     CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
 
     render :edit, layout: !@frame
+  end
+
+  def permit_merchant
+    authorize @event
+
+    merchant_lock = @event.card_grant_setting.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants") and return
+    end
+
+    merchant_lock << params[:merchant]
+    @event.card_grant_setting.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: edit_event_path(@event.slug, tab: "card_grants")
   end
 
   # PATCH/PUT /events/1
@@ -335,21 +347,8 @@ class EventsController < ApplicationController
     fixed_event_params = event_params
     fixed_user_event_params = user_event_params
 
-    # processing hidden for admins
-    if fixed_event_params[:hidden] == "1" && !@event.hidden_at.present?
-      fixed_event_params[:hidden_at] = DateTime.now
-    elsif fixed_event_params[:hidden] == "0" && @event.hidden_at.present?
-      fixed_event_params[:hidden_at] = nil
-    end
-    fixed_event_params.delete(:hidden)
-
-    # processing hidden for users
-    if fixed_user_event_params[:hidden] == "1" && !@event.hidden_at.present?
-      fixed_user_event_params[:hidden_at] = DateTime.now
-    elsif fixed_user_event_params[:hidden] == "0" && @event.hidden_at.present?
-      fixed_user_event_params[:hidden_at] = nil
-    end
-    fixed_user_event_params.delete(:hidden)
+    process_hidden_param!(fixed_event_params)
+    process_hidden_param!(fixed_user_event_params)
 
     plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
@@ -489,7 +488,7 @@ class EventsController < ApplicationController
     authorize @event
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || 20).to_i
+    per_page = (params[:per] || 18).to_i
 
     display_cards = [
       @user_stripe_cards.active,
@@ -627,9 +626,9 @@ class EventsController < ApplicationController
     @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.increase_deposited.or(@increase_checks.in_transit).sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.sum(&:usd_amount_cents),
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).sum(&:usd_amount_cents),
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.sum(&:usd_amount_cents)
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
     }
 
     @ach_transfers = @ach_transfers.in_transit if params[:filter] == "in_transit"
@@ -643,7 +642,7 @@ class EventsController < ApplicationController
     @checks = @checks.search_recipient(params[:q]) if params[:q].present?
 
     @increase_checks = @increase_checks.in_transit if params[:filter] == "in_transit"
-    @increase_checks = @increase_checks.increase_deposited if params[:filter] == "deposited"
+    @increase_checks = @increase_checks.deposited if params[:filter] == "deposited"
     @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
     @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
 
@@ -662,7 +661,7 @@ class EventsController < ApplicationController
     @wires = @wires.rejected if params[:filter] == "canceled"
     @wires = @wires.search_recipient(params[:q]) if params[:q].present?
 
-    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending) if params[:filter] == "in_transit"
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:filter] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
@@ -687,6 +686,12 @@ class EventsController < ApplicationController
 
   def reimbursements
     authorize @event
+    @total = @event.reimbursement_reports.to_calculate_total.where(currency: "USD").includes(:payout_holding).sum(&:amount_cents)
+    @total += Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed.where.not(currency: "USD")).sum(&:amount_cents)
+    @total += Money.from_cents(@event.reimbursement_reports.pending.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
+    @reimbursed = Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed).sum(&:amount_cents)
+    @pending = @total - @reimbursed
+
     @reports = @event.reimbursement_reports.visible
     @reports = @reports.draft if params[:status] == "draft"
     @reports = @reports.submitted if params[:status] == "review_required"
@@ -741,7 +746,7 @@ class EventsController < ApplicationController
           csv << %w[ID Name Slug Balance]
 
           @event.subevents.find_each do |e|
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0]
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0].map { |value| SafeCsv.sanitize(value) }
           end
         end
 
@@ -759,13 +764,16 @@ class EventsController < ApplicationController
       return redirect_back fallback_location: event_sub_organizations_path(@event)
     end
 
+    # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
+    poc_id = current_user.admin? ? current_user.id : User.system_user.id
+
     subevent = ::EventService::Create.new(
       name: params[:name],
       emails: [params[:email]],
       cosigner_email: params[:cosigner_email],
       is_signee: true,
       country: params[:country],
-      point_of_contact_id: @event.point_of_contact_id,
+      point_of_contact_id: poc_id,
       invited_by: current_user,
       is_public: @event.is_public,
       plan: @event.config.subevent_plan.presence,
@@ -786,12 +794,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cloud-b01qqxaux.vercel.app/barking_dog_turned_into_wood_meme.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_transforms_after_seeing_chair.mp4",
-        "https://cloud-b01qqxaux.vercel.app/dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cloud-b01qqxaux.vercel.app/run_now_meme.mp4",
-        "https://cloud-3qup26j81.vercel.app/bonk_sound_effect.mp4",
-        "https://cloud-is6jebpbb.vercel.app/disappearing_doge_meme.mp4"
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
+        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -950,8 +958,8 @@ class EventsController < ApplicationController
         "pending" => ->(t) { t.raw_pending_outgoing_check_transaction_id || t.increase_check_id }
       },
       "hcb_transfer"           => {
-        "settled" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id },
-        "pending" => ->(t) { t.local_hcb_code.disbursement? && !t.local_hcb_code.disbursement.destination_subledger_id && !t.local_hcb_code.disbursement.source_subledger_id }
+        "settled" => ->(t) { t.local_hcb_code.outgoing_disbursement&.inter_event_transfer? || t.local_hcb_code.incoming_disbursement&.inter_event_transfer? },
+        "pending" => ->(t) { t.local_hcb_code.outgoing_disbursement&.inter_event_transfer? || t.local_hcb_code.incoming_disbursement&.inter_event_transfer? }
       },
       "card_charge"            => {
         "settled" => ->(t) { t.raw_stripe_transaction },
@@ -988,6 +996,10 @@ class EventsController < ApplicationController
       "paypal_transfer"        => {
         "settled" => ->(t) { t.local_hcb_code.paypal_transfer? },
         "pending" => ->(t) { t.paypal_transfer_id }
+      },
+      "wise_transfer"          => {
+        "settled" => ->(t) { t.local_hcb_code.wise_transfer? },
+        "pending" => ->(t) { t.wise_transfer_id }
       }
     }
 
@@ -1021,6 +1033,15 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def process_hidden_param!(params_hash)
+    if params_hash[:hidden] == "1" && !@event.hidden_at.present?
+      params_hash[:hidden_at] = Time.current
+    elsif params_hash[:hidden] == "0" && @event.hidden_at.present?
+      params_hash[:hidden_at] = nil
+    end
+    params_hash.delete(:hidden)
+  end
 
   def filtered_sub_organizations(sub_organizations = @event.subevents)
     search = params[:q] || params[:search]
@@ -1087,7 +1108,10 @@ class EventsController < ApplicationController
           :banned_categories,
           :expiration_preference,
           :reimbursement_conversions_enabled,
-          :pre_authorization_required
+          :pre_authorization_required,
+          :block_suspected_fraud,
+          :support_message,
+          :support_url
         ],
         config_attributes: [
           :id,
@@ -1147,7 +1171,10 @@ class EventsController < ApplicationController
         :banned_categories,
         :expiration_preference,
         :reimbursement_conversions_enabled,
-        :pre_authorization_required
+        :pre_authorization_required,
+        :block_suspected_fraud,
+        :support_message,
+        :support_url
       ],
       config_attributes: [
         :id,
@@ -1175,23 +1202,34 @@ class EventsController < ApplicationController
 
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
-    @type = params[:type]
+    @type = params[:type].presence
     @start_date = params[:start].presence
     @end_date = params[:end].presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
-    @merchant = params[:merchant]
-    @direction = params[:direction]
+    @merchant = params[:merchant].presence
+    @direction = params[:direction].presence
     @category = TransactionCategory.find_by(slug: params[:category])
+    @subledger = params[:subledger].presence
 
     # Also used in Transactions page UI (outside of Ledger)
-    @organizers = @event.organizer_positions.joins(:user).includes(user: { profile_picture_attachment: :blob }).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    if @subledger
+      @users = User.where(id: @event.card_grants.select(:user_id)).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    else
+      @users = @event.users.with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+    end
 
     if @merchant
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
+    end
+
+    @ledger_filters_disabled = !signed_in?
+    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
+    if @ledger_filters_disabled && has_filters
+      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 
@@ -1214,7 +1252,7 @@ class EventsController < ApplicationController
       category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date",
-      subledger: params[:subledger]
+      subledger: @subledger
     ).run
     PendingTransactionEngine::PendingTransaction::AssociationPreloader.new(pending_transactions:, event: @event).run!
     pending_transactions

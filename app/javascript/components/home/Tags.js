@@ -30,10 +30,10 @@ export default function Tags({ data }) {
           outerRadius={115}
           fill="#82ca9d"
           label={({ percent }) =>
-            percent > 0.1 ? `${(percent * 100).toFixed(0)}%` : ''
+            percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''
           }
           labelLine={false}
-          strokeWidth={2}
+          strokeWidth={1.5}
           stroke={isDark ? '#252429' : '#FFFFFF'}
         >
           {data.map((_, i) => (

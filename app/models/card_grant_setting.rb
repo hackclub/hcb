@@ -7,6 +7,7 @@
 #  id                                :bigint           not null, primary key
 #  banned_categories                 :string
 #  banned_merchants                  :string
+#  block_suspected_fraud             :boolean          default(TRUE), not null
 #  category_lock                     :string
 #  expiration_preference             :integer          default("1 year"), not null
 #  invite_message                    :string
@@ -14,11 +15,13 @@
 #  merchant_lock                     :string
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
+#  support_message                   :string
+#  support_url                       :string
 #  event_id                          :bigint           not null
 #
 # Indexes
 #
-#  index_card_grant_settings_on_event_id  (event_id)
+#  index_card_grant_settings_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -28,6 +31,7 @@ class CardGrantSetting < ApplicationRecord
   has_paper_trail
 
   belongs_to :event
+  validates :event, uniqueness: true
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
@@ -43,5 +47,17 @@ class CardGrantSetting < ApplicationRecord
     "1 year": 365,
     "2 years": 365 * 2
   }, prefix: :expires_after
+
+  def slack_support?
+    return false unless support_url.present?
+
+    URI.parse(support_url)&.host&.end_with?(".slack.com") || false
+  rescue URI::InvalidURIError, ArgumentError
+    false
+  end
+
+  def email_support?
+    support_url&.start_with?("mailto:")
+  end
 
 end

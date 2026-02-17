@@ -123,7 +123,7 @@ class StripeCardsController < ApplicationController
       stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
       stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
       stripe_shipping_address_country: sc[:stripe_shipping_address_country],
-      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
     ).run
 
     redirect_to new_card, flash: { success: "Card was successfully created." }

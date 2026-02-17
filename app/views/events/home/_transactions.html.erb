@@ -1,11 +1,17 @@
 <% if @recent_transactions.length > 0 %>
-  <div class="card card--breakdown shadow-none p-0 px-0 flex-1 flex flex-col">
-    <h3 class="m-0 p-4 pb-0 mb-1">Recent transactions</h3>
+  <div class="card card--breakdown p-0 px-0 flex-1 flex flex-col">
+    <div class="p-4 pb-0 flex items-center justify-between">
+      <h3 class="m-0">Recent transactions</h3>
+      <%= link_to event_transactions_path(@event), class: "flex items-center shrink-0 no-underline" do %>
+        See all
+        <%= inline_icon "view-forward" %>
+      <% end %>
+    </div>
     <% @recent_transactions.each do |transaction| %>
       <% rendered_transaction = capture do %>
         <div style="min-width:0;flex:1">
-          <span class="truncate block"><%= transaction_memo(transaction) %></span>
-          <div class="text-sm text-gray-500">
+          <span class="truncate block truncate"><%= transaction_memo(transaction) %></span>
+          <div class="muted truncate">
             <% if transaction.is_a?(CanonicalPendingTransaction) %>
               Pending &bull;
             <% end %>
@@ -21,17 +27,16 @@
 
       <% if organizer_signed_in? %>
         <% popover_enabled = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && (@event || transaction.local_hcb_code.event).present? %>
-        <% css_classes = popover_enabled ? "cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors dark:hover:bg-neutral-700 dark:active:bg-neutral-600" : "" %>
         <a
           style="height:60px"
-          class="homepage-transaction <%= css_classes %>"
+          class="homepage-transaction <%= "clickable" if popover_enabled %>"
           href="<%= url_for(transaction.local_hcb_code) %>"
           data-behavior="modal_trigger"
           data-modal="transaction_details_<%= transaction.local_hcb_code.__id__ %>">
           <%= rendered_transaction %>
         </a>
       <% else %>
-        <div class="homepage-transaction" style="height:60px">
+        <div class="homepage-transaction cursor-[unset]" style="height:60px">
           <%= rendered_transaction %>
         </div>
       <% end %>
@@ -45,21 +50,15 @@
         </section>
       <% end %>
     <% end %>
-    <div class="flex items-center px-4 pb-2 mt-auto justify-between">
-      <%= link_to event_transactions_path(event_id: @event.slug), class: "flex items-center no-underline" do %>
-        See all
-        <%= inline_icon "view-forward" %>
-      <% end %>
-    </div>
   </div>
 <% else %>
-  <div class="card card--breakdown shadow-none text-center p-0 flex-1 flex flex-col items-center justify-center">
+  <div class="card card--breakdown w-100 text-center p-0 flex-1 flex flex-col items-center justify-center">
     <div class="max-w-xs">
       <h3 class="m-0 p-4 pb-0 mb-2">
         Recent transactions
       </h3>
       <p class="m-0 mb-4 muted">
-        You haven't made any transactions yet. When you do, they'll show up here.
+        You haven’t made any transactions yet. When you do, they’ll show up here.
       </p>
     </div>
   </div>

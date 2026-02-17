@@ -174,7 +174,7 @@ update_teenager_column_job:
 
 clear_old_user_sessions:
   cron: "0 3 * * *" # every day at 3:00 AM
-  class: "UserSession::ClearOldUserSessionsJob"
+  class: "User::Session::ClearOldUserSessionsJob"
   queue: low
 
 card_grant_expiration_job:
@@ -200,6 +200,10 @@ user_update_card_locking_recurring:
 column_sweep_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Column::SweepJob"
+
+column_operating_balance_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Column::OperatingBalanceJob"
 
 stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes

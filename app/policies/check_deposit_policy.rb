@@ -34,7 +34,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def user?
-    record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def check_deposits_enabled?
@@ -46,7 +46,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def auditor_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def user_who_can_transfer?

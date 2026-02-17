@@ -1,0 +1,27 @@
+<% title "Sign your HCB agreement" %>
+
+<script src="https://cdn.docuseal.com/js/form.js"></script>
+
+<h2>Sign your HCB agreement</h2>
+
+<% admin_tool do %>
+  <div class="flex flex-row gap-3 items-center justify-start">
+    <% if @contract.contractable.is_a?(Event::Application) %>
+      <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn" %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
+  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: "md:col-span-3" } %>
+  <div class="md:col-span-2 max-h-[75vh]">
+    <% if @contract.contractable.is_a?(Event::Application) && @party.hcb? %>
+      <p class="text-center">Sign the contract before activating the organization</p>
+      <%= button_to admin_activate_application_path(@contract.contractable), method: :post, class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } do %>
+        Activate
+      <% end %>
+    <% else %>
+      <%= render partial: "contract_faq" %>
+    <% end %>
+  </div>
+</div>

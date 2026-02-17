@@ -5,7 +5,7 @@
   <% subscriptions = StripeCardService::PredictSubscriptions.new(card: @card).run %>
 
   <% if subscriptions.any? && hcb_codes.first_page? %>
-    <h2 class="heading h2 line-height-4 mt2 ml0 pt1 pb1 pl2 pr2">Active subscriptions on this card</h2>
+    <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pl2 pr2">Active subscriptions on this card</h2>
     <div class="table-container">
       <table>
         <tbody data-behavior="transactions">
@@ -20,7 +20,7 @@
     </div>
   <% end %>
 
-  <h2 class="heading h2 line-height-4 mt2 ml0 pt1 pb1 pl2 pr2">All transactions on this card</h2>
+  <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
 
   <div class="table-container">
     <table>
@@ -39,5 +39,5 @@
   </div>
 
 <% elsif stripe_card.initially_activated? %>
-  <%= blankslate "No transactions made on this card yet." %>
+  <%= blankslate "No purchases yet." %>
 <% end %>

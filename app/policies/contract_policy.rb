@@ -9,12 +9,4 @@ class ContractPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def resend_to_user?
-    user&.admin?
-  end
-
-  def resend_to_cosigner?
-    user&.admin?
-  end
-
 end

@@ -41,7 +41,7 @@ module EventService
     end
 
     def run
-      raise ArgumentError, "name required" unless @name.present?
+      raise ArgumentError, "organization name is required" unless @name.present?
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
       ActiveRecord::Base.transaction do

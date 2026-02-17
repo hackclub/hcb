@@ -35,6 +35,10 @@ class Event
         1766872
       end
 
+      def default_values
+        { is_public: true }
+      end
+
     end
 
   end

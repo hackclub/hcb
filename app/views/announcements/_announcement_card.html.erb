@@ -26,8 +26,8 @@
         <% if announcement.draft? %>
           <%= pop_icon_to "send", publish_announcement_path(announcement), data: { turbo_confirm: "Are you sure you would like to publish this announcement and notify #{announcement.event.followers.size} #{"follower".pluralize(announcement.event.followers.size)}?", turbo_method: :post }, class: "tooltipped success", "aria-label": "Publish draft", disabled: !policy(announcement).publish? %>
         <% end %>
-        <%= pop_icon_to "edit", edit_announcement_path(announcement), class: "tooltipped", "aria-label": "Edit announcement", disabled: !policy(announcement).edit? %>
-        <%= pop_icon_to "delete", announcement_path(announcement), data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete }, class: "error tooltipped", "aria-label": "Delete announcement", disabled: !policy(announcement).destroy? %>
+        <%= pop_icon_to "edit", edit_announcement_path(announcement), class: "tooltipped", "aria-label": "Edit announcement" if policy(announcement).edit? %>
+        <%= pop_icon_to "delete", announcement_path(announcement), data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete }, class: "error tooltipped", "aria-label": "Delete announcement" if policy(announcement).destroy? %>
       </div>
     <% end %>
   </div>

@@ -239,7 +239,7 @@ class ReceiptsController < ApplicationController
 
   RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
-                          Reimbursement::Expense::Fee, Api::Models::CardCharge].index_by(&:to_s).freeze
+                          Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item].index_by(&:to_s).freeze
 
   def find_receiptable
     return unless params[:receiptable_type].present?
@@ -347,10 +347,6 @@ class ReceiptsController < ApplicationController
         streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))
       end
     end
-
-    # if @frame
-    #   streams.append(turbo_stream.close_modal)
-    # end
 
     unless params[:upload_method] == :transaction_page
       streams.append(turbo_stream.refresh_link_modals)

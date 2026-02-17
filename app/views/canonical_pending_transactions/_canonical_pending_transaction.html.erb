@@ -68,7 +68,7 @@
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">
               <% if Rails.cache.fetch("tx_#{pt.hcb_code}/card_grant", expires_in: 12.hours) { pt.local_hcb_code.card_grant? } && !organizer_signed_in? %>
-                <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
+                <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.outgoing_disbursement.card_grant), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "card_grant_details_#{instance}" }) %>
               <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{instance}" } do %>
                   <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
@@ -89,7 +89,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && show_tags && organizer_signed_in?(as: :member) && !pt.instance_of?(OpenStruct) %>
+      <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
@@ -180,11 +180,17 @@
               <%= inline_icon "payment-docs" %>
               <span>Select</span>
             <% end %>
+
+            <% if Flipper.enabled?(:copy_receipt_email_2026_01_21) %>
+              <button type="button" class="btn <%= "disabled" if local_assigns[:receipt_upload_button_disabled] %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= pt.local_hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this this transaction">
+                <%= inline_icon "email", style: "margin: 0px" %>
+              </button>
+            <% end %>
           </div>
         <% end %>
       <% else %>
         <div class="btn bg-success disabled" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem; width: 100%">
-          <%= inline_icon "attachment", size: 14 %>
+          <%= inline_icon "receipt", size: 14 %>
           <span>Uploaded!</span>
         </div>
       <% end %>
@@ -229,7 +235,7 @@
               </span>
             </h2>
 
-            <section class="card__banner card__darker details-horiz border-top border-bottom">
+            <section class="hcb-code--details">
               <p>
                 <strong>Card</strong> -
               </p>

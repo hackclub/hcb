@@ -52,6 +52,8 @@ class OrganizerPosition < ApplicationRecord
 
   alias_attribute :signee, :is_signee
 
+  after_create_commit :autofollow_event
+
   def tourable_options
     {
       demo: event.demo_mode?,
@@ -85,6 +87,15 @@ class OrganizerPosition < ApplicationRecord
     if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(::Contract::FiscalSponsorship)
       errors.add(:fiscal_sponsorship_contract, "must be of type Contract::FiscalSponsorship")
     end
+  end
+
+  def autofollow_event
+    if event.announcements.any? && !event.followers.include?(user:)
+      event.event_follows.create!(user:)
+    end
+
+  rescue ActiveRecord::RecordNotUnique
+    # Do nothing. The user already follows this event.
   end
 
 end

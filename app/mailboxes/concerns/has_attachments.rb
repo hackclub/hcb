@@ -7,7 +7,7 @@ module HasAttachments
     private
 
     def set_attachments(include_body: true, convert_emls: true)
-      files = mail.attachments.select { |a| valid_content_type(a.content_type) }.map do |atta|
+      files = mail.attachments.select { |a| valid_content_type(a.content_type) && a.content_disposition.starts_with?("attachment") }.map do |atta|
         {
           io: StringIO.new(atta.decoded),
           content_type: atta.content_type,

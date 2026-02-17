@@ -1,0 +1,14 @@
+<p>Hey <%= @application.user.name %>,</p>
+
+<p>
+  Welcome to HCB! You're now able to log into HCB and access your new organization, <%= link_to @application.name, @application.event %>!
+</p>
+
+<p>The signed fiscal sponsorship contract is available for you to <%= link_to "download here", document_download_url(@application.contract.document) %>.</p>
+
+<p>As always, contact us at <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> if you have any questions.</p>
+
+<p>
+  Warmly,<br>
+  The HCB team
+</p>

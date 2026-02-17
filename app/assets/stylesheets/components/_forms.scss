@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 input[type='date'],
 input[type='email'],
 input[type='number'],
@@ -9,24 +13,25 @@ input[type='url'],
 .input,
 select,
 textarea {
+  @apply dark:border-gray-700 border-gray-200;
   -webkit-appearance: none;
-  background-color: map-get($palette, snow);
+  background-color: transparent;
   border-radius: 6px;
-  border: 1px solid map-get($palette, smoke);
+  border: 1px solid rgba(200, 200, 200, 0.3);
   color: inherit;
   display: block;
   font-size: 1rem;
-  min-height: 2.5rem;
+  min-height: 36px;
   margin-left: 0;
   outline: 0;
   padding: 0.25rem 0.5rem;
   position: relative;
-  transition: border 0.2s ease;
   width: 100%;
   max-width: 24rem;
 
   &:focus-within {
     border-color: map-get($palette, info);
+    box-shadow: 0 0 0 3px rgba(map-get($palette, info), 0.25);
   }
 
   &[readonly],
@@ -34,11 +39,23 @@ textarea {
     cursor: no-drop;
     color: map-get($palette, slate);
   }
+
+  &::placeholder {
+    color: map-get($palette, divider);
+  }
+  &::-moz-placeholder {
+    color: map-get($palette, divider);
+  }
+}
+.input--sm,
+.input-group.input--sm input {
+  // 1px is added by border
+  min-height: 31px;
 }
 
 .input-group {
   display: flex;
-  gap: 0.2rem;
+  gap: 0.25rem;
   align-items: center;
   padding-top: 0;
   padding-bottom: 0;
@@ -47,6 +64,9 @@ textarea {
     border: 0;
     padding-left: 0.25rem;
     max-width: none;
+    &:focus {
+      box-shadow: none;
+    }
   }
 
   & svg {
@@ -54,9 +74,43 @@ textarea {
   }
 }
 
+[data-dark='true'] option {
+  background-color: $darkless;
+}
+
 select {
   min-height: 2.5rem;
   padding: 0.25rem 0.5rem;
+}
+
+@layer components {
+  [data-controller*='file-upload'] {
+    @apply my-2 cursor-pointer flex;
+    user-select: none;
+
+    & input {
+      display: none !important;
+    }
+
+    & [data-file-upload-target='preview'] {
+      @extend .pop;
+      @apply px-4 font-bold;
+      width: auto;
+    }
+
+    [data-file-upload-target='preview'].active {
+      border-top-right-radius: 0 !important;
+      border-bottom-right-radius: 0 !important;
+      background-color: rgba(map-get($palette, muted), 0.25);
+    }
+
+    & [data-file-upload-target='clear'] {
+      @extend .pop;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      display: none;
+    }
+  }
 }
 
 input[type='file'] {
@@ -88,16 +142,11 @@ input[type='number'] {
     color: map-get($palette, info);
     border: 1px dashed map-get($palette, info);
 
-    transition: transform 0.125s ease-in-out;
     font-size: 0.875rem;
     font-weight: 600;
 
     letter-spacing: 0;
     line-height: 1.5;
-
-    &:hover {
-      transform: scale(1.0625);
-    }
   }
 
   .field--fileupload__field {
@@ -222,6 +271,7 @@ input[type='checkbox'] {
 .field--checkbox--switch {
   position: relative;
   display: inline-block;
+  flex-shrink: 0;
   width: 60px;
   height: 34px;
 
@@ -284,6 +334,10 @@ input[type='checkbox'] {
   }
 }
 
+.field input[type='date'] {
+  height: 32px;
+}
+
 .field--radiobox {
   display: flex;
   align-items: center;
@@ -303,14 +357,19 @@ label {
   font-weight: 500;
 }
 
-$select: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="%238492a6" viewbox="0 0 32 32"><path d="M0 6 L32 6 L16 28 z"/></svg>');
+$select: url('data:image/svg+xml,<svg width="18" height="12" viewBox="0 0 18 12" fill="%238492a6" xmlns="http://www.w3.org/2000/svg"><path d="M7.35109 10.836C7.76709 11.15 8.32908 11.5 9.00108 11.5C9.67108 11.5 10.2351 11.15 10.6511 10.836L10.6531 10.834C12.8591 9.136 14.5771 6.878 16.2491 4.68L16.2631 4.66C16.5431 4.294 16.8211 3.93 17.0991 3.568C17.7071 2.782 17.6171 1.614 16.8731 0.948C16.1091 0.262 14.9671 0.382001 14.3411 1.19C14.0631 1.55 13.7871 1.914 13.5111 2.276C12.1011 4.126 10.7031 5.96 9.00108 7.428C7.32308 5.978 5.89509 4.11 4.48909 2.27C4.21109 1.908 3.93508 1.546 3.65908 1.19C3.03308 0.38 1.89109 0.262 1.12709 0.948C0.385086 1.614 0.291086 2.78 0.901087 3.568L0.903086 3.57L1.18509 3.936L1.30508 4.094C1.44108 4.272 1.57908 4.45 1.71508 4.63L1.71982 4.63621C3.39444 6.8304 5.17513 9.16358 7.34708 10.834L7.35109 10.836Z"/></svg>');
 
+.btn.menu__toggle:not(.menu__toggle--arrowless),
 select,
 .input.input--select {
   background-image: #{$select};
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 0.5rem;
+}
+.btn.menu__toggle:not(.menu__toggle--arrowless) {
+  background-position: right 0.875rem center;
+  padding-right: 1.75rem !important;
 }
 
 // rails date(time) inputs
@@ -361,36 +420,64 @@ legend {
     display: none;
   }
 
-  label,
-  .field_with_errors > label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    border-radius: 0.75rem;
-    text-align: center;
-    line-height: 1.25;
-    color: map-get($palette, info);
-    background-color: rgba(map-get($palette, accent), 0.25);
-  }
-
-  input:disabled + label,
-  .field_with_errors:has(> input:disabled) + .field_with_errors:has(> label) {
-    opacity: 0.5;
-    cursor: default;
-  }
-
-  input:checked + label,
-  .field_with_errors:has(> input:checked)
-    + .field_with_errors:has(> label)
-    > label {
+  input:checked + label {
     box-shadow:
-      0 0 0 1px white,
+      0 0 0 1px var(--bg-color),
       0 0 0 3px map-get($palette, info);
   }
 }
 
+.btn--form-option,
+.field--options label,
+.field_with_errors > label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  line-height: 1.25;
+  color: map-get($palette, info);
+  background-color: rgba(map-get($palette, accent), 0.125);
+
+  &:hover,
+  &:focus {
+    color: map-get($palette, info);
+  }
+
+  html[data-dark='true'] & {
+    color: map-get($palette, white);
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+.field--options input:disabled + label,
+.field_with_errors:has(> input:disabled) + .field_with_errors:has(> label) {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn--form-option--disabled,
+.field_with_errors:has(> input:checked)
+  + .field_with_errors:has(> label)
+  > label {
+  background-color: rgba(map-get($palette, accent), 0.12);
+  color: rgba(map-get($palette, info), 0.7);
+
+  html[data-dark='true'] & {
+    color: rgba(map-get($palette, white), 0.7);
+  }
+
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+}
+
+// Comments input
 textarea.card {
   max-width: none;
   border: 0;
@@ -398,9 +485,8 @@ textarea.card {
 
   &:focus {
     box-shadow:
-      inset 0 0 0 1px map-get($palette, info),
-      0 0 2px 0 rgba(0, 0, 0, 0.0625),
-      0 4px 8px 0 rgba(0, 0, 0, 0.125);
+      var(--shadow-border-md),
+      inset 0 0 0 1px map-get($palette, info);
   }
 }
 
@@ -526,20 +612,4 @@ input:where([data-behavior='otp_input']) {
 
 .dropdown-button__container {
   display: flex;
-  border-radius: 0.75rem;
-
-  width: fit-content;
-
-  transform: scale(1);
-  transition:
-    transform 0.125s ease-in-out,
-    box-shadow 0.25s ease-in-out;
-
-  &:hover,
-  &:focus,
-  &[aria-expanded='true'] {
-    color: $white;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1875);
-    transform: scale(1.0625);
-  }
 }

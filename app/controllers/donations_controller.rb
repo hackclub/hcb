@@ -80,7 +80,7 @@ class DonationsController < ApplicationController
 
     authorize @donation
 
-    @monthly = params[:monthly].present?
+    @monthly = params[:monthly].present? || params[:tier_id].present?
 
     if @monthly
       @recurring_donation = @event.recurring_donations.build(
@@ -96,6 +96,7 @@ class DonationsController < ApplicationController
     @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
 
     @hide_flash = true
+    @skip_layout_og_tags = true
   end
 
   def make_donation
