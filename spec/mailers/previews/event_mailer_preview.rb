@@ -27,7 +27,8 @@ class EventMailerPreview < ActionMailer::Preview
   end
 
   def monthly_announcements_enabled
-    EventMailer.with(event: Announcement.monthly_for(Date.today).first.event, whodunnit: Event.first.users.first).monthly_announcements_enabled
+    event = Announcement.monthly_for(Date.today).first.event
+    EventMailer.with(event:, whodunnit: event.users.first).monthly_announcements_enabled
   end
 
   def transparency_mode_disabled
