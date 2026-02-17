@@ -12,8 +12,11 @@ export default ({
   description,
   description_word_count: 0,
   init() {
-    this.$watch('description', this.setDescriptionWordCount)
-    this.$watch('description_word_count', this.setDescriptionValidity)
+    this.$watch('description', this.setDescriptionWordCount.bind(this))
+    this.$watch(
+      'description_word_count',
+      this.setDescriptionValidity.bind(this)
+    )
 
     this.setDescriptionWordCount(description)
     this.setDescriptionValidity(this.description_word_count)
