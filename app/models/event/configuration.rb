@@ -35,7 +35,7 @@ class Event
     after_save :create_or_destroy_monthly_announcement
     after_update if: :generate_monthly_announcement_previously_changed? do
       version = self.versions.where_object_changes(generate_monthly_announcement:).last
-      whodunnit = version.present? ? User.find(version.whodunnit) : User.system_user
+      whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
       if generate_monthly_announcement
         EventMailer.with(event:, whodunnit:).monthly_announcements_enabled.deliver_later
       else
