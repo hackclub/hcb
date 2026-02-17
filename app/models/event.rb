@@ -462,14 +462,12 @@ class Event < ApplicationRecord
 
   after_update if: :is_public_previously_changed? do
     version = self.versions.where_object_changes(is_public:).last
+    whodunnit = version.present? ? User.find(version.whodunnit) : User.system_user
 
-    if version.present?
-      whodunnit = User.find(version.whodunnit)
-      if is_public
-        EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
-      else
-        EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
-      end
+    if is_public
+      EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
+    else
+      EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
     end
   end
 

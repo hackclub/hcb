@@ -1,7 +1,7 @@
 <p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
 
 <p>
-  <%= @whodunnit.name %> (an <%= @is_manager ? "organization manager" : "HCB admin" %>) has enabled monthly announcements for <%= @event.name %>.
+  <%= @whodunnit.name %> <%= "(an #{@is_manager ? "organization manager" : "HCB admin"})" if @whodunnit != User.system_user %> has enabled monthly announcements for <%= @event.name %>.
   This is a feature that automatically generates an announcement each month to send out to your followers.
   For more information about announcements, check out <%= link_to "our blog post", "https://blog.hcb.hackclub.com/posts/organization-announcements" %>.
 </p>
