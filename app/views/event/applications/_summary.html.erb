@@ -73,7 +73,7 @@
     <% end %>
     <div>
       <p class="text-sm muted mb-1">Affiliations</p>
-      <% if application.affiliations.any? && false %>
+      <% if application.affiliations.any? %>
         <ul class="list-disc list-inside my-0 pl-5">
           <% application.affiliations.each do |affiliation| %>
             <li><%= affiliation %></li>
