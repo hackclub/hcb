@@ -80,7 +80,7 @@ class DonationsController < ApplicationController
 
     authorize @donation
 
-    @monthly = params[:monthly].present?
+    @monthly = params[:monthly].present? || params[:tier_id].present?
 
     if @monthly
       @recurring_donation = @event.recurring_donations.build(
@@ -96,6 +96,7 @@ class DonationsController < ApplicationController
     @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
 
     @hide_flash = true
+    @skip_layout_og_tags = true
   end
 
   def make_donation
@@ -106,7 +107,7 @@ class DonationsController < ApplicationController
       d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
     end
 
-    if d_params[:name] == "aser ras"
+    if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
       skip_authorization
       redirect_to root_url and return
     end

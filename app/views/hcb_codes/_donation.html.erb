@@ -2,8 +2,8 @@
 
 <% instance = @hcb_code.hashid %>
 
-<%= render partial: "admin_viewer", locals: { record: @donation } %>
-<%= render partial: "admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
+<%= render partial: "application/admin_viewer", locals: { record: @donation } %>
+<%= render partial: "application/admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
 
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @donation.stripe_dashboard_url, class: "btn bg-accent" %>
@@ -48,9 +48,9 @@
   <% end %>
 </section>
 
-<article class="card pb0 mt3 mb1">
+<article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <%= @donation.name(show_anonymous: organizer_signed_in?) %>
       <% if @donation.anonymous? %>
         <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
@@ -65,15 +65,15 @@
       <% end %>
     </span>
 
-    <span class="badge h4 md-right bg-<%= @donation.state %> nowrap">
+    <span class="badge h4 bg-<%= @donation.state %> nowrap order-1">
       <%= @donation.state_text %>
       <%= inline_icon @donation.state_icon, size: 20 if @donation.state_icon %>
     </span>
   <% end %>
 
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
+  <section class="hcb-code--details">
     <% if @donation.payment_method_type == 'card' %>
-      <p data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
+      <div data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
         <strong>
           <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
           <span class="inline-flex items-start relative" style="padding-right: 28px;">
@@ -84,30 +84,30 @@
         <span class="inline-flex">
           <%= donation_payment_method_mention %>
         </span>
-      </p>
+      </div>
     <% else %>
-      <p>
+      <div>
         <strong>Payment method</strong>
         <span class="inline-flex">
           <%= donation_payment_method_mention %>
         </span>
-      </p>
+      </div>
     <% end %>
-    <p>
+    <div>
       <strong>Donated at</strong>
       <%= format_datetime @donation.donated_at %>
-    </p>
+    </div>
     <% if @donation.collected_by.present? %>
-      <p>
+      <div>
         <strong>Collected by</strong>
         <%= user_mention @donation.collected_by %>
-      </p>
+      </div>
     <% end %>
-    <% admin_tool do %>
+    <% admin_tool("hcb-code--details-admin-tool") do %>
       <%= donation_payout_datetime %>
     <% end %>
   </section>
-  <section class="details pt2 pb2">
+  <section class="hcb-code--info">
     <% if @donation.email.present? %>
       <p>
         <strong>Donor email</strong>

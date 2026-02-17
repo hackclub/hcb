@@ -1,5 +1,9 @@
 <% title "Grant to #{@card_grant.user.name}" %>
-<%= render "events/nav", selected: :transfers if organizer_signed_in? %>
+<% if organizer_signed_in? %>
+  <%= render "events/nav", selected: :transfers %>
+<% else %>
+  <%= render "users/nav", selected: :home %>
+<% end %>
 
 <% footer = nil %>
 <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
@@ -19,54 +23,53 @@
 <%= render partial: "card_grants/header_banner", locals: { card_grant: @card_grant, footer: } %>
 
 <% if @card_grant.instructions.present? %>
-  <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
+  <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
-      <%= @card_grant.instructions %>
+      <%= sanitize(MarkdownService.instance.renderer.render(@card_grant.instructions), scrubber: MarkdownScrubber.new) %>
     </p>
   <% end %>
 <% end %>
 
-<div class="mt4 mb4 check--form flex justify-center <%= "flex-wrap" if @frame %>" style="gap: 3rem">
+<div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %> mb-5" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
     <% else %>
-      <%= render partial: "invitation", locals: { card_grant: @card_grant } %>
+      <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
     <% end %>
   <%# Grantee has accepted invite %>
   <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
-    <div class="justify-center grid grid-cols-1 <%= "md:grid-cols-2" if @card_grant.stripe_card.present? %>">
+    <div class="justify-center flex flex-col sm:flex-row w-full gap-2">
       <% if @card_grant.stripe_card %>
-        <div>
-          <%= render @card_grant.stripe_card, headless: true %>
-          <%= render partial: "balance", locals: { card_grant: @card_grant } %>
-          <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } %>
-          <%= render partial: "actions", locals: { card_grant: @card_grant } %>
+        <div class="sm:max-w-[300px]">
+          <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
+          <div class="-mt-2"></div>
+          <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
+          <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
+          <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>
         </div>
       <% end %>
-      <div class="flex flex-col g2">
+      <div class="flex flex-col flex-1 gap-2 mt-1.5">
         <% if @card_grant.stripe_card %>
           <% admin_tool_if @card_grant.user != current_user do %>
-            <%= render partial: "card_details", locals: { card_grant: @card_grant } %>
+            <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
           <% end %>
         <% end %>
-        <%= render partial: "grant_details", locals: { card_grant: @card_grant } %>
+        <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
 
         <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
       </div>
       <div class="flex flex-col g2">
-        <%= render partial: "canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
+        <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
       </div>
     </div>
   <% end %>
 </div>
 
-<hr>
-
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
-  <%= render partial: "transactions", locals: { hcb_codes: @hcb_codes } %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>

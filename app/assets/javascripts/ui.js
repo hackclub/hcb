@@ -14,9 +14,14 @@ const loadModals = element => {
       e.stopPropagation()
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
+      fadeDuration: 200,
+      fadeDelay: 0.75,
       modalClass: $(this).parents('turbo-frame').length
         ? 'turbo-frame-modal'
         : undefined,
+    })
+    BK.s('modal', '#' + $(this).data('modal')).find('iframe[data-src]').each((i, iframe) => {
+      iframe.src ||= iframe.dataset.src
     })
     return this.blur()
   })
@@ -118,55 +123,86 @@ $(document).keydown(function (e) {
 
 window.attachTooltipListener = () => {
   const tooltip = document.getElementById("tooltip-container");
+  let mutationObserver = null;
 
   const removeTooltips = () => {
-    if (window.innerWidth < 768) return;
     tooltip.className = "";
+    // Stop observing when tooltip is closed
+    if (mutationObserver) {
+      mutationObserver.disconnect();
+      mutationObserver = null;
+    }
   }
+
+  const updateTooltipPosition = (trigger) => {
+    const triggerRect = trigger.getBoundingClientRect();
+    const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
+    const offset = 5;
+    const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
+    const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
+
+    const positions = {
+      s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
+      n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
+      e: () => [triggerRect.right + window.scrollX + offset, centerY],
+      w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
+    };
+
+    const [left, top] = (positions[placement] || positions.n)();
+    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+  }
+
+  const showTooltip = (trigger) => {
+    if (!trigger.classList.contains("tooltipped")) return;
+    const label = trigger.getAttribute("aria-label")?.trim();
+    if (!label) return;
+
+    tooltip.className = "active";
+    tooltip.textContent = label;
+
+    // Sync size classes
+    ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
+      if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
+    });
+
+    updateTooltipPosition(trigger);
+
+    // Observe trigger for aria-label changes
+    if (mutationObserver) mutationObserver.disconnect();
+    mutationObserver = new MutationObserver(() => {
+      const updatedLabel = trigger.getAttribute("aria-label").trim();
+      if (updatedLabel) {
+        tooltip.textContent = updatedLabel;
+        updateTooltipPosition(trigger);
+      }
+    });
+    mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
+  };
 
   $(".tooltipped").on({
     mouseenter(event) {
       if (window.innerWidth < 768) return;
-
       const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped")) return;
-
-      const triggerRect = trigger.getBoundingClientRect();
-      const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
-      const offset = 5;
-
-      const label = trigger.getAttribute("aria-label").trim();
-      if (!label) return;
-
-      tooltip.className = "active";
-      tooltip.textContent = label;
-
-      // Sync size classes
-      ["tooltipped--lg", "tooltipped--xl"].forEach(cls => {
-        if (trigger.classList.contains(cls)) tooltip.classList.add(cls);
-      });
-
-      const centerX = triggerRect.left + window.scrollX + (triggerRect.width - tooltip.offsetWidth) / 2;
-      const centerY = triggerRect.top + window.scrollY + (triggerRect.height - tooltip.offsetHeight) / 2;
-
-      const positions = {
-        s: () => [centerX, triggerRect.bottom + window.scrollY + offset],
-        n: () => [centerX, triggerRect.top + window.scrollY - tooltip.offsetHeight - offset],
-        e: () => [triggerRect.right + window.scrollX + offset, centerY],
-        w: () => [triggerRect.left + window.scrollX - tooltip.offsetWidth - offset, centerY],
-      };
-
-      const [left, top] = (positions[placement] || positions.n)();
-      Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` });
+      showTooltip(trigger);
     },
+    touchstart(event) {
+      const trigger = event.currentTarget;
+      if (!trigger.classList.contains("tooltipped--tappable")) return;
+      showTooltip(trigger);
+    },
+    mouseleave: removeTooltips
+  });
 
-    mouseleave() {
-      removeTooltips()
+  $(document).on("click", function (event) {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
+    if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
+      removeTooltips();
     }
   });
   // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
   $(document).on('beforeunload', removeTooltips)
+  $(document).on('turbo:frame-load', removeTooltips);
 }
 
 $(document).on('turbo:frame-load', window.attachTooltipListener)
@@ -272,7 +308,7 @@ $(document).on('turbo:load', function () {
   $(document).on('input', '[data-behavior~=extract_slug]', function (event) {
     try {
       event.target.value = (new URL(event.target.value)).pathname.split("/")[1]
-    } catch {}
+    } catch { }
   })
 
   $('textarea:not([data-behavior~=no_autosize])')
@@ -479,7 +515,6 @@ $(document).on('turbo:load', function () {
       perspective: 1500,
       glare: true,
       maxGlare: 0.25,
-      scale: 1.0625,
     })
   const disableTilt = () => tiltElement.tilt.destroy.call(tiltElement)
   const setTilt = function () {
@@ -496,7 +531,7 @@ $(document).on('turbo:load', function () {
     .addListener(() => setTilt())
 })
 
-$(document).on('turbo:frame-load', function () {
+const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
@@ -574,7 +609,10 @@ $(document).on('turbo:frame-load', function () {
       }
     )
   }
-})
+}
+
+$(document).on('turbo:load', initPayoutMethodToggles)
+$(document).on('turbo:frame-load', initPayoutMethodToggles)
 
 $(document).on(
   'keydown',
@@ -597,10 +635,6 @@ $(document).on('focus', '[data-behavior~=select_if_empty]', function (event) {
   }
 })
 
-window.hidePWAPrompt = () => {
-  document.body.classList.add('hide__pwa__prompt')
-}
-
 $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   const controlOrCommandClick = e.ctrlKey || e.metaKey
   if ($(this).attr('href') || $(e.target).attr('href')) {
@@ -611,6 +645,9 @@ $(document).on('click', '[data-behavior~=expand_receipt]', function (e) {
   $(e.target)
     .parents('.modal--popover')
     .addClass('modal--popover--receipt-expanded')
+  $(e.target).parents('.receipt').find('iframe[data-src]').each((i, iframe) => {
+    iframe.src ||= iframe.dataset.src
+  })
   let selected_receipt = document.querySelectorAll(
     `.hidden_except_${e.originalEvent.target.dataset.receiptId}`
   )[0]

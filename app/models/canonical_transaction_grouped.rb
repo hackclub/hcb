@@ -130,6 +130,7 @@ class CanonicalTransactionGrouped
   end
 
   def disbursement
+    Rails.error.unexpected "CanonicalTransactionGrouped#disbursement accessed"
     Disbursement.find(hcb_i2)
   end
 

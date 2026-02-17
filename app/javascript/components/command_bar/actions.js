@@ -4,6 +4,7 @@ import { Priority } from 'kbar'
 import Icon from '@hackclub/icons'
 import csrf from '../../common/csrf'
 import React from 'react'
+import ReimbursementIcon from '../icons/reimbursement'
 
 const restrictedFilter = e => !e.demo_mode
 
@@ -53,7 +54,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-invoices`,
       name: 'Invoices',
       perform: navigate(`/${event.slug}/invoices`),
-      icon: <Icon glyph="briefcase" size={16} />,
+      icon: <Icon glyph="payment-docs" size={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -91,7 +92,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
       perform: navigate(`/${event.slug}/reimbursements`),
-      icon: <Icon glyph="attachment" size={16} />,
+      icon: <ReimbursementIcon size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -173,7 +174,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <Icon glyph="payment-docs" size={16} />,
+    icon: <Icon glyph="docs" size={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -241,11 +242,10 @@ export const initalActions = [
   ...['light', 'dark', 'system'].map(theme => ({
     id: `${theme}-theme`,
     name: `Set theme to ${theme}`,
-    keywords: theme, // eslint-disable-next-line no-undef
-    perform: () => BK.setDark(theme),
     section: 'Actions',
     icon: <Icon glyph="idea" size={16} />,
-    priority: Priority.HIGH,
+    keywords: theme, // eslint-disable-next-line no-undef
+    perform: () => BK.setDark(theme),
   })),
   {
     id: 'signout',
@@ -552,6 +552,22 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Referral programs',
       icon: <Icon glyph="share" size={16} />,
       perform: navigate('/admin/referral_programs'),
+    },
+    {
+      id: 'admin_tool_32',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Active teenagers leaderboard',
+      icon: <Icon glyph="leader" size={16} />,
+      perform: navigate('/admin/active_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_33',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'New teenagers leaderboard',
+      icon: <Icon glyph="member-add" size={16} />,
+      perform: navigate('/admin/new_teenagers_leaderboard'),
     },
   ]
 }

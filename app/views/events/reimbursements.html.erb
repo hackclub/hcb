@@ -2,53 +2,57 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
-<h1 class="heading flex gap-2 md:gap-4 text-3xl md:text-5xl border-0 md:border">
+<h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
   <span class="flex-grow">Reimbursements</span>
-  <%= pop_icon_to "download",
+  <div class="flex items-center gap-2">
+    <%= pop_icon_to "download",
                   reimbursements_exports_path(@event, format: :csv),
                   class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
-  <%= pop_icon_to "settings",
-      edit_event_path(@event, tab: "reimbursements"),
-      data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
-      class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
-  <% if @event.public_reimbursement_page_available? %>
-    <%= pop_icon_to "external",
-        reimbursement_start_reimbursement_report_url(@event),
-        target: "_blank",
-        class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
-  <% end %>
-  <% if organizer_signed_in?(as: :member) %>
-    <%= pop_icon_to "plus",
-          "#",
-          class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
-          "aria-label": "New report",
-          data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
-    <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
-        <%= inline_icon "plus" %> New
+    <%= pop_icon_to "settings",
+        edit_event_path(@event, tab: "reimbursements"),
+        data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
+        class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
+    <% if @event.public_reimbursement_page_available? %>
+      <%= pop_icon_to "external",
+          reimbursement_start_reimbursement_report_url(@event),
+          target: "_blank",
+          class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
     <% end %>
-  <% end %>
+    <% if organizer_signed_in?(as: :member) %>
+      <%= pop_icon_to "plus",
+            "#",
+            class: "tooltipped tooltipped--s success sm-hide md-hide lg-hide",
+            "aria-label": "New report",
+            data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } %>
+      <%= link_to "#", class: "btn bg-success xs-hide", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+          <%= inline_icon "plus" %> New
+      <% end %>
+    <% end %>
+  </div>
 </h1>
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
-<div class="statset mt3 mb3 xs-hide">
+<div class="statset mb-2">
   <div class="stat">
-    <span class="stat__label">Total</span>
-    <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@event.reimbursement_reports.to_calculate_total.sum(&:amount_cents)) %></span>
+    <span class="stat__label">
+      Total
+    </span>
+    <span class="stat__value" style="text-wrap: nowrap"><%= render_money_amount(@total) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Reimbursed</span>
-    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.reimbursed.sum(&:amount_cents)) %></span>
+    <span class="stat__value"><%= render_money_amount(@reimbursed) %></span>
   </div>
   <div class="stat stat--small">
     <span class="stat__label">Pending</span>
-    <span class="stat__value"><%= render_money_amount(@event.reimbursement_reports.pending.reimbursed.sum(&:amount_cents)) %></span>
+    <span class="stat__value"><%= render_money_amount(@pending) %></span>
   </div>
 </div>
 
-<div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb2">
+<div class="flex items-center gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "search", form: %>
+    <%= render "events/search", form: %>
   <% end %>
   <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
@@ -65,12 +69,13 @@
         <th>Status</th>
         <th>Report</th>
         <th>From</th>
-        <th class="right-align">Amount</th>
+        <th class="text-right">Amount</th>
+        <th class="text-right">Created</th>
       </tr>
       </thead>
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
-          <tr>
+          <tr class="clickable">
             <td>
               <% if report.status_description %>
                 <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
@@ -81,14 +86,17 @@
               <% end %>
             </td>
             <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis;">
-              <%= link_to report.name, report %>
-              <span class="muted">(<%= report.created_at.strftime("%m/%d/%Y") %>)</span>
+              <%= link_to "", report, class: "stretched-link" %>
+              <span class="muted"><%= report.name %></span>
             </td>
-            <td>
+            <td style="width: 200px; overflow: hidden; text-overflow: ellipsis;">
                <%= user_mention report.user %>
             </td>
-            <td class="right-align">
+            <td class="text-right">
                <%= report.amount.format %>
+            </td>
+            <td class="text-right">
+               <%= format_date report.created_at %>
             </td>
           </tr>
         <% end %>

@@ -7,13 +7,13 @@
 <% disabled ||= false %>
 <% organizer_signed_in = current_user && (organizer_signed_in?(@event || hcb_code.event) || (hcb_code.events && organizer_signed_in?(hcb_code.events.last))) %>
 
-<% memo = hcb_code.custom_memo.nil? ? Rails.cache.fetch("#{@event.public_id}/#{hcb_code.hcb_code}/cached_memo", expires_in: 10.minutes) { hcb_code.memo(event: @event) } : hcb_code.memo(event: @event) %>
+<% memo = hcb_code.custom_memo.nil? && @event && location == "ledger" ? Rails.cache.fetch("#{@event.public_id}/#{hcb_code.hcb_code}/cached_memo", expires_in: 10.minutes) { hcb_code.memo(event: @event) } : hcb_code.memo(event: @event) %>
 
 <% if (organizer_signed_in && (@event || hcb_code.event) || force_display_details) && !(@event || hcb_code.event)&.demo_mode? %>
   <%= turbo_frame_tag "#{location}:#{dom_id(hcb_code)}:memo", class: "flex gap-1", style: "flex-grow: 1"  do %>
     <% if form %>
         <%= form_with model: hcb_code, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
-          <div class="flex items-center">
+          <div class="flex items-center w-screen">
             <%= form.hidden_field :inline, value: "true" %>
             <%= form.hidden_field :prepended_to_memo, value: prepended_to_memo %>
             <%= form.hidden_field :location, value: location %>
@@ -30,8 +30,9 @@
         <% end %>
 
     <% else %>
-      <% details_link = hcb_code.card_grant? ? spending_card_grant_path(hcb_code.disbursement.card_grant) : url_for(hcb_code) %>
-      <% modal = hcb_code.card_grant? ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
+      <% card_grant = Rails.cache.fetch("tx_#{hcb_code.hcb_code}/card_grant", expires_in: 12.hours) { hcb_code.card_grant? } %>
+      <% details_link = card_grant ? spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant) : url_for(hcb_code) %>
+      <% modal = card_grant ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
               data-controller="navigation"

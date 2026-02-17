@@ -23,7 +23,7 @@
         <% else %>
             <span>
             <%= ("#{this_transaction} was declined by our card issuer " + ({
-                  card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "this card is frozen",
+                  card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "because this card is frozen",
                   card_canceled: "because this card is canceled",
                   card_expired: "because this card is expired",
                   verification_failed: "because the card verification failed",

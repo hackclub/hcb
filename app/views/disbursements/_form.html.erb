@@ -5,39 +5,53 @@
 <%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <%= render partial: "select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
-  <%= render partial: "select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Transfer details</h3>
+    <div class="card mb-4 relative">
+      <div class="field">
+        <%= form.label :name, "What is the transfer for?" %>
+        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+      </div>
 
-  <% if auditor_signed_in? %>
-    <div class="admin-tools field field--checkbox">
-      <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
-      <%= form.label :should_charge_fee do %>
-        Charge fiscal sponsorship fee?
-      <% end %>
-    </div>
-  <% end %>
-
-  <%= form.label :amount, "Amount" %>
-  <div class="field">
-    <div class="flex items-center">
-      <span class="bold muted" style="width: 1rem;">$</span>
-      <%= form.number_field :amount, value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)),
-                                     placeholder: "500.00",
-                                     step: 0.01,
-                                     min: 0.01,
-                                     required: true,
-                                     disabled:,
-                                     data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+      <%= render "events/transfer_attach_receipt", form:, disabled: %>
     </div>
   </div>
 
-  <div class="field">
-    <%= form.label :name, "What is the transfer for?" %>
-    <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, disabled: %>
-    <span class="muted">This is to help HCB keep record of our transactions.</span>
+  <div data-scroll-seek-target="section">
+    <h3>Payment</h3>
+    <div class="card mb-4 relative">
+      <div class="flex gap-2">
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+        <%= inline_icon "view-forward", class: "mt-[30px]" %>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <%= form.label :amount, "Amount" %>
+        <div class="flex items-center input py-0 max-w-[150px]">
+          <span class="bold muted">$</span>
+          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <% admin_tool do %>
+  <div data-scroll-seek-target="section">
+    <% if auditor_signed_in? || admin_signed_in? %>
+      <h3 class="mb-2">Admin</h3>
+    <% end %>
+
+    <% if auditor_signed_in? %>
+      <div class="admin-tools px-3 py-2 field field--checkbox">
+        <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
+        <%= form.label :should_charge_fee do %>
+          Charge fiscal sponsorship fee?
+        <% end %>
+      </div>
+    <% end %>
+
+    <% admin_tool("px-3 py-2") do %>
       <% category_select = ->(field) {
            form.select(
              field,
@@ -48,52 +62,27 @@
            )
          } %>
 
-    <div class="field">
-      <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
-      <%= category_select.call(:source_transaction_category_slug) %>
-    </div>
+      <div class="field">
+        <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
+        <%= category_select.call(:source_transaction_category_slug) %>
+      </div>
 
-    <div class="field">
-      <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
-      <%= category_select.call(:destination_transaction_category_slug) %>
-    </div>
-  <% end %>
+      <div class="field">
+        <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
+        <%= category_select.call(:destination_transaction_category_slug) %>
+      </div>
 
-  <%= form.label :file, "Attach a receipt / invoice (optional)", class: "mt2" %>
-  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-          action: "
-        dragover@window->file-drop#dragover
-        drop@window->file-drop#drop
-        dragenter@window->file-drop#dragenter
-        dragleave@window->file-drop#dragleave
-      "
-        } %>
-    <%= form.file_field :file,
-        multiple: true,
-        include_hidden: false,
-        required: false,
-        accept: "image/*,image/heic,.pdf",
-        style: "margin: 8px 0px",
-        class: "field--fileupload__field",
-        data: {
-          "file-drop-target" => "fileInput"
-        },
-        disabled: %>
-    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
-  </div>
+      <div class="field">
+        <%= form.label :scheduled_on, "Schedule for" %>
+        <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
+        <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
+      </div>
+    <% end %>
 
-  <% admin_tool do %>
-    <div class="field">
-      <%= form.label :scheduled_on, "Schedule for" %>
-      <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
-      <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
-    </div>
-  <% end %>
-
-  <div
-      class="<%= "actions inline-block #{"tooltipped tooltipped--e" if disabled}" %>"
-      aria-label="<%= event&.demo_mode? ? "Transfers are disabled in Playground mode" : (disabled ? "Only managers can make transfers!" : nil) %>">
-    <%= form.submit "Make transfer", class: "btn", disabled: %>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Send transfer
+      <%= inline_icon "send" %>
+    </button>
+    <p class="muted text-center text-sm">Transfers are reviewed by the HCB team and process within 24 hours on weekdays.</p>
   </div>
 <% end %>

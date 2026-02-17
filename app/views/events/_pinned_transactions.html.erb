@@ -1,6 +1,6 @@
 <% @show_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
 <% if @event.pinned_hcb_codes.any? %>
-  <div class="flex gap-4 mt-4 pinned__container">
+  <div class="flex gap-4 my-2 pinned__container">
     <% @event.pinned_hcb_codes.each do |pin| %>
      <% if @show_popovers %>
         <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= pin.__id__ %>" data-state-url="<%= hcb_code_path(pin.hcb_code.local_hcb_code) %>" data-state-title="<%= pin.hcb_code.local_hcb_code.pretty_title(show_amount: true, show_event_name: false) %>">
@@ -11,7 +11,7 @@
         </section>
       <% end %>
 
-      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card shadow-none border flex flex-col black" do %>
+      <%= link_to organizer_signed_in? ? pin.hcb_code : "#", data: @show_popovers ? { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{pin.__id__}" } : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
           <%= form_for(
                 pin.hcb_code,
@@ -31,7 +31,7 @@
           <% end %>
         <% end %>
 
-        <p class="block font-bold m0 flex items-center g2">
+        <p class="font-bold m0 flex items-center g2">
           <%= format_date pin.hcb_code.date %>
           <% if pin.hcb_code.canonical_transactions.none? %>
             <% if pin.hcb_code.pt&.declined? %>
@@ -41,14 +41,17 @@
             <% end %>
           <% end %>
         </p>
-        <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 line-height-3 h3">
+        <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 leading-[1.25] h3">
           <%= pin.hcb_code.memo %>
         </p>
         <footer class="flex items-center justify-between -mb-1 gap-2 w-full">
           <span class="m0 muted">
             <%= render_money pin.hcb_code.amount_cents_by_event(@event) %>
           </span>
-          <%= render "hcb_codes/icon", tx: pin.hcb_code.ct || pin.hcb_code.pt, tooltip_direction: "w" %>
+          <% tx = pin.hcb_code.ct || pin.hcb_code.pt %>
+          <% cache(["tx_#{tx.hcb_code}", "icon", "pinned", "w"], expires_in: 12.hours) do %>
+            <%= render "hcb_codes/icon", tx: tx, tooltip_direction: "w" %>
+          <% end %>
         </footer>
       <% end %>
     <% end %>

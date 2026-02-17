@@ -1,0 +1,41 @@
+<% page_full %>
+<% @no_app_shell = true %>
+
+<nav class="border-b px-6 flex items-center gap-4 fixed top-0 left-0 backdrop-blur-xl h-20 md:h-24 w-full z-10">
+  <% unless defined?(@back_url) && @back_url.nil? %>
+    <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
+  <% end %>
+  <div class="min-w-0">
+    <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
+    <%# For disbursements %>
+    <% if !@source_event.present? && @event.present? %>
+      <p class="text-sm text-muted m-0 truncate">From <%= @event.name %></p>
+    <% end %>
+  </div>
+</nav>
+
+<div
+  class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full mt-40 md:mt-20 gap-5"
+  data-controller="scroll-seek <%= "check-preview" if @check.present? %>"
+  <% if @check.present? %> data-action="scroll@window->check-preview#render"<% end %>>
+  <div class="md:w-[375px]">
+    <div class="md:sticky top-28" id="table-of-contents">
+      <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 md:static border-[rgba(200,200,200,.3)] md:rounded-xl p-2 border-solid border-[1px] border-x-0 md:border-x-[1px] overflow-x-auto">
+        <div class="inline-flex md:flex md:w-full md:flex-col mx-auto md:mx-0 gap-4 md:gap-0 px-5 md:px-0">
+          <%= yield :table_of_contents %>
+        </div>
+      </div>
+      <% if content_for?(:sidebar_footer) %>
+        <%= yield :sidebar_footer %>
+      <% end %>
+    </div>
+  </div>
+  <div class="flex-1 md:pt-3 sm:mb-24">
+    <%= yield %>
+  </div>
+</div>
+
+<% parent_layout "application" %>
+
+<hr class="mt-16 -mb-4">
+<%= render "application/footer" %>

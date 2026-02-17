@@ -2,10 +2,8 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
-  <div class="flex flex-col w-100">
-
+  <div class="flex flex-col w-100 pt3">
     <div class="container--xs m-auto">
-
       <div class="card border b--info center">
         <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
           <div class="field field--checkbox mb2 justify-center">

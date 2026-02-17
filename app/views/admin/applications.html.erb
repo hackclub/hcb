@@ -1,0 +1,43 @@
+<% title "Applications (HCB)" %>
+
+<%= form_with local: true, url: applications_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @applications, entry_name: "applications" %>
+  </div>
+  <%= paginate @applications %>
+</div>
+
+<table class="min-w-0">
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Project Name</th>
+      <th>User</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @applications.each do |application| %>
+      <tr class="<%= "admin-bg-pending" if application.submitted? %> <%= "admin-bg-transit" if application.approved? %>">
+        <td><%= application.id %></td>
+        <td><%= application.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= application.name %></td>
+        <td><%= user_mention(application.user) %></td>
+        <td><%= application.aasm.human_state %></td>
+        <td class="text-nowrap">
+          <%= link_to "View", submission_application_path(application) %>
+          <%= link_to "Airtable", airtable_application_path(application), target: "_blank" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @applications %>

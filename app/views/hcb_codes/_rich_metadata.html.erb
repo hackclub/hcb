@@ -33,9 +33,14 @@
   <%= render partial: "hcb_codes/stripe_card", locals: {} %>
 <% end %>
 
-<%# disbursement %>
-<% if @hcb_code.disbursement? && @hcb_code.disbursement.present? %>
-  <%= render partial: "hcb_codes/disbursement", locals: {} %>
+<%# outgoing disbursement %>
+<% if @hcb_code.outgoing_disbursement? && @hcb_code.outgoing_disbursement.present? %>
+  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.outgoing_disbursement } %>
+<% end %>
+
+<%# incoming disbursement %>
+<% if @hcb_code.incoming_disbursement? && @hcb_code.incoming_disbursement.present? %>
+  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.incoming_disbursement } %>
 <% end %>
 
 <%# bank fee %>
@@ -60,17 +65,17 @@
 
 <%# paypal transfer %>
 <% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
-  <%= render "paypal_transfer" %>
+  <%= render "hcb_codes/paypal_transfer" %>
 <% end %>
 
 <%# wire %>
 <% if @hcb_code.wire? && @hcb_code.wire.present? %>
-  <%= render "wire" %>
+  <%= render "hcb_codes/wire" %>
 <% end %>
 
 <%# wise_transfer %>
 <% if @hcb_code.wise_transfer? && @hcb_code.wise_transfer.present? %>
-  <%= render "wise_transfer" %>
+  <%= render "hcb_codes/wise_transfer" %>
 <% end %>
 
 <%# unknown (most likely a direct to bank account transaction) %>

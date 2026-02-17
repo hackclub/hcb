@@ -47,36 +47,36 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "18d9a7883755596ad9b083cfbd00e3fc19fdf296e396510648066dc43b432b27",
+      "fingerprint": "24b4bbb940906be890c8fca79f53e06131392c6b52417b1b280fbf1f554b55e5",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/stripe_cards/show.html.erb",
-      "line": 6,
+      "file": "app/views/admin/wise_transfer_process.html.erb",
+      "line": 83,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn bg-accent m1\")",
+      "code": "link_to(WiseTransfer.find(params[:id]).wise_id, WiseTransfer.find(params[:id]).wise_url, :target => \"_blank\")",
       "render_path": [
         {
           "type": "controller",
-          "class": "StripeCardsController",
-          "method": "show",
-          "line": 89,
-          "file": "app/controllers/stripe_cards_controller.rb",
+          "class": "AdminController",
+          "method": "wise_transfer_process",
+          "line": 753,
+          "file": "app/controllers/admin_controller.rb",
           "rendered": {
-            "name": "stripe_cards/show",
-            "file": "app/views/stripe_cards/show.html.erb"
+            "name": "admin/wise_transfer_process",
+            "file": "app/views/admin/wise_transfer_process.html.erb"
           }
         }
       ],
       "location": {
         "type": "template",
-        "template": "stripe_cards/show"
+        "template": "admin/wise_transfer_process"
       },
-      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
+      "user_input": "WiseTransfer.find(params[:id]).wise_url",
       "confidence": "Weak",
       "cwe_id": [
         79
       ],
-      "note": "this is already validated"
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -171,21 +171,108 @@
       "note": "It generates a https link that is based on 'stripe_transaction_id' which should be safe."
     },
     {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "5846154b6e719cd6a5d126ccba81f03e6ef5bf30e485edfa4bbd89bd6a49cdc7",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "app/controllers/referral/links_controller.rb",
+      "line": 23,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to((Referral::Link.find_by(:slug => params[:id]).program.redirect_to or root_path), :allow_other_host => true)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Referral::LinksController",
+        "method": "show"
+      },
+      "user_input": "Referral::Link.find_by(:slug => params[:id]).program.redirect_to",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "only admins can set this"
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "7c9ae4f5245c156ca383daec57b3c0a7cf88681a787ff39a54a4026486f3d929",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped model attribute",
+      "file": "app/views/application/_admin_viewer.html.erb",
+      "line": 9,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "ap(admin_inspectable_attributes(Admin::LedgerAudit::Task.find(params[:id]).hcb_code.donation))",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "Admin::LedgerAudits::TasksController",
+          "method": "show",
+          "line": 13,
+          "file": "app/controllers/admin/ledger_audits/tasks_controller.rb",
+          "rendered": {
+            "name": "admin/ledger_audits/tasks/show",
+            "file": "app/views/admin/ledger_audits/tasks/show.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "admin/ledger_audits/tasks/show",
+          "line": 29,
+          "file": "app/views/admin/ledger_audits/tasks/show.html.erb",
+          "rendered": {
+            "name": "hcb_codes/_rich_metadata",
+            "file": "app/views/hcb_codes/_rich_metadata.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/_rich_metadata",
+          "line": 3,
+          "file": "app/views/hcb_codes/_rich_metadata.html.erb",
+          "rendered": {
+            "name": "hcb_codes/_donation",
+            "file": "app/views/hcb_codes/_donation.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/_donation",
+          "line": 5,
+          "file": "app/views/hcb_codes/_donation.html.erb",
+          "rendered": {
+            "name": "application/_admin_viewer",
+            "file": "app/views/application/_admin_viewer.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "application/_admin_viewer"
+      },
+      "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "735bbf85ca21b70bf3b08f8ad5615ad3f037fe183b1f7801d13df4fdf761f66d",
+      "fingerprint": "842304376abd28273945166e54498133accb7cdfb9c731061649ff771c4c3a18",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
       "line": 14,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0\", :target => \"_blank\")",
+      "code": "link_to((WiseTransfer.find(params[:id]).wise_url or \"https://wise.com/send\"), :class => \"btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0\", :target => \"_blank\")",
       "render_path": [
         {
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 735,
+          "line": 753,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -202,7 +289,7 @@
       "cwe_id": [
         79
       ],
-      "note": "This parameter is validated to match a specific format"
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -211,7 +298,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/wise_transfer_process.html.erb",
-      "line": 89,
+      "line": 97,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"view on Wise\", WiseTransfer.find(params[:id]).wise_recipient_url, :target => \"_blank\")",
       "render_path": [
@@ -219,7 +306,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 735,
+          "line": 753,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -253,7 +340,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 995,
+          "line": 1032,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -321,7 +408,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 923,
+          "line": 960,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -343,6 +430,40 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "bbf21d4fdb41d31cd94878652023aa011919d97f6df8c3043d8dd03ebc082e6b",
+      "check_name": "LinkToHref",
+      "message": "Potentially unsafe model attribute in `link_to` href",
+      "file": "app/views/stripe_cards/show.html.erb",
+      "line": 20,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"View card on Stripe\", StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url, :class => \"btn btn--list-item\")",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "StripeCardsController",
+          "method": "show",
+          "line": 89,
+          "file": "app/controllers/stripe_cards_controller.rb",
+          "rendered": {
+            "name": "stripe_cards/show",
+            "file": "app/views/stripe_cards/show.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "stripe_cards/show"
+      },
+      "user_input": "StripeCard.includes(:event, :user).find(params[:id]).stripe_dashboard_url",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "bdc62cbde9149ebea74063a4d9163076b449ce86fc22403ddeb7da6622f2363a",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -355,7 +476,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 923,
+          "line": 960,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -423,7 +544,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 995,
+          "line": 1032,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -449,7 +570,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/metric/hcb/total_raised.rb",
-      "line": 34,
+      "line": 40,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"SELECT SUM(amount_cents) as amount_cents FROM \\\"canonical_transactions\\\"\\nLEFT JOIN \\\"canonical_event_mappings\\\" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id\\nLEFT JOIN \\\"events\\\" ON canonical_event_mappings.event_id = events.id\\nLEFT JOIN \\\"event_plans\\\" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'\\nLEFT JOIN \\\"disbursements\\\" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)\\nWHERE amount_cents > 0\\nAND date_part('year', date) = #{2025}\\n#{::Event::Plan.that(:omit_stats).map(&:name).map do\n \"AND event_plans.type != '#{p}'\"\n end.join(\" \")}\\nAND (disbursements.id IS NULL or disbursements.should_charge_fee = true)\\nAND NOT (\\n  canonical_transactions.hcb_code ILIKE 'HCB-300%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-310%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-350%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-400%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-401%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-600%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-601%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-710%' OR\\n  canonical_transactions.hcb_code ILIKE 'HCB-712%'\\n)\\n\")",
       "render_path": null,
@@ -466,6 +587,6 @@
       "note": ""
     }
   ],
-  "updated": "2025-10-13 08:21:43 +0000",
+  "updated": "2026-01-12 23:56:02 +0000",
   "brakeman_version": "6.2.2"
 }

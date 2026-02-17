@@ -122,8 +122,6 @@ class AdminController < Admin::BaseController
       demo_mode: true
     ).run
 
-    Flipper.enable_actor(:organizer_position_contracts_2025_01_03, event)
-
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
     record["HCB ID"] = event.id
 
@@ -558,6 +556,8 @@ class AdminController < Admin::BaseController
 
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -569,6 +569,8 @@ class AdminController < Admin::BaseController
 
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user, send_realtime: true)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
@@ -595,6 +597,7 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
@@ -747,6 +750,21 @@ class AdminController < Admin::BaseController
     @wise_transfer = WiseTransfer.find(params[:id])
   end
 
+  def applications
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+
+    @applications = Event::Application.all
+    @applications = @applications.search_name(@q) if @q
+
+    @applications = @applications.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'submitted' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
+      "created_at desc"
+    )
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -807,6 +825,25 @@ class AdminController < Admin::BaseController
 
     @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
 
+  end
+
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    # Pending fees that haven't been converted to FeeRevenue yet
+    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
+    events_with_balances = Event.pending_fees_v2.map do |event|
+      { event: event, balance: event.fee_balance_v2_cents }
+    end
+
+    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
   end
 
   def disbursements
@@ -1259,11 +1296,11 @@ class AdminController < Admin::BaseController
         require "csv"
 
         csv = Enumerator.new do |y|
-          y << ::CSV::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
-          y << ::CSV::Row.new(header_syms, @headers, true).to_s
+          y << SafeCsv::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
+          y << SafeCsv::Row.new(header_syms, @headers, true).to_s
 
           @rows.each do |row|
-            y << ::CSV::Row.new(header_syms, row).to_s
+            y << SafeCsv::Row.new(header_syms, row).to_s
           end
         end
 
@@ -1403,21 +1440,14 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc)
-  end
-
-  def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name])
-
-    if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
-    else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
-    end
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
   private
@@ -1544,6 +1574,9 @@ class AdminController < Admin::BaseController
     end
 
     client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  rescue => e
+    Rails.error.report(e)
+    9999 # return something invalidly high to get the ops team to report it
   end
 
   def hackathons_task_size
@@ -1605,8 +1638,6 @@ class AdminController < Admin::BaseController
         Event.negatives.size
       when :fee_reimbursements
         FeeReimbursement.unprocessed.size
-      when :emburse_transfers
-        EmburseTransfer.under_review.size
       when :g_suite_accounts
         GSuiteAccount.under_review.size
       when :transactions
@@ -1642,7 +1673,6 @@ class AdminController < Admin::BaseController
     pending_task :ach_transfers
     pending_task :negative_events
     pending_task :fee_reimbursements
-    pending_task :emburse_transfers
     pending_task :emburse_transactions
     pending_task :g_suite_accounts
     pending_task :transactions

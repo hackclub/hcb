@@ -9,16 +9,22 @@
     <a
       href="<%= Rails.application.routes.url_helpers.event_announcement_overview_url(@announcement.event) %>"
       target="_blank">
-      <img
-        src="<%= @announcement.event.logo.present? ? Rails.application.routes.url_helpers.url_for(@announcement.event.logo) : Rails.application.routes.url_helpers.root_url + "brand/hcb-icon-icon-original.png" %>"
-        style="height: 2.5rem; max-width: 80%" height="40">
+      <% if @announcement.event.logo.present? && @announcement.event.logo.variable? %>
+        <img
+          src="<%= Rails.application.routes.url_helpers.url_for(@announcement.event.logo.variant(resize_to_limit: [nil, 80])) %>"
+          style="height: 2.5rem; max-width: 80%" height="40">
+      <% else %>
+        <img
+          src="<%= hcb_logo_variant_url %>"
+          style="height: 2.5rem; max-width: 80%" height="40">
+      <% end %>
     </a>
   <% else %>
     <a
       href="<%= Rails.application.routes.url_helpers.root_url %>"
       target="_blank">
       <img
-        src="<%= Rails.application.routes.url_helpers.root_url %>brand/hcb-icon-icon-original.png"
+        src="<%= hcb_logo_variant_url %>"
         style="height: 2.5rem" height="40">
     </a>
   <% end %>

@@ -58,11 +58,11 @@ class Export
       end
 
       def header
-        ::CSV::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "total raised", "omitted?"], true)
+        SafeCsv::Row.new(headers, ["id", "name", "postal_code", "contact email", "organizers", "revenue fee", "url", "balance", "total raised", "omitted?"], true)
       end
 
       def row(event)
-        ::CSV::Row.new(
+        SafeCsv::Row.new(
           headers,
           [
             event.id,
