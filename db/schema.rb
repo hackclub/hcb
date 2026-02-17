@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_17_024157) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -194,8 +194,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "parameters"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
