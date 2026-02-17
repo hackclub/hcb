@@ -32,7 +32,13 @@
         <% end %>
         <span class="text-primary">*</span>
       <% end %>
-      <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
+      <p class="text-sm muted mt-1 mb-2">
+        <% if @application.teen_led? %>
+          Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!
+        <% else %>
+          Please share some additional details about your project’s charitable mission, operations and reason for seeking fiscal sponsorship.
+        <% end %>
+      </p>
       <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
     </div>
 
