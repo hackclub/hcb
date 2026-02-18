@@ -69,6 +69,7 @@ class Event
 
     belongs_to :user
     belongs_to :event, optional: true
+    belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
@@ -250,7 +251,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.age.present? && user.age < 18
         required_fields.push("cosigner_email")
       end
 
@@ -308,6 +309,7 @@ class Event
         point_of_contact_id: poc.id,
         application: self
       )
+      contract.create_document!
 
       service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
       invite = service.model
