@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_18_035938) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -486,7 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_035938) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "expiration_at", null: false
+    t.date "expiration_at", null: false
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
