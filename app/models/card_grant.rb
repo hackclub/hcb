@@ -10,7 +10,7 @@
 #  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
-#  expiration_at              :datetime
+#  expiration_at              :datetime         not null
 #  instructions               :text
 #  invite_message             :string
 #  keyword_lock               :string
