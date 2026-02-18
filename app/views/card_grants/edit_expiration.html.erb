@@ -5,7 +5,7 @@
     <div>
       <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
         <div class="field">
-          <%= form.label :expiration_at %>
+          <%= form.label :expiration_at, "Expires on" %>
 
           <div class="flex gap-3 items-stretch">
             <%= form.date_field :expiration_at, value: @card_grant.expiration_at %>
