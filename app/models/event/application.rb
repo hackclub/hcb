@@ -251,7 +251,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.age.present? && user.age < 18
         required_fields.push("cosigner_email")
       end
 
