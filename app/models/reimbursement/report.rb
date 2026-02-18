@@ -95,8 +95,8 @@ module Reimbursement
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
-      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
-      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
+      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
 
     after_commit :invalidate_cached_data # do this after commit for expense touch-ing
