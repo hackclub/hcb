@@ -7,7 +7,7 @@
       <div class="card card--outline">
         <h3 class="text-2xl my-0 mb-6">Project Information</h3>
 
-        <div class="field" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>' }">
+        <div class="field" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>' }">
           <%= form.label :name do %>
             Project name <span class="text-primary">*</span>
           <% end %>
@@ -16,7 +16,12 @@
 
         <div class="field">
           <%= form.label :description do %>
-            Tell us about your project <span class="text-primary">*</span>
+            <% if @application.teen_led? %>
+              Tell us about your project
+            <% else %>
+              Describe your mission's charitable purpose
+            <% end %>
+            <span class="text-primary">*</span>
           <% end %>
           <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
           <%= form.text_area :description, class: "w-full max-w-full", required: true %>
@@ -46,9 +51,63 @@
 
         <div class="field" x-show="has_political === 'true'">
           <%= form.label :political_description do %>
-            Please describe the political activity your project is involved in <span class="text-primary">*</span>
+             Please describe the political activity your project is involved in <span class="text-primary">*</span>
           <% end %>
           <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field" %>
+        </div>
+
+        <div class="field" x-show="!(<%= @application.user.teenager? %>)">
+          <%= form.label :planning_duration do %>
+            How long have you been planning your project? <span class="text-primary">*</span>
+          <% end %>
+          <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full" %>
+        </div>
+
+        <div class="field" x-show="!(<%= @application.user.teenager? %>)">
+          <%= form.label :team_size do %>
+            How many people are on your team? <span class="text-primary">*</span>
+          <% end %>
+          <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", step: 1, min: 1 %>
+        </div>
+
+        <div class="md:flex gap-4" x-show="!(<%= @application.user.teenager? %>)">
+          <div class="field flex-1">
+            <%= form.label :annual_budget do %>
+              Annual budget <span class="text-primary">*</span>
+            <% end %>
+            <div class="flex items-center">
+              <div class="input flex gap-2 items-center py-0">
+                <span class="bold muted">$</span>
+                <%= form.number_field :annual_budget, id: "annual_budget_field", placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+              </div>
+            </div>
+          </div>
+
+          <div class="field flex-1">
+            <%= form.label :committed_amount do %>
+              Committed amount <span class="text-primary">*</span>
+            <% end %>
+            <div class="flex items-center">
+              <div class="input flex gap-2 items-center py-0">
+                <span class="bold muted">$</span>
+                <%= form.number_field :committed_amount, id: "committed_amount_field", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" x-show="!(<%= @application.user.teenager? %>) && committed > 0">
+          <%= form.label :funding_source do %>
+            What is the source of your funding? <span class="text-primary">*</span>
+          <% end %>
+          <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full" %>
+        </div>
+
+        <div class="field m-0 mt-4">
+          <%= form.label :previously_applied do %>
+            Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
+          <% end %>
+          <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], @application.previously_applied.to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
         </div>
       </div>
 
@@ -74,7 +133,7 @@
               Mobile phone number <span class="text-primary">*</span>
             <% end %>
             <%= form.hidden_field :phone_number, value: @application.user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-            <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" required="required">
+            <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" required>
           </div>
           <div class="field flex-1">
             <div class="inline-flex items-center justify-between w-full gap-1">

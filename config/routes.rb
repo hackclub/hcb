@@ -858,6 +858,7 @@ Rails.application.routes.draw do
         get "airtable"
         get "edit"
         post "submit"
+        post "archive"
         post "admin_approve"
         post "admin_reject"
         post "admin_activate"

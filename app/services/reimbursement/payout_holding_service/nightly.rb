@@ -23,7 +23,7 @@ module Reimbursement
                   address_postal_code: payout_holding.report.user.payout_method.address_postal_code,
                   recipient_country: payout_holding.report.user.payout_method.recipient_country,
                   recipient_email: payout_holding.report.user.email,
-                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name,
                   account_number: payout_holding.report.user.payout_method.account_number,
                   bic_code: payout_holding.report.user.payout_method.bic_code,
                   recipient_information: payout_holding.report.user.payout_method.recipient_information.merge({
