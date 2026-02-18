@@ -66,6 +66,7 @@ class CardGrant < ApplicationRecord
   has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
+  alias_method :expires_on, :expiration_at
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
@@ -81,7 +82,7 @@ class CardGrant < ApplicationRecord
   after_create_commit :send_email
 
   before_create do
-    self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
+    self.expiration_at ||= default_expiration_at
   end
 
   validates :disbursement, uniqueness: true, allow_nil: true
@@ -298,12 +299,8 @@ class CardGrant < ApplicationRecord
     super || setting&.keyword_lock
   end
 
-  def expires_after
-    card_grant_setting.read_attribute_before_type_cast(:expiration_preference)
-  end
-
-  def expires_on
-    created_at + expires_after.days
+  def default_expiration_at
+    CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
 
   def last_user_change_to(...)
