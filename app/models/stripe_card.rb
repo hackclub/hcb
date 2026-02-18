@@ -469,7 +469,9 @@ class StripeCard < ApplicationRecord
   end
 
   def subledger_and_card_grant
-    (subledger.present? && card_grant.present?) || (subledger.nil? && card_grant.nil?)
+    unless (subledger.present? && card_grant.present?) || (subledger.nil? && card_grant.nil?)
+      errors.add(:base, "You must have a subledger and card grant present or neither present")
+    end
   end
 
 end
