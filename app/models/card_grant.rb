@@ -298,10 +298,6 @@ class CardGrant < ApplicationRecord
     super || setting&.keyword_lock
   end
 
-  def expires_on
-    expiration_at
-  end
-
   def default_expiration_at
     CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
   end
