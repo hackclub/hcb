@@ -92,7 +92,9 @@ module Api
       def update
         authorize @card_grant
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions))
+        expiration_at = params["expiration_at"]&.to_datetime
+
+        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions).merge(expiration_at:))
 
         render :show
       end
