@@ -146,6 +146,10 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def edit_expiration
+    authorize @card_grant
+  end
+
   def edit_topup
     authorize @card_grant
   end
@@ -174,7 +178,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :instructions, :merchant_lock, :category_lock, :keyword_lock, :expiration_at))
       flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence

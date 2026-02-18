@@ -66,7 +66,6 @@ class CardGrant < ApplicationRecord
   has_many :disbursements, ->(record) { where(destination_subledger_id: record.subledger_id).or(where(source_subledger_id: record.subledger_id)) }, through: :event
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
-  alias_method :expires_on, :expiration_at
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
@@ -297,6 +296,10 @@ class CardGrant < ApplicationRecord
 
   def keyword_lock
     super || setting&.keyword_lock
+  end
+
+  def expires_on
+    expiration_at
   end
 
   def default_expiration_at

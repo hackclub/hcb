@@ -29,6 +29,10 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def edit_expiration?
+    admin_or_manager?
+  end
+
   def edit_overview?
     admin_or_manager?
   end
