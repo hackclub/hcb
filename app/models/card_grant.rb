@@ -88,7 +88,7 @@ class CardGrant < ApplicationRecord
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
 
-  validates :email, email_with_tld: true
+  validates_email_format_of :email
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
   delegate :balance, to: :subledger

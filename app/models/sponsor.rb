@@ -51,7 +51,8 @@ class Sponsor < ApplicationRecord
 
   validates_presence_of :name, :address_line1, :address_city,
                         :address_state, :address_postal_code
-  validates :contact_email, presence: true, email_with_tld: true
+  validates :contact_email, presence: true
+  validates_email_format_of :contact_email
 
   before_create :create_stripe_customer
   before_update :update_stripe_customer
