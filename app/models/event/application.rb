@@ -251,7 +251,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.age.present? && user.age < 18
         required_fields.push("cosigner_email")
       end
 
@@ -298,7 +298,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!
+    def activate_event!(risk_level:, tags: [])
       contract.party(:hcb).sync_with_docuseal
       raise "Contract must be signed before activation" unless contract.signed?
 
@@ -308,7 +308,9 @@ class Event
         name:,
         country: address_country,
         point_of_contact_id: poc.id,
-        application: self
+        application: self,
+        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+        risk_level:
       )
       contract.create_document!
 
@@ -339,6 +341,16 @@ class Event
 
     def respondent_url
       url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
     end
 
     private
