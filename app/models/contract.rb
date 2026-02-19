@@ -62,7 +62,7 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
-  aasm timestamps: true do
+  aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
     state :signed
