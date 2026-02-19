@@ -117,7 +117,7 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          update!(teen_led: user.teenager?)
+          update!(teen_led: user.is_teenager?)
 
           if teen_led?
             create_contract
