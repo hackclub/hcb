@@ -14,8 +14,9 @@
 
 <div class=" mb-6">
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>' }">
-
+  <div
+    class="card card--outline mb-6"
+    x-data="application_project_info({ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>', description: '<%= @application.description %>' })">
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
@@ -32,8 +33,17 @@
         <% end %>
         <span class="text-primary">*</span>
       <% end %>
-      <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
-      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
+      <p class="text-sm muted mt-1 mb-2">
+        <% if @application.teen_led? %>
+          Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!
+        <% else %>
+          Please share some additional details about your project’s charitable mission, operations and reason for seeking fiscal sponsorship. (minimum 50 words)
+        <% end %>
+      </p>
+      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", "x-model": "description" %>
+      <% unless @application.teen_led? %>
+        <p class="text-sm muted mt-1 mb-2"><span x-text="description_word_count">0</span>/50 words</p>
+      <% end %>
     </div>
 
     <div class="field">
