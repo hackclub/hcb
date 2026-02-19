@@ -297,7 +297,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!(tags: [])
+    def activate_event!(risk_level:, tags: [])
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
@@ -307,7 +307,8 @@ class Event
         country: address_country,
         point_of_contact_id: poc.id,
         application: self,
-        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) }
+        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+        risk_level:
       )
 
       service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)

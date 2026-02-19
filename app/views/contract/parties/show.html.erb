@@ -20,6 +20,11 @@
             <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
           </div>
 
+          <div class="field">
+            <%= form.label :risk_level %>
+            <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+          </div>
+
           <% if @party.pending? %>
             <p>Sign the contract before activating the organization</p>
           <% end %>
