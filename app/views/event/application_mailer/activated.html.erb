@@ -11,6 +11,21 @@
   <li><%= link_to "Order a card", event_cards_overview_url(@application.event) %>: You can order a virtual or a plastic card that you can use to spend your funds.</li>
 </ul>
 
+<% if @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::HACKATHON)) %>
+  <p>
+    Also, check out <%= link_to "our guide to organizing a hackathon", "https://hackclub.com/how-to-organize-a-hackathon/" %>.
+    We're excited to see your event come to life!
+  </p>
+<% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::ROBOTICS_TEAM)) %>
+  <p>
+    Also, check out 
+  </p>
+<% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::HACK_CLUB)) %>
+  <p>
+    Also, check out 
+  </p>
+<% end %>
+
 <p>The signed fiscal sponsorship contract is available for you to <%= link_to "download here", document_download_url(@application.contract.document) %>.</p>
 
 <p>As always, contact us at <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> if you have any questions.</p>
