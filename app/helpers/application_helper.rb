@@ -278,13 +278,20 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
     rescue Stripe::InvalidRequestError
-      puts "Can't access stripe object, skipping"
+      Rails.logger.warn "Can't access stripe object, skipping"
+      nil
     rescue NoMethodError
-      puts "Not a stripe object, skipping"
+      Rails.logger.warn "Not a stripe object, skipping"
+      nil
     end
 
     if stripe_obj.nil?

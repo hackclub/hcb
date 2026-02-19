@@ -583,6 +583,10 @@ class User < ApplicationRecord
     apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
   end
 
+  def phone_number_update_count(since:)
+    versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
+  end
+
   private
 
   def update_stripe_cardholder

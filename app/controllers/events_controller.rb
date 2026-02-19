@@ -347,21 +347,8 @@ class EventsController < ApplicationController
     fixed_event_params = event_params
     fixed_user_event_params = user_event_params
 
-    # processing hidden for admins
-    if fixed_event_params[:hidden] == "1" && !@event.hidden_at.present?
-      fixed_event_params[:hidden_at] = DateTime.now
-    elsif fixed_event_params[:hidden] == "0" && @event.hidden_at.present?
-      fixed_event_params[:hidden_at] = nil
-    end
-    fixed_event_params.delete(:hidden)
-
-    # processing hidden for users
-    if fixed_user_event_params[:hidden] == "1" && !@event.hidden_at.present?
-      fixed_user_event_params[:hidden_at] = DateTime.now
-    elsif fixed_user_event_params[:hidden] == "0" && @event.hidden_at.present?
-      fixed_user_event_params[:hidden_at] = nil
-    end
-    fixed_user_event_params.delete(:hidden)
+    process_hidden_param!(fixed_event_params)
+    process_hidden_param!(fixed_user_event_params)
 
     plan_param = fixed_event_params[:plan]
     fixed_event_params.delete(:plan)
@@ -1046,6 +1033,15 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def process_hidden_param!(params_hash)
+    if params_hash[:hidden] == "1" && !@event.hidden_at.present?
+      params_hash[:hidden_at] = Time.current
+    elsif params_hash[:hidden] == "0" && @event.hidden_at.present?
+      params_hash[:hidden_at] = nil
+    end
+    params_hash.delete(:hidden)
+  end
 
   def filtered_sub_organizations(sub_organizations = @event.subevents)
     search = params[:q] || params[:search]
