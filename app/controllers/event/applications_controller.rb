@@ -52,7 +52,7 @@ class Event
                              end
 
       # We allow teenagers to receive and sign the contract while applying. Adults must wait for HCB Operations' review.
-      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
+      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.teen_led? || @application.contract&.party(:hcb)&.signed?)
       contract_step = {
         label: "Sign agreement",
         shorthand: "Sign",
@@ -64,15 +64,15 @@ class Event
       unless @application.draft?
         @steps = []
         @steps << { label: "Submit application", shorthand: "Submit", completed: true }
-        @steps << contract_step if @application.user.teenager?
+        @steps << contract_step if @application.teen_led?
         @steps << {
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
           description: "Our operations team will review your application and respond within #{@application.response_time}.",
-          completed: @application.approved? && (contract_signed || !@application.user.teenager?)
+          completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
-        @steps << contract_step unless @application.user.teenager?
+        @steps << contract_step unless @application.teen_led?
         @steps << {
           label: "Start spending",
           shorthand: "Spend",
@@ -104,7 +104,7 @@ class Event
       @application.mark_approved!
       flash[:success] = "Application approved."
 
-      if @application.user.teenager?
+      if @application.teen_led?
         party = @application.contract.party :hcb
         redirect_to contract_party_path(party)
       else

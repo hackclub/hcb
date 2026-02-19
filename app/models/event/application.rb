@@ -117,7 +117,9 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          if user.teenager?
+          update!(teen_led: user.teenager?)
+
+          if teen_led?
             create_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
@@ -136,7 +138,7 @@ class Event
       event :mark_approved do
         transitions from: [:submitted, :under_review], to: :approved
         after do
-          unless user.teenager?
+          unless teen_led?
             create_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
@@ -267,7 +269,7 @@ class Event
     end
 
     def response_time
-      user.teenager? ? "48 hours" : "2 weeks"
+      teen_led? ? "48 hours" : "2 weeks"
     end
 
     def status_color

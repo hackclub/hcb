@@ -21,7 +21,7 @@ class Event
       app["Zip Code"] = application.address_postal_code
       app["Tell us about your event"] = application.description
       app["Have you used HCB for any previous events?"] = application.user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
-      app["Teenager Led?"] = application.user.teenager?
+      app["Teenager Led?"] = application.teen_led?
       app["Address Line 1"] = application.address_line1
       app["City"] = application.address_city
       app["State"] = application.address_state
