@@ -8,7 +8,7 @@
       </span>
 
       <h2 class="text-4xl mt-2">
-        <%= current_user == @application.user ? "Your" : "#{@application.user.name}'s" %> application for <%= @application.name %>
+        <%= current_user == @application.user ? "Your" : "#{@application.user.name}'s" %> application for <%= @application.event.present? ? link_to(@application.name, @application.event) : @application.name %>
       </h2>
 
       <p class="m-0 text-lg muted">
