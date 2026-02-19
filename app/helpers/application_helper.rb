@@ -278,6 +278,7 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
   def subtitle(text)
     content_for :subtitle, text
   end
