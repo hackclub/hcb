@@ -34,6 +34,12 @@ class Event
       app["HCB Status"] = application.aasm_state.humanize unless application.draft?
       app["Synced from HCB at"] = Time.current
 
+      if application.affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+        app["Org Type"] = "FIRST/Robotics"
+      elsif application.affiliations.any? { |affiliation| affiliation.is_hack_club? }
+        app["Org Type"] = "Hack Club"
+      end
+
       app.save
 
       application.update_columns(airtable_record_id: app.id, airtable_status: app["Status"])
