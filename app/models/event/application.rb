@@ -146,6 +146,8 @@ class Event
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
         after do |rejection_message|
+          contract.mark_voided! if contract.present?
+
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
