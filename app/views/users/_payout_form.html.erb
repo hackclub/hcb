@@ -17,9 +17,7 @@
 
       <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email" %>
 
-      <% if Flipper.enabled?(:wise_reimbursements_2025_08_25, user) %>
-        <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
-      <% end %>
+      <%= render "users/payout_form/option", form:, model: User::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise" %>
 
       <%= render "users/payout_form/option", form:, model: User::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web" do %>
         <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
@@ -93,6 +91,14 @@
 
       <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
 
+      <div class="field">
+        <%= form.label :recipient_name, "Name on account" %>
+        <%= form.text_field :recipient_name,
+            required: false,
+            placeholder: user.full_name %>
+        <span class="muted">If the name on the bank account differs from your legal name on HCB.</span>
+      </div>
+
       <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
 
       <%= render partial: "wires/country_specific_details", locals: { form:, disabled: false, required: false, excluded_fields: ["remittance_info", "purpose_code"] } %>
@@ -114,8 +120,6 @@
           footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
           We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
         <% end %>
-
-        <%= render "wise_transfers/delay_warning" %>
 
         <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: false } %>
 
