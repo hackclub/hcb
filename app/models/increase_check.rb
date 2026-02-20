@@ -60,8 +60,7 @@ class IncreaseCheck < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   include PublicIdentifiable
   set_public_id_prefix :ick

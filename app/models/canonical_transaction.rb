@@ -34,6 +34,7 @@ class CanonicalTransaction < ApplicationRecord
   include Receiptable
   include Categorizable
   include HcbCodeScopeable
+  include Ledgerable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -112,8 +113,6 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
-
   before_create do
     self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
                               li.id
@@ -123,20 +122,6 @@ class CanonicalTransaction < ApplicationRecord
                               rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
                               rpst&.canonical_pending_transaction&.ledger_item_id
                             end
-  end
-
-  after_create_commit unless: -> { ledger_item.present? } do
-    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
-  end
-
-  after_commit if: -> { ledger_item.present? } do
-    ledger_item.map!
-    ledger_item.write_amount_cents!
-  end
-
-  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
-    old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
   end
 
   after_create :write_hcb_code

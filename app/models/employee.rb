@@ -29,8 +29,7 @@ class Employee < ApplicationRecord
   has_paper_trail
   acts_as_paranoid
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   validates_presence_of :gusto_id, if: -> { onboarded? }
 

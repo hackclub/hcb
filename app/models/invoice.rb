@@ -111,8 +111,7 @@ class Invoice < ApplicationRecord
 
   include Freezable
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   include PgSearch::Model
   pg_search_scope :search_description, associated_against: { sponsor: :name }, against: [:item_description, :item_amount], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "invoices.created_at"

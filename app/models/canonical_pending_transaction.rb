@@ -64,6 +64,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   include Categorizable
   include HcbCodeScopeable
+  include Ledgerable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
@@ -147,22 +148,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   after_create_commit :write_system_event
 
   attr_writer :stripe_cardholder
-
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
-
-  after_create_commit unless: -> { ledger_item.present? } do
-    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
-  end
-
-  after_commit if: -> { ledger_item.present? } do
-    ledger_item.map!
-    ledger_item.write_amount_cents!
-  end
-
-  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
-    old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
-  end
 
   def pending_expired?
     unsettled? && created_at < 5.days.ago

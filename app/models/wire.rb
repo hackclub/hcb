@@ -78,8 +78,7 @@ class Wire < ApplicationRecord
   monetize :amount_cents, as: "amount", with_model_currency: :currency
 
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   after_create do
     create_canonical_pending_transaction!(
