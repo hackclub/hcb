@@ -31,7 +31,7 @@
   </thead>
   <tbody>
     <% @contracts.each do |contract| %>
-      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all(&:signed?) && contract.party(:hcb)&.pending? %>">
+      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all(&:signed?) && contract.party(:hcb)&.pending? %> <%= "admin-bg-transit" if contract.signed? %>">
         <td><%= contract.id %></td>
         <td><%= contract.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= contract.class.name.demodulize.underscore.humanize %></td>
