@@ -9,7 +9,7 @@ class ContractPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def reject_and_resend?
+  def reissue?
     user&.admin?
   end
 

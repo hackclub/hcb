@@ -343,7 +343,7 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
-      post "reject_and_resend"
+      post "reissue"
     end
   end
 

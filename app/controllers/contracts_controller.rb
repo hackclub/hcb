@@ -11,7 +11,7 @@ class ContractsController < ApplicationController
     redirect_back(fallback_location: @contract.redirect_path)
   end
 
-  def reject_and_resend
+  def reissue
     authorize @contract, policy_class: ContractPolicy
 
     @contract.mark_voided!
@@ -28,7 +28,7 @@ class ContractsController < ApplicationController
     end
     new_contract.send!
 
-    flash[:success] = "Contract rejected and resent successfully."
+    flash[:success] = "Contract reissued successfully."
     redirect_back(fallback_location: new_contract.redirect_path)
   end
 
