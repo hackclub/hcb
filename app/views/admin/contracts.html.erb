@@ -31,7 +31,7 @@
   </thead>
   <tbody>
     <% @contracts.each do |contract| %>
-      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all(&:signed?) && contract.party(:hcb)&.pending? %> <%= "admin-bg-transit" if contract.signed? %>">
+      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all?(&:signed?) && contract.party(:hcb)&.pending? %> <%= "admin-bg-transit" if contract.signed? %>">
         <td><%= contract.id %></td>
         <td><%= contract.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= contract.class.name.demodulize.underscore.humanize %></td>
@@ -51,15 +51,23 @@
             <% elsif %>
               <span class="error"><%= party.email %></span>
             <% end %>
-            (<%= party.role %>): <span class="<%= party.signed? ? "success" : "error" %>"><%= party.aasm_state %></span>
+            (<%= party.role %>):
+            <% if party.hcb? && party.pending? %>
+              <%= link_to "pending (click to sign)", contract_party_path(party), class: "error" %>
+            <% else %>
+              <span class="<%= party.signed? ? "success" : "error" %>"><%= party.aasm_state %></span>
+            <% end %>
             <br>
           <% end %>
         </td>
-        <td class="text-nowrap">
+        <td>
           <%= link_to "DocuSeal", contract.docuseal_submission_url if contract.sent_with_docuseal? %>
           <%= link_to "Document", contract.document if contract.document.present? %>
         </td>
         <td class="text-nowrap">
+          <% contract.parties.not_hcb.pending.order(role: :desc).each do |party| %>
+            <%= link_to "Resend to #{party.role}", resend_contract_party_path(party), method: :post %><br>
+          <% end %>
           <%= link_to "Void", void_contract_path(contract), method: :post if contract.pending? || contract.sent? %>
         </td>
       </tr>
