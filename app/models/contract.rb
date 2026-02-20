@@ -41,6 +41,7 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
+  has_one :organizer_position, required: false
   has_many :parties
 
   validate :one_non_void_contract
