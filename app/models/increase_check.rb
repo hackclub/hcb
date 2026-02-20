@@ -204,9 +204,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def state
-    if column?
-      :info
-    elsif pending?
+    if pending?
       :muted
     elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
