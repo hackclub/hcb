@@ -34,14 +34,11 @@
 class InvoicePayout < ApplicationRecord
   has_paper_trail
 
-  # Stripe provides a field called type, which is reserved in rails for STI.
-  # This removes the Rails reservation on 'type' for this class.
-  self.inheritance_column = nil
+  include StripePayoutable
 
   # find invoice payouts that don't yet have an associated transaction
   scope :lacking_transaction, -> { includes(:t_transaction).where(transactions: { invoice_payout_id: nil }) }
   scope :invoice_hcb_code, -> { where("statement_descriptor ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
-  scope :should_sync, -> { where(status: ["pending", "in_transit"]).or(where(status: "paid", stripe_created_at: 3.days.ago..)) } # `paid` payouts can still transition to `failed`
 
   # although it normally doesn't make sense for a paynot not to be linked to an invoice,
   # Stripe's schema makes this possible, and when that happens, requiring invoice<>payout breaks bank
@@ -52,26 +49,6 @@ class InvoicePayout < ApplicationRecord
   delegate :hcb_code, :local_hcb_code, to: :invoice
 
   after_initialize :default_values
-  before_create :create_stripe_payout
-
-  def set_fields_from_stripe_payout(payout)
-    self.amount = payout.amount
-    self.arrival_date = Util.unixtime(payout.arrival_date)
-    self.automatic = payout.automatic
-    self.stripe_balance_transaction_id = payout.balance_transaction
-    self.stripe_created_at = Util.unixtime(payout.created)
-    self.currency = payout.currency
-    self.description = payout.description
-    self.stripe_destination_id = payout.destination
-    self.failure_stripe_balance_transaction_id = payout.failure_balance_transaction
-    self.failure_code = payout.failure_code
-    self.failure_message = payout.failure_message
-    self.method = payout.method
-    self.source_type = payout.source_type
-    self.statement_descriptor = payout.statement_descriptor
-    self.status = payout.status
-    self.type = payout.type
-  end
 
   # Description when displaying a payout in a form dropdown for associating
   # transactions.
@@ -86,13 +63,6 @@ class InvoicePayout < ApplicationRecord
     return unless invoice
 
     self.statement_descriptor ||= "HCB-#{local_hcb_code.short_code}"
-  end
-
-  def create_stripe_payout
-    payout = StripeService::Payout.create(stripe_payout_params)
-    self.stripe_payout_id = payout.id
-
-    self.set_fields_from_stripe_payout(payout)
   end
 
   def stripe_payout_params

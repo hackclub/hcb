@@ -63,6 +63,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
   include Categorizable
+  include HcbCodeScopeable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
@@ -123,16 +124,6 @@ class CanonicalPendingTransaction < ApplicationRecord
       .includes(:canonical_pending_declined_mapping)
       .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
   }
-  scope :missing_hcb_code, -> { where(hcb_code: nil) }
-  scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
-  scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
-  scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
-  scope :ach_transfer_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}%'") }
-  scope :check_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}%'") }
-  scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
-  scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
-  scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
   scope :fronted, -> { where(fronted: true) }
   scope :not_fronted, -> { where(fronted: false) }
   scope :not_declined, -> { includes(:canonical_pending_declined_mapping).where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil }) }
@@ -146,8 +137,6 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 
   validates :custom_memo, presence: true, allow_nil: true
@@ -418,16 +407,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   private
-
-  def write_hcb_code
-    safely do
-      code = ::TransactionGroupingEngine::Calculate::HcbCode.new(canonical_transaction_or_canonical_pending_transaction: self).run
-
-      self.update_column(:hcb_code, code)
-
-      ::HcbCodeService::FindOrCreate.new(hcb_code: code).run
-    end
-  end
 
   def friendly_memo_in_memory_backup
     @friendly_memo_in_memory_backup ||= PendingTransactionEngine::FriendlyMemoService::Generate.new(pending_canonical_transaction: self).run
