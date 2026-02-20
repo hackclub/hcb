@@ -26,6 +26,7 @@
     <%= content_tag :span, @g_suite.domain, class: "badge bg-info h3 ml0" if @g_suite %>
   </h1>
   <%= render partial: "application/admin_viewer", locals: { record: @g_suite } %>
+  <div class="mb-2"></div>
   <% if @g_suite.present? %>
     <% if @g_suite.revocation.present? %>
       <%= render "g_suite_revocations/notice" %>

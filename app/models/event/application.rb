@@ -69,6 +69,7 @@ class Event
 
     belongs_to :user
     belongs_to :event, optional: true
+    belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
@@ -225,6 +226,10 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
+    def contract_notify_hcb?
+      !teen_led?
+    end
+
     def create_contract
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
@@ -246,7 +251,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.age.present? && user.age < 18
         required_fields.push("cosigner_email")
       end
 
@@ -293,7 +298,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!
+    def activate_event!(risk_level:, tags: [])
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
@@ -302,8 +307,11 @@ class Event
         name:,
         country: address_country,
         point_of_contact_id: poc.id,
-        application: self
+        application: self,
+        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+        risk_level:
       )
+      contract.create_document!
 
       service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
       invite = service.model
@@ -332,6 +340,16 @@ class Event
 
     def respondent_url
       url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
     end
 
     private
