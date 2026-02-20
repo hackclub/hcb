@@ -47,10 +47,10 @@
 </div>
 
 <% if @party.hcb? %>
-  <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="reject_and_resend_modal">
+  <section class="modal bg-snow" data-behavior="modal" role="dialog" id="reject_and_resend_modal">
     <%= modal_header "Reject and resend contract" %>
     <p>Use this if the signee or cosigner has made an error in filling out the contract.</p>
-    <p>This will void the exisitng contract and resend a new one, along with the message you provide:</p>
+    <p>This will void the existing contract and resend a new one, along with the message you provide:</p>
     
     <%= form_with url: reject_and_resend_contract_path(@contract) do |form| %>
       <div class="field">
