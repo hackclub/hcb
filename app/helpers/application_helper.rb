@@ -278,6 +278,11 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
