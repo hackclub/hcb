@@ -7,6 +7,8 @@
 <% if @hcb_code.increase_check.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.increase_check.column_id}", class: "btn bg-accent", target: "_blank" %>
+    <%= button_to "Reissue", reissue_increase_check_path(@hcb_code.increase_check), class: "btn bg-accent", target: "_blank" %>
+    <%= button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-muted", target: "_blank" %>
   <% end %>
 <% end %>
 

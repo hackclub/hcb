@@ -425,6 +425,8 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "stop"
+      post "reissue"
     end
   end
 
