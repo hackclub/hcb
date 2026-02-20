@@ -265,7 +265,15 @@ class IncreaseCheck < ApplicationRecord
 
     stopped_id = column_id
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+    column_check = ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+
+    update!(
+      column_id: column_check["id"],
+      column_object: column_check,
+      check_number: column_check["check_number"],
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
+    )
   end
 
   def reissue!
