@@ -263,9 +263,7 @@ class IncreaseCheck < ApplicationRecord
   def stop!
     return unless column_id.present? && (column_issued? || column_stopped?)
 
-    stopped_id = column_id
-
-    column_check = ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}") unless column_stopped?
 
     update!(
       column_id: column_check["id"],
