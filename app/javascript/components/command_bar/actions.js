@@ -575,8 +575,8 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Contracts',
       icon: <Icon glyph="docs" size={16} />,
-      perform: navigate('/admin/contracts')
-    }
+      perform: navigate('/admin/contracts'),
+    },
   ]
 }
 
