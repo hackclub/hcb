@@ -307,7 +307,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_1',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications',
+      name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
       perform: () => (window.location.href = adminUrls['Applications']),
     },
@@ -568,6 +568,14 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'New teenagers leaderboard',
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_34',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Applications (HCB)',
+      icon: <Icon glyph="post" size={16} />,
+      perform: navigate('/admin/applications'),
     },
   ]
 }
