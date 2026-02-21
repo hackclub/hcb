@@ -70,8 +70,11 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after do
-        if contractable.contract_notify_when_sent
+      after do |reissue_signee_message = nil, reissue_cosigner_message = nil|
+        if reissue_signee_message.present? || reissue_cosigner_message.present?
+          party(:signee).notify_reissued(message: reissue_signee_message)
+          party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
+        elsif contractable.contract_notify_when_sent
           parties.not_hcb.each(&:notify)
         end
       end
@@ -119,7 +122,7 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
   end
 
-  def send!
+  def send!(reissue_signee_message: nil, reissue_cosigner_message: nil)
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
     existing_roles = parties.map(&:role)
@@ -128,7 +131,7 @@ class Contract < ApplicationRecord
 
     send_using_docuseal! unless sent_with_manual?
 
-    mark_sent!
+    mark_sent!(reissue_signee_message, reissue_cosigner_message)
   end
 
   def event

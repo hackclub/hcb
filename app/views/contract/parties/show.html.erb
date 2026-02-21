@@ -50,13 +50,22 @@
   <section class="modal bg-snow" data-behavior="modal" role="dialog" id="reissue_modal">
     <%= modal_header "Reissue contract" %>
     <p>Use this if the signee or cosigner has made an error in filling out the contract.</p>
-    <p>This will void the existing contract and resend a new one, along with the message you provide:</p>
+    <p>
+      This will void the existing contract and resend a new contract along with the messages you provide:
+    </p>
     
     <%= form_with url: reissue_contract_path(@contract) do |form| %>
       <div class="field">
-        <%= form.label :message, "Message" %>
-        <%= form.text_area :message %>
+        <%= form.label :signee_message, "Signee message" %>
+        <%= form.text_area :signee_message, placeholder: "Leave blank if the signee does not need to make any changes", rows: 2 %>
       </div>
+
+      <% if @contract.party(:cosigner).present? %>
+        <div class="field">
+          <%= form.label :cosigner_message, "Cosigner message" %>
+          <%= form.text_area :cosigner_message, placeholder: "Leave blank if the cosigner does not need to make any changes", rows: 2 %>
+        </div>
+      <% end %>
 
       <%= form.submit "Reissue", class: "btn" %>
     <% end %>
