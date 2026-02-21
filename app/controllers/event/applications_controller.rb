@@ -3,6 +3,7 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
+    before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -243,6 +244,13 @@ class Event
     def record_pageview
       if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
+      end
+    end
+
+    def prevent_access_after_submission
+      unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
+        return
       end
     end
 
