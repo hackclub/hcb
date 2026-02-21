@@ -60,13 +60,13 @@
     <%= form_with url: reissue_contract_path(@contract) do |form| %>
       <div class="field">
         <%= form.label :signee_message, "Signee message" %>
-        <%= form.text_area :signee_message, placeholder: "Leave blank if the signee does not need to make any changes", rows: 2, required: @contract.party(:cosigner).nil? %>
+        <%= form.text_area :signee_message, placeholder: "Leave blank if the signee does not need to make any changes", rows: 2, required: @contract.party(:cosigner).nil?, data: { behavior: "no_autosize" } %>
       </div>
 
       <% if @contract.party(:cosigner).present? %>
         <div class="field">
           <%= form.label :cosigner_message, "Cosigner message" %>
-          <%= form.text_area :cosigner_message, placeholder: "Leave blank if the cosigner does not need to make any changes", rows: 2 %>
+          <%= form.text_area :cosigner_message, placeholder: "Leave blank if the cosigner does not need to make any changes", rows: 2, data: { behavior: "no_autosize" } %>
         </div>
       <% end %>
 
