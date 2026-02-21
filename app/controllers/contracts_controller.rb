@@ -18,7 +18,7 @@ class ContractsController < ApplicationController
     cosigner_message = params[:cosigner_message].presence
 
     unless signee_message.present? || cosigner_message.present?
-      redirect_back_or_to contract_party_path(@contract.party(:hcb)), flash: { error: "You must provide a message for the signee or cosigner, or both." }
+      redirect_back_or_to contract_party_path(@contract.party(:hcb)), flash: { error: "You must provide a message for the signee, cosigner, or both." }
       return
     end
 
