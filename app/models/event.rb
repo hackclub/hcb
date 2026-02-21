@@ -105,7 +105,6 @@ class Event < ApplicationRecord
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
-  scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -127,33 +126,35 @@ class Event < ApplicationRecord
   }
 
   def ancestor_ids
-    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    sql = <<-SQL.squish
       WITH RECURSIVE parent_events AS (
         SELECT id, parent_id
         FROM events
-        WHERE id = #{id}
+        WHERE id = $1
         UNION ALL
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
       )
-      SELECT id FROM parent_events WHERE id != #{id};
+      SELECT id FROM parent_events WHERE id != $1
     SQL
+    [id] + Event.connection.exec_query(sql, "SQL", [id]).rows.flatten
   end
 
   def descendant_ids
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    sql = <<-SQL.squish
       WITH RECURSIVE child_events AS (
         SELECT id, parent_id
         FROM events
-        WHERE parent_id = #{id}
+        WHERE parent_id = $1
         UNION ALL
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN child_events ce ON e.parent_id = ce.id
       )
-      SELECT id FROM child_events;
+      SELECT id FROM child_events
     SQL
+    Event.connection.exec_query(sql, "SQL", [id]).rows.flatten
   end
 
   def ancestors
@@ -429,7 +430,7 @@ class Event < ApplicationRecord
   validate :contract_signed, unless: -> { demo_mode? || financially_frozen? }
 
   validates :name, presence: true
-  before_validation { self.name = name.gsub(/\s/, " ").strip unless name.nil? }
+  before_validation { self.name = name.gsub(/\s/, " ").strip if name }
 
   validates :slug, presence: true, format: { without: /\s/ }
   validates :slug, format: { without: /\A\d+\z/ }
@@ -511,13 +512,6 @@ class Event < ApplicationRecord
 
   def admin_dropdown_description
     "#{name} - #{id}#{" (DEMO)" if demo_mode?}"
-
-    # Causing n+1 queries on admin pages with an event dropdown
-
-    # badges = BADGES.map { |_, badge| send(badge[:qualifier]) ? badge[:emoji] : nil }.compact
-    # desc += " [#{badges.join(' ')}]" if badges.any?
-
-    # desc
   end
 
   def disbursement_dropdown_description
@@ -538,13 +532,13 @@ class Event < ApplicationRecord
     # because pending TXs will silently switch to complete and the admin will not
     # be notified to update the Emburse budget for this event later when that happens.
     # See also PR #317.
-    self.emburse_transactions.undeclined.where(emburse_card_uuid: nil).sum(:amount)
+    emburse_transactions.undeclined.where(emburse_card_uuid: nil).sum(:amount)
   end
 
   def emburse_balance
-    completed_t = self.emburse_transactions.completed.sum(:amount)
+    completed_t = emburse_transactions.completed.sum(:amount)
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
-    pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
+    pending_t = emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
   end
 
@@ -820,7 +814,7 @@ class Event < ApplicationRecord
     return 100 if plan.exempt_from_wire_minimum?
     return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 
-    return 500_00
+    500_00
   end
 
   def omit_stats?
@@ -847,7 +841,7 @@ class Event < ApplicationRecord
 
   def sync_to_airtable
     # Sync stats to application's airtable record
-    ApplicationsTable.all(filter: "{HCB ID} = \"#{self.id}\"").each do |app| # rubocop:disable Rails/FindEach
+    ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").each do |app| # rubocop:disable Rails/FindEach
       app["Active Teens (last 30 days)"] = users.where(teenager: true).active.size
       app["HCB POC Email"] = point_of_contact.email
 
@@ -864,7 +858,7 @@ class Event < ApplicationRecord
   def set_airtable_status(status)
     app = ApplicationsTable.all(filter: "{HCB ID} = \"#{id}\"").first
 
-    return unless app.present?
+    return unless app
 
     app["Status"] = status unless app["Status"] == "Onboarded"
 
@@ -872,7 +866,7 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    organizer_positions.joins(:user).count { |op| op.user.is_teenager? && op.user.active? }
+    users.where(teenager: true).active.distinct.count
   end
 
   def subevents_enabled?
@@ -889,15 +883,15 @@ class Event < ApplicationRecord
   end
 
   def merchants
-    settled_merchants = canonical_transactions.map do |ct|
+    settled_merchants = canonical_transactions.filter_map do |ct|
       rst = ct.raw_stripe_transaction
       stripe_transaction_merchant(rst) if rst.present?
-    end.select(&:present?)
+    end
 
-    pending_merchants = canonical_pending_transactions.map do |cpt|
+    pending_merchants = canonical_pending_transactions.filter_map do |cpt|
       rpst = cpt.raw_pending_stripe_transaction
       stripe_transaction_merchant(rpst) if rpst.present?
-    end.select(&:present?)
+    end
 
     settled_merchants.concat(pending_merchants)
   end
@@ -989,7 +983,7 @@ class Event < ApplicationRecord
   end
 
   def parent_id_is_acyclical
-    return unless parent_id.present? && parent_id_changed?
+    return unless parent_id && parent_id_changed?
 
     current_event = self
     visited_event_ids = Set.new

@@ -109,7 +109,7 @@ module HasWiseRecipient
         fields << { type: :date_field, key: "recipient_birthday", label: "Recipient's date of birth" }
         fields << ACCOUNT_NUMBER_FIELD
       end
-      return fields
+      fields
     end
 
     def self.recipient_information_accessors

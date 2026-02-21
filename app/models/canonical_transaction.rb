@@ -128,7 +128,7 @@ class CanonicalTransaction < ApplicationRecord
     self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
                               li.id
                             elsif linked_object.present?
-                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                              linked_object&.canonical_pending_transaction&.ledger_item_id
                             elsif raw_stripe_transaction&.stripe_authorization_id
                               rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
                               rpst&.canonical_pending_transaction&.ledger_item_id

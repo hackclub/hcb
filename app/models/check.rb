@@ -177,7 +177,7 @@ class Check < ApplicationRecord
   end
 
   def smart_memo
-    lob_address.try(:name).try(:upcase)
+    lob_address&.name&.upcase
   end
 
   include HasHcbCode

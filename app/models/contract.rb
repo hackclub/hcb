@@ -53,7 +53,7 @@ class Contract < ApplicationRecord
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
   after_create do
     whodunnit = PaperTrail.request.whodunnit
-    whodunnit_user = whodunnit.present? ? User.find(whodunnit) : nil
+    whodunnit_user = whodunnit.presence && User.find(whodunnit)
 
     user = User.system_user
     if whodunnit_user&.admin?

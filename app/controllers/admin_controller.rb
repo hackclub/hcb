@@ -1210,8 +1210,8 @@ class AdminController < Admin::BaseController
   end
 
   def balances
-    @start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-    @end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    @start_date = params[:start_date].presence && Date.parse(params[:start_date])
+    @end_date = params[:end_date].presence && Date.parse(params[:end_date])
     @monthly_breakdown = params[:monthly_breakdown] || false
 
     if @start_date && @end_date && @start_date > @end_date

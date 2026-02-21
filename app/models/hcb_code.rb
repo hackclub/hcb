@@ -80,10 +80,11 @@ class HcbCode < ApplicationRecord
   end
 
   def popover_path(**params)
-    author_img_param = "&transaction_show_author_img=#{params[:transaction_show_author_img]}" if params[:transaction_show_author_img]
-    receipt_button_param = "&transaction_show_receipt_button=#{params[:transaction_show_receipt_button]}" if params[:transaction_show_receipt_button]
-    ledger_instance_param = "&ledger_instance=#{params[:ledger_instance]}" if params[:ledger_instance]
-    "/hcb/#{hashid}?frame=true#{author_img_param}#{receipt_button_param}#{ledger_instance_param}"
+    query_params = { frame: true }
+    query_params[:transaction_show_author_img] = params[:transaction_show_author_img] if params[:transaction_show_author_img]
+    query_params[:transaction_show_receipt_button] = params[:transaction_show_receipt_button] if params[:transaction_show_receipt_button]
+    query_params[:ledger_instance] = params[:ledger_instance] if params[:ledger_instance]
+    "/hcb/#{hashid}?#{query_params.to_query}"
   end
 
   def receipt_upload_email
@@ -105,7 +106,7 @@ class HcbCode < ApplicationRecord
   end
 
   def date
-    @date ||= ct.try(:date) || pt.try(:date)
+    @date ||= ct&.date || pt&.date
   end
 
   def has_pending_expired?
@@ -235,15 +236,15 @@ class HcbCode < ApplicationRecord
         return Event.where(id: ids) unless ids.empty?
 
         ids.concat([
-          invoice.try(:event).try(:id),
-          donation.try(:event).try(:id),
-          ach_transfer.try(:event).try(:id),
-          check.try(:event).try(:id),
-          increase_check.try(:event).try(:id),
-          outgoing_disbursement.try(:event).try(:id),
-          incoming_disbursement.try(:event).try(:id),
-          check_deposit.try(:event).try(:id),
-          bank_fee.try(:event).try(:id),
+          invoice&.event&.id,
+          donation&.event&.id,
+          ach_transfer&.event&.id,
+          check&.event&.id,
+          increase_check&.event&.id,
+          outgoing_disbursement&.event&.id,
+          incoming_disbursement&.event&.id,
+          check_deposit&.event&.id,
+          bank_fee&.event&.id,
         ].compact.uniq)
 
         ids << EventMappingEngine::EventIds::INCOMING_FEES if incoming_bank_fee?
@@ -272,11 +273,11 @@ class HcbCode < ApplicationRecord
   end
 
   def stripe_card
-    pt.try(:stripe_card) || ct.try(:stripe_card)
+    pt&.stripe_card || ct&.stripe_card
   end
 
   def stripe_cardholder
-    pt.try(:stripe_cardholder) || ct.try(:stripe_cardholder)
+    pt&.stripe_cardholder || ct&.stripe_cardholder
   end
 
   def stripe_merchant
@@ -304,7 +305,7 @@ class HcbCode < ApplicationRecord
   end
 
   def stripe_auth_dashboard_url
-    pt.try(:stripe_auth_dashboard_url) || ct.try(:stripe_auth_dashboard_url)
+    pt&.stripe_auth_dashboard_url || ct&.stripe_auth_dashboard_url
   end
 
   def raw_emburse_transaction
@@ -366,7 +367,7 @@ class HcbCode < ApplicationRecord
   def disbursement?
     Rails.error.unexpected "HcbCode#disbursement? accessed"
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
   end
 
   def outgoing_disbursement?
@@ -631,13 +632,13 @@ class HcbCode < ApplicationRecord
 
   def comment_recipients_for(comment)
     users = []
-    users += self.comments.map(&:user)
-    users += self.comments.flat_map(&:mentioned_users)
-    users += self.events.flat_map(&:users).reject(&:my_threads?)
+    users += comments.map(&:user)
+    users += comments.flat_map(&:mentioned_users)
+    users += events.flat_map(&:users).reject(&:my_threads?)
     users += [author] if author
 
     if comment.admin_only?
-      users += self.events.map(&:point_of_contact)
+      users += events.map(&:point_of_contact)
       return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
@@ -645,15 +646,15 @@ class HcbCode < ApplicationRecord
   end
 
   def comment_mailer_subject
-    return "New comment on #{self.memo}."
+    "New comment on #{memo}."
   end
 
   def comment_mentionable(current_user: nil)
     users = []
-    users += self.comments.includes(:user).map(&:user)
-    users += self.comments.flat_map(&:mentioned_users)
-    users += self.events.includes(:users).select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
-    users += self.events.includes(:point_of_contact).map(&:point_of_contact)
+    users += comments.includes(:user).map(&:user)
+    users += comments.flat_map(&:mentioned_users)
+    users += events.includes(:users).select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
+    users += events.includes(:point_of_contact).map(&:point_of_contact)
 
     users.compact.uniq
   end

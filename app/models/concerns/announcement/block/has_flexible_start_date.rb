@@ -6,7 +6,7 @@ class Announcement
       extend ActiveSupport::Concern
 
       def start_date_param
-        self.parameters["start_date"].present? ? DateTime.parse(self.parameters["start_date"]) : nil
+        parameters["start_date"].presence && DateTime.parse(parameters["start_date"])
       end
     end
 

@@ -203,13 +203,13 @@ class Donation < ApplicationRecord
   end
 
   def send_receipt!
-    return unless email.present?
+    return if email.blank?
 
     DonationMailer.with(donation: self).donor_receipt.deliver_later
   end
 
   def arrival_date
-    arrival = self.payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
+    arrival = payout&.arrival_date || 3.business_days.after(payout_creation_queued_for)
 
     # Add 1 day to account for plaid and HCB processing time
     arrival + 1.day

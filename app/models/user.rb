@@ -93,8 +93,8 @@ class User < ApplicationRecord
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_positions
   has_many :reader_organizer_positions, -> { where(organizer_positions: { role: :reader }) }, class_name: "OrganizerPosition", inverse_of: :user
-  has_many :organizer_position_deletion_requests, inverse_of: :submitted_by
-  has_many :organizer_position_deletion_requests, inverse_of: :closed_by
+  has_many :submitted_organizer_position_deletion_requests, class_name: "OrganizerPositionDeletionRequest", inverse_of: :submitted_by
+  has_many :closed_organizer_position_deletion_requests, class_name: "OrganizerPositionDeletionRequest", inverse_of: :closed_by
   has_many :webauthn_credentials
   has_many :mailbox_addresses
   has_many :api_tokens
@@ -116,8 +116,8 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
+  has_many :fulfilled_g_suite_accounts, class_name: "GSuiteAccount", inverse_of: :fulfilled_by
+  has_many :created_g_suite_accounts, class_name: "GSuiteAccount", inverse_of: :creator
 
   has_many :emburse_transfers
   has_many :emburse_card_requests
@@ -255,22 +255,22 @@ class User < ApplicationRecord
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def auditor?
-    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+    %w[auditor admin superadmin].include?(access_level) && !pretend_is_not_admin
   end
 
   # admin? by default, takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def admin?(override_pretend: false)
-    has_admin_role = ["admin", "superadmin"].include?(self.access_level)
+    has_admin_role = %w[admin superadmin].include?(access_level)
     return has_admin_role if override_pretend
 
-    has_admin_role && !self.pretend_is_not_admin
+    has_admin_role && !pretend_is_not_admin
   end
 
   # admin_override_pretend? ignores an admin user's
   # preference to pretend not to be an admin.
   def admin_override_pretend?
-    ["auditor", "admin", "superadmin"].include?(self.access_level)
+    %w[auditor admin superadmin].include?(access_level)
   end
 
   def make_admin!
@@ -333,7 +333,7 @@ class User < ApplicationRecord
   end
 
   def pretty_phone_number
-    Phonelib.parse(self.phone_number).national
+    Phonelib.parse(phone_number).national
   end
 
   def admin_dropdown_description
@@ -375,7 +375,7 @@ class User < ApplicationRecord
   end
 
   def active_mailbox_address
-    self.mailbox_addresses.activated.first
+    mailbox_addresses.activated.first
   end
 
   def receipt_bin
@@ -413,7 +413,7 @@ class User < ApplicationRecord
   end
 
   def hack_clubber?
-    return events.organized_by_hack_clubbers.any?
+    events.organized_by_hack_clubbers.any?
   end
 
   def age_on(date)
@@ -466,7 +466,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    card_grants.size >= 1 && events.size == 0
+    card_grants.any? && events.none?
   end
 
   def backup_codes_enabled?
@@ -492,8 +492,8 @@ class User < ApplicationRecord
 
   def activate_backup_codes!
     ActiveRecord::Base.transaction do
-      backup_codes.active.map(&:mark_discarded!)
-      backup_codes.previewed.map(&:mark_active!)
+      backup_codes.active.each(&:mark_discarded!)
+      backup_codes.previewed.each(&:mark_active!)
     end
     User::BackupCodeMailer.with(user_id: id).new_codes_activated.deliver_now
   end
@@ -518,7 +518,7 @@ class User < ApplicationRecord
   def disable_backup_codes!
     ActiveRecord::Base.transaction do
       backup_codes.previewed.destroy_all
-      backup_codes.active.map(&:mark_discarded!)
+      backup_codes.active.each(&:mark_discarded!)
     end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
@@ -558,7 +558,7 @@ class User < ApplicationRecord
 
   # Total new teens via referrals links created by this user (admin)
   def new_teenagers_from_referrals_count
-    self.referral_links.sum { |link| link.new_teenagers.size }
+    referral_links.sum { |link| link.new_teenagers.size }
   end
 
   def has_discord_account?
@@ -566,7 +566,7 @@ class User < ApplicationRecord
   end
 
   def discord_account
-    return unless discord_id.present?
+    return unless discord_id
 
     @discord_bot ||= Discordrb::Bot.new token: Credentials.fetch(:DISCORD__BOT_TOKEN)
 

@@ -160,9 +160,7 @@ class GSuite < ApplicationRecord
 
       inactive_accounts.count == res_count
     rescue => e
-      if e.message.include?("Domain not found")
-        return true
-      end
+      return true if e.message.include?("Domain not found")
 
       Rails.error.report(e)
       throw :abort

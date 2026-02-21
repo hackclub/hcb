@@ -120,9 +120,6 @@ class AchTransfer < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
 
-  has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
-  has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
-
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
 
   scope :realtime, -> { where("column_id ILIKE 'rttr%'") }

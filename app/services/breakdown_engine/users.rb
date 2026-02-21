@@ -19,7 +19,7 @@ module BreakdownEngine
                          stripe_cardholders: {
                            user_id: position.user.id
                          },
-                         raw_stripe_transactions: @start_date.present? || @end_date.present? ? { created_at: @start_date..@end_date } : nil
+                         raw_stripe_transactions: (@start_date.present? || @end_date.present?) ? { created_at: @start_date..@end_date } : nil
                        }.compact)
                        .sum(:amount_cents).to_f / 100 * -1
 

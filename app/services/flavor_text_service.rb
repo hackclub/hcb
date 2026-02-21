@@ -13,9 +13,7 @@ class FlavorTextService
 
   def generate
     flavor_text = sample
-    flavor_text = flavor_text.call if flavor_text.respond_to? :call
-
-    flavor_text
+    flavor_text.respond_to?(:call) ? flavor_text.call : flavor_text
   end
 
   def development_flavor_texts
@@ -223,7 +221,6 @@ class FlavorTextService
       "TODO: get that bread",
       "Coming soon to a screen near your face",
       "Coming soon to a screen near you",
-      "As seen on the internet",
       "Operating at a loss so you don't have to",
       "Made by a non-profit for non-profits",
       "By hackers, for hackers",
