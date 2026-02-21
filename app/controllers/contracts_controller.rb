@@ -48,7 +48,7 @@ class ContractsController < ApplicationController
   rescue => e
     Rails.error.report(e)
     flash[:error] = "Failed to reissue contract."
-    redirect_to new_contract.redirect_path
+    redirect_to @contract.redirect_path
   end
 
   private
