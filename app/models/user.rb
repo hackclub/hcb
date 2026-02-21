@@ -466,7 +466,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    card_grants.size >= 1 && events.size == 0
+    card_grants.any? && events.none?
   end
 
   def backup_codes_enabled?
