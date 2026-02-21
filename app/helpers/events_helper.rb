@@ -264,7 +264,7 @@ module EventsHelper
 
   def transaction_memo(tx)
     # needed to handle mock data in playground mode
-    if tx.local_hcb_code.method(:memo).parameters.size == 0
+    if tx.local_hcb_code.method(:memo).parameters.empty?
       tx.local_hcb_code.memo
     else
       tx.local_hcb_code.memo(event: @event)
