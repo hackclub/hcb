@@ -16,7 +16,7 @@
             <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
           <% end %>
 
-          <%= link_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error" %>
+          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?" } %>
           <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
         </div>
 
