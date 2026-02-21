@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
     Current.session = begin
       # Find a valid session (not expired) using the session token
       session_token = cookies.encrypted[:session_token]
-      session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
+      session_token.presence && User::Session.not_expired.find_by(session_token:)
     end
   end
 
