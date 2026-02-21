@@ -21,12 +21,10 @@
   <div class="flex flex-row gap-6 items-start justify-center">
     <%= link_to "← Back", personal_info_application_path(@application), class: "btn bg-muted" %>
   </div>
-
-  <% if @application.draft? %>
-    <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.ready_to_submit?}", disabled: !@application.ready_to_submit?, "aria-label": "This application is not ready to submit" do %>
-      Submit application
-    <% end %>
-  <% else %>
-    <%= link_to "Submit application", application_path(@application), class: "btn bg-blue" %>
+  <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
+    <%= form.hidden_field :return_to, value: review_application_path(@application) %>
+  <% end %>
+  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.ready_to_submit?}", disabled: !@application.ready_to_submit?, "aria-label": "This application is not ready to submit" do %>
+    Submit application
   <% end %>
 <% end %>
