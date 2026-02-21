@@ -872,7 +872,7 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    organizer_positions.joins(:user).count { |op| op.user.is_teenager? && op.user.active? }
+    users.where(teenager: true).active.distinct.count
   end
 
   def subevents_enabled?
