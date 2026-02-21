@@ -250,7 +250,6 @@ class Event
     def prevent_access_after_submission
       unless @application.draft? || current_user.auditor?
         redirect_to application_path(@application)
-        return
       end
     end
 
