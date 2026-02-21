@@ -3,7 +3,7 @@
 <% if @message.present? %>
   <p>
     We have reviewed the agreement you signed for your child's organization on HCB, <%= @contract.event_name %>.
-    However, we cannot finalize this agreement due to an issue in your submission: 
+    However, we cannot finalize this agreement due to an issue in your submission:
   </p>
   <blockquote><%== MarkdownService.instance.renderer.render @message %></blockquote>
 <% else %>

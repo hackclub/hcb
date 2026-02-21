@@ -25,7 +25,7 @@ class ContractsController < ApplicationController
     @contract.mark_voided!
 
     new_contract = nil
-    
+
     ActiveRecord::Base.transaction do
       new_contract = Contract.create!(
         contractable: @contract.contractable,
