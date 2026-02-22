@@ -49,7 +49,7 @@
         <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
       </div>
 
-      <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
+      <%= render partial: "transfers/recipient_details", locals: { form:, disabled: } %>
     </div>
   </div>
 
