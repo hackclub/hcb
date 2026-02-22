@@ -250,8 +250,8 @@ class IncreaseCheck < ApplicationRecord
     column_issued? || column_manual_review?
   end
 
-  def should_or_has_settled?
-    column_pending_deposit? || column_settled?
+  def can_reissue?
+    !(column_pending_deposit? || column_settled?)
   end
 
   def address
@@ -285,7 +285,7 @@ class IncreaseCheck < ApplicationRecord
 
   def reissue!
     # do we want to allow reissuing if outbound checks arent settled but cant be stopped (ex initiated status)?
-    return if column_id.nil? || should_or_has_settled?
+    return if column_id.nil? || !can_reissue?
 
     stopped_id = column_id
 
