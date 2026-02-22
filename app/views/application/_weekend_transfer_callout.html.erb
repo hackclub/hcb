@@ -1,6 +1,6 @@
 <% if Date.today.on_weekend? %>
   <%= render "application/callout", type: "warning", title: "HCB team is out of office", class: "mt-2 mb-0" do %>
-    It is currently the weekend and the HCB team is out of office. Transfers will be reviewed on the next business day.
+    It is currently the weekend and the HCB team is out of office. Transfers will be reviewed on the <span class="tooltipped" aria-label="<%= Date.today.next_occurring(:monday).strftime("%b %e, %Y") %>">next business day</span>.
     <br><br>
     If you have an urgent request, please call <%= help_phone %>.
   <% end %>
