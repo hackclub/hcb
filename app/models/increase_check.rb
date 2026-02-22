@@ -246,8 +246,12 @@ class IncreaseCheck < ApplicationRecord
     approved?
   end
 
-  def stopped?
-    column_pending_stop? || column_stopped? || column_rejected?
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
+
+  def should_or_has_settled?
+    column_pending_deposit? || column_settled?
   end
 
   def address
@@ -263,7 +267,8 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def stop!
-    return if column_id.nil? || stopped?
+    # https://column.com/docs/api/#check-transfer/stop
+    return if column_id.nil? || !can_stop?
 
     column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
@@ -279,11 +284,11 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    return if column_id.nil? || column_pending_deposit? || column_settled?
+    return if column_id.nil? || should_or_has_settled?
 
     stopped_id = column_id
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_pending_stop? || column_stopped?
+    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") if can_stop?
 
     update!(
       column_id: nil,
