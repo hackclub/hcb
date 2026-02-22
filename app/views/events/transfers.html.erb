@@ -34,7 +34,7 @@
 
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
   <% end %>
   <div class="filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
@@ -175,5 +175,5 @@
 <% end %>
 
 <% if organizer_signed_in? %>
-  <%= render "events/transfer_modal" %>
+  <%= render "events/transfers/modal" %>
 <% end %>
