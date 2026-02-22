@@ -149,7 +149,7 @@
                 data: { extraction_field: "seller_address_line_2" } %>
             </div>
           </div>
-    
+
           <div class="flex gap-2">
             <div class="flex-auto">
               <%= form.label :address_city, "City" %>
@@ -163,7 +163,7 @@
               <%= form.label :address_state, "State" %>
               <%= form.select :address_state, IncreaseCheck::US_STATES,
               { prompt: "Select a state" },
-              class: "min-h-0 h-9", 
+              class: "min-h-0 h-9",
               disabled: disabled,
               data: { extraction_field: "seller_address_state_code" } %>
               <% @check.errors.messages_for(:address_state).each do |message| %>
@@ -171,7 +171,7 @@
               <% end %>
             </div>
           </div>
-    
+
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_zip, "ZIP" %>
             <%= form.text_field :address_zip, 
@@ -184,7 +184,7 @@
               <div class="primary"><%= message %></div>
             <% end %>
           </div>
-    
+
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_country, "Country" %>
             <%= form.text_field :address_country,
@@ -194,7 +194,7 @@
           </div>
         </div>
       </template>
-    
+
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
           <button type="button" 
