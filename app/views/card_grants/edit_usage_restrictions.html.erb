@@ -1,10 +1,9 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
   <%= render "card_grants/edit_nav", active: "usage" %>
 
-<div class="flex gap-3">
-  <div>
-    <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
-
+  <div class="flex gap-3">
+    <div>
+      <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
         <div class="field">
           <%= form.label :merchant_lock, "Update approved merchants" %>
           <%= form.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: @card_grant.merchant_lock.join(", ") %>
@@ -31,11 +30,10 @@
           <li>If you have multiple locks set, transactions that match any of those locks will be allowed.</li>
         </ul>
 
-      <div class="actions">
-        <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
-      </div>
-    <% end %>
+        <div class="actions">
+          <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
+        </div>
+      <% end %>
+    </div>
   </div>
-</div>
-
 </turbo-frame>
