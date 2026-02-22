@@ -267,6 +267,8 @@ class IncreaseCheck < ApplicationRecord
 
     column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+
     update!(
       column_id: column_check["id"],
       column_object: column_check,
