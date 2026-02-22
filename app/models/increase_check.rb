@@ -284,6 +284,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
+    # do we want to allow reissuing if outbound checks arent settled but cant be stopped (ex initiated status)?
     return if column_id.nil? || should_or_has_settled?
 
     stopped_id = column_id
