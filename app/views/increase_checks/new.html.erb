@@ -3,9 +3,8 @@
 <% subtitle "From #{@event.name}" %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Contact information" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Address" %>
-  <%= render "events/transfer_step_item", number: 3, label: "Payment information" %>
+  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
 <% end %>
 
 <% content_for :header do %>
@@ -36,16 +35,11 @@
     title: "Information about check transfers", class: "my-4" do %>
     <ul class="m0">
       <li>
-        Checks are not intended to reimburse someone.
-        Use <%= link_to "reimbursements", event_reimbursements_path(@event),
-          class: "info" %> to do so.
-      </li>
-      <li>
-        Checks can only be sent within the US. Recipients must have a US bank
+        Checks can only be sent within the U.S. Recipients must have a U.S. bank
         account to cash them.
       </li>
       <li>
-        Check will be valid for <span class="bold">180 days</span>, until
+        Check will be valid for <span class="bold"><%= IncreaseCheck::VALID_DURATION.in_days.to_i %> days</span>, until
         <%= format_date IncreaseCheck::VALID_DURATION.from_now %>
       </li>
     </ul>
@@ -70,7 +64,7 @@
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
 
   <div data-scroll-seek-target="section" class="lg:-mt-8">
-    <h3 class="mb-2" id="contact-information">Contact information</h3>
+    <h3 class="mb-2" id="contact-information">Recipient details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div id="increase_check_name_field" data-controller="menu text-filter" 
         data-menu-content-id-value="payment-recipient-search" 
@@ -137,12 +131,7 @@
       </div>
 
       <%= render "events/notify_transfer_recipient", form: form, disabled: disabled %>
-    </div>
-  </div>
 
-  <div data-scroll-seek-target="section">
-    <h3 class="mb-2">Address information</h3>
-    <div class="card mb-4 relative flex flex-col gap-3">
       <template x-if="!payment_recipient || editing">
         <div class="flex flex-col gap-3">
           <div>
@@ -160,7 +149,7 @@
                 data: { extraction_field: "seller_address_line_2" } %>
             </div>
           </div>
-
+    
           <div class="flex gap-2">
             <div class="flex-auto">
               <%= form.label :address_city, "City" %>
@@ -233,7 +222,7 @@
               <% end %>
             </div>
           </div>
-
+    
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_zip, "ZIP" %>
             <%= form.text_field :address_zip, 
@@ -246,7 +235,7 @@
               <div class="primary"><%= message %></div>
             <% end %>
           </div>
-
+    
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_country, "Country" %>
             <%= form.text_field :address_country,
@@ -256,7 +245,7 @@
           </div>
         </div>
       </template>
-
+    
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
           <button type="button" 
@@ -296,7 +285,7 @@
   </div>
 
   <div data-scroll-seek-target="section">
-    <h3 class="mb-2">Payment information</h3>
+    <h3 class="mb-2">Payment details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div>
         <%= form.label :payment_for,
