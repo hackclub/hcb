@@ -45,7 +45,6 @@ class Event
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
       airrecord["Synced from HCB at"] = Time.current
       airrecord["HCB ID"] = @application.event&.id
-      airrecord["HCB Slug"] = @application.event&.slug
 
       airrecord.save
 
