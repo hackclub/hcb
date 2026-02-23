@@ -43,6 +43,7 @@ class Event
 
     def resend_to_cosigner?
       return false if record.contract&.party(:cosigner).nil?
+
       record.contract.party(:cosigner).pending? && (record.user == user || user.admin?)
     end
 
