@@ -3,8 +3,8 @@
 <%= form_with local: true, url: contracts_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search parties" %>
   <%= form.select :type, Contract.subclasses.map { |subclass| [subclass.name.demodulize.underscore.humanize, subclass.name] }, { include_blank: "All contract types", selected: @type } %>
-  <%= form.select :status, Contract.aasm.states.map { |state| [state.name.to_s.humanize, state.name] }, { include_blank: "All statuses", selected: @status } %>
-  <%= form.select :service, Contract.external_services.to_a.map { |entry| [entry[0].humanize, entry[0]] }, { include_blank: "All services", selected: @service } %>
+  <%= form.select :status, Contract.aasm.states_for_select, { include_blank: "All statuses", selected: @status } %>
+  <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
   <%= form.submit "Search" %>
 <% end %>
 
