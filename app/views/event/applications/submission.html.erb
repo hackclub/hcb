@@ -35,6 +35,10 @@
             <strong>Airtable status</strong>
             <span class="badge w-max m-0 bg-muted"><%= @application.airtable_status %></span>
           </p>
+          <p>
+            <strong>Airtable last synced at</strong>
+            <span><%= @application.airtable_synced_at.present? ? format_datetime(@application.airtable_synced_at) : "Not synced" %></span>
+          </p>
         </section>
       </div>
     <% end %>

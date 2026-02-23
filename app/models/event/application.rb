@@ -14,6 +14,7 @@
 #  address_postal_code          :string
 #  address_state                :string
 #  airtable_status              :string
+#  airtable_synced_at           :datetime
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
 #  archived_at                  :datetime
@@ -77,7 +78,7 @@ class Event
     validate :cosigner_cannot_change_after_sign
 
     after_save :check_cosigner_update
-    after_commit :schedule_airtable_sync
+    after_commit :schedule_airtable_sync, unless: :saved_change_to_airtable_synced_at?
 
     monetize :annual_budget_cents, allow_nil: true
     monetize :committed_amount_cents, allow_nil: true
