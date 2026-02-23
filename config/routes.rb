@@ -862,6 +862,7 @@ Rails.application.routes.draw do
         post "admin_approve"
         post "admin_reject"
         post "admin_activate"
+        post "resend_to_cosigner"
       end
     end
   end

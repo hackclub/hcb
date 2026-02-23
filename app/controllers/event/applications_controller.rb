@@ -182,16 +182,6 @@ class Event
         end
       end
 
-      if application_params[:cosigner_email].present? && @application.contract.present?
-        # The case where the cosigner email changed is handled by an after_save callback
-        unless @application.cosigner_email_previously_changed?
-          @application.contract.party(:cosigner).notify
-        end
-
-        flash[:success] = "Resent agreement to parent"
-        return redirect_back_or_to application_path(@application)
-      end
-
       if params[:autosave] != "true"
         @return_to = url_from(params[:return_to])
         flash[:success] = "Changes saved." if params[:confirm] == "true"
@@ -224,6 +214,20 @@ class Event
       flash[:success] = "Application archived"
 
       redirect_to applications_path
+    end
+
+    def resend_to_cosigner
+      authorize @application
+
+      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+      # If the user resends to the same email, the after_save callback does not handle this
+      unless @application.cosigner_email_previously_changed?
+        @application.contract.party(:cosigner).notify
+      end
+
+      flash[:success] = "Resent agreement to parent"
+      redirect_back_or_to application_path(@application)
     end
 
     private

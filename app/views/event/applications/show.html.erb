@@ -86,7 +86,7 @@
         <% end %>
       </p>
 
-      <%= form_with model: @application, url: application_path(@application), method: :patch do |form| %>
+      <%= form_with model: @application, url: resend_to_cosigner_application_path(@application), method: :post do |form| %>
         <%= form.label :cosigner_email do %>
           Parent email <span class="text-primary">*</span>
         <% end %>
