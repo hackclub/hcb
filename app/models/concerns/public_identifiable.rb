@@ -4,6 +4,40 @@
 module PublicIdentifiable
   extend ActiveSupport::Concern
 
+  # Central registry for public ID for admin lookup tool
+  def self.models
+    @models ||= {
+      ach: AchTransfer,
+      act: PublicActivity::Activity,
+      apl: Event::Application,
+      bfe: BankFee,
+      cdg: CardGrant,
+      cdp: CheckDeposit,
+      chg: Api::Models::CardCharge,
+      chk: Check,
+      cmt: Comment,
+      crd: StripeCard,
+      don: Donation,
+      frv: FeeRevenue,
+      ick: IncreaseCheck,
+      inv: Invoice,
+      ivt: OrganizerPositionInvite,
+      org: Event,
+      rct: Receipt,
+      rep: Reimbursement::ExpensePayout,
+      rme: Reimbursement::Expense,
+      rmr: Reimbursement::Report,
+      rph: Reimbursement::PayoutHolding,
+      spr: Sponsor,
+      tag: Tag,
+      txn: HcbCode,
+      usr: User,
+      wir: Wire,
+      wse: WiseTransfer,
+      xfr: Disbursement
+    }.freeze
+  end
+
   included do
     include Hashid::Rails
     class_attribute :public_id_prefix
@@ -13,20 +47,43 @@ module PublicIdentifiable
     "#{self.public_id_prefix}_#{hashid}"
   end
 
+  # Extract prefix from public ID (e.g., "usr_abc123" => :usr)
+  def self.parse_components(public_id)
+    return unless public_id.is_a?(String)
+
+    components = public_id.split("_", 2)
+    return unless components.size == 2 && components.all?(&:present?)
+
+    {
+      prefix: components.first.to_s.downcase.to_sym,
+      hashid: components.last
+    }
+  end
+
+  def self.find_by_public_id(public_id)
+    return unless (components = parse_components(public_id))
+
+    prefix = components[:prefix]
+    model_class = models[prefix]
+    return nil unless model_class
+
+    model_class.find_by_public_id(public_id)
+  end
+
   module ClassMethods
     def set_public_id_prefix(prefix)
       self.public_id_prefix = prefix.to_s.downcase
     end
 
-    def find_by_public_id(id)
-      return nil unless id.is_a? String
+    def find_by_public_id(public_id)
+      components = PublicIdentifiable.parse_components(public_id)
+      return unless components
 
-      prefix = id.split("_").first.to_s.downcase
-      hash = id.split("_").last
-      return nil unless prefix == self.get_public_id_prefix
+      prefix = components[:prefix].to_s
+      # Prefix must match this model's prefix
+      return unless prefix == get_public_id_prefix
 
-      # ex. 'org_h1izp'
-      find_by_hashid(hash)
+      find_by_hashid(components[:hashid])
     end
 
     def find_by_public_id!(id)
