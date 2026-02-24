@@ -440,6 +440,10 @@ class User < ApplicationRecord
     age&.<=(18)
   end
 
+  def is_minor?
+    age&.<(18)
+  end
+
   def was_teenager_on_join?
     age_on(created_at)&.<=(18)
   end
