@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_23_152545) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -465,6 +465,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
+    t.datetime "created_at"
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
     t.string "invite_message"
@@ -474,6 +475,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
+    t.datetime "updated_at"
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
@@ -784,6 +786,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
@@ -986,6 +989,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_09_232615) do
     t.string "address_state"
     t.string "airtable_record_id"
     t.string "airtable_status"
+    t.datetime "airtable_synced_at"
     t.integer "annual_budget_cents"
     t.datetime "approved_at"
     t.datetime "archived_at"

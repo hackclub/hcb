@@ -569,6 +569,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
     },
+    {
+      id: 'admin_tool_34',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Contracts',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/admin/contracts'),
+    },
   ]
 }
 
