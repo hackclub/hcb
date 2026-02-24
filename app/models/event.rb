@@ -872,7 +872,7 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    users.where(teenager: true).active.distinct.count
+    users.active_teenager.count
   end
 
   def subevents_enabled?
