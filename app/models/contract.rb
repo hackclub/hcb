@@ -100,6 +100,14 @@ class Contract < ApplicationRecord
 
   scope :not_voided, -> { where.not(aasm_state: :voided) }
 
+  has_many :party_users, through: :parties, source: :user
+
+  include PgSearch::Model
+  pg_search_scope :search_parties, associated_against: {
+    parties: :external_email,
+    party_users: [:full_name, :email]
+  }
+
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
   end
@@ -155,6 +163,10 @@ class Contract < ApplicationRecord
     end
 
     contractable.on_contract_party_signed(party)
+  end
+
+  def docuseal_submission_url
+    "https://docuseal.com/submissions/#{external_id}"
   end
 
   # Adding this back temporarily while we work on fixing missing parties
