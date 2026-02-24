@@ -9,6 +9,7 @@
 #  deleted_at   :datetime
 #  description  :text
 #  name         :string           not null
+#  published    :boolean          default(FALSE), not null
 #  sort_index   :integer
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
