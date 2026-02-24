@@ -100,6 +100,14 @@ class Contract < ApplicationRecord
 
   scope :not_voided, -> { where.not(aasm_state: :voided) }
 
+  has_many :party_users, through: :parties, source: :user
+
+  include PgSearch::Model
+  pg_search_scope :search_parties, associated_against: {
+    parties: :external_email,
+    party_users: [:full_name, :email]
+  }
+
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
   end
@@ -132,7 +140,7 @@ class Contract < ApplicationRecord
   end
 
   def event
-    contractable.contract_event if contractable.respond_to?(:contract_event)
+    contractable.contract_event
   end
 
   def event_name
@@ -157,9 +165,36 @@ class Contract < ApplicationRecord
     contractable.on_contract_party_signed(party)
   end
 
+  def docuseal_submission_url
+    "https://docuseal.com/submissions/#{external_id}"
+  end
+
   # Adding this back temporarily while we work on fixing missing parties
   def signee_docuseal_url
     "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
+  end
+
+  def create_document!
+    raise ArgumentError, "Cannot create document as contract does not have an associated event" if event.nil?
+
+    document = Document.new(
+      event:,
+      name: document_name
+    )
+    contract_document = docuseal_document["documents"][0]
+
+    response = Faraday.get(contract_document["url"]) do |req|
+      req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
+    end
+
+    document.file.attach(
+      io: StringIO.new(response.body),
+      filename: "#{contract_document["name"]}.pdf"
+    )
+
+    document.user = party(:hcb).user
+    document.save!
+    update!(document:)
   end
 
   private
@@ -204,6 +239,11 @@ class Contract < ApplicationRecord
     if contractable.contracts.not_voided.excluding(self).any?
       self.errors.add(:base, "source already has a contract!")
     end
+  end
+
+  # Overrideen in inherited classes
+  def document_name
+    "Contract with #{party(:signee).user.full_name}"
   end
 
 end

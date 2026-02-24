@@ -107,7 +107,7 @@
 
 <% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
   <article class="card mt2 pt0">
-    <%= sanitize(MarkdownService.instance.renderer.render(@report.event.public_reimbursement_page_message), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(@report.event.public_reimbursement_page_message) %>
     <section class="card__banner card__banner--bottom card__darker pt2 pb2">
       <p class="muted mt0 mb0">
         Information from <%= @report.event.name %>
@@ -118,7 +118,7 @@
 
 <% if @report.invite_message.presence %>
   <article class="card mt2 pt0">
-    <%= sanitize(MarkdownService.instance.renderer.render(@report.invite_message), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(@report.invite_message) %>
     <section class="card__banner card__banner--bottom card__darker pt2 pb2">
       <p class="muted mt0 mb0">
         Message from <%= @report.event.name %>

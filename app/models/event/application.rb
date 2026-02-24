@@ -14,6 +14,7 @@
 #  address_postal_code          :string
 #  address_state                :string
 #  airtable_status              :string
+#  airtable_synced_at           :datetime
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
 #  archived_at                  :datetime
@@ -69,6 +70,7 @@ class Event
 
     belongs_to :user
     belongs_to :event, optional: true
+    belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
@@ -76,7 +78,7 @@ class Event
     validate :cosigner_cannot_change_after_sign
 
     after_save :check_cosigner_update
-    after_commit :schedule_airtable_sync
+    after_commit :schedule_airtable_sync, unless: :saved_change_to_airtable_synced_at?
 
     monetize :annual_budget_cents, allow_nil: true
     monetize :committed_amount_cents, allow_nil: true
@@ -116,7 +118,9 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          if user.teenager?
+          update!(teen_led: user.is_teenager?)
+
+          if teen_led?
             create_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
@@ -135,7 +139,7 @@ class Event
       event :mark_approved do
         transitions from: [:submitted, :under_review], to: :approved
         after do
-          unless user.teenager?
+          unless teen_led?
             create_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
@@ -234,6 +238,10 @@ class Event
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
 
+      if cosigner_email.present? && !user.is_minor?
+        update!(cosigner_email: nil)
+      end
+
       fs_contract = nil
       ActiveRecord::Base.transaction do
         fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
@@ -250,7 +258,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.is_minor?
         required_fields.push("cosigner_email")
       end
 
@@ -262,7 +270,7 @@ class Event
     end
 
     def response_time
-      user.teenager? ? "48 hours" : "2 weeks"
+      teen_led? ? "48 hours" : "2 weeks"
     end
 
     def status_color
@@ -297,7 +305,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!
+    def activate_event!(risk_level:, tags: [])
       raise "Contract must be signed before activation" unless contract.signed?
 
       poc = contract.party(:hcb).user
@@ -306,8 +314,11 @@ class Event
         name:,
         country: address_country,
         point_of_contact_id: poc.id,
-        application: self
+        application: self,
+        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+        risk_level:
       )
+      contract.create_document!
 
       service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
       invite = service.model
@@ -336,6 +347,21 @@ class Event
 
     def respondent_url
       url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
+    end
+
+    def airtable_record
+      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
+      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
     end
 
     private
