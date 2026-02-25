@@ -122,12 +122,20 @@ $(document).keydown(function (e) {
 })
 
 window.attachTooltipListener = () => {
-  const tooltip = document.getElementById("tooltip-container");
+  // Only initialize once. Event delegation means handlers automatically
+  // work for dynamically added elements, so re-initialization is unnecessary.
+  if (window._tooltipInitialized) return;
+  window._tooltipInitialized = true;
+
   let mutationObserver = null;
 
+  // Look up the tooltip container dynamically so it works across Turbo
+  // page navigations where the DOM body is replaced.
+  const getTooltip = () => document.getElementById("tooltip-container");
+
   const removeTooltips = () => {
-    tooltip.className = "";
-    // Stop observing when tooltip is closed
+    const tooltip = getTooltip();
+    if (tooltip) tooltip.className = "";
     if (mutationObserver) {
       mutationObserver.disconnect();
       mutationObserver = null;
@@ -135,6 +143,9 @@ window.attachTooltipListener = () => {
   }
 
   const updateTooltipPosition = (trigger) => {
+    const tooltip = getTooltip();
+    if (!tooltip) return;
+
     const triggerRect = trigger.getBoundingClientRect();
     const placement = [...trigger.classList].find(c => c.startsWith("tooltipped--"))?.split("--")[1] || "n";
     const offset = 5;
@@ -157,6 +168,9 @@ window.attachTooltipListener = () => {
     const label = trigger.getAttribute("aria-label")?.trim();
     if (!label) return;
 
+    const tooltip = getTooltip();
+    if (!tooltip) return;
+
     tooltip.className = "active";
     tooltip.textContent = label;
 
@@ -170,7 +184,7 @@ window.attachTooltipListener = () => {
     // Observe trigger for aria-label changes
     if (mutationObserver) mutationObserver.disconnect();
     mutationObserver = new MutationObserver(() => {
-      const updatedLabel = trigger.getAttribute("aria-label").trim();
+      const updatedLabel = trigger.getAttribute("aria-label")?.trim();
       if (updatedLabel) {
         tooltip.textContent = updatedLabel;
         updateTooltipPosition(trigger);
@@ -179,29 +193,30 @@ window.attachTooltipListener = () => {
     mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
   };
 
-  $(".tooltipped").on({
-    mouseenter(event) {
-      if (window.innerWidth < 768) return;
-      const trigger = event.currentTarget;
-      showTooltip(trigger);
-    },
-    touchstart(event) {
-      const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped--tappable")) return;
-      showTooltip(trigger);
-    },
-    mouseleave: removeTooltips
+  // Use event delegation instead of binding to each .tooltipped element
+  // directly. The old approach re-bound handlers on every turbo:frame-load
+  // and turbo:after-stream-render, causing thousands of duplicate handlers
+  // to accumulate on pages with many tooltipped elements (like the ledger).
+  $(document).on("mouseenter", ".tooltipped", function (event) {
+    if (window.innerWidth < 768) return;
+    showTooltip(event.currentTarget);
   });
 
+  $(document).on("touchstart", ".tooltipped", function (event) {
+    if (!event.currentTarget.classList.contains("tooltipped--tappable")) return;
+    showTooltip(event.currentTarget);
+  });
+
+  $(document).on("mouseleave", ".tooltipped", removeTooltips);
+
   $(document).on("click", function (event) {
-    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
     if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
       removeTooltips();
     }
   });
-  // on unload turbo
+
   $(document).on('turbo:before-visit', removeTooltips);
-  $(document).on('beforeunload', removeTooltips)
+  $(document).on('beforeunload', removeTooltips);
   $(document).on('turbo:frame-load', removeTooltips);
 }
 
@@ -272,8 +287,12 @@ $(document).on('turbo:load', function () {
   // if you add the money behavior to an input, it'll add commas, only allow two numbers for cents,
   // and only permit numbers to be entered
 
-  function attachMoneyInputListener() {
-    $('input[data-behavior~="money"]').off('input').on('input', function () {
+  // Use event delegation for money inputs so it automatically works for
+  // dynamically added elements (e.g. inside menus/popups) without needing
+  // a MutationObserver on the entire document body.
+  if (!window._moneyInputInitialized) {
+    window._moneyInputInitialized = true;
+    $(document).on('input', 'input[data-behavior~="money"]', function () {
       let value = $(this)
         .val()
         .replace(/,/g, '') // remove all commas
@@ -288,13 +307,6 @@ $(document).on('turbo:load', function () {
       $(this).val(value);
     });
   }
-
-  attachMoneyInputListener();
-
-  // Used to attach the money input listener to inputs inside of menus / popups.
-
-  const observer = new MutationObserver(() => attachMoneyInputListener());
-  observer.observe(document.body, { childList: true, subtree: true });
 
   $('input[data-behavior~=prevent_whitespace]').on({
     keydown: function (e) {
