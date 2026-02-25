@@ -45,8 +45,7 @@ class PaypalTransfer < ApplicationRecord
 
   monetize :amount_cents, as: "amount"
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   validate on: :create do
     errors.add(:base, "Due to integration issues, transfers via PayPal are currently unavailable.")

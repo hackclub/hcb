@@ -105,8 +105,7 @@ class CheckDeposit < ApplicationRecord
     unknown: "unknown"
   }, prefix: :rejection_reason
 
-  include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  include PubliclyTrackable
 
   def submit!
     ProcessColumnCheckDepositJob.perform_later(check_deposit: self)
