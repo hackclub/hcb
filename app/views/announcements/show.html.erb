@@ -7,6 +7,7 @@
 <%= render "events/nav", selected: :announcements %>
 
 <% show_blocks_callout = !@announcement.published? && @announcement.blocks.any? %>
+<h1 class="heading">
   <span class="flex flex-grow items-center"><%= heading %></span>
 </h1>
 
