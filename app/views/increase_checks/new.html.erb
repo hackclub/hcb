@@ -35,8 +35,10 @@
     title: "Information about check transfers", class: "my-4" do %>
     <ul class="m0">
       <li>
-        Checks can only be sent within the U.S. Recipients must have a U.S. bank
-        account to cash them.
+        Checks can only be sent within the U.S.
+      </li>
+      <li>
+        Recipients must have a U.S. bank account to cash them.
       </li>
       <li>
         Check will be valid for <strong><%= IncreaseCheck::VALID_DURATION.in_days.to_i %> days</strong>, until
