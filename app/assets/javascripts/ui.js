@@ -121,8 +121,19 @@ $(document).keydown(function (e) {
   }
 })
 
+// Tooltip system is initialized once using event delegation. This means a single
+// listener on the document handles all .tooltipped elements — current and future —
+// without needing to re-run on turbo:frame-load or turbo:after-stream-render.
+// Previously, attachTooltipListener() used $(".tooltipped").on(...) which attached
+// individual listeners to every matching element. Called on every frame load, this
+// caused hundreds of duplicate handlers to accumulate on pages with many transactions.
 window.attachTooltipListener = () => {
+  if (window._tooltipListenerAttached) return;
+  window._tooltipListenerAttached = true;
+
   const tooltip = document.getElementById("tooltip-container");
+  if (!tooltip) return;
+
   let mutationObserver = null;
 
   const removeTooltips = () => {
@@ -179,19 +190,18 @@ window.attachTooltipListener = () => {
     mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
   };
 
-  $(".tooltipped").on({
-    mouseenter(event) {
-      if (window.innerWidth < 768) return;
-      const trigger = event.currentTarget;
-      showTooltip(trigger);
-    },
-    touchstart(event) {
-      const trigger = event.currentTarget;
-      if (!trigger.classList.contains("tooltipped--tappable")) return;
-      showTooltip(trigger);
-    },
-    mouseleave: removeTooltips
+  // Event delegation: one listener on document covers all .tooltipped elements,
+  // including those added dynamically by turbo frames, without any re-attachment.
+  $(document).on("mouseenter", ".tooltipped", function (event) {
+    if (window.innerWidth < 768) return;
+    showTooltip(event.currentTarget);
   });
+  $(document).on("touchstart", ".tooltipped", function (event) {
+    const trigger = event.currentTarget;
+    if (!trigger.classList.contains("tooltipped--tappable")) return;
+    showTooltip(trigger);
+  });
+  $(document).on("mouseleave", ".tooltipped", removeTooltips);
 
   $(document).on("click", function (event) {
     // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
@@ -201,12 +211,9 @@ window.attachTooltipListener = () => {
   });
   // on unload turbo
   $(document).on('turbo:before-visit', removeTooltips);
-  $(document).on('beforeunload', removeTooltips)
+  $(document).on('beforeunload', removeTooltips);
   $(document).on('turbo:frame-load', removeTooltips);
 }
-
-$(document).on('turbo:frame-load', window.attachTooltipListener)
-$(document).on('turbo:after-stream-render', window.attachTooltipListener)
 
 $(document).on('turbo:load', function () {
   window.attachTooltipListener();
