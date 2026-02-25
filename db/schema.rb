@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_23_152545) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_25_175618) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -465,7 +465,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_152545) do
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
-    t.datetime "created_at"
+    t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
     t.string "invite_message"
@@ -475,7 +475,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_152545) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
-    t.datetime "updated_at"
+    t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
@@ -488,7 +488,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_23_152545) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "expiration_at"
+    t.datetime "expiration_at", precision: nil
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"

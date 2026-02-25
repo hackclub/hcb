@@ -17,8 +17,8 @@
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
 #  support_message                   :string
 #  support_url                       :string
-#  created_at                        :datetime
-#  updated_at                        :datetime
+#  created_at                        :datetime         not null
+#  updated_at                        :datetime         not null
 #  event_id                          :bigint           not null
 #
 # Indexes
