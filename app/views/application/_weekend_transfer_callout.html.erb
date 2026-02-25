@@ -1,7 +1,5 @@
 <% unless Date.today.workday? %>
   <%= render "application/callout", type: "warning", title: "HCB team is out of office", class: "mt-2 mb-0" do %>
     It is currently the weekend and the HCB team is out of office. Transfers will be reviewed on the <span class="tooltipped" aria-label="<%= Time.first_business_day(Date.today).strftime("%b %e, %Y") %>">next business day</span>.
-    <br><br>
-    If you have an urgent request, please call <%= help_phone %>.
   <% end %>
 <% end %>
