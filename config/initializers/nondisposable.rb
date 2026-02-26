@@ -16,7 +16,7 @@ Nondisposable.configure do |config|
     mxbros.org
     mamabood.com
     gmx.com
-  ]
+  ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
   # We've noticed some of these domains within HCB.
@@ -52,7 +52,7 @@ Nondisposable.configure do |config|
     wirelicker.com
     writeme.live
     writemeplz.net
-  ]
+  ].freeze
 
   # Add custom domains you want to be considered as disposable
   config.additional_domains = HCB_SOURCED_DOMAINS + OKTA_SOURCED_DOMAINS + [
