@@ -78,6 +78,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 gem "write_xlsx" # Export Excel files
 gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
+gem "nondisposable" # disallow temporary/disposable email addresses
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
 gem "browser", "~> 6.2" # browser detection

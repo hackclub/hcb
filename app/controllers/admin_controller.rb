@@ -1450,6 +1450,23 @@ class AdminController < Admin::BaseController
     @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
   end
 
+  def contracts
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @type = params[:type].presence
+    @status = params[:status].presence
+    @service = params[:service].presence
+
+    @contracts = Contract.all.includes(:document, :contractable)
+    @contracts = @contracts.where(type: @type) if @type
+    @contracts = @contracts.where(aasm_state: @status) if @status
+    @contracts = @contracts.where(external_service: @service) if @service
+    @contracts = @contracts.search_parties(@q) if @q
+
+    @contracts = @contracts.page(@page).per(@per).order(created_at: :desc)
+  end
+
   private
 
   def stream_data(content_type, filename, data, download = true)

@@ -16,7 +16,7 @@
   <p>
     Here's a message from the <%= @donation.event.name %> team:
     <blockquote>
-      <%== MarkdownService.instance.renderer.render @donation.event.donation_thank_you_message %>
+      <%= MarkdownService.instance.render @donation.event.donation_thank_you_message %>
     </blockquote>
   </p>
 <% end %>
