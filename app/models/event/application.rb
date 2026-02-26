@@ -270,7 +270,7 @@ class Event
     end
 
     def response_time
-      teen_led? ? "48 hours" : "2 weeks"
+      teen_led? ? "2 business days" : "2 weeks"
     end
 
     def status_color
