@@ -192,7 +192,7 @@ stripe_service_fee_job:
 user_seen_at_history_snapshot_job:
   cron: "0,30 * * * *" # twice every hour
   class: "User::SeenAtHistory::SnapshotJob"
-  
+
 user_update_card_locking_recurring:
   cron: "*/5 * * * *" # Every 5 minutes
   class: "User::UpdateCardLocking::RecurringJob"
@@ -248,3 +248,7 @@ announcement_delete_unsaved_job:
 notify_events_with_negative_balance_job:
   cron: "0 13 * * 1" # run at 9am est on monday
   class: "NotifyEventsWithNegativeBalanceJob"
+
+refresh_disposable_domains:
+  cron: "0 11 * * *" # run at 6am est every day
+  class: "DisposableEmailDomainListUpdateJob"
