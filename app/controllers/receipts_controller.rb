@@ -58,8 +58,8 @@ class ReceiptsController < ApplicationController
           flash[:popover] = params[:popover].gsub("HcbCode:", "")
         end
 
-        if params[:redirect_url]
-          redirect_to url_from(params[:redirect_url]) || @receiptable.try(:hcb_code) || @receiptable
+        if (safe_redirect = url_from(params[:redirect_url]))
+          redirect_to safe_redirect
         else
           redirect_back fallback_location: @receiptable.try(:hcb_code) || @receiptable
         end
