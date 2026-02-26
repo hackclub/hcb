@@ -5,7 +5,7 @@ Nondisposable.configure do |config|
   config.error_message = "provider is unsupported. Please try with another email address."
 
   # Sourced from https://hcb.hackclub.com/blazer/queries/1116-user-group-domain-by-usage
-  HCB_SOURCED_DOMAINS = %w[
+  hcb_sourced_domains = %w[
     aboodbab.com
     pupacloud.net
     phoboslink.com
@@ -20,7 +20,7 @@ Nondisposable.configure do |config|
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
   # We've noticed some of these domains within HCB.
-  OKTA_SOURCED_DOMAINS = %w[
+  okta_sourced_domains = %w[
     2mails1box.com
     300bucks.net
     blueink.top
@@ -55,7 +55,7 @@ Nondisposable.configure do |config|
   ].freeze
 
   # Add custom domains you want to be considered as disposable
-  config.additional_domains = HCB_SOURCED_DOMAINS + OKTA_SOURCED_DOMAINS + [
+  config.additional_domains = hcb_sourced_domains + okta_sourced_domains + [
     "gmail.con" # protect people who accidentally type .con instead of .com
   ]
 
