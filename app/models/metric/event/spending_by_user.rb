@@ -29,7 +29,7 @@ class Metric
       include Subject
 
       def calculate
-        sql = ActiveRecord::Base.sanitize_sql([<<~SQL, { event_id: event.id }])
+        sql = ActiveRecord::Base.sanitize_sql([<<~SQL, { event_id: event.id, year: Metric.year }])
           SELECT user_id, sum(dollars_spent) as spent
           FROM (
               SELECT raw_stripe_transactions.amount_cents * -1 AS dollars_spent, stripe_cardholders.user_id
@@ -37,7 +37,7 @@ class Metric
               LEFT JOIN canonical_transactions ct ON raw_stripe_transactions.id = ct.transaction_source_id AND ct.transaction_source_type = 'RawStripeTransaction'
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
               LEFT JOIN "stripe_cardholders" on stripe_cardholders.stripe_id = raw_stripe_transactions.stripe_transaction->>'cardholder'
-              WHERE EXTRACT(YEAR FROM raw_stripe_transactions.date_posted) = #{Metric.year}
+              WHERE EXTRACT(YEAR FROM raw_stripe_transactions.date_posted) = :year
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -46,7 +46,7 @@ class Metric
               FROM "ach_transfers"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-300-', ach_transfers.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM ach_transfers.created_at) = #{Metric.year}
+              WHERE EXTRACT(YEAR FROM ach_transfers.created_at) = :year
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -55,7 +55,7 @@ class Metric
               FROM "disbursements"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-500-', disbursements.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM disbursements.created_at) = #{Metric.year}
+              WHERE EXTRACT(YEAR FROM disbursements.created_at) = :year
               AND event_mapping.event_id = :event_id
 
               UNION ALL
@@ -64,7 +64,7 @@ class Metric
               FROM "increase_checks"
               LEFT JOIN canonical_transactions ct ON CONCAT('HCB-401-', increase_checks.id) = ct.hcb_code
               LEFT JOIN canonical_event_mappings event_mapping ON ct.id = event_mapping.canonical_transaction_id
-              WHERE EXTRACT(YEAR FROM increase_checks.created_at) = #{Metric.year}
+              WHERE EXTRACT(YEAR FROM increase_checks.created_at) = :year
               AND event_mapping.event_id = :event_id
           ) results
           group by user_id

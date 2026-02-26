@@ -29,7 +29,7 @@ class Metric
       include Subject
 
       def calculate
-        query = <<~SQL
+        query = ActiveRecord::Base.sanitize_sql([<<~SQL, { start_date: "#{Metric.year}-01-01", user_id: user.id }])
           SELECT CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) as user_1, comments.user_id as user_2, COUNT(*) FROM "comments"
           JOIN "hcb_codes" on commentable_type = 'HcbCode' and hcb_codes.id = commentable_id
           LEFT JOIN "ach_transfers" on hcb_codes.hcb_code = CONCAT('HCB-300-', ach_transfers.id)
@@ -41,9 +41,9 @@ class Metric
           LEFT JOIN "stripe_cardholders" on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id
           LEFT JOIN "paypal_transfers" on hcb_codes.hcb_code = CONCAT('HCB-350-', paypal_transfers.id)
           WHERE
-              comments.created_at >= '#{Metric.year}-01-01'
+              comments.created_at >= :start_date
               AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != '' AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != CAST(comments.user_id as text)
-              AND (CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) = '#{user.id}' OR comments.user_id = #{user.id})
+              AND (CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) = CAST(:user_id AS text) OR comments.user_id = :user_id)
               AND comments.user_id != 2891 -- This is the HCB user for automated comments
           GROUP BY CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id), comments.user_id
           ORDER BY COUNT(*) DESC

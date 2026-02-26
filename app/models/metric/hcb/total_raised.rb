@@ -29,15 +29,18 @@ class Metric
       include AppWide
 
       def calculate
-        result = ActiveRecord::Base.connection.execute(<<~SQL)
+        plan_types = ::Event::Plan.that(:omit_stats).map(&:name)
+        plan_type_clause = plan_types.any? ? "AND event_plans.type NOT IN (#{Array.new(plan_types.size, "?").join(", ")})" : ""
+
+        sql = ActiveRecord::Base.sanitize_sql([<<~SQL, Metric.year, *plan_types])
           SELECT SUM(amount_cents) as amount_cents FROM "canonical_transactions"
           LEFT JOIN "canonical_event_mappings" ON canonical_transactions.id = canonical_event_mappings.canonical_transaction_id
           LEFT JOIN "events" ON canonical_event_mappings.event_id = events.id
           LEFT JOIN "event_plans" ON event_plans.event_id = events.id AND event_plans.aasm_state = 'active'
           LEFT JOIN "disbursements" ON canonical_transactions.hcb_code = CONCAT('HCB-500-', disbursements.id)
           WHERE amount_cents > 0
-          AND date_part('year', date) = #{Metric.year}
-          #{::Event::Plan.that(:omit_stats).map(&:name).map { |p| "AND event_plans.type != '#{p}'" }.join(' ')}
+          AND date_part('year', date) = ?
+          #{plan_type_clause}
           AND (disbursements.id IS NULL or disbursements.should_charge_fee = true)
           AND NOT (
             canonical_transactions.hcb_code ILIKE 'HCB-300%' OR
@@ -52,6 +55,7 @@ class Metric
           )
         SQL
 
+        result = ActiveRecord::Base.connection.execute(sql)
         result.first["amount_cents"]
       end
 

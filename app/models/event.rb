@@ -127,26 +127,27 @@ class Event < ApplicationRecord
   }
 
   def ancestor_ids
-    [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    sql = ActiveRecord::Base.sanitize_sql([<<-SQL, id, id])
       WITH RECURSIVE parent_events AS (
         SELECT id, parent_id
         FROM events
-        WHERE id = #{id}
+        WHERE id = ?
         UNION ALL
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
       )
-      SELECT id FROM parent_events WHERE id != #{id};
+      SELECT id FROM parent_events WHERE id != ?;
     SQL
+    [id] + Event.connection.execute(sql).map { |row| row["id"] }
   end
 
   def descendant_ids
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    sql = ActiveRecord::Base.sanitize_sql([<<-SQL, id])
       WITH RECURSIVE child_events AS (
         SELECT id, parent_id
         FROM events
-        WHERE parent_id = #{id}
+        WHERE parent_id = ?
         UNION ALL
         SELECT e.id, e.parent_id
         FROM events e
@@ -154,6 +155,7 @@ class Event < ApplicationRecord
       )
       SELECT id FROM child_events;
     SQL
+    Event.connection.execute(sql).map { |row| row["id"] }
   end
 
   def ancestors
