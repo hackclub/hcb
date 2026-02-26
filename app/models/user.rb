@@ -42,8 +42,6 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
-  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
-
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -191,7 +189,7 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validate :email_not_in_blacklisted_domains, on: :create
+  validates :email, nondisposable: true, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
@@ -683,13 +681,6 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
-  end
-
-  def email_not_in_blacklisted_domains
-    domain = email.split("@").last.downcase
-    if BLACKLISTED_DOMAINS.include?(domain)
-      errors.add(:email, "is invalid. Please use a different email address.")
-    end
   end
 
 end
