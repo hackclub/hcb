@@ -8,5 +8,5 @@ Nondisposable.configure do |config|
   config.additional_domains = ["aboodbab.com"]
 
   # Exclude domains that are considered disposable but you want to allow anyways
-  config.excluded_domains = ['false-positive-domain.com']
+  # config.excluded_domains = ["false-positive-domain.com"]
 end
