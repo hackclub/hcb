@@ -48,6 +48,7 @@ class Contract < ApplicationRecord
 
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+  validates :cosigner_email, nondisposable: true, on: :create
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
