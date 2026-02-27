@@ -43,8 +43,8 @@ class Event
       airrecord["Planning Duration"] = @application.planning_duration
       airrecord["Currently fiscally sponsored?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
       airrecord["Previously applied?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
-      airrecord["Committed Amount"] = @application.committed_amount_cents / 100
-      airrecord["(Adults) Annual Budget"] = @application.annual_budget_cents / 100
+      airrecord["Committed Amount"] = @application.committed_amount_cents / 100.0 if @application.committed_amount_cents.present?
+      airrecord["(Adults) Annual Budget"] = @application.annual_budget_cents / 100.0 if @application.annual_budget_cents.present?
       airrecord["Funding Source"] = @application.funding_source
       airrecord["How did you hear about HCB?"] = @application.referrer
       airrecord["Accommodations"] = @application.accessibility_notes
