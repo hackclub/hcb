@@ -53,11 +53,11 @@ class Event
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
       airrecord["Synced from HCB at"] = Time.current
 
-      if @application.affiliations.any? { |affiliation| affiliation.is_first? }
+      if @application.affiliations.any?(&:is_first?)
         airrecord["Org Type"] = "FIRST/Robotics"
-      elsif @application.affiliations.any? { |affiliation| affiliation.is_vex? }
+      elsif @application.affiliations.any?(&:is_vex?)
         airrecord["Org Type"] = "Robotics"
-      elsif @application.affiliations.any? { |affiliation| affiliation.is_hack_club? }
+      elsif @application.affiliations.any?(&:is_hack_club?)
         airrecord["Org Type"] = "Hack Club"
       end
 
