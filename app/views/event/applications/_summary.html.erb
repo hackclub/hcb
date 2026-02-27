@@ -163,7 +163,7 @@
       </div>
     <% end %>
 
-    <% if application.user.teenager? && application.cosigner_email.present? %>
+    <% if application.user.is_minor? && application.cosigner_email.present? %>
       <div>
         <p class="text-sm muted mb-1">Parent email</p>
         <p class="mb-0"><%= application.cosigner_email %></p>

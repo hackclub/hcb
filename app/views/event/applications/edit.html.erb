@@ -56,21 +56,21 @@
           <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field" %>
         </div>
 
-        <div class="field" x-show="!(<%= @application.user.teenager? %>)">
+        <div class="field" x-show="!(<%= @application.teen_led? %>)">
           <%= form.label :planning_duration do %>
             How long have you been planning your project? <span class="text-primary">*</span>
           <% end %>
           <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full" %>
         </div>
 
-        <div class="field" x-show="!(<%= @application.user.teenager? %>)">
+        <div class="field" x-show="!(<%= @application.teen_led? %>)">
           <%= form.label :team_size do %>
             How many people are on your team? <span class="text-primary">*</span>
           <% end %>
           <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", step: 1, min: 1 %>
         </div>
 
-        <div class="md:flex gap-4" x-show="!(<%= @application.user.teenager? %>)">
+        <div class="md:flex gap-4" x-show="!(<%= @application.teen_led? %>)">
           <div class="field flex-1">
             <%= form.label :annual_budget do %>
               Annual budget <span class="text-primary">*</span>
@@ -96,7 +96,7 @@
           </div>
         </div>
 
-        <div class="field" x-show="!(<%= @application.user.teenager? %>) && committed > 0">
+        <div class="field" x-show="!(<%= @application.teen_led? %>) && committed > 0">
           <%= form.label :funding_source do %>
             What is the source of your funding? <span class="text-primary">*</span>
           <% end %>
@@ -111,7 +111,7 @@
         </div>
       </div>
 
-      <div class="card" x-data="{ minor: <%= @application.user.teenager? %> }">
+      <div class="card" x-data="{ minor: <%= @application.teen_led? %> }">
         <h3 class="text-2xl my-0 mb-6">Personal Information</h3>
 
         <div class="md:flex gap-2">
@@ -225,7 +225,7 @@
             <%= form.text_area :accessibility_notes, class: "w-full max-w-full" %>
           </div>
 
-          <% if @application.user.teenager? %>
+          <% if @application.user.is_minor? %>
             <div class="field col-span-2" x-show="minor">
               <%= form.label :cosigner_email do %>
                 Parent email <span class="text-primary">*</span>
