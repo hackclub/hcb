@@ -187,12 +187,6 @@ module Admin
             path: new_teenagers_leaderboard_admin_index_path,
             count: 0, # I think this would be expensive to calculate
             count_type: :records,
-          ),
-          make_item(
-            name: "Applications (HCB)",
-            path: applications_admin_index_path,
-            count: Event::Application.count,
-            count_type: :records,
           )
         ]
       )
@@ -227,6 +221,11 @@ module Admin
       Section.new(
         name: "Organizations",
         items: [
+          make_item(
+            name: "Applications",
+            path: applications_admin_index_path,
+            count: Event::Application.under_review.count
+          ),
           make_item(
             name: "Organizations",
             path: events_admin_index_path,
