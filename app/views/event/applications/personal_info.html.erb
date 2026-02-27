@@ -35,7 +35,7 @@
         <% end %>
 
         <%= form.hidden_field :phone_number, value: current_user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" autocomplete="off" required>
+        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" autocomplete="on" required>
       </div>
       <div class="field flex-1">
         <div class="inline-flex items-center justify-between w-full gap-1">
