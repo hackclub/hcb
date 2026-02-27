@@ -60,7 +60,7 @@ class Event
       elsif @application.affiliations.any?(&:is_hack_club?)
         airrecord["Org Type"] = "Hack Club"
       end
-      
+
       if @application.event.present?
         airrecord["HCB ID"] = @application.event.id
         airrecord["HCB account URL"] = Rails.application.helpers.url_helpers.event_url(@application.event)
