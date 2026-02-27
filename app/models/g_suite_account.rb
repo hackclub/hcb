@@ -44,6 +44,7 @@ class GSuiteAccount < ApplicationRecord
 
   validates_presence_of :address, :backup_email, :first_name, :last_name
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
+  validates :backup_email, nondisposable: true, on: :create
 
   validate :status_accepted_or_rejected
   validates :address, uniqueness: { scope: :g_suite }

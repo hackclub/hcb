@@ -171,6 +171,12 @@ module Admin
             count_type: :records,
           ),
           make_item(
+            name: "Contracts",
+            path: contracts_admin_index_path,
+            count: Contract.count,
+            count_type: :records
+          ),
+          make_item(
             name: "Active Teenagers Leaderboard",
             path: active_teenagers_leaderboard_admin_index_path,
             count: User.active_teenager.count,

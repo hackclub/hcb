@@ -64,6 +64,7 @@
         <%= card_to "Cards", stripe_cards_admin_index_path %>
         <%= card_to "Card designs", stripe_card_personalization_designs_admin_index_path %>
         <%= card_to "Emails", emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true %>
+        <%= card_to "Contracts", contracts_admin_index_path, badge: Contract.count, subtle_badge: true %>
       </ul>
       <h2>Perks</h2>
       <ul class="grid text-left w-100 mt0" id="perks-grid">
