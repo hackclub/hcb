@@ -46,7 +46,7 @@ class Event
       airrecord["Synced from HCB at"] = Time.current
 
       if @application.event.present?
-        airrecord["HCB ID"] = @application.event.id 
+        airrecord["HCB ID"] = @application.event.id
         airrecord["HCB account URL"] = Rails.application.helpers.url_helpers.event_url(@application.event)
       end
 
