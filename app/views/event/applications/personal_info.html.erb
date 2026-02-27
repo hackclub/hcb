@@ -99,12 +99,8 @@
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": "$el.setCustomValidity(disallowed_countries.includes(country) ? 'HCB is not supported in this country' : '')" } %>
-        <% if Event::Application::DISALLOWED_COUNTRIES.include?(@application.address_country) %>
-          <script>
-            event_application_address_country.setCustomValidity('HCB is not supported in this country')
-          </script>
-        <% end %>
+        <% validate = "$el.setCustomValidity(disallowed_countries.includes(country) ? 'HCB is not supported in this country' : '')" %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": validate, "x-init": validate } %>
       </div>
     </div>
 
