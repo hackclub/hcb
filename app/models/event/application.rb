@@ -268,7 +268,7 @@ class Event
         self[field].nil?
       end
 
-      !missing_fields && !user.onboarding? && !country.in?(DISALLOWED_COUNTRIES)
+      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
     end
 
     def response_time
