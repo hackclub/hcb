@@ -18,8 +18,6 @@
 #
 class Event
   class Affiliation < ApplicationRecord
-    self.ignored_columns += ["event_id"]
-
     include Hashid::Rails
     hashid_config salt: ""
 

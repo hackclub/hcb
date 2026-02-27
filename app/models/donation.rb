@@ -93,6 +93,7 @@ class Donation < ApplicationRecord
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates :email, nondisposable: true, on: :create
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
 
@@ -277,13 +278,8 @@ class Donation < ApplicationRecord
     anonymous? ? "Anonymous Donor" : name.to_s
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
 
   def canonical_pending_transaction
     canonical_pending_transactions.first
