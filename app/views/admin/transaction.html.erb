@@ -140,7 +140,7 @@
   <% if comment.content.blank? %>
     <div class="muted mb1"><em>Comment left blank.</em></div>
   <% else %>
-    <%= sanitize(MarkdownService.instance.renderer(current_user:, record: comment).render(comment.content), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(comment.content, current_user:, record: comment) %>
   <% end %>
   <% if comment.has_attached_file? %>
     <p>

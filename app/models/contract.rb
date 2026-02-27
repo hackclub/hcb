@@ -48,6 +48,7 @@ class Contract < ApplicationRecord
 
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+  validates :cosigner_email, nondisposable: true, on: :create
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
@@ -102,6 +103,14 @@ class Contract < ApplicationRecord
   }, prefix: :sent_with
 
   scope :not_voided, -> { where.not(aasm_state: :voided) }
+
+  has_many :party_users, through: :parties, source: :user
+
+  include PgSearch::Model
+  pg_search_scope :search_parties, associated_against: {
+    parties: :external_email,
+    party_users: [:full_name, :email]
+  }
 
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
@@ -158,6 +167,10 @@ class Contract < ApplicationRecord
     end
 
     contractable.on_contract_party_signed(party)
+  end
+
+  def docuseal_submission_url
+    "https://docuseal.com/submissions/#{external_id}"
   end
 
   # Adding this back temporarily while we work on fixing missing parties

@@ -16,6 +16,7 @@ module UserService
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
       disallow_fresh_users
+      disallow_excessive_sms_verifications
 
       TwilioVerificationService.new.send_verification_request(@user.phone_number)
     end
@@ -57,6 +58,16 @@ module UserService
       return if @user.created_at < 1.day.ago
 
       raise SMSEnrollmentError, "Please wait at least 24 hours after creating your account before enrolling in SMS authentication."
+    end
+
+    def disallow_excessive_sms_verifications
+      cache_key = "sms_verify_count:#{@user.id}:#{Date.current}"
+      count = Rails.cache.increment(cache_key, 1, expires_in: 25.hours).to_i
+
+      return if count <= 3
+
+      Rails.error.report(Errors::TwilioAbuseError.new("User #{@user.id} exceeded SMS verification send limit (count: #{count})."))
+      raise SMSEnrollmentError, "You've requested too many verification codes. Please try again tomorrow or contact support at hcb@hackclub.com."
     end
 
   end

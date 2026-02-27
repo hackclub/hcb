@@ -264,6 +264,7 @@ Rails.application.routes.draw do
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
+      get "contracts", to: "admin#contracts"
     end
 
     member do
@@ -493,7 +494,6 @@ Rails.application.routes.draw do
 
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
-      post "comment"
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
@@ -619,7 +619,7 @@ Rails.application.routes.draw do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
-      get "start/:event_name/tiers/:tier_id", to: "donations#start_donation", as: "start_donation_tier"
+      get "start/:event_name/tiers/:tier_id", to: "donation/tiers#start", as: "start_donation_tier"
       get "qr/:event_name.png", to: "donations#qr_code", as: "qr_code"
       get ":event_name/:donation", to: "donations#finish_donation", as: "finish_donation"
       get ":event_name/:donation/finished", to: "donations#finished", as: "finished_donation"
@@ -820,11 +820,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :edit, :update, :show] do
-      member do
-        post "refresh"
-      end
-    end
+    resources :blocks, only: [:create, :edit, :update, :show]
   end
 
   scope module: "organizer_position_invite" do
