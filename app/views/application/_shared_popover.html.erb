@@ -1,0 +1,10 @@
+<section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="shared_popover">
+  <header class="pb2 rounded-t-lg">
+    <%= pop_icon_to "view-close", "#close_modal", class: "modal__close muted", rel: "modal:close", tabindex: 0 %>
+    <a href="#" target="_blank" class="pop modal__external muted" id="shared_popover_external_link" style="display:none">
+      <%= inline_icon "external", size: 14 %>
+    </a>
+    <h2 class="h1 mt0 mb0 pb0 border-none" id="shared_popover_title"></h2>
+  </header>
+  <div id="shared_popover_body"></div>
+</section>
