@@ -23,9 +23,9 @@
     </h2>
 
     <h3 class="m-0 muted">
-      <% if !@application.approved? || @application.contract.party(:signee).pending? || @application.contract.party(:cosigner)&.pending? %>
+      <% if !@application.approved? || @application.contract&.party(:signee)&.pending? || @application.contract&.party(:cosigner)&.pending? %>
         Here's what's next for <%= @application.name %>
-      <% elsif @application.approved? && @application.contract.party(:hcb).pending? %>
+      <% elsif @application.approved? && @application.contract&.party(:hcb)&.pending? %>
         HCB is finalizing your contact
       <% else %>
         You're ready to start spending
