@@ -5,7 +5,7 @@
     We have reviewed the agreement you signed for <%= @contract.event_name %>.
     However, we cannot finalize this agreement due to an issue in your submission:
   </p>
-  <blockquote><%== MarkdownService.instance.renderer.render @message %></blockquote>
+  <blockquote><%= MarkdownService.instance.render @message %></blockquote>
 <% else %>
   <p>
     We have reviewed the agreement you signed for <%= @contract.event_name %>.
@@ -13,7 +13,7 @@
   </p>
 <% end %>
 
-<p><%= link_to "Click here", contract_party_url(@party) %> to sign a new agreement<%= " addressing the above issue" if @message.present? %>.</p>
+<p><%= link_to "Click here", contract_party_url(@party) %> to sign a new agreement<%= ", addressing the above issue" if @message.present? %>.</p>
 
 <p>
   Best,<br>
