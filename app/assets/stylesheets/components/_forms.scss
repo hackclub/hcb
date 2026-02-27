@@ -74,8 +74,13 @@ textarea {
   }
 }
 
-[data-dark='true'] option {
+[data-dark='true'] select:not([multiple]) option {
   background-color: $darkless;
+}
+
+[data-dark='true'] select[multiple] option:checked,
+[data-dark='true'] select[multiple] option::selection {
+  background-color: map-get($palette, info);
 }
 
 select {

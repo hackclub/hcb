@@ -4,11 +4,7 @@ class ApplicationController < ActionController::Base
   # set Current.session - this should come first as
   # a large portion of the code below this depends on this
   before_action do
-    Current.session = begin
-      # Find a valid session (not expired) using the session token
-      session_token = cookies.encrypted[:session_token]
-      session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
-    end
+    Current.session = find_current_session
   end
 
   include Pundit::Authorization
