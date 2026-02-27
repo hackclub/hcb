@@ -44,7 +44,11 @@ class Event
       airrecord["Referral Code"] = @application.referral_code
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
       airrecord["Synced from HCB at"] = Time.current
-      airrecord["HCB ID"] = @application.event&.id
+
+      if @application.event.present?
+        airrecord["HCB ID"] = @application.event.id 
+        airrecord["HCB account URL"] = Rails.application.helpers.url_helpers.event_url(@application.event)
+      end
 
       airrecord.save
 
