@@ -39,6 +39,18 @@
             <strong>Airtable last synced at</strong>
             <span><%= @application.airtable_synced_at.present? ? format_datetime(@application.airtable_synced_at) : "Not synced" %></span>
           </p>
+          <% if @application.contract.present? %>
+            <p>
+              <strong>Contract status</strong>
+              <span>
+                <% if @application.contract.parties.not_hcb.all?(&:signed?) %>
+                  Ready to sign
+                <% else %>
+                  Waiting on <%= @application.contract.parties.not_hcb.pending.map(&:role).join(", ") %>
+                <% end %>
+              </span>
+            </p>
+          <% end %>
         </section>
       </div>
     <% end %>
