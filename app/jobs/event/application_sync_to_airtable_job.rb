@@ -32,7 +32,7 @@ class Event
       airrecord["Zip Code"] = @application.address_postal_code
       airrecord["Tell us about your event"] = @application.description
       airrecord["Have you used HCB for any previous events?"] = @application.user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
-      airrecord["Teenager Led?"] = @application.user.teenager?
+      airrecord["Teenager Led?"] = @application.teen_led?
       airrecord["Address Line 1"] = @application.address_line1
       airrecord["Address Line 2"] = @application.address_line2
       airrecord["City"] = @application.address_city
