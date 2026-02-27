@@ -56,6 +56,8 @@ class EventsController < ApplicationController
     rescue Pundit::NotAuthorizedError
       return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
     end
+
+    render_tour @organizer_position, :welcome
   end
 
   def transaction_heatmap
@@ -144,8 +146,6 @@ class EventsController < ApplicationController
   end
 
   def transactions
-    render_tour @organizer_position, :welcome
-
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
     if maybe_pending_invite.present?

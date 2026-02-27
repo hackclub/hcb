@@ -222,6 +222,11 @@ module Admin
         name: "Organizations",
         items: [
           make_item(
+            name: "Applications",
+            path: applications_admin_index_path,
+            count: Event::Application.under_review.count
+          ),
+          make_item(
             name: "Organizations",
             path: events_admin_index_path,
             count: Event.approved.count,
