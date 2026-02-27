@@ -18,7 +18,9 @@ module Bank
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
 
-    Credentials.load if ENV["DOPPLER_TOKEN"]
+    ActiveRecord::Base.logger = Logger.new($stdout)
+
+    # Credentials.load if ENV["DOPPLER_TOKEN"]
 
     config.action_mailer.default_url_options = {
       host: Credentials.fetch(:LIVE_URL_HOST)
