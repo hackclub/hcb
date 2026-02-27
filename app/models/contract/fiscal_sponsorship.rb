@@ -34,26 +34,7 @@
 
 class Contract
   class FiscalSponsorship < Contract
-    after_update_commit if: ->{ sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") } do
-      document = Document.new(
-        event:,
-        name: "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
-      )
-      contract_document = docuseal_document["documents"][0]
-
-      response = Faraday.get(contract_document["url"]) do |req|
-        req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
-      end
-
-      document.file.attach(
-        io: StringIO.new(response.body),
-        filename: "#{contract_document["name"]}.pdf"
-      )
-
-      document.user = party(:hcb).user
-      document.save!
-      update!(document:)
-    end
+    after_update_commit :create_document!, if: ->{ event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
 
     def payload
       signee = party :signee
@@ -156,6 +137,12 @@ class Contract
       else
         nil
       end
+    end
+
+    private
+
+    def document_name
+      "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
     end
 
   end

@@ -21,32 +21,32 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
-  def edit_actions?
-    admin_or_manager?
-  end
-
-  def edit_usage_restrictions?
-    admin_or_manager?
-  end
-
   def edit_overview?
-    admin_or_manager?
-  end
-
-  def edit_balance?
-    admin_or_manager?
+    auditor_or_manager?
   end
 
   def edit_purpose?
-    admin_or_manager?
+    auditor_or_manager?
+  end
+
+  def edit_usage_restrictions?
+    auditor_or_manager?
+  end
+
+  def edit_actions?
+    auditor_or_manager?
+  end
+
+  def edit_balance?
+    auditor_or_manager?
   end
 
   def edit_topup?
-    admin_or_manager?
+    auditor_or_manager?
   end
 
   def edit_withdraw?
-    admin_or_manager?
+    auditor_or_manager?
   end
 
   def activate?
@@ -97,6 +97,10 @@ class CardGrantPolicy < ApplicationPolicy
 
   def admin_or_manager?
     user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+  end
+
+  def auditor_or_manager?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def sender_admin_or_manager?
