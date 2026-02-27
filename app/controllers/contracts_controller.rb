@@ -23,25 +23,12 @@ class ContractsController < ApplicationController
     end
 
     @contract.mark_voided!
-
-    new_contract = nil
-
-    ActiveRecord::Base.transaction do
-      new_contract = Contract.create!(
-        contractable: @contract.contractable,
-        external_service: @contract.external_service,
-        include_videos: @contract.include_videos,
-        prefills: @contract.prefills,
-        type: @contract.type,
-        external_template_id: @contract.external_template_id
-      )
-
-      @contract.parties.not_hcb.each do |party|
-        new_contract.parties.create!(external_email: party.external_email, role: party.role, user: party.user)
-      end
-    end
-
-    new_contract.send!(reissue_signee_message: signee_message, reissue_cosigner_message: cosigner_message)
+    new_contract = @contract.contractable.send_contract(
+      cosigner_email: @contract.party(:cosigner)&.email,
+      include_videos: @contract.include_videos,
+      reissue_signee_message: signee_message,
+      reissue_cosigner_message: cosigner_message
+    )
 
     flash[:success] = "Contract reissued successfully."
     redirect_to new_contract.redirect_path
