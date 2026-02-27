@@ -18,7 +18,8 @@
             <%= {
                   merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
                   cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
-                  user_cards_locked: "by HCB because you have too many missing receipts"
+                  user_cards_locked: "by HCB because you have too many missing receipts",
+                  user_locked: "by HCB because your account has been locked"
                 }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
         <% else %>
             <span>
@@ -42,6 +43,7 @@
                   merchant_not_allowed: "Merchant not allowed",
                   cash_withdrawals_not_allowed: "Cash withdrawals disabled",
                   user_cards_locked: "Card locked due to missing receipts",
+                  user_locked: "Account locked",
                 }[hcb_decline_reason] || "Insufficient funds" %>
         <% else %>
             <%= {
@@ -77,6 +79,8 @@
             Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
         <% elsif hcb_decline_reason == :user_cards_locked %>
             You can manage your receipts on HCB <%= link_to "receipts page", my_inbox_url %>. If you have 10 or more missing receipts, your cards will be locked until you submit them.
+        <% elsif hcb_decline_reason == :user_locked %>
+            Your account has been locked by an administrator. Please contact HCB support at <%= mail_to "hcb@hackclub.com" %>.
         <% elsif stripe_decline_reason == :authorization_controls %>
             This transaction exceeded daily limits set by our card issuer. Please try again later, or use a different card for this transaction.
         <% elsif stripe_decline_reason == :webhook_timeout %>
