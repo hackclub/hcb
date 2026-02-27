@@ -43,12 +43,12 @@ class Event
       airrecord["Planning Duration"] = @application.planning_duration
       airrecord["Currently fiscally sponsored?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
       airrecord["Previously applied?"] = @application.currently_fiscally_sponsored? ? "Yes" : "No"
-      airrecord["Committed Amount"] = @application.committed_amount
-      airrecord["(Adults) Annual Budget"] = @application.annual_budget
+      airrecord["Committed Amount"] = @application.committed_amount.to_f if @application.committed_amount.present?
+      airrecord["Annual Budget"] = @application.annual_budget.to_f if @application.annual_budget.present?
       airrecord["Funding Source"] = @application.funding_source
       airrecord["How did you hear about HCB?"] = @application.referrer
       airrecord["Accommodations"] = @application.accessibility_notes
-      airrecord["(Adults) Political Activity"] = @application.political_description
+      airrecord["Political Activity"] = @application.political_description
       airrecord["Referral Code"] = @application.referral_code
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
       airrecord["Synced from HCB at"] = Time.current
@@ -59,6 +59,11 @@ class Event
         airrecord["Org Type"] = "Robotics"
       elsif @application.affiliations.any?(&:is_hack_club?)
         airrecord["Org Type"] = "Hack Club"
+      end
+      
+      if @application.event.present?
+        airrecord["HCB ID"] = @application.event.id
+        airrecord["HCB account URL"] = Rails.application.helpers.url_helpers.event_url(@application.event)
       end
 
       airrecord.save

@@ -335,6 +335,8 @@ class Event
         affiliation_copy.save!
       end
 
+      schedule_airtable_sync
+
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
