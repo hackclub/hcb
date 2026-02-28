@@ -350,6 +350,10 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
+  def locked_by
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+  end
+
   def lock!
     update!(locked_at: Time.now)
 
