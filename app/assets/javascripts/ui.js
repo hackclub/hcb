@@ -794,6 +794,12 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
     const body = document.getElementById('shared_popover_body')
     if (body) body.innerHTML = ''
+
+    const popoverEl = modal.elm[0]
+    if (popoverEl && popoverEl.classList) {
+      popoverEl.classList.remove('modal--popover--receipt-expanded')
+      popoverEl.classList.remove('modal--popover--sm')
+    }
   }
 });
 
