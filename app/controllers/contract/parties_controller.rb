@@ -22,7 +22,7 @@ class Contract
         return
       elsif @contract.voided?
         flash[:error] = "This contract has been voided."
-        redirect_to root_path
+        redirect_to @contract.redirect_path
         return
       elsif @contract.pending?
         flash[:error] = "This contract has not been sent yet. Try again later."
