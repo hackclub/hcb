@@ -15,6 +15,8 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
+      raise SMSEnrollmentError, "SMS authentication currently unavailable for your account, please try again later."
+
       disallow_fresh_users
       disallow_excessive_sms_verifications
 
