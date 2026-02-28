@@ -496,7 +496,7 @@ class AdminController < Admin::BaseController
       @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
       Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       # Arel.sql("aasm_state = 'draft' ASC"),
-      "reimbursement_reports.submitted_at desc"
+      "reimbursement_reports.submitted_at DESC NULLS LAST"
     )
 
   end
