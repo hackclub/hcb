@@ -35,9 +35,10 @@
 
         <% if organizer_signed_in? %>
           <% popover_enabled = popovers_enabled? && (@event || transaction.local_hcb_code.event).present? %>
+          <% data_attributes = popover_enabled ? hcb_code_popover_data(transaction.local_hcb_code, event: @event) : {} %>
           <%= link_to url_for(transaction.local_hcb_code),
                 class: "homepage-transaction #{"clickable" if popover_enabled}",
-                data: hcb_code_popover_data(transaction.local_hcb_code, event: @event) do %>
+                data: data_attributes do %>
             <%= rendered_transaction %>
           <% end %>
         <% else %>
