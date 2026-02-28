@@ -74,7 +74,7 @@
       <% end %>
     <% elsif @application.approved? && (party = @application.contract&.party(:hcb))&.pending? %>
       <% admin_tool do %>
-        <% pending_parties = @application.contract&.parties&.not_hcb&.select(&:pending?).map(&:role) %>
+        <% pending_parties = @application.contract&.parties&.not_hcb&.select(&:pending?)&.map(&:role) %>
         <% disabled = pending_parties.any? %>
         <p class="<%= "tooltipped" if disabled %> my-0" aria-label="<%= "The contract is still pending on the #{pending_parties.to_sentence}" if disabled %>"><%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success #{"pointer-events-none" if disabled}", disabled: %></p>
       <% end %>
