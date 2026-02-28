@@ -89,7 +89,7 @@
         International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
       <% end %>
 
-      <%= render partial: "wires/recipient_details", locals: { form:, disabled: false, required: false } %>
+      <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: false } %>
 
       <div class="field">
         <%= form.label :recipient_name, "Name on account" %>
@@ -121,7 +121,7 @@
           We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
         <% end %>
 
-        <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: false } %>
+        <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false } %>
 
         <div class="field">
           <%= form.label :currency, "Currency" %>

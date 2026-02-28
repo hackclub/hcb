@@ -179,36 +179,34 @@ window.attachTooltipListener = () => {
     mutationObserver.observe(trigger, { attributes: true, attributeFilter: ["aria-label"] });
   };
 
-  // Use event delegation instead of binding directly to each .tooltipped element.
-  // Previously, $(".tooltipped").on({...}) was called on every turbo:frame-load,
-  // attaching N new handlers to every element on each call and causing severe
-  // slowdowns on pages with many tooltipped elements (e.g. the transfers page).
-  // Delegation uses a single document-level handler that works for both existing
-  // and dynamically-added elements, eliminating the need to re-run on frame loads.
-  // Namespaced events (.tooltip) allow safe cleanup on each turbo:load.
-  $(document)
-    .off("mouseenter.tooltip touchstart.tooltip mouseleave.tooltip", ".tooltipped")
-    .on("mouseenter.tooltip", ".tooltipped", function (event) {
+  $(".tooltipped").on({
+    mouseenter(event) {
       if (window.innerWidth < 768) return;
-      showTooltip(event.currentTarget);
-    })
-    .on("touchstart.tooltip", ".tooltipped", function (event) {
+      const trigger = event.currentTarget;
+      showTooltip(trigger);
+    },
+    touchstart(event) {
       const trigger = event.currentTarget;
       if (!trigger.classList.contains("tooltipped--tappable")) return;
       showTooltip(trigger);
-    })
-    .on("mouseleave.tooltip", ".tooltipped", removeTooltips);
+    },
+    mouseleave: removeTooltips
+  });
 
-  $(document)
-    .off("click.tooltip turbo:before-visit.tooltip beforeunload.tooltip turbo:frame-load.tooltip")
-    .on("click.tooltip", function (event) {
-      // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
-      if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
-        removeTooltips();
-      }
-    })
-    .on("turbo:before-visit.tooltip beforeunload.tooltip turbo:frame-load.tooltip", removeTooltips);
+  $(document).on("click", function (event) {
+    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
+    if (!$(event.target).closest(".tooltipped--tappable").length && !$(event.target).closest("#tooltip-container").length) {
+      removeTooltips();
+    }
+  });
+  // on unload turbo
+  $(document).on('turbo:before-visit', removeTooltips);
+  $(document).on('beforeunload', removeTooltips)
+  $(document).on('turbo:frame-load', removeTooltips);
 }
+
+$(document).on('turbo:frame-load', window.attachTooltipListener)
+$(document).on('turbo:after-stream-render', window.attachTooltipListener)
 
 $(document).on('turbo:load', function () {
   window.attachTooltipListener();
