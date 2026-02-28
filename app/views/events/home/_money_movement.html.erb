@@ -82,9 +82,9 @@
 
         <% if organizer_signed_in? %>
           <% popover_enabled = popovers_enabled? && (@event || transaction.local_hcb_code.event).present? %>
-          <%= link_to url_for(transaction.local_hcb_code),
-                class: "homepage-transaction #{"clickable" if popover_enabled}",
-                data: hcb_code_popover_data(transaction.local_hcb_code, event: @event) do %>
+          <% link_options = { class: "homepage-transaction #{"clickable" if popover_enabled}" } %>
+          <% link_options[:data] = hcb_code_popover_data(transaction.local_hcb_code, event: @event) if popover_enabled %>
+          <%= link_to url_for(transaction.local_hcb_code), link_options do %>
             <%= rendered_transaction %>
           <% end %>
         <% else %>
