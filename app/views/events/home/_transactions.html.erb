@@ -30,7 +30,7 @@
         <%= link_to url_for(transaction.local_hcb_code),
               style: "height:60px",
               class: "homepage-transaction #{"clickable" if popover_enabled}",
-              data: hcb_code_popover_data(transaction.local_hcb_code, event: @event) do %>
+              data: (popover_enabled ? hcb_code_popover_data(transaction.local_hcb_code, event: @event) : { turbo_frame: "_top" }) do %>
           <%= rendered_transaction %>
         <% end %>
       <% else %>
