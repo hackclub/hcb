@@ -5,6 +5,11 @@ Nondisposable.configure do |config|
   config.error_message = "provider is unsupported. Please try with another email address."
 
   # Sourced from https://hcb.hackclub.com/blazer/queries/1116-user-group-domain-by-usage
+  #
+  # NOTE: comcast.net, aol.com, and msn.com are semi-common email providers, but
+  # have very few legitimate users. I'm choosing to block them because the pros
+  # of blocking fraudulent users outweigh the cons of blocking a small number of
+  # new legitimate users.
   hcb_sourced_domains = %w[
     aboodbab.com
     pupacloud.net
@@ -16,6 +21,20 @@ Nondisposable.configure do |config|
     mxbros.org
     mamabood.com
     gmx.com
+    toukib.com
+    rambler.ru
+    autorambler.ru
+    bk.ru
+    inbox.ru
+    lenta.ru
+    list.ru
+    mail.ru
+    myrambler.ru
+    ro.ru
+    msn.com
+    aol.com
+    comcast.net
+    rambler.ua
   ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
@@ -56,7 +75,10 @@ Nondisposable.configure do |config|
 
   # Add custom domains you want to be considered as disposable
   config.additional_domains = hcb_sourced_domains + okta_sourced_domains + [
-    "gmail.con" # protect people who accidentally type .con instead of .com
+    # Project people who mistype gmail.com, but these were also found in SMS pumping fraud
+    "gmail.con",
+    "gmail.co",
+    "gamil.com"
   ]
 
   # Exclude domains that are considered disposable but you want to allow anyways
