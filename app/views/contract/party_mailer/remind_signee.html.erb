@@ -10,6 +10,15 @@
 <p>If you have any questions, we're here to help! Just reply to this email or reach out to <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %>.</p>
 
 <p>
+  If you do not wish to sign this agreement, you can
+  <% if @contract.contractable.is_a?(Event::Application) %>
+    <%= link_to "archive your application for #{@contract.event_name} on HCB", application_url(@contract.contractable) %>.
+  <% elsif @contract.contractable.is_a?(OrganizerPositionInvite) %>
+    <%= link_to "reject your invitation to #{@contract.event_name} on HCB", organizer_position_invite_url(@contract.contractable) %>.
+  <% end %>
+</p>
+
+<p>
   Warmly,<br>
   The HCB team
 </p>
