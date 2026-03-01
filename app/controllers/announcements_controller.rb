@@ -44,6 +44,7 @@ class AnnouncementsController < ApplicationController
     authorize @announcement
     return if @announcement.deleted?
   end
+
   def edit
     authorize @announcement
 
