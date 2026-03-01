@@ -137,7 +137,7 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: [:submitted, :under_review], to: :approved
+        transitions from: [:submitted, :under_review], to: :approved, if: :ready_to_approve?
         after do
           unless teen_led?
             send_contract unless contract.present?
@@ -375,6 +375,10 @@ class Event
     end
 
     private
+
+    def ready_to_approve?
+      (!teen_led && submitted?) || (teen_led && under_review?) 
+    end
 
     def schedule_airtable_sync
       Event::ApplicationSyncToAirtableJob.perform_later(self)
