@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Contract
   class Party
     class ReminderJob < ApplicationJob
@@ -8,6 +10,9 @@ class Contract
 
         Contract::PartyMailer.with(party:).reminder.deliver_later
       end
+
     end
+
   end
+
 end
