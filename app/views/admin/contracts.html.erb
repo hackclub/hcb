@@ -1,0 +1,78 @@
+<% title "Contracts" %>
+
+<%= form_with local: true, url: contracts_admin_index_path, method: :get do |form| %>
+  <%= form.text_field :q, value: params[:q], placeholder: "Search parties" %>
+  <%= form.select :type, Contract.subclasses.map { |subclass| [subclass.name.demodulize.underscore.humanize, subclass.name] }, { include_blank: "All contract types", selected: @type } %>
+  <%= form.select :status, Contract.aasm.states_for_select, { include_blank: "All statuses", selected: @status } %>
+  <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
+  <%= form.submit "Search" %>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @contracts, entry_name: "contracts" %>
+  </div>
+  <%= paginate @contracts %>
+</div>
+
+<table class="min-w-0">
+  <thead>
+    <tr>
+      <th class="w-24">ID</th>
+      <th class="w-32">Date</th>
+      <th>Type</th>
+      <th>Linked to</th>
+      <th>Status</th>
+      <th>Service</th>
+      <th>Parties</th>
+      <th class="w-24">Links</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @contracts.each do |contract| %>
+      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all?(&:signed?) && contract.party(:hcb)&.pending? %> <%= "admin-bg-transit" if contract.signed? %>">
+        <td><%= contract.id %></td>
+        <td><%= contract.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= contract.class.name.demodulize.underscore.humanize %></td>
+        <td>
+          <% if contract.contractable.is_a?(OrganizerPositionInvite) %>
+            <%= link_to "Invite to #{contract.contractable.event.name}", organizer_position_invite_path(contract.contractable) %>
+          <% elsif contract.contractable.is_a?(Event::Application) %>
+            <%= link_to "Application for #{contract.contractable.name}", application_path(contract.contractable) %>
+          <% end %>
+        </td>
+        <td><%= contract.aasm_state %></td>
+        <td><%= contract.external_service %></td>
+        <td>
+          <% contract.parties.order(role: :desc).each do |party| %>
+            <% if party.user.present? %>
+              <%= link_to party.email, party.user %>
+            <% elsif %>
+              <span class="error"><%= party.email %></span>
+            <% end %>
+            (<%= party.role %>):
+            <% if party.hcb? && party.pending? %>
+              <%= link_to "pending (click to sign)", contract_party_path(party), class: "error" %>
+            <% else %>
+              <span class="<%= party.signed? ? "success" : "error" %>"><%= party.aasm_state %></span>
+            <% end %>
+            <br>
+          <% end %>
+        </td>
+        <td>
+          <%= link_to "DocuSeal", contract.docuseal_submission_url if contract.sent_with_docuseal? %>
+          <%= link_to "Document", contract.document if contract.document.present? %>
+        </td>
+        <td class="text-nowrap">
+          <% contract.parties.not_hcb.pending.order(role: :desc).each do |party| %>
+            <%= link_to "Resend to #{party.role}", resend_contract_party_path(party), method: :post %><br>
+          <% end %>
+          <%= link_to "Void", void_contract_path(contract), method: :post if contract.pending? || contract.sent? %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @contracts %>

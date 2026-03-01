@@ -179,7 +179,7 @@
                                  disabled: %>
             <% unless @user.birthday.nil? %>
               <% admin_tool("p-1.5 !ml-2") do %>
-                <%= @user.teenager? ? "✅ Teenager" : "Not a teenager" %>
+                <%= @user.is_teenager? ? "✅ Teenager" : "Not a teenager" %>
               <% end %>
             <% end %>
           </div>

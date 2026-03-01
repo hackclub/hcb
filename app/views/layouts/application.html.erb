@@ -24,7 +24,7 @@
               <%= image_tag "logo-production-dark.svg", width: 100, class: "logo-dark" %>
               <%= image_tag "logo-production.svg", width: 100, class: "logo" %>
             </div>
-            <h1 class="border-0 mt-0">Welcome to <%= @event.name %></h1>
+            <h1 class="border-0 mt-0 text-center">Welcome to <%= @event.name %></h1>
             <div class="mb2">
               <button class="btn" data-action="welcome#tour">Show me around</button>
             </div>
@@ -38,7 +38,7 @@
           <div class="sidebar--scroll-container">
             <%= yield(:header) %>
             <div class="hidden lg:block">
-              <%= render "application/flash", klass: "mt2" %>
+              <%= render "application/flash", klass: "mt2 mb1" %>
             </div>
             <div class="hidden lg:block flex-1">
               <%= yield(:nav) %>
@@ -59,7 +59,7 @@
           <%= render "application/banner_container" %>
           <div class="container p-4 md:p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">
             <div class="lg:hidden">
-              <%= render "application/flash" unless @hide_flash %>
+              <%= render "application/flash", klass: "mb1" unless @hide_flash %>
             </div>
             <%= yield(:container) %>
             <%= yield %>
@@ -76,7 +76,7 @@
       <% end %>
       <%= yield(:header) %>
       <main class="container px-6 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
-        <%= render "application/flash" unless @hide_flash %>
+        <%= render "application/flash", klass: "mb1" unless @hide_flash %>
         <%= yield %>
       </main>
     <% end %>

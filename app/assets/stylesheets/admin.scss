@@ -27,6 +27,15 @@ $mono:
 @import 'components/buttons';
 @import 'components/steps';
 
+.card {
+  --card-bg: #ffffff;
+  background-color: $white;
+  box-shadow: var(--shadow-border-sm);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
 // // https://raw.githubusercontent.com/waldyrious/downstyler/master/downstyler.css
 // /* ---------------------------------------------------------------------------------------------- */
 // /* Make HTML more responsive (adapted from https://fluidity.sexy ← note: dead link)               */

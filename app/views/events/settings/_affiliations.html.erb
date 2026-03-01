@@ -1,71 +1,16 @@
 <%# locals: (event:) %>
 
-<% disabled = !policy(event).update? %>
-
 <%= turbo_frame_tag :affiliations_settings do %>
   <h3 class="mb1">Add a new affiliation</h3>
   <div class="card mb3">
-
-    <%= form_with(url: affiliations_path(affiliable_type: event.class.name, affiliable_id: event.id), local: true, html: { "x-data": "{ type: 'first' }" }) do |form| %>
-      <%= render "events/settings/affiliation_form", affiliation: Event::Affiliation.new(affiliable: event), form: %>
+    <% affiliation = Event::Affiliation.new(affiliable: event) %>
+    <%= form_with(url: affiliations_path(affiliable_type: event.class.name, affiliable_id: event.id), local: true, html: { "x-data": "{ type: 'first', disabled: #{!policy(affiliation).update?} }" }) do |form| %>
+      <%= render "events/settings/affiliation_form", affiliation:, form: %>
     <% end %>
   </div>
 
   <% unless event.affiliations.none? %>
     <h3 class="mb2"><%= possessive(event.name) %> affiliations</h3>
   <% end %>
-  <% event.affiliations.each do |affiliation| %>
-    <div class="card mb2 flex">
-      <div class="flex flex-col">
-      <h4 class="mt1 mb0"><%= affiliation.display_name %></h4>
-        <% if affiliation.is_first? || affiliation.is_vex? %>
-          <span class="mt1 flex flex-row items-center">
-            <p class="font-bold mt0 mb0">League:&nbsp;</p>
-            <%= affiliation.league.upcase %>
-          </span>
-          <span class="flex flex-row items-center">
-            <p class="font-bold mt0 mb0">Team number:&nbsp;</p>
-            <%= affiliation.team_number %>
-          </span>
-          <span class="flex flex-row items-center">
-            <p class="font-bold mt0 mb0">Size:&nbsp;</p>
-            <%= affiliation.size %>
-          </span>
-        <% elsif affiliation.is_hack_club? %>
-          <span class="mt1 flex flex-row items-center">
-            <p class="font-bold mt0 mb0">Venue name:&nbsp;</p>
-            <%= affiliation.venue_name %>
-          </span>
-          <span class="mt0 flex flex-row items-center">
-            <p class="font-bold mt0 mb0">Size:&nbsp;</p>
-            <%= affiliation.size %>
-          </span>
-        <% end %>
-      </div>
-      <div class="flex-grow"></div>
-      <div class="flex items-start justify-center">
-        <div class="flex items-center justify-center">
-          <%= pop_icon_to "edit",
-            "#",
-            class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this affiliation",
-            data: { behavior: "modal_trigger", modal: "edit_affiliation_#{affiliation.id}" },
-            disabled: %>
-          <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_affiliation_<%= affiliation.id %>">
-            <%= modal_header("Edit affiliation") %>
-            <%= form_with(url: affiliation_path(affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}' }" }) do |form| %>
-              <%= render "events/settings/affiliation_form", affiliation:, form: %>
-            <% end %>
-          </section>
-        </div>
-        <%= pop_icon_to "delete",
-          affiliation_path(affiliation.id),
-          icon_size: 26,
-          class: "tooltipped tooltipped--w h-8 w-8",
-          style: "background: #ec375020; color: #ec3750",
-          data: { turbo_confirm: "Are you sure you would like to delete this affiliation?", turbo_method: :delete },
-          'aria-label': "Delete this affiliation",
-          disabled: %>
-      </div>
-    </div>
-  <% end %>
+  <%= render partial: "events/settings/affiliation", collection: event.affiliations %>
 <% end %>

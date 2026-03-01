@@ -109,7 +109,7 @@ class OrganizerPositionInvite < ApplicationRecord
     OrganizerPositionInvitesMailer.with(invite: self).notify.deliver_later
   end
 
-  def accept(show_onboarding: true)
+  def accept(show_onboarding: true, application_contract: nil)
     if cancelled?
       self.errors.add(:base, "was canceled!")
       return false
@@ -120,7 +120,7 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
-    if pending_signature?
+    if pending_signature? && application_contract.nil?
       self.errors.add(:base, "requires a signed contract!")
       return false
     end
@@ -131,7 +131,7 @@ class OrganizerPositionInvite < ApplicationRecord
       role:,
       is_signee:,
       first_time: show_onboarding,
-      fiscal_sponsorship_contract: contract
+      fiscal_sponsorship_contract: contract || application_contract
     )
 
     self.accepted_at = Time.current
@@ -211,7 +211,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -225,7 +225,7 @@ class OrganizerPositionInvite < ApplicationRecord
       event.set_airtable_status("Documents sent")
     end
 
-    fs_contract.send!
+    fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
   end
 
   def on_contract_signed(contract)
@@ -246,6 +246,10 @@ class OrganizerPositionInvite < ApplicationRecord
       update(is_signee: false)
       organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
     end
+  end
+
+  def contract_redirect_path
+    Rails.application.routes.url_helpers.event_team_path(event)
   end
 
   private

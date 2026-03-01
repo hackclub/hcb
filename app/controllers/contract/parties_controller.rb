@@ -17,12 +17,12 @@ class Contract
         end
       end
 
-      if @party.signed?
+      if @party.signed? && !(@contract.contractable.is_a?(Event::Application) && @party.hcb?)
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?
         flash[:error] = "This contract has been voided."
-        redirect_to root_path
+        redirect_to @contract.redirect_path
         return
       elsif @contract.pending?
         flash[:error] = "This contract has not been sent yet. Try again later."
@@ -36,8 +36,8 @@ class Contract
       authorize @party
       @party.notify
 
-      flash[:success] = "Contract resent successfully."
-      redirect_back(fallback_location: event_team_path(@contract.event))
+      flash[:success] = "Contract successfully resent to #{@party.email}."
+      redirect_back(fallback_location: @contract.redirect_path)
     end
 
     def completed

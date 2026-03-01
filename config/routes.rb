@@ -9,12 +9,12 @@ Rails.application.routes.draw do
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
-    mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
+    mount Audits1984::Engine => "/console"
     mount Blazer::Engine, at: "blazer"
     mount SchemaEndpoint.instance => "/schema"
   end
@@ -231,6 +231,7 @@ Rails.application.routes.draw do
       post "stripe_card_personalization_design_create", to: "admin#stripe_card_personalization_design_create"
       get "checks", to: "admin#checks"
       get "increase_checks", to: "admin#increase_checks"
+      get "applications", to: "admin#applications"
       get "paypal_transfers", to: "admin#paypal_transfers"
       get "wires", to: "admin#wires"
       get "wise_transfers", to: "admin#wise_transfers"
@@ -263,6 +264,7 @@ Rails.application.routes.draw do
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
+      get "contracts", to: "admin#contracts"
     end
 
     member do
@@ -342,6 +344,7 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
+      post "reissue"
     end
   end
 
@@ -491,7 +494,6 @@ Rails.application.routes.draw do
 
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
-      post "comment"
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
@@ -543,7 +545,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transactions, only: [:index, :show, :edit, :update]
+  resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
@@ -573,8 +575,13 @@ Rails.application.routes.draw do
       post "unapprove"
     end
   end
-
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
+
+  resources :ledgers, only: [:show]
+  scope module: :ledger, as: :ledger do
+    resources :items, path: "transactions", only: [:show]
+  end
+  resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
   resources :employees do
     post "terminate"
@@ -606,22 +613,13 @@ Rails.application.routes.draw do
     post "cancel"
   end
 
-  resources :emburse_transfers, except: [:new, :create] do
-    collection do
-      get "export"
-    end
-    post "accept"
-    post "reject"
-    post "cancel"
-  end
-
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
 
   resources :donations, only: [:show, :update] do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
-      get "start/:event_name/tiers/:tier_id", to: "donations#start_donation", as: "start_donation_tier"
+      get "start/:event_name/tiers/:tier_id", to: "donation/tiers#start", as: "start_donation_tier"
       get "qr/:event_name.png", to: "donations#qr_code", as: "qr_code"
       get ":event_name/:donation", to: "donations#finish_donation", as: "finish_donation"
       get ":event_name/:donation/finished", to: "donations#finished", as: "finished_donation"
@@ -732,6 +730,7 @@ Rails.application.routes.draw do
         resources :invoices, only: [:show, :create]
         resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:show, :create]
+        resources :check_deposits, only: [:index, :show, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -821,11 +820,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :edit, :update, :show] do
-      member do
-        post "refresh"
-      end
-    end
+    resources :blocks, only: [:create, :edit, :update, :show]
   end
 
   scope module: "organizer_position_invite" do
@@ -843,6 +838,31 @@ Rails.application.routes.draw do
     end
   end
 
+  scope module: :event do
+    get "apply", to: "applications#apply"
+
+    resources :applications, only: [:index, :create, :show, :new, :update] do
+      collection do
+        get "start", to: "applications#create"
+      end
+
+      member do
+        get "personal_info"
+        get "project_info"
+        get "agreement"
+        get "review"
+        get "submission"
+        get "airtable"
+        get "edit"
+        post "submit"
+        post "archive"
+        post "admin_approve"
+        post "admin_reject"
+        post "admin_activate"
+        post "resend_to_cosigner"
+      end
+    end
+  end
   resources :affiliations, only: [:create, :update, :destroy], module: :event
 
   get "/events" => "events#index"
