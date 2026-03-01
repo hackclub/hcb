@@ -14,11 +14,7 @@ module Api
       end
 
       expose_associated User do |activity, options|
-        if activity.owner.is_a?(User)
-          activity.owner
-        elsif activity.trackable.respond_to?(:user) && activity.trackable&.user.is_a?(User)
-          activity.trackable.user
-        end
+        activity.owner if activity.owner.is_a?(::User)
       end
 
       expose_associated Transaction do |activity, options|
