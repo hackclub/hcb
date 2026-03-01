@@ -66,6 +66,10 @@ class Contract
       Contract::PartyMailer.with(party: self).notify.deliver_later
     end
 
+    def notify_reissued(message: nil)
+      Contract::PartyMailer.with(party: self, message:).reissued.deliver_later
+    end
+
     def docuseal_signature_url
       "https://docuseal.co/s/#{external_id}"
     end
@@ -85,12 +89,16 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event_name}'s agreement as HCB Operations"
+        "Sign #{contract.event_name}'s agreement as HCB Operations"
       elsif cosigner?
         "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
       else
         "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
       end
+    end
+
+    def reissue_email_subject
+      "There was an issue in the agreement you signed for #{contract.event_name} on HCB 📝"
     end
 
     # We may miss a webhook or load a page before we've received the webhook,

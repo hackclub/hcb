@@ -14,7 +14,7 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6" x-data="{ minor: <%= @application.user.is_minor? || false %> }">
+  <div class="card mb-6" x-data="{ minor: <%= @application.user.is_minor? || false %>, country: '<%= @application.address_country.presence %>', disallowed_countries: '<%= Event::Application::DISALLOWED_COUNTRIES.join(",") %>'.split(',') }">
     <div class="md:flex items-end gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
@@ -35,7 +35,7 @@
         <% end %>
 
         <%= form.hidden_field :phone_number, value: current_user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" required="required">
+        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" autocomplete="on" required>
       </div>
       <div class="field flex-1">
         <div class="inline-flex items-center justify-between w-full gap-1">
@@ -99,9 +99,17 @@
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]" } %>
+        <% validate = "$el.setCustomValidity(disallowed_countries.includes(country) ? 'HCB is not supported in this country' : '')" %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": validate, "x-init": validate } %>
       </div>
     </div>
+
+    <template x-if="disallowed_countries.includes(country)">
+      <div class="border border-1 border-primary/50 bg-primary/10 flex flex-row justify-start gap-2 items-center rounded-[6px] py-1 px-2 mt-4">
+        <%= inline_icon "important", size: 20, class: "primary" %>
+        <p class="primary text-sm m-0 p-0">HCB is not supported in <span x-text="(country, event_application_address_country.selectedOptions[0].label)">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
+      </div>
+    </template>
 
     <hr class="col-span-2 mt-5 invisible mb-4">
 
@@ -139,6 +147,6 @@
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">
     <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: review_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
-    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+    <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
   </div>
 <% end %>

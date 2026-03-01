@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_25_175618) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1670,6 +1670,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_25_175618) do
     t.integer "year"
     t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
+  end
+
+  create_table "nondisposable_disposable_domains", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_nondisposable_disposable_domains_on_name", unique: true
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|

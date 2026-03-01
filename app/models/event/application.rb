@@ -121,7 +121,7 @@ class Event
           update!(teen_led: user.is_teenager?)
 
           if teen_led?
-            create_contract
+            send_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
             mark_under_review!
@@ -140,7 +140,7 @@ class Event
         transitions from: [:submitted, :under_review], to: :approved
         after do
           unless teen_led?
-            create_contract unless contract.present?
+            send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
         end
@@ -149,6 +149,8 @@ class Event
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
         after do |rejection_message|
+          contract.mark_voided! if contract.present?
+
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
@@ -157,6 +159,8 @@ class Event
     end
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
+
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK].freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -203,8 +207,8 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
-      return "Sign the fiscal sponsorship agreement" if submitted?
-      return "Start spending!" if approved?
+      return "Sign the fiscal sponsorship agreement" if (submitted? && teen_led?) || (approved? && !teen_led?)
+      return "Start spending!" if event.present?
       return "" if rejected?
     end
 
@@ -212,7 +216,7 @@ class Event
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted? || under_review?
+      return 100 if submitted? || under_review? || approved?
 
       0
     end
@@ -233,7 +237,7 @@ class Event
       !teen_led?
     end
 
-    def create_contract
+    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -249,8 +253,8 @@ class Event
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!
-      fs_contract.party(:cosigner)&.notify
+      fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
 
       fs_contract
     end
@@ -266,11 +270,11 @@ class Event
         self[field].nil?
       end
 
-      !missing_fields && !user.onboarding?
+      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
     end
 
     def response_time
-      teen_led? ? "48 hours" : "2 weeks"
+      teen_led? ? "2 business days" : "2 weeks"
     end
 
     def status_color
@@ -291,7 +295,7 @@ class Event
     def check_cosigner_update
       if contract.present? && cosigner_email_previously_changed?
         contract.mark_voided!
-        create_contract
+        send_contract
       end
     end
 
@@ -309,29 +313,34 @@ class Event
       contract.party(:hcb).sync_with_docuseal
       raise "Contract must be signed before activation" unless contract.signed?
 
-      poc = contract.party(:hcb).user
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
 
-      Event.create!(
-        name:,
-        country: address_country,
-        point_of_contact_id: poc.id,
-        application: self,
-        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
-        risk_level:
-      )
-      contract.create_document!
+        poc = contract.party(:hcb).user
+        Event.create!(
+          name:,
+          country: address_country,
+          point_of_contact_id: poc.id,
+          application: self,
+          event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+          risk_level:
+        )
+        contract.create_document!
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
-      invite = service.model
-      service.run!
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        invite = service.model
+        service.run!
 
-      invite.accept(application_contract: contract)
+        invite.accept(application_contract: contract)
 
-      affiliations.each do |affiliation|
-        affiliation_copy = affiliation.dup
-        affiliation_copy.affiliable = event
-        affiliation_copy.save!
+        affiliations.each do |affiliation|
+          affiliation_copy = affiliation.dup
+          affiliation_copy.affiliable = event
+          affiliation_copy.save!
+        end
       end
+
+      schedule_airtable_sync
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 

@@ -7,7 +7,12 @@
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
-      Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
+      <p>
+        <%= user_mention @user %>'s profile was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
+      </p>
+      <% if @user.locked? %>
+        <p>Locked by <%= user_mention @user.locked_by %> on <%= format_date @user.locked_at %></p>
+      <% end %>
       <p>
         <strong>User ID:</strong> <%= @user.id %> (<%= @user.public_id %>)
       </p>
