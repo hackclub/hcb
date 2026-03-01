@@ -173,9 +173,9 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.rejected_at = Time.current
 
-    contract&.mark_voided! if contract&.may_mark_voided?
-
     self.save
+
+    contract&.mark_voided! if contract&.may_mark_voided?
   end
 
   def rejected?
