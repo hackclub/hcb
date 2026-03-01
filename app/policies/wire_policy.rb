@@ -32,7 +32,7 @@ class WirePolicy < ApplicationPolicy
   private
 
   def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def user_who_can_transfer?

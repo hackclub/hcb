@@ -251,7 +251,7 @@ class CardGrantsController < ApplicationController
   def cancel
     authorize @card_grant
 
-    disbursement = @card_grant.cancel!(current_user)
+    @card_grant.cancel!(current_user)
 
     redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
   end

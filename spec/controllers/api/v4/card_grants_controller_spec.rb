@@ -49,6 +49,7 @@ RSpec.describe Api::V4::CardGrantsController do
         "country"                           => nil,
         "created_at"                        => event.created_at.iso8601(3),
         "fee_percentage"                    => 0.0,
+        "financially_frozen"                => false,
         "icon"                              => nil,
         "donation_page_available"           => true,
         "playground_mode"                   => false,
