@@ -12,7 +12,7 @@ class DocusealController < ActionController::Base
 
       if params[:event_type] == "form.completed"
         party = contract.parties.detect { |party| party.docuseal_role == params[:data][:role] }
-        
+
         if party.present?
           party.with_lock do
             party.mark_signed! unless party.signed?
