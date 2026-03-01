@@ -77,10 +77,11 @@
           <%= link_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.teen_led?}", disabled: %>
         </p>
       <% end %>
-    <% elsif @application.approved? && (party = @application.contract&.party(:hcb))&.pending? %>
+    <% elsif @application.approved? && @application.event.nil? %>
       <% admin_tool do %>
         <% disabled = pending_parties.any? %>
-        <p class="<%= "tooltipped" if disabled %> my-0" aria-label="<%= "The contract is still pending on the #{pending_parties.to_sentence}" if disabled %>"><%= link_to "Sign contract", contract_party_path(party), class: "btn bg-success #{"pointer-events-none" if disabled}", disabled: %></p>
+        <% party = @application.contract.party(:hcb) %>
+        <p class="<%= "tooltipped" if disabled %> my-0" aria-label="<%= "The contract is still pending on the #{pending_parties.to_sentence}" if disabled %>"><%= link_to(party.pending? ? "Sign contract" : "Activate", contract_party_path(party), class: "btn bg-success #{"pointer-events-none" if disabled}", disabled:) %></p>
       <% end %>
     <% end %>
 
