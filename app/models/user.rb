@@ -12,8 +12,10 @@
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
 #  email                         :text             not null
+#  first_name                    :string
 #  full_name                     :string
 #  joined_as_teenager            :boolean
+#  last_name                     :string
 #  locked_at                     :datetime
 #  payout_method_type            :string
 #  phone_number                  :text
@@ -59,7 +61,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:first_name, :last_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -186,6 +188,20 @@ class User < ApplicationRecord
     message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
   }
 
+  validates :first_name, presence: true, if: -> { first_name_in_database.present? || last_name_in_database.present? }
+  validates :first_name, format: {
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    message: "must contain only letters and can't contain special characters.", allow_blank: true,
+  }
+
+  validates :last_name, format: {
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    message: "must contain only letters and can't contain special characters.", allow_blank: true,
+  }
+
+  normalizes :first_name, with: ->(name) { name.strip.presence }
+  normalizes :last_name, with: ->(name) { name.strip.presence }
+
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
@@ -280,31 +296,45 @@ class User < ApplicationRecord
   end
 
   def first_name(legal: false)
-    @first_name ||= (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
+    return read_attribute(:first_name) unless legal
+
+    read_attribute(:first_name) || (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
   end
 
   def last_name(legal: false)
-    @last_name ||= namae(legal:)&.family&.split(" ")&.last
+    return read_attribute(:last_name) unless legal
+
+    read_attribute(:last_name) || namae(legal:)&.family&.split(" ")&.last
+  end
+
+  def reconstructed_full_name
+    parts = [self[:first_name], self[:last_name]].compact
+    parts.empty? ? nil : parts.join(" ")
   end
 
   def initial_name
     @initial_name ||= if name.strip.split(" ").count == 1
                         name
                       else
-                        "#{(first_name || last_name)[0..20]} #{(last_name || first_name)[0, 1]}"
+                        first = (self[:first_name] || self[:last_name] || name)[0..20]
+                        last = (self[:last_name] || self[:first_name] || "")[0, 1]
+                        last.blank? ? first : "#{first} #{last}"
                       end
   end
 
   def safe_name
     # stripe requires names to be 24 chars or less, and must include a last name
     return name unless name.length > 24
-    return full_name unless full_name.length > 24
+
+    reconstructed = reconstructed_full_name
+    return reconstructed if reconstructed && reconstructed.length <= 24
+    return full_name if full_name && full_name.length <= 24
 
     initial_name
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || reconstructed_full_name || email_handle
   end
 
   def possessive_name
@@ -369,11 +399,11 @@ class User < ApplicationRecord
 
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
-    full_name_in_database.blank?
+    first_name_in_database.blank?
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank?
+    first_name_before_last_save.blank?
   end
 
   def active_mailbox_address
@@ -467,7 +497,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = first_name_before_last_save.blank? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 

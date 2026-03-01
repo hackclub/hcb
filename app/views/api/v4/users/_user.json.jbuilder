@@ -10,6 +10,8 @@ json.name user.initial_name
 # those which we'd like to expose less of:
 expand_pii(override_if: user == current_user) do
   json.email user.email
+  json.first_name user.first_name
+  json.last_name user.last_name
   json.birthday user.birthday
   if expand?(:shipping_address)
     json.shipping_address do
