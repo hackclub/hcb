@@ -176,9 +176,9 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
       end
