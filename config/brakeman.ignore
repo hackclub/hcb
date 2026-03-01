@@ -2,50 +2,6 @@
   "ignored_warnings": [
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 2,
-      "fingerprint": "154fc5e6dd75905b4d439027dc586e15421a58a265d590f753ce34b81d23095e",
-      "check_name": "CrossSiteScripting",
-      "message": "Unescaped model attribute",
-      "file": "app/views/announcements/_announcement_body.html.erb",
-      "line": 4,
-      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
-      "code": "Announcement.find(params[:id]).render",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "AnnouncementsController",
-          "method": "show",
-          "line": 45,
-          "file": "app/controllers/announcements_controller.rb",
-          "rendered": {
-            "name": "announcements/show",
-            "file": "app/views/announcements/show.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "announcements/show",
-          "line": 59,
-          "file": "app/views/announcements/show.html.erb",
-          "rendered": {
-            "name": "announcements/_announcement_body",
-            "file": "app/views/announcements/_announcement_body.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "announcements/_announcement_body"
-      },
-      "user_input": null,
-      "confidence": "High",
-      "cwe_id": [
-        79
-      ],
-      "note": "Content is never updated directly by user and always rendered on the server"
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "24b4bbb940906be890c8fca79f53e06131392c6b52417b1b280fbf1f554b55e5",
       "check_name": "LinkToHref",
@@ -169,6 +125,50 @@
         79
       ],
       "note": "It generates a https link that is based on 'stripe_transaction_id' which should be safe."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "45b1d7850182319597ac03060d4d9d024c93e6bbca8748e6b6f3e24804e5652e",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped model attribute",
+      "file": "app/views/announcements/_announcement_body.html.erb",
+      "line": 4,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "(Announcement.with_deleted.find(params[:id]) or Announcement.find(params[:id])).render",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AnnouncementsController",
+          "method": "show",
+          "line": 46,
+          "file": "app/controllers/announcements_controller.rb",
+          "rendered": {
+            "name": "announcements/show",
+            "file": "app/views/announcements/show.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "announcements/show",
+          "line": 75,
+          "file": "app/views/announcements/show.html.erb",
+          "rendered": {
+            "name": "announcements/_announcement_body",
+            "file": "app/views/announcements/_announcement_body.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "announcements/_announcement_body"
+      },
+      "user_input": "Announcement.with_deleted.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
     },
     {
       "warning_type": "Redirect",
@@ -621,6 +621,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-02-20 21:51:21 -0500",
+  "updated": "2026-03-01 06:23:47 +0000",
   "brakeman_version": "6.2.2"
 }
