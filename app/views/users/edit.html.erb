@@ -34,15 +34,25 @@
           <%= form_errors @user, "profile", "We couldn't update your" %>
           <div class="md:flex gap-2">
             <div class="field flex-1">
-              <%= form.label :full_name %>
-              <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
-              <% @user.errors.full_messages_for(:full_name).each do |message| %>
+              <%= form.label :first_name %>
+              <%= form.text_field :first_name, required: true, placeholder: "Fiona", style: "max-width:100%" %>
+              <% @user.errors.full_messages_for(:first_name).each do |message| %>
                 <div class="primary"><%= message %></div>
               <% end %>
             </div>
             <div class="field flex-1">
+              <%= form.label :last_name, "Last name (optional)" %>
+              <%= form.text_field :last_name, style: "max-width:100%", placeholder: "Hackworth" %>
+              <% @user.errors.full_messages_for(:last_name).each do |message| %>
+                <div class="primary"><%= message %></div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="md:flex gap-2">
+            <div class="field flex-1">
               <%= form.label :preferred_name, "Preferred name (optional)" %>
-              <%= form.text_field :preferred_name, style: "max-width:100%", placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30 %>
+              <%= form.text_field :preferred_name, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
             </div>
           </div>
 
@@ -137,16 +147,24 @@
         <% end %>
 
         <div class="field">
-          <%= form.label :full_name %>
-          <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", pattern: '^\S+.+', disabled: %>
-          <% @user.errors.full_messages_for(:full_name).each do |message| %>
+          <%= form.label :first_name %>
+          <%= form.text_field :first_name, required: true, placeholder: "Fiona", disabled: %>
+          <% @user.errors.full_messages_for(:first_name).each do |message| %>
+            <div class="primary"><%= message %></div>
+          <% end %>
+        </div>
+        <div class="field">
+          <%= form.label :last_name %>
+          <p class="h5 muted mt0 mb1">Optional - you can have just a first name if you prefer.</p>
+          <%= form.text_field :last_name, placeholder: "Hackworth", disabled: %>
+          <% @user.errors.full_messages_for(:last_name).each do |message| %>
             <div class="primary"><%= message %></div>
           <% end %>
         </div>
         <div class="field">
           <%= form.label :preferred_name %>
           <p class="h5 muted mt0 mb1">If you go by a different name.</p>
-          <%= form.text_field :preferred_name, placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30, disabled: %>
+          <%= form.text_field :preferred_name, placeholder: "FiFi Hacks", maxlength: 30, disabled: %>
         </div>
 
         <div class="field">
