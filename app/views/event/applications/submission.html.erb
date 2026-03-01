@@ -69,7 +69,7 @@
       <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
     <% end %>
 
-    <% pending_parties = @application.contract&.parties&.not_hcb&.select(&:pending?)&.map(&:role) %>
+    <% pending_parties = @application.contract&.parties&.not_hcb&.select(&:pending?)&.map(&:role) || [] %>
     <% if @application.may_mark_approved? %>
       <% admin_tool do %>
         <% disabled = @application.teen_led? && pending_parties.any? %>
@@ -77,7 +77,7 @@
           <%= link_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.teen_led?}", disabled: %>
         </p>
       <% end %>
-    <% elsif @application.approved? && @application.event.nil? %>
+    <% elsif @application.approved? && @application.event.nil? && @application.contract.present? %>
       <% admin_tool do %>
         <% disabled = pending_parties.any? %>
         <% party = @application.contract.party(:hcb) %>
