@@ -104,8 +104,10 @@ class Contract
     # We may miss a webhook or load a page before we've received the webhook,
     # so we can manually sync the party with this method!
     def sync_with_docuseal
-      if pending? && docuseal_submission&.[]("status") == "completed"
-        mark_signed!
+      self.with_lock do
+        if pending? && docuseal_submission&.[]("status") == "completed"
+          mark_signed!
+        end
       end
     end
 
