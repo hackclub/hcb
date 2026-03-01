@@ -72,7 +72,7 @@
       <% admin_tool do %>
         <%= button_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.teen_led?}" %>
       <% end %>
-    <% elsif @application.approved? %>
+    <% elsif @application.approved? && @application.event.nil? %>
       <% admin_tool do %>
         <% pending_parties = @application.contract.parties.not_hcb.select(&:pending?)&.map(&:role) %>
         <% disabled = pending_parties.any? %>
