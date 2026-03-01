@@ -377,7 +377,7 @@ class Event
     private
 
     def ready_to_approve?
-      (!teen_led && submitted?) || (teen_led && under_review?) 
+      (!teen_led && submitted?) || (teen_led && under_review?)
     end
 
     def schedule_airtable_sync
