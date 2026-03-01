@@ -482,4 +482,119 @@ RSpec.describe LoginsController do
       expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: reauthenticate_logins_url))
     end
   end
-end
+
+  describe "referral tracking" do
+    let(:program) do
+      user = create(:user)
+      Referral::Program.create!(name: "Test Program", creator: user)
+    end
+
+    let(:link) do
+      Referral::Link.create!(
+        name: "Test Link",
+        program:,
+        creator: program.creator
+      )
+    end
+
+    describe "when user completes login with referral link" do
+      it "preserves referral link in session and creates attribution" do
+        email = "test@example.com"
+
+        # Step 1: User navigates to login page with referral parameter
+        get(:new, params: { referral: link.slug })
+        expect(session[:referral_link_slug]).to eq(link.slug)
+
+        # Step 2: User submits email and referral link is stored with login
+        post(:create, params: { email:, referral_link_id: link.slug })
+
+        login = Login.last
+        expect(login.referral_link).to eq(link)
+
+        # Step 3: User completes login normally
+        user = User.find_by(email:)
+        login_code = create(:login_code, user:)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "login_code",
+            login_code: login_code.code
+          }
+        )
+
+        expect(response).to redirect_to(referral_link_path(link))
+
+        # Verify attribution was created
+        expect(Referral::Attribution.count).to eq(1)
+        attribution = Referral::Attribution.last
+        expect(attribution.user).to eq(user)
+        expect(attribution.link).to eq(link)
+      end
+
+      it "recovers referral link from session when login ID is missing" do
+        email = "test@example.com"
+
+        # Step 1: User navigates to login page with referral parameter
+        get(:new, params: { referral: link.slug })
+        expect(session[:referral_link_slug]).to eq(link.slug)
+
+        # Step 2: User submits email (referral link is in hidden field)
+        post(:create, params: { email:, referral_link_id: link.slug })
+
+        # Step 3: Simulate losing the login ID cookie/params (fallback case)
+        # Set session auth email to trigger the fallback code path
+        user = User.find_by(email:)
+        session[:auth_email] = email
+        session[:referral_link_slug] = link.slug  # Still in session
+
+        # Create a new login code for the user
+        login_code = create(:login_code, user:)
+
+        # Step 4: Complete login without login ID param (fallback path)
+        # This simulates the set_login fallback that creates a new login without params[:id]
+        post(
+          :complete,
+          params: {
+            method: "login_code",
+            login_code: login_code.code
+          }
+        )
+
+        # Verify the referral link was restored from session
+        expect(response).to redirect_to(referral_link_path(link))
+
+        # Verify attribution was created with the recovered referral link
+        expect(Referral::Attribution.count).to eq(1)
+        attribution = Referral::Attribution.last
+        expect(attribution.user).to eq(user)
+        expect(attribution.link).to eq(link)
+      end
+    end
+
+    describe "session cleanup" do
+      it "clears referral link slug from session after successful login" do
+        email = "test@example.com"
+        user = create(:user, email:)
+        login = create(:login, user:, referral_link: link)
+        login_code = create(:login_code, user:)
+
+        # Set the session variable to start
+        session[:referral_link_slug] = link.slug
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "login_code",
+            login_code: login_code.code
+          }
+        )
+
+        # After successful authentication, the referral link slug should be cleared
+        expect(session[:referral_link_slug]).to be_nil
+      end
+    end
+  end
+
