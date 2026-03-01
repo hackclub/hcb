@@ -139,7 +139,9 @@ class Event
       event :mark_approved do
         transitions from: [:submitted, :under_review], to: :approved
         after do
-          unless teen_led?
+          if teen_led?
+            contract.party(:hcb).schedule_reminders
+          else
             send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
