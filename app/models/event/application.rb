@@ -348,9 +348,9 @@ class Event
     end
 
     def archive!
-      update!(archived_at: Time.current)
-
       contract&.mark_voided! if contract&.may_mark_voided?
+      
+      update!(archived_at: Time.current)
     end
 
     def archived?
