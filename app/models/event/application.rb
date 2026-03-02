@@ -199,7 +199,7 @@ class Event
       country = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. Unfortunately, a lot of our banking infrastructure does not work in countries outside of the U.S. and Canada. We really want to support projects from all around the world, but due to different banking systems, we are not able to partner with organizations from certain countries, including #{ISO3166::Country.new(address_country).common_name}.
+        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
 
         We're sorry for not being able to support you on your journey and wish you all the best. Please feel free to reach out to me directly if you have any questions.
 
