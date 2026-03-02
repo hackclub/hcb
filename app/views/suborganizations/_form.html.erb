@@ -77,8 +77,11 @@
     </div>
   </div>
 
-  <small class="muted mt-0 mb-4">This project will be created on the
-    <strong><%= event.plan.label %></strong> plan</small>
+  <small class="muted mt-0 mb-4">
+    This project will be created on the
+    <strong><%= event.config.subevent_plan.constantize.new.label %></strong>
+    plan.
+  </small>
 
   <div class="inline-block">
     <%= form.submit "Create sub-organization", class: "mt1", disabled: event&.demo_mode? %>
