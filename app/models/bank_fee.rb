@@ -31,6 +31,9 @@ class BankFee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :bfe
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+
   belongs_to :event
   belongs_to :fee_revenue, optional: true
 
@@ -47,10 +50,16 @@ class BankFee < ApplicationRecord
     state :settled
 
     event :mark_in_transit do
+      after do
+        create_activity(key: "bank_fee.in_transit", owner: nil)
+      end
       transitions from: :pending, to: :in_transit
     end
 
     event :mark_settled do
+      after do
+        create_activity(key: "bank_fee.settled", owner: nil)
+      end
       transitions from: :in_transit, to: :settled
     end
   end
