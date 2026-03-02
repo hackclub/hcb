@@ -48,7 +48,6 @@
       <strong>Expires on</strong>
       <span><%= format_date card_grant.expires_on %></span>
     </p>
-
     <p>
       <strong>Email</strong>
       <span><%= mail_to card_grant.email %></span>
@@ -58,11 +57,10 @@
       <% if card_grant.allowed_merchants.any? %>
         <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %><br>
           (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
-    <% else %>
+      <% else %>
         <span>All merchants allowed</span>
       <% end %>
     </p>
-
     <p>
       <strong>Allowed categories</strong>
       <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>
