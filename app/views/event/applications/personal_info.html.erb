@@ -20,11 +20,11 @@
         <%= form.label :full_name do %>
           Full name <span class="text-primary">*</span>
         <% end %>
-        <%= form.text_field :full_name, value: current_user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+        <%= form.text_field :full_name, value: @application.user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
       </div>
       <div class="field flex-1">
         <%= form.label :preferred_name, "Preferred name (optional)" %>
-        <%= form.text_field :preferred_name, value: current_user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
+        <%= form.text_field :preferred_name, value: @application.user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
       </div>
     </div>
 
@@ -34,8 +34,8 @@
           Mobile phone number <span class="text-primary">*</span>
         <% end %>
 
-        <%= form.hidden_field :phone_number, value: current_user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" autocomplete="on" required>
+        <%= form.hidden_field :phone_number, value: @application.user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" autocomplete="on" required>
       </div>
       <div class="field flex-1">
         <div class="inline-flex items-center justify-between w-full gap-1">
@@ -51,15 +51,15 @@
                                 { start_year: Date.today.year,
                                   end_year: Date.today.year - 100,
                                   order: [:month, :day, :year],
-                                  prompt: current_user.birthday.nil?,
-                                  default: current_user.birthday.presence
+                                  prompt: @application.user.birthday.nil?,
+                                  default: @application.user.birthday.presence
                                 },
                                 { required: true } %>
         </div>
       </div>
     </div>
 
-    <% if current_user.applications.many? || current_user.events.any? %>
+    <% if @application.user.applications.many? || @application.user.events.any? %>
       <div class="mt-[-0.25rem] mb-4 rounded-b-lg h-2 border-solid border-smoke dark:border-slate border-t-0 w-full relative">
         <div class="absolute max-w-full w-max bottom-0 left-1/2 bg-white dark:bg-darkless px-2 muted text-sm -translate-x-1/2 translate-y-1/2">Changes made here will also update your HCB profile</div>
       </div>

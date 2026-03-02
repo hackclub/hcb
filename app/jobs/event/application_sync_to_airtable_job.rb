@@ -63,7 +63,7 @@ class Event
 
       if @application.event.present?
         airrecord["HCB ID"] = @application.event.id
-        airrecord["HCB account URL"] = Rails.application.helpers.url_helpers.event_url(@application.event)
+        airrecord["HCB account URL"] = Rails.application.routes.url_helpers.event_url(@application.event)
       end
 
       airrecord.save

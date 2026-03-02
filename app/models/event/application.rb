@@ -149,6 +149,8 @@ class Event
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
         after do |rejection_message|
+          contract.mark_voided! if contract.present?
+
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
@@ -158,7 +160,7 @@ class Event
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
-    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK].freeze
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -194,10 +196,22 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. Please feel free to reach out to me directly if you have any questions.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:
       }
     end
 
@@ -205,8 +219,8 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
-      return "Sign the fiscal sponsorship agreement" if submitted?
-      return "Start spending!" if approved?
+      return "Sign the fiscal sponsorship agreement" if (submitted? && teen_led?) || (approved? && !teen_led?)
+      return "Start spending!" if event.present?
       return "" if rejected?
     end
 
@@ -214,7 +228,7 @@ class Event
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted? || under_review?
+      return 100 if submitted? || under_review? || approved?
 
       0
     end

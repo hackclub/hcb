@@ -41,7 +41,7 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
-  has_one :organizer_position, required: false
+  has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
   has_many :parties
 
   validate :one_non_void_contract
@@ -63,7 +63,7 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
-  aasm timestamps: true do
+  aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
     state :signed

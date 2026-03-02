@@ -15,6 +15,10 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
+      unless has_verified_phone_number_before?
+        raise SMSEnrollmentError, "SMS authentication currently unavailable for your account, please try again later."
+      end
+
       disallow_fresh_users
       disallow_excessive_sms_verifications
 
@@ -68,6 +72,10 @@ module UserService
 
       Rails.error.report(Errors::TwilioAbuseError.new("User #{@user.id} exceeded SMS verification send limit (count: #{count})."))
       raise SMSEnrollmentError, "You've requested too many verification codes. Please try again tomorrow or contact support at hcb@hackclub.com."
+    end
+
+    def has_verified_phone_number_before?
+      @user.versions.where_object_changes_to(phone_number_verified: true).any?
     end
 
   end
