@@ -61,7 +61,3 @@ Alpine.start()
 
 import LocalTime from 'local-time'
 LocalTime.start()
-
-import '@github/text-expander-element'
-import '@oddbird/popover-polyfill'
-import 'emoji-picker-element'
