@@ -26,7 +26,7 @@ business_time:
     - November 11, 2027
     - November 25, 2027
     - December 24, 2027
-    - December 31, 2027 # this is a 2028 holiday falling in 2027
+    - December 31, 2027 # New Year's Day 2028 observed (Jan 1, 2028 falls on Saturday)
     - January 17, 2028
     - February 21, 2028
     - May 29, 2028
@@ -37,7 +37,7 @@ business_time:
     - November 10, 2028
     - November 23, 2028
     - December 25, 2028
-    - January 1, 2029
+    - January 01, 2029
     - January 15, 2029
     - February 19, 2029
     - May 28, 2029
@@ -48,7 +48,7 @@ business_time:
     - November 12, 2029
     - November 22, 2029
     - December 25, 2029
-    - January 1, 2030
+    - January 01, 2030
     - January 21, 2030
     - February 18, 2030
     - May 27, 2030
