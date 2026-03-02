@@ -10,7 +10,6 @@ export default class extends Controller {
     import('emoji-picker-element').catch(err => {
       console.error('Failed to load emoji-picker-element:', err)
     })
-    
     document.addEventListener('click', this.handleDocumentClick.bind(this))
   }
 
