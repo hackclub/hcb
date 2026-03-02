@@ -362,7 +362,7 @@
   <% end %>
   <% if report.expenses.any? %>
     <div class="<%= "closed" if report.closed? || member_viewing %>">
-      <div id="summary" class="statset pb-8 mt-4">
+      <div id="summary" class="statset pb-6 mt-4">
         <div class="stat shrink-0">
           <span class="stat__label">Amount requested</span>
           <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
