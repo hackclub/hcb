@@ -21,8 +21,6 @@ export default class extends Controller {
   }
 
   connect() {
-    this.handleResize = this.handleResize.bind(this)
-
     const getDates = (start, end) => {
       const arr = []
       for (
@@ -85,17 +83,13 @@ export default class extends Controller {
         this.balances = balances.slice(0, 365).reverse()
 
         this.drawGraph()
-        window.addEventListener('resize', this.handleResize)
+        this.resizeObserver = new ResizeObserver(() => this.drawGraph())
+        this.resizeObserver.observe(this.graphTarget)
       })
   }
 
   disconnect() {
-    window.removeEventListener('resize', this.handleResize)
-  }
-
-  handleResize() {
-    if (!this.balances) return
-    this.drawGraph()
+    this.resizeObserver?.disconnect()
   }
 
   drawGraph() {

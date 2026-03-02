@@ -2,9 +2,15 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   connect() {
+    this.handleResize = this.render.bind(this)
     this.render()
 
-    window.addEventListener('resize', this.render)
+    this.resizeObserver = new ResizeObserver(this.handleResize)
+    this.resizeObserver.observe(document.documentElement)
+  }
+
+  disconnect() {
+    this.resizeObserver?.disconnect()
   }
 
   scrollToTop() {
