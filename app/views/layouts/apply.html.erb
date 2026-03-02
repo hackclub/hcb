@@ -20,7 +20,6 @@
     }
 
     @media (min-width: 640px) {
-
         html,
         body {
             height: 100vh;
@@ -29,42 +28,9 @@
         }
     }
   </style>
-  <% img = "/brand/hcb-icon-icon-original.png" %>
-
-  <meta name="twitter:card" content="summary">
-  <meta property="og:image" content="<%= img %>">
-  <meta name="twitter:image" content="<%= img %>">
-  <meta property="og:site_name" content="HCB">
-  <meta property="og:url" content="https://hcb.hackclub.com">
-  <meta property="og:title" content="Sign in">
-  <meta name="twitter:title" content="Sign in">
-  <meta property="og:description" content="Sign in to HCB.">
-  <meta name="twitter:description" content="Sign in to HCB.">
-  <meta name="description" content="Sign in to HCB.">
-<% end %>
-
-<%# LET THERE BE SNOW %>
-<% if winter? %>
-  <%= react_component "holiday/SnowToggl", {}, { style: "position:fixed;left:1rem;bottom:1rem;z-index:2" } %>
-  <%= react_component "holiday/Snow", {}, { style: "height:0px" } %>
-<% end %>
-
-<%# ghosts and ghouls %>
-<% if fall? %>
-  <img
-    src=" https: cloud-iuqyduosh-hack-club-bot.vercel.app 0image.png "
-    alt=" oOoOoOoOo "
-    class=" flying-spook ghost ">
-  <img
-    src=" https: cloud-fy14iajlp-hack-club-bot.vercel.app 0image__50_-removebg-preview.png "
-    alt=" witch orpheus "
-    class=" flying-spook ">
 <% end %>
 
 <%= yield(:header) %>
-
-<div id="tooltip-container"></div>
-
     <main
       class="container <%= content_for :container_class %> h-screen"
       style="<%= content_for :container_style %>">
