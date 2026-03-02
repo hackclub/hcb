@@ -30,11 +30,6 @@
     </div>
   </div>
   <div class="flex-1 md:pt-3 sm:mb-24">
-    <% if @event && !policy(@event).create_transfer? %>
-      <div class="-mt-3">
-        <%= render partial: "events/unauthorized_callout", locals: { action: "transfer money" } %>
-      </div>
-    <% end %>
     <%= yield %>
   </div>
 </div>
