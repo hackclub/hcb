@@ -49,6 +49,7 @@ module Reimbursement
     def self.inherited(subclass)
       # Force STI subclasses to use the same hashid configuration to ensure no
       # salt is used.
+      super
       subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
     end
 
