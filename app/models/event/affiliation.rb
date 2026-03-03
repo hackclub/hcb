@@ -73,7 +73,7 @@ class Event
                         when "hack_club"
                           ["venue_name", "size"]
                         else
-                          errors.add(:name, "is not a valid affiliation name")
+                          return errors.add(:name, "is not a valid affiliation")
                         end
       
       missing_fields = required_fields.select { |field| metadata[field].nil? }
