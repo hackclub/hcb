@@ -27,6 +27,7 @@ class Event
     store_accessor :metadata, :league, :team_number, :size, :venue_name
 
     scope :robotics, -> { where(name: %w[first vex]) }
+    scope :nonempty, -> { where.not(metadata: {}) }
 
     def display_name
       case name
