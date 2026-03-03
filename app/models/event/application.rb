@@ -201,7 +201,7 @@ class Event
 
         Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
 
-        We're sorry for not being able to support you on your journey and wish you all the best. Please feel free to reach out to me directly if you have any questions.
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
         Best,
         The HCB team
