@@ -84,6 +84,13 @@ class Rack::Attack
     end
   end
 
+  # Throttle POST requests to SMS verification by IP address
+  throttle("sms_verify/ip", limit: 5, period: 8.hours) do |req|
+    if req.path == "/users/start_sms_auth_verification" && req.post?
+      req.ip
+    end
+  end
+
   ### Custom Throttle Response ###
 
   # By default, Rack::Attack returns an HTTP 429 for throttled responses,

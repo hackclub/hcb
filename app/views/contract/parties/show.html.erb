@@ -7,29 +7,37 @@
 <div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
   <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: "md:col-span-3" } %>
   <div class="md:col-span-2 max-h-[75vh]">
-    <% if @contract.contractable.is_a?(Event::Application) && @party.hcb? %>
+    <% if @party.hcb? %>
       <div class="card">
-        <div class="flex flex-row gap-3 items-center justify-start mb-2">
+        <div class="flex flex-wrap gap-3 mb-2 justify-center">
           <% if @contract.contractable.is_a?(Event::Application) %>
-            <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn" %>
+            <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn w-full" %>
+          <% else %>
+            <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
           <% end %>
+
+          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?" } %>
+          <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
         </div>
-        <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
-          <div class="field">
-            <%= form.label "Tags" %>
-            <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
-          </div>
 
-          <div class="field">
-            <%= form.label :risk_level %>
-            <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
-          </div>
+        <% if @contract.contractable.is_a?(Event::Application) %>
+          <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
+            <div class="field">
+              <%= form.label "Tags" %>
+              <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
+            </div>
 
-          <% if @party.pending? %>
-            <p>Sign the contract before activating the organization</p>
+            <div class="field">
+              <%= form.label :risk_level %>
+              <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+            </div>
+
+            <% if @party.pending? %>
+              <p>Sign the contract before activating the organization</p>
+            <% end %>
+
+            <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
           <% end %>
-
-          <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
         <% end %>
       </div>
     <% else %>
@@ -37,3 +45,42 @@
     <% end %>
   </div>
 </div>
+
+<% if @party.hcb? %>
+  <section class="modal bg-snow" data-behavior="modal" role="dialog" id="reissue_modal">
+    <%= modal_header "Reissue contract" %>
+    <p>Use this if the signee or cosigner has made an error in filling out the contract.</p>
+    <p>
+      This will void the existing contract and resend a new contract along with the messages you provide.
+      <% if @contract.party(:cosigner).present? %>
+        You must provide a message for the signee, cosigner, or both.
+      <% end %>
+    </p>
+
+    <%= form_with url: reissue_contract_path(@contract) do |form| %>
+      <div class="field">
+        <%= form.label :signee_message, "Signee message" %>
+        <%= form.text_area :signee_message, placeholder: "Leave blank if the signee does not need to make any changes", rows: 2, required: @contract.party(:cosigner).nil?, data: { behavior: "no_autosize" } %>
+        <p class="h5 muted mt0 mb1">
+          <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+            <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+          <% end %>
+        </p>
+      </div>
+
+      <% if @contract.party(:cosigner).present? %>
+        <div class="field">
+          <%= form.label :cosigner_message, "Cosigner message" %>
+          <%= form.text_area :cosigner_message, placeholder: "Leave blank if the cosigner does not need to make any changes", rows: 2, data: { behavior: "no_autosize" } %>
+          <p class="h5 muted mt0 mb1">
+            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+              <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+
+      <%= form.submit "Reissue", class: "btn" %>
+    <% end %>
+  </section>
+<% end %>

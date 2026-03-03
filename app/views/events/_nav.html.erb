@@ -24,7 +24,8 @@
             tooltip: item[:tooltip],
             icon: item[:icon],
             async_badge: item[:async_badge],
-            selected: item[:selected] %>
+            selected: item[:selected],
+            data: item[:data] %>
       <% end %>
     <% end %>
     <%= render partial: "events/settings_dropdown" %>
