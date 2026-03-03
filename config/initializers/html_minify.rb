@@ -6,6 +6,5 @@ if Rails.env.production?
                                    remove_intertag_spaces: true,
                                    remove_comments: true,
                                    remove_multi_spaces: true,
-                                   remove_quotes: true,
-                                   compress_css: true
+                                   remove_quotes: true
 end
