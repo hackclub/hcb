@@ -117,7 +117,7 @@ module SessionsHelper
   end
 
   def blazer_current_user
-    find_current_session&.user
+    @blazer_current_user ||= find_current_session&.user
   end
 
   def current_session

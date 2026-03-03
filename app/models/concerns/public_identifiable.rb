@@ -5,7 +5,6 @@ module PublicIdentifiable
   extend ActiveSupport::Concern
 
   included do
-    include Hashid::Rails
     class_attribute :public_id_prefix
   end
 

@@ -166,12 +166,20 @@ input[type='submit'],
   }
 
   &.bg-light-warning {
+    transition:
+      box-shadow 0.125s ease,
+      background-color 0.125s ease;
+
     background-color: map-get($palette, white) !important;
     color: darken(map-get($palette, warning), 33.3%) !important;
 
-    html[data-dark='true'] & {
+    [data-dark='true'] & {
       background: $darkless !important;
       color: lighten(map-get($palette, warning), 33.3%) !important;
+    }
+
+    &:hover {
+      background-color: rgba(map-get($palette, warning), 0.125) !important;
     }
   }
 
