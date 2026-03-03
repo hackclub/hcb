@@ -46,6 +46,11 @@ module Reimbursement
 
     include Hashid::Rails
     hashid_config salt: ""
+    def self.inherited(subclass)
+      # Force STI subclasses to use the same hashid configuration to ensure no
+      # salt is used.
+      subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
+    end
 
     has_paper_trail
     acts_as_paranoid
