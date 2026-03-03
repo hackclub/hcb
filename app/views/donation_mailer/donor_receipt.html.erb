@@ -1,41 +1,56 @@
 <% payment_term = @donation.tax_deductible ? "donation" : "payment" %>
+<% secondary_payment_term = @donation.tax_deductible ? "gift" : "payment" %>
 
 <p>Hi <%= @donation.name(show_anonymous: true) %>,</p>
 
 <% if @donation.recurring? %>
-<p>
-  Your <%= "anonymous" if @donation.anonymous? %> <%= payment_term %> of <%= render_money @donation.recurring_donation.amount %> per month to <%= @donation.event.name %> has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your card has been charged <%= render_money @donation.amount %>. Please consider this email a receipt for your gift for the month of <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
-</p>
+  <p>
+    Your <%= "anonymous" if @donation.anonymous? %> <%= payment_term %>
+    of <%= render_money @donation.recurring_donation.amount %> per month
+    to <%= @donation.event.name %>
+    has <%= @initial_recurring_donation ? "been started" : "renewed" %> and your
+    card has been charged <%= render_money @donation.amount %>. Please consider
+    this email a receipt for your <%= secondary_payment_term %> for the month of
+    <strong><%= @donation.created_at.strftime("%B %Y") %></strong>.
+  </p>
 <% else %>
-<p>
-  Thank you for your generous <%= "anonymous " if @donation.anonymous? %> <%= payment_term %> of <%= render_money @donation.amount %> to <%= @donation.event.name %>. Please consider this email a receipt for your gift.
-</p>
+  <p>
+    Thank you for your
+    generous <%= "anonymous " if @donation.anonymous? %> <%= payment_term %>
+    of <%= render_money @donation.amount %> to <%= @donation.event.name %>.
+    Please
+    consider this email a receipt for your <%= secondary_payment_term %>.
+  </p>
 <% end %>
 
 <% if @donation.event.donation_thank_you_message.present? %>
   <p>
     Here's a message from the <%= @donation.event.name %> team:
-    <blockquote>
-      <%= MarkdownService.instance.render @donation.event.donation_thank_you_message %>
-    </blockquote>
+  <blockquote>
+    <%= MarkdownService.instance.render @donation.event.donation_thank_you_message %>
+  </blockquote>
   </p>
 <% end %>
 
 <p>
-  <%= @donation.event.name %> is fiscally sponsored by Hack Club, a 501(c)(3) nonprofit. Our EIN is 81-2908499.
+  <%= @donation.event.name %> is fiscally sponsored by Hack Club, a 501(c)(3)
+  nonprofit. Our EIN is 81-2908499.
   <% if @donation.tax_deductible %>
-    Per IRS guidelines, you agree that no goods or services will be provided in return for this gift.
+    Per IRS guidelines, you agree that no goods or services will be provided in
+    return for this gift.
   <% end %>
 </p>
 
 <% if @donation.recurring? %>
   <p>
     To cancel your <%= payment_term %> or update your payment details, click
-    <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>.
+    <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>
+    .
   </p>
 <% end %>
 
-<p>If you have any questions or concerns, please reply directly to this email and our financial operations team will assist.</p>
+<p>If you have any questions or concerns, please reply directly to this email
+  and our financial operations team will assist.</p>
 
 <p>
   Best regards,<br>

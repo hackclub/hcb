@@ -10,12 +10,11 @@
 <% end %>
 
 <% content_for :sidebar_footer do %>
-  <%= render "application/callout", type: "info", title: "Important info about ACH transfers", class: "mt-2 mb-0" do %>
+  <%= render "application/callout", type: "warning", title: "Important info about ACH transfers", class: "mt-2 mb-0" do %>
     <ul>
-      <li>ACH transfers can only be sent to U.S. bank accounts.</li>
       <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
-      <li>We have limited ability to fix mistakes because of U.S. banking system restrictions.</li>
-      <li>ACH transfers are <strong>irreversible</strong> and can't be canceled.</li>
+      <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
+      <li>ACHs can only be sent to U.S. bank accounts.</li>
     </ul>
   <% end %>
   <% if @event.present? && !policy(@event).create_transfer? %>
