@@ -75,7 +75,7 @@ class Event
                         else
                           return errors.add(:name, "is not a valid affiliation")
                         end
-      
+
       missing_fields = required_fields.select { |field| metadata[field].nil? }
       if missing_fields.any?
         errors.add(:metadata, "is missing fields: #{missing_fields.to_sentence}")
