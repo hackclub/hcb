@@ -35,4 +35,5 @@ class MinifyHtmlMiddleware
     end
   end
 
+
 end
