@@ -19,6 +19,7 @@
 class Event
   class Affiliation < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     include ActionView::Helpers::TextHelper
 
