@@ -9,12 +9,12 @@ Rails.application.routes.draw do
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
-    mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
+    mount Audits1984::Engine => "/console"
     mount Blazer::Engine, at: "blazer"
     mount SchemaEndpoint.instance => "/schema"
   end

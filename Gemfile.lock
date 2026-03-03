@@ -423,6 +423,7 @@ GEM
       hashids (~> 1.0)
     hashids (1.0.6)
     htmlbeautifier (1.4.3)
+    htmlcompressor (0.4.0)
     htmlentities (4.3.4)
     http-accept (1.7.0)
     http-cookie (1.1.0)
@@ -982,6 +983,7 @@ DEPENDENCIES
   grape-swagger-entity (~> 0.7)
   hashid-rails (~> 1.0)
   htmlbeautifier
+  htmlcompressor
   image_processing (~> 1.2)
   intercom-rails
   invisible_captcha
