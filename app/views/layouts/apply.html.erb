@@ -1,7 +1,7 @@
 <% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 <% @home_size = 50 %>
 <% page_full %>
-<% @no_app_shell = true %>
+<% no_app_shell %>
 
 <% help_element = capture do %>
   <div class="card flex flex-col gap-3 card--sunken mb-7">
