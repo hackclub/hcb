@@ -24,6 +24,7 @@ class Ledger
     self.table_name = "ledger_items"
 
     include Hashid::Rails
+    hashid_config salt: Credentials.fetch(:HASHID_SALT)
     has_paper_trail
 
     include Commentable

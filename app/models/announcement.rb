@@ -28,8 +28,6 @@
 #
 class Announcement < ApplicationRecord
   include Hashid::Rails
-  hashid_config salt: ""
-
   include AASM
 
   ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze

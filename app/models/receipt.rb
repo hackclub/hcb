@@ -45,9 +45,6 @@ class Receipt < ApplicationRecord
 
   include StripeAuthorizationsHelper
 
-  include Hashid::Rails
-  hashid_config salt: ""
-
   include PublicIdentifiable
   set_public_id_prefix :rct
 

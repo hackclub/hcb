@@ -28,9 +28,6 @@ class BankFee < ApplicationRecord
   include AASM
   include HasBookTransfer
 
-  include Hashid::Rails
-  hashid_config salt: ""
-
   include PublicIdentifiable
   set_public_id_prefix :bfe
 

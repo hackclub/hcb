@@ -26,11 +26,10 @@
 class HcbCode < ApplicationRecord
   has_paper_trail
 
-  include Hashid::Rails
-  hashid_config salt: ""
-
   include PublicIdentifiable
   set_public_id_prefix :txn
+
+  include Hashid::Rails
 
   include Commentable
   include Receiptable

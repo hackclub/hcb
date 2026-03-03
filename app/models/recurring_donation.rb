@@ -38,7 +38,6 @@
 #
 class RecurringDonation < ApplicationRecord
   include Hashid::Rails
-  hashid_config salt: ""
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "subscriptions", :stripe_subscription_id

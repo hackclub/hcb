@@ -53,9 +53,6 @@ class WiseTransfer < ApplicationRecord
 
   include HasWiseRecipient
 
-  include Hashid::Rails
-  hashid_config salt: ""
-
   include PublicIdentifiable
   set_public_id_prefix :wse
 
