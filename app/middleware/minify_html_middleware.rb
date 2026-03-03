@@ -10,8 +10,8 @@ class MinifyHtmlMiddleware
     keep_spaces_between_attributes: true,
     keep_html_and_head_opening_tags: true,
     keep_input_type_text_attr: true,
-    minify_css: false,
-    minify_js: false,
+    minify_css: true,
+    minify_js: true,
     keep_comments: false
   }.freeze
 
@@ -34,4 +34,5 @@ class MinifyHtmlMiddleware
       [status, headers, response]
     end
   end
+
 end
