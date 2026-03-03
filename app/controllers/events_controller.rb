@@ -232,27 +232,11 @@ class EventsController < ApplicationController
   def balance_by_date
     authorize @event
 
-    max = [365, (Date.today - @event.created_at.to_date).to_i + 5].min
-
-    balance_by_date = Rails.cache.fetch("balance_by_date_#{@event.id}", expires_in: 5.minutes) do
-      ::TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).running_balance_by_date
-    end
-
-    balance_by_date[0.days.ago.to_date] = @event.balance_v2_cents
-
-    begin
-      if (balance_by_date[max.days.ago.to_date] || balance_by_date[balance_by_date.keys.first]) > balance_by_date[0.days.ago.to_date]
-        balance_trend = "down"
-      else
-        balance_trend = "up"
-      end
-    rescue
-      balance_trend = "up"
-    end
+    result = @event.balance_graph
 
     render json: {
-      balanceByDate: balance_by_date,
-      balanceTrend: balance_trend
+      balanceByDate: result[:data],
+      balanceTrend: result[:trend]
     }
   end
 

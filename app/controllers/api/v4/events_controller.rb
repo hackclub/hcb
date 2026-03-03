@@ -56,6 +56,13 @@ module Api
 
       require_oauth2_scope "event_followers", :followers
 
+      def balance_graph
+        authorize @event
+        @balance_graph = @event.balance_graph
+      end
+
+      require_oauth2_scope "organizations:read", :balance_graph
+
       private
 
       def set_event

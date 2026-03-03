@@ -50,6 +50,8 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  alias_method :balance_graph?, :balance_by_date?
+
   def edit?
     auditor_or_member?
   end
