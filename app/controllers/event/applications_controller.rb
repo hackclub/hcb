@@ -3,6 +3,7 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
+    before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -12,7 +13,7 @@ class Event
 
     def index
       skip_authorization
-      @applications = current_user.applications
+      @applications = current_user.applications.active
     end
 
     def apply
@@ -45,14 +46,14 @@ class Event
                                else
                                  "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
                                end
-                             elsif @application.contract.party(:signee).pending?
+                             elsif @application.contract.party(:signee)&.pending?
                                "You (#{@application.user.email}) need to sign the agreement before we can review your application."
                              else
                                "Our team will sign and finalize the contract soon."
                              end
 
       # We allow teenagers to receive and sign the contract while applying. Adults must wait for HCB Operations' review.
-      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.user.teenager? || @application.contract&.party(:hcb)&.signed?)
+      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.teen_led? || @application.contract&.party(:hcb)&.signed?)
       contract_step = {
         label: "Sign agreement",
         shorthand: "Sign",
@@ -64,15 +65,15 @@ class Event
       unless @application.draft?
         @steps = []
         @steps << { label: "Submit application", shorthand: "Submit", completed: true }
-        @steps << contract_step if @application.user.teenager?
+        @steps << contract_step if @application.teen_led?
         @steps << {
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
           description: "Our operations team will review your application and respond within #{@application.response_time}.",
-          completed: @application.approved? && (contract_signed || !@application.user.teenager?)
+          completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
-        @steps << contract_step unless @application.user.teenager?
+        @steps << contract_step unless @application.teen_led?
         @steps << {
           label: "Start spending",
           shorthand: "Spend",
@@ -104,7 +105,7 @@ class Event
       @application.mark_approved!
       flash[:success] = "Application approved."
 
-      if @application.user.teenager?
+      if @application.teen_led?
         party = @application.contract.party :hcb
         redirect_to contract_party_path(party)
       else
@@ -124,7 +125,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!
+      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level])
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
@@ -175,21 +176,11 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
-      end
-
-      if application_params[:cosigner_email].present? && @application.contract.present?
-        # The case where the cosigner email changed is handled by an after_save callback
-        unless @application.cosigner_email_previously_changed?
-          @application.contract.party(:cosigner).notify
-        end
-
-        flash[:success] = "Resent agreement to parent"
-        return redirect_back_or_to application_path(@application)
       end
 
       if params[:autosave] != "true"
@@ -217,6 +208,29 @@ class Event
       end
     end
 
+    def archive
+      authorize @application
+
+      @application.archive!
+      flash[:success] = "Application archived"
+
+      redirect_to applications_path
+    end
+
+    def resend_to_cosigner
+      authorize @application
+
+      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+      # If the user resends to the same email, the after_save callback does not handle this
+      unless @application.cosigner_email_previously_changed?
+        @application.contract.party(:cosigner).notify
+      end
+
+      flash[:success] = "Resent agreement to parent"
+      redirect_back_or_to application_path(@application)
+    end
+
     private
 
     def set_application
@@ -224,7 +238,7 @@ class Event
     end
 
     def application_params
-      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :accessibility_notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size, :funding_source)
+      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :accessibility_notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size, :funding_source, :previously_applied)
     end
 
     def user_params
@@ -232,8 +246,14 @@ class Event
     end
 
     def record_pageview
-      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s)
+      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
+      end
+    end
+
+    def prevent_access_after_submission
+      unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
       end
     end
 

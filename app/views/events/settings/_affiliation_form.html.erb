@@ -5,7 +5,7 @@
 <fieldset class="field">
   <legend class="font-medium">Type</legend>
   <p class="h5 muted mt-0 mb-3">
-    Which organization are you affiliated with, if any?
+    Which organization are you affiliated with, if any? Leave blank if none of these apply.
   </p>
   <div class="field field--options field--green trio mb-0">
     <%= form.radio_button :type, :first, disabled:, "x-model": "type" %>
@@ -43,7 +43,7 @@
     <%= form.label :size, "Size" %>
     <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
       <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
+        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
         <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
       </div>
     </div>
@@ -67,13 +67,16 @@
     <%= form.label :size, "Size" %>
     <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
       <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
+        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
         <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
       </div>
     </div>
   </div>
 </template>
 
+<template x-if="type == 'hack_club'">
+  <p class="p-0 text-sm">Select this only if you're a local Hack Club chapter. If you're running an official project for Hack Club HQ, don't use this application form.</p>
+</template>
 <template x-if="type == 'hack_club'">
   <div class="field">
     <%= form.label :venue_name, "Venue name" %>
@@ -85,7 +88,7 @@
     <%= form.label :size, "Size" %>
     <div class="flex items-center" x-data="{ people: <%= affiliation.size || "''" %> }">
       <div class="input flex gap-2 items-center justify-between py-0">
-        <%= form.number_field :size, placeholder: "10", step: 1, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
+        <%= form.number_field :size, placeholder: "10", step: 1, min: 0, required: true, class: "!p-0 !border-none !shadow-none min-h-auto", disabled:, "x-model": "people" %>
         <span class="bold muted" x-text="people == 1 ? 'person' : 'people'">people</span>
       </div>
     </div>
@@ -95,7 +98,7 @@
 <% if affiliation.new_record? %>
   <div class="flex flex-row items-center justify-between" x-show="type !== ''">
     <%= form.submit "Save affiliation", "x-bind:disabled": "disabled" %>
-    <button type="button" class="btn btn-secondary" "x-bind:disabled" : "disabled" x-on:click="type = ''">Cancel</button>
+    <button type="button" class="btn btn-secondary" x-bind:disabled="disabled" x-on:click="type = ''">Cancel</button>
   </div>
 <% else %>
   <%= form.submit "Update", "x-bind:disabled": "disabled || type === ''" %>

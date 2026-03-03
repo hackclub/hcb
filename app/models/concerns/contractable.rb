@@ -6,6 +6,11 @@ module Contractable
   included do
     has_many :contracts, as: :contractable, dependent: :destroy
 
+    def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
+      # This method should be overwritten in specific classes
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented it's own version of send_contract."
+    end
+
     def on_contract_signed(contract)
       # This method is a callback that can be overwritten in specific classes
       nil
@@ -29,6 +34,11 @@ module Contractable
     def contract_redirect_path
       # This method can be overwritten in specific classes to set the path that contract-related routes should redirect to
       "/"
+    end
+
+    def contract_notify_hcb?
+      # This method can be overwritten in specific classes to disable sending HCB's notification when all other parties have signed
+      true
     end
   end
 end
