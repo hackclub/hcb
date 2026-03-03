@@ -304,7 +304,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -373,7 +373,7 @@ class User < ApplicationRecord
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank?
+    full_name_before_last_save.blank? && full_name_previously_changed?
   end
 
   def active_mailbox_address
@@ -467,7 +467,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 

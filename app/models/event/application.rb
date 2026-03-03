@@ -196,10 +196,22 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. Please feel free to reach out to me directly if you have any questions.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:
       }
     end
 
