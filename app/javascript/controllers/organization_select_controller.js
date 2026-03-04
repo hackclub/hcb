@@ -10,13 +10,56 @@ export default class extends Controller {
     'wrapper',
     'field',
     'other',
+    'list',
   ]
   static values = {
     state: Boolean,
+    events: Array,
   }
 
   connect() {
     const organizations = {}
+
+    // When events are provided as JSON (admin path), build the dropdown list client-side
+    // instead of relying on server-rendered HTML. This avoids rendering thousands of ERB
+    // partials with route helper calls per request.
+    if (this.eventsValue.length > 0) {
+      const fragment = document.createDocumentFragment()
+      for (const event of this.eventsValue) {
+        const div = document.createElement('div')
+        div.dataset.id = event.id
+        div.dataset.slug = event.slug || ''
+        div.dataset.name = event.name
+        div.dataset.organizationSelectTarget = 'organization'
+        div.dataset.index = event.index
+        if (event.index >= 50) div.style.display = 'none'
+
+        const button = document.createElement('button')
+        button.className =
+          'text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150'
+        button.type = 'button'
+
+        const nameDiv = document.createElement('div')
+        nameDiv.className = 'text-left tooltipped tooltipped--e'
+        nameDiv.setAttribute('aria-label', `ID: ${event.numeric_id}`)
+        nameDiv.textContent = event.name
+
+        // Placeholder for balance column — keeps button.children[1] accessible to JS
+        const balanceDiv = document.createElement('div')
+        balanceDiv.className = 'text-muted pl-2'
+
+        button.appendChild(nameDiv)
+        button.appendChild(balanceDiv)
+
+        const hr = document.createElement('hr')
+        hr.className = 'my-0'
+
+        div.appendChild(button)
+        div.appendChild(hr)
+        fragment.appendChild(div)
+      }
+      this.listTarget.appendChild(fragment)
+    }
 
     const open = () => {
       // eslint-disable-next-line no-undef
@@ -210,10 +253,16 @@ export default class extends Controller {
   }
 
   get allOrganizations() {
+    // When using the JSON path, query directly so dynamically-added elements are found
+    // synchronously (Stimulus's MutationObserver fires asynchronously after DOM mutations).
+    const orgs = this.hasListTarget
+      ? [...this.listTarget.querySelectorAll('[data-organization-select-target="organization"]')]
+      : this.organizationTargets
+
     if (this.hasOtherTarget) {
-      return [...this.organizationTargets, this.otherTarget]
+      return [...orgs, this.otherTarget]
     }
 
-    return this.organizationTargets
+    return orgs
   }
 }
