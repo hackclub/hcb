@@ -63,6 +63,7 @@ module Api
           ::TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).running_balance_by_date
         end
 
+        @balance_by_date = @balance_by_date.dup
         @balance_by_date[0.days.ago.to_date] = @event.balance_v2_cents
 
         max = [365, (Date.today - @event.created_at.to_date).to_i + 5].min
