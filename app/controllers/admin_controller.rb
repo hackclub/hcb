@@ -859,9 +859,9 @@ class AdminController < Admin::BaseController
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.disbursements.includes(:event)
+      relation = @event.disbursements.includes(:event, :source_event)
     else
-      relation = Disbursement.includes(:event)
+      relation = Disbursement.includes(:event, :source_event)
     end
 
     if @q
@@ -883,6 +883,7 @@ class AdminController < Admin::BaseController
       Arel.sql("aasm_state = 'reviewing' DESC"),
       "created_at desc"
     )
+    @filter_events = Event.select(:id, :name, :demo_mode).reorder(Event::CUSTOM_SORT)
 
   end
 
