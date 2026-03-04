@@ -1,4 +1,6 @@
 # frozen_string_literal: true
 
-json.balance_by_date @balance_by_date.transform_keys(&:to_s)
-json.balance_trend @balance_trend
+json.array! @balance_series do |point|
+  json.date point[:date]
+  json.amount point[:amount]
+end
