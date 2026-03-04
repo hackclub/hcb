@@ -664,25 +664,6 @@ class Event < ApplicationRecord
 
   alias fee_balance fee_balance_v2_cents
 
-  def balance_graph
-    max = [365, (Date.today - created_at.to_date).to_i + 5].min
-
-    data = Rails.cache.fetch("balance_by_date_#{id}", expires_in: 5.minutes) do
-      ::TransactionGroupingEngine::Transaction::All.new(event_id: id).running_balance_by_date
-    end
-
-    data[Date.today] = balance_v2_cents
-
-    trend = begin
-      oldest = data[max.days.ago.to_date] || data[data.keys.first]
-      oldest > balance_v2_cents ? "down" : "up"
-    rescue
-      "up"
-    end
-
-    { data:, trend: }
-  end
-
   def used_emburse?
     emburse_cards.any?
   end

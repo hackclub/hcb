@@ -3,6 +3,7 @@
 module Api
   module V4
     class EventsController < ApplicationController
+      include BalanceGraph
       before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
@@ -58,7 +59,7 @@ module Api
 
       def balance_graph
         authorize @event
-        @balance_graph = @event.balance_graph
+        @balance_graph = balance_graph_for(@event)
       end
 
       require_oauth2_scope "organizations:read", :balance_graph

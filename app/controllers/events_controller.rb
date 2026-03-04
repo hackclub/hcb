@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class EventsController < ApplicationController
+  include BalanceGraph
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
@@ -232,7 +233,7 @@ class EventsController < ApplicationController
   def balance_by_date
     authorize @event
 
-    result = @event.balance_graph
+    result = balance_graph_for(@event)
 
     render json: {
       balanceByDate: result[:data],
