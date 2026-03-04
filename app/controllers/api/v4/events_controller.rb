@@ -74,7 +74,7 @@ module Api
           else
             @balance_trend = "up"
           end
-        rescue
+        rescue StandardError
           @balance_trend = "up"
         end
       end
