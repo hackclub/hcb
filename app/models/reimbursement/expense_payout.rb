@@ -34,9 +34,6 @@ module Reimbursement
     include PublicIdentifiable
     set_public_id_prefix :rep
 
-    include PublicActivity::Model
-    tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
-
     belongs_to :event
     belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout
     belongs_to :payout_holding, optional: true, foreign_key: "reimbursement_payout_holdings_id", inverse_of: :expense_payouts
@@ -65,23 +62,14 @@ module Reimbursement
       state :reversed
 
       event :mark_in_transit do
-        after do
-          create_activity(key: "reimbursement_expense_payout.in_transit", owner: nil)
-        end
         transitions from: :pending, to: :in_transit
       end
 
       event :mark_settled do
-        after do
-          create_activity(key: "reimbursement_expense_payout.settled", owner: nil)
-        end
         transitions from: :in_transit, to: :settled
       end
 
       event :mark_reversed do
-        after do
-          create_activity(key: "reimbursement_expense_payout.reversed", owner: nil)
-        end
         transitions from: :settled, to: :reversed
       end
     end
