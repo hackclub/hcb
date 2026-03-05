@@ -3,7 +3,7 @@
 <% signee_user = @contract.party(:signee).user %>
 
 <p>
-  <%= link_to "#{signee_user.name} (#{signee_user.email})", admin_user_url(signee_user) %> is ready for you (HCB Operations) to sign the fiscal sponsorship agreement for
+  <%= link_to "#{signee_user.name} (#{signee_user.email})", admin_user_url(signee_user) %> is waiting for you (HCB Operations) to sign the fiscal sponsorship agreement for
   <% if @contract.contractable.is_a?(Event::Application) %>
     <%= link_to "their application for #{@contract.event_name}", submission_application_url(@contract.contractable) %>!
   <% else %>

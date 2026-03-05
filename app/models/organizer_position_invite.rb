@@ -173,6 +173,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.rejected_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -221,8 +223,6 @@ class OrganizerPositionInvite < ApplicationRecord
 
       update!(is_signee: true)
       organizer_position&.update(is_signee: true)
-
-      event.set_airtable_status("Documents sent")
     end
 
     fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
