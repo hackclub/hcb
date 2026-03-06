@@ -81,7 +81,9 @@ module PayrollService
               payment_for: "Payment for \"#{payment.title}\".",
               memo: "Payment for \"#{payment.title}\".",
               recipient_email: payment.employee.user.payout_method.recipient_email,
-              recipient_name: payment.employee.user.payout_method.recipient_name.presence || payment.employee.user.full_name,
+              recipient_name: payment.employee.user.payout_method.recipient_name.presence ||
+                              payment.employee.user.full_name.presence ||
+                              payment.employee.user.name,
               user: User.system_user
             )
             paypal_transfer.save!
