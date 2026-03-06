@@ -27,10 +27,14 @@
     transition: left 0.3s;
 
     background-color: rgba(255, 255, 255, 0.8);
-    @media (min-width: 1024px) {
-      background-color: rgba(255, 255, 255, 0.9);
-    }
+
     @media (max-width: 1024px) {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      [data-dark='true'] & {
+        background-color: rgba(37, 36, 41, 0.9) !important;
+      }
+    }
+    @media (min-width: 1024px) {
       left: 0 !important;
     }
     border-color: rgba(200, 200, 200, 0.3) !important;
