@@ -8,9 +8,9 @@
   }
 
   .sidebar {
-    @apply fixed top-0 left-0 w-screen lg:w-72 lg:h-dvh flex items-center lg:items-start lg:flex-col
-      overflow-x-visible border border-x-0 lg:border-r lg:border-b-0 lg:border-l-0
-      backdrop-blur-xl z-10 lg:shadow-lg;
+    @apply fixed top-0 left-0 w-72 h-dvh flex items-start flex-col
+      overflow-x-visible border border-x-0 border-r border-b-0 border-l-0
+      backdrop-blur-xl z-10 shadow-lg;
 
     background-color: rgba(255, 255, 255, 0.8);
     border-color: rgba(200, 200, 200, 0.3) !important;
@@ -26,7 +26,7 @@
     }
 
     & .command-bar-trigger {
-      @apply h-10 shadow-none w-100 justify-start px-3 hidden md:flex items-center cursor-pointer border-none;
+      @apply h-10 shadow-none w-100 justify-start px-3 flex items-center cursor-pointer border-none;
       color: inherit;
       font-size: 15px;
       transition: background 0.2s ease-in-out;
@@ -59,16 +59,10 @@
       }
     }
 
-    @media (max-width: 1023px) {
-      height: 64px;
-    }
-
     .sidebar--scroll-container {
       overflow: hidden;
       @apply flex-1 w-full p-2 px-5;
-      @media (min-width: 1023px) {
-        overflow-y: auto;
-      }
+      overflow-y: auto;
     }
   }
 

@@ -37,19 +37,14 @@
         <aside class="sidebar select-none">
           <div class="sidebar--scroll-container">
             <%= yield(:header) %>
-            <div class="hidden lg:block">
-              <%= render "application/flash", klass: "mt2 mb1" %>
-            </div>
-            <div class="hidden lg:block flex-1">
-              <%= yield(:nav) %>
-            </div>
+            <%= yield(:nav) %>
           </div>
           <% if content_for?(:nav_footer) %>
-            <div class="mt-auto max-h-[30%] overflow-visible hidden lg:flex">
+            <div class="mt-auto max-h-[30%] overflow-visible flex">
               <%= yield(:nav_footer) %>
             </div>
           <% else %>
-            <div class="hidden lg:flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
+            <div class="flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
           <% end %>
           <%= render "application/user_menu" %>
         </aside>
