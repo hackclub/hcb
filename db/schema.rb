@@ -2514,6 +2514,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
   create_table "user_payout_method_ach_transfers", force: :cascade do |t|
     t.text "account_number_ciphertext", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.text "routing_number_ciphertext", null: false
     t.datetime "updated_at", null: false
   end
@@ -2526,12 +2527,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
     t.text "address_postal_code", null: false
     t.text "address_state", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 
   create_table "user_payout_method_paypal_transfers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "recipient_email", null: false
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 
@@ -2563,6 +2566,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
     t.string "currency"
     t.integer "recipient_country"
     t.text "recipient_information_ciphertext"
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
     t.text "wise_recipient_id"
   end
