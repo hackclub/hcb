@@ -3,11 +3,9 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = ['sidebar', 'overlay', 'trigger']
 
-  connect() {
-  }
+  connect() {}
 
-  disconnect() {
-  }
+  disconnect() {}
 
   open() {
     this.sidebarTarget.style.left = '0'
