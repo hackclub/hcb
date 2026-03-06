@@ -54,6 +54,7 @@ class CardGrant < ApplicationRecord
 
   include Freezable
   include Commentable
+  include HasPaperTrailHelpers
 
   belongs_to :event
   has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
@@ -304,12 +305,6 @@ class CardGrant < ApplicationRecord
 
   def expires_on
     created_at + expires_after.days
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def last_time_change_to(...)
