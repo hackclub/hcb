@@ -22,7 +22,7 @@
   .sidebar {
     @apply fixed -left-72 w-72 h-dvh flex items-start flex-col
       overflow-x-visible border border-x-0 border-r border-b-0 border-l-0
-      backdrop-blur-xl z-30 shadow-lg;
+      backdrop-blur-xl z-10 shadow-lg;
 
     transition: left 0.3s;
 
@@ -89,7 +89,6 @@
       overflow-y: auto;
     }
   }
-
 }
 
 .user-menu-trigger {
