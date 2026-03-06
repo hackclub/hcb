@@ -117,7 +117,9 @@ module Reimbursement
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
                   memo: "Reimbursement for #{payout_holding.report.name}.",
                   recipient_email: payout_holding.report.user.payout_method.recipient_email,
-                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence ||
+                    payout_holding.report.user.full_name.presence ||
+                    payout_holding.report.user.name,
                   user: User.system_user,
                 )
                 paypal_transfer.save!
