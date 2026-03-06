@@ -6,6 +6,7 @@
 #
 #  id              :bigint           not null, primary key
 #  recipient_email :text             not null
+#  recipient_name  :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #
