@@ -3,9 +3,20 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = ['sidebar', 'overlay', 'trigger']
 
-  connect() {}
+  connect() {
+    this.handleKeydown = this.handleKeydown.bind(this)
+    document.addEventListener('keydown', this.handleKeydown)
+  }
 
-  disconnect() {}
+  disconnect() {
+    document.removeEventListener('keydown', this.handleKeydown)
+  }
+
+  handleKeydown(event) {
+    if (event.key === 'Escape' && !this.sidebarTarget.getAttribute('inert')) {
+      this.close()
+    }
+  }
 
   open() {
     this.sidebarTarget.style.left = '0'
