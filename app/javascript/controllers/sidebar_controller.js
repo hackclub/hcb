@@ -9,9 +9,13 @@ export default class extends Controller {
     document.addEventListener('keydown', this.handleKeydown)
     window.addEventListener('resize', this.handleResize)
     this.handleResize()
-    this.sidebarTarget.querySelectorAll(".dock__item:not(summary.dock__item,.user-menu-trigger)").forEach(item => {
-      item.addEventListener('click', this.close.bind(this))
-    });
+    this.sidebarTarget
+      .querySelectorAll(
+        '.dock__item:not(summary.dock__item,.user-menu-trigger)'
+      )
+      .forEach(item => {
+        item.addEventListener('click', this.close.bind(this))
+      })
   }
 
   disconnect() {
