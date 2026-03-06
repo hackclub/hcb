@@ -29,8 +29,9 @@ export default class extends Controller {
     } else {
       this.sidebarTarget.setAttribute('aria-hidden', 'true')
     }
-    this.overlayTarget.classList.toggle('overlay--hidden', isDesktop)
+    this.overlayTarget.classList.add('overlay--hidden')
     this.sidebarTarget.style.left = isDesktop ? '0' : ''
+    if (isDesktop) this.toggleTarget.setAttribute('aria-expanded', 'false')
   }
 
   open() {
@@ -43,7 +44,7 @@ export default class extends Controller {
 
   close() {
     if (window.innerWidth < 1024) {
-      this.sidebarTarget.style.left = '-18rem'
+      this.sidebarTarget.style.left = `-${this.sidebarTarget.offsetWidth}px`
       this.sidebarTarget.setAttribute('inert', '')
       this.sidebarTarget.setAttribute('aria-hidden', 'true')
       this.overlayTarget.classList.add('overlay--hidden')

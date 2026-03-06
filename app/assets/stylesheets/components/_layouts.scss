@@ -90,37 +90,6 @@
     }
   }
 
-  .mobile-nav {
-    @apply lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none;
-
-    & .mobile-nav--trigger {
-      @apply rounded-full text-black px-5 py-3 max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform cursor-pointer;
-      width: 300px;
-      background-color: rgba(200, 200, 200, 0.4);
-      backdrop-filter: blur(15px);
-      box-shadow: var(--shadow-border-lg);
-
-      [data-dark='true'] & {
-        color: white;
-        background-color: rgba(50, 50, 50, 0.4);
-      }
-    }
-  }
-
-  .mobile-nav--modal {
-    @apply lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none;
-    height: auto !important;
-    max-height: 80vh !important;
-  }
-}
-
-.mobile-nav--popover {
-  @apply flex-1 mt-auto overflow-hidden rounded-xl;
-
-  background-color: rgba(255, 255, 255, 1) !important;
-  [data-dark='true'] & {
-    background-color: rgba(37, 36, 41, 1) !important;
-  }
 }
 
 .user-menu-trigger {

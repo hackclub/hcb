@@ -126,12 +126,10 @@ summary.dock__item {
   border-radius: var(--radius-lg);
 
   cursor: pointer;
-  line-height: 1.75;
+  line-height: 1.25;
   transition: all 0.125s ease-in-out;
   color: $black;
-  line-height: 1.25;
   margin-bottom: 2px;
-  color: $black;
   padding: 0.25rem;
 
   &:hover {
