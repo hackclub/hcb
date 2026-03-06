@@ -17,7 +17,8 @@ export default class extends Controller {
   }
 
   handleKeydown(event) {
-    if (event.key === 'Escape' && !this.sidebarTarget.getAttribute('inert')) this.close()
+    if (event.key === 'Escape' && !this.sidebarTarget.getAttribute('inert'))
+      this.close()
   }
 
   handleResize() {
