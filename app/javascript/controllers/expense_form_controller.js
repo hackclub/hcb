@@ -18,6 +18,19 @@ export default class extends Controller {
   }
 
   connect() {
+    this._handleKeydown = (e) => {
+      if (e.key === 'Escape' && this.enabledValue) {
+        this.formTarget.reset()
+        this.close()
+      }
+    }
+    document.addEventListener('keydown', this._handleKeydown)
+
+    this._handleLightboxClick = (e) => {
+      e.preventDefault()
+      this.formTarget.requestSubmit()
+    }
+
     for (const field of this.fieldTargets) {
       if (field.nodeName == 'SELECT') {
         field.disabled = !this.enabledValue
@@ -26,13 +39,6 @@ export default class extends Controller {
         field.addEventListener('dblclick', () => this.edit())
         this.#addTooltip(field, 'Double-click to edit...')
       }
-
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && this.enabledValue) {
-          this.formTarget.reset()
-          this.close()
-        }
-      })
     }
 
     // we don't render the button if the report is reimbursed
@@ -54,6 +60,11 @@ export default class extends Controller {
     this.#card()
     this.#move()
     this.#lightbox()
+  }
+
+  disconnect() {
+    document.removeEventListener('keydown', this._handleKeydown)
+    this.lightboxTarget.removeEventListener('click', this._handleLightboxClick)
   }
 
   close(e) {
@@ -166,19 +177,19 @@ export default class extends Controller {
   #addTooltip(field, label) {
     if (!label || this.lockedValue || this.enabledValue) return
 
-    const fieldWrapper = document.createElement('div')
-    field.parentNode.insertBefore(fieldWrapper, field)
-    fieldWrapper.appendChild(field)
-    fieldWrapper.classList.add('tooltipped', 'tooltipped--n')
-    fieldWrapper.setAttribute('aria-label', label)
+    const wrapper = field.closest('[data-tooltip-wrapper]')
+    if (!wrapper) return
 
-    window.attachTooltipListener()
+    wrapper.classList.add('tooltipped', 'tooltipped--n')
+    wrapper.setAttribute('aria-label', label)
   }
 
   #removeTooltip(field) {
-    const fieldWrapper = field.parentNode
-    fieldWrapper.parentNode.insertBefore(field, fieldWrapper)
-    fieldWrapper.remove()
+    const wrapper = field.closest('[data-tooltip-wrapper]')
+    if (!wrapper) return
+
+    wrapper.classList.remove('tooltipped', 'tooltipped--n')
+    wrapper.removeAttribute('aria-label')
   }
 
   #lightbox() {
@@ -186,14 +197,12 @@ export default class extends Controller {
       this.lightboxTarget.style.display = 'block'
       this.cardTarget.style.position = 'relative'
       this.cardTarget.style.zIndex = '11'
-      this.lightboxTarget.addEventListener('click', e => {
-        e.preventDefault()
-        this.formTarget.requestSubmit()
-      })
+      this.lightboxTarget.addEventListener('click', this._handleLightboxClick)
     } else {
       this.lightboxTarget.style.display = 'none'
       this.cardTarget.style.position = 'relative'
       this.cardTarget.style.zIndex = 'auto'
+      this.lightboxTarget.removeEventListener('click', this._handleLightboxClick)
     }
   }
 }

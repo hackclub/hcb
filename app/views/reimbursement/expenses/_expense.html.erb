@@ -1,4 +1,4 @@
-<%# locals: (expense:, new: false) -%>
+<%# locals: (expense:, new: false, move_report_options: nil, move_event_options: nil) -%>
 <% read_only = !OrganizerPosition.role_at_least?(current_user, expense.report.event, :manager) && current_user != expense.report.user && !admin_signed_in? %>
 <%= turbo_frame_tag expense do %>
   <div
@@ -103,12 +103,15 @@
   <%= form_with(model: expense.becomes(Reimbursement::Expense), class: "mb3 mt1", style: "max-width: 600px;", html: { "x-data" => "{reportId: null, eventId: null}" }, local: true, data: { turbo: false }) do |form| %>
     <div class="field event-select-target">
       <%= form.label :reimbursement_report_id, "Move to a pre-existing report", class: "mt2 bold" %>
-      <%= form.select(:reimbursement_report_id,
+      <% report_options = move_report_options || (
             admin_signed_in? ?
-              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |report| [report.name, report.id] } :
+              (current_user.reimbursement_reports.excluding(expense.report) + Reimbursement::Report.all.pending.excluding(expense.report)).reject(&:locked?).map { |r| [r.name, r.id] } :
             current_user == expense.report.user ?
-              current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] } :
-              expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |report| [report.name, report.id] },
+              current_user.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |r| [r.name, r.id] } :
+              expense.report.event.reimbursement_reports.excluding(expense.report).reject(&:locked?).map { |r| [r.name, r.id] }
+          ) %>
+      <%= form.select(:reimbursement_report_id,
+            report_options,
             { prompt: "Select a report…", required: false, include_blank: "Select a report..." }, "x-model": "reportId") %>
       <% unless admin_signed_in? %>
         <span class="muted mt1">You can transfer an expense to any report of yours.</span>
@@ -116,9 +119,10 @@
     </div>
     <div class="field event-select-target">
       <%= form.label :event_id, "Create a new report", class: "mt2 bold" %>
+      <% event_options = move_event_options || current_user.events.not_hidden.filter_demo_mode(false).map { |e| [e.name, e.id] } %>
       <%= form.select(
             :event_id,
-            current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] },
+            event_options,
             { prompt: "Select an event…", required: false }, "x-model": "eventId"
           ) %>
       <% unless admin_signed_in? %>

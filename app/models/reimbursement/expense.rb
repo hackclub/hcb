@@ -86,10 +86,6 @@ module Reimbursement
       end
     end
 
-    include TouchHistory
-
-    broadcasts_refreshes_to ->(expense) { expense.was_touched? ? :_noop : expense.report }
-
     scope :complete, -> { where.not(memo: nil, amount_cents: 0).merge(self.with_receipt) }
 
     aasm do
