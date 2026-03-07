@@ -56,7 +56,7 @@ RSpec.describe User, type: :model do
   describe "#initials" do
     context "when missing name" do
       it "returns initials from email" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+        user = create(:user, email: "user1@example.com", first_name: nil, last_name: nil)
 
         expect(user.initials).to eql("U")
       end
@@ -151,7 +151,7 @@ RSpec.describe User, type: :model do
 
     context "when full_name is nil" do
       it "returns" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+        user = create(:user, email: "user1@example.com", first_name: nil, last_name: nil)
 
         expect(user.initial_name).to eql("user1")
       end
