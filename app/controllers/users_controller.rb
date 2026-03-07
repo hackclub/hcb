@@ -254,7 +254,6 @@ class UsersController < ApplicationController
 
     @user.assign_attributes(user_params)
     if params[:user][:full_name].present? && params[:user][:first_name].blank? && params[:user][:last_name].blank?
-      require "namae"
       namae = Namae.parse(params[:user][:full_name]).first
       @user.first_name = (namae&.given || namae&.particle)&.split(" ")&.first
       @user.last_name = namae&.family&.split(" ")&.last

@@ -169,6 +169,7 @@ class User < ApplicationRecord
   before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
 
   before_create :format_number
+  before_save :sync_full_name_from_split_names, if: -> { first_name_changed? || last_name_changed? }
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
@@ -323,11 +324,14 @@ class User < ApplicationRecord
   end
 
   def safe_name
-    # stripe requires names to be 24 chars or less, and must include a last name
+    # stripe requires cardholder names to be 24 chars or less
     return name unless name.length > 24
 
     reconstructed = reconstructed_full_name
     return reconstructed if reconstructed && reconstructed.length <= 24
+
+    # fall back to the legacy full_name which may contain a suffix that was
+    # stripped during migration but is still shorter than the preferred name
     return full_name if full_name && full_name.length <= 24
 
     initial_name
@@ -624,6 +628,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def sync_full_name_from_split_names
+    self.full_name = reconstructed_full_name
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
