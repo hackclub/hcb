@@ -9,7 +9,7 @@ FactoryBot.define do
     after(:build) do |user|
       default_full_name = "#{user.first_name} #{user.last_name}"
 
-      if user.full_name&.present? && user.full_name != default_full_name
+      if user.full_name.present? && user.full_name != default_full_name
         require "namae"
         namae_obj = Namae.parse(user.full_name).first
         user.first_name = (namae_obj&.given || namae_obj&.particle)&.split(" ")&.first || namae_obj&.family
