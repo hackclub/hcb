@@ -53,7 +53,8 @@ module Api
           type: "string",
           values: %w[keyed_in swipe chip contactless online]
         } do |hcb_code|
-          hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method")
+          hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method") ||
+            hcb_code.raw_stripe_transaction&.stripe_transaction&.dig("authorization_method")
         end
 
         expose_associated Card, hide: [Card, Organization, User] do |hcb_code, options|
