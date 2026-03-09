@@ -47,7 +47,7 @@
         <%= card_to "Wise transfers", wise_transfers_admin_index_path, badge: WiseTransfer.pending.count %>
         <%= card_to "Disbursements", disbursements_admin_index_path, badge: Disbursement.reviewing.count %>
         <%= card_to "Reimbursements", reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count %>
-        <%= card_to "Deletion requests", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
+        <%= card_to "OPDRs", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
         <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
         <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
         <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
