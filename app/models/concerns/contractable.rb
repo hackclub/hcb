@@ -4,7 +4,7 @@ module Contractable
   extend ActiveSupport::Concern
 
   included do
-    has_many :contracts, as: :contractable
+    has_many :contracts, as: :contractable, dependent: :destroy
 
     before_destroy do
       contracts.where(aasm_state: [:pending, :sent]).each(&:mark_voided!)

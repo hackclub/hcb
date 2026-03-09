@@ -42,7 +42,7 @@ class Contract < ApplicationRecord
   belongs_to :contractable, polymorphic: true
 
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
-  has_many :parties
+  has_many :parties, dependent: :destroy
 
   validate :one_non_void_contract
 
