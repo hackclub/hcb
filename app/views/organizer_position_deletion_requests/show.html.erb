@@ -104,7 +104,7 @@
       </p>
     <% end %>
 
-    <% if @opdr.organizer_position.deleted_at.nil? %>
+    <% if @opdr.organizer_position.deleted_at.nil? && @opdr.status == :under_review %>
       <%= link_to "Delete organizer ⚠️☣☠",
                   organizer_path(@opdr.organizer_position.id),
                   method: :delete,
@@ -133,7 +133,7 @@
                               "Only continue if no follow-up is needed for this request."
                   },
                   class: "btn bg-accent" %>
-    <% else %>
+    <% elsif @opdr.organizer_position.deleted_at.nil? %>
       <%= link_to "Open request",
                   organizer_position_deletion_request_open_path(@opdr.id),
                   method: :post,
