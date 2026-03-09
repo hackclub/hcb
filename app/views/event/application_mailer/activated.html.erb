@@ -18,11 +18,11 @@
   </p>
 <% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::ROBOTICS_TEAM)) %>
   <p>
-    Also, if your team is on Discord, check out <%= "our Discord integration", "https://blog.hcb.hackclub.com/posts/discord-bot" %>!
+    Also, if your team is on Discord, check out <%= link_to "our Discord integration", "https://blog.hcb.hackclub.com/posts/discord-bot" %>!
   </p>
 <% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::HACK_CLUB)) %>
   <p>
-    Also, check out <%= "the Hack Club toolbox", "https://toolbox.hackclub.com/" %> for help running your club!
+    Also, check out the <%= link_to "Hack Club toolbox", "https://toolbox.hackclub.com/" %> for help running your club!
   </p>
 <% end %>
 
