@@ -72,6 +72,14 @@
         </div>
       </div>
 
+      <div class="field">
+        <%= form.label :recipient_name, "Name on check" %>
+        <%= form.text_field :recipient_name,
+            required: false,
+            placeholder: user.full_name %>
+        <span class="muted">If the name on the check should differ from your legal name on HCB.</span>
+      </div>
+
       <div class="actions inline-block mt1">
         <%= form.submit "Save" %>
       </div>
@@ -132,6 +140,14 @@
 
         <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: User::PayoutMethod::WiseTransfer } %>
 
+        <div class="field">
+          <%= form.label :recipient_name, "Name on account" %>
+          <%= form.text_field :recipient_name,
+              required: false,
+              placeholder: user.full_name %>
+          <span class="muted">If the name on the bank account differs from your legal name on HCB.</span>
+        </div>
+
         <div class="actions inline-block mt1">
           <%= form.submit "Save" %>
         </div>
@@ -154,6 +170,14 @@
       <div class="field">
         <%= form.label :recipient_email, "PayPal email" %>
         <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :recipient_name, "Name on account" %>
+        <%= form.text_field :recipient_name,
+            required: false,
+            placeholder: user.full_name %>
+        <span class="muted">If the name on the PayPal account differs from your legal name on HCB.</span>
       </div>
 
       <div class="actions inline-block mt1">
@@ -229,6 +253,14 @@
                             "@blur": "toggle()",
                             "x-model": "accountNumber",
                             value: "" %>
+      </div>
+
+      <div class="field">
+        <%= form.label :recipient_name, "Name on account" %>
+        <%= form.text_field :recipient_name,
+            required: false,
+            placeholder: user.full_name %>
+        <span class="muted">If the name on the bank account differs from your legal name on HCB.</span>
       </div>
 
       <div class="actions inline-block mt1">

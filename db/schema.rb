@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2515,6 +2515,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
   create_table "user_payout_method_ach_transfers", force: :cascade do |t|
     t.text "account_number_ciphertext", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.text "routing_number_ciphertext", null: false
     t.datetime "updated_at", null: false
   end
@@ -2527,12 +2528,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
     t.text "address_postal_code", null: false
     t.text "address_state", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 
   create_table "user_payout_method_paypal_transfers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "recipient_email", null: false
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 
@@ -2564,6 +2567,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
     t.string "currency"
     t.integer "recipient_country"
     t.text "recipient_information_ciphertext"
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
     t.text "wise_recipient_id"
   end
