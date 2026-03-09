@@ -55,7 +55,15 @@
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
         <td class="w-24"><%= report.amount.format %></td>
-        <td><%= report.admin_status_text %></td>
+        <td>
+          <%= report.admin_status_text %>
+          <% if report.reimbursement_requested? %>
+            <br>
+            <small>
+              since <%= format_date report.reimbursement_requested_at %>
+            </small>
+          <% end %>
+        </td>
         <td>
           <%= link_to "View", reimbursement_report_path(report) %>
         </td>

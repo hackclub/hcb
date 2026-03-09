@@ -2,8 +2,6 @@
 
 <% unless is_email %>
   <div class="block-actions flex gap-2">
-    <%= pop_icon_to "history", refresh_announcements_block_path(block), data: { turbo_method: :post }, class: "tooltipped", "aria-label": "Refresh this block with the latest data" %>
-
     <% if block.editable? %>
       <%= pop_icon_to "edit", edit_announcements_block_path(block), class: "tooltipped", "aria-label": "Edit this block", rel: "modal:open" %>
     <% end %>

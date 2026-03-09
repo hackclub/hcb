@@ -7,6 +7,7 @@ class LoginsController < ApplicationController
   before_action :set_for_application
   before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
+  invisible_captcha only: [:create, :complete], honeypot: :remember_me
 
   layout ->{ @for_application ? "apply" : "login" }
 

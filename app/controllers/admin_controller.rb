@@ -495,8 +495,8 @@ class AdminController < Admin::BaseController
     @reports = relation.page(@page).per(@per).order(
       @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
       Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
-      # Arel.sql("aasm_state = 'draft' ASC"),
-      "reimbursement_reports.created_at desc"
+      Arel.sql("reimbursement_reports.reimbursement_requested_at ASC NULLS LAST"),
+      Arel.sql("reimbursement_reports.created_at DESC")
     )
 
   end
@@ -1448,6 +1448,23 @@ class AdminController < Admin::BaseController
 
   def new_teenagers_leaderboard
     @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
+  end
+
+  def contracts
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @type = params[:type].presence
+    @status = params[:status].presence
+    @service = params[:service].presence
+
+    @contracts = Contract.all.includes(:document, :contractable)
+    @contracts = @contracts.where(type: @type) if @type
+    @contracts = @contracts.where(aasm_state: @status) if @status
+    @contracts = @contracts.where(external_service: @service) if @service
+    @contracts = @contracts.search_parties(@q) if @q
+
+    @contracts = @contracts.page(@page).per(@per).order(created_at: :desc)
   end
 
   private
