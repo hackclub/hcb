@@ -25,9 +25,7 @@
 
       <p>
         <strong>Submitter email</strong>
-        <%= copy_to_clipboard(@opdr.submitted_by.email) do %>
-          <%= @opdr.submitted_by.email %>
-        <% end %>
+        <%= mail_to @opdr.submitted_by.email %>
       </p>
 
       <p>
@@ -37,9 +35,7 @@
 
       <p>
         <strong>User email</strong>
-        <%= copy_to_clipboard(@opdr.organizer_position.user.email) do %>
-          <%= @opdr.organizer_position.user.email %>
-        <% end %>
+        <%= mail_to @opdr.organizer_position.user.email %>
       </p>
 
       <p>
