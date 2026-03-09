@@ -4,6 +4,7 @@ class Contract
   class Party
     class ReminderJob < ApplicationJob
       queue_as :low
+      discard_on ActiveJob::DeserializationError
 
       def perform(party)
         return unless party.pending? && party.contract.sent?
