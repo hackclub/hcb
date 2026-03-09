@@ -7,7 +7,7 @@ module Contractable
     has_many :contracts, as: :contractable, dependent: :destroy
 
     before_destroy do
-      contracts.where(aasm_state: [:pending, :sent]).each(&:mark_voided!)
+      contracts.where(aasm_state: [:pending, :sent]).find_each(&:mark_voided!)
     end
 
     def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
