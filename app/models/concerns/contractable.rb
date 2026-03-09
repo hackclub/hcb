@@ -6,7 +6,7 @@ module Contractable
   included do
     has_many :contracts, as: :contractable
 
-    after_destroy_commit do
+    before_destroy do
       contracts.where(aasm_state: [:pending, :sent]).each(&:mark_voided!)
     end
 
