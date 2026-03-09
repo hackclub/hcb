@@ -4,7 +4,11 @@ module Contractable
   extend ActiveSupport::Concern
 
   included do
-    has_many :contracts, as: :contractable, dependent: :destroy
+    has_many :contracts, as: :contractable
+
+    after_destroy_commit do
+      contracts.where(aasm_state: [:pending, :sent]).each(&:mark_voided!)
+    end
 
     def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
       # This method should be overwritten in specific classes
