@@ -102,9 +102,7 @@
                         style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
         Woah! This user has signed the fiscal sponsorship contract for this
         organization. Are you sure you want to remove them?
-        <% signee_count_after_removal = @opdr.event.signees.size - 1 %>
-        (<%= signee_count_after_removal %>
-        <%= "signee".pluralize(signee_count_after_removal) %> will remain)
+        (<%= "signee".pluralize(@opdr.event.signees.size - 1) %> will remain)
       </p>
     <% end %>
 
