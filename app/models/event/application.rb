@@ -367,6 +367,12 @@ class Event
       update!(archived_at: Time.current)
     end
 
+    def unarchive!
+      send_contract if contract.nil? && ((teen_led && (!draft? && !rejected?)) || (!teen_led && approved?))
+
+      update!(archived_at: nil)
+    end
+
     def archived?
       archived_at.present?
     end

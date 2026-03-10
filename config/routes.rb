@@ -857,6 +857,7 @@ Rails.application.routes.draw do
         get "edit"
         post "submit"
         post "archive"
+        post "unarchive"
         post "admin_approve"
         post "admin_reject"
         post "admin_activate"
