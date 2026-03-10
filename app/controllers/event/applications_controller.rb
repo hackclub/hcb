@@ -70,7 +70,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
