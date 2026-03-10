@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_10_040000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1725,14 +1725,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
     t.datetime "created_at", precision: nil, null: false
-    t.bigint "organizer_position_id"
-    t.text "reason"
+    t.bigint "organizer_position_id", null: false
+    t.text "reason", null: false
     t.boolean "subject_emails_should_be_forwarded", default: false, null: false
     t.boolean "subject_has_active_cards", default: false, null: false
     t.boolean "subject_has_outstanding_expenses_expensify", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_emburse", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_stripe", default: false, null: false
-    t.bigint "submitted_by_id"
+    t.bigint "submitted_by_id", null: false
     t.datetime "updated_at", precision: nil, null: false
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
