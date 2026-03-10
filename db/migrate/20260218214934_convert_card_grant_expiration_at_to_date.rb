@@ -1,21 +1,7 @@
 class ConvertCardGrantExpirationAtToDate < ActiveRecord::Migration[8.0]
-  def up
+  def change
     safety_assured {
-      execute <<-SQL
-        ALTER TABLE card_grants
-        ALTER COLUMN expiration_at TYPE DATE
-        USING CAST(expiration_at AS DATE);
-      SQL
-    }
-  end
-
-  def down
-    safety_assured {
-      execute <<-SQL
-        ALTER TABLE card_grants
-        ALTER COLUMN expiration_at TYPE TIMESTAMP
-        USING CAST(expiration_at AS TIMESTAMP);
-      SQL
+      change_column :card_grants, :expiration_at, :date
     }
   end
 end
