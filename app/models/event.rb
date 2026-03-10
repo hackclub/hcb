@@ -293,6 +293,10 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
+  def ancestor_users
+    User.where(id: ancestor_organizer_positions.select(:user_id))
+  end
+
   has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
@@ -872,7 +876,7 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    organizer_positions.joins(:user).count { |op| op.user.is_teenager? && op.user.active? }
+    users.active_teenager.count
   end
 
   def subevents_enabled?

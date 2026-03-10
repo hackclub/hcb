@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_26_081252) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -194,8 +194,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "parameters"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
@@ -465,6 +463,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
+    t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
     t.string "invite_message"
@@ -474,6 +473,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
+    t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
@@ -784,6 +784,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
@@ -986,6 +987,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.string "address_state"
     t.string "airtable_record_id"
     t.string "airtable_status"
+    t.datetime "airtable_synced_at"
     t.integer "annual_budget_cents"
     t.datetime "approved_at"
     t.datetime "archived_at"
@@ -1666,6 +1668,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_214934) do
     t.integer "year"
     t.index ["subject_type", "subject_id", "type", "year"], name: "index_metrics_on_subject_type_and_subject_id_and_type_and_year", unique: true
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
+  end
+
+  create_table "nondisposable_disposable_domains", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_nondisposable_disposable_domains_on_name", unique: true
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|

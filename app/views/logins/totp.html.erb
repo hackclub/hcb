@@ -40,6 +40,7 @@
             autofocus: true
           ) %>
     <% end %>
+    <%= invisible_captcha :remember_me %>
 
     <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
