@@ -12,5 +12,5 @@
   <% unless event.affiliations.none? %>
     <h3 class="mb2"><%= possessive(event.name) %> affiliations</h3>
   <% end %>
-  <%= render partial: "events/settings/affiliation", collection: event.affiliations %>
+  <%= render partial: "events/settings/affiliation", collection: event.affiliations.nonempty %>
 <% end %>

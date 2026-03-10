@@ -27,6 +27,9 @@ class Event
     store_accessor :metadata, :league, :team_number, :size, :venue_name
 
     scope :robotics, -> { where(name: %w[first vex]) }
+    scope :nonempty, -> { where.not(metadata: {}) }
+
+    validate :metadata_contains_required_fields
 
     def display_name
       case name
@@ -57,6 +60,26 @@ class Event
 
     def to_s
       [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
+    end
+
+    private
+
+    def metadata_contains_required_fields
+      required_fields = case name
+                        when "first"
+                          ["league", "team_number", "size"]
+                        when "vex"
+                          ["league", "team_number", "size"]
+                        when "hack_club"
+                          ["venue_name", "size"]
+                        else
+                          return errors.add(:name, "is not a valid affiliation")
+                        end
+
+      missing_fields = required_fields.select { |field| metadata[field].nil? }
+      if missing_fields.any?
+        errors.add(:metadata, "is missing fields: #{missing_fields.to_sentence}")
+      end
     end
 
   end
