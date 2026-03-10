@@ -118,7 +118,7 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          update!(teen_led: user.is_teenager?)
+          update!(teen_led: user.is_teenager?, archived_at: nil)
 
           if teen_led?
             send_contract
