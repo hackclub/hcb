@@ -77,7 +77,7 @@
         </div>
       <% end %>
 
-      <% if report.mismatched_currency? && (user == current_user || admin_signed_in?) %>
+      <% if policy(report).update_currency? %>
         <div style="flex-grow: 1;" class="flex justify-end">
           <%= link_to reimbursement_report_update_currency_path(report), method: :post, class: "btn bg-secondary" do %>
             <%= inline_icon "transactions" %>

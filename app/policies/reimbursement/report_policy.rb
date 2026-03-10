@@ -59,7 +59,7 @@ module Reimbursement
     end
 
     def update_currency?
-      (admin || creator) && open && record.mismatched_currency?
+      (admin || manager || creator) && open && record.mismatched_currency?
     end
 
     def admin_approve?
