@@ -8,12 +8,12 @@
           <%= form.label :expiration_at, "Expires on" %>
 
           <div class="flex gap-3 items-stretch">
-            <%= form.date_field :expiration_at, value: @card_grant.expiration_at %>
+            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update? %>
           </div>
         </div>
 
         <div class="actions">
-          <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }) %>
+          <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }, disabled: !policy(@card_grant).update?) %>
         </div>
       <% end %>
     </div>
