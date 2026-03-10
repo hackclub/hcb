@@ -54,7 +54,7 @@
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
-                <span class="bold">Status:</span> the HCB team is reviewing this report. To make further changes, mark it as a draft.
+                <span class="bold">Status:</span> the HCB team is reviewing this report. This may take up to <strong>2 business days</strong>. To make further changes, mark it as a draft.
               <% end %>
             <% end %>
           <% elsif current_user == report.user && report.submitted? %>
@@ -62,7 +62,7 @@
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
-                <span class="bold">Status:</span> your report is currently under review by the <%= report.event.name %> team. To make further changes, mark it as a draft.
+                <span class="bold">Status:</span> your report is currently under review by the <%= report.event.name %> team. Once it is approved by them, it will take the HCB team <strong>2 business days</strong> to review. To make further changes, mark it as a draft.
               <% end %>
             <% end %>
           <% elsif !report.closed? %>

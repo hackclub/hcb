@@ -2,7 +2,7 @@
 
 <%= @comment.user.name %> <%= @comment.action_text %> on <i><%= report.name %></i> in <i><%= report.event.name %></i>:
 
-<blockquote><%== MarkdownService.instance.renderer(record: @comment, location: :email).render @comment.content %></blockquote>
+<blockquote><%= MarkdownService.instance.render(@comment.content, record: @comment, location: :email) %></blockquote>
 
 <%= link_to "Click here to view and reply to the comment on HCB.", reimbursement_report_url(report, hash: "comment-#{@comment.hashid}"), class: "info" %>  Alternatively, send a reply to this email.
 

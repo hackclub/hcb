@@ -44,6 +44,7 @@
             inputmode: "numeric",
           ) %>
     <% end %>
+    <%= invisible_captcha :remember_me %>
 
     <%= hidden_field_tag :method, :login_code %>
     <%= hidden_field_tag :fingerprint %>

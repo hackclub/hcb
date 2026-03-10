@@ -171,6 +171,12 @@ module Admin
             count_type: :records,
           ),
           make_item(
+            name: "Contracts",
+            path: contracts_admin_index_path,
+            count: Contract.count,
+            count_type: :records
+          ),
+          make_item(
             name: "Active Teenagers Leaderboard",
             path: active_teenagers_leaderboard_admin_index_path,
             count: User.active_teenager.count,
@@ -215,6 +221,11 @@ module Admin
       Section.new(
         name: "Organizations",
         items: [
+          make_item(
+            name: "Applications (HCB)",
+            path: applications_admin_index_path,
+            count: Event::Application.under_review.count
+          ),
           make_item(
             name: "Organizations",
             path: events_admin_index_path,
