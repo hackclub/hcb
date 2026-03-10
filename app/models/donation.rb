@@ -90,7 +90,7 @@ class Donation < ApplicationRecord
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
-  validates :email, nondisposable: true, on: :create
+  validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
 
@@ -318,6 +318,10 @@ class Donation < ApplicationRecord
     recurring? && recurring_donation.donations.order(created_at: :asc).first == self
   end
 
+  def subsequent_recurring_donation?
+    recurring? && !initial_recurring_donation?
+  end
+
   def name(show_anonymous: false)
     anonymous? && !show_anonymous ? "Anonymous" : recurring_donation&.name(show_anonymous:) || super()
   end
@@ -354,7 +358,7 @@ class Donation < ApplicationRecord
     # only runs when status becomes succeeded, should not run on delete.
     return unless status_previously_changed?(to: "succeeded")
     # don't send for repeated recurring donations
-    return if recurring? && !initial_recurring_donation?
+    return if subsequent_recurring_donation?
 
     if first_donation?
       DonationMailer.with(donation: self).first_donation_notification.deliver_later
