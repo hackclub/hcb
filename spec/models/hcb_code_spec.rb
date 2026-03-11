@@ -140,6 +140,7 @@ RSpec.describe HcbCode, type: :model do
                               email: "test@example.com",
                               amount_cents: 1000,
                               invite_message: "Test invite message",
+                              expiration_at: 1.year.from_now,
                               created_at: Time.current,
                               updated_at: Time.current
                             })
@@ -175,6 +176,7 @@ RSpec.describe HcbCode, type: :model do
                             email: "test@example.com",
                             amount_cents: 1000,
                             invite_message: "Test invite message",
+                            expiration_at: 1.year.from_now,
                             created_at: Time.current,
                             updated_at: Time.current
                           })

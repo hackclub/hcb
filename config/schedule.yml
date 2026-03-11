@@ -178,7 +178,7 @@ clear_old_user_sessions:
   queue: low
 
 card_grant_expiration_job:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "0 0 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
 
 card_grant_zero_job:

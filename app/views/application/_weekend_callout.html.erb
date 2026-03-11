@@ -1,0 +1,6 @@
+<% unless Date.today.workday? %>
+  <%= render "application/callout", type: "warning", title: "Banks are closed", class: "mt-2 mb-0" do %>
+    It is currently the weekend or a holiday and all financial institutions are closed.
+    Transfers will be reviewed on the <span class="tooltipped" aria-label="<%= Time.first_business_day(Date.today).strftime("%b %e, %Y") %>">next business day</span>.
+  <% end %>
+<% end %>
