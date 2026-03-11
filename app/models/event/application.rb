@@ -368,7 +368,7 @@ class Event
     end
 
     def unarchive!
-      send_contract if contract.nil? && ((teen_led && (!draft? && !rejected?)) || (!teen_led && approved?))
+      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
 
       update!(archived_at: nil)
     end
