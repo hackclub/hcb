@@ -3,191 +3,191 @@
 <%= render "events/nav", selected: :donations %>
 
 <% if @donations.any? %>
-<h1 class="heading gap-2 border-0 mb-2" data-controller="walkthrough" data-walkthrough-key-value="donations">
-  <span class="flex items-center flex-grow">
-    Donations
-    <%= badge_for @donations.count, class: "bg-muted" %>
-  </span>
-  <% if organizer_signed_in? %>
-    <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="<%= @all_donations.not_pending.any? ? "Email all donors" : "You can't email donors when you don't have any donations!" %>">
-      <%= pop_icon_to "email",
-        "mailto:?bcc=#{@all_donations.pluck(:email).uniq.compact.join(',')}",
-        target: "_blank",
-        disabled: @all_donations.not_pending.none? %>
+  <h1 class="heading gap-2 border-0 mb-2" data-controller="walkthrough" data-walkthrough-key-value="donations">
+    <span class="flex items-center flex-grow">
+      Donations
+      <%= badge_for @donations.count, class: "bg-muted" %>
+    </span>
+    <% if organizer_signed_in? %>
+      <div class="tooltipped tooltipped--s" style="line-height: 0;" aria-label="<%= @all_donations.not_pending.any? ? "Email all donors" : "You can't email donors when you don't have any donations!" %>">
+        <%= pop_icon_to "email",
+          "mailto:?bcc=#{@all_donations.pluck(:email).uniq.compact.join(',')}",
+          target: "_blank",
+          disabled: @all_donations.not_pending.none? %>
+      </div>
+    <% end %>
+    <% if @event.donation_page_available? %>
+      <%= render partial: "events/share_donation_page" %>
+    <% end %>
+  </h1>
+
+  <% if @event.donation_page_available? %>
+  <% else %>
+    <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
+  <% end %>
+
+  <div class="statset">
+    <div class="stat">
+      <span class="stat__label">Total</span>
+      <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Per month</span>
+      <span class="stat__value"><%= render_money_amount @recurring_donations_monthly_sum %></span>
+    </div>
+  </div>
+
+  <% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
+    <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
+      Recurring donations
+    </h2>
+    <div class="table-container mb3">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Started on</th>
+            <th class="text-right">Amount</th>
+            <th class="text-right">Total donated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recurring_donations.each do |recurring_donation| %>
+            <tr>
+              <td style="width: 1%"><span class="ml0 mr1 badge bg-success"><%= recurring_donation.stripe_status.humanize %></span></td>
+              <td class="leading-[1.25]">
+                <% if recurring_donation.is_a? RecurringDonation %>
+                  <%= recurring_donation.name(show_anonymous: organizer_signed_in?) %><br>
+                <% else %>
+                  <%= recurring_donation.name %>
+                <% end %>
+                <% if organizer_signed_in? %>
+                  <%= mail_to recurring_donation.email, class: "muted h5" %>
+                <% end %>
+              </td>
+              <td><%= format_date recurring_donation.created_at %></td>
+              <td class="text-right">
+                <strong><%= render_money recurring_donation.amount %></strong><span class="muted">/mo</span>
+              </td>
+              <td class="text-right">
+                <%= render_money recurring_donation.total_donated %>
+              </td>
+              <% if recurring_donation.is_a?(RecurringDonation) && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
+                <td class="text-right">
+                  <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "error" %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     </div>
   <% end %>
-  <% if @event.donation_page_available? %>
-    <%= render partial: "events/share_donation_page" %>
-  <% end %>
-</h1>
 
-<% if @event.donation_page_available? %>
-<% else %>
-  <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
-<% end %>
+  <h2 class="heading mt3 justify-between">
+    Past donations
 
-<div class="statset">
-  <div class="stat">
-    <span class="stat__label">Total</span>
-    <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
-  </div>
-  <div class="stat stat--small">
-    <span class="stat__label">Per month</span>
-    <span class="stat__value"><%= render_money_amount @recurring_donations_monthly_sum %></span>
-  </div>
-</div>
+      <div data-controller="menu" data-menu-placement-value="bottom-end">
+        <button
+          type="button"
+          class="btn menu__toggle overflow-visible"
+          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          data-menu-target="toggle">
+            <%= inline_icon "download", size: 16 %>
+            Export
+        </button>
+        <div class="menu__content menu__content--2 h5" data-menu-target="content">
+          <%= link_to "Export donations (CSV)", export_donations_path(event: @event, format: :csv), target: :_blank %>
+          <%= link_to "Export donations (JSON)", export_donations_path(event: @event, format: :json), target: :_blank %>
+          <%= link_to "Export donors (CSV)", export_donors_donations_path(event: @event, format: :csv), target: :_blank %>
+        </div>
+      </div>
 
-<% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
-  <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
-    Recurring donations
   </h2>
-  <div class="table-container mb3">
+
+  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/search", form: %>
+    <% end %>
+    <div class="filterbar">
+      <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
+      <%= link_to "Refunded", "?filter=refunded", class: "filterbar__item", "aria-selected": params[:filter] == "refunded", role: "tab" %>
+    </div>
+  </div>
+
+  <% if @donations.size > 0 %>
+  <article class="table-container">
     <table>
       <thead>
         <tr>
           <th>Status</th>
-          <th>Name</th>
-          <th>Started on</th>
+          <th>Date</th>
+          <th>From</th>
           <th class="text-right">Amount</th>
-          <th class="text-right">Total donated</th>
         </tr>
       </thead>
+
       <tbody>
-        <% @recurring_donations.each do |recurring_donation| %>
-          <tr>
-            <td style="width: 1%"><span class="ml0 mr1 badge bg-success"><%= recurring_donation.stripe_status.humanize %></span></td>
-            <td class="leading-[1.25]">
-              <% if recurring_donation.is_a? RecurringDonation %>
-                <%= recurring_donation.name(show_anonymous: organizer_signed_in?) %><br>
+        <% @donations.each do |d| %>
+          <tr class="clickable">
+            <td>
+              <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
+            </td>
+            <td>
+              <%= format_date d.created_at %>
+            </td>
+            <td class="flex items-center">
+              <% if d.is_a? Donation %>
+                <%= d.name(show_anonymous: organizer_signed_in?) %>
               <% else %>
-                <%= recurring_donation.name %>
+                <%= d.name %>
               <% end %>
-              <% if organizer_signed_in? %>
-                <%= mail_to recurring_donation.email, class: "muted h5" %>
+              <% if d.recurring? %>
+                <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Monthly donor"><%= inline_icon "support-recurring", size: 24, class: "muted" %></div>
+              <% end %>
+              <% if d.in_person? %>
+                <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+              <% end %>
+              <% if d.anonymous? %>
+                <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
               <% end %>
             </td>
-            <td><%= format_date recurring_donation.created_at %></td>
-            <td class="text-right">
-              <strong><%= render_money recurring_donation.amount %></strong><span class="muted">/mo</span>
+            <td style="text-align: right;">
+              <%= render_money(d.amount) %>
+              <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
             </td>
-            <td class="text-right">
-              <%= render_money recurring_donation.total_donated %>
-            </td>
-            <% if recurring_donation.is_a?(RecurringDonation) && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
-              <td class="text-right">
-                <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "error" %>
-              </td>
-            <% end %>
           </tr>
+          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
+            <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= d.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(d.local_hcb_code.hashid) %>" data-state-title="<%= "#{d.name} invoiced for #{render_money(d.amount)}" %>">
+              <%= modal_header("#{d.name} donated #{render_money(d.amount)}", external_link: hcb_code_url(d.local_hcb_code.hashid)) %>
+              <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
+                <%= render partial: "application/loading_container" %>
+              <% end %>
+            </section>
+          <% end %>
         <% end %>
       </tbody>
     </table>
-  </div>
-<% end %>
+    <%= paginate @donations %>
+  </article>
 
-<h2 class="heading mt3 justify-between">
-  Past donations
-
-    <div data-controller="menu" data-menu-placement-value="bottom-end">
-      <button
-        type="button"
-        class="btn menu__toggle overflow-visible"
-        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-        data-menu-target="toggle">
-          <%= inline_icon "download", size: 16 %>
-          Export
-      </button>
-      <div class="menu__content menu__content--2 h5" data-menu-target="content">
-        <%= link_to "Export donations (CSV)", export_donations_path(event: @event, format: :csv), target: :_blank %>
-        <%= link_to "Export donations (JSON)", export_donations_path(event: @event, format: :json), target: :_blank %>
-        <%= link_to "Export donors (CSV)", export_donors_donations_path(event: @event, format: :csv), target: :_blank %>
-      </div>
-    </div>
-
-</h2>
-
-<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/search", form: %>
+  <% else %>
+    <%= blankslate "No donations yet" %>
   <% end %>
-  <div class="filterbar">
-    <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Refunded", "?filter=refunded", class: "filterbar__item", "aria-selected": params[:filter] == "refunded", role: "tab" %>
-  </div>
-</div>
 
-<% if @donations.size > 0 %>
-<article class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Status</th>
-        <th>Date</th>
-        <th>From</th>
-        <th class="text-right">Amount</th>
-      </tr>
-    </thead>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <%= javascript_include_tag "donation_qr_codes.js" %>
 
-    <tbody>
-      <% @donations.each do |d| %>
-        <tr class="clickable">
-          <td>
-            <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
-          </td>
-          <td>
-            <%= format_date d.created_at %>
-          </td>
-          <td class="flex items-center">
-            <% if d.is_a? Donation %>
-              <%= d.name(show_anonymous: organizer_signed_in?) %>
-            <% else %>
-              <%= d.name %>
-            <% end %>
-            <% if d.recurring? %>
-              <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Monthly donor"><%= inline_icon "support-recurring", size: 24, class: "muted" %></div>
-            <% end %>
-            <% if d.in_person? %>
-              <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
-            <% end %>
-            <% if d.anonymous? %>
-              <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
-            <% end %>
-          </td>
-          <td style="text-align: right;">
-            <%= render_money(d.amount) %>
-            <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
-          </td>
-        </tr>
-        <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-          <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= d.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(d.local_hcb_code.hashid) %>" data-state-title="<%= "#{d.name} invoiced for #{render_money(d.amount)}" %>">
-            <%= modal_header("#{d.name} donated #{render_money(d.amount)}", external_link: hcb_code_url(d.local_hcb_code.hashid)) %>
-            <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
-              <%= render partial: "application/loading_container" %>
-            <% end %>
-          </section>
-        <% end %>
+  <% if organizer_signed_in? %>
+    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
+      <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
+      <%= turbo_frame_tag :donations_settings, src: edit_event_path(@event, tab: "donations", params: { frame: true }), loading: "lazy" do %>
+        <strong>Loading...</strong>
       <% end %>
-    </tbody>
-  </table>
-  <%= paginate @donations %>
-</article>
-
-<% else %>
-  <%= blankslate "No donations yet" %>
-<% end %>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<%= javascript_include_tag "donation_qr_codes.js" %>
-
-<% if organizer_signed_in? %>
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
-    <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
-    <%= turbo_frame_tag :donations_settings, src: edit_event_path(@event, tab: "donations", params: { frame: true }), loading: "lazy" do %>
-      <strong>Loading...</strong>
-    <% end %>
-  </section>
-<% end %>
-</div>
+    </section>
+  <% end %>
+  </div>
 <% else %>
   <%= render "events/one_pager",
     title: "Donations",
