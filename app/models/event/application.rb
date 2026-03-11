@@ -64,10 +64,9 @@ class Event
     include AASM
     include Contractable
 
-    include Hashid::Rails
-
     include PublicIdentifiable
     set_public_id_prefix :apl
+    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
@@ -119,7 +118,7 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          update!(teen_led: user.is_teenager?)
+          update!(teen_led: user.is_teenager?, archived_at: nil)
 
           if teen_led?
             send_contract
@@ -366,6 +365,12 @@ class Event
       contract&.mark_voided! if contract&.may_mark_voided?
 
       update!(archived_at: Time.current)
+    end
+
+    def unarchive!
+      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+
+      update!(archived_at: nil)
     end
 
     def archived?

@@ -58,7 +58,7 @@
     </div>
     <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
     <%= render "events/transfer_modal" %>
-    <%= render "card_grants/create_modal" %>
+    <%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
     <%= render "invoices/modal" %>
 
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">

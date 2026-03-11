@@ -62,8 +62,6 @@ class Event < ApplicationRecord
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
-  hashid_config salt: ""
-
   extend FriendlyId
 
   include PublicIdentifiable
@@ -293,6 +291,10 @@ class Event < ApplicationRecord
 
   def ancestor_organizer_positions
     OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
+  def ancestor_users
+    User.where(id: ancestor_organizer_positions.select(:user_id))
   end
 
   has_many :contracts, through: :organizer_position_invites

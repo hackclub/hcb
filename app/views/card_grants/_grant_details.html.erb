@@ -13,7 +13,7 @@
               <%= inline_icon "important", size: 18, style: "position: unset;" %>
             </span>
           </strong>
-          <span><%= format_date card_grant.expires_on %></span>
+          <span><%= format_date card_grant.expiration_at %></span>
         </p>
 
         <% if card_grant.one_time_use %>

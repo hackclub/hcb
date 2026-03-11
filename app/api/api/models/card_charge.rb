@@ -26,7 +26,7 @@ module Api
 
       # Give Hashid a new pepper so that the public IDs look different than
       # the ones for transactions (HcbCodes).
-      hashid_config pepper: "api_card_charge", salt: ""
+      hashid_config pepper: "api_card_charge"
 
       # Set the default scope to HCB-600-* hcb codes (card charges).
       default_scope { where("hcb_code LIKE 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-%'") }

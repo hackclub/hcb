@@ -19,6 +19,10 @@
         <td><%= user.name %></td>
       </tr>
       <tr>
+        <td>Name on account:</td>
+        <td><%= payout_method.try(:account_holder).presence || user.full_name %></td>
+      </tr>
+      <tr>
         <td>Email:</td>
         <td><%= user.email %></td>
       </tr>
@@ -114,12 +118,6 @@
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>
         </tr>
-        <% if payout_method.recipient_information["account_holder"].present? %>
-          <tr>
-            <td>Name on account:</td>
-            <td><%= payout_method.recipient_information["account_holder"] %></td>
-          </tr>
-        <% end %>
         <% if payout_method.bank_name.present? %>
           <tr>
             <td>Bank name:</td>

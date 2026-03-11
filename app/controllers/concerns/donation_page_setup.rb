@@ -41,7 +41,7 @@ module DonationPageSetup
       utm_content: params[:utm_content]
     )
 
-    @monthly = params[:monthly].present? || params[:tier_id].present?
+    @monthly = params[:monthly].present? || (params[:tier_id].present? && params[:tier_id] != "custom")
     @skip_layout_og_tags = true
 
     if @monthly

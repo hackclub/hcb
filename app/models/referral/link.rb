@@ -26,7 +26,6 @@
 module Referral
   class Link < ApplicationRecord
     include Hashid::Rails
-    hashid_config salt: ""
 
     after_create_commit :set_default_slug!
     validates :slug, uniqueness: true

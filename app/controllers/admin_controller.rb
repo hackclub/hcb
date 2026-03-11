@@ -754,8 +754,10 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @include_archived = params[:include_archived] == "1" ? true : nil
 
     @applications = Event::Application.all
+    @applications = @applications.not_archived unless @include_archived
     @applications = @applications.search_name(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(

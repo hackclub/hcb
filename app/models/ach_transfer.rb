@@ -59,9 +59,6 @@ class AchTransfer < ApplicationRecord
   blind_index :routing_number
   monetize :amount, as: "amount_money"
 
-  include Hashid::Rails
-  hashid_config salt: ""
-
   include PublicIdentifiable
   set_public_id_prefix :ach
 
