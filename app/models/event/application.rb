@@ -137,9 +137,11 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: [:submitted, :under_review], to: :approved
+        transitions from: :under_review, to: :approved
         after do
-          unless teen_led?
+          if teen_led?
+            contract.party(:hcb).schedule_reminders
+          else
             send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
@@ -160,7 +162,7 @@ class Event
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
-    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK].freeze
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -196,10 +198,22 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:
       }
     end
 
@@ -348,6 +362,8 @@ class Event
     end
 
     def archive!
+      contract&.mark_voided! if contract&.may_mark_voided?
+
       update!(archived_at: Time.current)
     end
 
