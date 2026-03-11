@@ -1,6 +1,6 @@
 <% @is_dark = !!@dark || cookies[:theme] == "dark" || (cookies[:theme] == "system" && cookies[:system_preference] == "dark") %>
 <% @home_size = 50 %>
-<% page_full %>
+<% content_for(:container_class, "container--full !px-0") %>
 <% no_app_shell %>
 
 <% help_element = capture do %>
