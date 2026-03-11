@@ -3,23 +3,23 @@
 <%= render "events/nav", selected: :card_grants %>
 
 <% if @event.card_grants.active.any? %>
-<h1 class="flex heading items-center gap-2 flex-col sm:flex-row mb-2 border-0">
-  <span class="flex-grow flex items-center flex-1">
-    Card grants
-    <%= badge_for @event.card_grants.active.count, class: "bg-muted" %>
-  </span>
+  <h1 class="flex heading items-center gap-2 flex-col sm:flex-row mb-2 border-0">
+    <span class="flex-grow flex items-center flex-1">
+      Card grants
+      <%= badge_for @event.card_grants.active.count, class: "bg-muted" %>
+    </span>
 
-  <%= render "card_grants/buttons" %>
-</h1>
+    <%= render "card_grants/buttons" %>
+  </h1>
 
-<%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
-  <%= render "application/loading_container", klass: "mt-8" %>
-<% end %>
+  <%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
+    <%= render "application/loading_container", klass: "mt-8" %>
+  <% end %>
 
-<h2 class="heading mt4 pb1">Card grant transactions</h2>
-<%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
-  <%= render "application/loading_container", klass: "mt-8" %>
-<% end %>
+  <h2 class="heading mt4 pb1">Card grant transactions</h2>
+  <%= turbo_frame_tag :card_grant_transaction_overview, src: event_card_grant_transaction_overview_path(@event), loading: :eager do %>
+    <%= render "application/loading_container", klass: "mt-8" %>
+  <% end %>
 <% else %>
 
  <%= render "events/one_pager",
