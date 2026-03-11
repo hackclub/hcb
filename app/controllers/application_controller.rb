@@ -16,6 +16,17 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
+  MINIFY_HTML_OPTS = {
+    keep_spaces_between_attributes: true,
+    keep_html_and_head_opening_tags: true,
+    keep_input_type_text_attr: true,
+    minify_css: true,
+    minify_js: true,
+    keep_comments: false
+  }.freeze
+
+  after_action :minify_html_response if Rails.env.production?
+
   before_action :attach_error_reference
   before_action :attach_user_id
 
@@ -143,6 +154,12 @@ class ApplicationController < ActionController::Base
   def attach_user_id
     user_id = current_user&.id
     Appsignal.add_tags(user_id:) if defined?(Appsignal) && Appsignal.active?
+  end
+
+  def minify_html_response
+    return unless response.content_type&.include?("text/html")
+
+    response.body = minify_html(response.body, MINIFY_HTML_OPTS)
   end
 
 end

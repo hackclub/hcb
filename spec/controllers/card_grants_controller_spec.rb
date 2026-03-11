@@ -44,7 +44,6 @@ RSpec.describe CardGrantsController do
         amount_cents: "123.45",
         email: "recipient@example.com",
         invite_message: "this is a really cool card grant",
-        keyword_lock: "some keywords",
         purpose: "Raffle prize",
         one_time_use: "true",
         pre_authorization_required: "true",
@@ -71,7 +70,6 @@ RSpec.describe CardGrantsController do
       card_grant = event.card_grants.sole
       expect(card_grant.amount_cents).to eq(123_45)
       expect(card_grant.email).to eq("recipient@example.com")
-      expect(card_grant.keyword_lock).to eq("some keywords")
       expect(card_grant.purpose).to eq("Raffle prize")
       expect(card_grant.one_time_use).to eq(true)
       expect(card_grant.pre_authorization_required).to eq(true)
