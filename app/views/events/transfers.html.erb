@@ -1,7 +1,7 @@
 <% title "Transfers for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :transfers %>
-<%= render "card_grants/create_modal" %>
+<%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
 <h1 class="heading border-0 mb-0">
   <span class="flex items-center">
