@@ -78,7 +78,7 @@
           <% if @application.archived? %>
             <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn" %>
           <% else %>
-            <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application? It will be removed from your dashboard and #{@application.draft? ? "you will not be able to submit it" : "it will not be reviewed"}." } %>
+            <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
           <% end %>
         <% end %>
       </div>
