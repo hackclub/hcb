@@ -57,7 +57,7 @@ class CommentPolicy < ApplicationPolicy
         user_list += record.commentable.event&.ancestor_users || []
       end
     elsif record.commentable.is_a?(Event)
-      user_list = record.commentable.users
+      user_list = []
     else
       user_list = record.commentable.event.users
     end
