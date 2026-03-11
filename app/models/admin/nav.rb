@@ -222,7 +222,7 @@ module Admin
         name: "Organizations",
         items: [
           make_item(
-            name: "Applications",
+            name: "Applications (HCB)",
             path: applications_admin_index_path,
             count: Event::Application.under_review.count
           ),
