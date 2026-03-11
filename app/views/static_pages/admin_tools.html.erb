@@ -40,8 +40,8 @@
       <ul class="grid text-left w-100 mt0" id="task-grid">
         <%= card_to "Applications (Airtable)", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
         <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
-        <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
-        <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
+        <%= card_to "ACH transfers", ach_admin_index_path, badge: AchTransfer.pending.count %>
+        <%= card_to "Checks", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
         <%= card_to "Check deposits", admin_check_deposits_path, badge: CheckDeposit.unprocessed.count %>
         <%= card_to "Wires", wires_admin_index_path, badge: Wire.pending.count %>
         <%= card_to "Wise transfers", wise_transfers_admin_index_path, badge: WiseTransfer.pending.count %>
