@@ -26,10 +26,6 @@ module Api
           end
         end
 
-        expose :declined, documentation: { type: "boolean" } do |hcb_code|
-          hcb_code.pt&.declined? || false
-        end
-
         expose :decline_reason, documentation: { type: "string" } do |hcb_code|
           hcb_code.pt&.decline_reason&.to_s
         end
