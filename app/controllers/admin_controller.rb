@@ -1073,14 +1073,19 @@ class AdminController < Admin::BaseController
   def google_workspace_update
     @g_suite = GSuite.find(params[:id])
 
-    @g_suite = GSuiteService::Update.new(
-      g_suite_id: @g_suite.id,
-      domain: @g_suite.domain,
-      verification_key: params[:verification_key],
-      dkim_key: params[:dkim_key]
-    ).run
+    begin
+      @g_suite = GSuiteService::Update.new(
+        g_suite_id: @g_suite.id,
+        domain: @g_suite.domain,
+        verification_key: params[:verification_key],
+        dkim_key: params[:dkim_key],
+        max_account: params[:max_account]
+      ).run
 
-    redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { error: e.record.errors.full_messages.to_sentence }
+    end
   end
 
   def google_workspace_toggle_revocation_immunity
