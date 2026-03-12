@@ -3,7 +3,7 @@
 <% auto_discover_feed(@event) %>
 <%= render "events/nav", selected: :announcements %>
 
-<% if @announcements.empty? %>
+<% if @announcements.empty? && organizer_signed_in? %>
   <%= render "events/one_pager",
     title: "Announcements",
     screenshots: {

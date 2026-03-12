@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :payroll %>
 
-<% if @employees.empty? %>
+<% if @employees.empty? && organizer_signed_in? %>
     <%= render "events/one_pager",
     title: "Contractors",
     screenshots: {

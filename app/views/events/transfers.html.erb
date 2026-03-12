@@ -3,7 +3,7 @@
 <%= render "events/nav", selected: :transfers %>
 <%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
-<% if @transfers.empty? %>
+<% if @transfers.empty? && organizer_signed_in? %>
   <%= render "events/one_pager",
     title: "Transfers",
     screenshots: {
