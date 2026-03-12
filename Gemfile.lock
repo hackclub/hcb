@@ -523,8 +523,6 @@ GEM
       logger
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
-    minify_html (0.18.1)
-      fiddle (~> 1.0)
     minitest (6.0.1)
       prism (~> 1.5)
     monetize (1.13.0)
@@ -1001,7 +999,6 @@ DEPENDENCIES
   loofah
   memo_wise
   mini_magick
-  minify_html
   monetize
   money-rails
   namae
