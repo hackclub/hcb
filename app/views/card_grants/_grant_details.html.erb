@@ -3,7 +3,15 @@
 <% if (stripe_card = card_grant.stripe_card).present? %>
   <div>
     <div class="card container--md pt-0">
-      <p>This is information about your grant:</p>
+      <p>
+        This is information about your grant:
+        <br>
+        <i class="muted">
+          If there are any issues with your grant amount, spend by, or allowed merchants,
+          please reach out to the <%= card_grant.event.name %> team. HCB staff are unable
+          to provide assistance with these requests.
+        </i>
+      </p>
 
       <section class="details">
         <p>
