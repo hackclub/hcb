@@ -100,7 +100,7 @@ RSpec.describe GSuiteAccountService::Create, type: :model do
 
   context "when g suite account quota is reached" do
     before do
-      g_suite.update!(max_account: 1)
+      g_suite.update!(max_accounts: 1)
       GSuiteAccount.create!(
         g_suite:,
         creator: current_user,
