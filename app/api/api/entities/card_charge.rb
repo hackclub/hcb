@@ -20,7 +20,7 @@ module Api
           elsif hcb_code.stripe_reversed_by_merchant?
             "reversed"
           elsif hcb_code.canonical_transactions.any?
-            "closed"
+            "approved"
           else
             "pending"
           end
