@@ -26,7 +26,7 @@ module Api
           end
         end
 
-        expose :decline_reason, documentation: { type: "string" } do |hcb_code|
+        expose :decline_reason, documentation: { type: "string" }, if: ->(hcb_code, _options) { hcb_code.pt&.declined? } do |hcb_code|
           hcb_code.pt&.decline_reason&.to_s
         end
 
