@@ -23,7 +23,7 @@
 
   <% if @event.donation_page_available? %>
   <% else %>
-    <p>You can start accepting donations once you enable it in your organization’s <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
+    <p>You can start accepting donations once you enable it in your organization's <%= link_to "settings", edit_event_path(@event, tab: "donations") %>.</p>
   <% end %>
 
   <div class="statset">
@@ -155,17 +155,9 @@
             </td>
             <td style="text-align: right;">
               <%= render_money(d.amount) %>
-              <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && { turbo_frame: "_top", behavior: "modal_trigger", modal: "transaction_details_#{d.local_hcb_code.hashid}" } if organizer_signed_in? %>
+              <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && popover_data(title: "#{d.name} donated #{render_money(d.amount)}", src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.local_hcb_code.hashid), external_link: hcb_code_url(d.local_hcb_code.hashid), state_title: "#{d.name} donated #{render_money(d.amount)}") if organizer_signed_in? %>
             </td>
           </tr>
-          <% if (Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)) %>
-            <section class="modal modal--scroll modal--popover bg-snow" data-behavior="modal" role="dialog" id="transaction_details_<%= d.local_hcb_code.hashid %>" data-state-url="<%= hcb_code_url(d.local_hcb_code.hashid) %>" data-state-title="<%= "#{d.name} invoiced for #{render_money(d.amount)}" %>">
-              <%= modal_header("#{d.name} donated #{render_money(d.amount)}", external_link: hcb_code_url(d.local_hcb_code.hashid)) %>
-              <%= turbo_frame_tag d.local_hcb_code.public_id, src: d.local_hcb_code.popover_path, loading: :lazy do %>
-                <%= render partial: "application/loading_container" %>
-              <% end %>
-            </section>
-          <% end %>
         <% end %>
       </tbody>
     </table>
