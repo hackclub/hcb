@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module PopoverHelper
   def popovers_enabled?
     current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
@@ -21,8 +23,6 @@ module PopoverHelper
       popover_size: size
     }.compact
   end
-
-  private :popover_data
 
   def hcb_code_popover_data(hcb_code, event: nil, **popover_path_params)
     popover_data(

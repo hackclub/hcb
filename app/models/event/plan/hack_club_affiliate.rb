@@ -62,9 +62,10 @@ class Event
       def contract_skip_prefills
         {
           "Contract Signee" => ["Telephone", "Email", "The Project"],
-          "HCB" => ["HCB ID"]
+          "HCB"             => ["HCB ID"]
         }
       end
+
     end
 
   end

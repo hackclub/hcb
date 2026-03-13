@@ -40,6 +40,7 @@ const populateSharedPopover = (trigger) => {
     body.innerHTML = ''
     if (src && frameId) {
       const frame = document.createElement('turbo-frame')
+      frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/assets/icons/loading.svg" /></div>`
       frame.id = frameId
       frame.src = src
       frame.setAttribute('target', '_top')
@@ -793,6 +794,12 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
     const body = document.getElementById('shared_popover_body')
     if (body) body.innerHTML = ''
+
+    const popoverEl = modal.elm[0]
+    if (popoverEl && popoverEl.classList) {
+      popoverEl.classList.remove('modal--popover--receipt-expanded')
+      popoverEl.classList.remove('modal--popover--sm')
+    }
   }
 });
 
