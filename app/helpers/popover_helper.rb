@@ -24,6 +24,8 @@ module PopoverHelper
     }.compact
   end
 
+  private :popover_data
+
   def hcb_code_popover_data(hcb_code, event: nil, **popover_path_params)
     popover_data(
       title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: event),
