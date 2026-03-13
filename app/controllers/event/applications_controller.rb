@@ -217,6 +217,14 @@ class Event
       redirect_to applications_path
     end
 
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
+    end
+
     def resend_to_cosigner
       authorize @application
 
