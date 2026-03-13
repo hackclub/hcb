@@ -40,7 +40,7 @@ const populateSharedPopover = trigger => {
     body.innerHTML = ''
     if (src && frameId) {
       const frame = document.createElement('turbo-frame')
-      frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/assets/loading.svg" class="dark:invert" /></div>`
+      frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/assets/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
       frame.src = src
       frame.setAttribute('target', '_top')
