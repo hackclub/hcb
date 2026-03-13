@@ -59,7 +59,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
