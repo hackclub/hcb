@@ -6,7 +6,7 @@ Nondisposable.configure do |config|
 
   # Sourced from https://hcb.hackclub.com/blazer/queries/1116-user-group-domain-by-usage
   #
-  # NOTE: comcast.net, aol.com, and msn.com are semi-common email providers, but
+  # NOTE: aol.com, and msn.com are semi-common email providers, but
   # have very few legitimate users. I'm choosing to block them because the pros
   # of blocking fraudulent users outweigh the cons of blocking a small number of
   # new legitimate users.
@@ -33,7 +33,6 @@ Nondisposable.configure do |config|
     ro.ru
     msn.com
     aol.com
-    comcast.net
     rambler.ua
   ].freeze
 
