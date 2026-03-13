@@ -161,7 +161,7 @@ jobs:
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
         run: bundle exec rspec --tag ~skip
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: simplecov-report
           path: coverage/coverage.json
