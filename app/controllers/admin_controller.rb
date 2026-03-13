@@ -1079,7 +1079,7 @@ class AdminController < Admin::BaseController
         domain: @g_suite.domain,
         verification_key: params[:verification_key],
         dkim_key: params[:dkim_key],
-        max_account: params[:max_account]
+        max_accounts: params[:max_accounts]
       ).run
 
       redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
