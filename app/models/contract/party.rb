@@ -101,12 +101,24 @@ class Contract
       "There was an issue in the agreement you signed for #{contract.event_name} on HCB 📝"
     end
 
+    def reminder_email_subject
+      "[Action Needed] Sign the fiscal sponsorship agremeent for #{contract.event_name} on HCB 📝"
+    end
+
     # We may miss a webhook or load a page before we've received the webhook,
     # so we can manually sync the party with this method!
     def sync_with_docuseal
-      if pending? && docuseal_submission&.[]("status") == "completed"
-        mark_signed!
+      self.with_lock do
+        if pending? && docuseal_submission&.[]("status") == "completed"
+          mark_signed!
+        end
       end
+    end
+
+    def schedule_reminders
+      Contract::Party::ReminderJob.set(wait: 3.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 7.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 14.days).perform_later(self)
     end
 
     private

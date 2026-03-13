@@ -51,7 +51,7 @@ RSpec.describe OrganizerPositionInvitesController do
         receive(:all)
           .with(filter: include(event.id.to_s))
           .and_return([])
-          .twice
+          .once
       )
       create_docuseal_request =
         stub_request(:post, "https://api.docuseal.co/submissions")

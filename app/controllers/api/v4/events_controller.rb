@@ -56,6 +56,21 @@ module Api
 
       require_oauth2_scope "event_followers", :followers
 
+      def balance_by_date
+        authorize @event, :show_in_v4?
+
+        balance_by_date = Rails.cache.fetch("balance_by_date_#{@event.id}", expires_in: 5.minutes) do
+          ::TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).running_balance_by_date
+        end
+
+        balance_by_date = balance_by_date.dup
+        balance_by_date[Date.today] = @event.balance_v2_cents
+
+        @balance_series = balance_by_date.sort.map { |date, amount| { date: date.to_s, amount: } }
+      end
+
+      require_oauth2_scope "organizations:read", :balance_by_date
+
       private
 
       def set_event

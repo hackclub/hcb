@@ -4,7 +4,7 @@
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
@@ -49,12 +49,12 @@
         <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
       </div>
 
-      <%= render partial: "wise_transfers/recipient_details", locals: { form:, disabled: } %>
+      <%= render partial: "transfers/recipient_details", locals: { form:, disabled: } %>
     </div>
   </div>
 
   <div data-scroll-seek-target="section">
-    <h3 class="mb-1">Payment information</h3>
+    <h3 class="mb-1">Payment details</h3>
     <p class="muted mt-0 mb-2">Your payment recipient does not need a Wise account to receive funds. Transfers processed by Wise will be paid out via local bank transfer in the recipient's country.</p>
 
     <div class="card mb-4 relative">
@@ -105,7 +105,4 @@
   <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
   </button>
-  <p class="muted mt-3 text-center text-sm">
-    Your transfer will be sent out on the next business day.
-  </p>
 <% end %>
