@@ -119,7 +119,7 @@ module Admin
           make_item(
             name: "HCB Fees",
             path: bank_fees_admin_index_path,
-            count: BankFee.in_transit_or_pending.count,
+            count: BankFee.in_transit_or_confirmed.count,
             count_type: :records
           ),
           make_item(
