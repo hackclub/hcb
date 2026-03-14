@@ -1278,6 +1278,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_13_190555) do
     t.citext "domain"
     t.bigint "event_id"
     t.boolean "immune_to_revocation", default: false, null: false
+    t.integer "max_accounts", default: 75, null: false
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
     t.datetime "updated_at", precision: nil, null: false
