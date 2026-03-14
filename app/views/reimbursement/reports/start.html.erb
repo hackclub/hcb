@@ -12,23 +12,27 @@
 
 <%= render "events/landing/header", lead: "Get reimbursed by" %>
 
-<% if @event.public_reimbursement_page_message.present? %>
-  <div class="container container--sm">
-    <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
+<div class="container container--sm">
+  <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
+    <% if @event.public_reimbursement_page_message.present? %>
+
+
       <%= MarkdownService.instance.render(@event.public_reimbursement_page_message) %>
-    </div>
-  </div>
-<% else %>
-  <div class="container container--sm">
-    <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
+
+
+    <% else %>
+
+
       <p>
         <%= @event.name %> uses HCB to reimburse its volunteers and external contributors. After entering your
         email and the purpose of your reimbursement request, you'll receive an email from us with a portal to submit receipts
         and enter payout information.
       </p>
-    </div>
+
+
+    <% end %>
   </div>
-<% end %>
+</div>
 
 <%= form_with(model: Reimbursement::Report.new, class: "card mx-auto max-w-96 mb3", data: { turbo: false }) do |form| %>
 
@@ -42,7 +46,7 @@
     <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
   </div>
 
-  <%= invisible_captcha :subtitle %>
+  <%= invisible_captcha :company_url %>
 
   <%= form.hidden_field :event_id, value: @event.id %>
 

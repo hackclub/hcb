@@ -10,7 +10,7 @@ class RecurringDonationsController < ApplicationController
   skip_before_action :signed_in_user
   skip_before_action :redirect_to_onboarding
 
-  invisible_captcha only: [:create], honeypot: :subtitle
+  invisible_captcha only: [:create], honeypot: :company_url
 
   def create
     params[:recurring_donation][:amount] = Monetize.parse(params[:recurring_donation][:amount]).cents

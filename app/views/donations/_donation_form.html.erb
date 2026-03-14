@@ -14,7 +14,7 @@
                 class: "card mx-auto max-w-96 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
-    <%= form.invisible_captcha :subtitle %>
+    <%= form.invisible_captcha :company_url %>
     <%= form_errors(donation, nil, "We couldn't start this") unless @monthly %>
 
     <div class="field mb2">
@@ -73,7 +73,7 @@
       <div class="field field--checkbox mb0">
         <%= form.check_box :goods, style: "margin-left: 0;", checked: !donation&.tax_deductible %>
         <%= form.label :goods, "I'm receiving goods for this donation.", style: "display: inline; flex-grow: 1;", checked: !donation.tax_deductible %>
-        <a class="tooltipped tooltipped--w link--ignore flex" aria-label='Per IRS guidelines, for a contribution to be tax-deductible<%= " in the US" unless @event.country_US? %>, you agree that no goods or services will be provided in return for this gift. Please leave this box blank if making a tax-deductible donation that you will receive no goods or services for.' tabindex="0">
+        <a class="tooltipped tooltipped--w link--ignore flex" aria-label="Per IRS guidelines, for a contribution to be tax-deductible<%= " in the US" unless @event.country_US? %>, you agree that no goods or services will be provided in return for this gift. Please leave this box blank if making a tax-deductible donation that you will receive no goods or services for." tabindex="0">
           <%= inline_icon "info", width: 24 %>
         </a>
       </div>
