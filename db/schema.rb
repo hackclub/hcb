@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_10_040000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1277,6 +1277,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_040000) do
     t.citext "domain"
     t.bigint "event_id"
     t.boolean "immune_to_revocation", default: false, null: false
+    t.integer "max_accounts", default: 75, null: false
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
     t.datetime "updated_at", precision: nil, null: false
