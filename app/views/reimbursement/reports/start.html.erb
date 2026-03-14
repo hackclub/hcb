@@ -46,7 +46,7 @@
     <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true, autocomplete: "email" %>
   </div>
 
-  <%= invisible_captcha :company_url, autocomplete: "new-password" %>
+  <%= invisible_captcha :website, autocomplete: "off" %>
 
   <%= form.hidden_field :event_id, value: @event.id %>
 

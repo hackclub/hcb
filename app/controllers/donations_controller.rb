@@ -38,7 +38,7 @@ class DonationsController < ApplicationController
     p.fullscreen :self
   end
 
-  invisible_captcha only: [:make_donation], honeypot: :company_url, on_timestamp_spam: :redirect_to_404
+  invisible_captcha only: [:make_donation], honeypot: :website, on_timestamp_spam: :redirect_to_404
 
   # GET /donations/1
   def show

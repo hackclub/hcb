@@ -10,7 +10,7 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
-    invisible_captcha only: [:create], honeypot: :company_url
+    invisible_captcha only: [:create], honeypot: :website
 
     # POST /reimbursement_reports
     def create
