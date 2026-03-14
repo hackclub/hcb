@@ -390,9 +390,11 @@
           </div>
         <% end %>
       </div>
-      <div class="card -mt-2 rounded-t-none text-center">
-        <%= button_hint %>
-      </div>
+      <% if button_hint.present? %>
+        <div class="card -mt-2 rounded-t-none text-center">
+          <%= button_hint %>
+        </div>
+      <% end %>
       <% if report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
         <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
           <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
