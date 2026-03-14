@@ -122,4 +122,27 @@ RSpec.describe GSuiteService::Update, type: :model do
       expect(g_suite_result.verification_key).to eql(nil)
     end
   end
+
+  context "when max account quota is changed" do
+    let(:service) {
+      GSuiteService::Update.new(
+        g_suite_id: g_suite.id,
+        domain: g_suite.domain,
+        verification_key: g_suite.verification_key,
+        max_accounts: 100
+      )
+    }
+
+    it "updates max account quota" do
+      expect do
+        service.run
+      end.to change { g_suite.reload.max_accounts }.to(100)
+    end
+
+    it "does not send a mailer" do
+      expect do
+        service.run
+      end.to_not change(ActionMailer::Base.deliveries, :count)
+    end
+  end
 end
