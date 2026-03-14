@@ -9,7 +9,8 @@ class HcbCode
         return custom_memo if custom_memo.present?
 
         return card_grant_memo if card_grant?
-        return disbursement_memo(event:) if disbursement?
+        return incoming_disbursement_memo if incoming_disbursement?
+        return outgoing_disbursement_memo if outgoing_disbursement?
         return invoice_memo if invoice?
         return donation_memo if donation?
         return bank_fee_memo if bank_fee?
@@ -37,20 +38,21 @@ class HcbCode
       end
 
       def card_grant_memo
-        "Grant to #{disbursement.card_grant.user.name}".strip
+        "Grant to #{outgoing_disbursement.card_grant.user.name}".strip
       end
 
-      def disbursement_memo(event: nil)
-        return disbursement.special_appearance_memo if disbursement.special_appearance_memo
+      def incoming_disbursement_memo
+        return incoming_disbursement.special_appearance_memo if incoming_disbursement.special_appearance_memo
 
-        if event == disbursement.source_event
-          "Transfer to #{disbursement.destination_event.name}".strip
-        elsif event == disbursement.destination_event
-          "Transfer from #{disbursement.source_event.name}".strip
-        else
-          "Transfer from #{disbursement.source_event.name} to #{disbursement.destination_event.name}".strip
-        end
+        "Transfer from #{incoming_disbursement.source_event.name}".strip
+      end
 
+      def outgoing_disbursement_memo
+        return outgoing_disbursement.special_appearance_memo if outgoing_disbursement.special_appearance_memo
+
+        # "Transfer to #{outgoing_disbursement.destination_event.name}".strip
+        # replace the below with ^ after migration.
+        "Transfer from #{outgoing_disbursement.disbursement.source_event.name} to #{outgoing_disbursement.disbursement.destination_event.name}".strip
       end
 
       def invoice_memo

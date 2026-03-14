@@ -4,11 +4,7 @@ class ApplicationController < ActionController::Base
   # set Current.session - this should come first as
   # a large portion of the code below this depends on this
   before_action do
-    Current.session = begin
-      # Find a valid session (not expired) using the session token
-      session_token = cookies.encrypted[:session_token]
-      session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
-    end
+    Current.session = find_current_session
   end
 
   include Pundit::Authorization
@@ -21,6 +17,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery
 
   before_action :attach_error_reference
+  before_action :attach_user_id
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
@@ -141,6 +138,11 @@ class ApplicationController < ActionController::Base
   def attach_error_reference
     error_reference = ErrorReference.from_request_id(request.uuid)
     Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
+  end
+
+  def attach_user_id
+    user_id = current_user&.id
+    Appsignal.add_tags(user_id:) if defined?(Appsignal) && Appsignal.active?
   end
 
 end

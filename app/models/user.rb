@@ -13,6 +13,7 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
 #  payout_method_type            :string
 #  phone_number                  :text
@@ -58,7 +59,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -76,10 +77,12 @@ class User < ApplicationRecord
     reimbursement_report: 1,
     organizer_position_invite: 2,
     card_grant: 3,
-    grant: 4
+    grant: 4,
+    application_form: 5
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, class_name: "User::Session", dependent: :destroy
@@ -160,7 +163,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -185,6 +189,8 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
+  validates :email, nondisposable: true, on: :create
+
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
@@ -298,7 +304,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -344,11 +350,17 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
+  def locked_by
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+  end
+
   def lock!
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
     user_sessions.destroy_all
+    # Invalidate all API tokens
+    api_tokens.accessible.update_all(revoked_at: Time.current)
   end
 
   def unlock!
@@ -361,7 +373,7 @@ class User < ApplicationRecord
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank?
+    full_name_before_last_save.blank? && full_name_previously_changed?
   end
 
   def active_mailbox_address
@@ -425,9 +437,17 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def teenager?
+  def is_teenager?
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
+  end
+
+  def is_minor?
+    age&.<(18)
+  end
+
+  def was_teenager_on_join?
+    age_on(created_at)&.<=(18)
   end
 
   def last_seen_at
@@ -447,7 +467,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
@@ -559,6 +579,20 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def only_draft_application?
+    return false unless events.none? && card_grants.none? &&
+                        organizer_position_invites.none? && contracts.none? &&
+                        reimbursement_reports.none?
+
+    apps = applications.limit(2).to_a
+
+    apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
+  end
+
+  def phone_number_update_count(since:)
+    versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
+  end
+
   private
 
   def update_stripe_cardholder
@@ -646,7 +680,7 @@ class User < ApplicationRecord
     # Skip if user ever updated their seasonal_themes_enabled setting
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
-    self.seasonal_themes_enabled = teenager?
+    self.seasonal_themes_enabled = is_teenager?
   end
 
   def send_onboarded_email

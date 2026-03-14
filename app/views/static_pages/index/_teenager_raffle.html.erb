@@ -1,13 +1,13 @@
 <% raffle_program = "teenager-raffle-#{Date.current.strftime("%m-%Y")}" %>
 <%= render "raffles/raffle_modal", id: "join_teenager_raffle", program: raffle_program %>
 
-<% if current_user.teenager? && Date.current < Date.new(2026, 1, 1) %>
+<% if current_user.is_teenager? && Date.current < Date.new(2026, 1, 1) %>
   <% already_joined = Raffle.where(user: current_user, program: raffle_program).any? %>
 
   <% current_month = Date.current.strftime("%B") %>
 
   <% @raffle_card = capture do %>
-    <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
+    <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
       <div class="flex gap-2 items-center mb-4">
         <span>🎟️</span>
         <strong class="text-xl leading-tight">
@@ -26,7 +26,7 @@
           <% end %>
         </p>
         <div class="flex gap-2">
-          <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/9ef010a890d7c554a6da9328d62f9a592df9ae5d_laptop-removebg-preview.png" height="150" width="150" class="rounded align-bottom object-cover tooltipped tooltipped--w" alt="13-inch MacBook Air" aria-label="13-inch MacBook Air">
+          <img src="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9ef010a890d7c554a6da9328d62f9a592df9ae5d_laptop-removebg-preview.png" height="150" width="150" class="rounded align-bottom object-cover tooltipped tooltipped--w" alt="13-inch MacBook Air" aria-label="13-inch MacBook Air">
         </div>
       </div>
     </div>

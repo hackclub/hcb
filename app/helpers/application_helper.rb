@@ -38,7 +38,11 @@ module ApplicationHelper
   end
 
   def render_transaction_amount(amount)
-    render_money amount
+    if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
+      content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
+    else
+      render_money amount
+    end
   end
 
   def render_percentage(decimal, params = {})
@@ -240,6 +244,12 @@ module ApplicationHelper
     @home_size.to_i > 48 ? 36 : 28
   end
 
+  def parent_layout(name)
+    @view_flow.set(:layout, output_buffer)
+    output = render(template: "layouts/#{name}")
+    self.output_buffer = ActionView::OutputBuffer.new(output)
+  end
+
   def page_xl
     content_for(:container_class) { "container--xl" }
   end
@@ -268,13 +278,20 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
     rescue Stripe::InvalidRequestError
-      puts "Can't access stripe object, skipping"
+      Rails.logger.warn "Can't access stripe object, skipping"
+      nil
     rescue NoMethodError
-      puts "Not a stripe object, skipping"
+      Rails.logger.warn "Not a stripe object, skipping"
+      nil
     end
 
     if stripe_obj.nil?

@@ -34,7 +34,20 @@
         <% end %>
 
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
-          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "tooltipped tooltipped--w" do %>
+          <div data-controller="menu">
+            <a
+              href="javascript:void(0)"
+              class="-mr-1 block"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-menu-target="toggle">
+              <%= inline_icon "moon", size: 28 %>
+            </a>
+            <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 -mt-2" data-menu-target="content" style="z-index: 999;">
+              <%= render "application/theme_toggle" %>
+            </div>
+          </div>
+          <%= render partial: "application/blog_widget" %>
+          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "-ml-1 tooltipped tooltipped--w" do %>
             <%= inline_icon "receipt", size: home_action_size %>
           <% end %>
           <%= button_to logout_users_path, method: :delete, id: "admin-logout-button", 'aria-label': "Sign out", class: "tooltipped tooltipped--w" do %>

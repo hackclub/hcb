@@ -18,7 +18,7 @@
                     edit_event_path(@event, tab: "reimbursements"),
                     selected: @settings_tab == "reimbursements",
                     data: { turbo: true, turbo_action: "advance" } %>
-      <% if @event.card_grant_setting.present? %>
+      <% if @event.plan.card_grants_enabled? %>
         <%= dock_item "Card grants",
                       edit_event_path(@event, tab: "card_grants"),
                       tooltip: "Manage card grants",

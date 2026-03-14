@@ -9,7 +9,8 @@ module DisbursementService
         raise ArgumentError, "must be a pending disbursement only" unless disbursement.pending?
 
         amount_cents = disbursement.amount
-        memo = disbursement.transaction_memo
+        outgoing_memo = disbursement.outgoing_disbursement.transaction_memo
+        incoming_memo = disbursement.incoming_disbursement.transaction_memo
 
         # FS Main -> FS Operating
         ColumnService.post "/transfers/book",
@@ -18,7 +19,7 @@ module DisbursementService
                            currency_code: "USD",
                            sender_bank_account_id: ColumnService::Accounts::FS_MAIN,
                            receiver_bank_account_id: ColumnService::Accounts::FS_OPERATING,
-                           description: memo
+                           description: outgoing_memo
 
         # FS Operating -> FS Main
         ColumnService.post "/transfers/book",
@@ -27,8 +28,7 @@ module DisbursementService
                            currency_code: "USD",
                            sender_bank_account_id: ColumnService::Accounts::FS_OPERATING,
                            receiver_bank_account_id: ColumnService::Accounts::FS_MAIN,
-                           description: memo
-
+                           description: incoming_memo
         disbursement.mark_in_transit!
 
       end

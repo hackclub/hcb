@@ -29,6 +29,7 @@ class StaticPagesController < ApplicationController
       @organizer_positions = @service.organizer_positions.not_hidden
       @invites = @service.invites
       @invite_requests = @service.invite_requests
+      @applications = @service.applications
 
       if auditor_signed_in? && cookies[:admin_activities] == "everyone"
         @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
@@ -182,7 +183,7 @@ class StaticPagesController < ApplicationController
       end
     end
 
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
 
@@ -190,7 +191,7 @@ class StaticPagesController < ApplicationController
     Rails.error.report(e)
 
     flash[:error] = e.message
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
   end

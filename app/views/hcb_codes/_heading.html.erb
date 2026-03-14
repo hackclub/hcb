@@ -1,7 +1,7 @@
 <%# locals: (hcb_code:, render_memo: false) %>
 
-<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading" style="gap: 1ch">
-  <%= turbo_frame_tag hcb_code, class: "flex items-start gap-2 flex-grow" do %>
+<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
+  <%= turbo_frame_tag hcb_code, class: "flex items-center py-3 gap-2 flex-grow" do %>
     <% if hcb_code.custom_memo.nil? && !render_memo %>
       <%= yield %>
     <% else %>

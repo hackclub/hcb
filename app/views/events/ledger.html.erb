@@ -17,7 +17,7 @@
           </tr>
           </thead>
           <tbody data-behavior="transactions">
-          <%= render "events/pending_fee_transaction" unless @event.fronted_fee_balance_v2_cents <= 0 || @direction == "revenue" || params[:subledger] %>
+          <%= render "events/pending_fee_transaction" unless @event.fronted_fee_balance_v2_cents <= 0 || @direction == "revenue" || @subledger %>
 
           <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: @event.tags.size > 0, show_author_column: true, show_tags: true } %>
 
@@ -35,7 +35,7 @@
       browser history since it's attempt to set the URL to this frame's. So, i'm
       manually doing it here.
     %>
-    <% if !params[:subledger] %>
+    <% unless @subledger %>
       <script>
         window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
       </script>

@@ -105,7 +105,7 @@ class CardGrant
     def analyze!
       conn = Faraday.new url: "https://api.openai.com" do |c|
         c.request :json
-        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI, :PRE_AUTHORIZATION) }
         c.response :json
         c.response :raise_error
       end
@@ -123,9 +123,9 @@ class CardGrant
         valid_purchase // a boolean value indicating whether the purchase is a valid use of funds based on the purpose provided. This should be true or false.
         fraud_rating // a number between 1 and 10, where 1 is very likely to be valid and 10 is very likely to be fraudulent.
 
-        Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. Here are the instructions provided to the user:
+        Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. #{"The purpose of the grant is '#{card_grant.purpose}'." if card_grant.purpose.present?} Here are the instructions provided to the user:
 
-        #{card_grant.instructions}
+        #{card_grant.instructions.presence || "No specific instructions were provided."}
       PROMPT
 
       response = conn.post("/v1/responses", {
@@ -145,7 +145,7 @@ class CardGrant
                                  content: [
                                    {
                                      type: "input_text",
-                                     text: "The user was given the following instructions:\n\n#{card_grant.instructions}\n\nThe user provided the following URL: #{product_url}"
+                                     text: "The user provided the following URL: #{product_url}. Analyze and respond with the required JSON.",
                                    },
                                    screenshots.map { |screenshot|
                                      {

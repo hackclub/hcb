@@ -58,6 +58,7 @@ module Reimbursement
     end
 
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
+    normalizes :name, with: ->(name) { name&.strip }
 
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
@@ -95,8 +96,8 @@ module Reimbursement
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
-      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
-      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self) if Flipper.enabled?(:reimbursement_reminders_2025_01_21, user)
+      Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
+      Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
 
     after_commit :invalidate_cached_data # do this after commit for expense touch-ing
@@ -314,7 +315,7 @@ module Reimbursement
     end
 
     def team_review_required?
-      !event.users.include?(user) || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
     def reimbursement_confirmation_message

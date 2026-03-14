@@ -50,7 +50,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -146,6 +146,10 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def edit_expiration
+    authorize @card_grant
+  end
+
   def edit_topup
     authorize @card_grant
   end
@@ -154,11 +158,28 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def permit_merchant
+    authorize @card_grant
+
+    merchant_lock = @card_grant.merchant_lock
+    if merchant_lock.include?(params[:merchant])
+      flash[:error] = "Merchant is already permitted."
+      redirect_back fallback_location: card_grant_path(@card_grant) and return
+    end
+
+    merchant_lock << params[:merchant]
+    @card_grant.save!
+
+    flash[:success] = "Merchant successfully permitted."
+    redirect_back fallback_location: card_grant_path(@card_grant)
+  end
+
+
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock))
-      flash[:success] = "Grant's purpose has been successfully updated!"
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :instructions, :merchant_lock, :category_lock, :keyword_lock, :expiration_at))
+      flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
     end
@@ -168,8 +189,9 @@ class CardGrantsController < ApplicationController
 
   def clear_purpose
     authorize @card_grant, :update?
-    @card_grant.update(purpose: nil)
-    redirect_back fallback_location: card_grant_url(@card_grant)
+    @card_grant.update!(purpose: nil)
+    flash[:success] = "Purpose has been successfully cleared!"
+    redirect_to card_grant_url(@card_grant)
   end
 
   def show
@@ -233,7 +255,7 @@ class CardGrantsController < ApplicationController
   def cancel
     authorize @card_grant
 
-    disbursement = @card_grant.cancel!(current_user)
+    @card_grant.cancel!(current_user)
 
     redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
   end

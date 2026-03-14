@@ -12,22 +12,29 @@
       <% end %>
 
       <% if policy(event).update? %>
-       <button
-          type="button"
-          data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
-          class="pop menu__toggle z-[1] event_settings__banner--edit">
-          <%= inline_icon "photo", size: 24 %>
-          <div class="menu__content h5" data-behavior="menu_content">
-            <div class="field--fileupload">
-              <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :background_image, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
+        <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
+        <%= form.file_field :background_image, id: "event_background_image", class: "!hidden" %>
+        <div data-controller="menu" class="z-[1] event_settings__banner--edit rounded-md">
+          <button
+            type="button"
+            data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+            data-menu-target="toggle"
+            class="pop menu__toggle">
+            <%= inline_icon "photo", size: 24 %>
+          </button>
+
+          <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
+            <div data-controller="file-upload" class="justify-center">
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input" }, oninput: "document.getElementById('event_background_image').files = this.files" %>
+              <button data-file-upload-target="preview" type="button"></button>
+              <div data-file-upload-target="clear"></div>
             </div>
             <% if event.background_image.attached? %>
               <div class="menu__divider"></div>
               <%= link_to "Remove background image", event_remove_background_image_path(event), method: :post, style: "padding: 0.25rem 0.5rem" %>
             <% end %>
           </div>
-        </button>
+        </div>
       <% end %>
 
       <div class="event_settings__banner--logo">
@@ -38,22 +45,28 @@
         <% end %>
 
         <% if policy(event).update? %>
-          <button
-            type="button"
-            data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
-            class="pop menu__toggle z-[1] event_settings__logo--edit">
-            <%= inline_icon "photo", size: 24 %>
-            <div class="menu__content menu__content--left h5" data-behavior="menu_content">
-              <div class="field--fileupload">
-                <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
-                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
+          <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
+          <%= form.file_field :logo, disabled:, id: "event_logo", class: "!hidden" %>
+          <div data-controller="menu" class="event_settings__logo--edit z-[1] rounded-md">
+            <button
+              type="button"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-menu-target="toggle"
+              class="pop menu__toggle">
+              <%= inline_icon "photo", size: 24 %>
+            </button>
+            <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
+              <div data-controller="file-upload" class="justify-center">
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input" }, oninput: "document.getElementById('event_logo').files = this.files" %>
+                <button data-file-upload-target="preview" type="button"></button>
+                <div data-file-upload-target="clear"></div>
               </div>
               <% if event.logo.attached? %>
                 <div class="menu__divider"></div>
                 <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
             </div>
-          </button>
+          </div>
         <% end %>
       </div>
     </div>
@@ -155,9 +168,10 @@
       <% if event.stripe_card_logo.persisted? %>
         <%= image_tag event.stripe_card_logo, width: 48 %>
       <% end %>
-      <div class="field--fileupload mt2">
-        <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
-        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
+      <div data-controller="file-upload">
+        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
+        <button data-file-upload-target="preview" type="button"></button>
+        <div data-file-upload-target="clear"></div>
       </div>
     </div>
     <%= form.submit "Update", disabled: %>

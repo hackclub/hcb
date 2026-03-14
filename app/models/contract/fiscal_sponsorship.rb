@@ -34,33 +34,14 @@
 
 class Contract
   class FiscalSponsorship < Contract
-    after_update_commit if: ->{ sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") } do
-      document = Document.new(
-        event:,
-        name: "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
-      )
-      contract_document = docuseal_document["documents"][0]
-
-      response = Faraday.get(contract_document["url"]) do |req|
-        req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
-      end
-
-      document.file.attach(
-        io: StringIO.new(response.body),
-        filename: "#{contract_document["name"]}.pdf"
-      )
-
-      document.user = party(:hcb).user
-      document.save!
-      update!(document:)
-    end
+    after_update_commit :create_document!, if: ->{ event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
 
     def payload
       signee = party :signee
       cosigner = party :cosigner
       hcb = party :hcb
 
-      {
+      payload = {
         template_id: external_template_id,
         send_email: false,
         order: "preserved",
@@ -88,6 +69,11 @@ class Contract
                 name: "Organization",
                 default_value: prefills["name"],
                 readonly: true
+              },
+              {
+                name: "The Project",
+                default_value: prefills["description"],
+                readonly: false
               }
             ]
           },
@@ -111,16 +97,26 @@ class Contract
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
-              },
-              {
-                name: "The Project",
-                default_value: prefills["description"],
-                readonly: false
               }
             ]
           }
         ].compact
       }
+
+      if contractable.is_a?(OrganizerPositionInvite)
+        skip_prefills = contractable.event.plan.contract_skip_prefills
+        payload[:submitters] = payload[:submitters].map do |submitter|
+          skip_prefill_party = skip_prefills.find { |role, list| role == submitter[:role] }&.second
+          next submitter if skip_prefill_party.nil?
+
+          submitter[:fields] = submitter[:fields].reject do |field|
+            skip_prefill_party.include? field[:name]
+          end
+          submitter
+        end
+      end
+
+      payload
     end
 
     def required_roles
@@ -141,6 +137,12 @@ class Contract
       else
         nil
       end
+    end
+
+    private
+
+    def document_name
+      "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
     end
 
   end
