@@ -34,19 +34,19 @@
   </div>
 </div>
 
-<%= form_with(model: Reimbursement::Report.new, class: "card mx-auto max-w-96 mb3", data: { turbo: false }) do |form| %>
+<%= form_with(model: Reimbursement::Report.new, class: "card mx-auto max-w-96 mb3", data: { turbo: false }, html: { autocomplete: "on" }) do |form| %>
 
   <div class="field mb2">
     <%= form.label :report_name, "Purpose of reimbursement" %>
-    <%= form.text_field :report_name, placeholder: "FOSSASIA Conference Expenses", required: true, autofocus: true, value: "" %>
+    <%= form.text_field :report_name, placeholder: "FOSSASIA Conference Expenses", required: true, autofocus: true, value: "", autocomplete: "off" %>
   </div>
 
   <div class="field mb2">
     <%= form.label :email, "Your email" %>
-    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
+    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true, autocomplete: "email" %>
   </div>
 
-  <%= invisible_captcha :company_url %>
+  <%= invisible_captcha :company_url, autocomplete: "new-password" %>
 
   <%= form.hidden_field :event_id, value: @event.id %>
 
