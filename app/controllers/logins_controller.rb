@@ -190,7 +190,9 @@ class LoginsController < ApplicationController
         end
       end
     else
-      if @login.sms_available? || @login.email_available?
+      if @login.authenticated_with_webauthn && @login.totp_available?
+        redirect_to totp_login_path(@login), status: :temporary_redirect
+      elsif @login.sms_available? || @login.email_available?
         redirect_to login_code_login_path(@login), status: :temporary_redirect
       elsif @login.totp_available?
         redirect_to totp_login_path(@login), status: :temporary_redirect
