@@ -257,11 +257,9 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def state
-    if column?
-      :info
-    elsif pending?
+    if pending?
       :muted
-    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected?
+    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
     elsif increase_deposited?
       :success
@@ -301,6 +299,14 @@ class IncreaseCheck < ApplicationRecord
     approved?
   end
 
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
+
+  def can_reissue?
+    !(column_pending_deposit? || column_settled?)
+  end
+
   def address
     "#{address_line1} #{address_line2} - #{address_city}, #{address_state} #{address_zip}"
   end
@@ -313,12 +319,30 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
+  def stop!
+    # https://column.com/docs/api/#check-transfer/stop
+    return if column_id.nil? || !can_stop?
+
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+
+    update!(
+      column_id: column_check["id"],
+      column_object: column_check,
+      check_number: column_check["check_number"],
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
+    )
+  end
+
   def reissue!
-    return unless column_id.present? && (column_issued? || column_stopped?)
+    # do we want to allow reissuing if outbound checks arent settled but cant be stopped (ex initiated status)?
+    return if column_id.nil? || !can_reissue?
 
     stopped_id = column_id
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") if can_stop?
 
     update!(
       column_id: nil,
