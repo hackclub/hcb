@@ -9,6 +9,7 @@
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
 #  is_reauthentication      :boolean          default(FALSE), not null
+#  state                    :jsonb
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  referral_link_id         :bigint

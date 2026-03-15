@@ -26,6 +26,15 @@ export default class extends Controller {
     this.submitting = false
   }
 
+  connect() {
+    if (
+      this.loginPreferenceWebauthnInputTarget.checked &&
+      location.pathname.includes("/security_key")
+    ) {
+      this.submit()
+    }
+  }
+
   loginEmailInputTargetConnected() {
     this.loginEmailInputTarget.value ||= localStorage.getItem('login_email')
   }
@@ -40,12 +49,12 @@ export default class extends Controller {
       return
     }
 
-    event.preventDefault()
-    event.stopImmediatePropagation()
+    event?.preventDefault?.()
+    event?.stopImmediatePropagation?.()
 
     this.disableForm()
 
-    const loginEmail = event.target.email.value
+    const loginEmail = this.loginEmailInputTarget.value
 
     try {
       const options = await this.fetchWebAuthnOptions(loginEmail)
@@ -80,7 +89,7 @@ export default class extends Controller {
         this.storeLoginEmail(loginEmail)
 
         this.submitting = true
-        event.target.requestSubmit()
+        event?.target?.requestSubmit?.()
       } else {
         // Show an error
         this.enableForm()

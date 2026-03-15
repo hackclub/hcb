@@ -202,6 +202,9 @@ Rails.application.routes.draw do
       get "totp"
       post "totp"
 
+      get "security_key"
+      post "security_key"
+
       get "backup_code"
       post "backup_code"
 
