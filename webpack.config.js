@@ -36,9 +36,6 @@ module.exports = {
     ],
   },
   plugins: [
-    new webpack.optimize.LimitChunkCountPlugin({
-      maxChunks: 1,
-    }),
     new webpack.DefinePlugin({
       // prettier-ignore
       APPSIGNAL_FRONTEND: JSON.stringify(process.env.APPSIGNAL_FRONTEND || null),

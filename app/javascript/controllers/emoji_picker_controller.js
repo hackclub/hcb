@@ -6,6 +6,10 @@ export default class extends Controller {
   open = false
 
   connect() {
+    // Lazy load emoji-picker-element only when the controller is first needed
+    import('emoji-picker-element').catch(err => {
+      console.error('Failed to load emoji-picker-element:', err)
+    })
     document.addEventListener('click', this.handleDocumentClick.bind(this))
   }
 

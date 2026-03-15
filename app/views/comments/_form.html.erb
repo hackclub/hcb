@@ -9,17 +9,19 @@
     <% end %>
   </div>
 
-  <text-expander keys="@">
-    <%= form.text_area :content, class: "card overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
-  </text-expander>
+  <div data-controller="text-expander popover-polyfill">
+    <text-expander keys="@">
+      <%= form.text_area :content, class: "card overflow-visible", "data-behavior": "ctrl_enter_submit comment", placeholder: "Add a comment…", style: "min-height: 100px", id: "comment_textarea" %>
+    </text-expander>
 
-  <ul role="listbox" class="mention-suggestions card" hidden popover>
+    <ul role="listbox" class="mention-suggestions card" hidden popover>
     <% commentable.comment_mentionable(current_user:).each do |u| %>
       <li role="option" class="cursor-pointer mention-suggestion" data-value="@<%= u.email %>" data-search="<%= u.name %>">
         <%= user_mention u, disable_tooltip: true %>
       </li>
     <% end %>
   </ul>
+  </div>
 
   <div class="flex flex-row mb2 justify-between items-center">
 
