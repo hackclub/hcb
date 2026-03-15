@@ -196,7 +196,6 @@ RSpec.describe LoginsController do
               id: login.hashid,
               method: "sms",
               login_code: "123-456",
-              sms: "1",
             }
           )
 
