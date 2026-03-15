@@ -23,6 +23,7 @@ class LoginsController < ApplicationController
 
     @prefill_email = params[:email] if params[:email].present?
     @referral_link = Referral::Link.find_by(slug: params[:referral]).presence if params[:referral].present?
+    session[:referral_link_slug] = @referral_link&.slug
 
     @signup = params[:signup] == "true"
   end
@@ -165,6 +166,9 @@ class LoginsController < ApplicationController
       end
     end
 
+    # Clean up the referral link slug from session after successful login
+    session.delete(:referral_link_slug)
+
     if @login.complete? && @login.user_session.present?
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
@@ -230,7 +234,10 @@ class LoginsController < ApplicationController
           redirect_to auth_users_path
         end
       elsif session[:auth_email]
-        @login = User.find_by_email(session[:auth_email]).logins.create
+        referral_link = Referral::Link.find_by(slug: session[:referral_link_slug]).presence if session[:referral_link_slug].present?
+        @login = User.find_by_email(session[:auth_email]).logins.create(referral_link:)
+        @referral_link = referral_link
+        @referral_program = @referral_link&.program
         cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
       else
         flash[:error] = "Please try again."
