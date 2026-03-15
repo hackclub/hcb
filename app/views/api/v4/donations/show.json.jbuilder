@@ -1,1 +1,3 @@
-json.id @donation.public_id
+# frozen_string_literal: true
+
+json.partial! "api/v4/transactions/donation", donation: @donation

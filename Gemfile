@@ -6,7 +6,7 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 7.2"
+gem "rails", "~> 8.0"
 
 gem "puma", "~> 6.6" # app server
 
@@ -58,7 +58,7 @@ gem "aasm" # state machine
 gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
-gem "friendly_id", "~> 5.5.1" # slugs
+gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
 gem "active_storage_validations", "3.0.1" # file validations
@@ -78,6 +78,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 gem "write_xlsx" # Export Excel files
 gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
+gem "nondisposable" # disallow temporary/disposable email addresses
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
 gem "browser", "~> 6.2" # browser detection
@@ -108,15 +109,13 @@ gem "reverse_markdown" # public activity to discord
 gem "namae" # multi-cultural human name parser
 gem "premailer-rails" # css to inline styles for emails
 gem "safely_block"
-gem "strong_migrations", "~> 1" # protects against risky migrations
-# [@garyhtou] ^ We still use Postgres 11 in dev (not in prod). Strong Migrations
-#               2.x is incompatible with Postgres 11.
+gem "strong_migrations", "~> 2" # protects against risky migrations
 gem "xxhash" # fast hashing
 gem "memo_wise"
 
 gem "diffy" # rendering diffs (comments)
 
-gem "webauthn", "~> 3.2"
+gem "webauthn", "~> 3.4"
 
 gem "ahoy_matey" # analytics
 gem "blazer" # business intelligence tool/dashboard
@@ -202,7 +201,7 @@ gem "rtesseract"
 
 gem "sprockets-rails", "~> 3.5"
 
-gem "public_activity"
+gem "public_activity", ">= 3.0.2"
 
 gem "console1984"
 gem "audits1984"
@@ -211,7 +210,7 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.4"
+gem "ahoy_email", "~> 3.0"
 
 gem "email_reply_parser"
 
@@ -231,3 +230,8 @@ gem "prosemirror_to_html"
 
 gem "ed25519"
 gem "discordrb"
+
+gem "pghero", "~> 3.7"
+gem "pg_query", ">= 2"
+
+gem "intercom-rails"

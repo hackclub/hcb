@@ -1,15 +1,15 @@
 <% if @hcb_code.wise_transfer.wise_url %>
   <% admin_tool("mt3") do %>
-    <%= link_to @hcb_code.wise_transfer.wise_url, class: "btn bg-accent", target: "_blank" do %>
+    <%= link_to @hcb_code.wise_transfer.wise_url, class: "btn !bg-[#9fe870]", target: "_blank" do %>
       <%= inline_icon "wise" %>
       View transfer on Wise
     <% end %>
   <% end %>
 <% end %>
 
-<article class="card pb0 mt3 mb1">
+<article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <span style="flex-grow: 1">
+    <span>
       <% if @hcb_code.wise_transfer.failed? %>
         <span class="regular muted">Attempted to Wise transfer to</span>
         <%= @hcb_code.wise_transfer.recipient_name %>
@@ -23,28 +23,28 @@
         <span class="regular"><%= Money.from_cents(@hcb_code.wise_transfer.amount_cents, @hcb_code.wise_transfer.currency).format %> <%= @hcb_code.wise_transfer.currency %></span>
       <% end %>
     </span>
-    <span class="badge h4 md-right bg-<%= @hcb_code.wise_transfer.status_color %> nowrap">
+    <span class="badge h4 bg-<%= @hcb_code.wise_transfer.status_color %> nowrap order-1">
       <%= @hcb_code.wise_transfer.state_text %>
     </span>
   <% end %>
 
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
-    <p>
+  <section class="hcb-code--details">
+    <div>
       <strong>Sent by</strong>
       <%= user_mention @hcb_code.wise_transfer.user %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Sent at</strong>
       <%= format_datetime @hcb_code.wise_transfer.created_at %>
-    </p>
+    </div>
     <% if @hcb_code.wise_transfer.pending? || @hcb_code.wise_transfer.approved? %>
-        <% admin_tool "w-fit" do %>
+        <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
           <%= link_to "Process", wise_transfer_process_admin_path(@hcb_code.wise_transfer), class: "btn", target: "_blank" %>
         <% end %>
       <% end %>
   </section>
   <turbo-frame id="details">
-    <section class="details pt2 pb2">
+    <section class="hcb-code--info">
       <p>
         <strong>Recipient name</strong>
         <%= @hcb_code.wise_transfer.recipient_name %>

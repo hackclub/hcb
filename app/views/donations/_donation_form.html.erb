@@ -1,6 +1,6 @@
 <%= turbo_frame_tag :donation do %>
   <% unless @tier %>
-    <ul class="tab-container max-width-1 mx-auto bg-transparent">
+    <ul class="tab-container max-w-96 mx-auto bg-transparent">
         <li class="<%= "active" unless @monthly %>">
             <%= link_to "One-time", upsert_query_params(monthly: nil), data: { turbo: true } %>
         </li>
@@ -11,7 +11,7 @@
   <% end %>
 
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
-                class: "card mx-auto max-width-1 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
+                class: "card mx-auto max-w-96 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
     <%= form.invisible_captcha :subtitle %>
@@ -24,7 +24,7 @@
 
     <div class="field mb2">
       <%= form.label :email, "Your email" %>
-      <span class="muted block h5">We’ll send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records.</span>
+      <span class="muted block h5"><%= @event.name %> will send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records, and may use it to communicate with you.</span>
       <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off" %>
       <% donation.errors.messages_for(:email).each do |message| %>
         <div class="primary"><%= message %></div>

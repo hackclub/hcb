@@ -1,13 +1,17 @@
 <% title "Enter login code" %>
 <% content_for(:page_class) { "bg-snow" } %>
 
-<div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Sign in to HCB" do %>
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
+<div class="flex flex-col flex-1 justify-center w-full <%= @for_application ? "card" : "max-w-md" %>">
+  <%= render "logins/header", label: "Sign in to HCB" do %>
     <%= @use_sms_auth ? "SMS" : "Email" %> code
   <% end %>
-  <%= render "badge", user: @login.user %>
+  <%= render "logins/badge", user: @login.user %>
   <%= render partial: "users/sms_auth_notice" %>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, we've just sent a login code to
     <% else %>
@@ -15,7 +19,7 @@
     <% end %>
     <%= @use_sms_auth ? "your phone number ending in " + @phone_last_four : mail_to(@email, { target: "_blank" }) %>
   </p>
-  <%= form_tag complete_login_path(@login) do %>
+  <%= form_tag complete_login_path(@login), id: "login" do %>
     <% if Flipper.enabled?(:otp_single_input, @login.user) %>
       <%= text_field_tag(
             :login_code,
@@ -41,6 +45,7 @@
             data: { "op-ignore": true }
           ) %>
     <% end %>
+    <%= invisible_captcha :remember_me %>
 
     <%= hidden_field_tag :method, @use_sms_auth ? :sms : :email %>
     <%= hidden_field_tag :fingerprint %>
@@ -57,13 +62,20 @@
       <% if @login.webauthn_available? || @login.totp_available? || @login.backup_code_available? %>
         <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt-0 no-underline" %>
       <% end %>
-      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn">
+      <button data-webauthn-auth-target="continueButton" type="submit" class="gap-2 btn ml-auto">
         Continue
       </button>
     </div>
   <% end %>
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
+  <%= render partial: "logins/environment_banner" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/footer" %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", new_application_path, class: "btn bg-muted" %>
+  <button data-webauthn-auth-target="continueButton" type="submit" class="btn" form="login">
+    Continue →
+  </button>
+<% end %>

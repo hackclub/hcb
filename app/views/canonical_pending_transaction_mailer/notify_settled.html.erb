@@ -1,3 +1,3 @@
 <%= @cpt.memo %> has settled at <%= render_money @ct.amount_cents %>; this was a charge on your card ending in <%= @cpt.stripe_card.last4 %> that previously was <%= render_money @cpt.amount_cents %>.
 
-<%= render partial: "attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } if @cpt.local_hcb_code.missing_receipt? %>
+<%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } if @cpt.local_hcb_code.missing_receipt? %>

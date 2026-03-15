@@ -1,7 +1,8 @@
 /*! Basscss | http://basscss.com | MIT License */
-.h0 {
-  font-size: 3rem;
-}
+/**
+  * DO NOT add new classes here. The goal is to deprecate using BassCSS. 
+  * See https://github.com/hackclub/hcb/issues/5623
+  */
 .h1 {
   font-size: 2rem;
 }
@@ -20,19 +21,10 @@
 .h6 {
   font-size: 0.75rem;
 }
-/*
-.font-family-inherit {
-  font-family: inherit;
-}
-.font-size-inherit {
-  font-size: inherit;
-}
-*/
 .text-decoration-none {
   text-decoration: none;
 }
-.bold,
-.semibold {
+.bold {
   font-weight: 600;
 }
 .medium {
@@ -41,14 +33,8 @@
 .regular {
   font-weight: 400;
 }
-.left-align {
-  text-align: left;
-}
 .center {
   text-align: center;
-}
-.right-align {
-  text-align: right;
 }
 .justify {
   text-align: justify;
@@ -56,63 +42,11 @@
 .nowrap {
   white-space: nowrap;
 }
-.line-height-1 {
-  line-height: 1;
-}
-.line-height-2 {
-  line-height: 1.125;
-}
-.line-height-3 {
-  line-height: 1.25;
-}
-.line-height-4 {
-  line-height: 1.5;
-}
-.no-select {
-  -webkit-user-select: none;
-  -moz-user-select: all;
-  -ms-user-select: all;
-  user-select: none;
-}
-.no-resize {
-  resize: none;
-}
-/*
-.no-wrap {
-  white-space: nowrap;
-}
-*/
 .truncate {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.list-reset {
-  list-style: none;
-  padding-left: 0;
-}
-.overflow-visible {
-  overflow: visible;
-}
-.overflow-hidden {
-  overflow: hidden;
-}
-.overflow-scroll {
-  overflow: scroll;
-  -webkit-overflow-scrolling: touch;
-}
-.overflow-auto {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.clearfix:after,
-.clearfix:before {
-  content: ' ';
-  display: table;
-}
-.clearfix:after {
-  clear: both;
 }
 .left {
   float: left;
@@ -123,18 +57,6 @@
 .fit {
   max-width: 100%;
 }
-.max-width-1 {
-  max-width: 24rem;
-}
-.max-width-2 {
-  max-width: 32rem;
-}
-.max-width-3 {
-  max-width: 48rem;
-}
-.max-width-4 {
-  max-width: 64rem;
-}
 .flex-auto {
   -webkit-box-flex: 1;
   -webkit-flex: 1 1 auto;
@@ -143,100 +65,26 @@
   min-width: 0;
   min-height: 0;
 }
-@media (min-width: 32em) {
-  .md-left-align {
-    text-align: left;
-  }
-  .md-center {
-    text-align: center;
-  }
-  .md-left {
-    float: left;
-  }
-  .md-right {
-    float: right;
-  }
-  .md-flex {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-  }
-  .md-flex-column {
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
-    flex-direction: column;
-  }
-  .md-flex-row {
-    /* added as override */
-    -webkit-box-orient: horizontal;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
-    flex-direction: row;
-  }
-  .md-justify-between {
-    -webkit-box-pack: justify;
-    -webkit-justify-content: space-between;
-    -ms-flex-pack: justify;
-    justify-content: space-between;
-  }
-  .md-items-center {
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
-    -ms-grid-row-align: center;
-    align-items: center;
-  }
-  .md-items-baseline {
-    -webkit-box-align: baseline;
-    -webkit-align-items: baseline;
-    -ms-flex-align: baseline;
-    -ms-grid-row-align: baseline;
-    align-items: baseline;
-  }
-}
-@media (min-width: 64em) {
-  .lg-flex {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-  }
-}
-.z1 {
-  z-index: 1;
-}
-.z2 {
-  z-index: 2;
-}
-.z3 {
-  z-index: 3;
-}
-.z4 {
-  z-index: 4;
-}
 .border {
   border-style: solid;
   border-width: 1px;
+  border-width: 0.5px;
 }
 .border-top {
   border-top-style: solid;
-  border-top-width: 1px;
+  border-top-width: 0.5px;
 }
 .border-right {
   border-right-style: solid;
-  border-right-width: 1px;
+  border-right-width: 0.5px;
 }
 .border-bottom {
   border-bottom-style: solid;
-  border-bottom-width: 1px;
+  border-bottom-width: 0.5px;
 }
 .border-left {
   border-left-style: solid;
-  border-left-width: 1px;
+  border-left-width: 0.5px;
 }
 .border-none {
   border: 0;
@@ -251,9 +99,6 @@
 @media (max-width: 32em) {
   .xs-hide {
     display: none !important;
-  }
-  .xs-capitalize {
-    text-transform: capitalize;
   }
 }
 @media (min-width: 32em) and (max-width: 48em) {
@@ -273,13 +118,4 @@
 }
 .display-none {
   display: none !important;
-}
-.display-none-not-important {
-  display: none;
-}
-.w-fit-content {
-  width: fit-content;
-}
-.h-fit-content {
-  height: fit-content;
 }

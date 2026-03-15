@@ -1,3 +1,5 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation on how to use the robots.txt file
+
 # To disallow indexing of pages, use the `noindex` <meta/> tag or the
 # `X-Robots-Tag` header. Disallowing in Robots.txt does not guarantee no
 # indexing and may actually prevent the crawler from seeing the `noindex` meta

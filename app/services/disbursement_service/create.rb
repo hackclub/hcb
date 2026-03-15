@@ -47,42 +47,44 @@ module DisbursementService
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
 
-      if @source_subledger_id.present?
-        raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
-      else
-        raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
-      end
+      @source_event.with_lock do
+        if @source_subledger_id.present?
+          raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
+        else
+          raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
+        end
 
-      ActiveRecord::Base.transaction do
-        disbursement = Disbursement.create!(attrs)
-
-        # 1. Create the raw pending transactions
-        rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
-        # 2. Canonize the newly added raw pending transactions
-        o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt).run
-        # 3. Map to event
-        ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
-        # 4. Front if required
-        o_cpt.update(fronted: @fronted)
-
-        if disbursement.scheduled_on.nil?
-          # We only want to import Incoming Disbursements AFTER the scheduled date
+        ActiveRecord::Base.transaction do
+          disbursement = Disbursement.create!(attrs)
 
           # 1. Create the raw pending transactions
-          rpidt = ::PendingTransactionEngine::RawPendingIncomingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
+          rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
           # 2. Canonize the newly added raw pending transactions
-          i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt).run
+          o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt).run
           # 3. Map to event
-          ::PendingEventMappingEngine::Map::Single::IncomingDisbursement.new(canonical_pending_transaction: i_cpt).run
+          ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
           # 4. Front if required
-          i_cpt.update(fronted: @fronted)
-        end
+          o_cpt.update(fronted: @fronted)
 
-        if requested_by_admin_with_approval_permission?(disbursement) || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event
-          disbursement.approve_by_admin(requested_by)
-        end
+          if disbursement.scheduled_on.nil?
+            # We only want to import Incoming Disbursements AFTER the scheduled date
 
-        disbursement
+            # 1. Create the raw pending transactions
+            rpidt = ::PendingTransactionEngine::RawPendingIncomingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
+            # 2. Canonize the newly added raw pending transactions
+            i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt).run
+            # 3. Map to event
+            ::PendingEventMappingEngine::Map::Single::IncomingDisbursement.new(canonical_pending_transaction: i_cpt).run
+            # 4. Front if required
+            i_cpt.update(fronted: @fronted)
+          end
+
+          if requested_by_admin_with_approval_permission?(disbursement) || disbursement.source_event == disbursement.destination_event # Auto-fulfill disbursements between subledgers in the same event
+            disbursement.approve_by_admin(requested_by)
+          end
+
+          disbursement
+        end
       end
     end
 

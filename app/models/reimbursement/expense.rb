@@ -147,7 +147,9 @@ module Reimbursement
     delegate :conversion_rate, to: :report
 
     def value_label
-      "Amount"
+      label = "Amount"
+      label += " (#{currency})" unless currency == "USD"
+      label
     end
 
     def set_amount_cents

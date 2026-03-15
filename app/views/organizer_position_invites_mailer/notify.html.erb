@@ -1,8 +1,12 @@
 <p>Hi there! 👋</p>
 
-<% if @invite.event.demo_mode? == false || @invite.initial? == false %>
+<% if @invite.organizer_position_invite_request.present? %>
   <p>
-    <% if @invite.organizer_position_contracts.where(aasm_state: :signed).any? %>
+    Your request to join <%= @invite.event.name %> has been approved as a <%= @invite.role %>!
+  </p>
+<% elsif @invite.event.demo_mode? == false || @invite.initial? == false %>
+  <p>
+    <% if @invite.contracts.where(aasm_state: :signed).any? %>
       Thank you for signing the HCB contract!
     <% end %>
     You've been invited by <strong><%= @invite.sender.name %></strong> to <%= @invite.manager? ? "manage" : "be a member of" %> <strong><%= @invite.event.name %></strong>, which is running on HCB. HCB is an online dashboard used to store finances, raise money, receive grants, manage team emails, and so much more.

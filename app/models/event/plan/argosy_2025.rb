@@ -35,6 +35,16 @@ class Event
         1766872
       end
 
+      def default_values
+        { is_public: true }
+      end
+
+      def contract_skip_prefills
+        {
+          "Contract Signee" => ["The Project"]
+        }
+      end
+
     end
 
   end

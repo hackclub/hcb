@@ -152,6 +152,15 @@
           </span>
         </td>
       </tr>
+      <tr>
+        <td style="text-align: right;">Organization balance:</td>
+        <td>
+          <%= render_money @ach_transfer.event.balance_available_v2_cents %>
+          <% if @ach_transfer.event.balance_available_v2_cents < 0 %>
+            <span class="ml1 badge bg-error">⚠️ Negative balance</span>
+          <% end %>
+        </td>
+      </tr>
       <% if @ach_transfer.employee_payment.present? %>
         <tr>
           <td style="text-align: right;">Employee:</td>

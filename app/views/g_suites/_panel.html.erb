@@ -205,7 +205,7 @@
         </li>
         <li>
           <% if @g_suite.verification_error? %>
-            <%= render "callout", type: "error", title: "There was an error verifying your domain." do %>
+            <%= render "application/callout", type: "error", title: "There was an error verifying your domain." do %>
               Please check above to see which records may be missing or incorrectly entered. <br>Click "Retry Verification" below once you've confirmed all DNS records are entered correctly.
             <% end %>
           <% end %>

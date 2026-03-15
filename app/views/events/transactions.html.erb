@@ -25,125 +25,46 @@
 
 <% title "Transactions for #{@event.name}" %>
 
-<%= render "nav", selected: :transactions %>
+<%= render "events/nav", selected: :transactions %>
 
-<%# Demo mode callout thing %>
-<% if organizer_signed_in? && @event.demo_mode && !Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) %>
-  <div class="card border b--info pb0 mb-4" style="text-wrap: pretty;" id="playground-callout" data-tour-step="playground_mode">
-    <p class="mt0">
-      <strong>Welcome to Playground Mode</strong>
-      <br>
-      While in Playground mode, explore the dashboard with mock data, and invite your team.
-    </p>
-  </div>
+<%= render "events/heading", event: @event, event_follow: @event_follow do %>
+  <span class="flex-grow">Transactions</span>
 <% end %>
 
-<h1 class="flex items-center flex-wrap">
-  <span class="flex-grow mb1">Transactions</span>
-  <% admin_tool("p0 m2 badge", "span") do %>
-    <span class="m0 badge bg-muted">
-      #<%= @event.id %>
+<div class="statset mb-2">
+  <div class="stat">
+    <span class="stat__label">Account balance</span>
+    <%# this event has a fee credit (owes negative fees) %>
+    <% if @event.fee_balance_v2_cents < 0 %>
+      <span class="stat__value stat__value--no-space"><%= render_money_amount @event.balance_v2_cents %></span>
+      <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
+        fee credit</span>
+    <% else %>
+    <span class="stat__value stat__value--no-space">
+      <%= render_money_amount(@event.balance_available_v2_cents) %>
     </span>
-    <span class="m0 badge bg-muted ml1">
-      SL<%= @event.service_level %>
+    <% end %>
+  </div>
+
+  <div class="stat stat--small">
+    <span class="stat__label">Total revenue</span>
+    <span class="stat__value stat__value--no-space">
+      <%= render_money_amount(@event.total_raised) %>
     </span>
-  <% end %>
+  </div>
 
-  <%= render "events/follow_button", event: @event, event_follow: @event_follow %>
-</h1>
-
-<div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-  <% if Flipper.enabled?(:event_home_page_redesign_2024_09_21, @event) || show_mock_data? %>
-    <div class="flex items-center details-horiz details-horiz--lg" style="gap: 8px; pointer-events: none;">
-      <div class="stat statset__wide" data-tour-step="balance">
-        <span class="stat__label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
-          <span class="stat__value"><%= render_money_amount @event.balance_v2_cents %></span>
-          <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
-            fee credit</span>
-        <% else %>
-        <span class="stat__value">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
-        </span>
-        <% end %>
-      </div>
-    </div>
-  <% else %>
-    <div
-      class="flex"
-      style="flex-direction: row; gap: 8px; position: relative;"
-      data-controller="balance-graph"
-      data-balance-graph-available-value="<%= @event.balance_available_v2_cents %>"
-      data-balance-graph-slug-value="<%= @event.slug %>">
-      <div class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="stat">
-        <span class="stat__label" data-balance-graph-target="label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
-          <span class="stat__value" data-balance-graph-target="balance"><%= render_money_amount @event.balance_v2_cents %></span>
-          <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
-            fee credit</span>
-        <% else %>
-        <span class="stat__value" data-balance-graph-target="balance">
-          <%= render_money_amount(@event.balance_available_v2_cents) %>
-        </span>
-        <% end %>
-      </div>
-
-      <div data-nosnippet style="position: absolute; top: 0px; left: 0px; visibility: hidden;" aria-hidden="true" class="stat statset__wide" data-tour-step="balance" data-balance-graph-target="size">
-        <span class="stat__label">Account balance</span>
-        <% if @event.fee_balance_v2_cents < 0
-             # this event has a fee credit (owes negative fees) %>
-          <span class="stat__value" data-balance-graph-target="sizing"><%= render_money_amount @event.balance_v2_cents %></span>
-          <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
-            fee credit</span>
-        <% else %>
-        <span class="stat__value" data-balance-graph-target="sizing">
-          <%= render_money_amount(show_mock_data? ? @mock_total : @event.balance_available_v2_cents) %>
-        </span>
-        <% end %>
-      </div>
-
-      <svg data-balance-graph-target="graph" id="balance-chart" class="sparkline sparkline--filled" height="66" stroke-width="2"></svg>
-    </div>
-
-    <div style="pointer-events: all; z-index: 5;">
-      <div class="flex items-center">
-        <% if @organizers.any? %>
-          <div class="flex items-center">
-            <% @organizers.limit(5).each do |position| %>
-              <div class="avatar-grow line-height-0 tooltipped tooltipped--s mr1" aria-label="<%= position.user == current_user ? current_user_flavor_text.sample : position.user.name %>">
-                <%= avatar_for position.user, size: 36 %>
-              </div>
-            <% end %>
-          </div>
-          <% if @event.organizer_positions.count > 5 %>
-            <%= link_to event_team_path(@event), class: "pop" do %>
-              +<%= @event.organizer_positions.count - 5 %>
-            <% end %>
-          <% end %>
-          <%= pop_icon_to "member-add", event_team_path(@event), class: "ml1", data: { "tour-step" => "invite" } %>
-        <% else %>
-          <p class="slate bold h3 mr2">No team members yet</p>
-          <%= pop_icon_to "member-add", event_team_path(@event) %>
-        <% end %>
-      </div>
-    </div>
-  <% end %>
+  <div class="stat stat--small">
+    <span class="stat__label">Total expenses</span>
+    <span class="stat__value stat__value--no-space">
+      <%= render_money_amount(@event.total_spent_cents) %>
+    </span>
+  </div>
 </div>
 
 <%= render "events/public_message" %>
-
-<main data-controller="transactions">
-  <h2 class="heading pb-0 border-b-0">
-    <span style="flex-grow: 1">Transactions</span>
-  </h2>
-
-  <%= render "pinned_transactions" %>
-
+<main data-controller="transactions" class="mt-2">
+  <%= render "events/pinned_transactions" %>
   <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, request.query_parameters) do %>
-    <%= render partial: "filter" %>
-
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 </main>

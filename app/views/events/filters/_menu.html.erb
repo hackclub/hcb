@@ -47,18 +47,16 @@
 
           <% when "date_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
-              <% ["after", "before"].each do |suffix| %>
-                <label class="bold"><%= suffix.humanize %>...</label>
-                <%= form.date_field "#{filter[:key_base]}_#{suffix}", class: "border mb1", value: params["#{filter[:key_base]}_#{suffix}"] %>
-              <% end %>
-
+              <div
+                data-controller="date-range-picker"
+                data-date-range-picker-initial-start-value="<%= params["#{filter[:key_base]}_after"] %>"
+                data-date-range-picker-initial-end-value="<%= params["#{filter[:key_base]}_before"] %>"
+                data-date-range-picker-name-start-value="<%= filter[:key_base] %>_after"
+                data-date-range-picker-name-end-value="<%= filter[:key_base] %>_before"></div>
               <% request.query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
                 <%= hidden_field_tag k, v %>
               <% end %>
-
-              <%= form.submit "Filter..." %>
             <% end %>
-
           <% when "amount_range" %>
             <%= form_with(model: false, local: true, method: :get, class: "flex-auto p1") do |form| %>
               <div

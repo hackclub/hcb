@@ -3,12 +3,12 @@
 <% @return_to = root_path if params[:error] == "unauthorised_card_grant" %>
 
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Hack Club" do %>
+  <%= render "logins/header", label: "Hack Club" do %>
     Sign in to HCB
   <% end %>
   <%= render "logins/badge", user: current_user %>
 
-  <h3 class="medium max-width-2 mt-5">
+  <h3 class="medium max-w-lg mt-5">
     <% if params[:error] == "unauthorised_card_grant" %>
       This account does not have access to this grant. Please sign in with the same email you received the invitation at.
     <% else %>

@@ -29,7 +29,15 @@ module HasWiseRecipient
           type: :text_field,
           key: "account_holder",
           placeholder: "Fiona Hackworth",
-          label: "Account holder's name"
+          label: "Account holder's full name",
+          description: "Must match the name on the bank account exactly"
+        }
+
+        fields << {
+          type: :text_field,
+          key: "bank_name",
+          placeholder: "Silicon Valley Bank",
+          label: "Name of financial institution"
         }
       end
 
@@ -113,6 +121,12 @@ module HasWiseRecipient
     end
 
     store(:recipient_information, accessors: self.recipient_information_accessors)
+  end
+
+  class_methods do
+    def unsupported_currencies_supported_by_wire
+      @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - AVAILABLE_CURRENCIES).sort
+    end
   end
 
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details

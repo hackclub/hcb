@@ -50,8 +50,8 @@ imported as a [`RawIntrafiTransaction`](https://github.com/hackclub/hcb/blob/mai
 RawIntrafiTransaction.create(date_posted: tx[:Date], memo: tx[:"Account Activity"], amount_cents: tx[:Amount] * 100)
 ```
 
-All IntraFi transactions should be mapped to the HCB Sweeps organisation; *
-*except** for Interest Capitalization transactions. These are auto-mapped to
+All IntraFi transactions should be mapped to the HCB Sweeps organisation;
+**except** for Interest Capitalization transactions. These are auto-mapped to
 **Hack Foundation Interest Earnings**.
 
 After a batch of transactions has imported, HCB Sweep's balance should be

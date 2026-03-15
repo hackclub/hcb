@@ -1,0 +1,8 @@
+<%= turbo_frame_tag :card_grant_transaction_overview do %>
+  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, subledger: @subledger), loading: :eager do %>
+    <%# i'd like to have this show to improve the loading experience eventually but the ledger and filter code needs to be refactored more %>
+    <%# <%= render partial: "events/filter" %>
+
+    <%= render "application/loading_container", klass: "mt-8" %>
+  <% end %>
+<% end %>
