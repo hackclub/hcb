@@ -29,7 +29,7 @@ export default class extends Controller {
   connect() {
     if (
       this.loginPreferenceWebauthnInputTarget.checked &&
-      location.pathname.includes("/security_key")
+      location.pathname.includes('/security_key')
     ) {
       this.submit()
     }
