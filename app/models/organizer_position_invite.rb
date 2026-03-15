@@ -226,6 +226,8 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+
+    fs_contract
   end
 
   def on_contract_signed(contract)
