@@ -18,6 +18,7 @@ class ApplicationController < ActionController::Base
 
   before_action :attach_error_reference
   before_action :attach_user_id
+  before_action :attach_session_id
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
@@ -142,7 +143,18 @@ class ApplicationController < ActionController::Base
 
   def attach_user_id
     user_id = current_user&.id
-    Appsignal.add_tags(user_id:) if defined?(Appsignal) && Appsignal.active?
+    if defined?(Appsignal) && Appsignal.active?
+      Appsignal.add_tags(user_id:)
+      Appsignal.tag_request(user_id:)
+    end
+  end
+
+  def attach_session_id
+    session_id = Current.session&.id
+    if defined?(Appsignal) && Appsignal.active?
+      Appsignal.add_tags(session_id:)
+      Appsignal.tag_request(session_id:)
+    end
   end
 
 end
