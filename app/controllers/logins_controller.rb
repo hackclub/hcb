@@ -48,7 +48,7 @@ class LoginsController < ApplicationController
       redirect_to email_login_path(login), status: :temporary_redirect
     elsif login_preference(user:) == "sms" && login.sms_available?
       redirect_to sms_login_path(login), status: :temporary_redirect
-    
+
     else
       session[:auth_email] = login.user.email
       redirect_to choose_login_preference_login_path(login)
