@@ -218,7 +218,7 @@
   <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 
-<% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
+<% if @report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name && @report.expenses.none?(&:is_fee?) %>
   <%= render "application/callout",
       type: "info",
       icon: "wise",
