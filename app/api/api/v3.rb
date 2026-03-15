@@ -59,11 +59,16 @@ module Api
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
             combined = pending + settled
-            combined.select! { |t| t.local_hcb_code.type == :card_charge }
+            prefix = "HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-"
+            combined.select! { |t| t.hcb_code.to_s.start_with?(prefix) }
             combined = paginate(Kaminari.paginate_array(combined))
-            combined.map do |t|
-              Models::CardCharge.find_by_hcb_code(t.hcb_code)
-            end
+
+            card_charges_by_hcb_code = Models::CardCharge
+                                       .where(hcb_code: combined.map(&:hcb_code))
+                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction)
+                                       .index_by(&:hcb_code)
+
+            combined.map { |t| card_charges_by_hcb_code[t.hcb_code] }.compact
           end
       end
 
