@@ -176,9 +176,9 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
       end
@@ -215,6 +215,14 @@ class Event
       flash[:success] = "Application archived"
 
       redirect_to applications_path
+    end
+
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
     end
 
     def resend_to_cosigner

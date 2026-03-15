@@ -87,6 +87,10 @@ module Api
         hcb_code.event
       end
 
+      expose_associated User do |hcb_code, options|
+        hcb_code.author
+      end
+
       expose_associated Tag, documentation: { type: Tag, is_array: true }, as: :tags do |hcb_code, options|
         hcb_code.tags
       end

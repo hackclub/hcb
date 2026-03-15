@@ -17,6 +17,11 @@
       </div>
 
       <div class="field">
+        <%= form.label :expiration_at, "Expires on" %>
+        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at %>
+      </div>
+
+      <div class="field">
         <%= form.label :purpose, "Purpose (optional, shown to recipient)" %>
         <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled:, maxlength: CardGrant::MAXIMUM_PURPOSE_LENGTH %>
       </div>
