@@ -1,43 +1,45 @@
 <% title "Ledger" %>
 
-<%= form_with local: true, url: ledger_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr2" %>
-  <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "mr2" %>
+<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card" do |form| %>
+  <div class="flex items-center mt-1 gap-2">
+    <%= render "events/search", form: %>
+    <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-[200px]" %>
+    <div class="flex shrink-0 gap-2">
+        <%= render partial: "admin/user_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, user_id: @user_id } %>
+        <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
+    </div>
+  </div>
 
-  <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <fieldset class="flex gap-4 items-center">
+        <%= form.label :unmapped do %>
+        <%= form.check_box :unmapped, checked: @unmapped %>
+        Unmapped
+        <% end %>
 
-  <%= form.label :user do %>
-    <%= form.collection_select(:user_id, User.all, :id, :admin_dropdown_description, { include_blank: "Select a User (Card-only)", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
-  <% end %>
-  <fieldset>
-    <%= form.label :unmapped do %>
-      <%= form.check_box :unmapped, checked: @unmapped %>
-      Unmapped
-    <% end %>
+        <%= form.label :exclude_top_ups do %>
+        <%= form.check_box :exclude_top_ups, checked: @exclude_top_ups %>
+        Exclude Top Ups
+        <% end %>
 
-    <%= form.label :exclude_top_ups do %>
-      <%= form.check_box :exclude_top_ups, checked: @exclude_top_ups, class: "ml2" %>
-      Exclude Top Ups
-    <% end %>
+        <%= form.label :exclude_spending do %>
+        <%= form.check_box :exclude_spending, checked: @exclude_spending %>
+        Exclude Spending
+        <% end %>
 
-    <%= form.label :exclude_spending do %>
-      <%= form.check_box :exclude_spending, checked: @exclude_spending %>
-      Exclude Spending
-    <% end %>
-
-    <%= form.label :mapped_by_human do %>
-      <%= form.check_box :mapped_by_human, checked: @mapped_by_human, class: "ml2" %>
-      Mapped by Human
-    <% end %>
-  </fieldset>
-
-  <%= form.submit "Search" %>
+        <%= form.label :mapped_by_human do %>
+        <%= form.check_box :mapped_by_human, checked: @mapped_by_human %>
+        Mapped by Human
+        <% end %>
+    </fieldset>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
+  <h4 class="flex-grow mt-10">
     <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
-  </div>
+  </h4>
   <%= paginate @canonical_transactions %>
 </div>
 
@@ -86,12 +88,16 @@
       <% end %>
     </tbody>
   </table>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { prompt: "Select an Organization" }, { required: true, width: 300, style: "max-width: 300px; margin-right: 16px;" }) %>
-  <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
-<% end %>
 
-<% if @canonical_transactions.empty? %>
-  <%= blankslate "No transaction match your search parameters" %>
+  <% if @canonical_transactions.empty? %>
+    <%= blankslate "No transaction match your search parameters" %>
+  <% end %>
+
+  <div class="flex mt-2 gap-2 items-center justify-end">
+      <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
+      <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { prompt: "Select an Organization" }, { required: true, width: 300, style: "max-width: 300px;" }) %>
+      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
+  </div>
 <% end %>
 
 <%= paginate @canonical_transactions %>

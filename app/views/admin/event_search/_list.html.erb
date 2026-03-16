@@ -1,7 +1,9 @@
 <%= turbo_frame_tag :event_search do %>
     <%= form_with url: event_search_admin_index_path, method: :get, local: true, class: "mb-2 flex gap-2" do |f| %>
         <%= f.text_field :q, value: params[:q], autofocus: true, placeholder: "Search...", class: "w-full mb-0 shadow-none" %>
-        <button type="submit">Search</button>
+        <button type="submit" class="pop">
+            <%= inline_icon "search" %>
+        </button>
 
         <% request.query_parameters.except(:search).each do |key, value| %>
             <%= hidden_field_tag key, value %>

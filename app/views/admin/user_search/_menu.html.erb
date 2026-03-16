@@ -1,19 +1,18 @@
 <%= turbo_frame_tag "event_search" do %>
-    <div data-controller="menu combobox">
-        <%= form.hidden_field :event_id, data: { "combobox-target": "input" } %>
+    <div data-controller="menu" data-menu-append-to-value="#format-menus">
       <button
         data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
         data-menu-target="toggle"
         class="btn"
         type="button">
-        <%= inline_icon "event-check" %>
-        <%= @event&.name || "Event" %>
+        <%= inline_icon "person" %>
+        <%= @user&.name || "User" %>
         <%= inline_icon "down-caret", size: 18 %>
       </button>
 
       <div data-menu-target="content" class="menu__content text-sm">
-        <%= turbo_frame_tag "event_search",
-          src: event_search_admin_index_path(q: params[:event_search], selected_event_id: event_id, base_url:),
+        <%= turbo_frame_tag "user_search",
+          src: user_search_admin_index_path(q: params[:user_search], selected_user_id: user_id, base_url:),
           loading: :lazy do %>
             <div class="flex justify-center p-4">
                 <%= inline_icon "loading" %>

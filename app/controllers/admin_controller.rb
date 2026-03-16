@@ -394,6 +394,20 @@ class AdminController < Admin::BaseController
     render partial: "admin/event_search/list", locals: { base_url:, events:, selected_event_id: @selected_event_id }
   end
 
+  def user_search
+    @q = params[:q].presence
+    base_url = params[:base_url].presence
+    @selected_user_id = params[:selected_user_id].presence
+    users = if @q
+              User.where("full_name ILIKE ? OR email ILIKE ?", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%").order(:full_name)
+            elsif @selected_user_id
+              User.where(id: @selected_user_id).order(:full_name)
+            else
+              User.none
+            end
+    render partial: "admin/user_search/list", locals: { base_url:, users:, selected_user_id: @selected_user_id }
+  end
+
   def pending_ledger
     @page = params[:page] || 1
     @per = params[:per] || 100
