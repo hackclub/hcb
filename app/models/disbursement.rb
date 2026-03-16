@@ -205,7 +205,7 @@ class Disbursement < ApplicationRecord
   end
 
   def pending_expired?
-    local_hcb_code.has_pending_expired?
+    canonical_pending_transactions.pending_expired.any?
   end
 
   # Eagerly create HcbCode object
