@@ -595,7 +595,7 @@ class User < ApplicationRecord
   end
 
   def reimbursement_event_options
-    (events.not_demo_mode.pluck(:name, :id) + reimbursement_events.where(public_reimbursement_page_enabled: true).pluck(:name, :id)).uniq { |name, id| id }
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
   private
