@@ -1,0 +1,20 @@
+<%= turbo_frame_tag "event_search" do %>
+    <div data-controller="menu" data-menu-append-to-value="#format-menus">
+      <button
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle"
+        class="format-button font-bold flex gap-1"
+        type="button">
+        <%= @event&.name || "Select an event" %>
+        <%= inline_icon "down-caret", size: 18 %>
+      </button>
+
+      <div data-menu-target="content" class="menu__content text-sm">
+        <%= turbo_frame_tag "event_search",
+          src: event_search_admin_index_path(q: params[:event_search], selected_event_id: event_id, base_url:),
+          loading: :lazy do %>
+            <%= inline_icon "loading" %>
+        <% end %>
+    </div>
+</div>
+<% end %>

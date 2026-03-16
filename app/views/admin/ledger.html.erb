@@ -4,10 +4,9 @@
   <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr2" %>
   <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "mr2" %>
 
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, class: "mr2", style: "max-width: 250px" }) %>
+  <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
 
   <%= form.label :user do %>
-
     <%= form.collection_select(:user_id, User.all, :id, :admin_dropdown_description, { include_blank: "Select a User (Card-only)", selected: @user_id }, { width: 250, style: "max-width: 250px" }) %>
   <% end %>
   <fieldset>
