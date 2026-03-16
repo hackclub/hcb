@@ -380,6 +380,20 @@ class AdminController < Admin::BaseController
     @canonical_transactions = relation.page(@page).per(@per).order(date: :desc)
   end
 
+  def event_search
+    @q = params[:q].presence
+    base_url = params[:base_url].presence
+    @selected_event_id = params[:selected_event_id].presence
+    events = if @q
+                Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name)
+             elsif @selected_event_id
+                Event.where(id: @selected_event_id).order(:name)
+              else
+                Event.none
+              end
+    render partial: "admin/event_search/list", locals: { base_url:, events:, selected_event_id: @selected_event_id }
+  end
+
   def pending_ledger
     @page = params[:page] || 1
     @per = params[:per] || 100
