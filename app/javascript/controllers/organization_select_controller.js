@@ -121,7 +121,8 @@ export default class extends Controller {
         fieldValue.innerText = button.children[0].innerText
 
         const newValue = id == 'other' ? this.searchTarget.value : id
-        if (this.hasOtherCheckboxTarget) this.otherCheckboxTarget.checked = id == 'other'
+        if (this.hasOtherCheckboxTarget)
+          this.otherCheckboxTarget.checked = id == 'other'
         fieldValue.value = newValue
         fieldValue.dataset.fee = fee
         this.dropdownTarget.value = newValue
