@@ -149,7 +149,7 @@ class LoginsController < ApplicationController
       unless ok
         initialize_sms_params
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:login_code, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_entity)
         return
       end
     when "email"
@@ -160,7 +160,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:login_code, status: :unprocessable_entity)
+        render(:email, status: :unprocessable_entity)
         return
       end
     when "totp"
