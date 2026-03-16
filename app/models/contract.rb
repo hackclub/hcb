@@ -63,6 +63,10 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
+  before_destroy do
+    mark_voided! if may_mark_voided?
+  end
+
   aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
