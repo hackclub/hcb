@@ -41,13 +41,14 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
-  has_one :organizer_position, required: false
+  has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
   has_many :parties
 
   validate :one_non_void_contract
 
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
+  validates :cosigner_email, nondisposable: true, on: :create
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
@@ -62,7 +63,7 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
-  aasm timestamps: true do
+  aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
     state :signed
@@ -70,10 +71,15 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after do
-        if contractable.contract_notify_when_sent
+      after do |reissue_signee_message = nil, reissue_cosigner_message = nil|
+        if reissue_signee_message.present? || reissue_cosigner_message.present?
+          party(:signee).notify_reissued(message: reissue_signee_message)
+          party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
+        elsif contractable.contract_notify_when_sent
           parties.not_hcb.each(&:notify)
         end
+
+        parties.not_hcb.each(&:schedule_reminders)
       end
     end
 
@@ -100,6 +106,14 @@ class Contract < ApplicationRecord
 
   scope :not_voided, -> { where.not(aasm_state: :voided) }
 
+  has_many :party_users, through: :parties, source: :user
+
+  include PgSearch::Model
+  pg_search_scope :search_parties, associated_against: {
+    parties: :external_email,
+    party_users: [:full_name, :email]
+  }
+
   def docuseal_document
     docuseal_client.get("submissions/#{external_id}").body
   end
@@ -119,7 +133,7 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
   end
 
-  def send!
+  def send!(reissue_signee_message: nil, reissue_cosigner_message: nil)
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
     existing_roles = parties.map(&:role)
@@ -128,7 +142,7 @@ class Contract < ApplicationRecord
 
     send_using_docuseal! unless sent_with_manual?
 
-    mark_sent!
+    mark_sent!(reissue_signee_message, reissue_cosigner_message)
   end
 
   def event
@@ -152,9 +166,14 @@ class Contract < ApplicationRecord
       mark_signed!
     elsif parties.not_hcb.all?(&:signed?) && contractable.contract_notify_hcb?
       party(:hcb).notify
+      party(:hcb).schedule_reminders
     end
 
     contractable.on_contract_party_signed(party)
+  end
+
+  def docuseal_submission_url
+    "https://docuseal.com/submissions/#{external_id}"
   end
 
   # Adding this back temporarily while we work on fixing missing parties

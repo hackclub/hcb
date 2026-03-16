@@ -9,12 +9,12 @@ Rails.application.routes.draw do
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
-    mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
+    mount Audits1984::Engine => "/console"
     mount Blazer::Engine, at: "blazer"
     mount SchemaEndpoint.instance => "/schema"
   end
@@ -264,6 +264,7 @@ Rails.application.routes.draw do
       post "request_balance_export", to: "admin#request_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
+      get "contracts", to: "admin#contracts"
     end
 
     member do
@@ -343,6 +344,7 @@ Rails.application.routes.draw do
   resources :contracts, only: [] do
     member do
       post "void"
+      post "reissue"
     end
   end
 
@@ -492,7 +494,6 @@ Rails.application.routes.draw do
 
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
-      post "comment"
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
@@ -618,7 +619,7 @@ Rails.application.routes.draw do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
-      get "start/:event_name/tiers/:tier_id", to: "donations#start_donation", as: "start_donation_tier"
+      get "start/:event_name/tiers/:tier_id", to: "donation/tiers#start", as: "start_donation_tier"
       get "qr/:event_name.png", to: "donations#qr_code", as: "qr_code"
       get ":event_name/:donation", to: "donations#finish_donation", as: "finish_donation"
       get ":event_name/:donation/finished", to: "donations#finished", as: "finished_donation"
@@ -691,6 +692,7 @@ Rails.application.routes.draw do
 
             get "transactions", to: "transactions#index"
             get :followers
+            get :balance_by_date
           end
         end
 
@@ -819,11 +821,7 @@ Rails.application.routes.draw do
   end
 
   namespace "announcements" do
-    resources :blocks, only: [:create, :edit, :update, :show] do
-      member do
-        post "refresh"
-      end
-    end
+    resources :blocks, only: [:create, :edit, :update, :show]
   end
 
   scope module: "organizer_position_invite" do
@@ -859,9 +857,11 @@ Rails.application.routes.draw do
         get "edit"
         post "submit"
         post "archive"
+        post "unarchive"
         post "admin_approve"
         post "admin_reject"
         post "admin_activate"
+        post "resend_to_cosigner"
       end
     end
   end
@@ -990,13 +990,12 @@ Rails.application.routes.draw do
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
+        get "edit/expiration", to: "card_grants#edit_expiration"
         get "edit/purpose", to: "card_grants#edit_purpose"
         get "edit/actions", to: "card_grants#edit_actions"
         get "edit/balance", to: "card_grants#edit_balance"
         get "edit/topup", to: "card_grants#edit_topup"
         get "edit/withdraw", to: "card_grants#edit_withdraw"
-
-
       end
     end
 

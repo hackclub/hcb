@@ -32,7 +32,9 @@
     <% else %>
       <% card_grant = Rails.cache.fetch("tx_#{hcb_code.hcb_code}/card_grant", expires_in: 12.hours) { hcb_code.card_grant? } %>
       <% details_link = card_grant ? spending_card_grant_path(hcb_code.outgoing_disbursement.card_grant) : url_for(hcb_code) %>
-      <% modal = card_grant ? "card_grant_details_#{ledger_instance}" : "transaction_details_#{ledger_instance}" %>
+      <% memo_popover_attrs = card_grant ?
+          card_grant_popover_data(hcb_code.outgoing_disbursement.card_grant, hcb_code: hcb_code, event: @event) :
+          hcb_code_popover_data(hcb_code, event: @event, ledger_instance: ledger_instance) %>
       <% contents = capture do %>
         <span class="<%= "renamed" if renamed %>"
               data-controller="navigation"
@@ -52,7 +54,7 @@
             </span>
         </span>
       <% end %>
-      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && !@force_no_popover ? { turbo_frame: "_top", behavior: "modal_trigger", modal: } : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
+      <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: popovers_enabled? && !@force_no_popover ? memo_popover_attrs : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
         <%= render "hcb_codes/memo_stream", hcb_code: %>
       <% end %>
