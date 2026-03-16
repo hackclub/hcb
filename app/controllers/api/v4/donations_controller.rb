@@ -32,6 +32,26 @@ module Api
         render "show", status: :created
       end
 
+      def payment_intent
+        amount = params[:amount_cents]
+        if params[:fee_covered] && @event.config.cover_donation_fees
+          amount /= (1 - @event.revenue_fee).ceil
+        end
+
+        payment_intent = StripeService::PaymentIntent.create({
+                                                               amount:,
+                                                               currency: "usd",
+                                                               paymentMethodTypes: ["card_present"],
+                                                               offlineBehavior: "prefer_online",
+                                                               captureMethod: "automatic",
+                                                               statement_descriptor: "HCB",
+                                                               statement_descriptor_suffix: StripeService::StatementDescriptor.format(@event.short_name, as: :suffix),
+                                                               metadata: { donation: true, event_id: @event.id },
+                                                             })
+
+        render json: { payment_intent_id: payment_intent.id }, status: :created
+      end
+
     end
   end
 end
