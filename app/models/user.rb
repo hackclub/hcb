@@ -593,7 +593,25 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
   private
+
+  def accessible_events(roles:)
+    flatten = lambda do |nodes|
+      nodes.flat_map do |node|
+        [(node.event if node.role.in?(roles))].compact + flatten.call(node.child_nodes)
+      end
+    end
+
+    flatten.call User::PermissionsOverview.new(user: self).event_graph
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
