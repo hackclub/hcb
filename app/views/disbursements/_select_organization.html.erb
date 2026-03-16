@@ -7,6 +7,10 @@
     <option <%= "default" if default_event.present? %> value="<%= (admin_signed_in? ? default_event.id : default_event.public_id) if default_event.present? %>"><%= default_event.name if default_event.present? %></option>
   </select>
 
+  <% if receiving %>
+    <input type="checkbox" name="receiving_other" data-organization-select-target="otherCheckbox" class="hidden">
+  <% end %>
+
   <div data-organization-select-target="wrapper" style="max-width: 384px;">
     <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
 
