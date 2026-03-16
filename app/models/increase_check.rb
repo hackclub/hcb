@@ -250,10 +250,6 @@ class IncreaseCheck < ApplicationRecord
     column_issued? || column_manual_review?
   end
 
-  def can_reissue?
-    !(column_pending_deposit? || column_settled?)
-  end
-
   def address
     "#{address_line1} #{address_line2} - #{address_city}, #{address_state} #{address_zip}"
   end
@@ -284,22 +280,6 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    # do we want to allow reissuing if outbound checks arent settled but cant be stopped (ex initiated status)?
-    return if column_id.nil? || !can_reissue?
-
-    stopped_id = column_id
-
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") if can_stop?
-
-    update!(
-      column_id: nil,
-      column_object: nil,
-      check_number: nil,
-      column_status: nil,
-      column_delivery_status: nil,
-    )
-
-    send_column!("reissue_#{stopped_id}")
   end
 
   private
