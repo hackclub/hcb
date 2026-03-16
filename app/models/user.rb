@@ -594,6 +594,10 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def reimbursement_event_options
+    (events.not_demo_mode.pluck(:name, :id) + reimbursement_events.where(public_reimbursement_page_enabled: true).pluck(:name, :id)).uniq { |name, id| id }
+  end
+
   private
 
   def update_stripe_cardholder
