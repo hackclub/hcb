@@ -131,6 +131,7 @@ class User < ApplicationRecord
   has_many :checks, inverse_of: :creator
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+  has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
@@ -597,7 +598,29 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  def reimbursement_event_options
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
   private
+
+  def accessible_events(roles:)
+    flatten = lambda do |nodes|
+      nodes.flat_map do |node|
+        [(node.event if node.role.in?(roles))].compact + flatten.call(node.child_nodes)
+      end
+    end
+
+    flatten.call User::PermissionsOverview.new(user: self).event_graph
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
