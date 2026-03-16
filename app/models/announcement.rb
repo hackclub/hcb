@@ -5,7 +5,7 @@
 # Table name: announcements
 #
 #  id            :bigint           not null, primary key
-#  aasm_state    :string
+#  aasm_state    :string           not null
 #  content       :jsonb            not null
 #  deleted_at    :datetime
 #  published_at  :datetime
