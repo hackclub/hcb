@@ -4,7 +4,7 @@ require "digest/md5"
 require "cgi"
 
 module UsersHelper
-  def users_mobile_nav(selected: nil)
+  def users_nav(selected: nil)
     items = [
       {
         name: "Home",

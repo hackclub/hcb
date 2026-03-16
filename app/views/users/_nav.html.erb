@@ -1,6 +1,5 @@
-<%= render "users/mobile_nav", selected: local_assigns[:selected] %>
 <% content_for(:header) do %>
-  <div class="flex items-center gap-3 lg:mb-2 lg:pt-4">
+  <div class="flex items-center gap-3 mb-2 pt-4">
     <%= render partial: "logo" %>
     <h3 class="my-0">HCB</h3>
   </div>
@@ -23,7 +22,7 @@
   </div>
 
   <nav class="dock font-medium mt1">
-    <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
+    <% users_nav(selected: local_assigns[:selected]).each do |item| %>
       <%= dock_item item[:name],
         item[:path],
         tooltip: item[:tooltip],
