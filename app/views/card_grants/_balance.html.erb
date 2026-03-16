@@ -7,7 +7,7 @@
   </div>
   <i class="muted">
     <% if card_grant.reimbursement_report.present? %>
-      Any refunds after cancelation will be transferred to the organization and not automatically added to your reimbursement.
+      Refunds received after cancelation will be sent to <%= card_grant.event.name %>. The funds will not automatically be contributed to your reimbursement report cap.
     <% else %>
       Any refunds after cancelation will be transferred to the organization.
     <% end %>
