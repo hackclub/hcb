@@ -5,8 +5,8 @@ class LoginsController < ApplicationController
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
   before_action :set_for_application
-  before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
+  before_action :set_user, except: [:new, :create, :reauthenticate]
   invisible_captcha only: [:create, :complete], honeypot: :remember_me
 
   layout ->{ @for_application ? "apply" : "login" }
@@ -18,7 +18,6 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
-    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
@@ -29,27 +28,29 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    user = User.create_with(creation_method: @for_application ? :application_form : :login).find_or_create_by!(email: params[:email])
+    user = User.create_with(creation_method: params[:for_application] ? :application_form : :login).find_or_create_by!(email: params[:email])
 
+    state = { return_to: params[:return_to], for_application: params[:for_application] }
     if params[:referral_link_id].present?
       referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
-      login = user.logins.create(referral_link:)
+      login = user.logins.create(referral_link:, state:)
     else
-      login = user.logins.create
+      login = user.logins.create(state:)
     end
 
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
 
     has_webauthn_enabled = user&.webauthn_credentials&.any?
-    login_preference = session[:login_preference]
 
-    if login_preference == "totp"
-      redirect_to totp_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
-    elsif !has_webauthn_enabled || login_preference == "email" || login_preference == "sms"
-      redirect_to login_code_login_path(login, return_to: params[:return_to]), status: :temporary_redirect
+    if login_preference(user:) == "totp" && login.totp_available?
+      redirect_to totp_login_path(login), status: :temporary_redirect
+    elsif login_preference(user:) == "email" || login_preference(user:).nil?
+      redirect_to email_login_path(login), status: :temporary_redirect
+    elsif login_preference(user:) == "sms" && login.sms_available?
+      redirect_to sms_login_path(login), status: :temporary_redirect
     else
       session[:auth_email] = login.user.email
-      redirect_to choose_login_preference_login_path(login, return_to: params[:return_to])
+      redirect_to choose_login_preference_login_path(login)
     end
   rescue => e
     flash[:error] = e.message
@@ -65,17 +66,12 @@ class LoginsController < ApplicationController
 
   # post to set preference
   def set_login_preference
-    remember = params[:remember] == "1"
-
     case params[:login_preference]
     when "email"
-      session[:login_preference] = "email" if remember
-      redirect_to login_code_login_path(@login), status: :temporary_redirect
+      redirect_to email_login_path(@login), status: :temporary_redirect
     when "sms"
-      session[:login_preference] = "sms" if remember
-      redirect_to login_code_login_path(@login), status: :temporary_redirect
+      redirect_to sms_login_path(@login), status: :temporary_redirect
     when "totp"
-      session[:login_preference] = "totp" if remember
       redirect_to totp_login_path(@login), status: :temporary_redirect
     when "webauthn"
       # This should never happen, because WebAuthn auth is handled on the frontend
@@ -83,8 +79,25 @@ class LoginsController < ApplicationController
     end
   end
 
-  # post to request login code
-  def login_code
+  # post to request email login code
+  def email
+    resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
+
+    @use_sms_auth = false
+
+    if resp[:error].present?
+      flash[:error] = resp[:error]
+      return redirect_to auth_users_path
+    end
+
+    render status: :unprocessable_entity
+  rescue ActionController::ParameterMissing
+    flash[:error] = "Please enter an email address."
+    redirect_to auth_users_path
+  end
+
+  # post to request sms login code
+  def sms
     initialize_sms_params
 
     resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.remote_ip, user_agent: request.user_agent).run
@@ -97,7 +110,6 @@ class LoginsController < ApplicationController
     end
 
     render status: :unprocessable_entity
-
   rescue ActionController::ParameterMissing
     flash[:error] = "Please enter an email address."
     redirect_to auth_users_path
@@ -128,16 +140,27 @@ class LoginsController < ApplicationController
         redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
         return
       end
-    when "login_code"
+    when "sms"
       ok = service.process_login_code(
         code: params[:login_code],
-        sms: ActiveRecord::Type::Boolean.new.cast(params[:sms])
+        sms: true
       )
 
       unless ok
         initialize_sms_params
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:login_code, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_entity)
+        return
+      end
+    when "email"
+      ok = service.process_login_code(
+        code: params[:login_code],
+        sms: false
+      )
+
+      unless ok
+        flash.now[:error] = service.errors.full_messages.to_sentence
+        render(:email, status: :unprocessable_entity)
         return
       end
     when "totp"
@@ -169,11 +192,11 @@ class LoginsController < ApplicationController
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@for_application
-        redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
+        redirect_to edit_user_path(@user.slug, return_to: @return_to)
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        return_path = params[:return_to]
+        return_path = @return_to
         if return_path.present?
           begin
             route = Rails.application.routes.recognize_path(return_path)
@@ -190,12 +213,16 @@ class LoginsController < ApplicationController
         end
       end
     else
-      if @login.sms_available? || @login.email_available?
-        redirect_to login_code_login_path(@login), status: :temporary_redirect
-      elsif @login.totp_available?
+      if @login.sms_available? && login_preference == "sms"
+        redirect_to sms_login_path(@login), status: :temporary_redirect
+      elsif @login.email_available? && login_preference == "email"
+        redirect_to email_login_path(@login), status: :temporary_redirect
+      elsif @login.totp_available? && login_preference == "totp"
         redirect_to totp_login_path(@login), status: :temporary_redirect
+      elsif @login.webauthn_available? && login_preference == "webauthn"
+        redirect_to security_key_login_path(@login), status: :temporary_redirect
       else
-        redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
+        redirect_to choose_login_preference_login_path(@login)
       end
     end
   rescue SessionsHelper::AccountLockedError => e
@@ -205,17 +232,25 @@ class LoginsController < ApplicationController
   def reauthenticate
     return unless enforce_sudo_mode
 
-    redirect_to(@return_to || root_path)
+    redirect_to(url_from(params[:return_to]) || root_path)
   end
 
   private
 
-  def set_for_application
-    path = URI(params[:return_to] || "").path
+  def login_preference(user: @user)
+    return user.preferred_login_methods.first unless @login.present?
 
-    @for_application = path.starts_with?("/applications")
-  rescue URI::InvalidURIError
-    @for_application = false
+    authentication_factors = @login.authentication_factors&.filter_map { |key, value| key if value } || []
+
+    (user.preferred_login_methods - authentication_factors).first
+  end
+
+  def set_for_application
+    @for_application = @login&.state&.[]("for_application") || ActiveModel::Type::Boolean.new.cast(params[:for_application])
+  end
+
+  def set_return_to
+    @return_to = @login&.state&.[]("return_to") || url_from(params[:return_to])
   end
 
   def set_login
@@ -247,10 +282,6 @@ class LoginsController < ApplicationController
     @email = @login.user.email
   end
 
-  def set_return_to
-    @return_to = params[:return_to]
-  end
-
   def fingerprint_info
     {
       fingerprint: params[:fingerprint],
@@ -263,9 +294,8 @@ class LoginsController < ApplicationController
 
   def initialize_sms_params
     return if @login.authenticated_with_sms
-    return if session[:login_preference] == "email" && !@login.authenticated_with_email
 
-    if @login.user&.use_sms_auth || (@login.user&.phone_number_verified && (@login.authenticated_with_email || session[:login_preference] == "sms"))
+    if @login.user&.use_sms_auth || @login.user&.phone_number_verified
       @use_sms_auth = true
       @phone_last_four = @login.user.phone_number.last(4)
     end

@@ -195,11 +195,15 @@ Rails.application.routes.draw do
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
       # Request a login code
-      post "login_code"
+      post "email"
+      post "sms"
 
       # TOTP
       get "totp"
       post "totp"
+
+      get "security_key"
+      post "security_key"
 
       get "backup_code"
       post "backup_code"

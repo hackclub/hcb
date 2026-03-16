@@ -579,6 +579,10 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    logins.complete.last&.authentication_factors&.filter_map { |key, value| key if value } || []
+  end
+
   def only_draft_application?
     return false unless events.none? && card_grants.none? &&
                         organizer_position_invites.none? && contracts.none? &&
