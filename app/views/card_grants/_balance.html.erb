@@ -1,8 +1,15 @@
 <%# locals: (card_grant:) %>
 
-<div class="statset mb-2">
+<div class="statset mb-2 flex flex-col">
   <div class="stat">
     <span class="stat__label">Balance remaining</span>
     <span class="stat__value"><%= card_grant.balance.format(symbol: false) %></span>
   </div>
+  <i class="muted">
+    <% if card_grant.reimbursement_report.present? %>
+      Any refunds after cancelation will be transferred to the organization and not automatically added to your reimbursement.
+    <% else %>
+      Any refunds after cancelation will be transferred to the organization.
+    <% end %>
+  </i>
 </div>
