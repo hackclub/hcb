@@ -222,7 +222,7 @@ module Discord
 
       transactions = pending_transactions + settled_transactions
 
-      if transactions.length == 0
+      if transactions.empty?
         respond embeds: [
           {
             title: "Recent transactions for #{@current_event.name}",

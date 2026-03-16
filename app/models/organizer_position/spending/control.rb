@@ -62,7 +62,7 @@ class OrganizerPosition
       end
 
       def deactivate
-        if allowances.count == 0
+        if allowances.none?
           destroy
         else
           update active: false, ended_at: Time.current
