@@ -6,6 +6,13 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "date", default: true },
+    { key: "sponsors.name", display: "To" },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -55,7 +62,20 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc)
+    allowed_directions = %w[asc desc]
+    sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
+
+    sort_column =
+      case params[:sort]
+      when "created_at", "status", "amount_due"
+        params[:sort]
+      when "sponsor_name"
+        "sponsors.name"
+      else
+        "created_at"
+      end
+
+    @invoices = organizer_signed_in? ? relation.order(sort_column => sort_direction) : relation
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -63,6 +83,8 @@ class InvoicesController < ApplicationController
     @filter_options = filter_options
     helpers.validate_filter_options(@filter_options, params)
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
