@@ -226,12 +226,12 @@ class Invoice < ApplicationRecord
   end
 
   def deposited? # TODO move to aasm
-    canonical_transactions.count >= 2 || manually_marked_as_paid? || completed_deprecated?
+    deposited_v2? || canonical_transactions.count >= 2 || manually_marked_as_paid? || completed_deprecated?
   end
 
   def state
-    return :success if paid_v2? && deposited?
-    return :success if paid_v2? && event.can_front_balance?
+    return :success if paid_v2? && event.can_front_balance? # paid, and will be deposited soon
+    return :success if deposited?
     return :success if manually_marked_as_paid?
     return :info if paid_v2?
     return :error if void_v2?
@@ -244,7 +244,8 @@ class Invoice < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if paid_v2? && (event.can_front_balance? || deposited?)
+    return "Deposited" if paid_v2? && event.can_front_balance? # paid, and will be deposited soon
+    return "Deposited" if deposited?
     return "In Transit" if paid_v2?
     return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
