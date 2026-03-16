@@ -72,7 +72,7 @@ RSpec.describe Api::V4::CardGrantsController do
           "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
-          "expires_on"                 => card_grant.expires_on.iso8601(3),
+          "expires_on"                 => card_grant.expiration_at.iso8601,
           "disbursements"              => [
             {
               "id"                      => disbursement.public_id,
