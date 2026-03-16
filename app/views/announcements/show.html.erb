@@ -7,68 +7,73 @@
 <%= render "events/nav", selected: :announcements %>
 
 <% show_blocks_callout = !@announcement.published? && @announcement.blocks.any? %>
-
 <h1 class="heading">
   <span class="flex flex-grow items-center"><%= heading %></span>
 </h1>
 
-<% if editing %>
-  <% if @announcement.published? %>
-    <p class="font-bold">This announcement has already been published and delivered to followers' emails. New edits will not reflect in the emails.</p>
-  <% end %>
-
-  <% if @announcement.template_draft? %>
-    <p class="font-bold">This draft announcement was created by HCB - edit it and add any details before publishing!</p>
-  <% end %>
-<% end %>
-
-<div class="flex justify-between items-center <%= "pb-4" unless show_blocks_callout %>">
-  <p class="italic my-0">
-    <%= @announcement.published? ? "Published" : "Drafted" %> by <%= user_mention @announcement.author %> on <%= (@announcement.draft? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
-  </p>
-
-  <div class="flex gap-2">
-    <% unless editing %>
-      <% if @announcement.draft? && (policy(@announcement).publish? || auditor_signed_in?) %>
-        <%= link_to publish_announcement_path(@announcement), class: "btn flex items-center bg-success #{"disabled" if !policy(@announcement).publish?}", data: { turbo_confirm: "Are you sure you would like to publish this announcement and notify #{@event.followers.size} #{"follower".pluralize(@event.followers.size)}?", turbo_method: :post } do %>
-          <%= inline_icon "send" %>
-          Publish
-        <% end %>
-      <% end %>
-
-      <% if policy(@announcement).edit? || auditor_signed_in? %>
-        <%= link_to edit_announcement_path(@announcement), class: "btn flex items-center #{"disabled" if !policy(@announcement).edit?}", target: "post_editor" do %>
-          <%= inline_icon "edit" %>
-          Edit
-        <% end %>
-      <% end %>
-
-      <% if policy(@announcement).destroy? || auditor_signed_in? %>
-        <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
-          <%= inline_icon "delete" %>
-          Delete
-        <% end %>
-      <% end %>
-    <% end %>
+<% if @announcement.deleted? %>
+  <div class="card mt-4">
+    <p class="muted italic">This announcement has been deleted.</p>
   </div>
-</div>
-
-<% if show_blocks_callout %>
-  <%= render "callout", type: "info", title: "This announcement contains blocks", footer: :questions do %>
-    <ul>
-      <li>Blocks are sections of your announcement that automatically update with the latest data from HCB.</li>
-      <li>You can change block options by editing the announcement and clicking the blue edit icon in the top-right corner of any block.
-      <li>Add new blocks by selecting a block from the HCB dropdown menu when editing an announcement.</li>
-    </ul>
-  <% end %>
-<% end %>
-
-<%= turbo_frame_tag :post_editor do %>
+<% else %>
   <% if editing %>
-    <%= render partial: "announcements/announcement_form", locals: { announcement: @announcement } %>
-  <% else %>
-    <div class="card">
-      <%= render partial: "announcements/announcement_body", locals: { announcement: @announcement } %>
+    <% if @announcement.published? %>
+      <p class="font-bold">This announcement has already been published and delivered to followers' emails. New edits will not reflect in the emails.</p>
+    <% end %>
+
+    <% if @announcement.template_draft? %>
+      <p class="font-bold">This draft announcement was created by HCB - edit it and add any details before publishing!</p>
+    <% end %>
+  <% end %>
+
+  <div class="flex justify-between items-center <%= "pb-4" unless show_blocks_callout %>">
+    <p class="italic my-0">
+      <%= @announcement.published? ? "Published" : "Drafted" %> by <%= user_mention @announcement.author %> on <%= (@announcement.draft? ? @announcement.created_at : @announcement.published_at.presence || @announcement.created_at).strftime("%B %e, %Y") %>
+    </p>
+
+    <div class="flex gap-2">
+      <% unless editing %>
+        <% if @announcement.draft? && (policy(@announcement).publish? || auditor_signed_in?) %>
+          <%= link_to publish_announcement_path(@announcement), class: "btn flex items-center bg-success #{"disabled" if !policy(@announcement).publish?}", data: { turbo_confirm: "Are you sure you would like to publish this announcement and notify #{@event.followers.size} #{"follower".pluralize(@event.followers.size)}?", turbo_method: :post } do %>
+            <%= inline_icon "send" %>
+            Publish
+          <% end %>
+        <% end %>
+
+        <% if policy(@announcement).edit? || auditor_signed_in? %>
+          <%= link_to edit_announcement_path(@announcement), class: "btn flex items-center #{"disabled" if !policy(@announcement).edit?}", target: "post_editor" do %>
+            <%= inline_icon "edit" %>
+            Edit
+          <% end %>
+        <% end %>
+
+        <% if policy(@announcement).destroy? || auditor_signed_in? %>
+          <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
+            <%= inline_icon "delete" %>
+            Delete
+          <% end %>
+        <% end %>
+      <% end %>
     </div>
+  </div>
+
+  <% if show_blocks_callout %>
+    <%= render "callout", type: "info", title: "This announcement contains blocks", footer: :questions do %>
+      <ul>
+        <li>Blocks are sections of your announcement that automatically update with the latest data from HCB.</li>
+        <li>You can change block options by editing the announcement and clicking the blue edit icon in the top-right corner of any block.
+        <li>Add new blocks by selecting a block from the HCB dropdown menu when editing an announcement.</li>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <%= turbo_frame_tag :post_editor do %>
+    <% if editing %>
+      <%= render partial: "announcements/announcement_form", locals: { announcement: @announcement } %>
+    <% else %>
+      <div class="card">
+        <%= render partial: "announcements/announcement_body", locals: { announcement: @announcement } %>
+      </div>
+    <% end %>
   <% end %>
 <% end %>
