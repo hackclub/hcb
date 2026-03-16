@@ -175,6 +175,7 @@ window.attachTooltipListener = () => {
   let mutationObserver = null
 
   const removeTooltips = () => {
+    if (!tooltip) return
     tooltip.className = ''
     // Stop observing when tooltip is closed
     if (mutationObserver) {

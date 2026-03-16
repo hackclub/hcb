@@ -381,17 +381,14 @@ class AdminController < Admin::BaseController
   end
 
   def event_search
-    @q = params[:q].presence
-    base_url = params[:base_url].presence
-    @selected_event_id = params[:selected_event_id].presence
-    events = if @q
-                Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name)
-             elsif @selected_event_id
-                Event.where(id: @selected_event_id).order(:name)
+    @q = params[:q]
+    @events = if @q
+
+                Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name).limit(20).select(:id, :name)
               else
                 Event.none
               end
-    render partial: "admin/event_search/list", locals: { base_url:, events:, selected_event_id: @selected_event_id }
+    render turbo_stream: helpers.async_combobox_options(@events)
   end
 
   def user_search

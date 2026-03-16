@@ -5,8 +5,7 @@
     <%= render "events/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-[200px]" %>
     <div class="flex shrink-0 gap-2">
-        <%= render partial: "admin/user_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, user_id: @user_id } %>
-        <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
+        <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !m-0" %>
     </div>
   </div>
 
@@ -94,8 +93,7 @@
   <% end %>
 
   <div class="flex mt-2 gap-2 items-center justify-end">
-      <%= render partial: "admin/event_search/menu", locals: { base_url: ledger_admin_index_path(request.query_parameters), form: form, event_id: @event_id } %>
-      <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { prompt: "Select an Organization" }, { required: true, width: 300, style: "max-width: 300px;" }) %>
+      <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !w-56" %>
       <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
   </div>
 <% end %>
