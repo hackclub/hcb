@@ -118,7 +118,7 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          update!(teen_led: user.is_teenager?)
+          update!(teen_led: user.is_teenager?, archived_at: nil)
 
           if teen_led?
             send_contract
@@ -325,6 +325,7 @@ class Event
 
     def activate_event!(risk_level:, tags: [])
       contract.party(:hcb).sync_with_docuseal
+      contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
 
       self.with_lock do
@@ -365,6 +366,12 @@ class Event
       contract&.mark_voided! if contract&.may_mark_voided?
 
       update!(archived_at: Time.current)
+    end
+
+    def unarchive!
+      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+
+      update!(archived_at: nil)
     end
 
     def archived?

@@ -74,7 +74,7 @@
       <%= form.hidden_field :email, value: current_user.email %>
 
       <%= form.label :event_id, "Organization", class: "mt1 bold" %>
-      <%= form.select :event_id, current_user.events.not_demo_mode.pluck(:name, :id) %>
+      <%= form.select(:event_id, current_user.reimbursement_event_options) %>
 
       <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
         <%= form.label :currency, "Currency", class: "mt-4 bold" %>

@@ -66,7 +66,8 @@ module Api
         balance_by_date = balance_by_date.dup
         balance_by_date[Date.today] = @event.balance_v2_cents
 
-        @balance_series = balance_by_date.sort.map { |date, amount| { date: date.to_s, amount: } }
+        start_date = [@event.created_at.to_date, 1.year.ago.to_date].max
+        @balance_series = balance_by_date.sort.filter_map { |date, amount| { date: date.to_s, amount: } if date >= start_date }
       end
 
       require_oauth2_scope "organizations:read", :balance_by_date
