@@ -144,7 +144,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def new_transfer?
-    auditor_or_reader? && !record.demo_mode?
+    admin_or_manager? && !record.demo_mode?
   end
 
   def g_suite_overview?
