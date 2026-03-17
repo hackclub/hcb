@@ -369,8 +369,8 @@ class AdminController < Admin::BaseController
     relation = relation.mapped_by_human if @mapped_by_human
 
     if @user_id
-      user = User.find(@user_id)
-      sch_sid = user&.stripe_cardholder&.stripe_id
+      @user = User.find(@user_id)
+      sch_sid = @user&.stripe_cardholder&.stripe_id
       relation = relation.stripe_transaction
                          .where("raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", sch_sid)
     end
@@ -393,9 +393,9 @@ class AdminController < Admin::BaseController
   def user_search
     @q = params[:q]
     @users = if @q
-              User.search_name(@q).order(:full_name).limit(20).select(:id, :full_name, :email)
+              User.where("full_name ILIKE ? OR email ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%").order(:full_name).limit(20).select(:id, :full_name, :email)
              else
-               User.none
+              User.none
              end
     render turbo_stream: helpers.async_combobox_options(@users)
   end
