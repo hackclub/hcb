@@ -405,6 +405,10 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
+  def card_locking_violations
+    transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 72.hours.ago)
+  end
+
   def build_payout_method(params)
     return unless payout_method_type
 

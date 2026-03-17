@@ -9,9 +9,9 @@
 </h1>
 
 <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted"), footer: :questions do %>
+  <%= render "application/callout", type: "info", title: "Card locking" do %>
     <p>
-      Starting Monday, June 16th, 2025, HCB will beta test locking cards for users who have more than 10 missing receipts at any given time. Receipts before this beta period do not count towards the limit, though they still need to be submitted. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
+      Every receipt must be uploaded within 72 hours of the charge settling. If any receipts are overdue past this deadline, your cards will be locked until they are uploaded. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
     </p>
   <% end %>
 <% end %>
@@ -79,7 +79,9 @@
   Transactions
   <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
     <%= badge_for("#{@count} missing receipts") %>
-    <%= badge_for("#{@locking_count} / 10") %>
+    <% if @violation_count > 0 %>
+      <%= badge_for("#{@violation_count} overdue", class: "bg-error") %>
+    <% end %>
   <% else %>
     <%= badge_for(@count) %>
   <% end %>

@@ -38,9 +38,10 @@ class StripeController < ActionController::Base
 
     if approved
       user = service.card.user
-      ::User::UpdateCardLockingJob.set(wait: 24.hours + 1.minute).perform_later(user:)
-      ::User::SendCardLockingNotificationJob.perform_later(user:, event: service.card.event)
-      ::User::SendCardLockingNotificationJob.set(wait: 24.hours).perform_later(user:, event: service.card.event)
+      event = service.card.event
+      ::User::SendCardLockingNotificationJob.set(wait: 48.hours).perform_later(user:, event:)
+      ::User::SendCardLockingNotificationJob.set(wait: 71.hours).perform_later(user:, event:)
+      ::User::UpdateCardLockingJob.set(wait: 72.hours + 1.minute).perform_later(user:)
     end
 
     response.set_header "Stripe-Version", "2022-08-01"

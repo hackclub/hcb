@@ -194,7 +194,7 @@ user_seen_at_history_snapshot_job:
   class: "User::SeenAtHistory::SnapshotJob"
 
 user_update_card_locking_recurring:
-  cron: "*/5 * * * *" # Every 5 minutes
+  cron: "0 * * * *" # Every hour
   class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:

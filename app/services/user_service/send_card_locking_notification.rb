@@ -8,22 +8,29 @@ module UserService
 
     def run
       return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
+      return if @user.cards_locked?
 
-      current_count = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
-      future_count = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE).count
+      # Transactions approaching the 72-hour deadline (between 47-49h old)
+      approaching_deadline = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 47.hours.ago)
+                                  .where("created_at >= ?", 49.hours.ago)
 
-      if current_count.in?([5, 7, 9])
+      # Transactions urgently near deadline (between 71-73h old)
+      urgent_deadline = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 71.hours.ago)
+                             .where("created_at >= ?", 73.hours.ago)
+
+      if urgent_deadline.any?
         CardLockingMailer.warning(user: @user).deliver_later
 
         if @user.phone_number.present? && @user.phone_number_verified?
-          message = "You now have #{current_count} transactions missing receipts from more than a day ago. If you have ten or more missing receipts, your cards will be locked. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+          message = "Urgent: You have #{urgent_deadline.count} #{"receipt".pluralize(urgent_deadline.count)} due within the next hour. Your cards will be locked if receipts are not uploaded within the 72-hour deadline. Upload at #{Rails.application.routes.url_helpers.my_inbox_url}."
 
           TwilioMessageService::Send.new(@user, message).run!
         end
+      elsif approaching_deadline.any?
+        CardLockingMailer.warning(user: @user).deliver_later
 
-      elsif future_count >= 10
         if @user.phone_number.present? && @user.phone_number_verified?
-          message = "You have ten or more transactions missing receipts. In the next twenty-four hours, your cards will be locked unless receipts are uploaded for these transactions. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+          message = "Reminder: You have #{approaching_deadline.count} #{"transaction".pluralize(approaching_deadline.count)} with receipts due in the next 24 hours. Upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url} to avoid having your cards locked."
 
           TwilioMessageService::Send.new(@user, message).run!
         end

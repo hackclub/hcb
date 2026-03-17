@@ -9,13 +9,15 @@ module UserService
     def run
       return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
 
-      count = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
+      violations = @user.card_locking_violations
+      violation_count = violations.count
 
-      cards_should_lock = count >= 10
+      cards_should_lock = violation_count > 0
+
       if cards_should_lock && !@user.cards_locked?
         CardLockingMailer.cards_locked(user: @user).deliver_later
 
-        message = "Urgent: Your HCB cards have been locked because you have #{count} transactions missing receipts. To unlock your cards, upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+        message = "Urgent: Your HCB cards have been locked because you have #{violation_count} #{"receipt".pluralize(violation_count)} overdue past the 72-hour deadline. Upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
 
         TwilioMessageService::Send.new(@user, message).run!
       end
