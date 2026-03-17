@@ -848,6 +848,14 @@ form:has(> #admin-logout-button) {
 @tailwind components;
 @tailwind utilities;
 
+.combobox-wrapper {
+  @apply flex flex-col sm:flex-row shrink-0 gap-2 -mt-1 w-full;
+
+  @media (max-width: 30rem) {
+    width: unset;
+  }
+}
+
 :root {
   --hw-active-bg-color: #f3f4f6;
   --hw-border-color: #d1d5db;
