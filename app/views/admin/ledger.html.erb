@@ -4,8 +4,8 @@
   <div class="flex items-center mt-1 gap-2">
     <%= render "events/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-[200px]" %>
-    <div class="flex shrink-0 gap-2">
-        <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !m-0" %>
+    <div class="flex shrink-0 gap-2 -mt-1">
+        <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full" %>
     </div>
   </div>
 
