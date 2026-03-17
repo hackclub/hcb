@@ -353,6 +353,8 @@ Rails.application.routes.draw do
       member do
         post "resend"
         get "completed"
+        get "video1"
+        get "video2"
       end
     end
   end

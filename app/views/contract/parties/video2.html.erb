@@ -1,0 +1,22 @@
+<% title "Rules & Regulations – Video 2" %>
+
+<div class="grid md:grid-cols-2 gap-6 mt-4">
+  <div class="flex flex-col justify-center gap-4">
+    <h2 class="m-0">Rules &amp; Regulations – Video 2</h2>
+    <p>This video covers HCB's rules and regulations that apply to your project. Please watch it carefully before signing the agreement.</p>
+    <%= link_to "Schedule a call with the onboarding team", "https://hack.club/hcb-onboarding-call", class: "btn", target: "_blank", rel: "noopener noreferrer" %>
+  </div>
+  <div class="aspect-video w-full">
+    <iframe
+      class="w-full h-full rounded-md"
+      src="https://www.youtube-nocookie.com/embed/LMh9FCm8iIE"
+      title="HCB Onboarding – Rules & Regulations"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<div class="mt-6 flex justify-end">
+  <%= link_to "Continue to sign the agreement →", contract_party_path(@party), class: "btn" %>
+</div>

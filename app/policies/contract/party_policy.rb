@@ -17,6 +17,8 @@ class Contract
     end
 
     alias_method :completed?, :show?
+    alias_method :video1?, :show?
+    alias_method :video2?, :show?
 
   end
 

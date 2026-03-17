@@ -1,0 +1,22 @@
+<% title "Introduction – Video 1" %>
+
+<div class="grid md:grid-cols-2 gap-6 mt-4">
+  <div class="flex flex-col justify-center gap-4">
+    <h2 class="m-0">Introduction – Video 1</h2>
+    <p>Before signing your HCB agreement, please watch this short introduction video. It covers the basics of HCB and what to expect.</p>
+    <%= link_to "Schedule a call with the onboarding team", "https://hack.club/hcb-onboarding-call", class: "btn", target: "_blank", rel: "noopener noreferrer" %>
+  </div>
+  <div class="aspect-video w-full">
+    <iframe
+      class="w-full h-full rounded-md"
+      src="https://www.youtube-nocookie.com/embed/Ucz-QT2GPOk"
+      title="HCB Onboarding – Introduction"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
+
+<div class="mt-6 flex justify-end">
+  <%= link_to "Next: Rules & Regulations →", video2_contract_party_path(@party), class: "btn" %>
+</div>

@@ -3,7 +3,7 @@
 class Contract
   class PartiesController < ApplicationController
     before_action :set_party
-    skip_before_action :signed_in_user, only: [:show, :completed]
+    skip_before_action :signed_in_user, only: [:show, :completed, :video1, :video2]
 
     def show
       begin
@@ -29,7 +29,50 @@ class Contract
         Rails.error.unexpected("Contract not sent, but user is trying to sign it. Party ID: #{@party.id}")
         redirect_to root_path
         return
+      elsif @contract.include_videos? && !@party.hcb? && !session["contract_videos_watched_#{@party.id}"]
+        redirect_to video1_contract_party_path(@party)
+        return
       end
+    end
+
+    def video1
+      begin
+        authorize @party
+      rescue Pundit::NotAuthorizedError
+        if signed_in?
+          raise
+        else
+          skip_authorization
+          return redirect_to auth_users_path(return_to: video1_contract_party_path(@party)), flash: { info: "To continue, please sign in with the email that you received the invitation with." }
+        end
+      end
+
+      if @contract.voided?
+        flash[:error] = "This contract has been voided."
+        redirect_to @contract.redirect_path
+        return
+      end
+    end
+
+    def video2
+      begin
+        authorize @party
+      rescue Pundit::NotAuthorizedError
+        if signed_in?
+          raise
+        else
+          skip_authorization
+          return redirect_to auth_users_path(return_to: video2_contract_party_path(@party)), flash: { info: "To continue, please sign in with the email that you received the invitation with." }
+        end
+      end
+
+      if @contract.voided?
+        flash[:error] = "This contract has been voided."
+        redirect_to @contract.redirect_path
+        return
+      end
+
+      session["contract_videos_watched_#{@party.id}"] = true
     end
 
     def resend
