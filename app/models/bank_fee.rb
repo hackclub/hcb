@@ -50,16 +50,10 @@ class BankFee < ApplicationRecord
     state :settled
 
     event :mark_in_transit do
-      after do
-        create_activity(key: "bank_fee.in_transit", owner: nil, recipient: event)
-      end
       transitions from: :pending, to: :in_transit
     end
 
     event :mark_settled do
-      after do
-        create_activity(key: "bank_fee.settled", owner: nil, recipient: event)
-      end
       transitions from: :in_transit, to: :settled
     end
   end
