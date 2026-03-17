@@ -593,6 +593,7 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  # both to_combobox_display and id are used for comboboxes
   def to_combobox_display
     "#{full_name} (Email: #{email}, ID: #{id})"
   end
