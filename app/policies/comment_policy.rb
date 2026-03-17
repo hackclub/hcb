@@ -42,13 +42,13 @@ class CommentPolicy < ApplicationPolicy
     user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
-  private
 
   def users
     user_list = []
 
     if record.commentable.respond_to?(:events)
       user_list = record.commentable.events.collect(&:users).flatten
+      user_list = record.commentable.events.collect(&:ancestor_users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
       user_list = [record.commentable.user]
 
