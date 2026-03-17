@@ -37,7 +37,10 @@ class Login < ApplicationRecord
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, :backup_code, prefix: :authenticated_with
+  AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code]
+  store_accessor :authentication_factors, *AUTHENTICATION_FACTORS, prefix: :authenticated_with
+  
+  store_accessor :state, :return_to, :purpose
 
   EXPIRATION = 15.minutes
 

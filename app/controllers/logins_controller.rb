@@ -28,30 +28,21 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    user = User.create_with(creation_method: params[:for_application] ? :application_form : :login).find_or_create_by!(email: params[:email])
-
+    @user = User.create_with(creation_method: params[:for_application] ? :application_form : :login).find_or_create_by!(email: params[:email])
+    
+    referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence if params[:referral_link_id].present?
     state = { return_to: params[:return_to], for_application: params[:for_application] }
-    if params[:referral_link_id].present?
-      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
-      login = user.logins.create(referral_link:, state:)
-    else
-      login = user.logins.create(state:)
+
+    @login = @user.logins.create(referral_link:, state:)
+
+    cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
+
+    if @login.available_factors.none?
+      session[:auth_email] = @login.user.email
+      redirect_to choose_login_preference_login_path(@login) and return
     end
 
-    cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
-
-    has_webauthn_enabled = user&.webauthn_credentials&.any?
-
-    if login_preference(user:) == "totp" && login.totp_available?
-      redirect_to totp_login_path(login), status: :temporary_redirect
-    elsif login_preference(user:) == "email" || login_preference(user:).nil?
-      redirect_to email_login_path(login), status: :temporary_redirect
-    elsif login_preference(user:) == "sms" && login.sms_available?
-      redirect_to sms_login_path(login), status: :temporary_redirect
-    else
-      session[:auth_email] = login.user.email
-      redirect_to choose_login_preference_login_path(login)
-    end
+    continue_login(preference: login_preference || "email")
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
@@ -66,17 +57,7 @@ class LoginsController < ApplicationController
 
   # post to set preference
   def set_login_preference
-    case params[:login_preference]
-    when "email"
-      redirect_to email_login_path(@login), status: :temporary_redirect
-    when "sms"
-      redirect_to sms_login_path(@login), status: :temporary_redirect
-    when "totp"
-      redirect_to totp_login_path(@login), status: :temporary_redirect
-    when "webauthn"
-      # This should never happen, because WebAuthn auth is handled on the frontend
-      redirect_to choose_login_preference_login_path(@login)
-    end
+    continue_login(preference: params[:login_preference])
   end
 
   # post to request email login code
@@ -213,17 +194,7 @@ class LoginsController < ApplicationController
         end
       end
     else
-      if @login.sms_available? && login_preference == "sms"
-        redirect_to sms_login_path(@login), status: :temporary_redirect
-      elsif @login.email_available? && login_preference == "email"
-        redirect_to email_login_path(@login), status: :temporary_redirect
-      elsif @login.totp_available? && login_preference == "totp"
-        redirect_to totp_login_path(@login), status: :temporary_redirect
-      elsif @login.webauthn_available? && login_preference == "webauthn"
-        redirect_to security_key_login_path(@login), status: :temporary_redirect
-      else
-        redirect_to choose_login_preference_login_path(@login)
-      end
+      continue_login
     end
   rescue SessionsHelper::AccountLockedError => e
     redirect_to(auth_users_path, flash: { error: e.message })
@@ -237,12 +208,26 @@ class LoginsController < ApplicationController
 
   private
 
-  def login_preference(user: @user)
-    return user.preferred_login_methods.first unless @login.present?
+  def continue_login(preference: login_preference)
+    if @login.sms_available? && preference == "sms"
+      redirect_to sms_login_path(@login), status: :temporary_redirect
+    elsif @login.email_available? && preference == "email"
+      redirect_to email_login_path(@login), status: :temporary_redirect
+    elsif @login.totp_available? && preference == "totp"
+      redirect_to totp_login_path(@login), status: :temporary_redirect
+    elsif @login.webauthn_available? && preference == "webauthn"
+      redirect_to security_key_login_path(@login), status: :temporary_redirect
+    else
+      redirect_to choose_login_preference_login_path(@login)
+    end
+  end
+
+  def login_preference
+    return @user.preferred_login_methods.first unless @login.present?
 
     authentication_factors = @login.authentication_factors&.filter_map { |key, value| key if value } || []
 
-    (user.preferred_login_methods - authentication_factors).first
+    (@user.preferred_login_methods - authentication_factors).first
   end
 
   def set_for_application
