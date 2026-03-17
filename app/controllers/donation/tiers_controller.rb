@@ -26,7 +26,7 @@ class Donation
     end
 
     def set_index
-      tier = Donation::Tier.find_by(id: params[:id])
+      tier = Donation::Tier.find_by_hashid!(params[:id])
       return head status: :not_found unless tier
 
       authorize tier, :update?
