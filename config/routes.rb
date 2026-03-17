@@ -9,12 +9,12 @@ Rails.application.routes.draw do
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
-    mount Audits1984::Engine => "/console"
     mount Sidekiq::Web => "/sidekiq"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
   constraints AuditorConstraint do
+    mount Audits1984::Engine => "/console"
     mount Blazer::Engine, at: "blazer"
     mount SchemaEndpoint.instance => "/schema"
   end
@@ -692,6 +692,7 @@ Rails.application.routes.draw do
 
             get "transactions", to: "transactions#index"
             get :followers
+            get :balance_by_date
           end
         end
 
@@ -856,6 +857,7 @@ Rails.application.routes.draw do
         get "edit"
         post "submit"
         post "archive"
+        post "unarchive"
         post "admin_approve"
         post "admin_reject"
         post "admin_activate"
@@ -988,13 +990,12 @@ Rails.application.routes.draw do
 
         get "edit/overview", to: "card_grants#edit_overview"
         get "edit/usage_restrictions", to: "card_grants#edit_usage_restrictions"
+        get "edit/expiration", to: "card_grants#edit_expiration"
         get "edit/purpose", to: "card_grants#edit_purpose"
         get "edit/actions", to: "card_grants#edit_actions"
         get "edit/balance", to: "card_grants#edit_balance"
         get "edit/topup", to: "card_grants#edit_topup"
         get "edit/withdraw", to: "card_grants#edit_withdraw"
-
-
       end
     end
 

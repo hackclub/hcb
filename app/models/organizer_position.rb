@@ -12,9 +12,9 @@
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
-#  event_id                       :bigint
+#  event_id                       :bigint           not null
 #  fiscal_sponsorship_contract_id :bigint
-#  user_id                        :bigint
+#  user_id                        :bigint           not null
 #
 # Indexes
 #

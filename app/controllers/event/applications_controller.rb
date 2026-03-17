@@ -13,7 +13,9 @@ class Event
 
     def index
       skip_authorization
+
       @applications = current_user.applications.active
+      @referral_code = params[:ref]
     end
 
     def apply
@@ -22,14 +24,16 @@ class Event
       if signed_in? && current_user.applications.draft.one?
         redirect_to application_path(current_user.applications.draft.first)
       elsif signed_in? && current_user.applications.any?
-        redirect_to applications_path
+        redirect_to applications_path(ref: params[:ref])
       else
-        redirect_to new_application_path
+        redirect_to new_application_path(ref: params[:ref])
       end
     end
 
     def new
       skip_authorization
+
+      @referral_code = params[:ref]
     end
 
     def show
@@ -139,7 +143,7 @@ class Event
         redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -176,9 +180,9 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
       end
@@ -215,6 +219,14 @@ class Event
       flash[:success] = "Application archived"
 
       redirect_to applications_path
+    end
+
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
     end
 
     def resend_to_cosigner

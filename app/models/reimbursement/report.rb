@@ -58,6 +58,7 @@ module Reimbursement
     end
 
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
+    normalizes :name, with: ->(name) { name&.strip }
 
     belongs_to :inviter, class_name: "User", foreign_key: "invited_by_id", optional: true, inverse_of: :created_reimbursement_reports
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
@@ -314,7 +315,7 @@ module Reimbursement
     end
 
     def team_review_required?
-      !event.users.include?(user) || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
     def reimbursement_confirmation_message
