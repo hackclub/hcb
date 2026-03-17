@@ -593,6 +593,14 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
+  end
+
+  def value
+    id
+  end
+
   private
 
   def update_stripe_cardholder

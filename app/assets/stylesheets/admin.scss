@@ -951,24 +951,24 @@ form:has(> #admin-logout-button) {
 }
 
 .hw-combobox__listbox {
+  @apply shadow-md absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
+  visibility: hidden;
   border-color: transparent;
-  border-radius: var(--hw-border-radius);
   border-style: solid;
   border-width: var(--hw-border-width--slim);
-  left: 0;
   line-height: var(--hw-line-height);
   list-style: none;
-  margin: 0;
-  max-height: var(--hw-listbox-height);
-  overflow: auto;
-  padding: 0;
-  position: absolute;
   top: calc(100% + 0.2rem);
   width: 100%;
   z-index: var(--hw-listbox-z-index);
 
+  & li {
+    margin: 0 !important;
+  }
+
   &:has([role='option']:not([hidden])) {
     border-color: var(--hw-border-color);
+    visibility: visible !important;
   }
 }
 

@@ -383,7 +383,6 @@ class AdminController < Admin::BaseController
   def event_search
     @q = params[:q]
     @events = if @q
-
                 Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name).limit(20).select(:id, :name)
               else
                 Event.none
@@ -392,17 +391,13 @@ class AdminController < Admin::BaseController
   end
 
   def user_search
-    @q = params[:q].presence
-    base_url = params[:base_url].presence
-    @selected_user_id = params[:selected_user_id].presence
-    users = if @q
-              User.where("full_name ILIKE ? OR email ILIKE ?", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%").order(:full_name)
-            elsif @selected_user_id
-              User.where(id: @selected_user_id).order(:full_name)
-            else
-              User.none
-            end
-    render partial: "admin/user_search/list", locals: { base_url:, users:, selected_user_id: @selected_user_id }
+    @q = params[:q]
+    @users = if @q
+              User.search_name(@q).order(:full_name).limit(20).select(:id, :full_name, :email)
+             else
+               User.none
+             end
+    render turbo_stream: helpers.async_combobox_options(@users)
   end
 
   def pending_ledger

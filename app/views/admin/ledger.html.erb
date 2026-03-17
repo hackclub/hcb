@@ -1,10 +1,11 @@
 <% title "Ledger" %>
 
-<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card" do |form| %>
+<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card overflow-visible" do |form| %>
   <div class="flex items-center mt-1 gap-2">
     <%= render "events/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-[200px]" %>
     <div class="flex shrink-0 gap-2 -mt-1">
+        <%= combobox_tag "user_id", user_search_admin_index_path, placeholder: "User", class: "!max-w-full !w-56" %>
         <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full" %>
     </div>
   </div>
