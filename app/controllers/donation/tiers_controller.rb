@@ -6,7 +6,11 @@ class Donation
     include DonationPageSetup
 
     before_action :set_event, except: [:set_index]
+    skip_after_action :verify_authorized, only: [:index]
     skip_before_action :signed_in_user, only: [:start]
+    before_action :check_dark_param, only: [:start]
+    before_action :check_background_param, only: [:start]
+    before_action :hide_seasonal_decorations, only: [:start]
 
     def index
       @tiers = @event.donation_tiers
@@ -114,6 +118,23 @@ class Donation
     end
 
     private
+
+    def check_dark_param
+      if params[:dark].present? || cookies[:donation_dark]
+        @dark = true
+        cookies[:donation_dark] = true
+      end
+    end
+
+    def check_background_param
+      # because we're going to be injecting this value into a stylesheet,
+      # we ensure that it's a hex code to prevent: https://css-tricks.com/css-security-vulnerabilities/
+      @background = params[:background] unless (params[:background] =~ /\A[0-9a-fA-F]{6}\z/).nil?
+    end
+
+    def hide_seasonal_decorations
+      @hide_seasonal_decorations = true
+    end
 
     def tier_params(id)
       params

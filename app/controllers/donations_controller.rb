@@ -7,8 +7,8 @@ class DonationsController < ApplicationController
   include DonationPageSetup
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, only: [:qr_code, :finish_donation, :finished]
-  skip_before_action :signed_in_user, only: [:start_donation, :qr_code, :finish_donation, :finished]
+  skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
+  skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
   before_action :set_donation, only: [:show, :update]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
