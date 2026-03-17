@@ -1,0 +1,67 @@
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="account_number">
+  <%= modal_header "Bank account details" %>
+
+  <% if @event.column_account_number.present? %>
+    <div class="flex gap-3 items-center mb-4">
+      <div class="badge bg-info ml0 pl-2 w-fit inline-flex gap-1 items-center">
+        <%= inline_icon "info", size: 18 %>
+        Deposit<%= @event.column_account_number&.deposit_only? ? "-only" : " + send" %>
+      </div>
+
+      <% if admin_signed_in? %>
+        <% admin_tool "flex-col justify-center w-fit" do %>
+          <%= button_to @event.column_account_number&.deposit_only? ? "Enable debits" : "Make deposit-only",
+                        event_column_account_number_path(@event),
+                        method: :patch,
+                        params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
+                        class: "btn bg-muted text-sm py-1 px-3",
+                        data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <section class="details-horiz my-6 overflow-visible !mx-0">
+      <p>
+        <strong class="">Account number</strong>
+        <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.account_number, tooltip_direction: :s %></span>
+      </p>
+      <p>
+        <strong class="tooltipped tooltipped--s" aria-label="Used to receive ACH transfers and wires within the US">Routing number<sup class="muted help"> ?</sup></strong>
+        <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.routing_number, tooltip_direction: :s %></span>
+      </p>
+    </section>
+
+    <div class="details">
+      <p>
+        <strong>SWIFT/BIC Code<sup class="muted tooltipped tooltipped--n help" aria-label="Used to receive international wire transfers from outside the US"> ?</sup></strong>
+        <span><%= copy_to_clipboard @event.column_account_number&.bic_code, tooltip_direction: :e %></span>
+      </p>
+      <p>
+        <strong>Company Name</strong>
+        <span><%= @event.name %> C/O Hack Club</span>
+      </p>
+      <p>
+        <strong>Company Address</strong>
+        <span>8605 Santa Monica Blvd #86294<br>West Hollywood, CA 90069</span>
+      </p>
+      <p>
+        <strong>Bank Name</strong>
+        <span>Column N.A.</span>
+      </p>
+      <p>
+        <strong>Bank Address</strong>
+        <span>1110 Gorgas Avenue, Suite A4-700<br>San Francisco, CA 94129</span>
+      </p>
+    </div>
+
+    <% if @event.column_account_number&.deposit_only? %>
+      <footer class="muted center">
+        This account can receive direct deposits, but not direct debits.
+      </footer>
+    <% end %>
+  <% else %>
+    <div class="card container--sm mx-auto center pt4 pb4 mb3">
+      <%= button_to "View account number", event_column_account_number_path(@event), method: :post, class: "btn bg-accent" %>
+    </div>
+  <% end %>
+</section>
