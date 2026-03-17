@@ -61,17 +61,17 @@ class Donation
         author: current_user
       ).create
 
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: {
-                      success: {
-                        text: "Donation tier created successfully.",
-                        link: edit_announcement_path(announcement),
-                        link_text: "Create an announcement!"
-                      }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: {
+                    success: {
+                      text: "Donation tier created successfully.",
+                      link: edit_announcement_path(announcement),
+                      link_text: "Create an announcement!"
                     }
+                  }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     def update
@@ -97,8 +97,8 @@ class Donation
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     def destroy
@@ -106,11 +106,11 @@ class Donation
       authorize @tier, :destroy?
 
       @tier.destroy
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { success: "Donation tiers updated successfully." }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     private
