@@ -6,6 +6,7 @@ module Contractable
   included do
     has_many :contracts, as: :contractable, dependent: :destroy
 
+    # We need to void associated contracts before contractable is deleted so that callbacks and validations can run
     before_destroy do
       contracts.where(aasm_state: [:pending, :sent]).find_each(&:mark_voided!)
     end
