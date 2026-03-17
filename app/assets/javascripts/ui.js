@@ -172,6 +172,7 @@ $(document).keydown(function (e) {
 
 window.attachTooltipListener = () => {
   const tooltip = document.getElementById('tooltip-container')
+  if (!tooltip) return
   let mutationObserver = null
 
   const removeTooltips = () => {
