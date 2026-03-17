@@ -609,13 +609,8 @@ class User < ApplicationRecord
   private
 
   def accessible_events(roles:)
-    flatten = lambda do |nodes|
-      nodes.flat_map do |node|
-        [(node.event if node.role.in?(roles))].compact + flatten.call(node.child_nodes)
-      end
-    end
-
-    flatten.call User::PermissionsOverview.new(user: self).event_graph
+    event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
+    Event.where(id: event_ids)
   end
 
   def update_stripe_cardholder
