@@ -226,9 +226,9 @@ window.attachTooltipListener = () => {
     })
   }
 
-  const clampToViewport = (left, top, placement, triggerRect) => {
-    const tw = tooltip.offsetWidth
-    const th = tooltip.offsetHeight
+  const clampToViewport = (left, top, placement, triggerRect, tooltipWidth, tooltipHeight) => {
+    const tw = tooltipWidth
+    const th = tooltipHeight
     const vw = document.documentElement.clientWidth
     const vh = document.documentElement.clientHeight
     const offset = 5
