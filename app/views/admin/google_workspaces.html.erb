@@ -28,7 +28,7 @@
 <% end %>
 
 <%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
-  <%= form.submit "Attempt to verify all currently verifying domains" %>
+  <%= form.submit "Attempt to verify all currently verifying domains", class: "mt-2" %>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
