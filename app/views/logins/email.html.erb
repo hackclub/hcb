@@ -5,7 +5,7 @@
   <%= render partial: "apply_info_pane" %>
 <% end %>
 
-<div class="flex flex-col flex-1 justify-center w-full <%= @for_application ? "card" : "max-w-md" %>">
+<div class="flex flex-col flex-1 justify-center w-full <%= @login.for_application? ? "card" : "max-w-md" %>">
   <%= render "logins/header", label: "Sign in to HCB" do %>
     Email code
   <% end %>

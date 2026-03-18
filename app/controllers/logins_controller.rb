@@ -4,12 +4,10 @@ class LoginsController < ApplicationController
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
-  before_action :set_for_application
-  before_action :set_return_to
   before_action :set_user, except: [:new, :create, :reauthenticate]
   invisible_captcha only: [:create, :complete], honeypot: :remember_me
 
-  layout ->{ @for_application ? "apply" : "login" }
+  layout ->{ @login&.for_application? ? "apply" : "login" }
 
   after_action only: [:new] do
     # Allow indexing login page
@@ -20,20 +18,18 @@ class LoginsController < ApplicationController
   def new
     render "users/logout" if current_user
 
-    @prefill_email = params[:email] if params[:email].present?
-    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence if params[:referral].present?
+    referral_link_id = Referral::Link.find_by(slug: params[:referral])&.id if params[:referral].present?
+    @login = Login.new(state: { return_to: params[:return_to], purpose: params[:purpose] }, referral_link_id:)
 
+    @prefill_email = params[:email] if params[:email].present?
     @signup = params[:signup] == "true"
   end
 
   # when you submit your email
   def create
-    @user = User.create_with(creation_method: params[:for_application] ? :application_form : :login).find_or_create_by!(email: params[:email])
-    
-    referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence if params[:referral_link_id].present?
-    state = { return_to: params[:return_to], for_application: params[:for_application] }
+    @user = User.create_with(creation_method: login_params[:purpose] == "application" ? :application_form : :login).find_or_create_by!(email: params[:email])
 
-    @login = @user.logins.create(referral_link:, state:)
+    @login = @user.logins.create(login_params)
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
@@ -172,12 +168,12 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.present?
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
-      elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@for_application
-        redirect_to edit_user_path(@user.slug, return_to: @return_to)
+      elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application
+        redirect_to edit_user_path(@user.slug, return_to: @login.return_to)
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        return_path = @return_to
+        return_path = @login.return_to
         if return_path.present?
           begin
             route = Rails.application.routes.recognize_path(return_path)
@@ -222,20 +218,16 @@ class LoginsController < ApplicationController
     end
   end
 
+  def login_params
+    params.require(:login).permit(:return_to, :purpose, :referral_link_id, :email)
+  end
+
   def login_preference
     return @user.preferred_login_methods.first unless @login.present?
 
     authentication_factors = @login.authentication_factors&.filter_map { |key, value| key if value } || []
 
     (@user.preferred_login_methods - authentication_factors).first
-  end
-
-  def set_for_application
-    @for_application = @login&.state&.[]("for_application") || ActiveModel::Type::Boolean.new.cast(params[:for_application])
-  end
-
-  def set_return_to
-    @return_to = @login&.state&.[]("return_to") || url_from(params[:return_to])
   end
 
   def set_login

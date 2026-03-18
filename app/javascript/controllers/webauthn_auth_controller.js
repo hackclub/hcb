@@ -17,7 +17,6 @@ export default class extends Controller {
   ]
 
   static values = {
-    returnTo: String,
     requireWebauthnPreference: Boolean,
     loginId: String,
   }
@@ -76,7 +75,6 @@ export default class extends Controller {
           : `/logins/complete`,
         {
           credential: JSON.stringify(credential),
-          return_to: this.returnToValue,
           method: 'webauthn',
           remember:
             this.hasRememberInputTarget && this.rememberInputTarget.checked,

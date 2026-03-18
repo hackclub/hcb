@@ -5,7 +5,7 @@
   <%= render partial: "apply_info_pane" %>
 <% end %>
 
-<div class="flex flex-col flex-1 justify-center <%= @for_application ? "card" : "max-w-md" %> w-full">
+<div class="flex flex-col flex-1 justify-center <%= @login.for_application? ? "card" : "max-w-md" %> w-full">
   <%= render "logins/header", label: "Sign in to HCB" do %>
     How would you like to sign in?
   <% end %>
@@ -13,7 +13,7 @@
   <%= render "logins/badge", user: @login.user %>
   <%= render partial: "users/login_code_auth_notice" %>
 
-  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @login.webauthn_available? ? { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_return_to_value: @return_to, webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
+  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @login.webauthn_available? ? { "controller" => "webauthn-auth form-disable", "webauthn-auth-target" => "authForm", "action" => "webauthn-auth#submit", webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
     <div data-webauthn-auth-target="error" class="mb2 display-none">
       <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
         <p class="flash error mb1 mx-auto">Security key authentication failed.</p>

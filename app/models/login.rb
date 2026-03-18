@@ -82,6 +82,10 @@ class Login < ApplicationRecord
 
   before_create(:sync_is_reauthentication)
 
+  def for_application?
+    purpose == "application"
+  end
+
   def authentication_factors_count
     return 0 if authentication_factors.nil?
 

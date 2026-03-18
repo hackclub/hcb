@@ -5,7 +5,7 @@
   <%= render partial: "apply_info_pane" %>
 <% end %>
 
-<div class="flex flex-col flex-1 justify-center <%= @for_application ? "card" : "max-w-md" %>">
+<div class="flex flex-col flex-1 justify-center <%= @login.for_application? ? "card" : "max-w-md" %>">
   <div class="flex flex-col justify-between items-start">
     <%= render "logins/header", label: "Sign in to HCB" do %>
       One-time code
@@ -51,7 +51,7 @@
 
     <div class="flex flex-row justify-between items-center mt-4">
       <% if @login.available_factors.excluding(:totp).any? %>
-        <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @return_to), class: "block mt0 no-underline" %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @login.return_to), class: "block mt0 no-underline" %>
       <% end %>
       <button type="submit" class="gap-2 btn" data-1p-ignore>
         Continue
