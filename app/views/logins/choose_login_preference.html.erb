@@ -2,7 +2,7 @@
 <% content_for(:page_class) %>
 
 <% content_for :info_pane do %>
-  <%= render partial: "apply_info_pane" %>
+  <%= render partial: "logins/apply_info_pane" %>
 <% end %>
 
 <div class="flex flex-col flex-1 justify-center <%= @login.for_application? ? "card" : "max-w-md" %> w-full">
