@@ -975,7 +975,7 @@ form:has(> #admin-logout-button) {
   }
 
   &:has([role='option']:not([hidden])) {
-    border-color: var(--hw-border-color);
+    @apply border-neutral-500;
     visibility: visible !important;
   }
 }
@@ -996,7 +996,7 @@ form:has(> #admin-logout-button) {
 }
 
 .hw-combobox__option {
-  background-color: var(--hw-option-bg-color);
+  @apply bg-gray-100 dark:bg-neutral-800;
   padding: var(--hw-padding--slim) var(--hw-padding--thick);
   user-select: none;
   white-space: nowrap;
@@ -1013,7 +1013,7 @@ form:has(> #admin-logout-button) {
 .hw-combobox__option:hover,
 .hw-combobox__option--navigated,
 .hw-combobox__option--selected {
-  background-color: var(--hw-active-bg-color);
+  @apply bg-gray-100 dark:bg-neutral-700;
 }
 
 .hw-combobox__dialog__wrapper {
