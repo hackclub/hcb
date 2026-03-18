@@ -37,7 +37,7 @@ class Login < ApplicationRecord
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code]
+  AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code].freeze
   store_accessor :authentication_factors, *AUTHENTICATION_FACTORS, prefix: :authenticated_with
 
   store_accessor :state, :return_to, :purpose
