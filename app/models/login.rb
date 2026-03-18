@@ -39,7 +39,7 @@ class Login < ApplicationRecord
 
   AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code]
   store_accessor :authentication_factors, *AUTHENTICATION_FACTORS, prefix: :authenticated_with
-  
+
   store_accessor :state, :return_to, :purpose
 
   EXPIRATION = 15.minutes
@@ -53,6 +53,12 @@ class Login < ApplicationRecord
       # how did we create session when it's not complete?!
       Rails.error.unexpected "An incomplete login #{id} has a session #{user_session.id} present."
       errors.add(:base, "An incomplete login has a session present.")
+    end
+  end
+
+  validate do
+    if state.to_json.bytesize > 10.kilobytes
+      errors.add(:base, "Login state exceeds 10KB.")
     end
   end
 
