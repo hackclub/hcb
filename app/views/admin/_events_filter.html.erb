@@ -42,7 +42,9 @@
 
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
-    <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @point_of_contact_id, include_blank: "all" %>
+    <div class="combobox-wrapper">
+      <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", value: @point_of_contact&.to_combobox_display %>
+    </div>
   <% end %>
 
   <%= form.label :activity_since do %>

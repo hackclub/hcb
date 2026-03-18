@@ -2,9 +2,12 @@
 
 <h1>RECEIPTS FOR HQ EMPLOYEES</h1>
 
-<%= paginate @users %>
-
-<%= page_entries_info @users, entry_name: "users" %>
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <h4 class="flex-grow mt-4">
+    <%= page_entries_info @users, entry_name: "users" %>
+  </h4>
+  <%= paginate @users %>
+</div>
 
 <table>
   <thead>

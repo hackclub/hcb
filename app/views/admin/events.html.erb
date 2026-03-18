@@ -1,6 +1,6 @@
 <% title "Organizations" %>
 
-<%= form_with local: true, url: events_admin_index_path, method: :get do |form| %>
+<%= form_with local: true, class: "card overflow-visible", url: events_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], style: "vertical-align: top; width: 100%", placeholder: "Search Query" %>
   <div class="block">
     <% export_button = capture do %>
@@ -29,11 +29,11 @@
 </details>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
+  <h4 class="flex-grow mt-4">
     <%= page_entries_info @events, entry_name: "organizations" %>.
     <%= link_to "Create a new organization", event_new_admin_index_path %>.
     <%= link_to "Create a new organization from Airtable", event_new_from_airtable_admin_index_path %>.
-  </div>
+  </h4>
   <%= paginate @events %>
 </div>
 

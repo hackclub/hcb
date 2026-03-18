@@ -704,6 +704,10 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
 
+    if @event_id
+      @event = Event.find(@event_id)
+    end
+
     @paypal_transfers = PaypalTransfer.all
 
     @paypal_transfers = @paypal_transfers.search_recipient(@q) if @q
@@ -728,6 +732,10 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
 
+    if @event_id
+      @event = Event.find(@event_id)
+    end
+
     @wires = Wire.all
 
     @wires = @wires.search_recipient(@q) if @q
@@ -747,6 +755,10 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
+
+    if @event_id
+      @event = Event.find(@event_id)
+    end
 
     @wise_transfers = WiseTransfer.all
 
@@ -837,6 +849,10 @@ class AdminController < Admin::BaseController
     @canceled = params[:canceled] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
+
+    if @event_id
+      @event = Event.find(@event_id)
+    end
 
     relation = RecurringDonation.includes(:event).where.not(stripe_status: [:incomplete, :incomplete_expired])
 
@@ -1355,6 +1371,10 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
     @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
 
+    if @event_id
+      @event = Event.find(@event_id)
+    end
+
     relation = Column::AccountNumber.includes(:event)
 
     if @event_id
@@ -1523,6 +1543,7 @@ class AdminController < Admin::BaseController
     @tagged_with = params[:tagged_with].presence || "anything"
     @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].presence || "all"
+    @point_of_contact = User.find(@point_of_contact_id) if @point_of_contact_id != "all"
     @plan = params[:plan].presence || "all"
     if params[:country] == 9999.to_s
       @country = 9999

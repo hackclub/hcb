@@ -1,14 +1,17 @@
 <% title "W9s" %>
 
-<%= form_with method: :get do |form| %>
-  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
+<%= form_with method: :get, class: "card" do |form| %>
+  <div class="flex items-center gap-2">
+    <%= form.text_field :q, value: @q, placeholder: "Search", class: "!max-w-full w-full" %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
+  <h4 class="flex-grow mt-4">
     <%= page_entries_info @w9s, entry_name: "W9s" %>.
     <%= link_to "Upload a new W9", new_admin_w9_path %>.
-  </div>
+  </h4>
   <%= paginate @w9s %>
 </div>
 

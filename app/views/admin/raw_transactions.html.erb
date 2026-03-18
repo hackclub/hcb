@@ -11,9 +11,9 @@
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
+  <h4 class="flex-grow mt-4">
     <%= page_entries_info @raw_transactions, entry_name: "transactions" %>
-  </div>
+  </h4>
   <%= paginate @raw_transactions %>
 </div>
 
