@@ -43,7 +43,7 @@
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
     <div class="combobox-wrapper">
-      <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", value: @point_of_contact&.to_combobox_display %>
+      <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", value: @point_of_contact&.id %>
     </div>
   <% end %>
 
