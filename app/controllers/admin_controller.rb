@@ -1543,7 +1543,7 @@ class AdminController < Admin::BaseController
     @tagged_with = params[:tagged_with].presence || "anything"
     @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].presence || "all"
-    @point_of_contact = User.find(@point_of_contact_id) if @point_of_contact_id != "all"
+    @point_of_contact = User.find_by(id: @point_of_contact_id) if @point_of_contact_id != "all"
     @plan = params[:plan].presence || "all"
     if params[:country] == 9999.to_s
       @country = 9999
