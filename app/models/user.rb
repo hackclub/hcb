@@ -605,7 +605,7 @@ class User < ApplicationRecord
   def reimbursement_event_options
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
-  
+
   # both to_combobox_display and id are used for comboboxes
   def to_combobox_display
     "#{full_name} (Email: #{email}, ID: #{id})"
