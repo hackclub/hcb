@@ -150,10 +150,12 @@
         <p class="text-sm muted mb-1">How did you hear about HCB?</p>
         <p class="mb-0"><%= application.referrer.present? ? application.referrer : blank %></p>
       </div>
-      <div>
-        <p class="text-sm muted mb-1">Referral code</p>
-        <p class="mb-0"><%= application.referral_code.present? ? application.referral_code : blank %></p>
-      </div>
+      <% admin_tool do %>
+        <div>
+          <p class="text-sm muted mb-1">Referral code</p>
+          <p class="mb-0"><%= application.referral_code.present? ? application.referral_code : blank %></p>
+        </div>
+      <% end %>
     </div>
 
     <% if application.accessibility_notes.present? %>

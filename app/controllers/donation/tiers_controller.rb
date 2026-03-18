@@ -6,6 +6,7 @@ class Donation
     include DonationPageSetup
 
     before_action :set_event, except: [:set_index]
+    skip_before_action :signed_in_user, only: [:start]
 
     def index
       @tiers = @event.donation_tiers

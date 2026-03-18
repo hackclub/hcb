@@ -325,6 +325,7 @@ class Event
 
     def activate_event!(risk_level:, tags: [])
       contract.party(:hcb).sync_with_docuseal
+      contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
 
       self.with_lock do
