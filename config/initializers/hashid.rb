@@ -3,7 +3,7 @@
 ActiveSupport.on_load(:active_record) do
   Hashid::Rails::ClassMethods.module_eval do
     def hashid_configuration
-      if is_a?(ActiveRecord::Relation)
+      if is_a?(ActiveRecord::Relation) && klass.respond_to?(:hashid_configuration)
         klass.hashid_configuration
       else
         @hashid_configuration || hashid_config
