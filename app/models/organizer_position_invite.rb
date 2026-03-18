@@ -195,6 +195,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.cancelled_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -226,6 +228,8 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+
+    fs_contract
   end
 
   def on_contract_signed(contract)
