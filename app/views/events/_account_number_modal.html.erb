@@ -26,7 +26,7 @@
         <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.account_number, tooltip_direction: :s %></span>
       </p>
       <p>
-        <strong class="tooltipped tooltipped--s" aria-label="Used to receive ACH transfers and wires within the US">Routing number<sup class="muted help"> ?</sup></strong>
+        <strong class="tooltipped tooltipped--s" aria-label="Used to receive ACH transfers and wires within the US">Routing number<sup class="muted help leading-[0]"> ?</sup></strong>
         <span class="h2 font-mono"><%= copy_to_clipboard @event.column_account_number&.routing_number, tooltip_direction: :s %></span>
       </p>
     </section>
