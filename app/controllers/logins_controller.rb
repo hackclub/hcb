@@ -219,7 +219,9 @@ class LoginsController < ApplicationController
   end
 
   def login_params
-    params.require(:login).permit(:return_to, :purpose, :referral_link_id, :email)
+    params.require(:login).permit(:return_to, :purpose, :referral_link_id)
+  rescue ActionController::ParameterMissing
+    ActionController::Parameters.new
   end
 
   def login_preference
