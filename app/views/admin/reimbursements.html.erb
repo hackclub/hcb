@@ -2,7 +2,7 @@
 
 <%= form_with local: true, class: "card overflow-visible", url: reimbursements_admin_index_path, method: :get do |form| %>
   <div class="flex flex-col sm:flex-row items-center gap-2">
-    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full w-full" %>
+    <%= render "events/search", form: %>
     <div class="combobox-wrapper">
       <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
     </div>

@@ -2,7 +2,7 @@
 
 <%= form_with local: true, class: "card overflow-visible", url: donations_admin_index_path, method: :get do |form| %>
   <div class="flex flex-col sm:flex-row items-center gap-2">
-    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full w-full" %>
+    <%= render "events/search", form: %>
     <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
     <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
     <div class="combobox-wrapper">
