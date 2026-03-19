@@ -16,6 +16,11 @@ class CommentsController < ApplicationController
     authorize @comment
 
     if @comment.save
+      if params[:comment][:share_with_paired] == "1" && @commentable.is_a?(HcbCode)
+        paired = @commentable.paired_disbursement_hcb_code
+        CommentHcbCode.create!(comment: @comment, hcb_code: paired) if paired
+      end
+
       flash[:success] = "Comment created."
       redirect_to @commentable.is_a?(Event) ? edit_event_path(@commentable, tab: :admin) : @commentable
     else

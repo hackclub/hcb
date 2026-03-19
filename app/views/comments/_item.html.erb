@@ -1,4 +1,6 @@
-<% if policy(comment).show? %>
+<% is_shared = local_assigns.fetch(:is_shared, false) %>
+<% visible = is_shared ? (!comment.admin_only? || current_user&.auditor?) : policy(comment).show? %>
+<% if visible %>
   <div class="mt2 mb2 <%= local_assigns[:class] %>" id="<%= dom_id comment %>">
     <div class="card border pb0 pt0 mb2 max-w-5xl<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
       <div class="border-bottom card__banner secondary">
@@ -13,15 +15,42 @@
             'aria-label': "See all edit history" %>
         </action>
         <% end %>
-        <% if policy(comment).destroy? %>
-          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?" } do %>
-            <%= inline_icon "delete", size: 24, 'aria-label': "Delete" %>
+        <% unless is_shared %>
+          <% if policy(comment).destroy? %>
+            <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?" } do %>
+              <%= inline_icon "delete", size: 24, 'aria-label': "Delete" %>
+            <% end %>
+          <% end %>
+          <% if policy(comment).edit? %>
+            <%= link_to edit_comment_path(comment), class: "tooltipped tooltipped--s right", 'aria-label': "Edit", data: { turbo: false } do %>
+              <%= inline_icon "edit", size: 24, 'aria-label': "Edit" %>
+            <% end %>
           <% end %>
         <% end %>
-        <% if policy(comment).edit? %>
-          <%= link_to edit_comment_path(comment), class: "tooltipped tooltipped--s right", 'aria-label': "Edit", data: { turbo: false } do %>
-            <%= inline_icon "edit", size: 24, 'aria-label': "Edit" %>
-          <% end %>
+        <% if is_shared %>
+          <span class="muted right h6">
+            <% commentable = comment.commentable %>
+            <%
+              disbursement = commentable.is_a?(HcbCode) ? (commentable.outgoing_disbursement || commentable.incoming_disbursement)&.disbursement : nil
+              # Check the subledger on the ORIGINAL side (where the comment came FROM)
+              original_subledger = commentable.outgoing_disbursement? ? disbursement&.source_subledger : disbursement&.destination_subledger
+              card_grant = original_subledger&.card_grant
+              shared_label = card_grant ? "Grant to #{card_grant.user.name}" : commentable.event&.name
+            %>
+            shared from <%= shared_label %>
+          </span>
+        <% elsif (shared_out = local_assigns[:shared_out_hcb_codes])&.any? %>
+          <% shared = shared_out.first %>
+          <%
+            disbursement = (shared.outgoing_disbursement || shared.incoming_disbursement)&.disbursement
+            # Check the subledger on the SHARED side (where we shared TO)
+            shared_subledger = shared.outgoing_disbursement? ? disbursement&.source_subledger : disbursement&.destination_subledger
+            card_grant = shared_subledger&.card_grant
+            shared_label = card_grant ? "Grant to #{card_grant.user.name}" : shared.event&.name
+          %>
+          <span class="muted right h6">
+            also shared with <%= shared_label %>
+          </span>
         <% end %>
       </div>
       <div class="card__banner card__darker comment--container">

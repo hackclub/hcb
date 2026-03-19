@@ -44,6 +44,23 @@
     <%= form.hidden_field :commentable_type, value: commentable&.class %>
     <%= form.hidden_field :commentable_id, value: commentable&.id %>
 
+    <% if commentable.is_a?(HcbCode) && !@comment&.persisted? %>
+      <% paired = commentable.paired_disbursement_hcb_code %>
+      <% if paired %>
+        <div class="field field--checkbox mb0">
+          <%= check_box_tag "comment[share_with_paired]", "1", false, id: "comment_share_with_paired" %>
+          <%
+            disbursement = (commentable.outgoing_disbursement || commentable.incoming_disbursement)&.disbursement
+            # Check the subledger on the PAIRED side (where we're sharing TO)
+            paired_subledger = commentable.outgoing_disbursement? ? disbursement&.destination_subledger : disbursement&.source_subledger
+            card_grant = paired_subledger&.card_grant
+            share_label = card_grant ? "Grant to #{card_grant.user.name}" : paired.event&.name
+          %>
+          <%= label_tag "comment_share_with_paired", "Also share with #{share_label}" %>
+        </div>
+      <% end %>
+    <% end %>
+
     <% admin_tool("inline-flex", "span") do %>
       <% if defined?(admin_only) %>
         <%= form.hidden_field :admin_only, value: true %>

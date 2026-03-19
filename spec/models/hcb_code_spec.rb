@@ -152,6 +152,52 @@ RSpec.describe HcbCode, type: :model do
       end
     end
 
+    describe "#paired_disbursement_hcb_code" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns the incoming HcbCode when called on the outgoing side" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(outgoing.paired_disbursement_hcb_code).to eq(incoming)
+      end
+
+      it "returns the outgoing HcbCode when called on the incoming side" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.paired_disbursement_hcb_code).to eq(outgoing)
+      end
+
+      it "returns nil for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.paired_disbursement_hcb_code).to be_nil
+      end
+    end
+
+    describe "#shared_comments" do
+      let(:disbursement) { create(:disbursement) }
+      let(:user) { create(:user) }
+
+      it "includes comments shared from the paired HcbCode" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        comment = create(:comment, commentable: outgoing, user:)
+        CommentHcbCode.create!(comment:, hcb_code: incoming)
+
+        expect(incoming.shared_comments).to include(comment)
+      end
+
+      it "does not include comments directly on the HcbCode" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        create(:comment, commentable: incoming, user:)
+
+        expect(outgoing.shared_comments).to be_empty
+      end
+    end
+
     describe "#humanized_type" do
       it "returns 'Transfer' for disbursements" do
         disbursement = create(:disbursement)

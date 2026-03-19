@@ -49,6 +49,9 @@ class HcbCode < ApplicationRecord
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
+  has_many :comment_hcb_codes
+  has_many :shared_comments, through: :comment_hcb_codes, source: :comment
+
   has_one :personal_transaction, required: false
   has_one :pin, required: false
 
@@ -456,6 +459,14 @@ class HcbCode < ApplicationRecord
     return nil unless outgoing_disbursement?
 
     Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+  end
+
+  def paired_disbursement_hcb_code
+    if outgoing_disbursement?
+      outgoing_disbursement&.disbursement&.incoming_disbursement&.local_hcb_code
+    elsif incoming_disbursement?
+      incoming_disbursement&.disbursement&.outgoing_disbursement&.local_hcb_code
+    end
   end
 
   def card_grant

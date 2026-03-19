@@ -46,7 +46,7 @@
 
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
-  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/list", comments: @hcb_code.comments, shared_comments: @hcb_code.shared_comments %>
   <%= render "comments/form", commentable: @hcb_code %>
 
   <% admin_tool("mt2 p-3") do %>

@@ -1,7 +1,17 @@
 <section class="comments" id="comments">
-  <% if policy_scope(comments).empty? && defined?(show_blankslate) %>
+  <%
+    own_comments = policy_scope(comments).includes(:user, :versions).with_attached_file
+    inbound = defined?(shared_comments) ? policy_scope(shared_comments).includes(:user, :versions).with_attached_file : Comment.none
+    inbound_ids = inbound.map(&:id).to_set
+    shared_out = CommentHcbCode.where(comment_id: own_comments.map(&:id)).includes(hcb_code: :subledger)
+    shared_out_by_comment_id = shared_out.group_by(&:comment_id)
+    all_comments = (own_comments.to_a + inbound.to_a).sort_by(&:created_at)
+  %>
+  <% if all_comments.empty? && defined?(show_blankslate) %>
     <%= blankslate "No comments yet." %>
   <% else %>
-    <%= render partial: "comments/item", collection: policy_scope(comments).includes(:user, :versions).with_attached_file.order(created_at: :asc), as: :comment %>
+    <% all_comments.each do |comment| %>
+      <%= render "comments/item", comment: comment, is_shared: inbound_ids.include?(comment.id), shared_out_hcb_codes: shared_out_by_comment_id[comment.id]&.map(&:hcb_code) %>
+    <% end %>
   <% end %>
 </section>
