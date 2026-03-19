@@ -15,11 +15,10 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
-      unless has_verified_phone_number_before?
+      unless has_meaningful_activity? || has_verified_phone_number_before? || not_fresh_user?
         raise SMSEnrollmentError, "SMS authentication currently unavailable for your account, please try again later."
       end
 
-      disallow_fresh_users
       disallow_excessive_sms_verifications
 
       TwilioVerificationService.new.send_verification_request(@user.phone_number)
@@ -58,12 +57,6 @@ module UserService
 
     private
 
-    def disallow_fresh_users
-      return if @user.created_at < 1.day.ago
-
-      raise SMSEnrollmentError, "Please wait at least 24 hours after creating your account before enrolling in SMS authentication."
-    end
-
     def disallow_excessive_sms_verifications
       cache_key = "sms_verify_count:#{@user.id}:#{Date.current}"
       count = Rails.cache.increment(cache_key, 1, expires_in: 25.hours).to_i
@@ -76,6 +69,14 @@ module UserService
 
     def has_verified_phone_number_before?
       @user.versions.where_object_changes_to(phone_number_verified: true).any?
+    end
+
+    def has_meaningful_activity?
+      @user.organizer_position_invites.any? || @user.card_grants.any? || @user.organizer_positions.any? || @user.reimbursement_reports.any? || @user.applications.any?
+    end
+
+    def not_fresh_user?
+      @user.created_at >= 1.day.ago
     end
 
   end
