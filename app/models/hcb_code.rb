@@ -372,7 +372,7 @@ class HcbCode < ApplicationRecord
   def disbursement?
     Rails.application.deprecators[:hcb].warn("HcbCode#disbursement? accessed")
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    outgoing_disbursement? || incoming_disbursement?
   end
 
   def outgoing_disbursement?
@@ -467,6 +467,16 @@ class HcbCode < ApplicationRecord
     return @outgoing_disbursement if defined?(@outgoing_disbursement)
 
     @outgoing_disbursement = Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+  end
+
+  # Overrides shared_commentable? in Commentable concern to avoid
+  # unnecessary database read
+  def shared_commentable?
+    outgoing_disbursement? || incoming_disbursement?
+  end
+
+  def shared_commentable
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
   def card_grant

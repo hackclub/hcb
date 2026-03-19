@@ -41,9 +41,6 @@
       </div>
     <% end %>
 
-    <%= form.hidden_field :commentable_type, value: commentable&.class %>
-    <%= form.hidden_field :commentable_id, value: commentable&.id %>
-
     <% admin_tool("inline-flex", "span") do %>
       <% if defined?(admin_only) %>
         <%= form.hidden_field :admin_only, value: true %>
@@ -58,7 +55,32 @@
 
   </div>
 
-  <%= form.submit "Add comment", disabled: !policy(commentable.comments.build).create? %>
+  <% if commentable.shared_commentable? && !@comment&.persisted? %>
+    <% disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement %>
+    <div data-controller="comment-target"
+         data-comment-target-private-type-value="<%= commentable.class.to_s %>"
+         data-comment-target-private-id-value="<%= commentable.id %>"
+         data-comment-target-shared-type-value="<%= commentable.shared_commentable.class.to_s %>"
+         data-comment-target-shared-id-value="<%= commentable.shared_commentable.id %>">
+      <%= form.hidden_field :commentable_type, value: commentable.class.to_s, data: { "comment-target-target": "commentableType" } %>
+      <%= form.hidden_field :commentable_id, value: commentable.id, data: { "comment-target-target": "commentableId" } %>
+      <%= form.hidden_field :return_to, value: url_for(only_path: false) %>
+      <%= dropdown_button form:,
+                          options: [
+                            ["Add comment", "private", "Only visible to #{commentable.event&.name || 'this organization'}"],
+                            ["Share with #{disbursement.counterparty_label}", "shared", "Visible to both organizations"]
+                          ],
+                          button_class: "bg-info",
+                          button_icon: "send",
+                          name: "comment_target",
+                          template: ->(value) { value == "shared" ? "Share with #{disbursement.counterparty_label}" : "Add comment" },
+                          button_options: { disabled: !policy(commentable.comments.build).create? } %>
+    </div>
+  <% else %>
+    <%= form.hidden_field :commentable_type, value: commentable&.class %>
+    <%= form.hidden_field :commentable_id, value: commentable&.id %>
+    <%= form.submit local_assigns[:submit_text] || "Add comment", disabled: !policy(commentable.comments.build).create? %>
+  <% end %>
 <% end %>
 
 <% unless @popover %>
