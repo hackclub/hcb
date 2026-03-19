@@ -42,8 +42,8 @@ module Api
         payment_intent = StripeService::PaymentIntent.create({
                                                                amount:,
                                                                currency: "usd",
-                                                               paymentMethodTypes: ["card_present"],
-                                                               captureMethod: "automatic",
+                                                               payment_method_types: ["card_present"],
+                                                               capture_method: "automatic",
                                                                statement_descriptor: "HCB",
                                                                statement_descriptor_suffix: StripeService::StatementDescriptor.format(@event.short_name, as: :suffix),
                                                                metadata: { donation: true, event_id: @event.id },
