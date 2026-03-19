@@ -6,6 +6,7 @@ module Api
       include SetEvent
 
       before_action :set_api_event, only: [:create]
+      before_action :require_trusted_oauth_app!, only: [:payment_intent]
 
       def create
         amount = params[:amount_cents]
@@ -42,7 +43,6 @@ module Api
                                                                amount:,
                                                                currency: "usd",
                                                                paymentMethodTypes: ["card_present"],
-                                                               offlineBehavior: "prefer_online",
                                                                captureMethod: "automatic",
                                                                statement_descriptor: "HCB",
                                                                statement_descriptor_suffix: StripeService::StatementDescriptor.format(@event.short_name, as: :suffix),
