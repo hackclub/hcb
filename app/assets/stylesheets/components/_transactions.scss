@@ -24,6 +24,20 @@
   }
 }
 
+.transaction--genehaas {
+  background-image: repeating-linear-gradient(
+    to bottom right,
+    #c51a1a 0px, 
+    #8f0018 50px,
+    #d12030 100px
+  );
+  background-attachment: fixed;
+  color: $white;
+  > td > .author {
+    display: none;
+  }
+}
+
 .transaction--icy {
   background-image: repeating-linear-gradient(
     to bottom right,

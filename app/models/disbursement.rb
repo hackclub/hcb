@@ -134,7 +134,7 @@ class Disbursement < ApplicationRecord
     gene_haas_grant: {
       title: "Grant from Gene Haas",
       memo: "Gene Haas Grant",
-      css_class: "transaction--fancy",
+      css_class: "transaction--genehaas",
       icon: "sam",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
     }
