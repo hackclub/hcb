@@ -3,7 +3,7 @@
 <% if hcb_codes&.any? %>
   <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
 
-  <% if hcb_codes.any? { |hc| hc.pt&.hcb_decline_reason == :merchant_not_allowed } %>
+  <% if hcb_codes.any? { |hc| hc.canonical_pending_transactions.any? { |pt| pt.hcb_decline_reason == :merchant_not_allowed } } %>
     <% declined = hcb_codes.find { |hc| hc.pt&.hcb_decline_reason == :merchant_not_allowed } %>
     <% event_name = declined&.event&.name || "this card" %>
     <%= render "application/callout", type: "warning", title: "Transaction declined for #{event_name}" do %>
