@@ -3,7 +3,7 @@
 module Reimbursement
   class ReportPolicy < ApplicationPolicy
     def new?
-      admin || team_member
+      admin || reader
     end
 
     def create?
@@ -11,7 +11,7 @@ module Reimbursement
     end
 
     def show?
-      admin || team_member || creator || auditor
+      admin || reader || creator || auditor
     end
 
     def wise_transfer_quote?
@@ -59,7 +59,7 @@ module Reimbursement
     end
 
     def update_currency?
-      (admin || creator) && open && record.mismatched_currency?
+      (admin || manager || creator) && open && record.mismatched_currency?
     end
 
     def admin_approve?
@@ -92,8 +92,8 @@ module Reimbursement
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
-    def team_member
-      record.event&.users&.include?(user)
+    def reader
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def creator

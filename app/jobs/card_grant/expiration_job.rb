@@ -5,7 +5,9 @@ class CardGrant
     queue_as :low
 
     def perform
-      CardGrant.active.expired_before(Time.now).find_each do |card_grant|
+      # Because `expired_before` uses `<` instead of `<=`, the Card Grant will
+      # be expired one day after the expiry date at midnight UTC (when the job is ran).
+      CardGrant.active.expired_before(Date.today).find_each do |card_grant|
         card_grant.expire!
       end
 

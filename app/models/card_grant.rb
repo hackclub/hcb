@@ -10,7 +10,7 @@
 #  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
-#  expiration_at              :datetime
+#  expiration_at              :date             not null
 #  instructions               :text
 #  invite_message             :string
 #  keyword_lock               :string
@@ -81,7 +81,7 @@ class CardGrant < ApplicationRecord
   after_create_commit :send_email
 
   before_create do
-    self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
+    self.expiration_at ||= default_expiration_at
   end
 
   validates :disbursement, uniqueness: true, allow_nil: true
@@ -107,8 +107,8 @@ class CardGrant < ApplicationRecord
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
-  scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
-  scope :expires_on, ->(date) { joins(:card_grant_setting).where("DATE(card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day')) = ?", date) }
+  scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
+  scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
   monetize :amount_cents
 
@@ -298,12 +298,8 @@ class CardGrant < ApplicationRecord
     super || setting&.keyword_lock
   end
 
-  def expires_after
-    card_grant_setting.read_attribute_before_type_cast(:expiration_preference)
-  end
-
-  def expires_on
-    created_at + expires_after.days
+  def default_expiration_at
+    (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
   end
 
   def last_user_change_to(...)
