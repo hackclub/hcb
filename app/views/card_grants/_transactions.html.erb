@@ -3,6 +3,12 @@
 <% if hcb_codes&.any? %>
   <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
 
+  <% if hcb_codes.any? { |hc| hc.pt&.hcb_decline_reason == :merchant_not_allowed } %>
+    <% event_name = hcb_codes.first.event.name %>
+    <%= render "application/callout", type: "warning", title: "Transaction declined by #{event_name}" do %>
+      One or more transactions were declined because the merchant isn't enabled for this card. Please reach out to the <%= event_name %> team to request access.
+    <% end %>
+  <% end %>
   <div style="overflow-x: auto;" class="table-container">
     <table>
       <tbody data-behavior="transactions">
