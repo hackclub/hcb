@@ -28,6 +28,7 @@
 <%= form_with(
       model: [@event, @wise_transfer],
       local: true,
+      data: { controller: "submit-once", action: "submit->submit-once#submit" },
       html: {
         "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
       }

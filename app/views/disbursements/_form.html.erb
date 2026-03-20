@@ -2,7 +2,7 @@
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, data: { controller: "submit-once", action: "submit->submit-once#submit" }, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section">

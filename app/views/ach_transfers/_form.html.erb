@@ -6,7 +6,7 @@
   model: ach_transfer,
   local: true,
   url: event_ach_transfers_path(ach_transfer.event),
-  data: { controller: "input extraction", extraction_target: "form" },
+  data: { controller: "input extraction submit-once", extraction_target: "form", action: "submit->submit-once#submit" },
   html: {
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),

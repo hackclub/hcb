@@ -16,7 +16,7 @@
   <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
 <% end %>
 
-<%= form_with(model: [@event, @wire], local: true, html: {
+<%= form_with(model: [@event, @wire], local: true, data: { controller: "submit-once", action: "submit->submit-once#submit" }, html: {
       "x-data" => "wire(#{({
         payment_recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event),
         editing: @wire.address_line1.present?,
