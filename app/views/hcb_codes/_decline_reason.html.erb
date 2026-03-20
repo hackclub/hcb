@@ -70,10 +70,14 @@
         <h3>Troubleshooting</h3>
     <% end %>
 
+    <% if hcb_decline_reason == :merchant_not_allowed %>
+        <%= render "application/callout", type: "warning", title: "Reach out to #{hcb_code.event.name}" do %>
+          If you believe this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team directly.
+        <% end %>
+    <% end %>
+
     <p class="mb-0">
-        <% if hcb_decline_reason == :merchant_not_allowed %>
-            If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
-        <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
+        <% if hcb_decline_reason == :cash_withdrawals_not_allowed %>
             Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
         <% elsif hcb_decline_reason == :user_cards_locked %>
             You can manage your receipts on HCB <%= link_to "receipts page", my_inbox_url %>. If you have 10 or more missing receipts, your cards will be locked until you submit them.

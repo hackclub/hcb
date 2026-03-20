@@ -107,6 +107,11 @@
               } %>
         </action>
       </p>
+      <% if @hcb_code.pt.hcb_decline_reason == :merchant_not_allowed %>
+        <%= render "application/callout", type: "warning", title: "Merchant not allowed by #{@hcb_code.event.name}" do %>
+          This transaction was declined because this merchant isn't enabled for your card. Please reach out to the <%= @hcb_code.event.name %> team to request that this merchant be allowed.
+        <% end %>
+      <% end %>
     <% end %>
     <div>
       <span style="height: 100%;">
