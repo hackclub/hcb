@@ -27,7 +27,7 @@ class EventsController < ApplicationController
           @current_user
           .events
           .with_attached_logo
-          .preload(:config)
+          .preload(:config, :plan)
           .reorder("organizer_positions.sort_index ASC", "events.id ASC")
           .strict_loading
           .map { |event| serialize_event(event, member: true) }
@@ -37,7 +37,7 @@ class EventsController < ApplicationController
             Event
               .excluding(@current_user.events)
               .with_attached_logo
-              .preload(:config)
+              .preload(:config, :plan)
               .strict_loading
               .map { |event| serialize_event(event, member: false) }
           )
@@ -1305,7 +1305,7 @@ class EventsController < ApplicationController
       member:,
       features: {
         subevents: event.subevents_enabled?,
-        card_grants: policy(event).card_grant_overview?
+        card_grants: event.plan.card_grants_enabled?
       }
     }
   end
