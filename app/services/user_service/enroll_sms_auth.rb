@@ -26,7 +26,6 @@ module UserService
 
     # Completing the phone number verification by checking that exchanging code works
     def complete_verification(verification_code)
-      disallow_fresh_users
 
       begin
         verified = TwilioVerificationService.new.check_verification_token(@user.phone_number, verification_code)
@@ -43,8 +42,6 @@ module UserService
     def enroll_sms_auth
       raise SMSEnrollmentError, "user has no phone number" if @user.phone_number.blank?
       raise SMSEnrollmentError, "user has not verified phone number" unless @user.phone_number_verified
-
-      disallow_fresh_users
 
       @user.use_sms_auth = true
       @user.save!
