@@ -12,6 +12,7 @@
 #  address_postal_code :text             not null
 #  address_state       :text             not null
 #  created_at          :datetime         not null
+#  recipient_name      :string(255)
 #  updated_at          :datetime         not null
 #
 class User

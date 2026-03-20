@@ -57,7 +57,7 @@ module Reimbursement
                   memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
                   amount: payout_holding.amount_cents,
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
-                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name,
                   address_line1: payout_holding.report.user.payout_method.address_line1,
                   address_line2: payout_holding.report.user.payout_method.address_line2,
                   address_city: payout_holding.report.user.payout_method.address_city,
@@ -84,7 +84,7 @@ module Reimbursement
                 ach_transfer = clearinghouse.ach_transfers.build(
                   amount: payout_holding.amount_cents,
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
-                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name,
                   recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
                   routing_number: payout_holding.report.user.payout_method.routing_number,
@@ -116,7 +116,7 @@ module Reimbursement
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
                   memo: "Reimbursement for #{payout_holding.report.name}.",
                   recipient_email: payout_holding.report.user.payout_method.recipient_email,
-                  recipient_name: payout_holding.report.user.name,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name.presence || payout_holding.report.user.name,
                   user: User.system_user,
                 )
                 paypal_transfer.save!

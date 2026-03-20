@@ -14,6 +14,7 @@
 #  currency                         :string
 #  recipient_country                :integer
 #  recipient_information_ciphertext :text
+#  recipient_name                   :string(255)
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
 #  wise_recipient_id                :text

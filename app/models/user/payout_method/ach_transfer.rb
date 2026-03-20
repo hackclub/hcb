@@ -8,6 +8,7 @@
 #  account_number_ciphertext :text             not null
 #  routing_number_ciphertext :text             not null
 #  created_at                :datetime         not null
+#  recipient_name            :string(255)
 #  updated_at                :datetime         not null
 #
 class User
