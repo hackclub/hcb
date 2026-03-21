@@ -42,8 +42,6 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
-  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
-
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include PublicIdentifiable
@@ -61,7 +59,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -133,6 +131,7 @@ class User < ApplicationRecord
   has_many :checks, inverse_of: :creator
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+  has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
@@ -191,7 +190,7 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validate :email_not_in_blacklisted_domains, on: :create
+  validates :email, nondisposable: true, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
@@ -306,7 +305,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -352,6 +351,10 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
+  def locked_by
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+  end
+
   def lock!
     update!(locked_at: Time.now)
 
@@ -371,7 +374,7 @@ class User < ApplicationRecord
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank?
+    full_name_before_last_save.blank? && full_name_previously_changed?
   end
 
   def active_mailbox_address
@@ -440,6 +443,10 @@ class User < ApplicationRecord
     age&.<=(18)
   end
 
+  def is_minor?
+    age&.<(18)
+  end
+
   def was_teenager_on_join?
     age_on(created_at)&.<=(18)
   end
@@ -461,7 +468,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
@@ -587,7 +594,24 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  def reimbursement_event_options
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
   private
+
+  def accessible_events(roles:)
+    event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
+    Event.where(id: event_ids)
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
@@ -679,13 +703,6 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
-  end
-
-  def email_not_in_blacklisted_domains
-    domain = email.split("@").last.downcase
-    if BLACKLISTED_DOMAINS.include?(domain)
-      errors.add(:email, "is invalid. Please use a different email address.")
-    end
   end
 
 end

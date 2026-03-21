@@ -307,7 +307,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_1',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications',
+      name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
       perform: () => (window.location.href = adminUrls['Applications']),
     },
@@ -355,7 +355,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_7',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Organizer position deletion requests',
+      name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
       perform: () =>
         (window.location.href = '/organizer_position_deletion_requests'),
@@ -568,6 +568,22 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'New teenagers leaderboard',
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_34',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Contracts',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/admin/contracts'),
+    },
+    {
+      id: 'admin_tool_35',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Applications (HCB)',
+      icon: <Icon glyph="post" size={16} />,
+      perform: navigate('/admin/applications'),
     },
   ]
 }

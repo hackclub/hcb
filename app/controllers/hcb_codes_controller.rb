@@ -146,24 +146,6 @@ class HcbCodesController < ApplicationController
     end
   end
 
-  def comment
-    @hcb_code = HcbCode.find(params[:id])
-
-    authorize @hcb_code
-
-    ::HcbCodeService::Comment::Create.new(
-      hcb_code_id: @hcb_code.id,
-      content: params[:content],
-      file: params[:file],
-      admin_only: params[:admin_only],
-      current_user:
-    ).run
-
-    redirect_to params[:redirect_url]
-  rescue => e
-    redirect_to params[:redirect_url], flash: { error: e.message }
-  end
-
   include HcbCodeHelper # for disputed_transactions_airtable_form_url and attach_receipt_url
 
   def attach_receipt
