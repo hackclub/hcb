@@ -1,0 +1,13 @@
+<span id="ai_memo">
+  <%= turbo_stream_from hcb_code, "ai_memo" %>
+  <% if hcb_code.suggested_memos.any? && hcb_code.custom_memo.nil? %>
+    <span class="pointer tooltipped tooltipped--w"
+      aria-label="Use AI to generate a memo"
+      data-controller="navigation"
+      data-action="click->navigation#navigate"
+      data-navigation-location-param="<%= "#{edit_hcb_code_path(hcb_code)}?display_ai_memo=true" %>"
+      data-navigation-frame-param="<%= dom_id(hcb_code) %>">
+      <%= inline_icon "rep", size: 36, style: "color: var(--ai); margin: -10px 0px; transform: translateY(-2px);" %>
+    </span>
+  <% end %>
+</span>

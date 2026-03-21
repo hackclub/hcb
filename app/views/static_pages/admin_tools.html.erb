@@ -40,14 +40,14 @@
       <ul class="grid text-left w-100 mt0" id="task-grid">
         <%= card_to "Applications (Airtable)", link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable %>
         <%= card_to "Ledger", ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count %>
-        <%= card_to "ACH", ach_admin_index_path, badge: AchTransfer.pending.count %>
-        <%= card_to "Check", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
+        <%= card_to "ACH transfers", ach_admin_index_path, badge: AchTransfer.pending.count %>
+        <%= card_to "Checks", increase_checks_admin_index_path, badge: IncreaseCheck.pending.count %>
         <%= card_to "Check deposits", admin_check_deposits_path, badge: CheckDeposit.unprocessed.count %>
         <%= card_to "Wires", wires_admin_index_path, badge: Wire.pending.count %>
         <%= card_to "Wise transfers", wise_transfers_admin_index_path, badge: WiseTransfer.pending.count %>
         <%= card_to "Disbursements", disbursements_admin_index_path, badge: Disbursement.reviewing.count %>
         <%= card_to "Reimbursements", reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count %>
-        <%= card_to "Deletion requests", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
+        <%= card_to "OPDRs", organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count %>
         <%= card_to "Disputes", link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable %>
         <%= card_to "Feedback", link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable %>
         <%= card_to "Warehouse SKUs", link_to_airtable_task(:marketing_shipment_request) %>
@@ -64,6 +64,7 @@
         <%= card_to "Cards", stripe_cards_admin_index_path %>
         <%= card_to "Card designs", stripe_card_personalization_designs_admin_index_path %>
         <%= card_to "Emails", emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true %>
+        <%= card_to "Contracts", contracts_admin_index_path, badge: Contract.count, subtle_badge: true %>
       </ul>
       <h2>Perks</h2>
       <ul class="grid text-left w-100 mt0" id="perks-grid">

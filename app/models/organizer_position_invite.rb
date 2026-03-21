@@ -173,6 +173,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.rejected_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -193,6 +195,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.cancelled_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -211,7 +215,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -220,12 +224,12 @@ class OrganizerPositionInvite < ApplicationRecord
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
       update!(is_signee: true)
-      organizer_position&.update(is_signee: true)
-
-      event.set_airtable_status("Documents sent")
+      organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
     end
 
-    fs_contract.send!
+    fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+
+    fs_contract
   end
 
   def on_contract_signed(contract)

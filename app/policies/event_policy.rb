@@ -144,7 +144,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def new_transfer?
-    admin_or_manager? && !record.demo_mode?
+    auditor_or_reader? && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -205,6 +205,10 @@ class EventPolicy < ApplicationPolicy
 
   def donation_overview?
     show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
+  end
+
+  def donation_page?
+    record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
   def invoices?

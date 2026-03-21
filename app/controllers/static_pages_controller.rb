@@ -183,7 +183,7 @@ class StaticPagesController < ApplicationController
       end
     end
 
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
 
@@ -191,7 +191,7 @@ class StaticPagesController < ApplicationController
     Rails.error.report(e)
 
     flash[:error] = e.message
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
   end

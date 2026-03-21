@@ -302,7 +302,7 @@ class UsersController < ApplicationController
 
     if @user.phone_number_changed? && @user.phone_number_update_count(since: 24.hours.ago) >= 2 && !admin_signed_in?
       flash[:error] = "You're updating your phone number too quickly. Contact support at hcb@hackclub.com."
-      Rails.error.report TwilioAbuseError.new("User #{@user.id} is updating their phone number too quickly.")
+      Rails.error.report Errors::TwilioAbuseError.new("User #{@user.id} is updating their phone number too quickly.")
       return redirect_back_or_to edit_user_path(@user)
     end
 

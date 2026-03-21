@@ -1,0 +1,74 @@
+<link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
+
+<%= render "increase_checks/paper_check",
+      check_number: @hcb_code.check.check_number&.to_s,
+      date: (@hcb_code.check.send_date || @hcb_code.check.created_at).strftime("%b %d, %Y"),
+      recipient_name: @hcb_code.check.lob_address.name,
+      amount: @hcb_code.check.amount,
+      memo: @hcb_code.check.memo %>
+
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
+    <div class="flex items-start" style="flex-grow: 1">
+      <span class="flex-auto mr1">
+        <span class="regular muted"><%= @hcb_code.check.deposited? ? "Sent" : "Sending" %> </span>
+        <%= @hcb_code.check.lob_address.name %>
+        <span class="regular muted"> a&nbsp;check for </span>
+        <span class="regular"><%= render_money @hcb_code.check.amount %></span>
+      </span>
+      <span class="badge h4 ml2 nowrap bg-<%= @hcb_code.check.state %>">
+        <%= @hcb_code.check.status_text %>
+      </span>
+    </div>
+  <% end %>
+
+  <section class="hcb-code--details">
+    <div>
+      <strong>Sent by</strong>
+      <%= user_mention @hcb_code.check.creator %>
+    </div>
+    <div>
+      <strong><%= @hcb_code.check.sent? ? "Scheduled at" : "Sent at" %></strong>
+      <%= format_datetime @hcb_code.check.send_date %>
+    </div>
+
+    <% if @hcb_code.check.in_transit? || @hcb_code.check.in_transit_and_processed? %>
+      <div>
+        <strong>Delivery expected between</strong>
+        <div>
+          <%= format_date @hcb_code.check.expected_delivery_date %>–<%= format_date 7.business_days.after(@hcb_code.check.expected_delivery_date) %>
+        </div>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="hcb-code--info">
+    <p>
+      <strong>Sent to</strong>
+      <%= @hcb_code.check.lob_address.name %>
+    </p>
+
+    <p>
+      <strong>Addressed to</strong>
+      <%= @hcb_code.check.lob_address.address_text %>
+    </p>
+
+    <p>
+      <strong>Check memo</strong>
+      <%= @hcb_code.check.memo %>
+    </p>
+
+    <p>
+      <strong>Payment purpose</strong>
+      <%= @hcb_code.check.payment_for %>
+    </p>
+
+    <p>
+      <strong>Amount</strong>
+      <%= render_money @hcb_code.check.amount %>
+    </p>
+
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
+</article>

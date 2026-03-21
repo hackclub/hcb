@@ -1,0 +1,10 @@
+<% if policy(local_assigns[:hcb_code]).invoice_as_personal_transaction? && local_assigns[:hcb_code].personal_transaction.nil? %>
+  <div class="flex muted justify-end items-end">
+    <%= inline_icon "sad", size: 20 %>
+    <%= link_to invoice_as_personal_transaction_hcb_code_path(id: local_assigns[:hcb_code].hashid), method: :post, class: "tooltipped tooltipped--s", 'aria-label': "Invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction.", data: { confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
+      <small class="mt0 mb0" style="margin-left: 2px;">
+        Flag as a personal transaction
+      </small>
+    <% end %>
+  </div>
+<% end %>
