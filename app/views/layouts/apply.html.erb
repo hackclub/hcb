@@ -33,6 +33,7 @@
 <% end %>
 
 <%= yield(:header) %>
+    <%= render "application/flash" %>
     <main
       class="container <%= content_for :container_class %> h-screen"
       style="<%= content_for :container_style %>">
