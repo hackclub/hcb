@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def index
+
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -12,9 +16,15 @@ class AdminController < Admin::BaseController
       format.html do
         color = size == 0 ? "muted" : "accent"
 
-        render html: helpers.turbo_frame_tag(params[:task_name]) {
-          helpers.badge_for size, class: "bg-#{color}"
-        }
+        if params[:style] == "plain"
+          render html: helpers.turbo_frame_tag(params[:task_name], class: "admin-card-count #{color}") {
+            size.to_s
+          }
+        else
+          render html: helpers.turbo_frame_tag(params[:task_name]) {
+            helpers.badge_for size, class: "bg-#{color}"
+          }
+        end
       end
     end
   end
