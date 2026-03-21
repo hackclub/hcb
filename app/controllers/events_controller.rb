@@ -375,13 +375,17 @@ class EventsController < ApplicationController
           flash[:success] = "Organization successfully updated."
         end
 
-        redirect_back fallback_location: edit_event_path(@event.slug)
+        if params[:event][:tab].present?
+          redirect_to edit_event_path(@event.slug, tab: params[:event][:tab])
+        else
+          redirect_back_or_to edit_event_path(@event.slug)
+        end
       else
         render :edit, status: :unprocessable_entity
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
-      redirect_back fallback_location: edit_event_path(@event.slug)
+      redirect_back_or_to edit_event_path(@event.slug)
     end
   end
 
