@@ -1,104 +1,104 @@
-      <% admin_cards = {
-           tasks: {
-             title: "Tasks",
-             grid_id: "task-grid",
-             cards: [
-               { name: "Applications (Airtable)", icon: "align-left", link: link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable },
-               { name: "Ledger", icon: "list", link: ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count },
-               { name: "ACH transfers", icon: "payment-transfer", link: ach_admin_index_path, badge: AchTransfer.pending.count },
-               { name: "Checks", icon: "payment-docs", link: increase_checks_admin_index_path, badge: IncreaseCheck.pending.count },
-               { name: "Check deposits", icon: "payment-docs", link: admin_check_deposits_path, badge: CheckDeposit.unprocessed.count },
-               { name: "Wires", icon: "web", link: wires_admin_index_path, badge: Wire.pending.count },
-               { name: "Wise transfers", icon: "wise", link: wise_transfers_admin_index_path, badge: WiseTransfer.pending.count },
-               { name: "Disbursements", icon: "payment-transfer", link: disbursements_admin_index_path, badge: Disbursement.reviewing.count },
-               { name: "Reimbursements", icon: "reimbursement", link: reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count },
-               { name: "OPDRs", icon: "member-remove", link: organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count },
-               { name: "Disputes", icon: "important", link: link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable },
-               { name: "Feedback", icon: "message-new", link: link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable },
-               { name: "Warehouse SKUs", icon: "", link: link_to_airtable_task(:marketing_shipment_request) },
-               { name: "Identity verifications", icon: "profile", link: "https://identity.hackclub.com/backend/verifications/pending", async_badge: :pending_identity_vault_verifications }
-             ]
-           },
-           info: {
-             title: "Info",
-             grid_id: "info-grid",
-             cards: [
-               { name: "Organizations", icon: "explore", link: events_admin_index_path, badge: Event.approved.count, subtle_badge: true },
-               { name: "Applications (HCB)", icon: "post", link: applications_admin_index_path, badge: Event::Application.under_review.count },
-               { name: "Users", icon: "leaders", link: users_admin_index_path },
-               { name: "Donations", icon: "support", link: donations_admin_index_path },
-               { name: "Invoices", icon: "docs-fill", link: invoices_admin_index_path },
-               { name: "Sponsors", icon: "purse", link: sponsors_admin_index_path },
-               { name: "Cards", icon: "card", link: stripe_cards_admin_index_path },
-               { name: "Card designs", icon: "", link: stripe_card_personalization_designs_admin_index_path },
-               { name: "Emails", icon: "email", link: emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true },
-               { name: "Contracts", icon: "docs", link: contracts_admin_index_path, badge: Contract.count, subtle_badge: true }
-             ]
-           },
-           perks: {
-             title: "Perks",
-             grid_id: "perks-grid",
-             cards: [
-               { name: "Google Workspaces", icon: "google", link: google_workspaces_admin_index_path, badge: GSuite.needs_ops_review.count },
-               { name: "Stickers", icon: "sticker", link: link_to_airtable_task(:stickers), async_badge: :pending_stickers_airtable },
-               { name: "Hackathons", icon: "event-code", link: "https://dash.hackathons.hackclub.com/sign_in", async_badge: :pending_hackathons_airtable },
-               { name: "1Password", icon: "private", link: link_to_airtable_task(:onepassword), async_badge: :pending_onepassword_airtable },
-               { name: "Domains", icon: "web", link: link_to_airtable_task(:domains), async_badge: :pending_domains_airtable },
-               { name: "The Event Helper", icon: "relaxed", link: link_to_airtable_task(:theeventhelper), async_badge: :pending_theeventhelper_airtable },
-               { name: "Google Workspace waitlist", icon: "google", link: link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable }
-             ]
-           },
-           accounting: {
-             title: "Accounting",
-             grid_id: "accounting-grid",
-             cards: [
-               { name: "Bank fees", icon: "bank-circle", link: bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count },
-               { name: "Fee revenues", icon: "bank-circle", link: fee_revenues_admin_index_path },
-               { name: "Ledger audits", icon: "", link: admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count },
-               { name: "Organization balances", icon: "payment", link: balances_admin_index_path },
-               { name: "Blazer", icon: "bolt", link: blazer_path },
-               { name: "Column statements", icon: "", link: admin_column_statements_path }
-             ]
-           },
-           other: {
-             title: "Other",
-             grid_id: "other-grid",
-             cards: [
-               { name: "Common docs", icon: "docs", link: common_documents_path },
-               { name: "Flipper", icon: "flag-fill", link: flipper_path },
-               { name: "Pending ledger", icon: "list", link: pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count },
-               { name: "Account numbers", icon: "bank-account", link: account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true },
-               { name: "Recurring donations", icon: "transactions", link: recurring_donations_admin_index_path, badge: RecurringDonation.active.count }
-             ]
-           }
-         } %>
+<% admin_cards = {
+      tasks: {
+        title: "Tasks",
+        grid_id: "task-grid",
+        cards: [
+          { name: "Applications (Airtable)", icon: "align-left", link: link_to_airtable_task(:bank_applications), async_badge: :pending_bank_applications_airtable },
+          { name: "Ledger", icon: "list", link: ledger_admin_index_path, badge: CanonicalTransaction.not_stripe_top_up.unmapped.count },
+          { name: "ACH transfers", icon: "payment-transfer", link: ach_admin_index_path, badge: AchTransfer.pending.count },
+          { name: "Checks", icon: "payment-docs", link: increase_checks_admin_index_path, badge: IncreaseCheck.pending.count },
+          { name: "Check deposits", icon: "payment-docs", link: admin_check_deposits_path, badge: CheckDeposit.unprocessed.count },
+          { name: "Wires", icon: "web", link: wires_admin_index_path, badge: Wire.pending.count },
+          { name: "Wise transfers", icon: "wise", link: wise_transfers_admin_index_path, badge: WiseTransfer.pending.count },
+          { name: "Disbursements", icon: "payment-transfer", link: disbursements_admin_index_path, badge: Disbursement.reviewing.count },
+          { name: "Reimbursements", icon: "reimbursement", link: reimbursements_admin_index_path, badge: Reimbursement::Report.reimbursement_requested.count },
+          { name: "OPDRs", icon: "member-remove", link: organizer_position_deletion_requests_path, badge: OrganizerPositionDeletionRequest.under_review.count },
+          { name: "Disputes", icon: "important", link: link_to_airtable_task(:disputed_transactions), async_badge: :pending_disputed_transactions_airtable },
+          { name: "Feedback", icon: "message-new", link: link_to_airtable_task(:feedback), async_badge: :pending_feedback_airtable },
+          { name: "Warehouse SKUs", icon: "", link: link_to_airtable_task(:marketing_shipment_request) },
+          { name: "Identity verifications", icon: "profile", link: "https://identity.hackclub.com/backend/verifications/pending", async_badge: :pending_identity_vault_verifications }
+        ]
+      },
+      info: {
+        title: "Info",
+        grid_id: "info-grid",
+        cards: [
+          { name: "Organizations", icon: "explore", link: events_admin_index_path, badge: Event.approved.count, subtle_badge: true },
+          { name: "Applications (HCB)", icon: "post", link: applications_admin_index_path, badge: Event::Application.under_review.count },
+          { name: "Users", icon: "leaders", link: users_admin_index_path },
+          { name: "Donations", icon: "support", link: donations_admin_index_path },
+          { name: "Invoices", icon: "docs-fill", link: invoices_admin_index_path },
+          { name: "Sponsors", icon: "purse", link: sponsors_admin_index_path },
+          { name: "Cards", icon: "card", link: stripe_cards_admin_index_path },
+          { name: "Card designs", icon: "", link: stripe_card_personalization_designs_admin_index_path },
+          { name: "Emails", icon: "email", link: emails_admin_index_path, badge: Ahoy::Message.count, subtle_badge: true },
+          { name: "Contracts", icon: "docs", link: contracts_admin_index_path, badge: Contract.count, subtle_badge: true }
+        ]
+      },
+      perks: {
+        title: "Perks",
+        grid_id: "perks-grid",
+        cards: [
+          { name: "Google Workspaces", icon: "google", link: google_workspaces_admin_index_path, badge: GSuite.needs_ops_review.count },
+          { name: "Stickers", icon: "sticker", link: link_to_airtable_task(:stickers), async_badge: :pending_stickers_airtable },
+          { name: "Hackathons", icon: "event-code", link: "https://dash.hackathons.hackclub.com/sign_in", async_badge: :pending_hackathons_airtable },
+          { name: "1Password", icon: "private", link: link_to_airtable_task(:onepassword), async_badge: :pending_onepassword_airtable },
+          { name: "Domains", icon: "web", link: link_to_airtable_task(:domains), async_badge: :pending_domains_airtable },
+          { name: "The Event Helper", icon: "relaxed", link: link_to_airtable_task(:theeventhelper), async_badge: :pending_theeventhelper_airtable },
+          { name: "Google Workspace waitlist", icon: "google", link: link_to_airtable_task(:google_workspace_waitlist), async_badge: :pending_google_workspace_waitlist_airtable }
+        ]
+      },
+      accounting: {
+        title: "Accounting",
+        grid_id: "accounting-grid",
+        cards: [
+          { name: "Bank fees", icon: "bank-circle", link: bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count },
+          { name: "Fee revenues", icon: "bank-circle", link: fee_revenues_admin_index_path },
+          { name: "Ledger audits", icon: "", link: admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count },
+          { name: "Organization balances", icon: "payment", link: balances_admin_index_path },
+          { name: "Blazer", icon: "bolt", link: blazer_path },
+          { name: "Column statements", icon: "", link: admin_column_statements_path }
+        ]
+      },
+      other: {
+        title: "Other",
+        grid_id: "other-grid",
+        cards: [
+          { name: "Common docs", icon: "docs", link: common_documents_path },
+          { name: "Flipper", icon: "flag-fill", link: flipper_path },
+          { name: "Pending ledger", icon: "list", link: pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count },
+          { name: "Account numbers", icon: "bank-account", link: account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true },
+          { name: "Recurring donations", icon: "transactions", link: recurring_donations_admin_index_path, badge: RecurringDonation.active.count }
+        ]
+      }
+    } %>
 
-      <% admin_cards.each_value do |section| %>
-        <h2 class="mt-5 first:mt-0 p-0"><%= section[:title] %></h2>
-        <ul class="grid text-left p-0 w-100 mt0 gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="<%= section[:grid_id] %>">
-          <% section[:cards].each do |card| %>
-            <%= link_to card[:link], class: "link-reset" do %>
-              <li class="card card--hover flex items-center gap-3 py-2 m-0">
-                <%= inline_icon(card[:icon].presence || "bank-account", size: 28, class: "muted shrink-0") %>
-                <span class="flex flex-col min-w-0 leading-tight">
-                  <strong class="truncate">
-                    <%= card[:name] %>
-                    <% if "airtable".in? card[:link] %>
-                      <%= inline_icon("airtable", size: 14, class: "ml-1 muted shrink-0") %>
-                    <% end %>
-                  </strong>
-                  <% if card[:async_badge].present? %>
-                    <%= turbo_frame_tag card[:async_badge], src: admin_task_size_path(task_name: card[:async_badge], style: :plain), class: "admin-card-count muted" do %>
-                      ...
-                    <% end %>
-                  <% else %>
-                    <% count_value = card[:badge] %>
-                    <% count_class = card[:subtle_badge].present? || count_value.to_i == 0 ? "muted" : "accent" %>
-                    <span class="admin-card-count <%= count_class %>"><%= count_value.present? || count_value == 0 ? number_with_delimiter(count_value) : "—" %></span>
-                  <% end %>
-                </span>
-              </li>
+<% admin_cards.each_value do |section| %>
+  <h2 class="mt-5 first:mt-0 p-0"><%= section[:title] %></h2>
+  <ul class="grid text-left p-0 w-100 mt0 gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4" id="<%= section[:grid_id] %>">
+    <% section[:cards].each do |card| %>
+      <%= link_to card[:link], class: "link-reset" do %>
+        <li class="card card--hover flex items-center gap-3 py-2 m-0">
+          <%= inline_icon(card[:icon].presence || "bank-account", size: 28, class: "muted shrink-0") %>
+          <span class="flex flex-col min-w-0 leading-tight">
+            <strong class="truncate">
+              <%= card[:name] %>
+              <% if "airtable".in? card[:link] %>
+                <%= inline_icon("airtable", size: 14, class: "ml-1 muted shrink-0") %>
+              <% end %>
+            </strong>
+            <% if card[:async_badge].present? %>
+              <%= turbo_frame_tag card[:async_badge], src: admin_task_size_path(task_name: card[:async_badge], style: :plain), class: "admin-card-count muted" do %>
+                ...
+              <% end %>
+            <% else %>
+              <% count_value = card[:badge] %>
+              <% count_class = card[:subtle_badge].present? || count_value.to_i == 0 ? "muted" : "accent" %>
+              <span class="admin-card-count <%= count_class %>"><%= count_value.present? || count_value == 0 ? number_with_delimiter(count_value) : "—" %></span>
             <% end %>
-          <% end %>
-        </ul>
+          </span>
+        </li>
       <% end %>
+    <% end %>
+  </ul>
+<% end %>
