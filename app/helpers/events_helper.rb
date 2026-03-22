@@ -376,7 +376,7 @@ module EventsHelper
   def event_avatar_for(event, size: 24, click_to_mention: false, **options)
     src = event_logo_for(event, size:)
 
-    return (inline_icon("people-2", size:, class: options[:class], style: "margin-right: 6px;")) unless src.present?
+    return inline_icon("people-2", size:, class: options[:class], style: "margin-right: 6px;") unless src.present?
 
     klasses = ["rounded", "shrink-none"]
     klasses << options[:class] if options[:class]
