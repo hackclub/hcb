@@ -13,14 +13,12 @@
         </div>
       <% end %>
       <div class="field field--checkbox mb-2">
-        <span style="font-weight: 700" class="flex-1">Enable public reimbursement page</span>
+        <%= form.label :public_reimbursement_page_enabled, "Enable public reimbursement page", class: "flex-1", style: "font-weight: 700" %>
         <div class="field--checkbox--switch" style="flex-shrink:0">
-          <%= form.label :public_reimbursement_page_enabled do %>
-            <%= form.check_box :public_reimbursement_page_enabled,
-              disabled:,
-              switch: true %>
-            <span class="slider"></span>
-          <% end %>
+          <%= form.check_box :public_reimbursement_page_enabled,
+            disabled:,
+            switch: true %>
+          <span class="slider"></span>
         </div>
       </div>
 
