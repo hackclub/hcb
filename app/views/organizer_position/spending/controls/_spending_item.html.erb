@@ -1,8 +1,9 @@
 <% item_user = item.is_a?(OrganizerPosition::Spending::Control::Allowance) ? item.authorized_by : item.stripe_cardholder.user %> <!-- Item is either an allowance or an HCB code. -->
 <% is_hcb_code = item.is_a?(HcbCode) %>
-<% row_class = [item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative", ("cursor-pointer" if is_hcb_code)].compact.join(" ") %>
+<% use_popover = is_hcb_code && popovers_enabled? %>
+<% row_class = [item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative", ("cursor-pointer" if use_popover)].compact.join(" ") %>
 
-<tr class="<%= row_class %>"<%= is_hcb_code ? " onclick=\"window.location='#{hcb_code_path(item)}'\"".html_safe : "" %>>
+<%= content_tag :tr, class: row_class, data: (use_popover ? hcb_code_popover_data(item) : {}) do %>
   <td><%= format_date(spending_item_created_date(item)) %></td>
   <td style="max-width: 400px; overflow: hidden; text-overflow: elipsis;"><%= item.memo %></td>
   <td class="flex items-center g1">
@@ -10,4 +11,4 @@
     <%= item_user.name %>
   </td>
   <td><%= render_money item.amount_cents %></td>
-</tr>
+<% end %>
