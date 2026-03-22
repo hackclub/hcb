@@ -208,7 +208,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :admin, only: [] do
+  resources :admin, only: [:index] do
     collection do
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
