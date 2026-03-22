@@ -23,8 +23,6 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalPendingEventMapping < ApplicationRecord
-  include HasBalanceMonitoring
-
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
   belongs_to :canonical_pending_transaction
@@ -32,5 +30,9 @@ class CanonicalPendingEventMapping < ApplicationRecord
   belongs_to :subledger, optional: true
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
+
+  after_commit do
+    canonical_pending_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
+  end
 
 end

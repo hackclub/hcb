@@ -16,12 +16,12 @@ class OrganizerPositionsController < ApplicationController
     # also cancel all stripe cards from the organizer
     cards = @organizer_position.user.stripe_cards.where(event: @organizer_position.event)
     cards.each do |card|
-      card.cancel! unless card.stripe_status == "canceled"
+      card.cancel! unless card.canceled? || card.card_grant.present?
     end
     # ...and auto-close all deletion requests
     @organizer_position.organizer_position_deletion_requests.under_review.each { |opdt| opdt.close(current_user) }
 
-    flash[:success] = "Removed #{@organizer_position.user.email} from the team and cancelled their cards."
+    flash[:success] = "Removed #{@organizer_position.user.email} from the team and canceled their cards."
     redirect_back(fallback_location: event_team_path(@organizer_position.event))
   end
 
@@ -65,15 +65,6 @@ class OrganizerPositionsController < ApplicationController
     end
 
     redirect_to organizer_position.event
-  end
-
-  def toggle_signee_status
-    organizer_position = OrganizerPosition.find(params[:id])
-    authorize organizer_position
-    unless organizer_position.update(is_signee: !organizer_position.is_signee?)
-      flash[:error] = organizer_position.errors.full_messages.to_sentence.presence || "Failed to toggle signee status."
-    end
-    redirect_back(fallback_location: event_team_path(organizer_position.event))
   end
 
 end

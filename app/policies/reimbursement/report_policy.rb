@@ -3,15 +3,23 @@
 module Reimbursement
   class ReportPolicy < ApplicationPolicy
     def new?
-      admin || team_member
+      admin || reader
     end
 
     def create?
-      !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || team_member)
+      !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || OrganizerPosition.role_at_least?(user, record.event, :member))
     end
 
     def show?
-      admin || team_member || creator
+      admin || reader || creator || auditor
+    end
+
+    def wise_transfer_quote?
+      show?
+    end
+
+    def wise_transfer_breakdown?
+      show?
     end
 
     def edit?
@@ -34,6 +42,10 @@ module Reimbursement
       (admin || (manager && !creator)) && open
     end
 
+    def convert_to_wise_transfer?
+      admin && !record.event.financially_frozen?
+    end
+
     def request_changes?
       (admin || manager) && open
     end
@@ -46,8 +58,20 @@ module Reimbursement
       (admin || manager) && open
     end
 
+    def update_currency?
+      (admin || manager || creator) && open && record.mismatched_currency?
+    end
+
     def admin_approve?
       admin && open
+    end
+
+    def admin_send_wise_transfer?
+      admin
+    end
+
+    def reverse?
+      admin
     end
 
     def destroy?
@@ -60,12 +84,16 @@ module Reimbursement
       user&.admin?
     end
 
-    def manager
-      record.event && OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    def auditor
+      user&.auditor?
     end
 
-    def team_member
-      record.event&.users&.include?(user)
+    def manager
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
+    end
+
+    def reader
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def creator

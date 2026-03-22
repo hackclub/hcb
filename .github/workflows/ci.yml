@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -21,16 +21,14 @@ jobs:
         with:
           bundler-cache: true
       - name: Run Rubocop
-        run: bundle exec rubocop -a
-      - name: Comment suggested changes
-        uses: parkerbxyz/suggest-changes@v2.0.0
-        if: ${{ github.event.pull_request }}
-  erblint:
-    name: 'ERB Lint'
+        run: bundle exec rubocop
+  suggest_lint_changes:
+    name: 'Suggest lint changes'
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -39,16 +37,40 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
-      - name: Run erblint
-        run: bundle exec erblint app/views/
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+      - name: Install Yarn
+        run: yarn install
+      - name: Run Lint
+        run: bin/lint -c
+      - name: Comment suggested changes
+        uses: parkerbxyz/suggest-changes@v3.0.3
+  erblint:
+    name: 'ERB Lint'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run erb_lint
+        run: bundle exec erb_lint app/views/
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - run: yarn install
@@ -59,9 +81,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - run: yarn install
@@ -72,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:15
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -83,9 +105,19 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      # https://docs.github.com/en/actions/tutorials/use-containerized-services/create-redis-service-containers
+      redis:
+        image: redis:latest
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -95,14 +127,14 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -124,20 +156,60 @@ jobs:
         env:
           ${{ insert }}: ${{ secrets }}
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          REDIS_URL: redis://localhost:6379
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
         run: bundle exec rspec --tag ~skip
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: simplecov-report
           path: coverage/coverage.json
+  annotate:
+    name: Annotate
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Build App
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - name: Run annotaterb
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundle exec annotaterb --frozen
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install Poppler
         run: |
           sudo apt-get update
@@ -147,14 +219,14 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: package.json
       - name: Find yarn cache location
         id: yarn-cache
         run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
       - name: JS package cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ steps.yarn-cache.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
@@ -167,12 +239,105 @@ jobs:
         env:
           RAILS_ENV: test
         run: bundle exec rails zeitwerk:check
+  reversible_migrations:
+    name: Reversible Migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Get new migration versions
+        id: migrations
+        run: |
+          # Get migration files added in this PR compared to main
+          NEW_MIGRATIONS=$(git diff --name-only --diff-filter=A origin/main...HEAD -- db/migrate/*.rb | sort)
+          if [ -z "$NEW_MIGRATIONS" ]; then
+            echo "No new migrations found"
+            echo "versions=" >> $GITHUB_OUTPUT
+          else
+            echo "New migrations found:"
+            echo "$NEW_MIGRATIONS"
+            # Extract versions (timestamps) from filenames
+            VERSIONS=$(echo "$NEW_MIGRATIONS" | sed 's/.*\/\([0-9]*\)_.*/\1/' | tac | tr '\n' ' ')
+            echo "versions=$VERSIONS" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup database
+        if: steps.migrations.outputs.versions != ''
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundle exec rails db:create db:schema:load
+      - name: Test migration reversibility
+        if: steps.migrations.outputs.versions != ''
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: |
+          VERSIONS="${{ steps.migrations.outputs.versions }}"
+
+          # Ensure all migrations are applied first
+          echo "========================================="
+          echo "Applying all migrations to get to latest state..."
+          bundle exec rails db:migrate
+
+          # Get the oldest new migration version
+          OLDEST_NEW=$(echo "$VERSIONS" | awk '{print $NF}')
+
+          # Get all migration versions from files, find the one right before OLDEST_NEW
+          ALL_MIGRATIONS=$(ls db/migrate/*.rb | sed 's/.*\/\([0-9]*\)_.*/\1/' | sort)
+          ROLLBACK_TO=$(echo "$ALL_MIGRATIONS" | awk -v target="$OLDEST_NEW" '$1 < target {prev=$1} END {print prev}')
+
+          echo "========================================="
+          echo "Rolling back all new migrations..."
+          if [ -z "$ROLLBACK_TO" ]; then
+            echo "Rolling back to empty database (no migrations before the new ones)..."
+            bundle exec rails db:migrate VERSION=0
+          else
+            echo "Rolling back to VERSION=$ROLLBACK_TO..."
+            bundle exec rails db:migrate VERSION=$ROLLBACK_TO
+          fi
+
+          echo "========================================="
+          echo "Re-applying all migrations..."
+          bundle exec rails db:migrate
+
+          echo "========================================="
+          echo "✅ All migrations are reversible!"
   brakeman:
     name: Brakeman
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:

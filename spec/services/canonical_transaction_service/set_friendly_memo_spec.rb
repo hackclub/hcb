@@ -16,7 +16,7 @@ RSpec.describe CanonicalTransactionService::SetFriendlyMemo, type: :model do
   it "sets friendly memo" do
     service.run
 
-    expect(canonical_transaction.reload.friendly_memo).to eql("FRIENDLY MEMO")
+    expect(canonical_transaction.reload.friendly_memo).to eql("Friendly Memo")
   end
 
   context "friendly memo is empty string" do

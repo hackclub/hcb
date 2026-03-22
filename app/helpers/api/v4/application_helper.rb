@@ -6,26 +6,45 @@ module Api
       include UsersHelper # for `profile_picture_for`
       include StripeAuthorizationsHelper
 
-      attr_reader :current_user
+      attr_reader :current_user, :current_token
 
       def pagination_metadata(json)
         json.total_count @total_count
         json.has_more @has_more
       end
 
+      def paginate_hcb_codes(hcb_codes)
+        limit = params[:limit]&.to_i || 25
+        return render json: { error: "invalid_operation", messages: "Limit is capped at 100. '#{params[:limit]}' is invalid." }, status: :bad_request if limit > 100
+
+        start_index = if params[:after]
+                        index = hcb_codes.index { |hcb_code| hcb_code.public_id == params[:after] }
+                        return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request if index.nil?
+
+                        index + 1
+                      else
+                        0
+                      end
+        @has_more = hcb_codes.length > start_index + limit
+
+        hcb_codes.slice(start_index, limit)
+      end
+
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        if tx.disbursement? && event == tx.disbursement.source_event
-          return -tx.disbursement.amount
-        elsif tx.disbursement? && event == tx.disbursement.destination_event
-          return tx.disbursement.amount
+        if tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.source_event
+          return -tx.outgoing_disbursement.disbursement.amount
+        elsif tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.destination_event
+          return tx.outgoing_disbursement.disbursement.amount # incoming that needs a backfill
         end
 
+        # return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
+        return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
 
-        return tx.amount.cents
+        tx.amount.cents
       end
 
       def expand?(key)
@@ -39,6 +58,10 @@ module Api
         yield
       ensure
         @expand = before
+      end
+
+      def expand_pii(override_if: false)
+        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
       end
 
     end

@@ -31,8 +31,10 @@ class RawPendingIncomingDisbursementTransaction < ApplicationRecord
   end
 
   def memo
-    "Incoming Transfer".strip.upcase
+    "Incoming transfer"
   end
+
+  delegate :incoming_disbursement, to: :disbursement
 
   def likely_event_id
     @likely_event_id ||= disbursement.destination_event.id

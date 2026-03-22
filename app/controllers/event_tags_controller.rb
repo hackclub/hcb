@@ -10,8 +10,7 @@ class EventTagsController < ApplicationController
 
     @event_tag.save!
 
-    if params[:event_id]
-      @event = Event.find(params[:event_id])
+    if @event.present?
       authorize @event, :toggle_event_tag?
 
       suppress ActiveRecord::RecordNotUnique do
@@ -19,7 +18,7 @@ class EventTagsController < ApplicationController
       end
     end
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
   def destroy
@@ -28,7 +27,7 @@ class EventTagsController < ApplicationController
 
     @event_tag.destroy!
 
-    redirect_back fallback_location: edit_event_path(@event, anchor: "admin_organization_tags")
+    redirect_back fallback_location: edit_event_path(@event, tab: "admin")
   end
 
 end

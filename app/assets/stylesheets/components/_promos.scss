@@ -30,7 +30,7 @@
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
     ),
-    url('https://cloud-drtdkpcni-hack-club-bot.vercel.app/0not-a-hcb-leek.png');
+    url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9f6ee44cdba626bd_image.png');
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -43,7 +43,7 @@
       rgba(245, 246, 252, 0.25),
       rgba(248, 248, 248, 0.05)
     ),
-    url('https://cloud-brj27gj5t-hack-club-bot.vercel.app/0ninja_background.png');
+    url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/224addd545122d7d_image.png');
   background-size: cover;
   background-repeat: no-repeat;
 }
@@ -51,7 +51,7 @@
 .promo-stickers {
   background-image:
     linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
-    url('https://cloud-gjqy3yr8t-hack-club-bot.vercel.app/0hero.jpg');
+    url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/33ca4b940f79ee22_image.png');
   background-size: cover;
   background-position: 0% 30%;
 
@@ -72,10 +72,18 @@
 
 .promo-1password {
   background-color: $blue;
-  background-image: url('https://cloud-p7r1i1ebz-hack-club-bot.vercel.app/0yeah.svg');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/3a15d06bf9df8750_yeah.svg');
   background-position-x: right;
   background-size: 60%;
   background-repeat: no-repeat;
+}
+
+.promo-hackathons-page {
+  background-image:
+    linear-gradient(to right, rgba(20, 20, 20, 0.3), rgba(248, 248, 248, 0.05)),
+    url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/8c401650b4f472f22eb9048d6b75b351ef562957_image.png');
+  background-size: cover;
+  background-position: 0% 55%;
 }
 
 .promo-event-helper {
@@ -85,14 +93,14 @@
 
 .promo-sendy {
   background-color: #8492a6;
-  background-image: url('https://cloud-7cxyr06bk-hack-club-bot.vercel.app/0yeah.svg');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/72c83255c96248eb_yeah.svg');
   background-repeat: repeat;
   background-size: 500px auto;
 }
 
 .promo-wallets {
   background-color: #bfe595;
-  background-image: url('https://cloud-kir52yjnl-hack-club-bot.vercel.app/0amaziograph_c0634a90-37b4-42a9-9986-9d1495a3f33d_1__traced___1_.svg');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b53a74cad4b022cd_amaziograph_c0634a90-37b4-42a9-9986-9d1495a3f33d_1__traced___1_.svg');
   background-repeat: repeat;
   background-size: 500px auto;
 }
@@ -103,7 +111,7 @@
   .card__banner--top {
     background-image:
       linear-gradient(to right, $dark 10%, transparent),
-      url('https://cloud-3aeson6ue-hack-club-bot.vercel.app/0lahacks3.jpeg');
+      url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/c8a65fd0a31eda8c_image.png');
     background-size: cover;
     background-position: left center;
   }
@@ -114,7 +122,8 @@
     h3 {
       color: #363a44 !important;
     }
-    background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/2screenshot_2024-05-15_at_17.37.21.png');
+
+    background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/191f0894c4e7bd84_image.png');
     background-size: cover;
     background-position: left center;
   }
@@ -122,21 +131,99 @@
 
 .promo-onboard {
   .card__banner--top {
-    background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/0zxcv.png');
+    background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/c67ea255716a7d87_image.png');
     background-size: cover;
     background-position: center;
   }
 }
 
+.promo-robotics {
+  .card__banner--top {
+    background-color: #ff0000;
+    background-image:
+      linear-gradient(to right, rgba(0, 38, 255, 0.25), rgba(255, 0, 0, 0.05)),
+      url('https://cdn.hackclub.com/019c3144-1b61-732f-a297-798bae6d49e1/event-experience.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-jukebox {
+  .card__banner--top {
+    background-image: url('https://cdn.hackclub.com/019c3143-6240-7b35-b754-4a6acff647e5/jukebox.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-robotics-raffle {
+  background-color: #0066b3;
+
+  .card__banner--top {
+    background-color: #0066b3;
+  }
+}
+
+.promo-pins-keychains {
+  .card__banner--top {
+    background-image: url('https://cdn.hackclub.com/019c3140-a1cd-734a-b849-af6d2f2422b1/keychain.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+.promo-premium-domains {
+  .card__banner--top {
+    background-image: url('https://cdn.hackclub.com/019c3142-0e6f-748f-94c0-59908893d7a8/domains.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
+
+@property --scroll-progress {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+
+.promo-premium-header {
+  background: linear-gradient(-60deg, #ec3750, #ff8c37, #ec3750);
+  background-size: 200%;
+  animation: premium-scroll-gradient linear;
+  animation-timeline: scroll(root);
+  background-position: 0% center;
+
+  .badge {
+    background-color: rgba(100, 111, 126, 0.7) !important;
+    color: map-get($palette, smoke) !important;
+  }
+}
+
+@keyframes premium-scroll-gradient {
+  0% {
+    background-position: 0% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
 html[data-dark='true'] {
+  .promo-premium-banner {
+    background-color: $dark;
+  }
+
   .promo-bin {
     .card__banner--top {
       h3 {
         color: #fff !important;
       }
-      background-image: url('https://cloud-meapabplu-hack-club-bot.vercel.app/3screenshot_2024-05-15_at_17.37.30.png');
+
+      background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/30489301cc0cd8d4_image.png');
     }
   }
+
   .promo-pvsa {
     background: repeating-linear-gradient(
       135deg,

@@ -1,0 +1,15 @@
+<%# locals: (event:) %>
+
+<%= link_to("Groups", "##{dom_id(event, :event_groups_modal)}", rel: "modal:open") %>
+
+<section
+  id="<%= dom_id(event, :event_groups_modal) %>"
+  class="modal modal--scroll"
+  data-behavior="modal"
+  role="dialog"
+  data-controller="turbo-frame-modal"
+  data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+  <%= turbo_frame_tag(dom_id(event, :event_groups_frame), src: event_admin_event_groups_path(event), loading: :lazy) do %>
+    Loading...
+  <% end %>
+</section>

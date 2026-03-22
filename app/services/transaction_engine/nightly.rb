@@ -35,7 +35,7 @@ module TransactionEngine
     def import_raw_plaid_transactions!
       BankAccount.syncing_v2.pluck(:id).each do |bank_account_id|
         Rails.error.handle do
-          puts "raw_plaid_transactions: #{bank_account_id}"
+          Rails.logger.info "raw_plaid_transactions: #{bank_account_id}"
 
           ::TransactionEngine::RawPlaidTransactionService::Plaid::Import.new(bank_account_id:, start_date: @start_date).run
         end
@@ -56,10 +56,9 @@ module TransactionEngine
       transactions_by_report.each do |report_id, transactions|
         transactions.each_with_index do |transaction, transaction_index|
           if transaction["effective_at"] == transaction["effective_at_utc"] && transaction["effective_at_utc"] < "2024-10-07T04:00:00Z"
-            notice = "Skipping the import of the following transaction in #{report_id}"
-            puts notice
-            puts transaction
-            Airbrake.notify(notice, transaction)
+            notice = "Skipping the import of the following transaction in #{report_id}: #{transaction}"
+            Rails.logger.warn notice
+            Rails.error.unexpected notice
             next
           end
 

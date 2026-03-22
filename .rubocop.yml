@@ -1,4 +1,5 @@
-require: rubocop-rails
+plugins:
+  - rubocop-rails
 inherit_from: .rubocop_todo.yml
 
 AllCops:
@@ -6,6 +7,7 @@ AllCops:
     - 'db/**/*'
     - 'lib/tasks/**/*'
     - 'vendor/**/*'
+    - 'tmp/**/*'
 
 # The "offical" rubocop style guide is indeed quite strict. So intead, we use
 # the Relaxed Ruby Style guide. https://relaxed.ruby.style/
@@ -72,7 +74,7 @@ Layout/EmptyLines:
 Style/RaiseArgs:
   Enabled: false
 
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Enabled: false
 
 Style/ConditionalAssignment:

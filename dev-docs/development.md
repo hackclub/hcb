@@ -1,23 +1,31 @@
-## Development
+# Development
 
-We recommend using Docker to get an instance running locally. It should work out-of-the-box and is how most contributors work on HCB.
+We recommend using GitHub Codespaces to get an instance running. It should work out-of-the-box and is how most contributors work on HCB.
 
-- [Development](#development)
+- [Running HCB locally](#running-hcb-locally)
   - [Quickstart with GitHub Codespaces](#quickstart-with-github-codespaces)
   - [Automated setup with Docker](#automated-setup-with-docker)
   - [Manual setup with Docker](#manual-setup-with-docker)
   - [Native setup](#native-setup)
-- [Production Access](#production-access)
+- [Testing](#testing)
+- [Credentials](#credentials)
+
+## Running HCB locally
+
+Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use [Letter Opener](https://github.com/ryanb/letter_opener) to access the development email outbox and retrieve the login code. Letter Opener can be accessed at [`localhost:3000/letter_opener`](localhost:3000/letter_opener).
+
+## Code style
+Thank you for contributing! Please make sure to follow the code style guide [here](/dev-docs/code_style.md).
 
 ### Quickstart with GitHub Codespaces
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=135250235&skip_quickstart=true&machine=premiumLinux&devcontainer_path=.devcontainer%2Fdevcontainer.json&geo=UsWest)
 
-[GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with browser or VS Code access to contribute.
+[GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with VS Code to contribute.
 
-To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces. Run `bin/dev`. If you can't open the link that is printed in the terminal, ensure the `3000` port is public under the `PORTS` tab in your terminal.
+To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
-After creating your codespace, run `bundle install` and `bin/rails db:migrate`. This will finish preparing HCB for development.
+You can then run `bin/dev` to launch HCB. If you can't open the link that is printed in the terminal, navigate to the `PORTS` tab in your terminal and set port `3000` to public and then back to private.
 
 ### Automated setup with Docker
 
@@ -67,15 +75,15 @@ env $(cat .env.docker) docker-compose -f docker-compose.yml -f docker-compose.so
 Before beginning this process, please **ensure you have both Ruby and Node
 installed**, as well as a PostgreSQL database running.
 
-#### [Step 1] Prereq: Install Ruby and Node
+#### [Step 1] Prerequisite: Install Ruby and Node
 
-See [`.ruby-version`](.ruby-version)
-and [`.node-version](.node-version) for which versions you need installed. I
+See [`.ruby-version`](/.ruby-version)
+and [`.node-version`](/.node-version) for which versions you need installed. I
 personally recommend using a version manager
-like [rbenv](https://rbenv.org/), [nvm](https://github.com/nvm-sh/nvm),
-or [asdf](https://asdf-vm.com/).
+like [rbenv](https://rbenv.org/) for ruby, [nvm](https://github.com/nvm-sh/nvm) for node,
+or [asdf](https://asdf-vm.com/) for both.
 
-#### [Step 2] Prereq: Install and run PostgreSQL
+#### [Step 2] Prerequisite: Install and run PostgreSQL
 
 We recommend you use version `15.12` as that's what running in production. If
 you're on MacOS, I recommend using Homebrew to get Postgres up and running. If
@@ -106,7 +114,7 @@ HCB-specific setup instructions.
    ```
 
    Since you're running HCB outside of Docker, you will need to update the
-   `DATABASE_URL` environment variable located in `.env.development`. The
+   `DATABASE_URL` environment variable located in [`.env.development`](/.env.development). The
    default caters towards Docker and GitHub Codespaces users. Please update it to
    ```
    postgres://postgres@127.0.0.1:5432
@@ -115,6 +123,10 @@ HCB-specific setup instructions.
 3. Install ruby gems
    ```bash
    bundle install
+   ```
+    If you're on a Mac you may need to install a few Homebrew dependencies to get `bundle install` to succeed:
+   ```bash
+   brew install pkg-config cairo libpq
    ```
 
 4. Install node packages
@@ -139,13 +151,6 @@ HCB-specific setup instructions.
 
 **Additional installs for local development:**
 
-Install [wkhtmltopdf](https://wkhtmltopdf.org/)
-
-```bash
-# Mac specific instruction:
-brew install wkhtmltopdf
-```
-
 Install [ImageMagick](https://imagemagick.org/)
 
 ```bash
@@ -153,11 +158,68 @@ Install [ImageMagick](https://imagemagick.org/)
 brew install imagemagick
 ```
 
-## Production Data
+## Testing
 
-We've transitioned to using development keys and seed data in development, but historically have used production keys and data on dev machines. It is recommended to not roll back to using production data & keys in development, but if absolutely necessary the following steps can be taken:
+### Automated testing w/ RSpec
 
-- Set environment variables `DOPPLER_TOKEN=<a doppler token with production access>`, `DOPPER_PROJECT=hcb`, `DOPPLER_CONFIG=production` in your docker container (usually via `.env.development`). N.B. this does not set [`RAILS_ENV=production`](https://guides.rubyonrails.org/configuring.html#rails-environment-settings), which you should **never** do on a development machine.
-- Put the production key in `config/credentials/production.key`. If you have heroku access you can get this from the `RAILS_MASTER_KEY` environment variable. If not then ask a team member (ping `@creds` in Slack). [DO NOT CHECK THIS INTO GIT](https://github.com/hackclub/hcb/blob/99fab73deb27a09a9424847e02080cb3ea5d09cf/.gitignore#L29)
-    - If you need to edit [`config/credentials/production.yml.enc`](./config/credentials/production.yml.enc), you can now run `bin/rails credentials:edit --environment=production`.
-- Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker using a dump of the production database.
+HCB has a limited set of tests created using [RSpec](https://rspec.info/). Run them using:
+
+```bash
+bundle exec rspec
+```
+
+## Credentials
+
+External contributors should provide credentials via a [`.env.development`](/.env.development) file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
+
+HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+
+We also include OpenAI and Twilio keys in our [`.env.development`](/.env.development) file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
+
+Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials; if you have access to Doppler, you can set a `DOPPLER_TOKEN` in your `.env` file to load in credentials from Doppler.
+
+### Production data
+
+We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary a HCB engineer can take the following steps:
+
+- Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
+
+- Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` enviroment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
+
+- Run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to set up a local environment with Docker. The script will use a dump of our production database from Heroku.
+
+#### Pulling data from production
+
+On the postgres server:
+```bash
+su - postgres
+pg_dump -Fc --no-acl --no-owner -h localhost -U rails -d hcb_production -f /tmp/hcb_production.dump
+```
+
+On your laptop:
+```bash
+scp hcb-postgres-3:/tmp/hcb_production.dump hcb_production.dump
+pg_restore --verbose --clean --no-acl --no-owner -h localhost -U postgres -d bank_development hcb_production.dump
+```
+
+## Flipper
+
+[Flipper](https://github.com/flippercloud/flipper) is used to toggle feature flags on HCB. Flipper can be accessed at [localhost:3000/flipper/features](http://localhost:3000/flipper/features). To enable a flag, press "Add Feature", paste in the name of a feature from [this list](https://hcb.hackclub.com/api/flags), and then press "Fully Enable".
+
+## Getting an OAuth token
+
+There are two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference. Both described here use the `authorization_code` grant type, but HCB also supports the `device_code` grant type. See the [device grant gem docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) for instructions on how to use this flow, keeping in mind that HCB uses a scope of `api/v4/oauth` instead of just `oauth`.
+
+1. Go to [localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to [`http://localhost:3000/`](http://localhost:3000/), and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
+
+2. Open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "http://localhost:3000/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read write`.
+
+Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to [`http://localhost:3000/api/v4/oauth/token`](http://localhost:3000/api/v4/oauth/token) with a content type of `application/x-www-form-urlencoded` (you can use a tool like [Postman](https://www.postman.com/) to do this!). The request body fields are as follows:
+```
+grant_type=authorization_code
+code=<CODE>
+client_id=<UID>
+client_secret=<SECRET>
+redirect_uri=http://localhost:3000/
+```
+This request will return your OAuth access token. It can then be passed into future API requests in the Authorization header. Ex. `Authorization: Bearer <ACCESS TOKEN>`

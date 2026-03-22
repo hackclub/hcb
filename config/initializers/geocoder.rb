@@ -3,6 +3,9 @@
 Geocoder.configure(
   timeout: 15,
 
+  lookup: :mapbox,
+  mapbox: { api_key: Credentials.fetch(:MAPBOX, :API_KEY) },
+
   ip_lookup: :ipinfo_io,
   ipinfo_io: { api_key: Credentials.fetch(:IP_INFO) },
 

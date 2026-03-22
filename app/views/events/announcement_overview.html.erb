@@ -1,0 +1,87 @@
+<% title "Announcements for #{@event.name}" %>
+<% page_md %>
+<% auto_discover_feed(@event) %>
+<%= render "events/nav", selected: :announcements %>
+
+<% if @announcements.empty? && organizer_signed_in? %>
+  <%= render "events/one_pager",
+    title: "Announcements",
+    screenshots: {
+      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
+      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+    },
+    hints: [
+      {
+        icon: "announcement",
+        title: "Keep your community informed",
+        description: "Share updates, news, and important information with your event followers through announcements."
+      },
+      {
+        icon: "friend",
+        title: "Engage your audience",
+        description: "Build a stronger connection with your community by regularly updating them on event developments and highlights."
+      },
+      {
+        icon: "up-caret",
+        title: "Grow your following",
+        description: "Encourage attendees and supporters to follow your event for the latest announcements and updates."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/announcements" target="_blank" class="underline">how we do announcements on HQ!</a></span>
+    <% end %>
+    <div class="flex gap-2 flex-row-reverse">
+      <%= render "announcement_header" %>
+    </div>
+  <% end %>
+
+<% else %>
+  <h1 class="flex heading flex-col sm:flex-row items-center gap-2 mb-0 border-0">
+    <span class="flex-grow flex-col sm:flex-row flex items-center flex-1">
+      Announcements
+      <% show_followers_modal = organizer_signed_in?(as: :reader) && @event.followers.any? %>
+      <%= render "events/followers_modal", event_follows: @event.event_follows if show_followers_modal %>
+      <% if show_followers_modal %>
+        <%= link_to "#", class: "list-badge quick-action ml-4", data: { behavior: "modal_trigger", modal: "edit_followers" } do %>
+          <%= inline_icon "person", size: 20 %>
+          <%= pluralize(@event.followers.count, "follower") %>
+        <% end %>
+      <% end %>
+      </span>
+    </span>
+
+    <div class="mt-1 sm:mt-0 flex items-center gap-2">
+      <%= render "announcement_header" %>
+    </div>
+  </h1>
+
+  <% if @monthly_announcement.present? && organizer_signed_in?(as: :reader) %>
+    <% scheduled_for = Date.today.next_month.beginning_of_month %>
+    <% scheduled_for_string = scheduled_for.strftime("%B #{scheduled_for.day.ordinalize}") %>
+
+    <% if @monthly_announcement.template_draft? && (DateTime.now > DateTime.now.end_of_month - 1.week) %>
+      <%= render "application/callout", type: "error", title: "Your scheduled monthly announcement will be skipped", footer: :questions do %>
+        <ul>
+          <li>Since blocks contained in this monthly announcement have no data, the scheduled monthly announcement for <%= Date.today.strftime("%B") %> will be skipped.</li>
+          <li>If you would like to keep this monthly announcement, <%= link_to "edit it", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+          <li>You can also disable sending monthly announcements in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+        </ul>
+      <% end %>
+    <% elsif !@monthly_announcement.published? %>
+      <%= render "application/callout", type: "warning", title: "You have a scheduled monthly announcement that will be delivered on #{scheduled_for_string}", footer: :questions do %>
+        <ul>
+          <li>You can <%= link_to "view and edit this announcement", announcement_path(@monthly_announcement) %> any time before <%= scheduled_for_string %>.</li>
+          <li>If you would like to disable sending monthly announcements, you may do so in your <%= link_to "organization settings", edit_event_path(@event) %>.</li>
+          <li>This announcement will be sent out to everyone following you on <%= scheduled_for_string %>.</li>
+        </ul>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <div class="flex flex-col gap-2">
+    <% @announcements.each do |announcement| %>
+      <%= render partial: "announcements/announcement_card", locals: { announcement: } %>
+    <% end %>
+  </div>
+  <%= paginate @announcements %>
+<% end %>

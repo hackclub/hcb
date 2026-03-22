@@ -8,7 +8,7 @@ module TransactionEngine
 
         def initialize(bank_account_id:, start_date: nil, end_date: Date.today)
           @bank_account_id = bank_account_id
-          @start_date = fmt_date((start_date || last_1_month))
+          @start_date = fmt_date(start_date || last_1_month)
           @end_date = fmt_date end_date
         end
 
@@ -18,8 +18,9 @@ module TransactionEngine
 
             if plaid_transaction.date <= "2024-10-09".to_date
               "[Plaid import] Skipping #{plaid_transaction.transaction_id}".tap do |msg|
-                puts msg, plaid_transaction
-                Airbrake.notify(msg, plaid_transaction)
+                notice = "#{msg} #{plaid_transaction}"
+                puts notice
+                Rails.error.unexpected notice
               end
 
               next

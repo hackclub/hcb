@@ -4,18 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  subject_type  :string
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module User
@@ -26,21 +32,21 @@ class Metric
 
         stripe_transactions_subquery = RawStripeTransaction.select("date(date_posted) AS transaction_date, SUM(amount_cents) * -1 AS amount")
                                                            .where("raw_stripe_transactions.stripe_transaction->>'cardholder' IN (?)", StripeCardholder.select(:stripe_id).where(user_id: user.id))
-                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", 2024)
+                                                           .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                                                            .group("date(date_posted)")
 
         ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                            .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                            .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
         increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                                                .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                                                .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                                 .where(user_id: user.id)
                                                 .group("date(created_at)")
 
         checks_subquery = Check.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
-                               .where("EXTRACT(YEAR FROM created_at) = ?", 2024)
+                               .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                .where(creator_id: user.id)
                                .group("date(created_at)")
 
@@ -62,7 +68,7 @@ class Metric
         SQL
 
         hash = {}
-        (Date.new(2024, 1, 1)..Date.new(2024, 12, 31)).each do |date|
+        (Date.new(Metric.year, 1, 1)..Date.new(Metric.year, 12, 31)).each do |date|
           hash[date.to_s] = 0
         end
 

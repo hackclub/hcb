@@ -1,0 +1,9 @@
+<%# locals: (block:, is_email: false) %>
+
+<% unless is_email %>
+  <div class="block-actions flex gap-2">
+    <% if block.editable? %>
+      <%= pop_icon_to "edit", edit_announcements_block_path(block), class: "tooltipped", "aria-label": "Edit this block", rel: "modal:open" %>
+    <% end %>
+  </div>
+<% end %>

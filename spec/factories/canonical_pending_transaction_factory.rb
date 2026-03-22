@@ -6,5 +6,15 @@ FactoryBot.define do
     date { Faker::Date.backward(days: 14) }
     memo { Faker::Quote.matz }
     fronted { false }
+
+    transient do
+      category_slug {}
+    end
+
+    after(:create) do |cpt, context|
+      if context.category_slug.present?
+        TransactionCategoryService.new(model: cpt).set!(slug: context.category_slug)
+      end
+    end
   end
 end

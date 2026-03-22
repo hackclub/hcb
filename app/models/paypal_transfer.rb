@@ -53,7 +53,7 @@ class PaypalTransfer < ApplicationRecord
   end
 
   after_create do
-    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip.upcase, date: created_at)
+    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "PayPal transfer to #{recipient_name}".strip, date: created_at)
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -133,16 +133,11 @@ class PaypalTransfer < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::PAYPAL_TRANSFER_CODE
 
   def admin_dropdown_description
     "#{ApplicationController.helpers.render_money(amount_cents)} to #{recipient_email} from #{event.name}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
 end

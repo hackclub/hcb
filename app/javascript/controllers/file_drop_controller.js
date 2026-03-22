@@ -1,6 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
-import airbrake from '../airbrake'
+import { appsignal } from '../appsignal'
 
 let dropzone
 
@@ -17,7 +17,6 @@ function extractId(dataTransfer) {
     receiptId = imgTag.getAttribute('data-receipt-id')
   } catch (err) {
     console.error(err)
-    // airbrake?.notify(err)
   }
 
   if (!receiptId) {
@@ -33,7 +32,7 @@ function extractId(dataTransfer) {
       receiptId = imageElement.getAttribute('data-receipt-id')
     } catch (err) {
       console.error(err)
-      airbrake?.notify(err)
+      appsignal.sendError(err)
     }
   }
 
@@ -43,7 +42,7 @@ function extractId(dataTransfer) {
 export default class extends Controller {
   static targets = ['fileInput', 'dropzone', 'form', 'uploadMethod']
   static values = {
-    title: String,
+    title: { type: String, default: 'Drop to add a receipt' },
     linking: { type: Boolean, default: false },
     globalPaste: { type: Boolean, default: false },
     receiptable: String,
@@ -90,6 +89,7 @@ export default class extends Controller {
           receiptable_type: receiptableType,
           receiptable_id: receiptableId,
           show_link: true,
+          show_receipt_button: true,
         })
       }
     }

@@ -165,7 +165,7 @@ class Check < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{check_number.present? ? check_number : 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
+    "#{check_number.presence || 'No number'} | #{event.name} | #{lob_address.name} | #{status} - #{ApplicationController.helpers.render_money amount}"
   end
 
   def sent?
@@ -180,13 +180,8 @@ class Check < ApplicationRecord
     lob_address.try(:name).try(:upcase)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)

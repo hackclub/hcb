@@ -2,9 +2,9 @@
 
 module StripeCardholderService
   class Create
-    def initialize(current_user:, current_session:, event_id:)
+    def initialize(current_user:, ip_address:, event_id:)
       @current_user = current_user
-      @current_session = current_session
+      @ip_address = ip_address
       @event_id = event_id
     end
 
@@ -49,7 +49,7 @@ module StripeCardholderService
           card_issuing: {
             user_terms_acceptance: {
               date: DateTime.now.to_i,
-              ip: @current_session.ip
+              ip: @ip_address
             }
           }
         }

@@ -2,11 +2,11 @@
 
 class EmburseCardPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def show?
-    record.event.users.include?(user) || user&.admin?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.auditor?
   end
 
 end

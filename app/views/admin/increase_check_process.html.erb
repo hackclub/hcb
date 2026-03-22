@@ -3,7 +3,7 @@
     Back to checks
 <% end %>
 
-<h1>Process Check #<%= @check.id %></h1>
+<h1>Process Check #<%= @check.id %> for <%= @check.event.name %> <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @check.event.financially_frozen? %></h1>
 <p><small>Current Status: <%= @check.aasm_state %></small></p>
 
 <hr>
@@ -36,6 +36,15 @@
       <td style="text-align: right;">Amount:</td>
       <td><%= render_money @check.amount %></td>
     </tr>
+    <tr>
+      <td style="text-align: right;">Organization balance:</td>
+      <td>
+        <%= render_money @check.event.balance_available_v2_cents %>
+        <% if @check.event.balance_available_v2_cents < 0 %>
+          <span class="ml1 badge bg-error">⚠️ Negative balance</span>
+        <% end %>
+      </td>
+    </tr>
     <% if @check.employee_payment.present? %>
       <tr>
         <td style="text-align: right;">Employee:</td>
@@ -67,7 +76,7 @@
 
 <% if @check.pending? %>
   <%= button_to "💸 Approve and send check", approve_increase_check_path(@check), method: :post, data: { confirm: "Are you sure you want to send this check?" } %>
-  <%= form_with(model: nil, local: true, url: reject_increase_check_path(@check), method: :post) do |form| %>
+  <%= form_with(model: false, local: true, url: reject_increase_check_path(@check), method: :post) do |form| %>
     <div class="field">
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>

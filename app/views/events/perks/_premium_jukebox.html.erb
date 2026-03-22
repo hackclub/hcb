@@ -1,0 +1,41 @@
+<%# locals: (event:, perks_available:, active_teenagers_count:) %>
+
+<div class="card pb0 mb3 promo-jukebox" id="premium-jukebox">
+  <div class="card__banner card__banner--top flex justify-between items-center">
+    <h3 class="h1 py-4 my0 text-transparent promo-premium-header bg-clip-text inline-flex items-center flex-grow">
+      <span class="flex-grow">Jukebox</span>
+      <span class="badge bg-muted mr-5" style="font-size: 15px; padding: 8px 14px;">Premium</span>
+    </h3>
+
+    <% if !event.plan.promotions_enabled? %>
+      <% jukebox_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
+    <% elsif !perks_available %>
+      <% jukebox_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+    <% elsif active_teenagers_count < 10 %>
+      <% jukebox_ineligible_reason = "Organization must have 10 or more active teenagers" %>
+    <% end %>
+    <% if jukebox_ineligible_reason %>
+      <div class="tooltipped tooltipped--w inline-block" aria-label="<%= jukebox_ineligible_reason %>">
+        <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+      </div>
+    <% else %>
+      <%= link_to "Apply",
+        fillout_form("briCUMzx5Sus", { "hcbprojname" => event.name, "hcburl" => event_team_url(event), "name" => current_user.name, "email" => current_user.email }),
+        class: "btn promo-premium-header bg-clip-padding",
+        target: :_blank %>
+    <% end %>
+  </div>
+
+  <p>
+    Does your HCB organization have 10 or more active teenagers? Add a link to
+    <%= link_to "Jukebox Print", "https://www.jukeboxprint.com/custom-stickers" %>
+    to your website for a $500 coupon to spend on custom stickers, cards, marketing materials, and more!
+  </p>
+  <p>
+    More detailed instructions on linking to Jukebox upon application.
+    Note that international shipping costs are not covered by the coupon.
+  </p>
+  <section class="card__banner card__darker secondary border-top italic">
+    You currently have <%= active_teenagers_count %>/10 active teenagers in your organization!
+  </section>
+</div>

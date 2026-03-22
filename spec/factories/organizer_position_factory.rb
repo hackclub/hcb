@@ -4,6 +4,8 @@ FactoryBot.define do
   factory :organizer_position do
     association :user
     association :event
-    association :organizer_position_invite
+    organizer_position_invite do
+      association(:organizer_position_invite, event:, user:)
+    end
   end
 end

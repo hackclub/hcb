@@ -44,6 +44,7 @@ module PendingEventMappingEngine
       decline_canonical_pending_incoming_disbursement!
 
       settle_canonical_pending_expense_payout!
+      settle_canonical_pending_payout_holding!
 
       true
     end
@@ -185,6 +186,14 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_expense_payout!
       CanonicalPendingTransaction.unsettled.reimbursement_expense_payout.find_each(batch_size: 100) do |cpt|
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+        end
+      end
+    end
+
+    def settle_canonical_pending_payout_holding!
+      CanonicalPendingTransaction.unsettled.reimbursement_payout_holding.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
         end

@@ -105,7 +105,7 @@ function TourStep({
 
   return (
     <div
-      className="card border b--info overflow-visible z4 max-width-1"
+      className="card border b--info overflow-visible z-[2] max-w-96"
       ref={floating}
       style={{
         position: strategy,

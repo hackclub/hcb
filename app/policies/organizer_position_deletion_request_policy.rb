@@ -2,7 +2,7 @@
 
 class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   def index?
-    user.admin?
+    user.auditor?
   end
 
   def new?
@@ -10,7 +10,7 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   end
 
   def create?
-    return false unless user.present?
+    return false unless OrganizerPosition.role_at_least?(user, record.event, :member)
 
     target_is_in_event = record.event.organizer_positions.include?(record.organizer_position)
     target_has_no_pending_request = record.organizer_position.organizer_position_deletion_requests.under_review.none?
@@ -19,7 +19,7 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin?
+    user.auditor?
   end
 
   def close?
@@ -33,11 +33,11 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   private
 
   def user_in_event?
-    record.event.users.include? user
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def current_user_is_manager?
-    OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def current_user_is_the_user?

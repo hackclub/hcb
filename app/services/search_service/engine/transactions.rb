@@ -9,14 +9,14 @@ module SearchService
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
         if @context[:event_id] && @query["types"].length == 1
           transactions = Event.find(@context[:event_id]).canonical_transactions
-        elsif @admin
+        elsif @auditor
           transactions = CanonicalTransaction
         else
           transactions = CanonicalTransaction.joins(:canonical_event_mapping).where(canonical_event_mapping: { event: @user.events })

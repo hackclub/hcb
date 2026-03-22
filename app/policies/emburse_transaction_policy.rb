@@ -2,11 +2,11 @@
 
 class EmburseTransactionPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def show?
-    user&.admin? || record.event.users.include?(user)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def edit?

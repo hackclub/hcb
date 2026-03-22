@@ -22,7 +22,8 @@ class ReceiptBinMailerPreview < ActionMailer::Preview
   def bounce_success
     ReceiptBinMailer.with(
       to: "test@example.com",
-      receipts_count: 1
+      receipts_count: 1,
+      pairs: []
     ).bounce_success
   end
 

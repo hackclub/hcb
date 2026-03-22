@@ -1,20 +1,26 @@
 <% title "Send an ACH transfer" %>
-<% page_sm %>
-<%= render "events/nav", selected: :transfers %>
+<% subtitle "From #{@event.name}" %>
 
-<h1>Send an ACH transfer</h1>
-
-<%= render "callout", type: "warning", title: "Important info about ACH transfers", footer: :questions do %>
-  <ul>
-    <li><strong>Sending via ACH is irreversible</strong>—you cannot cancel.</li>
-    <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
-    <li>These are US banking system restrictions, so we have limited ability to fix mistakes.</li>
-    <li>ACHs can only be sent to U.S. bank accounts.</li>
-  </ul>
+<% content_for :table_of_contents do %>
+  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
+  <% admin_tool do %>
+    <%= render "events/transfer_step_item", number: 3, label: "Admin" %>
+  <% end %>
 <% end %>
 
-<% unless policy(@event).create_transfer? %>
-  <%= render "events/transfers/unauthorized_callout" %>
+<% content_for :sidebar_footer do %>
+  <%= render "application/callout", type: "info", title: "Important info about ACH transfers", class: "mt-2 mb-0" do %>
+    <ul>
+      <li>ACH transfers can only be sent to U.S. bank accounts.</li>
+      <li>If you enter the wrong destination here, the money will permanently leave your account regardless.</li>
+      <li>We have limited ability to fix mistakes because of U.S. banking system restrictions.</li>
+      <li>ACH transfers are <strong>irreversible</strong> and can't be canceled.</li>
+    </ul>
+  <% end %>
+  <% if @event.present? && !policy(@event).create_transfer? %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
+  <% end %>
 <% end %>
 
-<%= render "form", ach_transfer: @ach_transfer %>
+<%= render "ach_transfers/form", ach_transfer: @ach_transfer %>

@@ -1,0 +1,29 @@
+<% title "Unlink Discord server" %>
+
+<% page_xs %>
+<% no_app_shell if params[:no_app_shell] %>
+<% @hide_footer = true %>
+
+<div class="flex justify-center mt5">
+  <img class="w-20 h-20 mx-auto center rounded-lg" src="<%= @guild.icon_url || Discord.random_avatar %>">
+</div>
+<h2 class="border-none center regular mb2">Unlink <strong><%= @event.name %></strong> from <strong><%= @guild.name %></strong>?</h2>
+
+<section class="mb2">
+  <div class="flex items-start">
+    <span class="muted mr2"><%= inline_icon "important" %></span>
+
+    <p class="mt0">Your Discord server will no longer receive notifications for the organization <%= @event.name %>.</p>
+  </div>
+</section>
+
+<div class="flex items-center justify-center g1">
+  <%= button_to "Unlink", discord_unlink_server_path, class: "btn bg-error h2", params: { signed_guild_id: @signed_guild_id } %>
+  <%= link_to "Cancel", root_path, class: "btn bg-muted" %>
+</div>
+
+<div class="center mt2">
+  <div class="flex items-center justify-center muted">Signed in as <%= user_mention current_user, class: "ml1" %></div>
+
+  <%= link_to "Switch accounts", auth_users_path(return_to: request.fullpath), class: "center" %>
+</div>

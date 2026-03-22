@@ -19,6 +19,8 @@
 #
 class User
   class Totp < ApplicationRecord
+    ISSUER = "HCB"
+
     acts_as_paranoid
 
     include AASM
@@ -34,10 +36,16 @@ class User
             created_at > 15.minutes.ago
           end
         end
+        after do
+          User::SecurityMailer.security_configuration_changed(user:, change: "Time-based one-time passwords were enabled").deliver_later
+        end
       end
 
       event :mark_expired do
         transitions from: :verified, to: :expired
+        after do
+          User::SecurityMailer.security_configuration_changed(user:, change: "Time-based one-time passwords were disabled").deliver_later
+        end
       end
     end
 
@@ -61,7 +69,7 @@ class User
     private
 
     def instance
-      ROTP::TOTP.new(secret, issuer: "HCB")
+      ROTP::TOTP.new(secret, issuer: ISSUER)
     end
 
   end

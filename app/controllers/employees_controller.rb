@@ -20,6 +20,7 @@ class EmployeesController < ApplicationController
   def show
     @employee = Employee.find(params[:id])
     @event = @employee.event
+    @frame = params[:frame].present?
     authorize @employee
   end
 
@@ -35,14 +36,14 @@ class EmployeesController < ApplicationController
     @employee = Employee.find(params[:employee_id])
     authorize @employee
     @employee.mark_terminated!
-    redirect_to current_user.admin? ? employees_admin_index_path : event_employees_path(@employee.event)
+    redirect_to admin_signed_in? ? employees_admin_index_path : event_employees_path(@employee.event)
   end
 
   def destroy
     @employee = Employee.find(params[:id])
     authorize @employee
     @employee.destroy
-    redirect_to current_user.admin? ? employees_admin_index_path : event_employees_path(@employee.event)
+    redirect_to admin_signed_in? ? employees_admin_index_path : event_employees_path(@employee.event)
   end
 
   private

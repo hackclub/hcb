@@ -11,7 +11,7 @@ module SetEvent
     def set_event
       id = params[:event_name] || params[:event_id] || params[:id]
       id ||= params[:event] if params[:event].is_a?(String) # sometimes params[:event] is a hash with nested attributes
-      @event = admin_signed_in? ? Event.friendly.find(id) : Event.friendly.find_by_friendly_id(id)
+      @event = auditor_signed_in? ? Event.friendly.find(id) : Event.friendly.find_by_friendly_id(id)
 
       @organizer_position = @event.organizer_positions.find_by(user: current_user) if signed_in?
       @first_time = params[:first_time] || @organizer_position&.first_time?
@@ -20,7 +20,7 @@ module SetEvent
       # Attempt to find this slug in the history
       @event = FriendlyId::Slug.order(id: :desc).find_by(slug: id, sluggable_type: "Event")&.sluggable
 
-      unless @event || admin_signed_in?
+      unless @event || auditor_signed_in?
         return redirect_to root_path, flash: { error: "We couldn’t find that organization!" }
       end
 
@@ -38,6 +38,14 @@ module SetEvent
       end
 
       redirect_to params.to_unsafe_h
+    end
+
+    def set_api_event
+      if params[:event_id]
+        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
+      else
+        @event = Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+      end
     end
 
   end

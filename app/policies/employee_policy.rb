@@ -10,7 +10,7 @@ class EmployeePolicy < ApplicationPolicy
   end
 
   def show?
-    team_member || admin || employee
+    team_member || admin || employee || auditor
   end
 
   def onboard?
@@ -31,12 +31,16 @@ class EmployeePolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def auditor
+    user&.auditor?
+  end
+
   def manager
-    OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def team_member
-    record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def employee

@@ -2,11 +2,11 @@
 
 class AchTransferPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def new?
-    is_public? || user_who_can_transfer?
+    admin_or_user?
   end
 
   def create?
@@ -52,8 +52,12 @@ class AchTransferPolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).create_transfer?
   end
 
+  def admin_or_user?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+  end
+
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def is_public?

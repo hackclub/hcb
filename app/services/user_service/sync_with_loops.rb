@@ -3,7 +3,7 @@
 module UserService
   class SyncWithLoops
     def initialize(user_id:, queue: Limiter::RateQueue.new(2, interval: 1), new_user: false)
-      @user = User.find(user_id)
+      @user = User.includes(:events).find(user_id)
       @queue = queue
       @new_user = new_user
       @contact_details = contact_details
@@ -12,27 +12,46 @@ module UserService
     def run
       return if @user.onboarding?
 
-      body = {
-        email: @user.email,
-        firstName: @user.first_name,
-        lastName: @user.last_name,
-        hcbSignedUpAt: format_unix(@user.created_at),
-        birthday: format_unix(@user.birthday),
-        hcbLastSeenAt: format_unix(@user.last_seen_at),
-        hcbLastLoginAt: format_unix(@user.last_login_at),
-        mailingLists: {
-          # https://loops.so/docs/contacts/mailing-lists#api
-          Credentials.fetch(:LOOPS, :MAILING_LIST) => true
-        }
-      }.compact_blank
+      if @user.teenager
+        # The additional `select` is a safety against Airtable query injection
+        user = EmailsTable.all(filter: "{Email} = \"#{@user.email}\"").select { |record| record["Email"] == @user.email }.first
+        user ||= EmailsTable.new("Email" => @user.email)
 
-      body[:userGroup] = @user.teenager? ? "Hack Clubber" : "HCB Adult"
-      body[:subscribed] = true if @contact_details.nil?
-      body[:source] = "HCB" if @contact_details.nil?
+        user["Full Name"] = "Preferred name: \"#{@user.preferred_name}\", Legal name: \"#{@user.full_name}\""
+        user["Date of Birth"] = @user.birthday
+        user["Address"] = @user.stripe_cardholder&.full_address if !@user.stripe_cardholder&.default_billing_address?
+        user["HCB Signed Up At"] = @user.created_at
+        user["HCB Last Seen At"] = @user.last_seen_at
+        user["HCB Last Login At"] = @user.last_login_at
+        user["HCB Has Active Org?"] = @user.events.active.any?
+        user["HCB Has Card Grant?"] = @user.card_grants.any?
 
-      body.merge!(billing_address)
+        user.save
+      else
+        body = {
+          email: @user.email,
+          firstName: @user.first_name,
+          lastName: @user.last_name,
+          hcbSignedUpAt: format_unix(@user.created_at),
+          birthday: format_unix(@user.birthday),
+          hcbLastSeenAt: format_unix(@user.last_seen_at),
+          hcbLastLoginAt: format_unix(@user.last_login_at),
+          hcbHasActiveOrg: @user.events.active.any?,
+          hcbHasCardGrant: @user.card_grants.any?,
+          mailingLists: {
+            # https://loops.so/docs/contacts/mailing-lists#api
+            Credentials.fetch(:LOOPS, :MAILING_LIST) => true
+          }
+        }.compact_blank
 
-      update(body:)
+        body[:userGroup] = "HCB Adult"
+        body[:subscribed] = true if @contact_details.nil?
+        body[:source] = "HCB" if @contact_details.nil?
+
+        body.merge!(billing_address)
+
+        update(body:)
+      end
     end
 
     private
@@ -53,18 +72,23 @@ module UserService
     end
 
     def contact_details
-      @queue.shift
-      conn = Faraday.new(url: "https://app.loops.so/")
+      begin
+        @queue.shift
+        conn = Faraday.new(url: "https://app.loops.so/")
 
-      resp = conn.send(:get) do |req|
-        req.url("api/v1/contacts/find")
-        req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
-        req.params[:email] = @user.email
+        resp = conn.send(:get) do |req|
+          req.url("api/v1/contacts/find")
+          req.headers["Authorization"] = "Bearer #{Credentials.fetch(:LOOPS)}"
+          req.params[:email] = @user.email
+        end
+
+        return nil if resp.body.strip == "[]"
+
+        JSON[resp.body][0]
+      rescue => e
+        Rails.error.unexpected "Received exception #{e.full_message} while attempting to get contact details for email #{@user.email} from Loops."
+        raise e
       end
-
-      return nil if resp.body.strip == "[]"
-
-      JSON[resp.body][0]
     end
 
     def update(body:)

@@ -5,30 +5,27 @@ class DocusealController < ActionController::Base
 
   def webhook
     ActiveRecord::Base.transaction do
-      @contract = OrganizerPosition::Contract.find_by(external_id: params[:data][:submission_id])
-      return render json: { success: true } unless @contract # sometimes contracts are sent using Docuseal that aren't in HCB
+      return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
 
-      if params[:event_type] == "form.completed" && params[:data][:submission][:status] == "completed"
-        return render json: { success: true } if @contract.signed?
+      contract = Contract.find_by(external_id: params[:data][:submission_id])
+      return render json: { success: true } if contract.nil? || contract.signed? # sometimes contracts are sent using Docuseal that aren't in HCB
 
-        document = Document.new(
-          event: @contract.organizer_position_invite.event,
-          name: "Fiscal sponsorship contract with #{@contract.organizer_position_invite.user.name}"
-        )
+      if params[:event_type] == "form.completed"
+        party = contract.parties.detect { |party| party.docuseal_role == params[:data][:role] }
 
-        document.file.attach(
-          io: URI.parse(params[:data][:documents][0][:url]).open,
-          filename: "#{params[:data][:documents][0][:name]}.pdf"
-        )
-
-        document.user = User.find_by(email: params[:data][:email]) || @contract.organizer_position_invite.event.point_of_contact
-        document.save!
-        @contract.update(document:)
-        @contract.mark_signed!
+        if party.present?
+          party.with_lock do
+            party.mark_signed! unless party.signed?
+          end
+        else
+          Rails.error.unexpected("Unexpected docuseal party #{params[:data][:role]}")
+        end
       elsif params[:event_type] == "form.declined"
-        @contract.mark_voided!
+        contract.mark_voided!
       end
     end
+
+    return render json: { success: true }
   rescue => e
     Rails.error.report(e)
     return render json: { success: false }

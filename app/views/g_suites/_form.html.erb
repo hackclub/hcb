@@ -1,0 +1,25 @@
+<p>
+  Your organization gets complimentary Google Workspace (formerly G Suite) through HCB! Google Workspace gives you
+  Gmail, Google Drive, Calendar, and more, all for free, including custom email addresses like
+  <strong>team@yourdomain.com</strong>.
+</p>
+<p>
+  Don’t own a domain yet? If you’re a high school organization, HCB will purchase a custom domain for <strong><%= @event.name %></strong> and set up Google Workspace for you.
+  Check out the <%= link_to "Domains promotion in the Perks tab", event_promotions_path %>
+  to get started!
+</p>
+<p>
+  If you <strong>already own</strong> a domain you would like to use, you can connect it to Google Workspace below.
+</p>
+<hr>
+<%= form_with(local: true, url: event_g_suite_create_path(@event), method: :post) do %>
+  <%= hidden_field_tag :event_id, @event.id %>
+  <%= hidden_field_tag :creator_id, current_user.id %>
+  <div class="field">
+    <%= label_tag :domain, "Your domain" %>
+    <%= text_field_tag :domain, nil, placeholder: "yourdomain.com", 'data-behavior': "prevent_whitespace", required: true, disabled: !policy(@event).g_suite_create? %>
+  </div>
+  <div class="actions">
+    <%= submit_tag "Configure", disabled: !policy(@event).g_suite_create? %>
+  </div>
+<% end %>

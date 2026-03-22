@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
-  skip_before_action :signed_in_user
+  skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
-  before_action :set_login, except: [:new, :create]
-  before_action :set_user, except: [:new, :create]
-  before_action :set_available_methods, except: [:new, :create]
+  before_action :set_login, except: [:new, :create, :reauthenticate]
+  before_action :set_for_application
+  before_action :set_user, except: [:new, :create, :reauthenticate]
   before_action :set_return_to
+  invisible_captcha only: [:create, :complete], honeypot: :remember_me
 
-  layout "login"
+  layout ->{ @for_application ? "apply" : "login" }
 
   after_action only: [:new] do
     # Allow indexing login page
@@ -17,15 +18,26 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
+    @return_to = url_from(params[:return_to])
     render "users/logout" if current_user
 
     @prefill_email = params[:email] if params[:email].present?
+    @referral_link = Referral::Link.find_by(slug: params[:referral]).presence if params[:referral].present?
+
+    @signup = params[:signup] == "true"
   end
 
   # when you submit your email
   def create
-    user = User.create_with(creation_method: :login).find_or_create_by!(email: params[:email])
-    login = user.logins.create
+    user = User.create_with(creation_method: @for_application ? :application_form : :login).find_or_create_by!(email: params[:email])
+
+    if params[:referral_link_id].present?
+      referral_link = Referral::Link.find_by(slug: params[:referral_link_id]).presence
+      login = user.logins.create(referral_link:)
+    else
+      login = user.logins.create
+    end
+
     cookies.signed["browser_token_#{login.hashid}"] = { value: login.browser_token, expires: Login::EXPIRATION.from_now }
 
     has_webauthn_enabled = user&.webauthn_credentials&.any?
@@ -39,6 +51,9 @@ class LoginsController < ApplicationController
       session[:auth_email] = login.user.email
       redirect_to choose_login_preference_login_path(login, return_to: params[:return_to])
     end
+  rescue => e
+    flash[:error] = e.message
+    return redirect_to auth_users_path
   end
 
   # get page to choose preference
@@ -97,110 +112,139 @@ class LoginsController < ApplicationController
   end
 
   def complete
-
-    case params[:method]
-    when "webauthn"
-      webauthn_credential = WebAuthn::Credential.from_get(JSON.parse(params[:credential]))
-      stored_credential = @user.webauthn_credentials.find_by!(webauthn_id: webauthn_credential.id)
-
-      webauthn_credential.verify(
-        session[:webauthn_challenge],
-        public_key: stored_credential.public_key,
-        sign_count: stored_credential.sign_count
-      )
-
-      stored_credential.update!(sign_count: webauthn_credential.sign_count)
-
-      session[:login_preference] = "webauthn" if params[:remember] == "true"
-
-      @login.update(authenticated_with_webauthn: true)
-
-    when "login_code"
-      UserService::ExchangeLoginCodeForUser.new(
-        user_id: @login.user.id,
-        login_code: params[:login_code],
-        sms: params[:sms],
-      ).run
-
-      if params[:sms]
-        @login.update(authenticated_with_sms: true)
-      else
-        @login.update(authenticated_with_email: true)
-      end
-    when "totp"
-      if @user.totp&.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
-        @user.totp.update!(last_used_at: DateTime.now)
-        @login.update(authenticated_with_totp: true)
-      else
-        return redirect_to totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." }
-      end
-    end
-
     # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
     flash.clear
 
+    service = ProcessLoginService.new(login: @login)
+
+    case params[:method]
+    when "webauthn"
+      ok = service.process_webauthn(
+        raw_credential: params[:credential],
+        challenge: session[:webauthn_challenge]
+      )
+
+      unless ok
+        redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
+        return
+      end
+    when "login_code"
+      ok = service.process_login_code(
+        code: params[:login_code],
+        sms: ActiveRecord::Type::Boolean.new.cast(params[:sms])
+      )
+
+      unless ok
+        initialize_sms_params
+        flash.now[:error] = service.errors.full_messages.to_sentence
+        render(:login_code, status: :unprocessable_entity)
+        return
+      end
+    when "totp"
+      ok = service.process_totp(code: params[:code])
+
+      unless ok
+        redirect_to(totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." })
+        return
+      end
+    when "backup_code"
+      ok = service.process_backup_code(code: params[:backup_code])
+
+      unless ok
+        redirect_to(backup_code_login_path(@login), flash: { error: service.errors.full_messages.to_sentence })
+        return
+      end
+    end
+
+
     # Only create a user session if authentication factors are met AND this login
     # has not created a user session before
-    if @login.complete? && @login.user_session.nil?
-      @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
-      if @user.full_name.blank? || @user.phone_number.blank?
-        redirect_to edit_user_path(@user.slug)
+    @login.with_lock do
+      if @login.complete? && @login.user_session.nil?
+        @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+      end
+    end
+
+    if @login.complete? && @login.user_session.present?
+      if @referral_link.present?
+        redirect_to referral_link_path(@referral_link)
+      elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@for_application
+        redirect_to edit_user_path(@user.slug, return_to: params[:return_to])
+      elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
+        redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        redirect_to(params[:return_to] || root_path)
+        return_path = params[:return_to]
+        if return_path.present?
+          begin
+            route = Rails.application.routes.recognize_path(return_path)
+            return_path = root_path if route[:controller] == "logins"
+          rescue ActionController::RoutingError
+            return_path = root_path
+          end
+        end
+
+        if @user.only_draft_application? && return_path.blank?
+          redirect_to application_path(@user.applications.first)
+        else
+          redirect_to(return_path || root_path)
+        end
       end
     else
-      set_available_methods
-
-      if @sms_available || @email_available
+      if @login.sms_available? || @login.email_available?
         redirect_to login_code_login_path(@login), status: :temporary_redirect
-      elsif @totp_available
+      elsif @login.totp_available?
         redirect_to totp_login_path(@login), status: :temporary_redirect
       else
         redirect_to choose_login_preference_login_path(@login, return_to: @return_to), status: :temporary_redirect
       end
     end
-  rescue Errors::InvalidLoginCode => e
-    flash.now[:error] = "Invalid login code!"
-    initialize_sms_params
-    return render :login_code, status: :unprocessable_entity
-  rescue WebAuthn::SignCountVerificationError, WebAuthn::Error => e
-    redirect_to auth_users_path, flash: { error: "Something went wrong." }
-  rescue ActiveRecord::RecordInvalid => e
-    redirect_to auth_users_path, flash: { error: e.record.errors&.full_messages&.join(". ") }
+  rescue SessionsHelper::AccountLockedError => e
+    redirect_to(auth_users_path, flash: { error: e.message })
+  end
+
+  def reauthenticate
+    return unless enforce_sudo_mode
+
+    redirect_to(@return_to || root_path)
   end
 
   private
 
+  def set_for_application
+    path = URI(params[:return_to] || "").path
+
+    @for_application = path.starts_with?("/applications")
+  rescue URI::InvalidURIError
+    @for_application = false
+  end
+
   def set_login
-    if params[:id]
-      begin
-        @login = Login.incomplete.active.find_by_hashid!(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        return redirect_to auth_users_path, flash: { error: "Please start again." }
-      end
-      unless valid_browser_token?
-        # error! browser token doesn't match the cookie.
-        flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
+    begin
+      if params[:id]
+        @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
+        @referral_link = @login.referral_link
+        @referral_program = @referral_link&.program
+        unless valid_browser_token?
+          # error! browser token doesn't match the cookie.
+          flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
+          redirect_to auth_users_path
+        end
+      elsif session[:auth_email]
+        @login = User.find_by_email(session[:auth_email]).logins.create
+        cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
+      else
+        flash[:error] = "Please try again."
         redirect_to auth_users_path
       end
-    elsif session[:auth_email]
-      @login = User.find_by_email(session[:auth_email]).logins.create
-      cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
-    else
-      raise ActionController::ParameterMissing.new("Missing login.")
+    rescue ActiveRecord::RecordNotFound
+      flash[:error] = "Please start again."
+      redirect_to auth_users_path, flash: { error: "Please start again." }
     end
   end
 
   def set_user
     @user = @login.user
     @email = @login.user.email
-  end
-
-  def set_available_methods
-    @email_available = !@login.authenticated_with_email
-    @sms_available = @user&.phone_number_verified && !@login.authenticated_with_sms
-    @webauthn_available = @user&.webauthn_credentials&.any? && !@login.authenticated_with_webauthn
-    @totp_available = @user&.totp.present? && !@login.authenticated_with_totp
   end
 
   def set_return_to

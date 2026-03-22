@@ -1,5 +1,5 @@
 # Wires on HCB
-Wires are our most complex outbound transfer type. That’s largely due to requirements varying from country to country. Before reading this, I’d recommend [Column’s documentation on wires](https://column.com/docs/international-wires/). Specifically the section on “Country-specific Details” and “Outgoing Transfers”.Our system is largely modelled on theirs.
+Wires are our most complex outbound transfer type. That’s largely due to requirements varying from country to country. Before reading this, I’d recommend [Column’s documentation on wires](https://column.com/docs/international-wires/). Specifically the section on “Country-specific Details” and “Outgoing Transfers”. Our system is largely modelled on theirs.
 
 ## The basics
 
@@ -7,17 +7,17 @@ Wires are sent via Column, just like ACH transfers and checks. They use HCB code
 
 ## How we handle currency
 
-Column provides us with currency exchange, we choose not to take a quote and instead accept whatever rate they currently have. The 	`CanonicalTransaction` produced from sending a wire represents us using USD to purchase the currency we need to send the wire.
+Column provides us with currency exchange, we choose not to take a quote and instead accept whatever rate they currently have. The [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) produced from sending a wire represents us using USD to purchase the currency we need to send the wire.
 
-Wires also have an associated `CanonicalPendingTransaction`, the `amount_cents` for that transaction is in USD and is based on exchange rates from the EU central bank at the time of creation.
+Wires also have an associated [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb), the `amount_cents` for that transaction is in USD and is based on exchange rates from the EU central bank at the time of creation.
 
 The most up to date amount for a wire (in USD) is accessible using `Wire#usd_amount_cents`. `Wire#amount_cents` and `Wire#currency` store the currency and amount of the wire, in that currency.
 
-## How we collect specific country fields
+## How we collect country-specific fields
 
 Column lists out the specific details needed for a wire in each country: [column.com/docs/international-wires/country-specific-details](https://column.com/docs/international-wires/country-specific-details).
 
-We’ve translated this into the `Wire#information_required_for` method. Which you pass in a country code and are returned an array of details that need to be collected. This information is stored in the `recipient_information` JSONB column of the database, we use [`ActiveRecord::Store`](https://api.rubyonrails.org/classes/ActiveRecord/Store.html) for this. On the frontend, we conditionally render these fields using Alpine based on the recipient’s country. 
+We’ve translated this into the `Wire#information_required_for` method; you can pass it a country code and it will return an array of details that need to be collected. This information is stored in the `recipient_information` JSONB column of the database. We use [`ActiveRecord::Store`](https://api.rubyonrails.org/classes/ActiveRecord/Store.html) for this. On the frontend, we conditionally render these fields using Alpine based on the recipient’s country. 
 
 We then pass this information to Column, but directly reference the fields because they have to go in specific spots in the request body. When adding a new field, we have to add it to the calls to Column.
 

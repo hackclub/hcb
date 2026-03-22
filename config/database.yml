@@ -15,4 +15,4 @@ test:
 
 production:
   <<: *default
-  database: bank_production
+  database: hcb_production

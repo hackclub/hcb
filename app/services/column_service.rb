@@ -33,27 +33,30 @@ class ColumnService
   end
 
   def self.post(url, params = {})
+    raise ArgumentError, "missing idempotency_key: #{url}" if params[:idempotency_key].nil?
+
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
   end
 
   def self.transactions(from_date: 1.week.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
+    from_date = from_date.to_date
+    to_date = to_date.to_date
+
+    if (to_date - from_date).to_i > 100
+      raise ArgumentError, "cannot fetch transactions for a range of more than 100 days"
+    end
+
     # 1: fetch daily reports from Column
     reports = get(
       "/reporting",
       type: "bank_account_transaction",
+      # We don't need to paginate here as there is one report per day and we
+      # check that our date range does not exceed 100 days.
       limit: 100,
-      from_date: from_date.to_date.iso8601,
-      to_date: to_date.to_date.iso8601,
+      from_date: from_date.iso8601,
+      to_date: to_date.iso8601,
     )["reports"].select { |r| r["from_date"] == r["to_date"] && r["row_count"]&.>(0) }
-
-    document_ids = reports.pluck "json_document_id"
-
-    dates = reports.pluck "from_date"
-
-    # if (from_date.to_date..to_date.to_date).reject { |date| dates.include?(date.to_date.iso8601) }.any?
-    #  raise StandardError.new("Missing Column reports for #{from_date.to_date.iso8601} to #{to_date.to_date.iso8601}")
-    # end
 
     reports.to_h do |report|
       url = get("/documents/#{report["json_document_id"]}")["url"]
@@ -69,6 +72,7 @@ class ColumnService
       type: "bank_account_summary",
       from_date: from_date.to_date.iso8601,
       to_date: to_date.to_date.iso8601,
+      idempotency_key: "#{from_date}_to_#{to_date}"
     )
   end
 
@@ -107,8 +111,12 @@ class ColumnService
     get("/transfers/ach/#{id}")
   end
 
+  def self.international_wire(id)
+    get("/transfers/international-wire/#{id}")
+  end
+
   def self.return_ach(id, with:)
-    post("/transfers/ach/#{id}/return", return_code: with)
+    post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
 
 end

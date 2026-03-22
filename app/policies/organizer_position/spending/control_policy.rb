@@ -4,16 +4,12 @@ class OrganizerPosition
   module Spending
     class ControlPolicy < ApplicationPolicy
       def index?
-        return unless enabled?
-
-        user.admin? || (
+        user.auditor? || (
           current_user_manager? || own_control?
         )
       end
 
       def create?
-        return unless enabled?
-
         user.admin? || (
            current_user_manager? &&
            !record.organizer_position.manager?
@@ -24,25 +20,17 @@ class OrganizerPosition
       end
 
       def destroy?
-        return unless enabled?
-
-        user.admin? ||
-          current_user_manager?
-
+        user.admin? || current_user_manager?
       end
 
       private
 
       def current_user_manager?
-        OrganizerPosition.find_by(user:, event: record.organizer_position.event).manager?
+        OrganizerPosition.role_at_least?(user, record.organizer_position.event, :manager)
       end
 
       def own_control?
         user == record.organizer_position.user
-      end
-
-      def enabled?
-        Flipper.enabled?(:spending_controls_2024_06_03, record.organizer_position.event)
       end
 
     end

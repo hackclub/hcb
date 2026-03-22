@@ -19,10 +19,6 @@ class User
       validates_presence_of :recipient_email
       normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
-      validate do
-        errors.add(:base, "Due to integration issues, transfers via PayPal are currently unavailable. Please choose another payout method.")
-      end
-
       def kind
         "paypal_transfer"
       end
@@ -41,6 +37,10 @@ class User
 
       def title_kind
         "PayPal"
+      end
+
+      def currency
+        "USD"
       end
 
     end

@@ -23,6 +23,8 @@ class PublicActivity::Activity
   include PublicIdentifiable
   set_public_id_prefix :act
 
+  has_one :discord_message, class_name: "Discord::Message", inverse_of: :activity
+
   after_create_commit -> {
     # this code has been tested
     # but because this will run so often
@@ -33,10 +35,14 @@ class PublicActivity::Activity
       streams = []
 
       if event_id
-        Event.find(event_id).users.each do |user|
+        event = Event.find(event_id)
+
+        event.users.each do |user|
           streams << [user, "activities"]
           streams << [user, Event.find(event_id), "activities"]
         end
+
+        ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
       end
 
       if recipient.is_a?(User)

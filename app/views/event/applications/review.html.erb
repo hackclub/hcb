@@ -1,0 +1,30 @@
+<% title "Review your application" %>
+<% content_for :progress, 75 %>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Review your application
+    </h2>
+
+    <p class="mt-0 text-lg muted">Make sure everything looks correct before submitting</p>
+  </div>
+<% end %>
+
+<div class="flex flex-col items-center flex-grow">
+  <div class="md:max-w-[600px] w-full mt-7 space-y-8 pb-5">
+    <%= render "event/applications/summary", application: @application, allow_edits: true %>
+  </div>
+</div>
+
+<% content_for :footer do %>
+  <div class="flex flex-row gap-6 items-start justify-center">
+    <%= link_to "← Back", personal_info_application_path(@application), class: "btn bg-muted" %>
+  </div>
+  <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
+    <%= form.hidden_field :return_to, value: review_application_path(@application) %>
+  <% end %>
+  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.ready_to_submit?}", disabled: !@application.ready_to_submit?, "aria-label": "This application is not ready to submit" do %>
+    Submit application
+  <% end %>
+<% end %>

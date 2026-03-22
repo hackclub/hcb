@@ -6,7 +6,7 @@
                 <%= form.label :logo do %>
                     <div
                         role="button"
-                        class="donations-logo-edit-btn pointer no-select tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center"
+                        class="donations-logo-edit-btn pointer select-none tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center"
                         aria-label="Upload new logo">
                         <%= inline_icon "pen", size: 12 %>
                     </div>
@@ -16,7 +16,7 @@
             <%= link_to event_remove_logo_path(@event), method: :post do %>
                 <div
                     role="button"
-                    class="donations-logo-edit-btn donations-logo-edit-btn--left pointer no-select tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center embedded-display-none"
+                    class="donations-logo-edit-btn donations-logo-edit-btn--left pointer select-none tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center embedded-display-none"
                     style="top: 20px"
                     aria-label="Remove logo">
                     <%= inline_icon "view-close-small", size: 18 %>

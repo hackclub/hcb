@@ -1,0 +1,33 @@
+<%# locals: (model:, admin_context: false) %>
+
+<% url = case model
+         when CanonicalTransaction
+           set_category_canonical_transaction_path(model)
+         when CanonicalPendingTransaction
+           set_category_canonical_pending_transaction_path(model)
+         else
+           raise(ArgumentError, "unsupported model class: #{model.class.name.inspect}")
+         end %>
+
+<%= form_for(
+      model,
+      url:,
+      method: :post,
+      data: { controller: "form" },
+      html: { class: "m-0" }
+    ) do |f| %>
+  <% if admin_context %>
+    <%= hidden_field_tag("context", "admin") %>
+  <% end %>
+
+  <%= select_tag(
+        f.field_name(:category_slug),
+        options_for_select(
+          TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+          model.category&.slug,
+        ),
+        include_blank: "None",
+        data: { action: "change->form#submit" },
+        class: "m-0"
+      ) %>
+<% end %>

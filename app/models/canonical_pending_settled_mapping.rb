@@ -34,8 +34,10 @@ class CanonicalPendingSettledMapping < ApplicationRecord
     # Raised from https://github.com/hackclub/hcb/issues/7419
     if canonical_pending_transaction.canonical_pending_declined_mapping
       canonical_pending_transaction.canonical_pending_declined_mapping.destroy!
-      Airbrake.notify("CPT ##{canonical_pending_transaction.id} had both a decline and a settle mapping. The decline mapping was destroyed.")
+      Rails.error.unexpected "CPT ##{canonical_pending_transaction.id} had both a decline and a settle mapping. The decline mapping was destroyed."
     end
+
+    canonical_transaction.update(ledger_item: canonical_pending_transaction.ledger_item)
   end
 
 end

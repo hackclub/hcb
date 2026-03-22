@@ -10,10 +10,9 @@ class StripeCardsController < ApplicationController
   end
 
   def shipping
-    # Only show shipping for phyiscal cards if the eta is in the future (or 1 week after)
-    @stripe_cards = current_user.stripe_cards.where.not(stripe_status: "canceled").physical_shipping.filter do |sc|
-      sc.shipping_eta&.after?(1.week.ago)
-    end
+    # Only show shipping for phyiscal cards if the eta is in the future and they haven't already been activated or canceled.
+    @stripe_cards = current_user.stripe_cards.cards_in_shipping
+
     skip_authorization # do not force pundit
 
     render :shipping, layout: false
@@ -23,42 +22,48 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.freeze!
+    begin
+      @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
+    rescue => e
+      flash[:error] = "Card could not be frozen"
     end
+
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def cancel
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    @card.cancel!
-    flash[:success] = "Card cancelled"
-    redirect_back_or_to @card
-  rescue => e
-    flash[:error] = e.message
-    render :show, status: :unprocessable_entity
+    begin
+      @card.cancel!
+      flash[:success] = "Card canceled"
+    rescue => e
+      flash[:error] = "Card could not be canceled"
+    end
+
+    redirect_back_or_to stripe_card_path(@card)
   end
 
   def defrost
     @card = StripeCard.find(params[:id])
     authorize @card
 
-    if @card.defrost!
+    begin
+      @card.defrost!
       flash[:success] = "Card defrosted"
-      redirect_back_or_to @card
-    else
-      render :show, status: :unprocessable_entity
+    rescue => e
+      flash[:error] = "Card could not be defrosted"
     end
+
+    redirect_back_or_to @card
   end
 
   def show
     @card = StripeCard.includes(:event, :user).find(params[:id])
 
-    if @card.card_grant.present? && !current_user&.admin?
+    if @card.card_grant.present? && !auditor_signed_in?
       authorize @card.card_grant
       return redirect_to card_grant_path(@card.card_grant, frame: params[:frame])
     end
@@ -66,13 +71,15 @@ class StripeCardsController < ApplicationController
     authorize @card
 
     if params[:show_details] == "true"
+      return unless enforce_sudo_mode
+
       ahoy.track "Card details shown", stripe_card_id: @card.id
     end
 
     @show_card_details = params[:show_details] == "true"
     @event = @card.event
 
-    @hcb_codes = @card.hcb_codes
+    @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(25)
 
@@ -106,7 +113,7 @@ class StripeCardsController < ApplicationController
 
     new_card = ::StripeCardService::Create.new(
       current_user:,
-      current_session:,
+      ip_address: current_session.ip,
       event_id: event.id,
       card_type: sc[:card_type],
       stripe_shipping_name: sc[:stripe_shipping_name],
@@ -116,14 +123,16 @@ class StripeCardsController < ApplicationController
       stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
       stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
       stripe_shipping_address_country: sc[:stripe_shipping_address_country],
-      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
     ).run
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
   rescue => e
-    Rails.error.report(e)
-
-    redirect_to event_cards_new_path(event), flash: { error: e.message }
+    if event.present?
+      redirect_to event_cards_new_path(event), flash: { error: e.message }
+    else
+      redirect_to my_cards_path, flash: { error: e.message }
+    end
   end
 
   def edit

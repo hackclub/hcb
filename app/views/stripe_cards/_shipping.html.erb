@@ -6,7 +6,7 @@
   <h3 class="m0 p2 inline-flex items-baseline g1" style="flex-wrap: wrap;">
     Card for
     <% if @event %>
-      <%= user_mention stripe_card.user, { class: style ? "smoke" : "", disable_tooltip: true } %>
+      <%= user_mention stripe_card.user, class: style ? "smoke" : "", disable_tooltip: true %>
     <% else %>
       <%= link_to stripe_card.event.name, stripe_card.event, class: style ? "smoke" : "" %>
     <% end %>

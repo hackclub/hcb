@@ -16,7 +16,10 @@ module Users
       end
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "This authorization token has expired, please request another."
-      raise
+      redirect_to root_path
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = @request.errors.full_messages.to_sentence
+      redirect_to root_path
     end
 
     def verify
@@ -33,7 +36,8 @@ module Users
       end
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "This authorization token has expired, please request another."
-      raise
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = @request.errors.full_messages.to_sentence
     end
 
   end

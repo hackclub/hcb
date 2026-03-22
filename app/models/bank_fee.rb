@@ -28,6 +28,9 @@ class BankFee < ApplicationRecord
   include AASM
   include HasBookTransfer
 
+  include PublicIdentifiable
+  set_public_id_prefix :bfe
+
   belongs_to :event
   belongs_to :fee_revenue, optional: true
 

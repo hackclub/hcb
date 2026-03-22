@@ -26,8 +26,6 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalEventMapping < ApplicationRecord
-  include HasBalanceMonitoring
-
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
   belongs_to :canonical_transaction
@@ -40,9 +38,17 @@ class CanonicalEventMapping < ApplicationRecord
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
 
-  after_create { canonical_transaction.write_hcb_code }
+  after_create do
+    canonical_transaction.write_hcb_code
+    canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
+  end
+
   after_create if: -> { fee.nil? } do
     FeeEngine::Create.new(canonical_event_mapping: self).run
+  end
+
+  after_commit do
+    canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
 
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }

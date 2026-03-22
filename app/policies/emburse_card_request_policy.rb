@@ -2,25 +2,15 @@
 
 class EmburseCardRequestPolicy < ApplicationPolicy
   def index?
-    user&.admin?
+    user&.auditor?
   end
 
   def show?
-    user&.admin?
+    user&.auditor?
   end
 
   def export?
-    user&.admin?
-  end
-
-  private
-
-  def admin_or_user
-    user&.admin? || user&.events&.include?(record.event)
-  end
-
-  def is_public
-    record&.event&.is_public?
+    user&.auditor?
   end
 
 end

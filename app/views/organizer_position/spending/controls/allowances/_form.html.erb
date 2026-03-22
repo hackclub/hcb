@@ -26,6 +26,6 @@
   <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-html="formatter.format(balance + (operation == 'add' ? Number(amount) : -Number(amount)))"></span></p>
 
   <div class="actions">
-    <%= form.submit %>
+    <%= form.submit "Create allowance" %>
   </div>
 <% end %>

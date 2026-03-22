@@ -16,14 +16,19 @@ export default function Merchants({ data }) {
   const isDark = useDarkMode()
 
   return (
-    <ResponsiveContainer width="100%" height={420} style={{ marginLeft: -50 }}>
+    <ResponsiveContainer width="100%" height={420} style={{ marginLeft: -20 }}>
       <BarChart data={data}>
         <YAxis
-          tickFormatter={n => USDollarNoCents.format(n)}
-          width={
-            USDollarNoCents.format(Math.max(data.map(d => d['value']))).length *
-            18
-          }
+          tickFormatter={n => {
+            if (n >= 1000000) {
+              return `$${(n / 1000000).toFixed(0)}M`
+            }
+            if (n >= 1000) {
+              return `$${(n / 1000).toFixed(0)}K`
+            }
+            return USDollarNoCents.format(n)
+          }}
+          width={65}
           tickMargin={0}
         />
         {data.length > 8 ? (
@@ -45,7 +50,7 @@ export default function Merchants({ data }) {
                   <text
                     key={index}
                     x={0}
-                    y={index * 10} // Adjust spacing between lines
+                    y={index * 10}
                     dy={16}
                     textAnchor="middle"
                     fill="#666"

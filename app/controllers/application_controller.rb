@@ -1,12 +1,23 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  # set Current.session - this should come first as
+  # a large portion of the code below this depends on this
+  before_action do
+    Current.session = find_current_session
+  end
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
+  include SetGovernanceRequestContext
+  include ThemeDetection
 
   protect_from_forgery
+
+  before_action :attach_error_reference
+  before_action :attach_user_id
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
@@ -19,25 +30,45 @@ class ApplicationController < ActionController::Base
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.touch_last_seen_at }
+  before_action { Current.session&.update_session_timestamps }
 
-  # This cookie is used for Safari PWA prompts
   before_action do
-    next if current_user.nil?
-
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
+    # Disallow indexing and following
+    response.set_header("X-Robots-Tag", "none")
   end
 
   before_action do
-    # Disallow indexing
-    response.set_header("X-Robots-Tag", "noindex")
+    # Disallow all external redirects
+    # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
+  end
+
+  # Enable Rack::MiniProfiler for auditors
+  before_action do
+    if current_user&.auditor?
+      Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
+    end
   end
 
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
+
+  rescue_from ActionView::MissingTemplate, with: :not_found
+
+  rescue_from Rack::Timeout::RequestTimeoutException do
+    respond_to do |format|
+      format.html { render "errors/timeout" }
+      format.all { render plain: "This request timed out, sorry." }
+    end
+  end
 
   def hide_footer
     @hide_footer = true
@@ -51,7 +82,7 @@ class ApplicationController < ActionController::Base
   rescue_from ArgumentError do |exception|
     if request.format.html? && exception.message == "invalid base64"
       request.reset_session # reset your old existing session.
-      redirect_to auth_users_path # your login page.
+      redirect_to auth_users_path(require_reload: true) # your login page.
     else
       raise(exception)
     end
@@ -69,7 +100,7 @@ class ApplicationController < ActionController::Base
   end
 
   def find_current_auditor
-    current_user if admin_signed_in?
+    current_user if auditor_signed_in?
   end
 
   private
@@ -80,13 +111,12 @@ class ApplicationController < ActionController::Base
     end
   end
 
-
   def user_not_authorized
     flash[:error] = "You are not authorized to perform this action."
     if current_user || !request.get?
-      redirect_to root_path
+      redirect_back_or_to root_path
     else
-      redirect_to auth_users_path(return_to: request.url)
+      redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
   end
 
@@ -103,6 +133,16 @@ class ApplicationController < ActionController::Base
   def confetti!(emojis: nil)
     flash[:confetti] = true
     flash[:confetti_emojis] = emojis.join(",") if emojis
+  end
+
+  def attach_error_reference
+    error_reference = ErrorReference.from_request_id(request.uuid)
+    Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
+  end
+
+  def attach_user_id
+    user_id = current_user&.id
+    Appsignal.add_tags(user_id:) if defined?(Appsignal) && Appsignal.active?
   end
 
 end

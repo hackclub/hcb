@@ -11,7 +11,7 @@
 
 <p>
   Checks are valid for 180 days after being sent.
-  Since it was issued on <%= @check.approved_at.strftime("%b %e %Y") %> (<%= days_ago %> days ago), you have <%= ((IncreaseCheck::VALID_DURATION / 1.day) - days_ago) %> days left to deposit the check.
+  Since it was issued on <%= @check.approved_at.strftime("%b %e %Y") %> (<%= days_ago %> days ago), you have <%= (IncreaseCheck::VALID_DURATION / 1.day) - days_ago %> days left to deposit the check.
   After this, you won't be able to deposit it.
 </p>
 

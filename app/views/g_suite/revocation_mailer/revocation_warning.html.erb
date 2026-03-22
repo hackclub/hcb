@@ -1,0 +1,42 @@
+<p>Hi there,</p>
+
+<p>
+  <%= @g_suite.event.name %> currently has Google Workspace
+  for <code><%= @g_suite.domain %></code> provided by HCB.
+</p>
+
+<% if @g_suite_revocation.because_of_other? %>
+  <p>
+    We have identified an issue with your Google Workspace
+    because <%= @reason %>. Unfortunately, your Google Workspace accounts will
+    be closed on
+    <strong><%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %></strong>.
+  </p>
+  <p>
+    Please export your data
+    before <%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %>. After
+    this date, all accounts and data will be permanently deleted, and you will
+    no longer be able to access Google Workspace through HCB.
+  </p>
+<% else %>
+  <p>
+    We have identified an issue with your Google Workspace
+    because <%= @reason %>. If you would like to retain your access to Google
+    Workspace, please take action to remedy the issue within two weeks
+    (<strong><%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %></strong>).
+  </p>
+
+  <p>
+    If this issue has not been resolved
+    by <%= @g_suite_revocation.scheduled_at.strftime("%B %d, %Y") %>, we will
+    unfortunately have to close your Google Workspace accounts to provide this
+    benefit to other organizations on the waitlist.
+  </p>
+
+  <%= render "g_suite/revocation_mailer/revocation_warning_details" %>
+<% end %>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>

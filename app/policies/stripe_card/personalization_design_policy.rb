@@ -3,7 +3,7 @@
 class StripeCard
   class PersonalizationDesignPolicy < ApplicationPolicy
     def show?
-      user&.admin?
+      user&.auditor?
     end
 
     def make_common?

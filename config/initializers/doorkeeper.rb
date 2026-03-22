@@ -225,7 +225,7 @@ Doorkeeper.configure do
   #
   # force_ssl_in_redirect_uri !Rails.env.development?
   #
-  # force_ssl_in_redirect_uri { |uri| uri.host != 'localhost' }
+  force_ssl_in_redirect_uri { |uri| uri.host != "localhost" }
 
   # Specify what redirect URI's you want to block during Application creation.
   # Any redirect URI is allowed by default.
@@ -298,7 +298,7 @@ Doorkeeper.configure do
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.2
   #   https://datatracker.ietf.org/doc/html/rfc6819#section-4.4.3
   #
-  # grant_flows %w[authorization_code client_credentials]
+  grant_flows %w[authorization_code client_credentials device_code]
 
   # Allows to customize OAuth grant flows that +each+ application support.
   # You can configure a custom block (or use a class respond to `#call`) that must
@@ -338,9 +338,10 @@ Doorkeeper.configure do
   #
   # Be default all Resource Owners are authorized to any Client (application).
   #
-  # authorize_resource_owner_for_client do |client, resource_owner|
-  #   resource_owner.admin? || client.owners_allowlist.include?(resource_owner)
-  # end
+  # Block locked users from authorizing OAuth applications
+  authorize_resource_owner_for_client do |client, resource_owner|
+    !resource_owner.locked?
+  end
 
   # Allows additional data fields to be sent while granting access to an application,
   # and for this additional data to be included in subsequently generated access tokens.
@@ -369,6 +370,10 @@ Doorkeeper.configure do
   # after_successful_strategy_response do |request, response|
   #   puts "AFTER HOOK FIRED! #{request}, #{response}"
   # end
+
+  after_successful_strategy_response do |_request, response|
+    response.token&.update_column(:ip_address, Current.request_ip)
+  end
 
   # Hook into Authorization flow in order to implement Single Sign Out
   # or add any other functionality. Inside the block you have an access

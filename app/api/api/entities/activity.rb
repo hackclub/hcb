@@ -14,7 +14,7 @@ module Api
       end
 
       expose_associated User do |activity, options|
-        activity.user
+        activity.owner.is_a?(User) ? activity.owner : activity.user
       end
 
       expose_associated Transaction do |activity, options|
@@ -22,6 +22,8 @@ module Api
           return activity.trackable.try(:hcb_code)
         elsif activity.trackable.try(:hcb_code)
           HcbCode.find_by_hcb_code(activity.trackable.try(:hcb_code))
+        elsif (cpt_hcb_code = activity.trackable.try(:canonical_pending_transaction)&.try(:local_hcb_code))
+          cpt_hcb_code
         end
       end
 

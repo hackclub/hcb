@@ -13,13 +13,10 @@ class OrganizerPositionPolicy < ApplicationPolicy
     record.user == user
   end
 
-  def toggle_signee_status?
-    user.admin?
-  end
-
   def change_position_role?
     return false unless user
     return false if record.user == user
+    return false if record.signee?
 
     admin_or_manager?
   end
@@ -29,14 +26,14 @@ class OrganizerPositionPolicy < ApplicationPolicy
   end
 
   def view_allowances?
-    admin_or_manager? || record.user == user
+    admin_or_manager? || record.user == user || user&.auditor?
   end
 
   private
 
   def admin_or_manager?
     user&.admin? ||
-      OrganizerPosition.find_by(user:, event: record.event)&.manager? # This is not just `record`!
+      OrganizerPosition.role_at_least?(user, record.event, :manager) # This is not just `record`!
   end
 
   def admin_or_contract_signee?

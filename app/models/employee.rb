@@ -66,4 +66,8 @@ class Employee < ApplicationRecord
     end
   end
 
+  def popover_path
+    Rails.application.routes.url_helpers.employee_path(hashid, frame: true)
+  end
+
 end

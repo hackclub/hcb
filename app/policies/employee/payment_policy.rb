@@ -15,7 +15,7 @@ class Employee
     end
 
     def stub?
-      employee || admin || manager
+      employee || admin || manager || auditor
     end
 
     private
@@ -24,8 +24,12 @@ class Employee
       user&.admin?
     end
 
+    def auditor
+      user&.auditor?
+    end
+
     def manager
-      OrganizerPosition.find_by(user:, event: record.employee.event)&.manager?
+      OrganizerPosition.role_at_least?(user, record.employee.event, :manager)
     end
 
     def employee

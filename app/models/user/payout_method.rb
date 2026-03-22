@@ -2,6 +2,21 @@
 
 class User
   module PayoutMethod
+    ALL_METHODS = [
+      User::PayoutMethod::AchTransfer,
+      User::PayoutMethod::Check,
+      User::PayoutMethod::PaypalTransfer,
+      User::PayoutMethod::Wire,
+      User::PayoutMethod::WiseTransfer,
+    ].freeze
+    UNSUPPORTED_METHODS = {
+      User::PayoutMethod::PaypalTransfer => {
+        status_badge: "Unavailable",
+        reason: "Due to integration issues, transfers via PayPal are currently unavailable."
+      }
+    }.freeze
+    SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
+
     def kind
       "unknown"
     end
@@ -20,6 +35,10 @@ class User
 
     def title_kind
       "Unknown"
+    end
+
+    def currency
+      "USD"
     end
 
   end

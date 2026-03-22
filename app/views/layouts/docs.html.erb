@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-dark="<%= @is_dark %>">
+  <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
+  <head>
+    <%= render "layouts/head" %>
+  </head>
+  <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
+    <%= react_component "tour/TourOverlay",
+                        tour: @tour&.name,
+                        id: @tour&.id,
+                        step: @tour&.step || 0,
+                        options: @tour&.tourable&.try(:tourable_options) || {},
+                        back_to_tour: @back_to_tour %>
+
+    <% if current_session&.impersonated? %>
+      <div class="w-100 px4 bg-white transparency-banner">
+        <p class="h5 medium center py-2 my-0">
+          <%= link_to "← Exit Impersonation", unimpersonate_user_path(current_user&.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention User.find(current_user&.id) %>
+        </p>
+      </div>
+    <% end %>
+    <% if @event&.is_public && !organizer_signed_in? && !@no_app_shell && !@no_transparency_header && !@use_user_nav %>
+      <div class="w-100 px3 bg-white transparency-banner" data-behavior="hide_iframe">
+        <p class="h5 font-medium text-center text-balance py-2 my-0">
+          This HCB organization has made their finances public.
+          Hey, <%= link_to "what’s HCB?", "https://hackclub.com/fiscal-sponsorship/", target: "_blank", class: "primary" %>
+        </p>
+      </div>
+    <% end %>
+
+    <%= render "layouts/seasonal" %>
+
+    <% if content_for?(:nav) %>
+      <main class="container app">
+        <%= render "application/native_changelog" if @latest_changelog_post %>
+
+        <aside class="app__sidebar">
+          <%= render "application/docs_header" %>
+          <%= render "application/flash", klass: "mb1" %>
+          <%= yield(:nav) %>
+        </aside>
+        <article class="container app__content <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+          <%= yield(:container) %>
+          <%= yield %>
+          <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+        </article>
+      </main>
+    <% else %>
+      <%= render "application/docs_header" unless @no_app_shell %>
+      <%= yield(:header) %>
+      <main class="container px-6 lg:px-3 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
+        <%= render "application/flash", klass: "mb1" unless @hide_flash %>
+        <%= yield %>
+        <%= render "application/footer" unless @no_app_shell || @hide_footer %>
+      </main>
+    <% end %>
+
+    <%= render "application/fullstory" %>
+    <%= render "layouts/body_suffix" %>
+  </body>
+</html>

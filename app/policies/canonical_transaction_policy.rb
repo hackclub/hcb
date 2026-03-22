@@ -2,7 +2,7 @@
 
 class CanonicalTransactionPolicy < ApplicationPolicy
   def show?
-    admin_or_teammember
+    auditor_or_teammember
   end
 
   def edit?
@@ -11,6 +11,10 @@ class CanonicalTransactionPolicy < ApplicationPolicy
 
   def set_custom_memo?
     admin_or_teammember
+  end
+
+  def set_category?
+    user&.admin?
   end
 
   def export?
@@ -30,6 +34,10 @@ class CanonicalTransactionPolicy < ApplicationPolicy
   end
 
   private
+
+  def auditor_or_teammember
+    user&.auditor? || record&.event&.users&.include?(user)
+  end
 
   def admin_or_teammember
     user&.admin? || record&.event&.users&.include?(user)

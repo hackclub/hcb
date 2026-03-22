@@ -9,14 +9,14 @@ module SearchService
       def initialize(query, user, context)
         @query = query
         @user = user
-        @admin = user.admin?
+        @auditor = user.auditor?
         @context = context
       end
 
       def run
         if @context[:event_id] && @query["types"].length == 1
           reimbursement_reports = Event.find(@context[:event_id]).reimbursement_reports
-        elsif @admin
+        elsif @auditor
           reimbursement_reports = Reimbursement::Report
         else
           reimbursement_reports = Reimbursement::Report.where(event: @user.events).and(@user.reimbursement_reports)

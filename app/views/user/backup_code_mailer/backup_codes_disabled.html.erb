@@ -1,0 +1,16 @@
+<p>
+  Hey <%= @user.first_name %>,
+</p>
+
+<p>
+  You've just disabled backup codes for HCB. If you had any unused backup codes, they were invalidated.
+</p>
+
+<p>
+  If this was you, great! If you didn't do this, please <%= mail_to "hcb@hackclub.com", "contact us", subject: "My backup codes were disabled and it was not me" %> immediately.
+</p>
+
+<p>
+  Thanks,<br>
+  The HCB Team
+</p>

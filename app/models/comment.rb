@@ -32,6 +32,7 @@ class Comment < ApplicationRecord
   belongs_to :user
 
   has_one_attached :file
+  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content

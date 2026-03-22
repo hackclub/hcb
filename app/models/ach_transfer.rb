@@ -14,6 +14,7 @@
 #  company_entry_description :string
 #  company_name              :string
 #  confirmation_number       :text
+#  invoiced_at               :date
 #  payment_for               :text
 #  recipient_email           :string
 #  recipient_name            :string
@@ -65,6 +66,7 @@ class AchTransfer < ApplicationRecord
   include Commentable
   include Payoutable
   include Payment
+  include Freezable
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -101,9 +103,18 @@ class AchTransfer < ApplicationRecord
   end
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
+  # validates :invoiced_at, presence: true, on: :create
+  validates(
+    :invoiced_at,
+    comparison: {
+      less_than_or_equal_to: ->(ach_transfer) { ach_transfer.created_at || Date.current },
+      message: "cannot be after the transfer creation date"
+    },
+    allow_nil: true,
+    on: :create
+  )
 
   has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
-  has_one :grant, required: false
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
@@ -173,11 +184,11 @@ class AchTransfer < ApplicationRecord
   before_validation { self.recipient_name = recipient_name.presence&.strip }
 
   before_validation do
-    self.company_name = event.short_name if company_name.blank?
+    self.company_name = "HCB (Hack Club)" # Column requires "Hack Club" to be included in the company_name for all outgoing ACHs
   end
 
-  # Eagerly create HcbCode object
-  after_create :local_hcb_code
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE, eager_create: true
 
   after_create unless: -> { scheduled_on.present? } do
     create_raw_pending_outgoing_ach_transaction!(amount_cents: -amount, date_posted: scheduled_on || created_at)
@@ -192,8 +203,7 @@ class AchTransfer < ApplicationRecord
   def send_ach_transfer!
     return unless may_mark_in_transit?
 
-    account_number_id = event.column_account_number&.column_id ||
-                        Credentials.fetch(:COLUMN, ColumnService::ENVIRONMENT, :DEFAULT_ACCOUNT_NUMBER)
+    account_number_id = (event.column_account_number || event.create_column_account_number)&.column_id
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
@@ -202,6 +212,7 @@ class AchTransfer < ApplicationRecord
       type: "CREDIT",
       entry_class_code: "PPD",
       counterparty: {
+        name: recipient_name,
         account_number:,
         routing_number:,
       },
@@ -252,7 +263,7 @@ class AchTransfer < ApplicationRecord
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id
 
-    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:
+    ColumnService.post "/transfers/ach/#{column_id}/reverse", reason:, idempotency_key: "reverse_#{self.id}"
   end
 
   def pending_expired?
@@ -260,6 +271,12 @@ class AchTransfer < ApplicationRecord
   end
 
   def approve!(processed_by = nil, send_realtime: false)
+    GovernanceService::Admin::Transfer::Approval.new(
+      transfer: self,
+      amount_cents: amount,
+      user: processed_by,
+    ).ensure_may_approve!
+
     if scheduled_on.present?
       mark_scheduled!
     elsif send_realtime
@@ -269,8 +286,6 @@ class AchTransfer < ApplicationRecord
     end
 
     update!(processor: processed_by) if processed_by.present?
-
-    grant.mark_fulfilled! if grant.present?
   end
 
   def status
@@ -320,19 +335,11 @@ class AchTransfer < ApplicationRecord
   end
 
   def smart_memo
-    recipient_name.to_s.upcase
+    recipient_name.to_s
   end
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
-  end
-
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def estimated_arrival
@@ -340,6 +347,7 @@ class AchTransfer < ApplicationRecord
 
     now = ActiveSupport::TimeZone.new("America/Los_Angeles").now
 
+    return scheduled_on if scheduled_on.present?
     return now if realtime?
 
     if same_day? && now.workday?

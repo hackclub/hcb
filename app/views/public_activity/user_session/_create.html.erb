@@ -1,7 +1,7 @@
 <% current_user ||= local_assigns[:p][:current_user] %>
 
 <% if activity&.trackable&.impersonated? %>
-  <% if current_user.admin? %>
+  <% if current_user.auditor? %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>
       impersonated <%= activity.trackable.user.name %> on HCB
     <% end %>

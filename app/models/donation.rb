@@ -63,6 +63,8 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include Freezable
+  include UsersHelper
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -88,6 +90,7 @@ class Donation < ApplicationRecord
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
 
@@ -98,6 +101,7 @@ class Donation < ApplicationRecord
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
+  scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -268,16 +272,11 @@ class Donation < ApplicationRecord
   end
 
   def smart_memo
-    anonymous? ? "ANONYMOUS DONOR" : name.to_s.upcase
+    anonymous? ? "Anonymous Donor" : name.to_s
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE
 
   def canonical_pending_transaction
     canonical_pending_transactions.first
@@ -319,6 +318,10 @@ class Donation < ApplicationRecord
     recurring? && recurring_donation.donations.order(created_at: :asc).first == self
   end
 
+  def subsequent_recurring_donation?
+    recurring? && !initial_recurring_donation?
+  end
+
   def name(show_anonymous: false)
     anonymous? && !show_anonymous ? "Anonymous" : recurring_donation&.name(show_anonymous:) || super()
   end
@@ -337,6 +340,10 @@ class Donation < ApplicationRecord
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
   end
 
+  def avatar(size = 128)
+    gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -351,12 +358,16 @@ class Donation < ApplicationRecord
     # only runs when status becomes succeeded, should not run on delete.
     return unless status_previously_changed?(to: "succeeded")
     # don't send for repeated recurring donations
-    return if recurring? && !initial_recurring_donation?
+    return if subsequent_recurring_donation?
 
     if first_donation?
       DonationMailer.with(donation: self).first_donation_notification.deliver_later
     else
       DonationMailer.with(donation: self).notification.deliver_later
+    end
+
+    if reached_donation_goal?
+      EventMailer.with(event:).donation_goal_reached.deliver_later
     end
   end
 
@@ -364,9 +375,19 @@ class Donation < ApplicationRecord
     self.event.donations.succeeded.size == 1
   end
 
-  def create_payment_intent_attrs
+  def reached_donation_goal?
+    return false unless event.donation_goal.present?
+    return false unless event.donation_goal.progress_amount_cents >= event.donation_goal.amount_cents
+    # this prevents us from sending the email after the organization has already reached the goal
+    return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
+
+    true
+  end
+
+  def create_payment_intent_attrs(customer)
     {
       amount:,
+      customer: customer.id,
       currency: "usd",
       statement_descriptor: "HCB",
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
@@ -375,7 +396,8 @@ class Donation < ApplicationRecord
   end
 
   def create_stripe_payment_intent
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs)
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
 
     self.stripe_payment_intent_id = payment_intent.id
 

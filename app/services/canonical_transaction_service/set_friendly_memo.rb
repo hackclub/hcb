@@ -8,7 +8,7 @@ module CanonicalTransactionService
     end
 
     def run
-      canonical_transaction.friendly_memo = @friendly_memo.blank? ? nil : @friendly_memo.upcase.strip
+      canonical_transaction.friendly_memo = @friendly_memo.blank? ? nil : @friendly_memo.strip
       canonical_transaction.save!
     end
 

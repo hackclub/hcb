@@ -1,0 +1,44 @@
+<%# locals: (event:, perks_available:, active_teenagers_count:) %>
+
+<% if Date.current < Date.new(2025, 11, 1) %>
+  <div class="card pb0 mb3 promo-robotics" id="fee-waiver">
+    <div class="card__banner card__banner--top flex justify-between items-center">
+      <h3 class="h1 py-4 my0 flex items-start smoke justify-center">
+        Fee Waiver
+      </h3>
+      <% if !event.plan.promotions_enabled? %>
+        <% fee_waiver_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
+      <% elsif !perks_available %>
+        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% end %>
+
+      <% if fee_waiver_ineligible_reason %>
+        <div class="tooltipped tooltipped--w inline-block" aria-label="<%= fee_waiver_ineligible_reason %>">
+          <span class="btn disabled promo-premium-header bg-clip-padding">Ineligible</span>
+        </div>
+      <% else %>
+        <%= button_to (event.fee_waiver_eligible ? "Opt-out" : "Opt-in").to_s,
+          event_toggle_fee_waiver_eligible_path,
+          class: "btn promo-premium-header bg-clip-padding" %>
+      <% end %>
+    </div>
+    <h3 class="mb0 mt0">Raise some money this month with zero fees on HCB!</h3>
+    <p>
+      Are you a teen-led organization? We’d love to waive all of your HCB fees till <%= Date.current.end_of_month.strftime("%B %e, %Y") %>! Fee waiver status updates nightly.
+    </p>
+    <table class="mb2">
+      <tr class="<%= "card__darker" if active_teenagers_count.between?(0, 4) %>">
+        <td>0-4 active teenagers</td>
+        <td>7.0% fee</td>
+      </tr>
+      <tr class="<%= "card__darker" if active_teenagers_count.between?(5, 9) %>">
+        <td>5-9 active teenagers</td>
+        <td>3.5% fee</td>
+      </tr>
+      <tr class="<%= "card__darker" if active_teenagers_count >= 10 %>">
+        <td>10+ active teenagers</td>
+        <td>0.0% fee</td>
+      </tr>
+    </table>
+  </div>
+<% end %>

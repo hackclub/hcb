@@ -82,7 +82,12 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
     end
 
     context "when processed" do
-      let(:disbursement) { create(:disbursement) }
+      let(:disbursement) do
+        create(
+          :disbursement,
+          source_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising")
+        )
+      end
 
       it "copies the attributes over to the pending canonical transaction" do
         expect do
@@ -92,6 +97,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
         canonical_pending_transaction = CanonicalPendingTransaction.last
         expect(canonical_pending_transaction.date).to eq(raw_pending_outgoing_disbursement_transaction.date_posted)
         expect(canonical_pending_transaction.memo).to eq(raw_pending_outgoing_disbursement_transaction.memo)
+        expect(canonical_pending_transaction.category.slug).to eq("fundraising")
       end
     end
   end

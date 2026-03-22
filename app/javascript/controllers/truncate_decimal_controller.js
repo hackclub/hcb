@@ -12,7 +12,10 @@ export default class extends Controller {
   truncate(e) {
     const split = e.target.value.split('.')
 
-    if (split.length == 2 && split[1].length > this.placesValue) {
+    if (this.placesValue == 0 && split.length == 2) {
+      e.target.value = split[0]
+      e.target.dispatchEvent(new Event('input'))
+    } else if (split.length == 2 && split[1].length > this.placesValue) {
       e.target.value = [split[0], split[1].slice(0, this.placesValue)].join('.')
       e.target.dispatchEvent(new Event('input'))
     }

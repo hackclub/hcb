@@ -1,0 +1,27 @@
+<p>
+  Hey <%= @emails.size > 1 ? "all" : "there" %>,
+</p>
+
+<p>
+  We recently launched a new feature on HCB - organization announcements! This will help you keep your community and donors in the loop on your nonprofit's activity.
+  For more details, check out <%= link_to "our blog post", "https://blog.hcb.hackclub.com/posts/organization-announcements" %> and the new Announcements page on any of your organizations.
+</p>
+
+<p>
+  <%= @event.name %> also has monthly announcements enabled!
+  This is a feature that automatically generates an announcement each month to send out to your followers.
+</p>
+
+<p>
+  By default, each announcement includes summarized data about your organization from the past month, such as donations and spending analyses, but you can edit the announcement to include whatever you'd like.
+  We've already generated your first monthly announcement to be sent on <%= @scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}") %> - <%= link_to "view or edit it on HCB", announcement_url(@monthly_announcement) %>!
+  If your organization doesn't have any activity from this month to include in the announcement by <%= @warning_date.strftime("%B #{@warning_date.day.ordinalize}") %>, the announcement will not be sent.
+</p>
+
+<p>If you would like to disable monthly announcements, you can do so in <%= link_to "your organization settings", edit_event_url(@event) %>.</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

@@ -17,8 +17,8 @@
 #
 # Indexes
 #
-#  index_column_account_numbers_on_account_number_bidx  (account_number_bidx)
-#  index_column_account_numbers_on_event_id             (event_id)
+#  index_column_account_numbers_on_account_number_bidx  (account_number_bidx) UNIQUE
+#  index_column_account_numbers_on_event_id             (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -36,12 +36,15 @@ module Column
 
     validate :event_is_not_demo_mode
 
+    validates_uniqueness_of :account_number_bidx
+    validates :event, uniqueness: true
+
     has_paper_trail
 
     private
 
     def create_column_account_number
-      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})")
+      account_number = ColumnService.post("/bank-accounts/#{ColumnService::Accounts::FS_MAIN}/account-numbers", description: "##{event.id} (#{event.name})", idempotency_key: self.id.to_s)
 
       self.column_id = account_number["id"]
       self.account_number = account_number["account_number"]

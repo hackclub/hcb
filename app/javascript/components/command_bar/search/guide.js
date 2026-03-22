@@ -16,6 +16,7 @@ export function Guide() {
             paddingRight: '3px',
             marginRight: '1.5px',
             color: 'black',
+            border: 'none',
           }}
         >
           @user
@@ -30,6 +31,7 @@ export function Guide() {
             paddingRight: '3px',
             marginRight: '1.5px',
             color: 'black',
+            border: 'none',
           }}
         >
           @transaction
@@ -43,6 +45,7 @@ export function Guide() {
             paddingLeft: '3px',
             paddingRight: '3px',
             color: 'black',
+            border: 'none',
           }}
         >
           @organization
@@ -56,6 +59,7 @@ export function Guide() {
             paddingLeft: '3px',
             paddingRight: '3px',
             color: 'black',
+            border: 'none',
           }}
         >
           @reimbursement
@@ -69,6 +73,7 @@ export function Guide() {
             paddingLeft: '3px',
             paddingRight: '3px',
             color: 'black',
+            border: 'none',
           }}
         >
           @card

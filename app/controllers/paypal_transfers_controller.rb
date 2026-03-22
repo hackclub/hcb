@@ -2,6 +2,7 @@
 
 class PaypalTransfersController < ApplicationController
   include SetEvent
+  include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_paypal_transfer, only: %i[approve reject mark_failed]
@@ -35,6 +36,7 @@ class PaypalTransfersController < ApplicationController
   def approve
     authorize @paypal_transfer
 
+    ensure_admin_may_approve!(@paypal_transfer, amount_cents: @paypal_transfer.amount_cents)
     @paypal_transfer.mark_approved!
 
     redirect_to paypal_transfer_process_admin_path(@paypal_transfer), flash: { success: "Thanks for sending that PayPal transfer." }

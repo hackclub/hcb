@@ -15,10 +15,11 @@
 #  created_at                                       :datetime         not null
 #  updated_at                                       :datetime         not null
 #  check_deposit_id                                 :bigint
-#  grant_id                                         :bigint
 #  increase_check_id                                :bigint
+#  ledger_item_id                                   :bigint
 #  paypal_transfer_id                               :bigint
 #  raw_pending_bank_fee_transaction_id              :bigint
+#  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -29,15 +30,18 @@
 #  reimbursement_expense_payout_id                  :bigint
 #  reimbursement_payout_holding_id                  :bigint
 #  wire_id                                          :bigint
+#  wise_transfer_id                                 :bigint
 #
 # Indexes
 #
+#  idx_on_raw_pending_column_transaction_id_ceea9a99e1              (raw_pending_column_transaction_id) UNIQUE
 #  index_canonical_pending_transactions_on_check_deposit_id         (check_deposit_id)
-#  index_canonical_pending_transactions_on_grant_id                 (grant_id)
 #  index_canonical_pending_transactions_on_hcb_code                 (hcb_code)
 #  index_canonical_pending_transactions_on_increase_check_id        (increase_check_id)
+#  index_canonical_pending_transactions_on_ledger_item_id           (ledger_item_id)
 #  index_canonical_pending_transactions_on_paypal_transfer_id       (paypal_transfer_id)
 #  index_canonical_pending_transactions_on_wire_id                  (wire_id)
+#  index_canonical_pending_transactions_on_wise_transfer_id         (wise_transfer_id)
 #  index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id        (raw_pending_bank_fee_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_donation_tx_id        (raw_pending_donation_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_invoice_tx_id         (raw_pending_invoice_transaction_id)
@@ -46,15 +50,19 @@
 #  index_canonical_pending_txs_on_raw_pending_stripe_tx_id          (raw_pending_stripe_transaction_id)
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
+#  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
 #
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
+
+  include Categorizable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_pending_transactions.date"
@@ -68,13 +76,14 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_donation_transaction, optional: true
   belongs_to :raw_pending_invoice_transaction, optional: true
   belongs_to :raw_pending_bank_fee_transaction, optional: true
+  belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
+  belongs_to :wise_transfer, optional: true
   belongs_to :check_deposit, optional: true
-  belongs_to :grant, optional: true
   belongs_to :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", optional: true
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 
@@ -97,6 +106,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :outgoing_check, -> { where("raw_pending_outgoing_check_transaction_id is not null") }
   scope :increase_check, -> { where.not(increase_check_id: nil) }
   scope :wire, -> { where.not(wire: nil) }
+  scope :wise_transfer, -> { where.not(wise_transfer: nil) }
   scope :check_deposit, -> { where.not(check_deposit_id: nil) }
   scope :donation, -> { where("raw_pending_donation_transaction_id is not null") }
   scope :invoice, -> { where("raw_pending_invoice_transaction_id is not null") }
@@ -119,7 +129,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
   scope :ach_transfer_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}%'") }
   scope :check_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}%'") }
-  scope :disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}%'") }
+  scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
+  scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
   scope :fronted, -> { where(fronted: true) }
@@ -148,6 +159,24 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   attr_writer :stripe_cardholder
 
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+
+  after_create_commit unless: -> { ledger_item.present? } do
+    safely do
+      update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+    end
+  end
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+    ledger_item.write_amount_cents!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+  end
+
   def pending_expired?
     unsettled? && created_at < 5.days.ago
   end
@@ -171,6 +200,22 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def declined?
     @declined ||= canonical_pending_declined_mapping.present?
+  end
+
+  def stripe_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history", 0, "reason")&.to_sym
+  end
+
+  def hcb_decline_reason
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("metadata", "declined_reason")&.to_sym
+  end
+
+  def decline_reason
+    hcb_decline_reason || stripe_decline_reason
+  end
+
+  def declined_by
+    hcb_decline_reason ? "HCB" : "Stripe"
   end
 
   def unsettled?
@@ -229,14 +274,34 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_donation_transaction.donation if raw_pending_donation_transaction
     return raw_pending_invoice_transaction.invoice if raw_pending_invoice_transaction
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
-    return raw_pending_incoming_disbursement_transaction.disbursement if raw_pending_incoming_disbursement_transaction
-    return raw_pending_outgoing_disbursement_transaction.disbursement if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
+    return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return increase_check if increase_check
+    return paypal_transfer if paypal_transfer
+    return wire if wire
+    return wise_transfer if wise_transfer
+    return check_deposit if check_deposit
+    return reimbursement_expense_payout if reimbursement_expense_payout
+    return reimbursement_payout_holding if reimbursement_payout_holding
 
     nil
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    Rails.error.unexpected "CanonicalPendingTransaction#disbursement accessed"
+    return nil unless raw_pending_outgoing_disbursement_transaction || raw_pending_incoming_disbursement_transaction
+
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
+  end
+
+  def incoming_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Incoming)
+
+    nil
+  end
+
+  def outgoing_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Outgoing)
 
     nil
   end
@@ -348,6 +413,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
       ::StripeCard.find_by(stripe_id: raw_pending_stripe_transaction.stripe_transaction["card"]["id"])
     end
+  end
+
+  def column_transaction_id
+    raw_pending_column_transaction&.column_id
   end
 
   private

@@ -48,14 +48,22 @@ class CommentsController < ApplicationController
 
   def destroy
     authorize @comment
+    commentable = @comment.commentable
     @comment.destroy!
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.remove(@comment)
+        render turbo_stream: turbo_stream.replace(
+          "comments",
+          partial: "comments/list",
+          locals: {
+            comments: commentable.comments,
+            show_blankslate: commentable.comments.empty?
+          }
+        )
       end
 
-      format.any { redirect_back_or_to @comment.commentable }
+      format.any { redirect_back_or_to commentable }
     end
   end
 
@@ -65,9 +73,10 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:content, :file, :admin_only)
   end
 
-  COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
+  COMMENTABLE_TYPE_MAP = [AchTransfer, EmburseCardRequest, EmburseTransaction,
                           EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
-                          OrganizerPositionDeletionRequest, User, Reimbursement::Report].index_by(&:to_s).freeze
+                          OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
+                          Ledger::Item].index_by(&:to_s).freeze
 
   # Given a route "/transactions/25/comments", this method sets @commentable to
   # Transaction with ID 25

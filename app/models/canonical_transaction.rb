@@ -14,18 +14,25 @@
 #  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
 #
 # Indexes
 #
 #  index_canonical_transactions_on_date                (date)
 #  index_canonical_transactions_on_hcb_code            (hcb_code)
+#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
 #  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
 
   include Receiptable
+  include Categorizable
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -42,7 +49,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
   scope :ach_transfer_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}%'") }
   scope :check_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}%'") }
-  scope :disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}%'") }
+  scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
+  scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
   scope :with_custom_memo, -> { where("custom_memo is not null") }
   scope :without_custom_memo, -> { where("custom_memo is null") }
@@ -99,6 +107,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
   has_one :event, through: :canonical_event_mapping
+  has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
@@ -112,6 +121,35 @@ class CanonicalTransaction < ApplicationRecord
   validates :custom_memo, presence: true, allow_nil: true
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
+
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+
+  before_create do
+    self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
+                              li.id
+                            elsif linked_object.present?
+                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                            elsif raw_stripe_transaction&.stripe_authorization_id
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
+                              rpst&.canonical_pending_transaction&.ledger_item_id
+                            end
+  end
+
+  after_create_commit unless: -> { ledger_item.present? } do
+    safely do
+      update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+    end
+  end
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+    ledger_item.write_amount_cents!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+  end
 
   after_create :write_hcb_code
   after_create_commit :write_system_event
@@ -327,6 +365,10 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object if linked_object.is_a?(Wire)
   end
 
+  def wise_transfer
+    return linked_object if linked_object.is_a?(WiseTransfer)
+  end
+
   def check_deposit
     return linked_object if linked_object.is_a?(CheckDeposit)
 
@@ -344,7 +386,12 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_account_verification_related?
-    hcb_code.starts_with?("HCB-000-") && memo.downcase.include?("acctverify") && amount_cents.abs < 100
+    # Substring match (case-insensitive) for any of these identifiers in the
+    # memo indicating an account verification transaction. The majority use
+    # "ACCTVERIFY", however, it appears a few companies use other variants.
+    memo_matches = %w[acctverify verify validation sdv-vrfy amts:].any? { |s| memo.downcase.include?(s) }
+
+    hcb_code.starts_with?("HCB-000-") && amount_cents.abs < 100 && memo_matches
   end
 
   def short_code
@@ -370,7 +417,18 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    Rails.error.unexpected "CanonicalTransaction#disbursement accessed"
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
+  end
+
+  def outgoing_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Outgoing)
+
+    nil
+  end
+
+  def incoming_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Incoming)
 
     nil
   end
@@ -401,8 +459,8 @@ class CanonicalTransaction < ApplicationRecord
 
   def hashed_transaction
     @hashed_transaction ||= begin
-      Airbrake.notify("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
-      Airbrake.notify("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
+      Rails.error.unexpected("There was less than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size < 1
+      Rails.error.unexpected("There was more than 1 hashed_transaction for canonical_transaction: #{self.id}") if hashed_transactions.size > 1
 
       hashed_transactions.first
     end

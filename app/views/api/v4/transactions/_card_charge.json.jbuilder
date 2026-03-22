@@ -9,7 +9,10 @@ json.merchant do
   json.name merchant_data["name"]
   json.smart_name humanized_merchant_name(merchant_data) rescue nil
   json.country merchant_data["country"]
+  json.network_id merchant_data["network_id"]
 end
+
+json.decline_reason hcb_code.pt&.decline_reason if hcb_code.pt&.declined?
 
 json.charge_method stripe_authorization&.dig("authorization_method")
 json.spent_at Time.at((stripe_authorization || stripe_transaction)["created"], in: "UTC")

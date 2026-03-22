@@ -42,7 +42,7 @@ module TransactionEngine
       end
 
       def csvs
-        ["#{csvs_path}/ach_transfers_that_were_processed_under_wrong_svb_account.csv", "#{csvs_path}/td_bank_missing_transactions.csv"]
+        []
       end
 
       def csvs_path

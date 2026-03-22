@@ -4,18 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  subject_type  :string
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module User
@@ -28,14 +34,14 @@ class Metric
           JOIN "hcb_codes" on commentable_type = 'HcbCode' and hcb_codes.id = commentable_id
           LEFT JOIN "ach_transfers" on hcb_codes.hcb_code = CONCAT('HCB-300-', ach_transfers.id)
           LEFT JOIN "checks" on hcb_codes.hcb_code = CONCAT('HCB-400-', checks.id)
-          LEFT JOIN "increase_checks" on hcb_codes.hcb_code = CONCAT('HCB-402-', increase_checks.id)
+          LEFT JOIN "increase_checks" on hcb_codes.hcb_code = CONCAT('HCB-401-', increase_checks.id)
           LEFT JOIN "disbursements" on hcb_codes.hcb_code = CONCAT('HCB-500-', disbursements.id)
           LEFT JOIN "canonical_transactions" on hcb_codes.hcb_code = canonical_transactions.hcb_code
           LEFT JOIN "raw_stripe_transactions" on canonical_transactions.transaction_source_type = 'RawStripeTransaction' and canonical_transactions.transaction_source_id = raw_stripe_transactions.id
           LEFT JOIN "stripe_cardholders" on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id
           LEFT JOIN "paypal_transfers" on hcb_codes.hcb_code = CONCAT('HCB-350-', paypal_transfers.id)
           WHERE
-              comments.created_at >= '2024-01-01'
+              comments.created_at >= '#{Metric.year}-01-01'
               AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != '' AND CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) != CAST(comments.user_id as text)
               AND (CONCAT(ach_transfers.creator_id, checks.creator_id, increase_checks.user_id, disbursements.requested_by_id, stripe_cardholders.user_id, paypal_transfers.user_id) = '#{user.id}' OR comments.user_id = #{user.id})
               AND comments.user_id != 2891 -- This is the HCB user for automated comments

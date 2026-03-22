@@ -41,7 +41,8 @@ module ReceiptService
                                                            .select { |pairing| pairing.hcb_code.missing_receipt? }
                                                            .first
             pair.mark_accepted!
-            ReceiptBinMailer.with(suggested_pairing: pair).paired.deliver_later
+
+            return pair
           end
         end
 
@@ -52,9 +53,11 @@ module ReceiptService
     def distance(hcb_code)
       return if @extracted.nil?
 
+      merchant_amount = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("merchant_amount")
+
       distances = {
         amount_cents: {
-          value: @extracted.extracted_total_amount_cents && (hcb_code.amount_cents.abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
+          value: @extracted.extracted_total_amount_cents && ((merchant_amount || hcb_code.amount_cents).abs - @extracted.extracted_total_amount_cents.abs).abs == 0 ? 0 : 1,
           weight: 200,
         },
         card_last_four: {

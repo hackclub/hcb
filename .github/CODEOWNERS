@@ -1,21 +1,19 @@
-# Default rule
-* @hackclub/hcb-engineers @hackclub/hcb-committers
+# Database changes - Requires review for db design/architecture
+/db @garyhtou
 
-/config @hackclub/hcb-engineers # Restrict most files in the config directory
-/config/locales @hackclub/hcb-engineers @hackclub/hcb-committers
-/config/routes.rb @hackclub/hcb-engineers @hackclub/hcb-committers
+# Package management - Requires review for dependency security
+/Gemfile @garyhtou
+/package.json @garyhtou
 
-# Additional restrictions
-/db @hackclub/hcb-engineers
-/.ruby-version @hackclub/hcb-engineers
-/app.json @hackclub/hcb-engineers
-/Aptfile @hackclub/hcb-engineers
-/config.ru @hackclub/hcb-engineers
-/docker* @hackclub/hcb-engineers
-/Dockerfile @hackclub/hcb-engineers
-/Gemfile @hackclub/hcb-engineers
-/Gemfile.lock @hackclub/hcb-engineers
-/package.json @hackclub/hcb-engineers
-/Procfile @hackclub/hcb-engineers
-/webpack.config.js @hackclub/hcb-engineers
-/yarn.lock @hackclub/hcb-engineers
+# Critical configs - Requires review from Gary
+/.ruby-version @garyhtou
+/LICENSE @garyhtou
+/config.ru @garyhtou
+/config/application.rb @garyhtou
+/config/boot.rb @garyhtou
+/config/brakeman.ignore @garyhtou
+/config/database.yml @garyhtou
+/config/environment.rb @garyhtou
+/config/environments @garyhtou
+/config/initializers @garyhtou
+/config/storage.yml @garyhtou

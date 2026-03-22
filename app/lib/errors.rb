@@ -13,4 +13,10 @@ module Errors
   class StripeIssuingBalanceAnomaly < StandardError
   end
 
+  class StripeInvalidNameError < StandardError
+  end
+
+  class TwilioAbuseError < StandardError
+  end
+
 end

@@ -1,0 +1,37 @@
+<%# locals: (event:) %>
+
+<div class="card pb0 mb3">
+  <div class="card__banner card__banner--top flex justify-between items-center integration-api">
+    <div class="flex gap-4 items-center">
+      <%= inline_icon "code", size: 40, class: "fill-white" %>
+      <h3 class="h1 pt2 pb2 my0">HCB API</h3>
+    </div>
+      <%= link_to(
+            "View documentation",
+            docs_api_index_path,
+            class: "btn bg-blue",
+          ) %>
+  </div>
+  <div class="flex flex-row gap-5 items-start justify-between mb-4">
+    <div class="flex-grow w-50">
+      <p class="m-0">
+        Interact with your finances programatically with the HCB Transparency Mode API.
+      </p>
+    </div>
+    <div class="bg-muted self-stretch" style="width: 1px;"></div>
+
+    <div class="flex flex-col flex-grow w-50">
+      <label for="organization_id"><%= event.name %>'s API ID</label>
+      <div class="relative block mt-auto flex gap-2" data-controller="clipboard" data-clipboard-text-value="<%= event.public_id %>">
+        <input id="organization_id" type="tel" value="<%= event.public_id %>" readonly style="cursor: text;" class="fit select-all">
+        <button
+          type="button"
+          class="pointer pop align-middle tooltipped tooltipped--n"
+          aria-label="Copy ID"
+          data-action="clipboard#copy:prevent">
+          <%= inline_icon "copy", size: 28 %>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -10,7 +10,7 @@ require "paper_trail/frameworks/rspec"
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 # Add additional requires below this line. Rails is not loaded until this point!
-require_relative "support/factory_bot"
+Dir[Rails.root.join("spec/support/**/*.rb")].sort.each { |f| require f }
 
 # see https://github.com/public-activity/public_activity#testing
 # for context around testing PublicActivity

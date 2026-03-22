@@ -2,20 +2,31 @@
   display: flex;
   color: inherit !important;
   text-decoration: none;
-  padding: 0.35rem 1rem;
-}
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
 
-.homepage-eyebrow {
-  font-weight: 800;
-  text-transform: uppercase;
-  opacity: 0.6;
-  margin-top: -10px;
-  margin-bottom: 10px;
+  &.clickable {
+    @apply hover:transition-none transition-colors;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.03);
+      &:active {
+        background: rgba(0, 0, 0, 0.07);
+      }
+    }
+
+    [data-dark='true'] &:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+      &:active {
+        background-color: rgba(255, 255, 255, 0.07);
+      }
+    }
+  }
 }
 
 .homepage-row {
   display: flex;
-  gap: 20px;
+  @apply gap-4;
 
   &:empty {
     display: none;

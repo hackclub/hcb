@@ -57,8 +57,12 @@ BK.isDark = () => {
   }
 }
 
+BK.resolveSystemTheme = () => window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? "dark" : "light"
+
 BK.styleDark = _theme => {
-  const theme = _theme === "system" ? window.matchMedia?.('(prefers-color-scheme: dark)')?.matches : _theme === "dark";
+  const theme = (_theme === "system" ? BK.resolveSystemTheme() : _theme) === "dark";
+
+  window.dispatchEvent(new CustomEvent('theme-toggle', { detail: theme }))
 
   const css = document.createElement('style')
   css.type = 'text/css'

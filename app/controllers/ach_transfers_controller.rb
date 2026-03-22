@@ -3,7 +3,7 @@
 class AchTransfersController < ApplicationController
   include SetEvent
 
-  before_action :set_ach_transfer, except: [:new, :create, :index, :validate_routing_number]
+  before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
   skip_before_action :signed_in_user, except: [:validate_routing_number]
   skip_after_action :verify_authorized, only: [:validate_routing_number]
@@ -43,6 +43,7 @@ class AchTransfersController < ApplicationController
   def new
     @ach_transfer = AchTransfer.new(event: @event)
     authorize @ach_transfer
+    render layout: "transfer"
   end
 
   # POST /ach_transfers
@@ -50,6 +51,10 @@ class AchTransfersController < ApplicationController
     @ach_transfer = @event.ach_transfers.build(ach_transfer_params.except(:file).merge(creator: current_user))
 
     authorize @ach_transfer
+
+    if @ach_transfer.amount > SudoModeHandler::THRESHOLD_CENTS
+      return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
+    end
 
     if @ach_transfer.save
       if ach_transfer_params[:file]
@@ -117,7 +122,7 @@ class AchTransfersController < ApplicationController
   end
 
   def ach_transfer_params
-    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id]
+    permitted_params = [:routing_number, :account_number, :recipient_email, :bank_name, :recipient_name, :amount_money, :payment_for, :send_email_notification, { file: [] }, :payment_recipient_id, :invoiced_at]
 
     if admin_signed_in?
       permitted_params << :scheduled_on
