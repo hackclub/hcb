@@ -684,7 +684,11 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
           resources :ach_transfers, only: [:create]
 
-          resources :donations, path: "donations", only: [:create]
+          resources :donations, path: "donations", only: [:create] do
+            collection do
+              post "payment_intent"
+            end
+          end
 
           member do
             get "sub_organizations"
