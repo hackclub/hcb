@@ -363,7 +363,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_7',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Organizer position deletion requests',
+      name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
       perform: () =>
         (window.location.href = '/organizer_position_deletion_requests'),

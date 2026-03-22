@@ -49,8 +49,7 @@
                 <%= link_to "Delete",
                   account,
                   method: :delete,
-                  'data-confirm': "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Think carefully before you click ok.",
-                  class: "admin-tools" if admin_signed_in? %>
+                  'data-confirm': "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Are you sure you want to continue?" if policy(account).destroy? %>
               </div>
             </action>
           </div>

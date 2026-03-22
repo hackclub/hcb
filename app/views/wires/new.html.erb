@@ -9,7 +9,7 @@
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
+  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
@@ -93,15 +93,15 @@
       </template>
 
       <template x-if="!payment_recipient || editing">
-        <div class="flex flex-col gap-3">
-          <%= render partial: "wires/recipient_details", locals: { form: form, disabled: disabled, required: true } %>
+        <div class="flex flex-col">
+          <%= render partial: "transfers/recipient_details", locals: { form: form, disabled: disabled, required: true } %>
         </div>
       </template>
     </div>
   </div>
 
   <div data-scroll-seek-target="section">
-    <h3 class="mb-2">Payment information</h3>
+    <h3 class="mb-2">Payment details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div>
         <%= form.label :payment_for, "What are you paying for with this wire?" %>
@@ -146,8 +146,5 @@
       Send wire
       <%= inline_icon "send" %>
     </button>
-    <p class="muted mt-3 text-center text-sm">
-      Your wire will be sent out on the next business day.
-    </p>
   </div>
 <% end %>

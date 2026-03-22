@@ -42,7 +42,7 @@ class Contract < ApplicationRecord
   belongs_to :contractable, polymorphic: true
 
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
-  has_many :parties
+  has_many :parties, dependent: :destroy
 
   validate :one_non_void_contract
 
@@ -63,6 +63,10 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
+  before_destroy do
+    mark_voided! if may_mark_voided?
+  end
+
   aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
@@ -78,6 +82,8 @@ class Contract < ApplicationRecord
         elsif contractable.contract_notify_when_sent
           parties.not_hcb.each(&:notify)
         end
+
+        parties.not_hcb.each(&:schedule_reminders)
       end
     end
 
@@ -164,6 +170,7 @@ class Contract < ApplicationRecord
       mark_signed!
     elsif parties.not_hcb.all?(&:signed?) && contractable.contract_notify_hcb?
       party(:hcb).notify
+      party(:hcb).schedule_reminders
     end
 
     contractable.on_contract_party_signed(party)
