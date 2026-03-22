@@ -1,0 +1,5 @@
+<%= turbo_frame_tag dom_id(@event, :card) do %>
+  <div class="*:m-0">
+    <%= render partial: "events/event_card", locals: { event: @event, link: false } %>
+  </div>
+<% end %>

@@ -521,6 +521,12 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
+  def async_card
+    authorize @event
+
+    render :async_card, layout: false
+  end
+
   def account_number
     @transactions = if @event.column_account_number.present?
                       CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).order(created_at: :desc)

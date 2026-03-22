@@ -351,6 +351,61 @@ module EventsHelper
     end
   end
 
+  def event_mention(event, default_name: "No Event", click_to_mention: false, comment_mention: false, **options)
+    name = content_tag(:span, event&.name || default_name)
+    avatar = event_avatar_for(event, click_to_mention:, **(options[:avatar] || {}))
+
+    klasses = ["mention"]
+    klasses << %w[badge bg-muted ml0] if comment_mention
+    klasses << options[:class] if options[:class]
+    klass = klasses.flatten.uniq.join(" ")
+
+    aria_label = options[:aria_label] || (event.nil? ? "No event found" : event.name)
+    content = options[:hide_avatar] ? name : avatar + name
+    content += turbo_custom_tooltip(:n, dom_id(event, :card), event_async_card_path(event)) if event.present? && !options[:disable_tooltip]
+
+    tag_options = options.except(:avatar, :aria_label, :hide_avatar, :disable_tooltip, :class)
+
+    if event.present?
+      link_to(content, event_path(event), tag_options.merge(class: klass, "aria-label": aria_label))
+    else
+      content_tag(:span, content, tag_options.merge(class: klass, "aria-label": aria_label))
+    end
+  end
+
+  def event_avatar_for(event, size: 24, click_to_mention: false, **options)
+    src = event_logo_for(event, size:)
+
+    return (inline_icon("people-2", size:, class: options[:class], style: "margin-right: 6px;")) unless src.present?
+
+    klasses = ["rounded", "shrink-none"]
+    klasses << options[:class] if options[:class]
+    klass = klasses.join(" ")
+
+    data = options[:data] || {}
+    if click_to_mention && event
+      data = data.merge(behavior: "mention", mention_value: event_path(event))
+    end
+
+    image_tag(src,
+              options.merge(
+                loading: "lazy",
+                alt: options[:alt] || event&.name.to_s,
+                width: size,
+                height: size,
+                class: klass,
+                data:
+              ))
+  end
+
+  def event_logo_for(event, size: 24)
+    return unless event&.logo&.attached?
+
+    return url_for(event.logo.variant(resize_to_fill: [size * 2, size * 2])) if event.logo.variable?
+
+    url_for(event.logo)
+  end
+
   private
 
   def validate_date_range(base, params)

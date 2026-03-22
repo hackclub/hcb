@@ -923,6 +923,7 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
+    get "async_card"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
