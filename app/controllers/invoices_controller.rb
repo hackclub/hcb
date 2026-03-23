@@ -8,8 +8,8 @@ class InvoicesController < ApplicationController
 
   INVOICE_COLUMNS = [
     { key: "status" },
-    { key: "date", default: true },
-    { key: "sponsors.name", display: "To" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To" },
     { key: "amount_due", right: true, display: "Amount" },
   ].freeze
 
@@ -75,7 +75,12 @@ class InvoicesController < ApplicationController
         "created_at"
       end
 
-    @invoices = organizer_signed_in? ? relation.order(sort_column => sort_direction) : relation
+    if organizer_signed_in?
+      relation = relation.left_joins(:sponsor) if sort_column == "sponsors.name"
+      @invoices = relation.order(sort_column => sort_direction)
+    else
+      @invoices = relation.order(created_at: :desc)
+    end
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
