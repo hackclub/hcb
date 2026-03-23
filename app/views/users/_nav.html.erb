@@ -12,10 +12,10 @@
       style="border-radius: 8px;box-shadow: none;"
       data-behavior="command_bar_trigger">
       <span class="flex-grow text-left font-medium opacity-75">Jump to...</span>
-      <span class="key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
+      <span class="hidden sm:inline key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
         <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
       </span>
-      <span class="key opacity-75 w-6 rounded-md text-sm">
+      <span class="hidden sm:inline key opacity-75 w-6 rounded-md text-sm">
         K
       </span>
     </button>
