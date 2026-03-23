@@ -208,7 +208,8 @@
     <% content_for :caption do %>
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/donations" target="_blank" class="underline">our HQ's donations!</a></span>
     <% end %>
-    <div class="flex gap-2">
+    <div class="flex flex-row-reverse gap-2 justify-end">
+      <%= pop_icon_to "settings", edit_event_path(@event, tab: "donations") %>
       <%= render partial: "events/share_donation_page", is_blankslate: true %>
     </div>
   <% end %>
