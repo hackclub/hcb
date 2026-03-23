@@ -5,7 +5,7 @@
     <%= render partial: "event/applications/application_card", locals: { application: } %>
   <% end %>
 
-  <%= link_to new_application_path do %>
+  <%= link_to new_application_path(ref: @referral_code) do %>
     <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
       <div class="center">
         <div class="pop success mx-auto flex mb-1">
