@@ -160,6 +160,11 @@ class HcbCode < ApplicationRecord
     end
   end
 
+  def update_custom_memo!(memo)
+    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+  end
+
   # this replicates our balance calculation
   def smart_amount_cents
     sum = canonical_transactions.sum(:amount_cents)

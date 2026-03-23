@@ -43,7 +43,14 @@ class OrganizerPosition
       end
 
       def total_spent_cents
-        transactions.sum(&:amount_cents) * -1
+        card_ids = organizer_position.stripe_cards.on_main_ledger.pluck(:stripe_id)
+        condition = "(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) BETWEEN ? AND ?)"
+        args = [card_ids, created_at.to_i, ended_at&.to_i || Time.now.to_i]
+
+        settled = CanonicalTransaction.stripe_transaction.where(condition, *args)
+        pending = CanonicalPendingTransaction.not_declined.joins(:raw_pending_stripe_transaction).where(condition, *args)
+
+        (settled.sum(:amount_cents) + pending.where.not(hcb_code: settled.select(:hcb_code)).sum(:amount_cents)) * -1
       end
 
       def transactions
