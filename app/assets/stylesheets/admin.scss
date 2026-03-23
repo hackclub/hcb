@@ -984,7 +984,7 @@ form:has(> #admin-logout-button) {
   &:focus {
     .custom-tooltip {
       opacity: 1;
-      z-index: 9;
+      z-index: 9999;
       backdrop-filter: blur(2px);
     }
   }
@@ -1025,15 +1025,15 @@ form:has(> #admin-logout-button) {
   &:active,
   &:focus {
     opacity: 1;
-    z-index: 9;
+    z-index: 9999;
     backdrop-filter: blur(2px);
   }
 }
 
 .custom-tooltip--e {
   left: 100%;
+  right: auto;
   bottom: 50%;
-  right: 0;
   margin-left: 0.5rem;
   transform: translateY(50%);
 }

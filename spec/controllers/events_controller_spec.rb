@@ -5,6 +5,92 @@ require "rails_helper"
 RSpec.describe EventsController do
   include SessionSupport
 
+  describe "#async_card" do
+    context "when the event is public" do
+      let(:event) { create(:event, is_public: true) }
+
+      it "renders successfully for an authenticated organizer" do
+        user = create(:user)
+        create(:organizer_position, user:, event:)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders successfully for an admin" do
+        user = create(:user, :make_admin)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders successfully for an unauthenticated user (public event)" do
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders successfully for a non-member (public event)" do
+        user = create(:user)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders without layout" do
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to render_template(layout: false)
+        expect(response).to render_template("events/async_card")
+      end
+    end
+
+    context "when the event is private" do
+      let(:event) { create(:event, is_public: false) }
+
+      it "renders successfully for an organizer" do
+        user = create(:user)
+        create(:organizer_position, user:, event:)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "renders successfully for an admin" do
+        user = create(:user, :make_admin)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "redirects a non-member" do
+        user = create(:user)
+        sign_in(user)
+
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to be_redirect
+      end
+
+      it "redirects an unauthenticated user to login" do
+        get :async_card, params: { event_id: event.slug }
+
+        expect(response).to be_redirect
+        expect(response.location).to include("sign_in").or include("auth")
+      end
+    end
+  end
+
   describe "#index" do
     before do
       # This is required since creating event configs creates a monthly announcement for the event authored by the system user
