@@ -667,6 +667,7 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
     @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @has_filter = params[:q].present? || %w[deposited in_transit canceled].include?(params[:filter])
   end
 
   def new_transfer
@@ -707,7 +708,7 @@ class EventsController < ApplicationController
       { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
       { key: "created_*", label: "Date created", type: "date_range" }
     ]
-    @has_filter = helpers.check_filters?(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params) || params[:q].present?
   end
 
   def reimbursements_pending_review_icon
@@ -727,6 +728,7 @@ class EventsController < ApplicationController
     @employees = @employees.onboarding if params[:filter] == "onboarding"
     @employees = @employees.terminated if params[:filter] == "terminated"
     @employees = @employees.search(params[:q]) if params[:q].present?
+    @has_filter = params[:q].present? || params[:filter].present?
   end
 
   def sub_organizations
