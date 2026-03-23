@@ -33,11 +33,6 @@ class LoginsController < ApplicationController
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
-    if @login.available_factors.none?
-      session[:auth_email] = @login.user.email
-      redirect_to choose_login_preference_login_path(@login) and return
-    end
-
     continue_login(preference: login_preference || "email")
   rescue => e
     flash[:error] = e.message
@@ -47,6 +42,12 @@ class LoginsController < ApplicationController
   # get page to choose preference
   def choose_login_preference
     return redirect_to auth_users_path if @email.nil?
+
+    if @login.available_factors.none?
+      Rails.error.unexpected("[Login] Login ran out of available factors. This should never be possible.")
+      flash[:error] = "Something went wrong. Please try again or contact HCB for support."
+      return redirect_to auth_users_path
+    end
 
     session.delete :login_preference
   end
