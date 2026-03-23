@@ -7,7 +7,7 @@
     <% declined = hcb_codes.find { |hc| hc.pt&.hcb_decline_reason == :merchant_not_allowed } %>
     <% event_name = declined&.event&.name || "this card" %>
     <%= render "application/callout", type: "warning", title: "Transaction declined for #{event_name}" do %>
-      One or more transactions were declined because the merchant isn't enabled for this card. Please reach out to the <%= event_name %> team to request access.
+      One or more transactions were declined because the merchant isn't enabled for this card. Please reach out to the <%= event_name %> team if you need support.
     <% end %>
   <% end %>
   <div style="overflow-x: auto;" class="table-container">
