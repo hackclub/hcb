@@ -61,8 +61,6 @@ class LoginsController < ApplicationController
   def email
     resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
-    @use_sms_auth = false
-
     if resp[:error].present?
       flash[:error] = resp[:error]
       return redirect_to auth_users_path
@@ -76,11 +74,7 @@ class LoginsController < ApplicationController
 
   # post to request sms login code
   def sms
-    initialize_sms_params
-
-    resp = LoginCodeService::Request.new(email: @email, sms: @use_sms_auth, ip_address: request.remote_ip, user_agent: request.user_agent).run
-
-    @use_sms_auth = resp[:method] == :sms
+    resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?
       flash[:error] = resp[:error]
@@ -125,7 +119,6 @@ class LoginsController < ApplicationController
       )
 
       unless ok
-        initialize_sms_params
         flash.now[:error] = service.errors.full_messages.to_sentence
         render(:sms, status: :unprocessable_entity)
         return
@@ -174,7 +167,7 @@ class LoginsController < ApplicationController
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        return_path = @login.return_to
+        return_path = url_from(@login.return_to)
         if return_path.present?
           begin
             route = Rails.application.routes.recognize_path(return_path)
@@ -270,15 +263,6 @@ class LoginsController < ApplicationController
       timezone: params[:timezone],
       ip: request.remote_ip
     }
-  end
-
-  def initialize_sms_params
-    return if @login.authenticated_with_sms
-
-    if @login.user&.use_sms_auth || @login.user&.phone_number_verified
-      @use_sms_auth = true
-      @phone_last_four = @login.user.phone_number.last(4)
-    end
   end
 
   def valid_browser_token?
