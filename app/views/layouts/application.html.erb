@@ -51,10 +51,10 @@
           </div>
           <aside class="sidebar select-none" id="sidebar" data-sidebar-target="sidebar">
             <div class="sidebar--scroll-container">
-              <div class="hidden lg:block">
-                <%= render "application/flash", klass: "mb1" unless @hide_flash %>
-              </div>
               <%= yield(:header) %>
+              <div class="hidden lg:block">
+                <%= render "application/flash", klass: "mt-2" unless @hide_flash %>
+              </div>
               <%= yield(:nav) %>
             </div>
             <% if content_for?(:nav_footer) %>
