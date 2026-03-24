@@ -6,13 +6,14 @@ class Donation
     include DonationPageSetup
 
     before_action :set_event, except: [:set_index]
-    skip_after_action :verify_authorized, only: [:index]
     skip_before_action :signed_in_user, only: [:start]
     before_action :check_dark_param, only: [:start]
     before_action :check_background_param, only: [:start]
     before_action :hide_seasonal_decorations, only: [:start]
 
     def index
+      authorize @event, :donation_page?
+
       @tiers = @event.donation_tiers
     end
 
