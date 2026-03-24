@@ -692,6 +692,8 @@ class EventsController < ApplicationController
     @reimbursed = Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed).sum(&:amount_cents)
     @pending = @total - @reimbursed
 
+    @format_reports_with_currency = @event.reimbursement_reports.where.not(currency: "USD").exists?
+
     @reports = @event.reimbursement_reports.visible
     @reports = @reports.draft if params[:status] == "draft"
     @reports = @reports.submitted if params[:status] == "review_required"
