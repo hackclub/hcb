@@ -332,7 +332,28 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    raise NotImplementedError
+    stop!
+
+    reissued_check = event.increase_checks.build(
+      user_id:,
+      memo:,
+      amount:,
+      payment_for:,
+      recipient_name:,
+      address_line1:,
+      address_line2:,
+      address_city:,
+      recipient_email:,
+      send_email_notification:,
+      address_zip:,
+      payment_recipient_id:,
+    )
+
+    if reissued_check.save
+      # copy receipts
+    end
+
+    reissued_check.send_check!
   end
 
   private
