@@ -41,6 +41,8 @@ class Event
       user.admin? || record.user == user
     end
 
+    alias_method :unarchive?, :archive?
+
     def resend_to_cosigner?
       return false if record.contract&.party(:cosigner).nil?
 

@@ -7,12 +7,36 @@
     display: none;
   }
 
+  .sidebar--overlay {
+    @apply fixed top-0 left-0 w-full h-dvh;
+    background-color: rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    transition: opacity 0.3s;
+
+    &.overlay--hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
   .sidebar {
-    @apply fixed top-0 left-0 w-screen lg:w-72 lg:h-dvh flex items-center lg:items-start lg:flex-col
-      overflow-x-visible border border-x-0 lg:border-r lg:border-b-0 lg:border-l-0
-      backdrop-blur-xl z-10 lg:shadow-lg;
+    @apply fixed -left-72 w-72 h-dvh flex items-start flex-col
+      overflow-x-visible border border-x-0 border-r border-b-0 border-l-0
+      backdrop-blur-xl z-10 shadow-lg;
+
+    transition: left 0.3s;
 
     background-color: rgba(255, 255, 255, 0.8);
+
+    @media (max-width: 1024px) {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      [data-dark='true'] & {
+        background-color: rgba(37, 36, 41, 0.9) !important;
+      }
+    }
+    @media (min-width: 1024px) {
+      left: 0 !important;
+    }
     border-color: rgba(200, 200, 200, 0.3) !important;
     border-top-width: 0px;
 
@@ -26,7 +50,7 @@
     }
 
     & .command-bar-trigger {
-      @apply h-10 shadow-none w-100 justify-start px-3 hidden md:flex items-center cursor-pointer border-none;
+      @apply h-10 shadow-none w-100 justify-start px-3 flex items-center cursor-pointer border-none;
       color: inherit;
       font-size: 15px;
       transition: background 0.2s ease-in-out;
@@ -59,49 +83,11 @@
       }
     }
 
-    @media (max-width: 1023px) {
-      height: 64px;
-    }
-
     .sidebar--scroll-container {
       overflow: hidden;
       @apply flex-1 w-full p-2 px-5;
-      @media (min-width: 1023px) {
-        overflow-y: auto;
-      }
+      overflow-y: auto;
     }
-  }
-
-  .mobile-nav {
-    @apply lg:hidden fixed bottom-0 left-0 w-full p-10 z-10 flex justify-center pointer-events-none;
-
-    & .mobile-nav--trigger {
-      @apply rounded-full text-black px-5 py-3 max-w-full flex items-center pointer-events-auto gap-3 active:scale-90 transition-transform cursor-pointer;
-      width: 300px;
-      background-color: rgba(200, 200, 200, 0.4);
-      backdrop-filter: blur(15px);
-      box-shadow: var(--shadow-border-lg);
-
-      [data-dark='true'] & {
-        color: white;
-        background-color: rgba(50, 50, 50, 0.4);
-      }
-    }
-  }
-
-  .mobile-nav--modal {
-    @apply lg:invisible modal modal--scroll modal--popover p-3 bg-transparent shadow-none;
-    height: auto !important;
-    max-height: 80vh !important;
-  }
-}
-
-.mobile-nav--popover {
-  @apply flex-1 mt-auto overflow-hidden rounded-xl;
-
-  background-color: rgba(255, 255, 255, 1) !important;
-  [data-dark='true'] & {
-    background-color: rgba(37, 36, 41, 5) !important;
   }
 }
 
