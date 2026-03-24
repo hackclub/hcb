@@ -54,6 +54,7 @@ class CardGrant < ApplicationRecord
 
   include Freezable
   include Commentable
+  include HasPaperTrailHelpers
 
   belongs_to :event
   has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
@@ -177,8 +178,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -199,8 +199,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -235,8 +234,7 @@ class CardGrant < ApplicationRecord
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
     ).run
-    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -300,12 +298,6 @@ class CardGrant < ApplicationRecord
 
   def default_expiration_at
     (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def last_time_change_to(...)

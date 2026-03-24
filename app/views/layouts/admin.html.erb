@@ -56,36 +56,9 @@
         </div>
       </div>
 
-      <div class="nav-row !border-gray-200 dark:!border-gray-700 overflow-x-auto" style="width: 100%; border-top:1px solid">
-        <div class="nav-row-scroll-container flex">
-          <% nav.sections.each do |section| %>
-            <div data-controller="menu" class="pb-0 sm:flex-1 shrink-0 flex item">
-              <button
-                type="button"
-                class="nav-item menu__toggle menu__toggle--arrowless flex-1 h-12 rounded-none bg-transparent"
-                style="<%= section.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)" %>"
-                data-menu-target="toggle"
-                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-                <%= section.name %>
-                <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
-                  <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
-                </span>
-              </button>
-              <div class="menu__content rounded-t-none -mt-2.5 admin-menu-content !bg-white/50 backdrop-blur-lg dark:!bg-[rgba(0,0,0,0.8)]" data-menu-target="content">
-                <% section.items.each do |item| %>
-                  <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
-                    <%= item.name %>
-                    <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit ml-auto">
-                      <%= item.count %>
-                    </span>
-                  <% end %>
-                  <div class="menu__divider last:hidden"></div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </div>
+      <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), class: "w-100" do %>
+        <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
+      <% end %>
     </nav>
 
     <%= render(partial: "admin/flash") %>
