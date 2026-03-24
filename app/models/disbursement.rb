@@ -130,6 +130,13 @@ class Disbursement < ApplicationRecord
       css_class: "transaction--frc",
       icon: "sam",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+    },
+    gene_haas_grant: {
+      title: "Grant from Gene Haas",
+      memo: "Gene Haas Grant",
+      css_class: "transaction--genehaas",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
     }
   }.freeze
 

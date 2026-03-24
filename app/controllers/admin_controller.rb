@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def nav
+    @nav = Admin::Nav.new(page_title: params[:title])
+
+    render :nav, layout: false
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
