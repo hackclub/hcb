@@ -27,10 +27,12 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    @login = @user.logins.new(**login_params, referral_link: Referral::Link.find_by(slug: login_params[:referral_link_id]) if login_params[:referral_link_id].present?)
+    referral_link = Referral::Link.find_by(slug: login_params[:referral_link_id]) if login_params[:referral_link_id].present?
+    @login = Login.new(**login_params, referral_link:)
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
+    @login.user = @user
     @login.save!
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
