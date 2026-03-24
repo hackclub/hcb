@@ -75,7 +75,7 @@
                 <%= user_mention report.user %>
               </td>
               <td class="text-right">
-                <%= report.amount.format %>
+                <%= report.amount.format(with_currency: @format_reports_with_currency) %>
               </td>
               <td class="text-right">
                 <%= format_date report.created_at %>
