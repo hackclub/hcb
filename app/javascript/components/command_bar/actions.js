@@ -247,14 +247,30 @@ export const initalActions = [
     icon: <Icon glyph="rep" size={16} />,
     priority: Priority.HIGH,
   },
-  ...['light', 'dark', 'system'].map(theme => ({
-    id: `${theme}-theme`,
-    name: `Set theme to ${theme}`,
+  {
+    id: `theme-light`,
+    name: `Set theme to light`,
     section: 'Actions',
-    icon: <Icon glyph="idea" size={16} />,
-    keywords: theme, // eslint-disable-next-line no-undef
-    perform: () => BK.setDark(theme),
-  })),
+    icon: <Icon glyph="sun" size={16} />,
+    keywords: 'theme light', // eslint-disable-next-line no-undef
+    perform: () => BK.setDark('light'),
+  },
+  {
+    id: `theme-dark`,
+    name: `Set theme to dark`,
+    section: 'Actions',
+    icon: <Icon glyph="moon" size={16} />,
+    keywords: 'theme dark', // eslint-disable-next-line no-undef
+    perform: () => BK.setDark('dark'),
+  },
+  {
+    id: `theme-system`,
+    name: `Set theme to system`,
+    section: 'Actions',
+    icon: <Icon glyph="lightbulb" size={16} />,
+    keywords: 'theme system', // eslint-disable-next-line no-undef
+    perform: () => BK.setDark('system'),
+  },
   {
     id: 'signout',
     name: 'Sign out',
