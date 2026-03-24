@@ -44,6 +44,22 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-transactions`,
+      name: 'Transactions',
+      perform: navigate(`/${event.slug}/transactions`),
+      icon: <Icon glyph="bank-account" size={16} />,
+      parent: event.slug,
+      keywords: 'ledger payments',
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-account-number`,
+      name: 'Account numbers',
+      perform: () =>
+        (window.location.pathname = `/${event.slug}/account-number`),
+      icon: <Icon glyph="hashtag" size={16} />,
+      parent: event.slug,
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-donations`,
       name: 'Donations',
       perform: navigate(`/${event.slug}/donations`),
@@ -58,19 +74,11 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
-      id: `${event.slug}-account-number`,
-      name: 'Account numbers',
-      perform: () =>
-        (window.location.pathname = `/${event.slug}/account-number`),
-      icon: <Icon glyph="bank-account" size={16} />,
-      parent: event.slug,
-    })),
-    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-check-deposit`,
       name: 'Check deposits',
       perform: () =>
         (window.location.pathname = `/${event.slug}/check-deposits`),
-      icon: <Icon glyph="attachment" size={16} />,
+      icon: <Icon glyph="cheque" size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -79,14 +87,6 @@ export const generateEventActions = data => {
       perform: navigate(`/${event.slug}/cards`),
       icon: <Icon glyph="card" size={16} />,
       parent: event.slug,
-    })),
-    ...data.filter(restrictedFilter).map(event => ({
-      id: `${event.slug}-transactions`,
-      name: 'Transactions',
-      perform: navigate(`/${event.slug}/transactions`),
-      icon: <Icon glyph="transactions" size={16} />,
-      parent: event.slug,
-      keywords: 'ledger payments',
     })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transfers`,
@@ -107,23 +107,14 @@ export const generateEventActions = data => {
       id: `${event.slug}-team`,
       name: 'Team',
       perform: navigate(`/${event.slug}/team`),
-      icon: <Icon glyph="leader" size={16} />,
+      icon: <Icon glyph="people-2" size={16} />,
       parent: event.slug,
     })),
-    ...data
-      .filter(e => e.features.subevents)
-      .map(event => ({
-        id: `${event.slug}-subevents`,
-        name: 'Sub-organizations',
-        perform: navigate(`/${event.slug}/sub_organizations`),
-        icon: <Icon glyph="channels" size={16} />,
-        parent: event.slug,
-      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-perks`,
       name: 'Perks',
       perform: navigate(`/${event.slug}/promotions`),
-      icon: <Icon glyph="shirt" size={16} />,
+      icon: <Icon glyph="perks" size={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -137,9 +128,18 @@ export const generateEventActions = data => {
       id: `${event.slug}-documents`,
       name: 'Documents',
       perform: () => (window.location.pathname = `/${event.slug}/documents`),
-      icon: <Icon glyph="info" size={16} />,
+      icon: <Icon glyph="docs" size={16} />,
       parent: event.slug,
     })),
+    ...data
+      .filter(e => e.features.subevents)
+      .map(event => ({
+        id: `${event.slug}-subevents`,
+        name: 'Sub-organizations',
+        perform: navigate(`/${event.slug}/sub_organizations`),
+        icon: <Icon glyph="channels" size={16} />,
+        parent: event.slug,
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-settings`,
       name: 'Settings',
@@ -182,7 +182,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <Icon glyph="docs" size={16} />,
+    icon: <Icon glyph="receipt" size={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -191,7 +191,7 @@ export const initalActions = [
     keywords: 'reimbursements report',
     perform: navigate('/my/reimbursements'),
     section: 'Pages',
-    icon: <Icon glyph="attachment" size={16} />,
+    icon: <Icon glyph="reimbursement" size={16} />,
     priority: Priority.HIGH,
   },
   {

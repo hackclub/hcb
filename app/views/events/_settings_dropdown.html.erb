@@ -1,7 +1,7 @@
 <% if organizer_signed_in? %>
   <details class="dock" <%= "open" if @settings_tab.present? || local_assigns[:selected] == :settings %>>
     <summary class="dock__item bg-none tooltipped tooltipped--e" aria-label="Edit organization settings">
-      <%= inline_icon "switches-mixed", size: 35, class: "ml-1 -mr-1" %>
+      <%= inline_icon "settings", size: 35, class: "ml-1 -mr-1" %>
       <span class="-ml-1">Settings</span>
       <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
     </summary>
