@@ -344,13 +344,13 @@ class IncreaseCheck < ApplicationRecord
       address_line2:,
       address_city:,
       recipient_email:,
-      send_email_notification:,
+      send_email_notification:, # TODO: disable email notification and send reissue mailer
       address_zip:,
       payment_recipient_id:,
     )
 
     if reissued_check.save
-      # copy receipts
+      # TODO: copy receipts
     end
 
     reissued_check.send_check!
