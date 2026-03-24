@@ -271,12 +271,10 @@ class IncreaseCheck < ApplicationRecord
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
 
     update!(
-      column_id: column_check["id"],
       column_object: column_check,
-      check_number: column_check["check_number"],
       column_status: column_check["status"],
       column_delivery_status: column_check["delivery_status"],
-    )
+)
   end
 
   def reissue!
