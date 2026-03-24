@@ -65,6 +65,7 @@ module Reimbursement
     belongs_to :card_grant, optional: true
 
     has_paper_trail ignore: :expense_number
+    include HasPaperTrailHelpers
 
     monetize :maximum_amount_cents, allow_nil: true
     monetize :amount_to_reimburse_cents, allow_nil: true, with_model_currency: :currency
@@ -420,12 +421,6 @@ module Reimbursement
     end
 
     private
-
-    def last_user_change_to(...)
-      user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-      user_id && User.find(user_id)
-    end
 
     def reimburse!
       ActiveRecord::Base.transaction do
