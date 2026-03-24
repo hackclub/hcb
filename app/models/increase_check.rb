@@ -157,7 +157,7 @@ class IncreaseCheck < ApplicationRecord
       transitions from: :pending, to: :approved
 
       after_commit do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later unless reimbursement_payout_holding.present?
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
       end
     end
