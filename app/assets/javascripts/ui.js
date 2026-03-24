@@ -7,6 +7,7 @@ const whenViewed = (element, callback) =>
   }).observe(element)
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
+  if (!popover) return
 
   const title = trigger.dataset.popoverTitle || ''
   const src = trigger.dataset.popoverSrc || ''
@@ -174,7 +175,6 @@ window.attachTooltipListener = () => {
   let mutationObserver = null
 
   const removeTooltips = () => {
-    if (!tooltip) return
     tooltip.className = ''
     // Stop observing when tooltip is closed
     if (mutationObserver) {
