@@ -7,10 +7,9 @@ class Donation
 
     before_action :set_event, except: [:set_index]
     skip_before_action :signed_in_user, only: [:start]
-
-    def index
-      @tiers = @event.donation_tiers
-    end
+    before_action :check_dark_param, only: [:start]
+    before_action :check_background_param, only: [:start]
+    before_action :hide_seasonal_decorations, only: [:start]
 
     def start
       authorize @event, :donation_page?
@@ -22,7 +21,7 @@ class Donation
     end
 
     def set_index
-      tier = Donation::Tier.find_by(id: params[:id])
+      tier = Donation::Tier.find_by_hashid!(params[:id])
       return head status: :not_found unless tier
 
       authorize tier, :update?
@@ -61,17 +60,17 @@ class Donation
         author: current_user
       ).create
 
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: {
-                      success: {
-                        text: "Donation tier created successfully.",
-                        link: edit_announcement_path(announcement),
-                        link_text: "Create an announcement!"
-                      }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: {
+                    success: {
+                      text: "Donation tier created successfully.",
+                      link: edit_announcement_path(announcement),
+                      link_text: "Create an announcement!"
                     }
+                  }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     def update
@@ -97,8 +96,8 @@ class Donation
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     def destroy
@@ -106,14 +105,31 @@ class Donation
       authorize @tier, :destroy?
 
       @tier.destroy
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { success: "Donation tiers updated successfully." }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { success: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e
-      redirect_back fallback_location: edit_event_path(@event.slug),
-                    flash: { error: e.message }
+      redirect_to edit_event_path(@event.slug, tab: "donations"),
+                  flash: { error: e.message }
     end
 
     private
+
+    def check_dark_param
+      if params[:dark].present? || cookies[:donation_dark]
+        @dark = true
+        cookies[:donation_dark] = true
+      end
+    end
+
+    def check_background_param
+      # because we're going to be injecting this value into a stylesheet,
+      # we ensure that it's a hex code to prevent: https://css-tricks.com/css-security-vulnerabilities/
+      @background = params[:background] unless (params[:background] =~ /\A[0-9a-fA-F]{6}\z/).nil?
+    end
+
+    def hide_seasonal_decorations
+      @hide_seasonal_decorations = true
+    end
 
     def tier_params(id)
       params

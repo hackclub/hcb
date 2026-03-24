@@ -110,7 +110,7 @@ class Wire < ApplicationRecord
 
     event :mark_approved do
       after_commit do
-        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
       end
       transitions from: :pending, to: :approved
     end
