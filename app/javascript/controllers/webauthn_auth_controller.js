@@ -27,6 +27,7 @@ export default class extends Controller {
 
   connect() {
     if (
+      this.hasLoginPreferenceWebauthnInputTarget &&
       this.loginPreferenceWebauthnInputTarget.checked &&
       location.pathname.includes('/security_key')
     ) {
