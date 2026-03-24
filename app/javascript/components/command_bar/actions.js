@@ -159,7 +159,7 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'home',
+    id: 'my-home',
     name: 'Home',
     keywords: 'index',
     perform: navigate('/'),
@@ -168,7 +168,7 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'cards',
+    id: 'my-cards',
     name: 'Cards',
     keywords: 'cards',
     perform: navigate('/my/cards'),
@@ -177,7 +177,7 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'receipts',
+    id: 'my-receipts',
     name: 'Receipts',
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
@@ -186,7 +186,7 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'reimbursements',
+    id: 'my-reimbursements',
     name: 'Reimbursements',
     keywords: 'reimbursements report',
     perform: navigate('/my/reimbursements'),
@@ -195,7 +195,7 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'settings',
+    id: 'my-settings',
     name: 'Settings',
     keywords: 'settings',
     section: 'Pages',
@@ -203,47 +203,47 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
-    id: 'settings-account',
+    id: 'my-settings-account',
     name: 'Account',
     keywords: 'account profile personal name birthday picture email sign',
     perform: navigate('/my/settings'),
-    parent: 'settings',
+    parent: 'my-settings',
     icon: <Icon glyph="profile" size={16} />,
     priority: Priority.HIGH,
   },
   {
-    id: 'settings-notifications',
+    id: 'my-settings-notifications',
     name: 'Notifications',
     keywords: 'notifications alerts emails',
     perform: navigate('/my/settings/notifications'),
-    parent: 'settings',
+    parent: 'my-settings',
     icon: <Icon glyph="notification" size={16} />,
     priority: Priority.HIGH,
   },
   {
-    id: 'settings-payouts',
+    id: 'my-settings-payouts',
     name: 'Payout settings',
     keywords: 'reimbursement payouts payment bank direct deposit',
     perform: navigate('/my/settings/payouts'),
-    parent: 'settings',
+    parent: 'my-settings',
     icon: <Icon glyph="payment-transfer" size={16} />,
     priority: Priority.HIGH,
   },
   {
-    id: 'settings-security',
+    id: 'my-settings-security',
     name: 'Security',
     keywords: 'security password authentication 2fa two-factor',
     perform: navigate('/my/settings/security'),
-    parent: 'settings',
+    parent: 'my-settings',
     icon: <Icon glyph="private" size={16} />,
     priority: Priority.HIGH,
   },
   {
-    id: 'settings-previews',
+    id: 'my-settings-previews',
     name: 'Feature previews',
     keywords: 'feature previews beta experimental',
     perform: navigate('/my/settings/previews'),
-    parent: 'settings',
+    parent: 'my-settings',
     icon: <Icon glyph="rep" size={16} />,
     priority: Priority.HIGH,
   },
@@ -277,7 +277,7 @@ export const adminActions = (adminUrls, isPretending) => {
   if (isPretending) {
     return [
       {
-        id: 'pretend',
+        id: 'admin-pretend',
         name: 'Stop pretending not to be an admin',
         keywords: 'pretend admin',
         perform: () =>
@@ -296,7 +296,7 @@ export const adminActions = (adminUrls, isPretending) => {
   }
   return [
     {
-      id: 'pretend',
+      id: 'admin-pretend',
       name: 'Pretend to not be an admin',
       keywords: 'pretend admin',
       perform: () =>
@@ -312,7 +312,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
     },
     {
-      id: 'admin_tool_1',
+      id: 'admin-applications-airtable',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Applications (Airtable)',
@@ -320,7 +320,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Applications']),
     },
     {
-      id: 'admin_tool_2',
+      id: 'admin-ledger',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Ledger',
@@ -328,7 +328,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/ledger'),
     },
     {
-      id: 'admin_tool_3',
+      id: 'admin-ach-transfers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'ACH transfers',
@@ -336,7 +336,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/ach'),
     },
     {
-      id: 'admin_tool_4',
+      id: 'admin-checks',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Checks',
@@ -344,7 +344,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/increase_checks'),
     },
     {
-      id: 'admin_tool_5',
+      id: 'admin-wires',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Wires',
@@ -352,7 +352,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/wires'),
     },
     {
-      id: 'admin_tool_6',
+      id: 'admin-disbursements',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Disbursements',
@@ -360,7 +360,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/disbursements'),
     },
     {
-      id: 'admin_tool_7',
+      id: 'admin-opdrs',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'OPDRs',
@@ -369,7 +369,7 @@ export const adminActions = (adminUrls, isPretending) => {
         (window.location.href = '/organizer_position_deletion_requests'),
     },
     {
-      id: 'admin_tool_8',
+      id: 'admin-disputes',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Disputes',
@@ -377,7 +377,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Disputes']),
     },
     {
-      id: 'admin_tool_9',
+      id: 'admin-feedback',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Feedback',
@@ -385,7 +385,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Feedback']),
     },
     {
-      id: 'admin_tool_10',
+      id: 'admin-organizations',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Organizations',
@@ -393,7 +393,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/events'),
     },
     {
-      id: 'admin_tool_11',
+      id: 'admin-users',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Users',
@@ -401,7 +401,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/users'),
     },
     {
-      id: 'admin_tool_12',
+      id: 'admin-donations',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Donations',
@@ -409,7 +409,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/donations'),
     },
     {
-      id: 'admin_tool_13',
+      id: 'admin-invoices',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Invoices',
@@ -417,7 +417,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/invoices'),
     },
     {
-      id: 'admin_tool_14',
+      id: 'admin-sponsors',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Sponsors',
@@ -425,7 +425,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/sponsors'),
     },
     {
-      id: 'admin_tool_15',
+      id: 'admin-cards',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Cards',
@@ -433,7 +433,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/stripe_cards'),
     },
     {
-      id: 'admin_tool_16',
+      id: 'admin-gsuite',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Google Workspaces',
@@ -441,7 +441,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/google_workspaces'),
     },
     {
-      id: 'admin_tool_17',
+      id: 'admin-stickers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Stickers',
@@ -449,7 +449,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Stickers']),
     },
     {
-      id: 'admin_tool_18',
+      id: 'admin-hackathons',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Hackathons',
@@ -457,7 +457,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Hackathons']),
     },
     {
-      id: 'admin_tool_19',
+      id: 'admin-1passwords',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: '1Password',
@@ -465,7 +465,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['1Password']),
     },
     {
-      id: 'admin_tool_20',
+      id: 'admin-domains',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Domains',
@@ -473,7 +473,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['Domains']),
     },
     {
-      id: 'admin_tool_21',
+      id: 'admin-event-helper',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'The Event Helper',
@@ -481,7 +481,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = adminUrls['The Event Helper']),
     },
     {
-      id: 'admin_tool_22',
+      id: 'admin-gsuite-waitlist',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Google Workspace waitlist',
@@ -490,7 +490,7 @@ export const adminActions = (adminUrls, isPretending) => {
         (window.location.href = adminUrls['Google Workspace Waitlist']),
     },
     {
-      id: 'admin_tool_23',
+      id: 'admin-bank-fees',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Bank fees',
@@ -498,7 +498,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/bank_fees'),
     },
     {
-      id: 'admin_tool_24',
+      id: 'admin-organization-balances',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Organization balances',
@@ -506,7 +506,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/balances'),
     },
     {
-      id: 'admin_tool_25',
+      id: 'admin-check-deposits',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Check deposits',
@@ -514,7 +514,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/check_deposits'),
     },
     {
-      id: 'admin_tool_26',
+      id: 'admin-blazer',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Blazer',
@@ -522,7 +522,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/blazer'),
     },
     {
-      id: 'admin_tool_27',
+      id: 'admin-common-documents',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Common documents',
@@ -530,7 +530,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/documents'),
     },
     {
-      id: 'admin_tool_28',
+      id: 'admin-pending-ledger',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Pending ledger',
@@ -538,7 +538,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/pending_ledger'),
     },
     {
-      id: 'admin_tool_29',
+      id: 'admin-recurring-donations',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Recurring donations',
@@ -546,7 +546,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/recurring_donations'),
     },
     {
-      id: 'admin_tool_30',
+      id: 'admin-flipper',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Flipper',
@@ -554,7 +554,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/flipper/features'),
     },
     {
-      id: 'admin_tool_31',
+      id: 'admin-referral-programs',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Referral programs',
@@ -562,7 +562,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/referral_programs'),
     },
     {
-      id: 'admin_tool_32',
+      id: 'admin-active-teens-leaderboard',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Active teenagers leaderboard',
@@ -570,7 +570,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/active_teenagers_leaderboard'),
     },
     {
-      id: 'admin_tool_33',
+      id: 'admin-new-teens-leaderboard',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'New teenagers leaderboard',
@@ -578,7 +578,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/new_teenagers_leaderboard'),
     },
     {
-      id: 'admin_tool_34',
+      id: 'admin-contracts',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Contracts',
@@ -586,7 +586,7 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/contracts'),
     },
     {
-      id: 'admin_tool_35',
+      id: 'admin-applications-hcb',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Applications (HCB)',
