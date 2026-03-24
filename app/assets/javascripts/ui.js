@@ -172,11 +172,12 @@ $(document).keydown(function (e) {
 
 window.attachTooltipListener = () => {
   const tooltip = document.getElementById('tooltip-container')
+  if (!tooltip) return
   let mutationObserver = null
 
   const removeTooltips = () => {
+    if (!tooltip) return
     tooltip.className = ''
-    // Stop observing when tooltip is closed
     if (mutationObserver) {
       mutationObserver.disconnect()
       mutationObserver = null
@@ -213,7 +214,70 @@ window.attachTooltipListener = () => {
     }
 
     const [left, top] = (positions[placement] || positions.n)()
-    Object.assign(tooltip.style, { left: `${left}px`, top: `${top}px` })
+    const [clampedLeft, clampedTop] = clampToViewport(
+      left,
+      top,
+      placement,
+      triggerRect
+    )
+    Object.assign(tooltip.style, {
+      left: `${clampedLeft}px`,
+      top: `${clampedTop}px`,
+    })
+  }
+
+  const clampToViewport = (left, top, placement, triggerRect, tooltipWidth, tooltipHeight) => {
+    const tw = tooltipWidth
+    const th = tooltipHeight
+    const vw = document.documentElement.clientWidth
+    const vh = document.documentElement.clientHeight
+    const offset = 5
+    const margin = 4 // min gap from viewport edge
+
+    // Check if the tooltip overflows on each side
+    const overflows = {
+      left: left < window.scrollX + margin,
+      right: left + tw > window.scrollX + vw - margin,
+      top: top < window.scrollY + margin,
+      bottom: top + th > window.scrollY + vh - margin,
+    }
+
+    // Flip axis placements to opposite side if they overflow
+    const flipMap = { n: 's', s: 'n', e: 'w', w: 'e' }
+    const shouldFlip =
+      (placement === 'n' && overflows.top) ||
+      (placement === 's' && overflows.bottom) ||
+      (placement === 'e' && overflows.right) ||
+      (placement === 'w' && overflows.left)
+
+    if (shouldFlip) {
+      const flipped = flipMap[placement]
+      const centerX =
+        triggerRect.left + window.scrollX + (triggerRect.width - tw) / 2
+      const centerY =
+        triggerRect.top + window.scrollY + (triggerRect.height - th) / 2
+
+      const flippedPositions = {
+        s: [centerX, triggerRect.bottom + window.scrollY + offset],
+        n: [centerX, triggerRect.top + window.scrollY - th - offset],
+        e: [triggerRect.right + window.scrollX + offset, centerY],
+        w: [triggerRect.left + window.scrollX - tw - offset, centerY],
+      }
+
+      ;[left, top] = flippedPositions[flipped]
+    }
+
+    // After any flip, nudge horizontally/vertically so edges don't clip
+    left = Math.max(
+      window.scrollX + margin,
+      Math.min(left, window.scrollX + vw - tw - margin)
+    )
+    top = Math.max(
+      window.scrollY + margin,
+      Math.min(top, window.scrollY + vh - th - margin)
+    )
+
+    return [left, top]
   }
 
   const showTooltip = trigger => {
@@ -223,15 +287,12 @@ window.attachTooltipListener = () => {
 
     tooltip.className = 'active'
     tooltip.textContent = label
-
-    // Sync size classes
     ;['tooltipped--lg', 'tooltipped--xl'].forEach(cls => {
       if (trigger.classList.contains(cls)) tooltip.classList.add(cls)
     })
 
     updateTooltipPosition(trigger)
 
-    // Observe trigger for aria-label changes
     if (mutationObserver) mutationObserver.disconnect()
     mutationObserver = new MutationObserver(() => {
       const updatedLabel = trigger.getAttribute('aria-label').trim()
@@ -249,8 +310,7 @@ window.attachTooltipListener = () => {
   $('.tooltipped').on({
     mouseenter(event) {
       if (window.innerWidth < 768) return
-      const trigger = event.currentTarget
-      showTooltip(trigger)
+      showTooltip(event.currentTarget)
     },
     touchstart(event) {
       const trigger = event.currentTarget
@@ -261,7 +321,6 @@ window.attachTooltipListener = () => {
   })
 
   $(document).on('click', function (event) {
-    // Prevent tooltip removal when clicking on a tooltip trigger or the tooltip itself
     if (
       !$(event.target).closest('.tooltipped--tappable').length &&
       !$(event.target).closest('#tooltip-container').length
@@ -269,7 +328,7 @@ window.attachTooltipListener = () => {
       removeTooltips()
     }
   })
-  // on unload turbo
+
   $(document).on('turbo:before-visit', removeTooltips)
   $(document).on('beforeunload', removeTooltips)
   $(document).on('turbo:frame-load', removeTooltips)
