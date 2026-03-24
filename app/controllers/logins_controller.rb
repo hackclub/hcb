@@ -18,7 +18,7 @@ class LoginsController < ApplicationController
   def new
     render "users/logout" if current_user
 
-    referral_link_id = Referral::Link.find_by(slug: params[:referral])&.id if params[:referral].present?
+    referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
     @login = Login.new(state: { return_to: url_from(params[:return_to]), purpose: params[:purpose] }, referral_link_id:)
 
     @prefill_email = params[:email] if params[:email].present?
@@ -27,7 +27,7 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    @login = @user.logins.new(login_params)
+    @login = @user.logins.new(**login_params, referral_link: Referral::Link.find_by(slug: login_params[:referral_link_id]) if login_params[:referral_link_id].present?)
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
