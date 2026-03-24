@@ -54,11 +54,6 @@
       <% end %>
     </div>
 
-    <div class="field field--checkbox justify-left hidden">
-      <%= form.check_box :remember, checked: true, data: { "webauthn-auth-target" => "rememberInput" } %>
-      <%= form.label :remember, "Remember my choice in this browser" %>
-    </div>
-
     <%= form.hidden_field :email, value: @email, data: { "webauthn-auth-target" => "loginEmailInput" } %>
 
     <div class="flex flex-row justify-between items-center my-4">

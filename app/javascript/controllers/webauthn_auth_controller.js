@@ -13,7 +13,6 @@ export default class extends Controller {
     'loginCode',
     'continueButton',
     'loginPreferenceWebauthnInput',
-    'rememberInput',
   ]
 
   static values = {
@@ -77,8 +76,6 @@ export default class extends Controller {
         {
           credential: JSON.stringify(credential),
           method: 'webauthn',
-          remember:
-            this.hasRememberInputTarget && this.rememberInputTarget.checked,
           ...(await this.fingerprint()),
         }
       )
