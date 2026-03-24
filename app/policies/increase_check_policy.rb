@@ -14,11 +14,11 @@ class IncreaseCheckPolicy < ApplicationPolicy
   end
 
   def stop?
-    user&.admin?
+    user&.admin? && record.can_stop?
   end
 
   def reissue?
-    user&.admin?
+    user&.admin? && record.can_stop?
   end
 
   def reject?

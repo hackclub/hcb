@@ -299,10 +299,6 @@ class IncreaseCheck < ApplicationRecord
     approved?
   end
 
-  def can_stop?
-    column_issued? || column_manual_review?
-  end
-
   def address
     "#{address_line1} #{address_line2} - #{address_city}, #{address_state} #{address_zip}"
   end
@@ -315,9 +311,14 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
+  # https://column.com/docs/api/#check-transfer/stop
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
+
   def stop!
-    # https://column.com/docs/api/#check-transfer/stop
-    return if column_id.nil? || !can_stop?
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
     column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
@@ -327,7 +328,7 @@ class IncreaseCheck < ApplicationRecord
       column_object: column_check,
       column_status: column_check["status"],
       column_delivery_status: column_check["delivery_status"],
-)
+    )
   end
 
   def reissue!

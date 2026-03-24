@@ -7,7 +7,8 @@
 <% if @hcb_code.increase_check.column_id.present? %>
   <% admin_tool("mt3 flex gap-3") do %>
     <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.increase_check.column_id}", class: "btn bg-accent", target: "_blank" %>
-    <%= button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", disabled: !@hcb_code.increase_check.can_stop? %>
+    <%= button_to "Reissue", reissue_increase_check_path(@hcb_code.increase_check), class: "btn bg-muted", target: "_blank", turbo_confirm: "This action will stop the current check and issue a new one for the same amount.", disabled: !policy(@increase_check).reissue? %>
+    <%= button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", turbo_confirm: "This action will stop the check and is irreversible.", disabled: !policy(@increase_check).stop? %>
   <% end %>
 <% end %>
 
