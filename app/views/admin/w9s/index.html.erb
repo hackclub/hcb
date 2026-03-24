@@ -8,10 +8,10 @@
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <h4 class="flex-grow mt-4">
+  <div class="flex-grow">
     <%= page_entries_info @w9s, entry_name: "W9s" %>.
     <%= link_to "Upload a new W9", new_admin_w9_path %>.
-  </h4>
+  </div>
   <%= paginate @w9s %>
 </div>
 

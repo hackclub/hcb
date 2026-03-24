@@ -12,10 +12,10 @@
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <h4 class="flex-grow mt-4">
+  <div class="flex-grow">
     <%= page_entries_info @bank_fees, entry_name: "HCB fees" %>
     (<%= render_money @sum %>)
-  </h4>
+  </div>
   <%= paginate @bank_fees %>
 </div>
 

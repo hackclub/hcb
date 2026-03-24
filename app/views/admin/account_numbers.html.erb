@@ -14,9 +14,9 @@
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <h4 class="flex-grow mt-4">
+  <div class="flex-grow">
     <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
-  </h4>
+  </div>
   <%= paginate @account_numbers %>
 </div>
 
