@@ -67,9 +67,6 @@ class LoginsController < ApplicationController
     end
 
     render status: :unprocessable_entity
-  rescue ActionController::ParameterMissing
-    flash[:error] = "Please enter an email address."
-    redirect_to auth_users_path
   end
 
   # post to request sms login code
@@ -82,17 +79,11 @@ class LoginsController < ApplicationController
     end
 
     render status: :unprocessable_entity
-  rescue ActionController::ParameterMissing
-    flash[:error] = "Please enter an email address."
-    redirect_to auth_users_path
   end
 
   # get to see totp page
   def totp
     render status: :unprocessable_entity
-  rescue ActionController::ParameterMissing
-    flash[:error] = "Please enter an email address."
-    redirect_to auth_users_path
   end
 
   def complete
@@ -214,8 +205,6 @@ class LoginsController < ApplicationController
 
   def login_params
     params.require(:login).permit(:return_to, :purpose, :referral_link_id)
-  rescue ActionController::ParameterMissing
-    ActionController::Parameters.new
   end
 
   def login_preference
