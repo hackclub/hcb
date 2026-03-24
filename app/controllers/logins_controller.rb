@@ -27,9 +27,11 @@ class LoginsController < ApplicationController
 
   # when you submit your email
   def create
-    @user = User.create_with(creation_method: login_params[:purpose] == "application" ? :application_form : :login).find_or_create_by!(email: params[:email])
+    @login = @user.logins.new(login_params)
 
-    @login = @user.logins.create(login_params)
+    @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
+
+    @login.save!
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
