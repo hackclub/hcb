@@ -198,6 +198,8 @@ argosy_grant_fund_2025_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
 
+argosy_grant_fund_2025_event.plan.update(type: Event::Plan::FeeWaived)
+
 OrganizerPositionInvite.create_or_find_by!(
   event: argosy_grant_fund_2025_event,
   user:,
@@ -213,6 +215,8 @@ first_transparency_grant_fund_event = Event.create_with(
   created_at: 14.days.ago,
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
+
+first_transparency_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: first_transparency_grant_fund_event,
