@@ -11,12 +11,6 @@ class Donation
     before_action :check_background_param, only: [:start]
     before_action :hide_seasonal_decorations, only: [:start]
 
-    def index
-      authorize @event, :donation_page?
-
-      @tiers = @event.donation_tiers
-    end
-
     def start
       authorize @event, :donation_page?
 
