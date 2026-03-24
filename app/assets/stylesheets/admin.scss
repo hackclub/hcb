@@ -18,10 +18,12 @@ $mono:
 @import 'utilities';
 @import 'components/badges';
 @import 'components/forms';
+
 @import 'dark';
 @import 'components/menus';
 @import 'components/receipts';
 @import 'components/modals';
+
 @import 'components/tooltips';
 @import 'kbar';
 @import 'components/buttons';
@@ -65,6 +67,10 @@ html {
 *:after {
   box-sizing: border-box;
 }
+
+// /* ---------------------------------------------------------------------------------------------- */
+// /* Size text according to screen width (adapted from https://css-tricks.com/molten-leading-css/)  */
+// /* ---------------------------------------------------------------------------------------------- */
 
 button {
   border: none;
