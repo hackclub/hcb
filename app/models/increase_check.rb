@@ -278,6 +278,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
+    raise NotImplementedError
   end
 
   private
