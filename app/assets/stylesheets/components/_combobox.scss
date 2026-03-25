@@ -1,13 +1,8 @@
 :root {
-  --hw-active-bg-color: #f3f4f6;
   --hw-border-color: #d1d5db;
-  --hw-component-bg-color: #ffffff;
   --hw-group-color: #57595c;
   --hw-group-bg-color: #ffffff;
-  --hw-invalid-color: #ef4444;
   --hw-dialog-label-color: #1d1d1d;
-  --hw-focus-color: #2563eb;
-  --hw-option-bg-color: #ffffff;
 
   --hw-border-radius: 0.375rem;
   --hw-border-width--slim: 1px;
@@ -35,9 +30,6 @@
 
   --hw-line-height: 1.5rem;
   --hw-line-height--multiple: 2.125rem;
-
-  --hw-listbox-height: calc(var(--hw-line-height) * 10);
-  --hw-listbox-z-index: 9;
 
   --hw-padding--slimmer: 0.25rem;
   --hw-padding--slim: 0.375rem;
