@@ -41,15 +41,6 @@
 }
 
 .hw-combobox {
-  border-width: 0;
-  display: inline-flex;
-  flex-direction: column;
-  font-size: var(--hw-font-size);
-  gap: var(--hw-padding--slim);
-  margin: 0;
-  padding: 0;
-  position: relative;
-
   &,
   * {
     box-sizing: border-box;
