@@ -39,6 +39,7 @@ export default function Tags({ data }) {
           {data.map((_, i) => (
             <Cell
               key={`cell-${i}`}
+              style={{ outline: 'none' }}
               fill={generateColor(i, data.length, isDark)}
             />
           ))}
