@@ -1,5 +1,6 @@
 <%# locals: (no_questions: false) %>
 
+<div class="relative" data-controller="scroll-fade">
 <%= render "application/callout", title: "Questions about the HCB agreement?", type: "info", class: "mt-0 max-h-full overflow-y-scroll", footer: no_questions ? nil : :questions do %>
   <p>
     <span class="font-bold">Why do I need to sign this agreement?</span><br>
@@ -35,3 +36,5 @@
     Anything pre-existing can stay as is.
   </p>
 <% end %>
+  <div class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent transition-opacity" data-scroll-fade-target="fade"></div>
+</div>
