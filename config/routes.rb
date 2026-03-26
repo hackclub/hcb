@@ -149,6 +149,7 @@ Rails.application.routes.draw do
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
+      get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"
 
@@ -210,6 +211,7 @@ Rails.application.routes.draw do
 
   resources :admin, only: [] do
     collection do
+      get "nav", to: "admin#nav"
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
@@ -684,7 +686,11 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
           resources :ach_transfers, only: [:create]
 
-          resources :donations, path: "donations", only: [:create]
+          resources :donations, path: "donations", only: [:create] do
+            collection do
+              post "payment_intent"
+            end
+          end
 
           member do
             get "sub_organizations"

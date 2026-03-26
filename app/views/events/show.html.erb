@@ -47,7 +47,7 @@
         <%= inline_icon "cheque", size: 20 %>
         Deposit a check
       <% end %>
-      <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_numbers" } do %>
+      <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_number" } do %>
         <%= inline_icon "bank-account", size: 20 %>
         Account numbers
       <% end %>
@@ -65,7 +65,7 @@
       <%= modal_header "Deposit a check" %>
       <%= render "check_deposits/new", event: @event %>
     </section>
-    <%= render "account_numbers", event: @event %>
+    <%= render "events/account_number_modal" %>
   <% end %>
 
   <%= render "events/public_message" %>
