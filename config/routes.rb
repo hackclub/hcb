@@ -149,6 +149,7 @@ Rails.application.routes.draw do
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
+      get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"
 
