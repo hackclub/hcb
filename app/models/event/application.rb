@@ -331,17 +331,18 @@ class Event
       self.with_lock do
         raise ArgumentError.new("Event was already created") if event.present?
 
+        poc_user = point_of_contact.present? ? point_of_contact : contract.party(:hcb).user
         Event.create!(
           name:,
           country: address_country,
-          point_of_contact_id: point_of_contact.present? ? point_of_contact.id : contract.party(:hcb).user.id,
+          point_of_contact_id: poc_user.id,
           application: self,
           event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
           risk_level:
         )
         contract.create_document!
 
-        service = OrganizerPositionInviteService::Create.new(event:, sender: point_of_contact, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
         invite = service.model
         service.run!
 
