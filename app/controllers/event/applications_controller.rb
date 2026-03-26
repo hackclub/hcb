@@ -3,6 +3,7 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
+    before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -12,7 +13,9 @@ class Event
 
     def index
       skip_authorization
+
       @applications = current_user.applications.active
+      @referral_code = params[:ref]
     end
 
     def apply
@@ -21,14 +24,16 @@ class Event
       if signed_in? && current_user.applications.draft.one?
         redirect_to application_path(current_user.applications.draft.first)
       elsif signed_in? && current_user.applications.any?
-        redirect_to applications_path
+        redirect_to applications_path(ref: params[:ref])
       else
-        redirect_to new_application_path
+        redirect_to new_application_path(ref: params[:ref])
       end
     end
 
     def new
       skip_authorization
+
+      @referral_code = params[:ref]
     end
 
     def show
@@ -138,7 +143,7 @@ class Event
         redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -175,21 +180,11 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
-      end
-
-      if application_params[:cosigner_email].present? && @application.contract.present?
-        # The case where the cosigner email changed is handled by an after_save callback
-        unless @application.cosigner_email_previously_changed?
-          @application.contract.party(:cosigner).notify
-        end
-
-        flash[:success] = "Resent agreement to parent"
-        return redirect_back_or_to application_path(@application)
       end
 
       if params[:autosave] != "true"
@@ -226,6 +221,28 @@ class Event
       redirect_to applications_path
     end
 
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
+    end
+
+    def resend_to_cosigner
+      authorize @application
+
+      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+      # If the user resends to the same email, the after_save callback does not handle this
+      unless @application.cosigner_email_previously_changed?
+        @application.contract.party(:cosigner).notify
+      end
+
+      flash[:success] = "Resent agreement to parent"
+      redirect_back_or_to application_path(@application)
+    end
+
     private
 
     def set_application
@@ -243,6 +260,12 @@ class Event
     def record_pageview
       if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
+      end
+    end
+
+    def prevent_access_after_submission
+      unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
       end
     end
 

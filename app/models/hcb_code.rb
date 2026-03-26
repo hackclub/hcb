@@ -717,4 +717,9 @@ class HcbCode < ApplicationRecord
     update(event_id: event&.id, subledger_id: subledger&.id)
   end
 
+  def update_custom_memo!(memo)
+    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+  end
+
 end

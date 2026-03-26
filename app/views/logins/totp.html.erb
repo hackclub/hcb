@@ -42,7 +42,6 @@
     <% end %>
     <%= invisible_captcha :remember_me %>
 
-    <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>

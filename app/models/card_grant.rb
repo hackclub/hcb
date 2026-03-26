@@ -10,7 +10,7 @@
 #  banned_merchants           :string
 #  category_lock              :string
 #  email                      :string           not null
-#  expiration_at              :datetime
+#  expiration_at              :date             not null
 #  instructions               :text
 #  invite_message             :string
 #  keyword_lock               :string
@@ -54,6 +54,7 @@ class CardGrant < ApplicationRecord
 
   include Freezable
   include Commentable
+  include HasPaperTrailHelpers
 
   belongs_to :event
   has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
@@ -81,7 +82,7 @@ class CardGrant < ApplicationRecord
   after_create_commit :send_email
 
   before_create do
-    self.expiration_at ||= CardGrantSetting.expiration_preferences[card_grant_setting.expiration_preference].days.from_now
+    self.expiration_at ||= default_expiration_at
   end
 
   validates :disbursement, uniqueness: true, allow_nil: true
@@ -107,8 +108,8 @@ class CardGrant < ApplicationRecord
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
-  scope :expired_before, ->(date) { joins(:card_grant_setting).where("card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day') < ?", date) }
-  scope :expires_on, ->(date) { joins(:card_grant_setting).where("DATE(card_grants.created_at + (card_grant_settings.expiration_preference * interval '1 day')) = ?", date) }
+  scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
+  scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
   monetize :amount_cents
 
@@ -177,8 +178,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -199,8 +199,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -235,8 +234,7 @@ class CardGrant < ApplicationRecord
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
     ).run
-    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -298,18 +296,8 @@ class CardGrant < ApplicationRecord
     super || setting&.keyword_lock
   end
 
-  def expires_after
-    card_grant_setting.read_attribute_before_type_cast(:expiration_preference)
-  end
-
-  def expires_on
-    created_at + expires_after.days
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
+  def default_expiration_at
+    (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
   end
 
   def last_time_change_to(...)

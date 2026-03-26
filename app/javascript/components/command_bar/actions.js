@@ -81,6 +81,14 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-transactions`,
+      name: 'Transactions',
+      perform: navigate(`/${event.slug}/transactions`),
+      icon: <Icon glyph="transactions" size={16} />,
+      parent: event.slug,
+      keywords: 'ledger payments',
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transfers`,
       name: 'Transfers',
       perform: navigate(`/${event.slug}/transfers`),
@@ -307,7 +315,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_1',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications',
+      name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
       perform: () => (window.location.href = adminUrls['Applications']),
     },
@@ -355,7 +363,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_7',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Organizer position deletion requests',
+      name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
       perform: () =>
         (window.location.href = '/organizer_position_deletion_requests'),
@@ -576,6 +584,14 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Contracts',
       icon: <Icon glyph="docs" size={16} />,
       perform: navigate('/admin/contracts'),
+    },
+    {
+      id: 'admin_tool_35',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Applications (HCB)',
+      icon: <Icon glyph="post" size={16} />,
+      perform: navigate('/admin/applications'),
     },
   ]
 }
