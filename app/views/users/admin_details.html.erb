@@ -71,6 +71,12 @@
       <% end %>
     <% end %>
 
+    <%= turbo_frame_tag :admin_details_stripe_transactions, src: admin_details_stripe_transactions_user_path(@user), loading: :lazy do %>
+      <% admin_tool "p-3" do %>
+        <p>Loading user's stripe transactions</p>
+      <% end %>
+    <% end %>
+
     <% if @user.emburse_cards.present? %>
       <% admin_tool "p-3" do %>
         <h3 class="mb2 mt1">Emburse cards</h3>

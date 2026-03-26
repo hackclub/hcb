@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UsersHelper
-  def users_mobile_nav(selected: nil)
+  def users_nav(selected: nil)
     items = [
       {
         name: "Home",
