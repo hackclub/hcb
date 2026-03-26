@@ -200,7 +200,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
   end
 
   create_table "announcements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "author_id", null: false
     t.jsonb "content", null: false
     t.datetime "created_at", null: false
