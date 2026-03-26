@@ -2,7 +2,12 @@
 
 class AdminController < Admin::BaseController
   def index
+  end
 
+  def nav
+    @nav = Admin::Nav.new(page_title: params[:title])
+
+    render :nav, layout: false
   end
 
   def task_size
