@@ -11,7 +11,6 @@ class Donation
     alias_method :update?, :can_update_event?
     alias_method :destroy?, :can_update_event?
 
-
   end
 
 end

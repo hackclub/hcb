@@ -47,6 +47,7 @@
 #
 class Wire < ApplicationRecord
   has_paper_trail
+  include HasPaperTrailHelpers
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
@@ -109,7 +110,7 @@ class Wire < ApplicationRecord
 
     event :mark_approved do
       after_commit do
-        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
       end
       transitions from: :pending, to: :approved
     end
@@ -238,12 +239,6 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def column_wire_details

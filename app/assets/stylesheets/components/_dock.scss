@@ -125,32 +125,28 @@ summary.dock__item {
 
   border-radius: var(--radius-lg);
 
-  @media (min-width: 768px) {
-    cursor: pointer;
-    line-height: 1.75;
-    transition: all 0.125s ease-in-out;
-    color: $black;
-    line-height: 1.25;
-    margin-bottom: 2px;
-    color: $black;
-    padding: 0.25rem;
+  cursor: pointer;
+  line-height: 1.25;
+  transition: all 0.125s ease-in-out;
+  color: $black;
+  margin-bottom: 2px;
+  padding: 0.25rem;
 
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transition-duration: 0s;
+  }
+  &:active {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  &[aria-current='page'] {
+    background-color: rgba(map-get($palette, primary), 0.1);
     &:hover {
-      background-color: rgba(0, 0, 0, 0.05);
-      transition-duration: 0s;
+      background-color: rgba(map-get($palette, primary), 0.15);
     }
     &:active {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
-
-    &[aria-current='page'] {
-      background-color: rgba(map-get($palette, primary), 0.1);
-      &:hover {
-        background-color: rgba(map-get($palette, primary), 0.15);
-      }
-      &:active {
-        background-color: rgba(map-get($palette, primary), 0.2);
-      }
+      background-color: rgba(map-get($palette, primary), 0.2);
     }
   }
 
