@@ -56,6 +56,30 @@ RSpec.describe AchTransfer, type: :model do
     end
   end
 
+  describe "aasm_state" do
+    it "is set to pending on initialization (never null)" do
+      ach_transfer = build(:ach_transfer, event:)
+      expect(ach_transfer.aasm_state).to eq("pending")
+    end
+
+    it "is always present so the not null constraint is satisfied" do
+      ach_transfer = create(:ach_transfer, event:)
+      expect(ach_transfer.aasm_state).not_to be_nil
+      expect(ach_transfer.reload.aasm_state).to eq("pending")
+    end
+
+    it "transitions correctly through states" do
+      ach_transfer = create(:ach_transfer, event:)
+      expect(ach_transfer).to be_pending
+
+      ach_transfer.mark_in_transit
+      expect(ach_transfer.aasm_state).to eq("in_transit")
+
+      ach_transfer.mark_deposited
+      expect(ach_transfer.aasm_state).to eq("deposited")
+    end
+  end
+
   describe "invoiced_at validation" do
     it "allows invoiced_at to be nil" do
       ach_transfer = build(:ach_transfer, event:, invoiced_at: nil)
