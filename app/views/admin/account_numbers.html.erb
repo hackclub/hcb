@@ -40,10 +40,14 @@
       <tr>
         <td><%= an.id %></td>
         <td>
-          <%= link_to event_path(an.event) do %>
-            <%= an.event.name.upcase %>
+          <% if an.event %>
+            <%= link_to event_path(an.event) do %>
+              <%= an.event.name.upcase %>
+            <% end %>
+            (#<%= an.event.id %>)
+          <% else %>
+            <em>No event</em>
           <% end %>
-          (#<%= an.event.id %>)
         </td>
         <td><%= an.account_number %></td>
         <td><%= an.routing_number %></td>
