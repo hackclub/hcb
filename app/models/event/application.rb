@@ -331,7 +331,7 @@ class Event
       self.with_lock do
         raise ArgumentError.new("Event was already created") if event.present?
 
-        poc_user = point_of_contact.present? ? point_of_contact : contract.party(:hcb).user
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
           country: address_country,
