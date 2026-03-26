@@ -1,6 +1,10 @@
 <% title "Choose login method" %>
 <% content_for(:page_class) %>
 
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
   <%= render "logins/header", label: "Sign in to HCB" do %>
     How would you like to sign in?
@@ -14,7 +18,7 @@
       </div>
     </div>
 
-    <div class="field field--options max-w-full w-full mt-3 <%= "trio" if @login.available_factors.length == 3 %>">
+    <div class="field field--options max-w-full w-full mt-1 <%= "trio" if @login.available_factors.length == 3 %>">
       <% if @login.webauthn_available? %>
         <%= form.radio_button :login_preference, "webauthn", required: true, data: { "webauthn-auth-target" => "loginPreferenceWebauthnInput", "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
         <%= form.label :login_preference, value: "webauthn", class: "cursor-pointer" do %>

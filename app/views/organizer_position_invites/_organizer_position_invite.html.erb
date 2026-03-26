@@ -28,12 +28,9 @@
                     <%= link_to void_contract_path(organizer_position_invite.contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
                       Void this contract
                     <% end %>
-                    <%= link_to resend_to_user_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
-                      Resend to the user
-                    <% end %>
-                    <% if organizer_position_invite.contract.cosigner_email.present? %>
-                      <%= link_to resend_to_cosigner_contract_path(organizer_position_invite.contract), data: { turbo_method: :post } do %>
-                        Resend to the cosigner
+                    <% organizer_position_invite.contract.parties.reject { |party| party.role == "hcb" }.each do |party| %>
+                      <%= link_to resend_contract_party_path(party), data: { turbo_method: :post } do %>
+                        Resend to the <%= party.role %>
                       <% end %>
                     <% end %>
                   </div>
@@ -92,8 +89,8 @@
       <% if can_change_role %>
         <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
           <% OrganizerPositionInvite.roles.keys.each do |role| %>
-            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
-              <%= role.humanize %><%= " ✔" if organizer_position_invite.role == role %>
+            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: role), class: ("menu__action--active" if organizer_position_invite.role == role).to_s, data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == role } do %>
+              <%= role.humanize %>
             <% end %>
           <% end %>
           <div class="menu__divider"></div>

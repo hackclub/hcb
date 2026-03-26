@@ -1,6 +1,6 @@
 <%= turbo_frame_tag :donation do %>
   <% unless @tier %>
-    <ul class="tab-container max-width-1 mx-auto bg-transparent">
+    <ul class="tab-container max-w-96 mx-auto bg-transparent">
         <li class="<%= "active" unless @monthly %>">
             <%= link_to "One-time", upsert_query_params(monthly: nil), data: { turbo: true } %>
         </li>
@@ -11,7 +11,7 @@
   <% end %>
 
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
-                class: "card mx-auto max-width-1 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
+                class: "card mx-auto max-w-96 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
     <%= form.invisible_captcha :subtitle %>

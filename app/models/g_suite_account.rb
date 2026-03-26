@@ -44,8 +44,10 @@ class GSuiteAccount < ApplicationRecord
 
   validates_presence_of :address, :backup_email, :first_name, :last_name
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
+  validates :backup_email, nondisposable: true, on: :create
 
   validate :status_accepted_or_rejected
+  validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
 
   before_update :sync_update_to_gsuite
@@ -164,6 +166,12 @@ class GSuiteAccount < ApplicationRecord
         notify_user_of_password_change
       end
     end
+  end
+
+  def within_quota
+    return if g_suite.accounts.count < g_suite.max_accounts
+
+    errors.add(:base, "You've reached your quota of #{g_suite.max_accounts} accounts and won't be able to create more accounts until you delete existing ones.")
   end
 
 end

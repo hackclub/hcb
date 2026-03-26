@@ -48,16 +48,18 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
   include HasWiseRecipient
 
+  include PublicIdentifiable
+  set_public_id_prefix :wse
+
   belongs_to :event
   belongs_to :user
   has_paper_trail
+  include HasPaperTrailHelpers
 
   has_one :canonical_pending_transaction
 
@@ -148,21 +150,15 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted?
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def status_color
@@ -184,12 +180,6 @@ class WiseTransfer < ApplicationRecord
 
   def state_text
     aasm_state.humanize
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def self.generate_detailed_quote(initial_local_amount)
@@ -235,6 +225,10 @@ class WiseTransfer < ApplicationRecord
 
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
+  end
+
+  def usd_amount_cents_or_quoted
+    usd_amount_cents || quoted_usd_amount_cents
   end
 
   def generate_quote!

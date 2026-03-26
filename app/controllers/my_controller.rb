@@ -90,7 +90,7 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(since: Receipt::CARD_LOCKING_START_DATE).count
+    @locking_count = current_user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 

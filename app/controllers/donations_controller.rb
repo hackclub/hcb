@@ -4,10 +4,11 @@ require "csv"
 
 class DonationsController < ApplicationController
   include SetEvent
+  include DonationPageSetup
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, only: [:export, :show, :qr_code, :finish_donation, :finished]
-  skip_before_action :signed_in_user
+  skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
+  skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
   before_action :set_donation, only: [:show, :update]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
@@ -47,55 +48,12 @@ class DonationsController < ApplicationController
   end
 
   def start_donation
-    unless @event.donation_page_available?
-      return not_found
-    end
-
-    tax_deductible = params[:goods].nil? || params[:goods] == "0"
-
-    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
-    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
-    if params[:tier_id] && @tier.nil?
-      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
-    end
-
-
-    @donation = Donation.new(
-      name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
-      email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
-      amount: params[:amount],
-      message: params[:message],
-      fee_covered: params[:fee_covered],
-      event: @event,
-      ip_address: request.remote_ip,
-      user_agent: request.user_agent,
-      tax_deductible:,
-      referrer: request.referrer,
-      utm_source: params[:utm_source],
-      utm_medium: params[:utm_medium],
-      utm_campaign: params[:utm_campaign],
-      utm_term: params[:utm_term],
-      utm_content: params[:utm_content]
-    )
+    return unless build_donation_page!(event: @event, params:, request:)
 
     authorize @donation
-
-    @monthly = params[:monthly].present?
-
-    if @monthly
-      @recurring_donation = @event.recurring_donations.build(
-        name: params[:name],
-        email: params[:email],
-        amount: params[:amount],
-        message: params[:message],
-        fee_covered: params[:fee_covered],
-        tax_deductible:
-      )
-    end
-
-    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
-
     @hide_flash = true
+
+    render "donations/start_donation"
   end
 
   def make_donation
@@ -129,7 +87,6 @@ class DonationsController < ApplicationController
   end
 
   def finish_donation
-
     @donation = Donation.find_by!(url_hash: params["donation"])
 
     # We don't use set_event here to prevent a UI vulnerability where a user could create a donation on one org and make it look like another org by changing the slug

@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def nav
+    @nav = Admin::Nav.new(page_title: params[:title])
+
+    render :nav, layout: false
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -121,8 +127,6 @@ class AdminController < Admin::BaseController
       tags:,
       demo_mode: true
     ).run
-
-    Flipper.enable_actor(:organizer_position_contracts_2025_01_03, event)
 
     record["HCB account URL"] = "https://hcb.hackclub.com/#{event.slug}"
     record["HCB ID"] = event.id
@@ -497,8 +501,8 @@ class AdminController < Admin::BaseController
     @reports = relation.page(@page).per(@per).order(
       @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
       Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
-      # Arel.sql("aasm_state = 'draft' ASC"),
-      "reimbursement_reports.created_at desc"
+      Arel.sql("reimbursement_reports.reimbursement_requested_at ASC NULLS LAST"),
+      Arel.sql("reimbursement_reports.created_at DESC")
     )
 
   end
@@ -558,6 +562,8 @@ class AdminController < Admin::BaseController
 
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -569,6 +575,8 @@ class AdminController < Admin::BaseController
 
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
+    return unless enforce_sudo_mode
+
     ach_transfer.approve!(current_user, send_realtime: true)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
@@ -595,6 +603,7 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
@@ -747,6 +756,23 @@ class AdminController < Admin::BaseController
     @wise_transfer = WiseTransfer.find(params[:id])
   end
 
+  def applications
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @include_archived = params[:include_archived] == "1" ? true : nil
+
+    @applications = Event::Application.all
+    @applications = @applications.not_archived unless @include_archived
+    @applications = @applications.search_name(@q) if @q
+
+    @applications = @applications.page(@page).per(@per).order(
+      Arel.sql("aasm_state = 'submitted' DESC"),
+      Arel.sql("aasm_state = 'approved' DESC"),
+      "created_at desc"
+    )
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
@@ -807,6 +833,25 @@ class AdminController < Admin::BaseController
 
     @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
 
+  end
+
+  def fee_revenues
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+
+    # Pending fees that haven't been converted to FeeRevenue yet
+    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
+    events_with_balances = Event.pending_fees_v2.map do |event|
+      { event: event, balance: event.fee_balance_v2_cents }
+    end
+
+    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
+
+    relation = FeeRevenue.all
+
+    @count = relation.count
+    @fee_revenues = relation.page(@page).per(@per).order("created_at desc")
   end
 
   def disbursements
@@ -1034,14 +1079,19 @@ class AdminController < Admin::BaseController
   def google_workspace_update
     @g_suite = GSuite.find(params[:id])
 
-    @g_suite = GSuiteService::Update.new(
-      g_suite_id: @g_suite.id,
-      domain: @g_suite.domain,
-      verification_key: params[:verification_key],
-      dkim_key: params[:dkim_key]
-    ).run
+    begin
+      @g_suite = GSuiteService::Update.new(
+        g_suite_id: @g_suite.id,
+        domain: @g_suite.domain,
+        verification_key: params[:verification_key],
+        dkim_key: params[:dkim_key],
+        max_accounts: params[:max_accounts]
+      ).run
 
-    redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { error: e.record.errors.full_messages.to_sentence }
+    end
   end
 
   def google_workspace_toggle_revocation_immunity
@@ -1259,11 +1309,11 @@ class AdminController < Admin::BaseController
         require "csv"
 
         csv = Enumerator.new do |y|
-          y << ::CSV::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
-          y << ::CSV::Row.new(header_syms, @headers, true).to_s
+          y << SafeCsv::Row.new(header_syms, ["", "Report generated on #{Time.now.in_time_zone('Eastern Time (US & Canada)').strftime("%Y-%m-%d at %l:%M %p %Z")}"], true).to_s
+          y << SafeCsv::Row.new(header_syms, @headers, true).to_s
 
           @rows.each do |row|
-            y << ::CSV::Row.new(header_syms, row).to_s
+            y << SafeCsv::Row.new(header_syms, row).to_s
           end
         end
 
@@ -1403,21 +1453,31 @@ class AdminController < Admin::BaseController
   end
 
   def referral_programs
-    @referral_programs = Referral::Program.all.order(created_at: :desc)
-  end
-
-  def referral_program_create
-    @referral_program = Referral::Program.new(name: params[:name])
-
-    if @referral_program.save
-      redirect_to referral_programs_admin_index_path, flash: { success: "Referral program created successfully." }
-    else
-      flash[:error] = @referral_program.errors.full_messages.to_sentence
-      redirect_to referral_programs_admin_index_path
-    end
+    @referral_programs = Referral::Program.all.order(created_at: :desc).includes(:creator, :links)
   end
 
   def active_teenagers_leaderboard
+  end
+
+  def new_teenagers_leaderboard
+    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
+  end
+
+  def contracts
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @type = params[:type].presence
+    @status = params[:status].presence
+    @service = params[:service].presence
+
+    @contracts = Contract.all.includes(:document, :contractable)
+    @contracts = @contracts.where(type: @type) if @type
+    @contracts = @contracts.where(aasm_state: @status) if @status
+    @contracts = @contracts.where(external_service: @service) if @service
+    @contracts = @contracts.search_parties(@q) if @q
+
+    @contracts = @contracts.page(@page).per(@per).order(created_at: :desc)
   end
 
   private
@@ -1544,6 +1604,9 @@ class AdminController < Admin::BaseController
     end
 
     client.get("https://identity.hackclub.com/api/v1/hcb").body["pending"] || 0
+  rescue => e
+    Rails.error.report(e)
+    9999 # return something invalidly high to get the ops team to report it
   end
 
   def hackathons_task_size
@@ -1605,8 +1668,6 @@ class AdminController < Admin::BaseController
         Event.negatives.size
       when :fee_reimbursements
         FeeReimbursement.unprocessed.size
-      when :emburse_transfers
-        EmburseTransfer.under_review.size
       when :g_suite_accounts
         GSuiteAccount.under_review.size
       when :transactions
@@ -1642,7 +1703,6 @@ class AdminController < Admin::BaseController
     pending_task :ach_transfers
     pending_task :negative_events
     pending_task :fee_reimbursements
-    pending_task :emburse_transfers
     pending_task :emburse_transactions
     pending_task :g_suite_accounts
     pending_task :transactions

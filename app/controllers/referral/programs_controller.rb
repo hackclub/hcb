@@ -2,32 +2,18 @@
 
 module Referral
   class ProgramsController < ApplicationController
-    before_action :set_program, only: :show
-    skip_before_action :signed_in_user, only: :show
+    def create
+      @program = Referral::Program.new(name: params[:name], redirect_to: params[:redirect_to].presence || root_url, creator: current_user)
 
-    def show
-      unless signed_in?
-        skip_authorization
-        return redirect_to auth_users_path(referral: @program)
-      end
+      authorize(@program)
 
-      if @program
-        authorize(@program)
-
-        Rails.error.handle do
-          Referral::Attribution.create!(user: current_user, program: @program)
-        end
+      if @program.save
+        flash[:success] = "Referral program created successfully."
       else
-        skip_authorization
+        flash[:error] = @program.errors.full_messages.to_sentence
       end
 
-      redirect_to params[:return_to] || root_path
-    end
-
-    private
-
-    def set_program
-      @program = Referral::Program.find_by_hashid(params[:id])
+      redirect_to referral_programs_admin_index_path
     end
 
   end

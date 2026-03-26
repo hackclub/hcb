@@ -21,8 +21,8 @@ class FeeRevenue < ApplicationRecord
 
   has_many :bank_fees
 
-  # Eagerly create HcbCode object
-  after_create :local_hcb_code
+  include HasHcbCode
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE, eager_create: true
 
   aasm do
     state :pending, initial: true
@@ -36,14 +36,6 @@ class FeeRevenue < ApplicationRecord
     event :mark_settled do
       transitions from: :in_transit, to: :settled
     end
-  end
-
-  def hcb_code
-    "HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def canonical_transaction

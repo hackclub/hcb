@@ -1,6 +1,10 @@
 <% title "Enter TOTP code" %>
 <% content_for(:page_class) { "bg-snow" } %>
 
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
 <div class="flex flex-col flex-1 justify-center">
   <div class="flex flex-col justify-between items-start">
     <%= render "logins/header", label: "Sign in to HCB" do %>
@@ -8,7 +12,7 @@
     <% end %>
     <%= render "logins/badge", user: @login.user %>
   </div>
-  <p>
+  <p class="mt-0">
     <% if @login.authentication_factors_count > 0 %>
       For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>
@@ -31,13 +35,13 @@
             "",
             placeholder: "Enter your one time password code",
             autocomplete: "one-time-code",
-            class: "left-align mb2 !max-w-full w-max",
+            class: "text-left mb2 !max-w-full w-max",
             required: true,
             autofocus: true
           ) %>
     <% end %>
+    <%= invisible_captcha :remember_me %>
 
-    <%= hidden_field_tag :email, @email %>
     <%= hidden_field_tag :method, :totp %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>

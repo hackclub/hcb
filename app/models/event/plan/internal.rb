@@ -28,7 +28,7 @@ class Event
       end
 
       def description
-        "👻 oo scary! you're looking at the internal workings of HCB. shield your eyes, you may not like what you see."
+        "FOR ENGINEERING/TRANSACTION ENGINE USE ONLY. 👻 oo scary! you're looking at the internal workings of HCB. shield your eyes, you may not like what you see."
       end
 
       def features

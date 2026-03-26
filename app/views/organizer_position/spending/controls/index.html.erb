@@ -103,7 +103,7 @@
 <% end %>
 
 <% if @active_control %>
-  <div class="m-auto text-center mb-5">
+  <div class="m-auto text-center mb-5 filterbar">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["allowances", "transactions"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Allowances", "?filter=allowances", class: "filterbar__item", "aria-selected": params[:filter] == "allowances", role: "tab" %>
     <%= link_to "Transactions", "?filter=transactions", class: "filterbar__item", "aria-selected": params[:filter] == "transactions", role: "tab" %>
@@ -131,7 +131,7 @@
     <%= inline_icon "clock" %>
   <% end %>
 
-  <%= link_to "https://blog.hcb.hackclub.com/posts/spending-controls-295539", class: "card flex justify-between" do %>
+  <%= link_to "https://help.hcb.hackclub.com/en/articles/14061706-how-do-i-limit-organization-members-spending", class: "card flex justify-between" do %>
     <div class="flex flex-col">
       <p class="bold black">More info</p>
       <p class="muted">Learn about HCB's spending controls feature</p>

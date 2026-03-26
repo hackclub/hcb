@@ -3,25 +3,61 @@
 <ul>
   <% @referral_programs.each do |program| %>
     <li>
-      <div class="flex flex-row items-center border p-4 gap-8 w-100 mb-0">
-        <div class="flex flex-col">
-          <h5 class="m-0 p-0"><%= program.name %></h5>
-          <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • <code><%= program.hashid %></code></small>
-        </div>
-        <div class="flex flex-row gap-2 justify-between m-0">
-          <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
-        </div>
-        <%= link_to program_url(program), program_url(program) %>
+      <div class="flex flex-col items-start justify-start border w-100 mb-0">
+        <div class="flex flex-row items-center p-4 gap-8 border-bottom w-100 mb-0">
+          <div class="flex flex-col">
+            <h5 class="m-0 p-0"><%= program.name %></h5>
+            <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %></small>
+            <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url) %></small>
+          </div>
+          <div class="flex flex-row gap-2 justify-between m-0">
+            <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
+          </div>
 
-        <div class="flex-grow"></div>
+          <div class="flex-grow"></div>
 
-        <div class="flex flex-row gap-2">
-          <%= link_to users_admin_index_path(referral_program_id: program.id) do %>
-            <button>View users</button>
+          <div class="flex flex-row gap-2">
+            <%= link_to users_admin_index_path(referral_program_id: program.id) do %>
+              <button>View users</button>
+            <% end %>
+            <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="bg-warning">Create link</button>
+          </div>
+        </div>
+        <div class="flex flex-col items-center p-4 gap-3 w-100 mb-0">
+          <% program.links.each do |link| %>
+            <div class="flex flex-row items-center justify-between w-100">
+              <small><%= link.name %> • <span class="text-muted">Created by <%= link.creator.name %></span></small>
+              <small>
+                <%= link_to referral_link_url(link.slug), referral_link_url(link.slug) %> • <%= pluralize(link.attributions.count, "attribution") %>
+              </small>
+            </div>
           <% end %>
         </div>
       </div>
     </li>
+
+    <section data-behavior="modal" id="referral_program_<%= program.id %>" class="modal" role="dialog">
+      <div class="modal__content">
+        <header class="modal__header">
+          <h2 class="modal__title">Create referral link for <%= program.name %></h2>
+          <button class="modal__close" data-behavior="modal_close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal__body">
+          <%= form_with model: false, local: true, url: referral_link_create_admin_index_path(program_id: program.id) do |form| %>
+            <fieldset>
+              <legend>Create a referral link</legend>
+              <%= form.label :name, "Link name" %>
+              <%= form.text_field :name, placeholder: "Reddit Post", required: true, class: "w-100" %>
+              <br>
+              <%= form.label :slug, "Custom slug (optional)" %>
+              <%= form.text_field :slug, placeholder: "my-custom-slug", class: "w-100" %>
+              <br>
+              <%= form.submit "Create link", class: "bg-success" %>
+            </fieldset>
+          <% end %>
+        </div>
+      </div>
+    </section>
   <% end %>
 </ul>
 
@@ -30,7 +66,8 @@
     <legend>Create a referral program</legend>
     <%= form.label :name, "Program name" %>
     <%= form.text_field :name, placeholder: "Program Name", required: true, class: "w-100" %>
-    <br>
+    <%= form.label :redirect_to, "Redirect to (optional)" %>
+    <%= form.text_field :redirect_to, placeholder: "https://hcb.hackclub.com/", class: "w-100" %>
     <%= form.submit "Create", class: "btn bg-success" %>
   </fieldset>
 <% end %>

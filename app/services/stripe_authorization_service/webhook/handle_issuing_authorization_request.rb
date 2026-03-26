@@ -57,7 +57,7 @@ module StripeAuthorizationService
       def approve?
         return decline_with_reason!("event_frozen") if event.financially_frozen?
 
-        if forbidden_merchant_category?
+        if forbidden_merchant_category? && !card.user&.admin?
           AdminMailer
             .with(stripe_card: card, merchant_category:)
             .blocked_authorization
