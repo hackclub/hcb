@@ -216,7 +216,7 @@ class LoginsController < ApplicationController
 
     authentication_factors = @login.authentication_factors&.filter_map { |key, value| key if value } || []
 
-    (@user.preferred_login_methods - authentication_factors).first
+    (@user.preferred_login_methods - authentication_factors & @login.available_factors).first
   end
 
   def set_login
