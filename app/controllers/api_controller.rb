@@ -17,26 +17,6 @@ class ApiController < ApplicationController
     }
   end
 
-  def create_demo_event
-    event = EventService::CreateDemoEvent.new(
-      name: params[:name],
-      email: params[:email],
-      country: params[:country],
-      postal_code: ValidatesZipcode.valid?(params[:postal_code], params[:country]) ? params[:postal_code] : nil,
-      is_public: params[:transparent].nil? || params[:transparent],
-    ).run
-
-    render json: {
-      id: event.id,
-      name: event.name,
-      slug: event.slug,
-      email: params[:email],
-      transparent: event.is_public?,
-    }
-  rescue ArgumentError, ActiveRecord::RecordInvalid => e
-    render json: { error: e }, status: :unprocessable_entity
-  end
-
   def user_find
     user = User.find_by_email!(params[:email])
     recent_transactions = if user.stripe_cardholder.present?
