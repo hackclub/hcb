@@ -49,7 +49,7 @@ module Api
                                                                metadata: { donation: true, event_id: @event.id },
                                                              })
 
-        render json: { payment_intent_id: payment_intent.id }, status: :created
+        render json: { payment_intent_id: payment_intent.id, client_secret: payment_intent.client_secret }, status: :created
       end
 
     end
