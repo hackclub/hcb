@@ -19,6 +19,8 @@ module OneTimeJobs
           no_event_id << intent.id
         elsif intent.metadata["event_id"] != donation.event_id.to_s
           mismatched_event_id << intent.id
+        else
+          next
         end
 
         begin
