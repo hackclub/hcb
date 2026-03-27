@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
   enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "account_number_bidx"
     t.text "account_number_ciphertext"
     t.integer "amount"
@@ -258,7 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
   end
 
   create_table "bank_fees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
