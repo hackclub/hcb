@@ -11,7 +11,7 @@ module OneTimeJobs
       no_event_id = []
       mismatched_event_id = []
 
-      PaymentIntent.where("created_at > '2024-01-01'").find_each do |intent|
+      Stripe::PaymentIntent.where("created_at > '2024-01-01'").find_each do |intent|
         donation = Donation.find_by(payment_intent_id: intent.id)
         next unless donation
 
