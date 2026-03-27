@@ -11,9 +11,9 @@ module OneTimeJobs
       no_event_id = []
       mismatched_event_id = []
 
-      Stripe::PaymentIntent.where("created_at > '2024-01-01'").find_each do |intent|
-        donation = Donation.find_by(payment_intent_id: intent.id)
-        next unless donation
+      Donation.where("created_at > '2024-01-01'").find_each do |donation|
+        intent = Stripe::PaymentIntent.retrieve(donation.stripe_payment_intent_id)
+        next unless intent
 
         if intent.metadata["event_id"].nil?
           no_event_id << intent.id
@@ -28,7 +28,7 @@ module OneTimeJobs
               { metadata: { event_id: donation.event_id } }
             )
           end
-          puts "Updated #{intent.id} event_id to: #{donation.event_id}"
+          puts "Updated #{intent.id} event_id from #{intent.metadata["event_id"].inspect} to: #{donation.event_id}"
           updated += 1
         rescue Stripe::StripeError => e
           puts "ERROR #{intent.id}: #{e.message}"
@@ -40,12 +40,12 @@ module OneTimeJobs
 
       if no_event_id.any?
         puts "PaymentIntents with no event_id (#{no_event_id.size}):"
-        puts no_event_id.join("\n")
+        puts no_event_id.join(",")
       end
 
       if mismatched_event_id.any?
         puts "PaymentIntents with mismatched event_id (#{mismatched_event_id.size}):"
-        puts mismatched_event_id.join("\n")
+        puts mismatched_event_id.join(",")
       end
 
     end
