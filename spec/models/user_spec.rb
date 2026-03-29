@@ -284,4 +284,41 @@ RSpec.describe User, type: :model do
       expect(results).to be_empty
     end
   end
+
+  describe "Stripe cardholder phone sync" do
+    let(:user) { create(:user, phone_number: "+18005551234", phone_number_verified: true) }
+    let!(:stripe_cardholder) { create(:stripe_cardholder, user:, stripe_phone_number: "+18005551234") }
+
+    before do
+      allow(StripeService::Issuing::Cardholder).to receive(:update)
+    end
+
+    it "does not send the new unverified phone to Stripe when phone number changes" do
+      user.update!(phone_number: "+18005559999")
+
+      # phone_number_verified is automatically reset to false by on_phone_number_update
+      expect(user.phone_number_verified).to eq(false)
+
+      # Stripe may have been called (e.g. to sync email), but never with the new unverified number
+      expect(StripeService::Issuing::Cardholder).not_to have_received(:update).with(
+        anything,
+        hash_including(phone_number: "+18005559999")
+      )
+    end
+
+    it "syncs the verified phone to Stripe when phone_number_verified transitions from false to true" do
+      user.update!(phone_number: "+18005559999") # resets verified to false
+      user.reload
+
+      # Reset mock so we only track the verification-triggered call
+      allow(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).to have_received(:update).with(
+        stripe_cardholder.stripe_id,
+        hash_including(phone_number: "+18005559999")
+      )
+    end
+  end
 end

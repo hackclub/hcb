@@ -109,6 +109,7 @@ class StripeCardsController < ApplicationController
     end
 
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Birthday is required" } if current_user.birthday.nil?
+    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "A verified phone number is required to issue a card. Please verify your phone number in your settings." } unless current_user.phone_number_verified?
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless sc[:stripe_shipping_address_country] == "US"
 
     new_card = ::StripeCardService::Create.new(
