@@ -708,7 +708,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-  @event = Event.find_by(params[:event_id) if params[:event_id].present?
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @paypal_transfers = PaypalTransfer.all
 
