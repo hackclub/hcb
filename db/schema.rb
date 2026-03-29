@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
   enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "account_number_bidx"
     t.text "account_number_ciphertext"
     t.integer "amount"
@@ -200,7 +200,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
   end
 
   create_table "announcements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "author_id", null: false
     t.jsonb "content", null: false
     t.datetime "created_at", null: false
@@ -258,7 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
   end
 
   create_table "bank_fees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -526,7 +526,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
   end
 
   create_table "checks", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "approved_at", precision: nil
     t.integer "check_number"
@@ -635,7 +635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_25_000000) do
   end
 
   create_table "contract_parties", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "contract_id", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
