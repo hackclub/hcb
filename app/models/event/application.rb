@@ -64,9 +64,10 @@ class Event
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
@@ -323,7 +324,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!(risk_level:, tags: [])
+    def activate_event!(risk_level:, tags: [], point_of_contact: nil)
       contract.party(:hcb).sync_with_docuseal
       contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
@@ -331,18 +332,18 @@ class Event
       self.with_lock do
         raise ArgumentError.new("Event was already created") if event.present?
 
-        poc = contract.party(:hcb).user
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
           country: address_country,
-          point_of_contact_id: poc.id,
+          point_of_contact_id: poc_user.id,
           application: self,
           event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
           risk_level:
         )
         contract.create_document!
 
-        service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
         invite = service.model
         service.run!
 
