@@ -1,3 +1,13 @@
+<% unless current_user.phone_number_verified? %>
+  <div class="card border b--warning mb3">
+    <p class="m0">
+      <%= inline_icon "important-fill", class: "warning mr1" %>
+      <strong>A verified phone number is required to issue a card.</strong>
+      Please <%= link_to "verify your phone number", my_settings_path, class: "info" %> before continuing.
+    </p>
+  </div>
+<% end %>
+
 <%= form_with(model: StripeCard.new, local: true) do |form| %>
   <% if @event || params[:event_id] %>
     <%= form.hidden_field :event_id, value: @event&.id || params[:event_id] %>
