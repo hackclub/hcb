@@ -397,8 +397,8 @@ class AdminController < Admin::BaseController
   end
 
   def user_search
-    @q = params[:q]
-    @users = if @q
+    @q = params[:q].presence
+    @users = if @q.present?
                User.where("full_name ILIKE ? OR email ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%").order(:full_name).limit(20).select(:id, :full_name, :email)
              else
                User.none
