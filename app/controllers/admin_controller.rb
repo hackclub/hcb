@@ -387,8 +387,8 @@ class AdminController < Admin::BaseController
   end
 
   def event_search
-    @q = params[:q]
-    @events = if @q
+    @q = params[:q].presence
+    @events = if @q.present?
                 Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name).limit(20).select(:id, :name)
               else
                 Event.none
