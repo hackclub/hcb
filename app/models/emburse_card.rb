@@ -34,6 +34,8 @@
 #
 class EmburseCard < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   scope :deactivated, -> { where.not(emburse_state: "active") }
