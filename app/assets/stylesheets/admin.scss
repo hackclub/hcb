@@ -533,9 +533,9 @@ mark {
 }
 
 textarea,
-select {
+select,
+input {
   padding: 6px 12px;
-  margin-bottom: 0.5rem;
   font-size: inherit;
   font-family: inherit;
   background: var(--hcb-bg-3);
