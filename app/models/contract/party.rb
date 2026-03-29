@@ -5,7 +5,7 @@
 # Table name: contract_parties
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  deleted_at     :datetime
 #  external_email :string
 #  role           :string           not null
@@ -25,7 +25,6 @@ class Contract
   class Party < ApplicationRecord
     include AASM
     include Hashid::Rails
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     acts_as_paranoid
     has_paper_trail

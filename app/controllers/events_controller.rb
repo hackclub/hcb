@@ -375,13 +375,17 @@ class EventsController < ApplicationController
           flash[:success] = "Organization successfully updated."
         end
 
-        redirect_back fallback_location: edit_event_path(@event.slug)
+        if params[:event][:tab].present?
+          redirect_to edit_event_path(@event.slug, tab: params[:event][:tab])
+        else
+          redirect_back_or_to edit_event_path(@event.slug)
+        end
       else
         render :edit, status: :unprocessable_entity
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
-      redirect_back fallback_location: edit_event_path(@event.slug)
+      redirect_back_or_to edit_event_path(@event.slug)
     end
   end
 
@@ -691,6 +695,8 @@ class EventsController < ApplicationController
     @total += Money.from_cents(@event.reimbursement_reports.pending.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
     @reimbursed = Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed).sum(&:amount_cents)
     @pending = @total - @reimbursed
+
+    @format_reports_with_currency = @event.reimbursement_reports.where.not(currency: "USD").exists?
 
     @reports = @event.reimbursement_reports.visible
     @reports = @reports.draft if params[:status] == "draft"
