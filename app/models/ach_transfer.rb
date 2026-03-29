@@ -5,7 +5,7 @@
 # Table name: ach_transfers
 #
 #  id                        :bigint           not null, primary key
-#  aasm_state                :string
+#  aasm_state                :string           not null
 #  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  amount                    :integer
