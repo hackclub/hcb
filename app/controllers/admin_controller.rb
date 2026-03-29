@@ -734,9 +734,7 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
 
-    if @event_id
-      @event = Event.find(@event_id)
-    end
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wires = Wire.all
 
@@ -758,9 +756,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
 
-    if @event_id
-      @event = Event.find(@event_id)
-    end
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wise_transfers = WiseTransfer.all
 
@@ -852,9 +848,7 @@ class AdminController < Admin::BaseController
 
     @event_id = params[:event_id].presence
 
-    if @event_id
-      @event = Event.find(@event_id)
-    end
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     relation = RecurringDonation.includes(:event).where.not(stripe_status: [:incomplete, :incomplete_expired])
 
@@ -1373,9 +1367,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
     @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
 
-    if @event_id
-      @event = Event.find(@event_id)
-    end
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     relation = Column::AccountNumber.includes(:event)
 
