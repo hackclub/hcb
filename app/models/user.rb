@@ -176,6 +176,7 @@ class User < ApplicationRecord
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
   after_update :queue_sync_with_loops_job
+  after_update :sync_verified_phone_to_stripe_cardholder, if: -> { phone_number_verified_previously_changed?(from: false, to: true) }
 
   before_update :set_default_seasonal_theme
 
@@ -614,7 +615,13 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
+    attrs = { stripe_email: email }
+    attrs[:stripe_phone_number] = phone_number if phone_number_verified?
+    stripe_cardholder&.update!(**attrs)
+  end
+
+  def sync_verified_phone_to_stripe_cardholder
+    stripe_cardholder&.update!(stripe_phone_number: phone_number)
   end
 
   def namae(legal: false)
