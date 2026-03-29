@@ -15,29 +15,60 @@ class ExportsController < ApplicationController
       format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
 
-        # CSV exports **can** support date ranges
-        set_date_range if file_extension == "csv" && params[:start_date].present?
+        # Set up filter parameters
+        set_export_filters
 
         @export = case file_extension
                   when "csv"
                     Export::Event::Transactions::Csv.new(
                       requested_by: current_user,
                       event_id: @event.id,
-                      start_date: @start,
-                      end_date: @end,
-                      public_only: !organizer_signed_in?
+                      start_date: @start_date,
+                      end_date: @end_date,
+                      public_only: !organizer_signed_in?,
+                      tag_id: @tag&.id,
+                      user_id: @user&.id,
+                      transaction_type: @type,
+                      direction: @direction,
+                      minimum_amount: @minimum_amount&.to_f,
+                      maximum_amount: @maximum_amount&.to_f,
+                      missing_receipts: @missing_receipts,
+                      category_slug: @category&.slug,
+                      merchant_id: @merchant
                     )
                   when "json"
                     Export::Event::Transactions::Json.new(
                       requested_by: current_user,
                       event_id: @event.id,
-                      public_only: !organizer_signed_in?
+                      public_only: !organizer_signed_in?,
+                      start_date: @start_date,
+                      end_date: @end_date,
+                      tag_id: @tag&.id,
+                      user_id: @user&.id,
+                      transaction_type: @type,
+                      direction: @direction,
+                      minimum_amount: @minimum_amount&.to_f,
+                      maximum_amount: @maximum_amount&.to_f,
+                      missing_receipts: @missing_receipts,
+                      category_slug: @category&.slug,
+                      merchant_id: @merchant
                     )
                   when "ledger"
                     Export::Event::Transactions::Ledger.new(
                       requested_by: current_user,
                       event_id: @event.id,
-                      public_only: !organizer_signed_in?
+                      public_only: !organizer_signed_in?,
+                      start_date: @start_date,
+                      end_date: @end_date,
+                      tag_id: @tag&.id,
+                      user_id: @user&.id,
+                      transaction_type: @type,
+                      direction: @direction,
+                      minimum_amount: @minimum_amount&.to_f,
+                      maximum_amount: @maximum_amount&.to_f,
+                      missing_receipts: @missing_receipts,
+                      category_slug: @category&.slug,
+                      merchant_id: @merchant
                     )
                   end
 
@@ -126,6 +157,21 @@ class ExportsController < ApplicationController
   end
 
   private
+
+  def set_export_filters
+    # Set up all filter parameters for exports
+    @tag = Tag.find_by(event_id: @event.id, label: params[:tag]) if params[:tag].present?
+    @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user].present?
+    @type = params[:type].presence
+    @start_date = params[:start].presence
+    @end_date = params[:end].presence
+    @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
+    @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
+    @missing_receipts = params[:missing_receipts].present?
+    @merchant = params[:merchant].presence
+    @direction = params[:direction].presence
+    @category = TransactionCategory.find_by(slug: params[:category]) if params[:category].present?
+  end
 
   def set_date_range
     @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month

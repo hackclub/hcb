@@ -24,6 +24,12 @@
         <%= link_to "All transactions (CSV)", transactions_exports_path(event: @event, format: :csv), target: :_blank %>
         <%= link_to "All transactions (JSON)", transactions_exports_path(event: @event, format: :json), target: :_blank %>
         <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
+        <% if filter_applied %>
+          <hr class="my-2">
+          <%= link_to "Filtered transactions (CSV)", transactions_exports_path(event: @event, format: :csv, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+          <%= link_to "Filtered transactions (JSON)", transactions_exports_path(event: @event, format: :json, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+          <%= link_to "Filtered transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+        <% end %>
         <%= link_to "Monthly statements", event_statements_path(@event) %>
       </div>
     </div>
