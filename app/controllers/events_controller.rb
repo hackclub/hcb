@@ -1306,7 +1306,7 @@ class EventsController < ApplicationController
       member:,
       features: {
         subevents: event.subevents_enabled?,
-        card_grants: policy(event).card_grant_overview?
+        card_grants: CardGrant.where(event_id: event.id).exists?
       }
     }
   end
