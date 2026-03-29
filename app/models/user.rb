@@ -175,6 +175,7 @@ class User < ApplicationRecord
   validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :sync_verified_phone_to_stripe_cardholder, if: -> { phone_number_verified_previously_changed?(from: false, to: true) }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
@@ -617,7 +618,13 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
+    attrs = { stripe_email: email }
+    attrs[:stripe_phone_number] = phone_number if phone_number_verified?
+    stripe_cardholder&.update!(**attrs)
+  end
+
+  def sync_verified_phone_to_stripe_cardholder
+    stripe_cardholder&.update!(stripe_phone_number: phone_number)
   end
 
   def namae(legal: false)
