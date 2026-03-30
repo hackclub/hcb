@@ -74,7 +74,7 @@ class Export
             start_date: start_date,
             end_date: end_date,
             user: user_id ? User.find_by(id: user_id) : nil,
-            missing_receipts: missing_receipts == true || missing_receipts == "true",
+            missing_receipts: [true, "true"].include?(missing_receipts),
             category: category_slug ? TransactionCategory.find_by(slug: category_slug) : nil,
             merchant: merchant_id,
             order_by: :date
@@ -98,8 +98,8 @@ class Export
 
         def no_filters_applied?
           tag_id.blank? && user_id.blank? && transaction_type.blank? &&
-          direction.blank? && minimum_amount.blank? && maximum_amount.blank? &&
-          missing_receipts.blank? && category_slug.blank? && merchant_id.blank?
+            direction.blank? && minimum_amount.blank? && maximum_amount.blank? &&
+            missing_receipts.blank? && category_slug.blank? && merchant_id.blank?
           # Note: start_date and end_date are NOT included here because CSV exports
           # already supported date ranges before this feature was added
         end
