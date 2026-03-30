@@ -863,13 +863,14 @@ class AdminController < Admin::BaseController
     @processing = params[:processing] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
+    @events_for_select = Event.reorder(Event::CUSTOM_SORT).select(:id, :name, :demo_mode)
 
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.disbursements.includes(:event)
+      relation = @event.disbursements.includes(:event, :source_event)
     else
-      relation = Disbursement.includes(:event)
+      relation = Disbursement.includes(:event, :source_event)
     end
 
     if @q
