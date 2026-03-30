@@ -1,0 +1,10 @@
+<%= link_to event_feed_path(@event, format: :atom), class: "pop tooltipped tooltipped--s", "aria-label": "you found an Atom feed!", data: { turbo: false } do %>
+  <%= inline_icon "rss", size: 30 %>
+<% end %>
+<%= render "events/follow_button", event: @event, event_follow: @event_follow %>
+<% if organizer_signed_in?(as: :member) %>
+  <%= link_to event_announcements_new_path(@event), class: "flex-1 btn bg-success #{"disabled" if !policy(@announcement).new?}" do %>
+    <%= inline_icon "plus" %>
+    Create
+  <% end %>
+<% end %>

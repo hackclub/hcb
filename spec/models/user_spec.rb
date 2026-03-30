@@ -266,4 +266,22 @@ RSpec.describe User, type: :model do
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
     end
   end
+
+  describe ".search_name" do
+    it "finds user by ID" do
+      user = create(:user)
+
+      results = User.search_name(user.id.to_s)
+
+      expect(results).to include(user)
+    end
+
+    it "returns empty results for non-matching ID" do
+      create(:user)
+
+      results = User.search_name("999999999")
+
+      expect(results).to be_empty
+    end
+  end
 end

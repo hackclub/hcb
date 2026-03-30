@@ -84,11 +84,19 @@ export const generateEventActions = data => {
       .filter(e => e.features.card_grants)
       .map(event => ({
         id: `${event.slug}-card-grants`,
-        name: 'Card grants',
+        name: 'Grants',
         perform: navigate(`/${event.slug}/card_grants`),
         icon: <Icon glyph="bag" size={16} />,
         parent: event.slug,
       })),
+    ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-transactions`,
+      name: 'Transactions',
+      perform: navigate(`/${event.slug}/transactions`),
+      icon: <Icon glyph="transactions" size={16} />,
+      parent: event.slug,
+      keywords: 'ledger payments',
+    })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transfers`,
       name: 'Transfers',
@@ -364,7 +372,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_7',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Organizer position deletion requests',
+      name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
       perform: () =>
         (window.location.href = '/organizer_position_deletion_requests'),
