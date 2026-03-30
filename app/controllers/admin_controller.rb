@@ -927,12 +927,12 @@ class AdminController < Admin::BaseController
     respond_to do |format|
       format.html do
         @hcb_codes = @hcb_codes.includes(
-                  :event,
-                  :comments,
-                  :receipts,
-                  canonical_pending_transactions: :event,
-                  canonical_transactions: :event
-                ).page(@page).per(@per)
+          :event,
+          :comments,
+          :receipts,
+          canonical_pending_transactions: :event,
+          canonical_transactions: :event
+        ).page(@page).per(@per)
       end
       format.csv { render csv: @hcb_codes }
     end
