@@ -1,4 +1,4 @@
-<%= render "events/nav", selected: :transfers unless @frame %>
+<%= render "events/nav", selected: :card_grants unless @frame %>
 
 <%= turbo_frame_tag "spending_#{@card_grant.public_id}" do %>
   <div class="mt4 mb4 check--form flex justify-center" style="gap: 3rem">
