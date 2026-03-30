@@ -2,11 +2,11 @@
 <% page_md %>
 <%= render "events/nav", selected: :invoices %>
 
-<% if @invoices.size > 0 || params[:q].present? || @has_filter || !organizer_signed_in? %>
+<% if @invoices.total_count > 0 || params[:q].present? || @has_filter || !organizer_signed_in? %>
   <h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
     <span class="flex items-center">
       Invoices
-      <%= badge_for @invoices.size, class: "bg-muted" %>
+      <%= badge_for @invoices.total_count, class: "bg-muted" %>
     </span>
 
     <% if organizer_signed_in?(as: :member) %>
@@ -81,6 +81,7 @@
       </tbody>
     </table>
   </article>
+  <%= paginate @invoices %>
 <% else %>
   <%= render "events/one_pager",
     title: "Invoices",
