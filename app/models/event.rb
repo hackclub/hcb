@@ -121,6 +121,28 @@ class Event < ApplicationRecord
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
+
+  CATEGORY_TAGS = {
+    "climate"       => EventTag::Tags::CLIMATE,
+    "hack_club"     => EventTag::Tags::HACK_CLUB,
+    "hackathon"     => EventTag::Tags::HACKATHON,
+    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM
+  }.freeze
+
+  # filter organizations by category
+  scope :by_category, ->(category) {
+    # check if tag is in hash
+    if (tag = CATEGORY_TAGS[category])
+      includes(:event_tags).where(event_tags: { name: tag })
+    elsif category == "hack_club_hq"
+      # hack_club_hq is stored as a plan not a tag
+      includes(:plan).where(event_plans: { type: [Event::Plan::HackClubAffiliate.sti_name, Event::Plan::HackClubHQ.sti_name] })
+    else
+      # unrecognized category, return nothing, though this should never make it this far since values: constraint
+      none
+    end
+  }
+
   scope :flag_enabled, ->(flag) {
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
