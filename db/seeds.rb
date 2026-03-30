@@ -156,6 +156,22 @@ OrganizerPositionInvite.create_or_find_by!(
   sender: user,
 )
 
+# GENE_HAAS_GRANT_FUND
+gene_haas_grant_fund_event = Event.create_with(
+  name: "Gene Haas",
+  slug: "gene-haas",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).create_or_find_by!(id: EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND)
+
+OrganizerPositionInvite.create_or_find_by!(
+  event: gene_haas_grant_fund_event,
+  user:,
+  sender: user,
+)
+
 # ARGOSY_GRANT_FUND
 argosy_grant_fund_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",

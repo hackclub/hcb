@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def nav
+    @nav = Admin::Nav.new(page_title: params[:title])
+
+    render :nav, layout: false
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -754,8 +760,10 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @include_archived = params[:include_archived] == "1" ? true : nil
 
     @applications = Event::Application.all
+    @applications = @applications.not_archived unless @include_archived
     @applications = @applications.search_name(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
@@ -1071,14 +1079,19 @@ class AdminController < Admin::BaseController
   def google_workspace_update
     @g_suite = GSuite.find(params[:id])
 
-    @g_suite = GSuiteService::Update.new(
-      g_suite_id: @g_suite.id,
-      domain: @g_suite.domain,
-      verification_key: params[:verification_key],
-      dkim_key: params[:dkim_key]
-    ).run
+    begin
+      @g_suite = GSuiteService::Update.new(
+        g_suite_id: @g_suite.id,
+        domain: @g_suite.domain,
+        verification_key: params[:verification_key],
+        dkim_key: params[:dkim_key],
+        max_accounts: params[:max_accounts]
+      ).run
 
-    redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { error: e.record.errors.full_messages.to_sentence }
+    end
   end
 
   def google_workspace_toggle_revocation_immunity

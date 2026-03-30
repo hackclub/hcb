@@ -224,7 +224,7 @@ gem "irb"
 
 gem "pstore"
 
-gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.22"
 
 gem "prosemirror_to_html"
 
@@ -235,4 +235,3 @@ gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
 gem "intercom-rails"
-gem "htmlcompressor"
