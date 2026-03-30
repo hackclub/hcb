@@ -9,15 +9,19 @@
                   edit_event_path(@event, tab: "details"),
                   selected: @settings_tab == "details" || (@settings_tab.nil? && local_assigns[:selected] == :settings),
                   data: { turbo: true, turbo_action: "advance" } %>
-    <% unless @event.unapproved? %>
-      <%= dock_item "Donations",
-                    edit_event_path(@event, tab: "donations"),
-                    selected: @settings_tab == "donations",
-                    data: { turbo: true, turbo_action: "advance" } %>
-      <%= dock_item "Reimbursements",
-                    edit_event_path(@event, tab: "reimbursements"),
-                    selected: @settings_tab == "reimbursements",
-                    data: { turbo: true, turbo_action: "advance" } %>
+    <% if @event.approved? %>
+      <% if @event.plan.donations_enabled? %>
+        <%= dock_item "Donations",
+                      edit_event_path(@event, tab: "donations"),
+                      selected: @settings_tab == "donations",
+                      data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
+      <% if @event.plan.reimbursements_enabled? %>
+        <%= dock_item "Reimbursements",
+                      edit_event_path(@event, tab: "reimbursements"),
+                      selected: @settings_tab == "reimbursements",
+                      data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
       <% if @event.plan.card_grants_enabled? %>
         <%= dock_item "Card grants",
                       edit_event_path(@event, tab: "card_grants"),

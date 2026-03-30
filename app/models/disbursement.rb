@@ -62,6 +62,9 @@ class Disbursement < ApplicationRecord
 
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
 
@@ -130,6 +133,13 @@ class Disbursement < ApplicationRecord
       css_class: "transaction--frc",
       icon: "sam",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+    },
+    gene_haas_grant: {
+      title: "Grant from Gene Haas",
+      memo: "Gene Haas Grant",
+      css_class: "transaction--genehaas",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
     }
   }.freeze
 

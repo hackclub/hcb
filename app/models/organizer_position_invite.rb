@@ -55,7 +55,11 @@
 #     creation.
 #
 class OrganizerPositionInvite < ApplicationRecord
+  acts_as_paranoid
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ivt
