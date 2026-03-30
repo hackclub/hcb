@@ -8,7 +8,7 @@
     <% @visible_pages.each_with_index do |page, i| %>
       <%= " and " if i == @visible_pages.size - 1 && @visible_pages.size > 1 %><%= link_to page[:name], page[:link] %><%= ", " if i < @visible_pages.size - 1 && @visible_pages.size > 2 %>
     <% end %>
-    <%= @visible_pages.size > 1 ? "are" : "is" %> still visible to the public.
+    <%= "is".pluralize(@visible_pages.size) %> still visible to the public.
   <% end %>
 </p>
 
