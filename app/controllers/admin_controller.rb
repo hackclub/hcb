@@ -492,7 +492,7 @@ class AdminController < Admin::BaseController
     relation = relation.reimbursement_requested if @pending
 
     @unprocessed_wise_report_ids = Reimbursement::Report
-                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
                                    .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
                                    .select(:id)
                                    .pluck(:id)
