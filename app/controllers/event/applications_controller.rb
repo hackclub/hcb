@@ -158,6 +158,10 @@ class Event
       authorize @application
     end
 
+    def videos
+      authorize @application
+    end
+
     def agreement
       authorize @application
 
