@@ -37,7 +37,7 @@ class LoginsController < ApplicationController
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
-    continue_login(preference: login_preference || "email")
+    continue_login(preference: login_preference || :email)
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
@@ -194,13 +194,13 @@ class LoginsController < ApplicationController
   private
 
   def continue_login(preference: login_preference)
-    if @login.sms_available? && preference == "sms"
+    if @login.sms_available? && preference == :sms
       redirect_to sms_login_path(@login), status: :temporary_redirect
-    elsif @login.email_available? && preference == "email"
+    elsif @login.email_available? && preference == :email
       redirect_to email_login_path(@login), status: :temporary_redirect
-    elsif @login.totp_available? && preference == "totp"
+    elsif @login.totp_available? && preference == :totp
       redirect_to totp_login_path(@login), status: :temporary_redirect
-    elsif @login.webauthn_available? && preference == "webauthn"
+    elsif @login.webauthn_available? && preference == :webauthn
       redirect_to security_key_login_path(@login), status: :temporary_redirect
     else
       redirect_to choose_login_preference_login_path(@login)
@@ -214,7 +214,7 @@ class LoginsController < ApplicationController
   def login_preference
     return @user.preferred_login_methods.first unless @login.present?
 
-    authentication_factors = @login.authentication_factors&.filter_map { |key, value| key if value } || []
+    authentication_factors = @login.authentication_factors&.filter_map { |key, value| key.to_sym if value } || []
 
     (@user.preferred_login_methods - authentication_factors & @login.available_factors).first
   end

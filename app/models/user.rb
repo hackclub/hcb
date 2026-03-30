@@ -584,9 +584,9 @@ class User < ApplicationRecord
   end
 
   def preferred_login_methods
-    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key if value }
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
 
-    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor.to_sym) } || []
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
   end
 
   def only_draft_application?
