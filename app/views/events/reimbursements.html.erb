@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :reimbursements %>
 
-<% if @reports.any? || !organizer_signed_in? %>
+<% if @reports.any? || !organizer_signed_in? || params[:q].present? || @has_filter %>
   <h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
     <span class="flex-grow">Reimbursements</span>
     <div class="flex items-center gap-2">

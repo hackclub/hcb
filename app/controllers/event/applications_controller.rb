@@ -111,6 +111,7 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
+        party.update!(user: current_user)
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -129,7 +130,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level])
+      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
@@ -140,7 +141,7 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
+        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
       end
 
       authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
@@ -154,6 +155,10 @@ class Event
     end
 
     def project_info
+      authorize @application
+    end
+
+    def videos
       authorize @application
     end
 

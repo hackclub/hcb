@@ -1,0 +1,49 @@
+<% title "HCB Onboarding Videos" %>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Watch HCB's onboarding videos
+    </h2>
+
+    <p class="mt-0 text-lg muted">
+      Before signing the agreement, watch these two short videos to
+      understand how HCB operates
+    </p>
+  </div>
+<% end %>
+
+<div class="md:max-h-[75vh] flex flex-col gap-5">
+  <div class="flex gap-3 items-start flex-grow">
+    <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+      1
+    </div>
+
+    <div class="flex flex-col flex-grow gap-3">
+      <p class="text-lg mb-0 mt-1">
+        <strong>Introduction</strong>
+      </p>
+
+      <iframe class="aspect-[560/315] flex-grow min-h-0 max-w-full" src="https://www.youtube.com/embed/Ucz-QT2GPOk?si=Hoe7R62QCgokUgSW" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <div class="flex gap-3 items-start flex-grow">
+    <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+      2
+    </div>
+
+    <div class="flex flex-col flex-grow gap-3">
+      <p class="text-lg mb-0 mt-1">
+        <strong>Rules & Regulations</strong>
+      </p>
+
+      <iframe class="flex-grow aspect-[560/315] min-h-0 max-w-full" src="https://www.youtube.com/embed/LMh9FCm8iIE?si=qYV_l5IVGZMhhVvW" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<% content_for :footer do %>
+  <a class="btn bg-muted" href="<%= application_path(@application) %>">← Back</a>
+  <a class="btn bg-blue" href="<%= agreement_application_path(@application) %>">Continue →</a>
+<% end %>
