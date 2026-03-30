@@ -5,9 +5,7 @@
     <%= render "events/search", form: %>
     <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
     <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
-    <div class="combobox-wrapper">
-      <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
-    </div>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
   </div>
   <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :deposited do %>
