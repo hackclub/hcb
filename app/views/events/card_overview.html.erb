@@ -31,7 +31,7 @@
       </div>
     </h1>
 
-    <%= render "events/filters/filter_cards_menu" if @has_filter %>
+    <%= render "events/filters/filter_cards" if @has_filter %>
 
     <% if control = @organizer_position&.active_spending_control %>
       <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
