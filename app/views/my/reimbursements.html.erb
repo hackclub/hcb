@@ -2,46 +2,47 @@
 <% page_md %>
 <%= render "users/nav", selected: :reimbursements %>
 
-<h1 class="heading">
+<h1 class="heading flex-col sm:flex-row border-0 mb-0">
   <span>
     Reimbursements
   </span>
 
-  <% if @payout_method.present? %>
-    <%= link_to settings_payouts_path, class: "btn bg-info" do %>
-      <%= inline_icon @payout_method.icon %>
-      Payout settings
+  <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
+    <% if @payout_method.present? %>
+      <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
+        <%= inline_icon @payout_method.icon %>
+        Payout settings
+      <% end %>
+    <% else %>
+      <%= link_to settings_payouts_path, class: "!ml-0 btn" do %>
+        <%= inline_icon "bank-account" %>
+        Configure payouts
+      <% end %>
     <% end %>
-  <% else %>
-    <%= link_to settings_payouts_path, class: "btn bg-warning" do %>
-      <%= inline_icon "payment-docs" %>
-      Configure payouts
-    <% end %>
-  <% end %>
 
-  <% if current_user.events.not_demo_mode.any? %>
-    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
-      <%= inline_icon "plus" %>
-      New
+    <% if current_user.events.not_demo_mode.any? %>
+      <%= link_to "#", class: "!ml-0 btn bg-success", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+        <%= inline_icon "plus" %>
+        Start report
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 </h1>
 
 <%= render partial: "reimbursement/reports/create_form" %>
 
 <% if current_user.events.not_demo_mode.any? %>
-  <section class="grid grid--split grid--spacious mb2">
+  <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
     <div>
       <label for="sms_number">Start a report via SMS</label>
       <p class="h5 muted mt0 mb1">
         Message photos from your phone.
       </p>
-      <div class="relative block" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+      <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
         <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
         <button
           type="button"
-          class="pointer pop mr2 align-middle tooltipped tooltipped--n"
-          style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+          class="pointer pop tooltipped tooltipped--n"
           aria-label="Copy number"
           data-action="clipboard#copy:prevent">
           <%= inline_icon "copy", size: 28 %>
@@ -54,12 +55,11 @@
       <p class="h5 muted mt0 mb1">
         Send or forward from your email address.
       </p>
-      <div class="relative block" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
-        <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit">
+      <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
+        <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit font-mono">
         <button
           type="button"
-          class="pointer pop mr2 align-middle tooltipped tooltipped--n"
-          style="position: absolute; top: 50%; right: -8px; transform: translateY(-50%) scale(0.9);"
+          class="pointer pop tooltipped tooltipped--n"
           aria-label="Copy email address"
           data-action="clipboard#copy:prevent">
           <%= inline_icon "copy", size: 28 %>
@@ -71,11 +71,11 @@
 
 <h3 class="mb0">Reports</h3>
 
-<div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb2 mt1">
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb2 mt1">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/search", form: %>
   <% end %>
-  <div>
+  <div class="filterbar" role="tablist" aria-label="Reimbursement report filters">
     <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
     <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
     <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
@@ -99,8 +99,8 @@
       </thead>
       <tbody>
         <% @reports.order(created_at: :desc).each do |report| %>
-          <tr>
-            <td class="!pl-0 flex items-center justify-center" style="margin-top: 1px;">
+          <tr class="clickable">
+            <td class="flex items-center justify-center" style="margin-top: 1px;">
               <%= avatar_for report.user, size: 24 %>
             </td>
             <td>
@@ -113,7 +113,8 @@
               <% end %>
             </td>
             <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-              <%= link_to report.name, report %>
+              <%= link_to "", report, class: "stretched-link" %>
+              <span><%= report.name %></span>
             </td>
             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
                <%= report.event&.name || "None" %>

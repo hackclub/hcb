@@ -6,8 +6,8 @@
 #
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  event_id            :bigint           not null
-#  event_scoped_tag_id :bigint           not null
+#  event_id            :bigint           not null, primary key
+#  event_scoped_tag_id :bigint           not null, primary key
 #
 # Indexes
 #

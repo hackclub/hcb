@@ -15,21 +15,21 @@
     </span>
   <% end %>
   </h2>
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
-    <p>
+  <section class="hcb-code--details">
+    <div>
       <strong>Sent by</strong>
       <%= user_mention card_grant.sent_by %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Funded by</strong>
       <%= link_to card_grant.event.name, card_grant.event %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong>Sent</strong>
       <span class="tooltipped" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
         <%= time_ago_in_words card_grant.created_at %> ago
       </span>
-    </p>
+    </div>
   </section>
   <section class="details details--wide pt2 pb2 details--tall">
     <p>
@@ -46,9 +46,8 @@
     </p>
     <p>
       <strong>Expires on</strong>
-      <span><%= format_date card_grant.expires_on %></span>
+      <span><%= format_date card_grant.expiration_at %></span>
     </p>
-
     <p>
       <strong>Email</strong>
       <span><%= mail_to card_grant.email %></span>
@@ -58,11 +57,10 @@
       <% if card_grant.allowed_merchants.any? %>
         <span class="font-mono h5"><%= card_grant.allowed_merchant_names.join(", ") %><br>
           (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
-    <% else %>
+      <% else %>
         <span>All merchants allowed</span>
       <% end %>
     </p>
-
     <p>
       <strong>Allowed categories</strong>
       <% if (allowed_categories = card_grant.allowed_category_names.join(", ").presence) %>

@@ -1,0 +1,11 @@
+<%# locals: (render_snow: true) %>
+<%# LET THERE BE SNOW %>
+<% if winter? && render_snow %>
+  <%= react_component "holiday/Snow", {}, { style: "height:100%;position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:99999" } %>
+<% end %>
+
+<%# ghosts and ghouls %>
+<% if fall? %>
+  <img src="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/7e4929972e5eee4c_image.png" alt="oOoOoOoOo" class="flying-spook ghost">
+  <img src="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/1106e43a5e5219cf_image.png" alt="witch orpheus" class="flying-spook">
+<% end %>

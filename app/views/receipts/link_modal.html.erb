@@ -20,7 +20,7 @@
       <%= form.hidden_field :show_receipt_button, value: @show_receipt_button %>
       <%= form.hidden_field :show_author_img, value: @show_author_img %>
 
-      <ul class="grid grid--narrow left-align w-100 grid--spacious mt0 justify-center">
+      <ul class="grid grid--narrow text-left w-100 grid--spacious mt0 justify-center">
         <% @receipts.each do |receipt| %>
           <li class="flex grid flex-col justify-between h-100 mx4 modal__<%= receipt.id %>" id="modal_receipt_<%= receipt.id %>">
             <%= render partial: "receipts/receipt", locals: { receipt:, selectable: true, textual_content: true, pairing: @suggested_receipt_ids.include?(receipt.id), size: 169 } %>

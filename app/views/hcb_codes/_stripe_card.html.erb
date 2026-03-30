@@ -8,20 +8,22 @@
 <% end %>
 
 <% @hcb_code.canonical_pending_transactions.each do |pt| %>
-<%= render partial: "admin_viewer", locals: { record: pt } %>
-<%= render partial: "admin_viewer", locals: { record: pt.raw_pending_stripe_transaction } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt.raw_pending_stripe_transaction } %>
 <% end %>
 <% @hcb_code.canonical_transactions.each do |pt| %>
-<%= render partial: "admin_viewer", locals: { record: pt } %>
+<%= render partial: "application/admin_viewer", locals: { record: pt } %>
 <% end %>
 
-<article class="card pb0 mt3 mb1">
+<article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <span class="flex-auto">
       <% if @hcb_code.stripe_cash_withdrawal? && @hcb_code.custom_memo.nil? %>
+        <span class="regular"><%= render_money(renderable_amount_cents) %></span>
         <span class="regular muted">
-          Withdrawal from
+          withdrawal from
         </span>
+        <%= humanized_merchant_name @hcb_code.stripe_merchant %>
       <% else %>
         <span class="regular muted">Purchase at </span>
         <%= humanized_merchant_name @hcb_code.stripe_merchant %>
@@ -31,19 +33,19 @@
 
       <% if @hcb_code.pt && !@hcb_code.pt.settled? %>
         <% if @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed" %>
-          <span class="badge h4 md-right bg-accent">
+          <span class="badge h4 bg-accent">
             Reversed
             <%= inline_icon :info, size: 20 %>
           </span>
         <% elsif @hcb_code.pt.declined? %>
           <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
-            <span class="badge h4 md-right bg-accent">
+            <span class="badge h4 bg-accent">
               Declined
               <%= inline_icon :info, size: 20 %>
             </span>
           </action>
         <% else %>
-          <span class="badge h4 md-right bg-muted">
+          <span class="badge h4 bg-muted">
             Pending
             <%= inline_icon :info, size: 20 %>
           </span>
@@ -51,7 +53,7 @@
       <% end %>
 
       <% if @hcb_code.personal_transaction.present? %>
-        <span class="badge h4 md-right bg-warning">
+        <span class="badge h4 bg-warning">
           Personal
           <%= inline_icon :info, size: 20 %>
         </span>
@@ -59,38 +61,38 @@
     </span>
   <% end %>
 
-  <section class="card__banner card__darker details-horiz border-top border-bottom">
-    <p>
+  <section class="hcb-code--details">
+    <div>
       <strong>Card</strong>
       <%= stripe_card_mention @hcb_code.stripe_card %>
-    </p>
-    <p>
+    </div>
+    <div>
       <strong><%= @hcb_code.stripe_refund? ? "Refunded to" : "Spender" %></strong>
       <%= link_to @hcb_code.stripe_card do %>
         <%= user_mention @hcb_code.stripe_card.user %>
       <% end %>
-    </p>
+    </div>
     <% if @hcb_code.stripe_atm_fee %>
-      <p>
+      <div>
         <strong>ATM fee</strong>
         <span><%= render_money @hcb_code.stripe_atm_fee %></span>
-      </p>
+      </div>
     <% end %>
-    <p>
+    <div>
       <strong><%= @hcb_code.stripe_refund? ? "Refunded" : "Spent" %></strong>
       <%= local_time_ago @hcb_code.pt&.raw_pending_stripe_transaction&.created_at || Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]) %>
-    </p>
+    </div>
     <% unless @hcb_code.ct.nil? || @hcb_code.pt.nil? %>
-      <p>
+      <div>
         <strong>Settled after</strong>
         <span title="<%= Time.at(@hcb_code.raw_stripe_transaction.stripe_transaction["created"]).strftime("%B %e, %Y %l:%M%P") %>">
         <%= distance_of_time_in_words @hcb_code.pt.raw_pending_stripe_transaction.created_at, @hcb_code.ct.created_at %>
         </span>
-      </p>
+      </div>
     <% end %>
   </section>
 
-  <section class="details pt2 pb2 details--wide details--tall">
+  <section class="hcb-code--info details--wide details--tall">
     <% if @hcb_code.pt&.declined? && @hcb_code.pt.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
       <% reason = @hcb_code.pt.decline_reason %>
       <% webhook_declined_reason = @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction.dig("metadata", "declined_reason") %>
@@ -198,7 +200,7 @@
       <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
         <% if defined?(@frame) && @frame %>
             <details>
-              <summary class="inline-flex no-select">
+              <summary class="inline-flex select-none">
                 <%= @hcb_code.pt.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
                 <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
               </summary>

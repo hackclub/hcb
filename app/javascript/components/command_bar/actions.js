@@ -4,6 +4,7 @@ import { Priority } from 'kbar'
 import Icon from '@hackclub/icons'
 import csrf from '../../common/csrf'
 import React from 'react'
+import ReimbursementIcon from '../icons/reimbursement'
 
 const restrictedFilter = e => !e.demo_mode
 
@@ -53,7 +54,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-invoices`,
       name: 'Invoices',
       perform: navigate(`/${event.slug}/invoices`),
-      icon: <Icon glyph="briefcase" size={16} />,
+      icon: <Icon glyph="payment-docs" size={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -80,6 +81,14 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
+      id: `${event.slug}-transactions`,
+      name: 'Transactions',
+      perform: navigate(`/${event.slug}/transactions`),
+      icon: <Icon glyph="transactions" size={16} />,
+      parent: event.slug,
+      keywords: 'ledger payments',
+    })),
+    ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-transfers`,
       name: 'Transfers',
       perform: navigate(`/${event.slug}/transfers`),
@@ -91,7 +100,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
       perform: navigate(`/${event.slug}/reimbursements`),
-      icon: <Icon glyph="attachment" size={16} />,
+      icon: <ReimbursementIcon size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -173,7 +182,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <Icon glyph="payment-docs" size={16} />,
+    icon: <Icon glyph="docs" size={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -241,11 +250,10 @@ export const initalActions = [
   ...['light', 'dark', 'system'].map(theme => ({
     id: `${theme}-theme`,
     name: `Set theme to ${theme}`,
-    keywords: theme, // eslint-disable-next-line no-undef
-    perform: () => BK.setDark(theme),
     section: 'Actions',
     icon: <Icon glyph="idea" size={16} />,
-    priority: Priority.HIGH,
+    keywords: theme, // eslint-disable-next-line no-undef
+    perform: () => BK.setDark(theme),
   })),
   {
     id: 'signout',
@@ -307,7 +315,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_1',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications',
+      name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
       perform: () => (window.location.href = adminUrls['Applications']),
     },
@@ -355,7 +363,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin_tool_7',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Organizer position deletion requests',
+      name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
       perform: () =>
         (window.location.href = '/organizer_position_deletion_requests'),
@@ -552,6 +560,38 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Referral programs',
       icon: <Icon glyph="share" size={16} />,
       perform: navigate('/admin/referral_programs'),
+    },
+    {
+      id: 'admin_tool_32',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Active teenagers leaderboard',
+      icon: <Icon glyph="leader" size={16} />,
+      perform: navigate('/admin/active_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_33',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'New teenagers leaderboard',
+      icon: <Icon glyph="member-add" size={16} />,
+      perform: navigate('/admin/new_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin_tool_34',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Contracts',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/admin/contracts'),
+    },
+    {
+      id: 'admin_tool_35',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Applications (HCB)',
+      icon: <Icon glyph="post" size={16} />,
+      perform: navigate('/admin/applications'),
     },
   ]
 }

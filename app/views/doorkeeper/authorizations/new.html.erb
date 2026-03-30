@@ -11,7 +11,7 @@
 
 <h2 class="border-none center regular mt5 mb2">Connect <strong><%= @pre_auth.client.name %></strong> to your HCB account?</h2>
 
-<section class="mb2">
+<section class="mb-2 p-3">
   <div class="flex items-start">
     <span class="muted mr2"><%= inline_icon "private-outline" %></span>
     <p class="mt0"><%= @pre_auth.client.name %> is a trusted app created by HCB.</p>
@@ -24,8 +24,8 @@
   </div>
 </section>
 
-<div class="flex items-center justify-center g1">
-  <%= button_to "Connect", oauth_authorization_path, class: "btn bg-success h2", params: {
+<div class="flex flex-col gap-2 px-3">
+  <%= button_to "Cancel", oauth_authorization_path, method: :delete, class: "w-full btn bg-muted", params: {
         client_id: @pre_auth.client.uid,
         redirect_uri: @pre_auth.redirect_uri,
         state: @pre_auth.state,
@@ -35,7 +35,7 @@
         code_challenge: @pre_auth.code_challenge,
         code_challenge_method: @pre_auth.code_challenge_method,
       }, form: { data: { turbo: false } } %>
-  <%= button_to "Cancel", oauth_authorization_path, method: :delete, class: "btn bg-muted", params: {
+  <%= button_to "Connect", oauth_authorization_path, class: "w-full btn bg-success", params: {
         client_id: @pre_auth.client.uid,
         redirect_uri: @pre_auth.redirect_uri,
         state: @pre_auth.state,
@@ -49,6 +49,5 @@
 
 <div class="center mt2">
   <div class="flex items-center justify-center muted">Signed in as <%= user_mention current_user, class: "ml1" %></div>
-
   <%= link_to "Switch accounts", auth_users_path(return_to: request.fullpath), class: "center" %>
 </div>

@@ -12,6 +12,12 @@ class Rack::Attack
 
   # Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
 
+  # Blacklist
+  bad_ips = Credentials.fetch("BLOCKED_IPS")&.split(",")&.map(&:strip)
+  Rack::Attack.blocklist "Block IPs from Environment Variable" do |req|
+    bad_ips&.include?(req.ip)
+  end
+
   # Safelist Hack Club Office
   if office_ip = Credentials.fetch(:OFFICE_IP)
     safelist_ip(office_ip)
@@ -78,6 +84,13 @@ class Rack::Attack
     end
   end
 
+  # Throttle POST requests to SMS verification by IP address
+  throttle("sms_verify/ip", limit: 5, period: 8.hours) do |req|
+    if req.path == "/users/start_sms_auth_verification" && req.post?
+      req.ip
+    end
+  end
+
   ### Custom Throttle Response ###
 
   # By default, Rack::Attack returns an HTTP 429 for throttled responses,
@@ -107,8 +120,14 @@ class Rack::Attack
     end
   end
 
-  throttle("/hq/transactions/ip", limit: 5, period: 20.seconds) do |req|
+  throttle("/hq/transactions/ip", limit: 25, period: 1.minute) do |req|
     if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
+      req.ip
+    end
+  end
+
+  throttle("/hq/ledger/ip", limit: 30, period: 1.minute) do |req|
+    if req.path.start_with?("/hq/ledger") && req.cookies[:session_token].nil?
       req.ip
     end
   end

@@ -1,31 +1,46 @@
 <%# locals: (event:, invite_links:) %>
 
 <% if invite_links.empty? %>
-  <p><%= event.name %> does not currently have any active invite links</p>
+  <div class="banner border border-gray-200 dark:border-neutral-700 shadow-none">
+    <p><%= event.name %> does not currently have any active invite links</p>
+  </div>
 <% else %>
-  <ul class="grid grid-cols-1 text-left w-full mt-2">
-    <% invite_links.each do |link| %>
-      <li class="overflow-visible card flex flex-row justify-between items-center gap-2">
+  <div class="border border-gray-200 dark:border-neutral-700 rounded-xl overflow-hidden banner border !shadow-none">
+    <% invite_links.each_with_index do |link, index| %>
+      <div class="overflow-visible justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">
             <div class="flex flex-col">
-              <p class="my-0 font-bold"><%= link_to link_url(link), link_url(link) %></p>
-              <p class="my-0">Created by <%= user_mention link.creator %> on <%= link.created_at.strftime("%B %e, %Y") %></p>
-              <p class="my-0">Expires in <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %></p>
-              <p class="my-0">Used <%= pluralize(link.requests.size, "times") %></p>
+                <%= copy_to_clipboard(link_url(link), class: "muted underline gap-1 my-0 font-bold items-center inline-flex mr-auto") do %>
+                  <%= link.hashid %>
+                  <%= inline_icon "copy", size: 24 %>
+                <% end %>
+              <div class="my-0 mt-1 text-sm flex items-center gap-1 text-muted">
+                <%= user_mention link.creator %>
+                <span class="tooltipped -ml-1.5" aria-label="Created <%= link.created_at.strftime("%B %e, %Y") %>">
+                  &bull; Expires <%= distance_of_time_in_words(Time.now, link.expires_in.seconds.from_now) %>
+                </span>
+              </div>
             </div>
             <div class="flex-grow"></div>
-            <%= pop_icon_to "view-close-small",
+            <div class="tooltipped cursor-default flex items-center text-muted mr-2 cursor-pointer" aria-label="Used <%= pluralize(link.requests.size, "times") %>">
+                <%= inline_icon "link", size: 24 %>
+                <%= link.requests.size %>
+            </div>
+            <%= pop_icon_to "delete",
                             deactivate_link_path(link),
-                            class: "error tooltipped",
+                            class: "error tooltipped tooltipped--w",
                             data: {
-                              turbo_frame: "_top",
+                              turbo_frame: "invite_links_section",
                               turbo_method: :post,
                               turbo_confirm: "Are you sure you want to deactivate this invite link?",
                             },
                             "aria-label": "Deactivate invite link",
                             disabled: !policy(link).deactivate? %>
         </span>
-      </li>
+        <% if index < invite_links.size - 1 %>
+          <div class="menu__divider"></div>
+        <% end %>
+      </div>
     <% end %>
-  </ul>
+  </div>
 <% end %>

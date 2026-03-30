@@ -1,0 +1,22 @@
+<%# locals: (opi:) %>
+
+<%= form_with(local: true, data: { turbo: false }, url: send_contract_organizer_position_invite_path(id: opi.id)) do |form| %>
+  <p class="muted">
+    This will send <%= opi.user.name %> a fiscal sponsorship agreement
+    for <%= opi.event.name %>. <strong>If they are under 18, <%= opi.user.name %> will need to have a parent sign on their behalf.</strong>
+  <p>
+
+  <div class="field field--checkbox">
+    <%= form.check_box :include_videos %>
+    <%= form.label :include_videos, "Would you like us to include the onboarding videos?" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :cosigner_email, "Cosigned by (email address)" %>
+    <%= form.text_field :cosigner_email %>
+  </div>
+
+  <div class="actions">
+    <%= form.submit "Send contract" %>
+  </div>
+<% end %>

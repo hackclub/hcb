@@ -1,16 +1,21 @@
 <% title "Enter backup code" %>
 <% content_for(:page_class) { "bg-snow" } %>
 
+<% content_for :info_pane do %>
+  <%= render partial: "apply_info_pane" %>
+<% end %>
+
 <div class="flex flex-col flex-1 justify-center max-w-md w-full">
-  <%= render "header", label: "Sign in to HCB" do %>
+  <%= render "logins/header", label: "Sign in to HCB" do %>
     Backup code
   <% end %>
-  <%= render "badge", user: @login.user %>
+  <%= render "logins/badge", user: @login.user %>
   <p>
     Please enter one of the backup codes you generated previously.
   </p>
   <%= form_tag complete_login_path(@login) do %>
     <%= text_field :backup_code, "", placeholder: "Enter your backup code", name: "backup_code", class: "!max-w-full w-max", required: true, autofocus: true %>
+    <%= invisible_captcha :remember_me %>
     <%= hidden_field_tag :method, :backup_code %>
     <%= hidden_field_tag :fingerprint %>
     <%= hidden_field_tag :device_info %>
@@ -29,5 +34,5 @@
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
   <%= javascript_include_tag "fingerprint.js" %>
 </div>
-<%= render partial: "environment_banner" %>
-<%= render partial: "footer" %>
+<%= render partial: "logins/environment_banner" %>
+<%= render partial: "logins/footer" %>

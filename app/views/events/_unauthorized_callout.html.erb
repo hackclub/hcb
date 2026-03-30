@@ -1,6 +1,6 @@
 <%# locals: (action: "") %>
 
-<%= render "callout", type: "info", title: "You can't #{action}" do %>
+<%= render "application/callout", type: "info", title: "You can't #{action}" do %>
   <% if @event.demo_mode? %>
     <p class="m0">This is because this organization is in Playground Mode.</p>
   <% else %>

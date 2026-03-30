@@ -3,7 +3,7 @@
 class AchTransfersController < ApplicationController
   include SetEvent
 
-  before_action :set_ach_transfer, except: [:new, :create, :index, :validate_routing_number]
+  before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
   skip_before_action :signed_in_user, except: [:validate_routing_number]
   skip_after_action :verify_authorized, only: [:validate_routing_number]
@@ -43,6 +43,7 @@ class AchTransfersController < ApplicationController
   def new
     @ach_transfer = AchTransfer.new(event: @event)
     authorize @ach_transfer
+    render layout: "transfer"
   end
 
   # POST /ach_transfers
