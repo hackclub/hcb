@@ -203,14 +203,13 @@
             <%= avatar_for @user, size: 48, class: "mr2" %>
             <span>
               <% if @user.profile_picture.attached? %>
-              You're currently using an uploaded profile picture.<br>
-              If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>
-                .
+                You're currently using an uploaded profile picture.<br>
+                If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
               <% else %>
-              If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
-              Or, you can upload a profile picture.<br>
+                If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
+                Or, you can upload a profile picture.<br>
               <% end %>
-          </span>
+            </span>
           </p>
           <div data-controller="file-upload" data-file-upload-placeholder-value="Upload profile picture">
             <%= form.file_field :profile_picture, accept: "image/png, image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
@@ -265,6 +264,5 @@
                             phone_number: @user.phone_number_in_database %>
       </section>
     <% end %>
-
   </turbo-frame>
 <% end %>

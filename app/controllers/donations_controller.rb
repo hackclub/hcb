@@ -7,8 +7,8 @@ class DonationsController < ApplicationController
   include DonationPageSetup
   include Rails::Pagination
 
-  skip_after_action :verify_authorized, only: [:export, :show, :qr_code, :finish_donation, :finished]
-  skip_before_action :signed_in_user
+  skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
+  skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
   before_action :set_donation, only: [:show, :update]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
@@ -87,7 +87,6 @@ class DonationsController < ApplicationController
   end
 
   def finish_donation
-
     @donation = Donation.find_by!(url_hash: params["donation"])
 
     # We don't use set_event here to prevent a UI vulnerability where a user could create a donation on one org and make it look like another org by changing the slug
