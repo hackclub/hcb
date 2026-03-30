@@ -14,28 +14,28 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6" x-data="{ minor: <%= @application.user.age&.<(18) || false %> }">
-    <div class="md:flex gap-2">
+  <div class="card mb-6" x-data="{ minor: <%= @application.user.is_minor? || false %>, country: '<%= @application.address_country.presence %>', disallowed_countries: '<%= Event::Application::DISALLOWED_COUNTRIES.join(",") %>'.split(',') }">
+    <div class="md:flex items-end gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
           Full name <span class="text-primary">*</span>
         <% end %>
-        <%= form.text_field :full_name, value: current_user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+        <%= form.text_field :full_name, value: @application.user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
       </div>
       <div class="field flex-1">
         <%= form.label :preferred_name, "Preferred name (optional)" %>
-        <%= form.text_field :preferred_name, value: current_user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
+        <%= form.text_field :preferred_name, value: @application.user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
       </div>
     </div>
 
-    <div class="md:flex items-center gap-2">
+    <div class="md:flex items-end gap-2">
       <div class="field flex-1">
         <%= form.label :phone_number do %>
           Mobile phone number <span class="text-primary">*</span>
         <% end %>
 
-        <%= form.hidden_field :phone_number, value: current_user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= current_user.phone_number.presence %>" required="required">
+        <%= form.hidden_field :phone_number, value: @application.user.phone_number.presence, required: true, placeholder: "555-555-5555", id: "phone_number" %>
+        <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @application.user.phone_number.presence %>" autocomplete="on" required>
       </div>
       <div class="field flex-1">
         <div class="inline-flex items-center justify-between w-full gap-1">
@@ -51,15 +51,15 @@
                                 { start_year: Date.today.year,
                                   end_year: Date.today.year - 100,
                                   order: [:month, :day, :year],
-                                  prompt: current_user.birthday.nil?,
-                                  default: current_user.birthday.presence
+                                  prompt: @application.user.birthday.nil?,
+                                  default: @application.user.birthday.presence
                                 },
                                 { required: true } %>
         </div>
       </div>
     </div>
 
-    <% if current_user.applications.many? || current_user.events.any? %>
+    <% if @application.user.applications.many? || @application.user.events.any? %>
       <div class="mt-[-0.25rem] mb-4 rounded-b-lg h-2 border-solid border-smoke dark:border-slate border-t-0 w-full relative">
         <div class="absolute max-w-full w-max bottom-0 left-1/2 bg-white dark:bg-darkless px-2 muted text-sm -translate-x-1/2 translate-y-1/2">Changes made here will also update your HCB profile</div>
       </div>
@@ -99,9 +99,17 @@
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]" } %>
+        <% validate = "$el.setCustomValidity(disallowed_countries.includes(country) ? 'HCB is not supported in this country' : '')" %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": validate, "x-init": validate } %>
       </div>
     </div>
+
+    <template x-if="disallowed_countries.includes(country)">
+      <div class="border border-1 border-primary/50 bg-primary/10 flex flex-row justify-start gap-2 items-center rounded-[6px] py-1 px-2 mt-4">
+        <%= inline_icon "important", size: 20, class: "primary" %>
+        <p class="primary text-sm m-0 p-0">HCB is not supported in <span x-text="(country, event_application_address_country.selectedOptions[0].label)">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
+      </div>
+    </template>
 
     <hr class="col-span-2 mt-5 invisible mb-4">
 
@@ -110,11 +118,6 @@
         How did you hear about HCB? <span class="text-primary">*</span>
       <% end %>
       <%= form.text_field :referrer, class: "w-full !max-w-full", required: true %>
-    </div>
-
-    <div class="field">
-      <%= form.label :referral_code, "Referral code" %>
-      <%= form.text_field :referral_code, class: "w-full !max-w-full" %>
     </div>
 
     <div class="field">
@@ -139,6 +142,6 @@
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">
     <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: review_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
-    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+    <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
   </div>
 <% end %>

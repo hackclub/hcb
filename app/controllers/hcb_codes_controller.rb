@@ -130,8 +130,7 @@ class HcbCodesController < ApplicationController
     hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
-    @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
-    @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
+    @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
     if params[:hcb_code][:inline].present?
       return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
@@ -144,24 +143,6 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code
     end
-  end
-
-  def comment
-    @hcb_code = HcbCode.find(params[:id])
-
-    authorize @hcb_code
-
-    ::HcbCodeService::Comment::Create.new(
-      hcb_code_id: @hcb_code.id,
-      content: params[:content],
-      file: params[:file],
-      admin_only: params[:admin_only],
-      current_user:
-    ).run
-
-    redirect_to params[:redirect_url]
-  rescue => e
-    redirect_to params[:redirect_url], flash: { error: e.message }
   end
 
   include HcbCodeHelper # for disputed_transactions_airtable_form_url and attach_receipt_url

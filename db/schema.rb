@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "account_number_bidx"
     t.text "account_number_ciphertext"
     t.integer "amount"
@@ -194,15 +194,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "parameters"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
   end
 
   create_table "announcements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "author_id", null: false
     t.jsonb "content", null: false
     t.datetime "created_at", null: false
@@ -220,6 +218,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "application_id"
     t.datetime "created_at", null: false
     t.integer "expires_in"
+    t.inet "ip_address"
     t.string "refresh_token"
     t.datetime "revoked_at"
     t.string "scopes"
@@ -228,6 +227,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
+    t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -258,7 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   end
 
   create_table "bank_fees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -463,6 +463,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
     t.string "category_lock"
+    t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.integer "expiration_preference", default: 365, null: false
     t.string "invite_message"
@@ -472,6 +473,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
     t.string "support_url"
+    t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
   end
 
@@ -484,7 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "expiration_at"
+    t.date "expiration_at", null: false
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
@@ -498,11 +500,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id"
+    t.index ["disbursement_id"], name: "index_card_grants_on_disbursement_id", unique: true
     t.index ["event_id"], name: "index_card_grants_on_event_id"
     t.index ["sent_by_id"], name: "index_card_grants_on_sent_by_id"
-    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id"
-    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id"
+    t.index ["stripe_card_id"], name: "index_card_grants_on_stripe_card_id", unique: true
+    t.index ["subledger_id"], name: "index_card_grants_on_subledger_id", unique: true
     t.index ["user_id"], name: "index_card_grants_on_user_id"
   end
 
@@ -524,7 +526,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   end
 
   create_table "checks", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "approved_at", precision: nil
     t.integer "check_number"
@@ -633,7 +635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   end
 
   create_table "contract_parties", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "contract_id", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
@@ -782,6 +784,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.text "description"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.boolean "published", default: false, null: false
     t.integer "sort_index"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_donation_tiers_on_event_id"
@@ -984,8 +987,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.string "address_state"
     t.string "airtable_record_id"
     t.string "airtable_status"
+    t.datetime "airtable_synced_at"
     t.integer "annual_budget_cents"
     t.datetime "approved_at"
+    t.datetime "archived_at"
     t.integer "committed_amount_cents"
     t.string "cosigner_email"
     t.datetime "created_at", null: false
@@ -998,6 +1003,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.string "name"
     t.string "planning_duration"
     t.text "political_description"
+    t.boolean "previously_applied"
     t.string "project_category"
     t.string "referral_code"
     t.string "referrer"
@@ -1271,6 +1277,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.citext "domain"
     t.bigint "event_id"
     t.boolean "immune_to_revocation", default: false, null: false
+    t.integer "max_accounts", default: 75, null: false
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
     t.datetime "updated_at", precision: nil, null: false
@@ -1664,6 +1671,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.index ["subject_type", "subject_id"], name: "index_metrics_on_subject"
   end
 
+  create_table "nondisposable_disposable_domains", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_nondisposable_disposable_domains_on_name", unique: true
+  end
+
   create_table "oauth_access_grants", force: :cascade do |t|
     t.bigint "application_id", null: false
     t.string "code_challenge"
@@ -1712,14 +1726,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
     t.datetime "created_at", precision: nil, null: false
-    t.bigint "organizer_position_id"
-    t.text "reason"
+    t.bigint "organizer_position_id", null: false
+    t.text "reason", null: false
     t.boolean "subject_emails_should_be_forwarded", default: false, null: false
     t.boolean "subject_has_active_cards", default: false, null: false
     t.boolean "subject_has_outstanding_expenses_expensify", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_emburse", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_stripe", default: false, null: false
-    t.bigint "submitted_by_id"
+    t.bigint "submitted_by_id", null: false
     t.datetime "updated_at", precision: nil, null: false
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
@@ -1796,14 +1810,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
   create_table "organizer_positions", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
-    t.bigint "event_id"
+    t.bigint "event_id", null: false
     t.boolean "first_time", default: true
     t.bigint "fiscal_sponsorship_contract_id"
     t.boolean "is_signee", default: false
     t.integer "role", default: 100, null: false
     t.integer "sort_index"
     t.datetime "updated_at", precision: nil, null: false
-    t.bigint "user_id"
+    t.bigint "user_id", null: false
     t.index ["event_id"], name: "index_organizer_positions_on_event_id"
     t.index ["fiscal_sponsorship_contract_id"], name: "index_organizer_positions_on_fiscal_sponsorship_contract_id"
     t.index ["user_id"], name: "index_organizer_positions_on_user_id"
@@ -2085,7 +2099,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.bigint "user_id", null: false
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
-    t.index ["user_id", "referral_program_id"], name: "index_referral_attributions_on_user_id_and_referral_program_id", unique: true
+    t.index ["user_id", "referral_link_id"], name: "index_referral_attributions_on_user_id_and_referral_link_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
   end
 
@@ -2534,6 +2548,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_04_200446) do
     t.datetime "created_at", null: false
     t.integer "recipient_country"
     t.jsonb "recipient_information"
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 

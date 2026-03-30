@@ -14,8 +14,10 @@
 #  address_postal_code          :string
 #  address_state                :string
 #  airtable_status              :string
+#  airtable_synced_at           :datetime
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
+#  archived_at                  :datetime
 #  committed_amount_cents       :integer
 #  cosigner_email               :string
 #  currently_fiscally_sponsored :boolean
@@ -26,6 +28,7 @@
 #  name                         :string
 #  planning_duration            :string
 #  political_description        :text
+#  previously_applied           :boolean
 #  project_category             :string
 #  referral_code                :string
 #  referrer                     :string
@@ -61,23 +64,27 @@ class Event
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
+    belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
-    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     validate :cosigner_cannot_change_after_sign
 
     after_save :check_cosigner_update
-    after_commit :sync_to_airtable
+    after_commit :schedule_airtable_sync, unless: :saved_change_to_airtable_synced_at?
 
     monetize :annual_budget_cents, allow_nil: true
     monetize :committed_amount_cents, allow_nil: true
+
+    include Rails.application.routes.url_helpers
 
     after_create_commit do
       Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
@@ -85,6 +92,11 @@ class Event
       Event::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
       Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
     end
+
+    scope :not_archived, -> { where(archived_at: nil) }
+    scope :archived, -> { where.not(archived_at: nil) }
+
+    scope :active, -> { where(archived_at: nil, event_id: nil) }
 
     enum :last_page_viewed, {
       show: "show",
@@ -107,8 +119,10 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          if user.teenager?
-            create_contract
+          update!(teen_led: user.is_teenager?, archived_at: nil)
+
+          if teen_led?
+            send_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
             mark_under_review!
@@ -124,10 +138,12 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: [:submitted, :under_review], to: :approved
+        transitions from: :under_review, to: :approved
         after do
-          unless user.teenager?
-            create_contract unless contract.present?
+          if teen_led?
+            contract.party(:hcb).schedule_reminders
+          else
+            send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
         end
@@ -135,10 +151,19 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
+        after do |rejection_message|
+          contract.mark_voided! if contract.present?
+
+          if rejection_message.present?
+            Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
+          end
+        end
       end
     end
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
+
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -174,10 +199,22 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:
       }
     end
 
@@ -185,8 +222,8 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
-      return "Sign the fiscal sponsorship agreement" if submitted?
-      return "Start spending!" if approved?
+      return "Sign the fiscal sponsorship agreement" if (submitted? && teen_led?) || (approved? && !teen_led?)
+      return "Start spending!" if event.present?
       return "" if rejected?
     end
 
@@ -194,7 +231,7 @@ class Event
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted? || under_review?
+      return 100 if submitted? || under_review? || approved?
 
       0
     end
@@ -211,9 +248,17 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
-    def create_contract
+    def contract_notify_hcb?
+      !teen_led?
+    end
+
+    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
+      end
+
+      if cosigner_email.present? && !user.is_minor?
+        update!(cosigner_email: nil)
       end
 
       fs_contract = nil
@@ -223,8 +268,8 @@ class Event
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!
-      fs_contract.party(:cosigner)&.notify
+      fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
 
       fs_contract
     end
@@ -232,7 +277,7 @@ class Event
     def ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
 
-      if user.age < 18
+      if user.is_minor?
         required_fields.push("cosigner_email")
       end
 
@@ -240,11 +285,11 @@ class Event
         self[field].nil?
       end
 
-      !missing_fields && !user.onboarding?
+      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
     end
 
     def response_time
-      user.teenager? ? "48 hours" : "2 weeks"
+      teen_led? ? "2 business days" : "2 weeks"
     end
 
     def status_color
@@ -262,39 +307,11 @@ class Event
       end
     end
 
-    def sync_to_airtable
-      return if draft?
-
-      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
-      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
-      app ||= ApplicationsTable.new("HCB Application ID" => hashid)
-
-      app["First Name"] = user.first_name
-      app["Last Name"] = user.last_name
-      app["Email Address"] = user.email
-      app["Phone Number"] = user.phone_number
-      app["Date of Birth"] = user.birthday
-      app["Event Name"] = name
-      app["Event Website"] = website_url
-      app["Zip Code"] = address_postal_code
-      app["Tell us about your event"] = description
-      app["Have you used HCB for any previous events?"] = user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
-      app["Teenager Led?"] = user.teenager?
-      app["Address Line 1"] = address_line1
-      app["City"] = address_city
-      app["State"] = address_state
-      app["Address Country"] = address_country
-      app["Event Location"] = address_country
-      app["How did you hear about HCB?"] = referrer
-      app["Accommodations"] = notes
-      app["(Adults) Political Activity"] = political_description
-      app["Referral Code"] = referral_code
-      app["HCB Status"] = aasm_state.humanize unless draft?
-      app["Synced from HCB at"] = Time.current
-
-      app.save
-
-      update_columns(airtable_record_id: app.id, airtable_status: app["Status"])
+    def check_cosigner_update
+      if contract.present? && cosigner_email_previously_changed?
+        contract.mark_voided!
+        send_contract
+      end
     end
 
     def airtable_url
@@ -307,43 +324,85 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def check_cosigner_update
-      if contract.present? && cosigner_email_previously_changed?
-        contract.mark_voided!
-        create_contract
-      end
-    end
-
-    def activate_event!
+    def activate_event!(risk_level:, tags: [], point_of_contact: nil)
+      contract.party(:hcb).sync_with_docuseal
+      contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
 
-      poc = contract.party(:hcb).user
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
 
-      Event.create!(
-        name:,
-        country: address_country,
-        point_of_contact_id: poc.id,
-        application: self
-      )
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
+        Event.create!(
+          name:,
+          country: address_country,
+          point_of_contact_id: poc_user.id,
+          application: self,
+          event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+          risk_level:
+        )
+        contract.create_document!
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
-      invite = service.model
-      service.run!
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        invite = service.model
+        service.run!
 
-      invite.accept(application_contract: contract)
+        invite.accept(application_contract: contract)
 
-      affiliations.each do |affiliation|
-        affiliation_copy = affiliation.dup
-        affiliation_copy.affiliable = event
-        affiliation_copy.save!
+        affiliations.each do |affiliation|
+          affiliation_copy = affiliation.dup
+          affiliation_copy.affiliable = event
+          affiliation_copy.save!
+        end
       end
+
+      schedule_airtable_sync
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
     end
 
+    def archive!
+      contract&.mark_voided! if contract&.may_mark_voided?
+
+      update!(archived_at: Time.current)
+    end
+
+    def unarchive!
+      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+
+      update!(archived_at: nil)
+    end
+
+    def archived?
+      archived_at.present?
+    end
+
+    def respondent_url
+      url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
+    end
+
+    def airtable_record
+      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
+      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
+    end
+
     private
+
+    def schedule_airtable_sync
+      Event::ApplicationSyncToAirtableJob.perform_later(self)
+    end
 
     def cosigner_cannot_change_after_sign
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
