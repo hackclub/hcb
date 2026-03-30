@@ -1,3 +1,5 @@
+<%# locals: (hcb_codes:) %>
+
 <% if hcb_codes.first&.canonical_pending_transactions&.any? { |pt| pt.hcb_decline_reason == :merchant_not_allowed } %>
   <% event_name = hcb_codes.first.event&.name || "this card" %>
   <%= render "application/callout", type: "warning", title: "Transaction declined for #{event_name}" do %>
