@@ -37,9 +37,9 @@
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
-  <h4 class="flex-grow mt-10">
+  <div class="flex-grow">
     <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
-  </h4>
+  </div>
   <%= paginate @canonical_transactions %>
 </div>
 
