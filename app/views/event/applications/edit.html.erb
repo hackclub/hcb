@@ -238,6 +238,19 @@
       </div>
 
     <% end %>
+
+    <%= turbo_frame_tag :affiliations_settings do %>
+      <h3 class="mb2">Affiliations</h3>
+
+      <div class="card mb3">
+        <% affiliation = Event::Affiliation.new(affiliable: @application) %>
+        <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: '', disabled: #{!policy(affiliation).update?} }" }) do |form| %>
+          <%= render "events/settings/affiliation_form", affiliation:, form: %>
+        <% end %>
+      </div>
+
+      <%= render partial: "events/settings/affiliation", collection: @application.affiliations.nonempty %>
+    <% end %>
   </div>
 </div>
 
