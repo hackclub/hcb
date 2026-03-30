@@ -7,8 +7,8 @@
   <%= render "events/one_pager",
     title: "Announcements",
     screenshots: {
-      light: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/ea38bca4b45ea898_image.png",
-      dark: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/4c5f86c3d3366341_image.png",
+      light: "https://cdn.hackclub.com/019ce82d-380a-7bf0-89b7-600b22247f45/image.png",
+      dark: "https://cdn.hackclub.com/019ce82d-5120-79a5-928e-4745bec305a4/image.png"
     },
     hints: [
       {
@@ -28,7 +28,7 @@
       }
     ] do %>
     <% content_for :caption do %>
-      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/announcements" target="_blank" class="underline">how we do announcements on HQ!</a></span>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/converge/announcements" target="_blank" rel="noopener noreferrer" class="underline">how Converge sends announcements!</a></span>
     <% end %>
     <div class="flex gap-2 flex-row-reverse">
       <%= render "announcement_header" %>
