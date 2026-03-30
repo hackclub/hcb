@@ -255,6 +255,14 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def request_meeting?
+    manager?
+  end
+
+  def send_meeting_request?
+    manager?
+  end
+
   private
 
   def admin_or_member?

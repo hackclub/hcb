@@ -1,0 +1,11 @@
+<% title "Request an onboarding meeting" %>
+<% page_md %>
+<%= render "events/nav" %>
+
+<h1 class="flex mb-0 border-0">
+  Request an onboarding meeting
+</h1>
+
+<p>If you have questions or would like to go over the HCB plaform with a member of our team, feel free to request a meeting!</p>
+
+<%= button_to "Request", send_meeting_request_event_path(@event), class: "btn bg-info" %>

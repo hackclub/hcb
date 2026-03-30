@@ -22,4 +22,8 @@ class EventMailerPreview < ActionMailer::Preview
       .negative_balance
   end
 
+  def meeting_requested
+    EventMailer.with(event: Event.last, user: Event.last.users.first).meeting_requested
+  end
+
 end

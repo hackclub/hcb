@@ -47,4 +47,12 @@ class EventMailer < ApplicationMailer
     mail(to: @emails, subject: "#{@event.name} has a negative balance")
   end
 
+  def meeting_requested
+    @user = params[:user]
+
+    mail to: @event.point_of_contact.email_address_with_name,
+         subject: "#{@user.name} from #{@event.name} requested an onboarding meeting",
+         reply_to: @user.email_address_with_name
+  end
+
 end

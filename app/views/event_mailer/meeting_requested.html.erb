@@ -1,0 +1,14 @@
+<p>Hi there! 👋</p>
+
+<p>
+  <%= link_to "#{@user.name} (#{@user.email})", admin_user_url(@user) %>
+  from <%= link_to @event.name, @event %> has requested an onboarding meeting.
+</p>
+
+<p>
+  Reply to this email to schedule an onboarding meeting with <%= @user.name %>!
+</p>
+
+<p>
+  Thanks!
+</p>
