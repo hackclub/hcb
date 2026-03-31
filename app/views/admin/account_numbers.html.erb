@@ -40,13 +40,12 @@
       <tr>
         <td><%= an.id %></td>
         <td>
-          <% if an.event %>
-            <%= link_to event_path(an.event) do %>
-              <%= an.event.name.upcase %>
-            <% end %>
-            (#<%= an.event.id %>)
-          <% else %>
-            <em>No event</em>
+          <%= link_to event_path(an.event) do %>
+            <%= an.event.name.upcase %>
+          <% end %>
+          (#<%= an.event.id %>)
+          <% if an.event.deleted? %>
+            <em>(deleted)</em>
           <% end %>
         </td>
         <td><%= an.account_number %></td>

@@ -26,7 +26,7 @@
 #
 module Column
   class AccountNumber < ApplicationRecord
-    belongs_to :event
+    belongs_to :event, with_deleted: true
 
     has_encrypted :account_number, :routing_number, :bic_code
 
