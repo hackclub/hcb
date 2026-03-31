@@ -3,6 +3,11 @@
     Back to ACHs
 <% end %>
 
+<%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= inline_icon "payment-transfer" %>
+  View transaction
+<% end %>
+
 <h1>Process ACH Transfer #<%= @ach_transfer.id %></h1>
 <p><small>Current Status: <%= @ach_transfer.aasm_state %></small></p>
 
