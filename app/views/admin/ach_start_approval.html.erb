@@ -6,7 +6,7 @@
 
   <%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
-    View transaction
+    View transaction (<%= pluralize(@ach_transfer.local_hcb_code.comments.count, "comment") %>)
   <% end %>
 
   <div class="flex-grow"></div>
