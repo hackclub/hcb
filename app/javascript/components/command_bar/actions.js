@@ -78,7 +78,7 @@ export const generateEventActions = data => {
       name: 'Check deposits',
       perform: () =>
         (window.location.pathname = `/${event.slug}/check-deposits`),
-      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
+      icon: <Icon glyph="cheque" size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -462,7 +462,7 @@ export const adminActions = (adminUrls, isPretending) => {
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Check deposits',
-      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
+      icon: <Icon glyph="cheque" size={16} />,
       perform: navigate('/admin/check_deposits'),
     },
     {
