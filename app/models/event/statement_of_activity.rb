@@ -63,15 +63,52 @@ class Event
     end
 
     memo_wise def net_asset_change
-      transactions.sum(:amount_cents)
+      transaction_sections.sum { |section| section.fetch(:transactions).sum { |transaction| transaction.fetch(:amount_cents) } }
     end
 
     memo_wise def total_revenue
-      transactions.where("amount_cents > 0").sum(:amount_cents)
+      transaction_sections.sum do |section|
+        section.fetch(:transactions).sum do |transaction|
+          amount_cents = transaction.fetch(:amount_cents)
+          amount_cents.positive? ? amount_cents : 0
+        end
+      end
     end
 
     memo_wise def total_expense
-      transactions.where("amount_cents < 0").sum(:amount_cents)
+      transaction_sections.sum do |section|
+        section.fetch(:transactions).sum do |transaction|
+          amount_cents = transaction.fetch(:amount_cents)
+          amount_cents.negative? ? amount_cents : 0
+        end
+      end
+    end
+
+    memo_wise def includes_multiple_organizations?
+      event_group.present? || include_descendants
+    end
+
+    memo_wise def included_organization_names
+      events.map(&:name)
+    end
+
+    memo_wise def transaction_sections
+      totals = category_totals
+
+      transactions_by_category.map do |category, category_transactions|
+        {
+          category_name: category&.label || "Uncategorized",
+          category_total_cents: totals[category&.slug],
+          transactions: category_transactions.map do |transaction|
+            {
+              memo: transaction.memo,
+              amount_cents: transaction.amount_cents,
+              organization_name: transaction.event.name,
+              url: transaction.local_hcb_code.present? ? Rails.application.routes.url_helpers.url_for(transaction.local_hcb_code) : nil,
+            }
+          end,
+        }
+      end
     end
 
     memo_wise def xlsx
@@ -98,39 +135,31 @@ class Event
         current_row += 1
       end
 
-      if @event_group.present?
+      if includes_multiple_organizations?
         write_row.call("Included organizations:", format: bold)
-        @event_group.events.each do |event|
-          write_row.call(event.name, level: 1)
+        included_organization_names.each do |organization_name|
+          write_row.call(organization_name, level: 1)
         end
-        write_row.call("Total organization count:", @event_group.events.count)
+        write_row.call("Total organization count:", included_organization_names.count)
 
         current_row += 2 # Give some space before the transaction list
       end
 
       # Header row for transaction list
-      if @event_group.present?
-        write_row.call("Transaction Memo", "Amount", "Organization", "URL", format: bold)
-      else
-        write_row.call("Transaction Memo", "Amount", "URL", format: bold)
-      end
+      write_row.call("Transaction Memo", "Amount", "Organization", "URL", format: bold)
 
-      transactions_by_category.to_a.each do |category, transactions|
-        category_name = category&.label || "Uncategorized"
-        category_total = category_totals[category&.slug] / 100.0
-
-        transactions.each do |transaction|
-          memo = transaction.memo
-          amount_cents = transaction.amount_cents / 100.0
-          url = Rails.application.routes.url_helpers.url_for(transaction.local_hcb_code)
-          if @event_group.present?
-            write_row.call(memo, amount_cents, transaction.event.name, url, level: 1)
-          else
-            write_row.call(memo, amount_cents, url, level: 1)
-          end
+      transaction_sections.each do |section|
+        section.fetch(:transactions).each do |transaction|
+          write_row.call(
+            transaction.fetch(:memo),
+            transaction.fetch(:amount_cents) / 100.0,
+            transaction.fetch(:organization_name),
+            transaction.fetch(:url),
+            level: 1
+          )
         end
 
-        write_row.call(category_name, category_total, format: bold)
+        write_row.call(section.fetch(:category_name), section.fetch(:category_total_cents) / 100.0, nil, nil, format: bold)
       end
 
       workbook.close
