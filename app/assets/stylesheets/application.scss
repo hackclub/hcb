@@ -687,3 +687,23 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     @apply bg-primary text-white;
   }
 }
+
+.scroll-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--top-mask-size, 0),
+    black calc(100% - var(--bottom-mask-size, 0)),
+    transparent 100%
+  );
+  --top-mask-size: 0px;
+  --bottom-mask-size: 0px;
+}
+
+.scroll-fade.is-top-overflowing {
+  --top-mask-size: 48px !important;
+}
+
+.scroll-fade.is-bottom-overflowing {
+  --bottom-mask-size: 48px !important;
+}
