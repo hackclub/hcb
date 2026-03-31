@@ -38,9 +38,7 @@ export default class extends Controller {
   }
 
   handleStateChange(index, event) {
-    console.log('state')
     if (event.data === YT.PlayerState.PLAYING) {
-      console.log('PLAY!')
       this.startedMap.set(index, true)
       this.checkAllStarted()
     }
