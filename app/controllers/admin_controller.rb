@@ -389,9 +389,9 @@ class AdminController < Admin::BaseController
   def event_search
     @q = params[:q].presence
     @events = if @q.present?
-                Event.where("name ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{Event.sanitize_sql_like(@q)}%", "%#{Event.sanitize_sql_like(@q)}%").order(:name).limit(20).select(:id, :name)
+                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
               else
-                Event.none
+                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
               end
     render turbo_stream: helpers.async_combobox_options(@events)
   end
@@ -399,9 +399,9 @@ class AdminController < Admin::BaseController
   def user_search
     @q = params[:q].presence
     @users = if @q.present?
-               User.where("full_name ILIKE ? OR email ILIKE ? OR CAST(id AS TEXT) ILIKE ?", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%", "%#{User.sanitize_sql_like(@q)}%").order(:full_name).limit(20).select(:id, :full_name, :email)
+              User.search_name(@q).limit(20).select(:id, :full_name, :email)
              else
-               User.none
+               User.order(:full_name).limit(20).select(:id, :full_name, :email)
              end
     render turbo_stream: helpers.async_combobox_options(@users)
   end
@@ -732,7 +732,6 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-    @event_id = params[:event_id].presence
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -740,7 +739,7 @@ class AdminController < Admin::BaseController
 
     @wires = @wires.search_recipient(@q) if @q
 
-    @wires.where(event_id: @event_id) if @event_id
+    @wires = @wires.where(event_id: @event.id) if @event
 
     @wires = @wires.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
