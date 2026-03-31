@@ -55,6 +55,22 @@
               </span>
             </p>
           <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :approved).last&.whodunnit) %>
+            <p>
+              <strong>Approved by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
+              </span>
+            </p>
+          <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :rejected).last&.whodunnit) %>
+            <p>
+              <strong>Rejected by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
+              </span>
+            </p>
+          <% end %>
         </section>
       </div>
     <% end %>
