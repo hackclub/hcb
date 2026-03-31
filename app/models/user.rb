@@ -583,6 +583,12 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
+
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
+  end
+
   def only_draft_application?
     return false unless events.none? && card_grants.none? &&
                         organizer_position_invites.none? && contracts.none? &&
