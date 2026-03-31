@@ -399,7 +399,7 @@ class AdminController < Admin::BaseController
   def user_search
     @q = params[:q].presence
     @users = if @q.present?
-              User.search_name(@q).limit(20).select(:id, :full_name, :email)
+               User.search_name(@q).limit(20).select(:id, :full_name, :email)
              else
                User.order(:full_name).limit(20).select(:id, :full_name, :email)
              end
