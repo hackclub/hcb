@@ -762,7 +762,7 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @include_archived = params[:include_archived] == "1" ? true : nil
 
-    @applications = Event::Application.all
+    @applications = Event::Application.all.includes(:user)
     @applications = @applications.not_archived unless @include_archived
     @applications = @applications.search_name(@q) if @q
 
@@ -867,9 +867,9 @@ class AdminController < Admin::BaseController
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.disbursements.includes(:event)
+      relation = @event.disbursements.includes(:source_event)
     else
-      relation = Disbursement.includes(:event)
+      relation = Disbursement.includes(:source_event)
     end
 
     if @q
@@ -926,7 +926,13 @@ class AdminController < Admin::BaseController
 
     respond_to do |format|
       format.html do
-        @hcb_codes = @hcb_codes.page(@page).per(@per)
+        @hcb_codes = @hcb_codes.includes(
+          :event,
+          :comments,
+          :receipts,
+          canonical_pending_transactions: :event,
+          canonical_transactions: :event
+        ).page(@page).per(@per)
       end
       format.csv { render csv: @hcb_codes }
     end
@@ -1430,7 +1436,7 @@ class AdminController < Admin::BaseController
   def employees
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @employees = Employee.all.page(@page).per(@per).order(
+    @employees = Employee.all.includes(:event, :entity).page(@page).per(@per).order(
       Arel.sql("aasm_state = 'onboarding' DESC"),
       "employees.created_at desc"
     )
@@ -1471,7 +1477,7 @@ class AdminController < Admin::BaseController
     @status = params[:status].presence
     @service = params[:service].presence
 
-    @contracts = Contract.all.includes(:document, :contractable)
+    @contracts = Contract.all.includes(:document, :contractable, parties: :user)
     @contracts = @contracts.where(type: @type) if @type
     @contracts = @contracts.where(aasm_state: @status) if @status
     @contracts = @contracts.where(external_service: @service) if @service
