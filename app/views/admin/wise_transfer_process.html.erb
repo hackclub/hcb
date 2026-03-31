@@ -155,7 +155,7 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
-        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post %>
+        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "my-3" %>
 
       </fieldset>
 
@@ -174,6 +174,15 @@
     <% elsif @wise_transfer.approved? %>
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Metadata</legend>
+
+        <div class="field mb-3">
+          <label class="bold mb1">Transaction category</label>
+          <br>
+          <%= render(
+                  partial: "hcb_codes/transaction_category_form",
+                  locals: { model: @wise_transfer.local_hcb_code.ct || @wise_transfer.local_hcb_code.pt }
+                ) %>
+        </div>
 
         <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
           <div class="mb-2">
