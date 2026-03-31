@@ -8,6 +8,13 @@
     <%= inline_icon "payment-transfer" %>
     View transaction
   <% end %>
+
+  <div class="flex-grow"></div>
+
+  <%= link_to("https://dashboard.column.com/app/transfers/edit/intl-wire/#{@ach_transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
+    <%= inline_icon "column" %>
+    <%= @ach_transfer.column_id.present? ? "Open Column (#{@ach_transfer.column_id})" : "Open Column" %>
+  <% end %>
 </div>
 
 <h1>Process Wire #<%= @wire.id %></h1>
