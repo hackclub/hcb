@@ -133,6 +133,8 @@ class Event < ApplicationRecord
 
   # filter organizations by category
   scope :by_category, ->(category) {
+    return all if category.nil?
+
     # check if tag is in hash
     if (tag = CATEGORY_TAGS[category])
       includes(:event_tags).where(event_tags: { name: tag })
