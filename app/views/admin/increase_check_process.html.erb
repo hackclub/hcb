@@ -10,7 +10,6 @@
   <% end %>
 </div>
 
-
 <h1>Process Check #<%= @check.id %> for <%= @check.event.name %> <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @check.event.financially_frozen? %></h1>
 <p><small>Current Status: <%= @check.aasm_state %></small></p>
 
@@ -94,9 +93,9 @@
           <label class="bold mb1">Transaction category</label>
           <br>
           <%= render(
-                  partial: "hcb_codes/transaction_category_form",
-                  locals: { model: @check.local_hcb_code.ct || @check.local_hcb_code.pt }
-                ) %>
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: @check.local_hcb_code.ct || @check.local_hcb_code.pt }
+              ) %>
         </div>
 
         <%= button_to "💸 Approve and send check", approve_increase_check_path(@check), method: :post, data: { confirm: "Are you sure you want to send this check?" } %>

@@ -179,9 +179,9 @@
           <label class="bold mb1">Transaction category</label>
           <br>
           <%= render(
-                  partial: "hcb_codes/transaction_category_form",
-                  locals: { model: @wise_transfer.local_hcb_code.ct || @wise_transfer.local_hcb_code.pt }
-                ) %>
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: @wise_transfer.local_hcb_code.ct || @wise_transfer.local_hcb_code.pt }
+              ) %>
         </div>
 
         <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>

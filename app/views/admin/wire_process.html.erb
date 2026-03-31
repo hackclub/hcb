@@ -15,7 +15,6 @@
 
 <hr>
 
-
 <div class="grid grid-cols-1 lg:grid-cols-2">
   <div>
     <h3>Transfer Details</h3>
@@ -128,9 +127,9 @@
           <label class="bold mb1">Transaction category</label>
           <br>
           <%= render(
-                  partial: "hcb_codes/transaction_category_form",
-                  locals: { model: @wire.local_hcb_code.ct || @wire.local_hcb_code.pt }
-                ) %>
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: @wire.local_hcb_code.ct || @wire.local_hcb_code.pt }
+              ) %>
         </div>
 
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>

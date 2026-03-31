@@ -161,7 +161,6 @@
   <div>
     <h3>Process</h3>
 
-
     <% if @ach_transfer.pending? %>
       <fieldset class="px-6 py-3">
         <% verb = @ach_transfer.scheduled_on.present? ? "Approve" : "Send" %>
@@ -171,9 +170,9 @@
           <label class="bold mb1">Transaction category</label>
           <br>
           <%= render(
-                  partial: "hcb_codes/transaction_category_form",
-                  locals: { model: @ach_transfer.local_hcb_code.ct || @ach_transfer.local_hcb_code.pt }
-                ) %>
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: @ach_transfer.local_hcb_code.ct || @ach_transfer.local_hcb_code.pt }
+              ) %>
         </div>
 
         <div class="flex flex-row gap-2 items-center justify-start">
@@ -196,7 +195,7 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Reject</legend>
 
-        <%= form_with(model: false, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>          
+        <%= form_with(model: false, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>
           <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
 
           <div class="field">
