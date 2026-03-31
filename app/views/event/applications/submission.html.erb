@@ -12,7 +12,11 @@
       </h2>
 
       <p class="m-0 text-lg muted">
-        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% if @application.submitted_at? %>
+          Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% else %>
+          This application is still a draft
+        <% end %>
 
         <% if @application.approved_at? %>
           <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
