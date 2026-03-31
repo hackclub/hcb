@@ -56,7 +56,7 @@ export const generateEventActions = data => {
       name: 'Account numbers',
       perform: () =>
         (window.location.pathname = `/${event.slug}/account-number`),
-      icon: <Icon glyph="hashtag" size={16} />,
+      icon: <img src="/icons/hashtag.svg" width={16} height={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -78,7 +78,7 @@ export const generateEventActions = data => {
       name: 'Check deposits',
       perform: () =>
         (window.location.pathname = `/${event.slug}/check-deposits`),
-      icon: <Icon glyph="cheque" size={16} />,
+      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -114,7 +114,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-perks`,
       name: 'Perks',
       perform: navigate(`/${event.slug}/promotions`),
-      icon: <Icon glyph="perks" size={16} />,
+      icon: <img src="/icons/perks.svg" width={16} height={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -182,7 +182,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <Icon glyph="receipt" size={16} />,
+    icon: <img src="/icons/receipt.svg" width={16} height={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -191,7 +191,7 @@ export const initalActions = [
     keywords: 'reimbursements report',
     perform: navigate('/my/reimbursements'),
     section: 'Pages',
-    icon: <Icon glyph="reimbursement" size={16} />,
+    icon: <img src="/icons/reimbursement.svg" width={16} height={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -462,7 +462,7 @@ export const adminActions = (adminUrls, isPretending) => {
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Check deposits',
-      icon: <Icon glyph="payment-docs" size={16} />,
+      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
       perform: navigate('/admin/check_deposits'),
     },
     {
