@@ -37,6 +37,7 @@
 #  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
+#  videos_watched               :boolean
 #  website_url                  :string
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
