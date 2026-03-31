@@ -3,6 +3,11 @@
     Back to wires
 <% end %>
 
+<%= link_to hcb_code_path(@wire.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <%= inline_icon "payment-transfer" %>
+  View transaction
+<% end %>
+
 <h1>Process Wire #<%= @wire.id %></h1>
 <p><small>Current Status: <%= @wire.aasm_state %></small></p>
 
