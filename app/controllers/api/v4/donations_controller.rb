@@ -64,6 +64,7 @@ module Api
                         if index.nil?
                           return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request
                         end
+
                         index + 1
                       else
                         0
