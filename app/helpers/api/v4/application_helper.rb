@@ -60,6 +60,15 @@ module Api
         @expand = before
       end
 
+      def shares_org_with?(user)
+        return false if current_user.nil?
+
+        @current_user_event_ids ||= OrganizerPosition.where(user: current_user).pluck(:event_id)
+        return false if @current_user_event_ids.empty?
+
+        OrganizerPosition.where(user:, event_id: @current_user_event_ids).exists?
+      end
+
       def expand_pii(override_if: false)
         yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
       end
