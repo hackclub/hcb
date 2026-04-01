@@ -1,5 +1,16 @@
 <%# locals: (statement_of_activity:) %>
 
+<%
+  included_events = statement_of_activity.events
+  category_totals = statement_of_activity.category_totals
+  transactions_by_category = statement_of_activity.transactions_by_category
+  transactions = transactions_by_category.values.flatten
+  total_revenue = transactions.sum { |transaction| transaction.amount_cents.positive? ? transaction.amount_cents : 0 }
+  total_expense = transactions.sum { |transaction| transaction.amount_cents.negative? ? transaction.amount_cents : 0 }
+  net_asset_change = transactions.sum(&:amount_cents)
+  show_organization_column = statement_of_activity.event_group.present? || statement_of_activity.include_descendants
+%>
+
 <h1 class="border-b-0">Statement of Activity</h1>
 
 <div class="flex gap-4 items-center">
@@ -54,21 +65,21 @@
     <% end %>
   <% end %>
   had a change in net assets
-  of <%= render_money statement_of_activity.net_asset_change %>;
-  after having raised <%= render_money statement_of_activity.total_revenue %> and
-  spent <%= render_money statement_of_activity.total_expense.abs %>.
+  of <%= render_money net_asset_change %>;
+  after having raised <%= render_money total_revenue %> and
+  spent <%= render_money total_expense.abs %>.
 </p>
 
-<% if statement_of_activity.includes_multiple_organizations? %>
+<% if statement_of_activity.event_group || statement_of_activity.include_descendants %>
   <details open>
-    <summary>Included organizations (<%= statement_of_activity.included_organization_names.count %>)</summary>
+    <summary>Included organizations (<%= included_events.count %>)</summary>
     <% if statement_of_activity.event_group && statement_of_activity.events.empty? %>
       <p>This group does not have any associated events</p>
     <% else %>
       <ul>
-        <% statement_of_activity.included_organization_names.each do |organization_name| %>
+        <% included_events.each do |event| %>
           <li>
-            <%= organization_name %>
+            <%= link_to(event.name, event_path(event)) %>
           </li>
         <% end %>
       </ul>
@@ -76,19 +87,22 @@
   </details>
 <% end %>
 
-<% if statement_of_activity.transaction_sections.empty? %>
+<% if transactions_by_category.empty? %>
   <p>There were no transactions in this date range.</p>
 <% else %>
   <details open>
     <summary>Categories and transactions</summary>
 
-    <% statement_of_activity.transaction_sections.each do |section| %>
+    <% transactions_by_category.each do |category, category_transactions| %>
+      <% category_name = category&.label || "Uncategorized" %>
+      <% category_total = category_totals[category&.slug] %>
+
       <details>
         <summary>
-          <%= section.fetch(:category_name) %>
+          <%= category_name %>
           —
-          <%= render_money section.fetch(:category_total_cents) %>
-          (<%= pluralize(section.fetch(:transactions).count, "transaction") %>)
+          <%= render_money category_total %>
+          (<%= pluralize(category_transactions.count, "transaction") %>)
         </summary>
 
         <table>
@@ -96,19 +110,25 @@
           <tr>
             <th>Transaction Memo</th>
             <th>Amount</th>
-            <th>Organization</th>
+            <% if show_organization_column %>
+              <th>Organization</th>
+            <% end %>
             <th>URL</th>
           </tr>
           </thead>
           <tbody>
-          <% section.fetch(:transactions).each do |transaction| %>
+          <% category_transactions.each do |transaction| %>
+            <% transaction_url = transaction.local_hcb_code.present? ? url_for(transaction.local_hcb_code) : nil %>
+
             <tr>
-              <td><%= transaction.fetch(:memo) %></td>
-              <td><%= render_money transaction.fetch(:amount_cents) %></td>
-              <td><%= transaction.fetch(:organization_name) %></td>
+              <td><%= transaction.memo %></td>
+              <td><%= render_money transaction.amount_cents %></td>
+              <% if show_organization_column %>
+                <td><%= transaction.event.name %></td>
+              <% end %>
               <td>
-                <% if transaction.fetch(:url).present? %>
-                  <%= link_to "View transaction", transaction.fetch(:url) %>
+                <% if transaction_url.present? %>
+                  <%= link_to "View transaction", transaction_url %>
                 <% else %>
                   URL unavailable
                 <% end %>
