@@ -7,6 +7,7 @@
 #  id                                     :bigint           not null, primary key
 #  accepted_at                            :datetime
 #  cancelled_at                           :datetime
+#  deleted_at                             :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
 #  is_signee                              :boolean          default(FALSE)
@@ -22,6 +23,7 @@
 #
 # Indexes
 #
+#  index_organizer_position_invites_on_deleted_at             (deleted_at)
 #  index_organizer_position_invites_on_event_id               (event_id)
 #  index_organizer_position_invites_on_organizer_position_id  (organizer_position_id)
 #  index_organizer_position_invites_on_sender_id              (sender_id)
