@@ -866,17 +866,11 @@ class EventsController < ApplicationController
   def statement_of_activity
     authorize @event
 
-    include_descendants = if params.key?(:include_descendants)
-                            ActiveRecord::Type::Boolean.new.cast(params[:include_descendants])
-                          else
-                            true
-                          end
-
     @statement_of_activity = Event::StatementOfActivity.new(
       @event,
       start_date_param: params[:start],
       end_date_param: params[:end],
-      include_descendants: include_descendants,
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
     )
 
     respond_to do |format|
