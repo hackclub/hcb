@@ -90,54 +90,71 @@
 <% if transactions_by_category.empty? %>
   <p>There were no transactions in this date range.</p>
 <% else %>
-  <details open>
-    <summary>Categories and transactions</summary>
-
-    <% transactions_by_category.each do |category, category_transactions| %>
-      <% category_name = category&.label || "Uncategorized" %>
-      <% category_total = category_totals[category&.slug] %>
-
-      <details>
-        <summary>
-          <%= category_name %>
-          —
-          <%= render_money category_total %>
-          (<%= pluralize(category_transactions.count, "transaction") %>)
-        </summary>
-
-        <table>
-          <thead>
+    <article class="table-container mb-4">
+      <table class="table-fixed w-full">
+        <thead>
           <tr>
-            <th>Transaction Memo</th>
+            <th class="w-[40%]">Transaction Memo</th>
             <th>Amount</th>
             <% if show_organization_column %>
               <th>Organization</th>
             <% end %>
-            <th>URL</th>
+            <th>ID</th>
           </tr>
-          </thead>
-          <tbody>
-          <% category_transactions.each do |transaction| %>
-            <% transaction_url = transaction.local_hcb_code.present? ? url_for(transaction.local_hcb_code) : nil %>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <% transactions_by_category.each do |category, category_transactions| %>
+        <% category_name = category&.label || "Uncategorized" %>
+        <% category_total = category_totals[category&.slug] %>
 
-            <tr>
-              <td><%= transaction.memo %></td>
-              <td><%= render_money transaction.amount_cents %></td>
-              <% if show_organization_column %>
-                <td><%= transaction.event.name %></td>
-              <% end %>
-              <td>
-                <% if transaction_url.present? %>
-                  <%= link_to "View transaction", transaction_url %>
-                <% else %>
-                  URL unavailable
+        <details class="relative">
+          <summary class="visual-table-row py-1 px-2" style="background: rgba(0, 0, 0, 0.01);">
+            <div class="inline-flex justify-start items-baseline absolute right-0 w-full">
+              <div class="w-[40%] pl-6">
+                <%= category_name %>
+              </div>
+
+                <div class="px-2">
+                  <%= render_money category_total %>
+                </div>
+                <div class="px-2 text-sm text-muted">
+                  <%= number_with_delimiter(category_transactions.count) %> <%= "transaction".pluralize(category_transactions.count) %>
+                </div>
+
+            </div>
+          </summary>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="w-[40%]">Transaction Memo</th>
+                <th>Amount</th>
+                <% if show_organization_column %>
+                  <th>Organization</th>
                 <% end %>
-              </td>
-            </tr>
-          <% end %>
-          </tbody>
-        </table>
-      </details>
-    <% end %>
-  </details>
+                <th>ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% category_transactions.each do |transaction| %>
+                <% transaction_url = transaction.local_hcb_code.present? ? url_for(transaction.local_hcb_code) : nil %>
+
+                <tr>
+                  <td><%= transaction.memo %></td>
+                  <td><%= render_money transaction.amount_cents %></td>
+                  <% if show_organization_column %>
+                    <td><%= link_to(transaction.event.name, event_path(transaction.event)) %></td>
+                  <% end %>
+                  <td>
+                    <%= link_to transaction.local_hcb_code.hashid, transaction_url %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </details>
+      <% end %>
+    </article>
 <% end %>
