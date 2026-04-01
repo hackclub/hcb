@@ -703,6 +703,7 @@ Rails.application.routes.draw do
             get "transactions", to: "transactions#index"
             get :followers
             get :balance_by_date
+            get :transfers
           end
         end
 

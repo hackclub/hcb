@@ -72,6 +72,28 @@ module Api
 
       require_oauth2_scope "organizations:read", :balance_by_date
 
+      def transfers
+        authorize @event, :show_in_v4?
+
+        query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q]).run
+        all_transfers = query.transfers
+
+        @stats = query.stats
+
+        limit = [[params[:limit]&.to_i || 25, 1].max, 100].min
+        @total_count = all_transfers.length
+
+        start_index = if params[:after].present?
+                        idx = all_transfers.index { |t| t.public_id == params[:after] }
+                        idx ? idx + 1 : 0
+                      else
+                        0
+                      end
+
+        @has_more = all_transfers.length > start_index + limit
+        @transfers = all_transfers.slice(start_index, limit) || []
+      end
+
       private
 
       def set_event
