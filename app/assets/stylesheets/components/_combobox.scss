@@ -90,7 +90,7 @@
 }
 
 .hw-combobox__listbox {
-  @apply shadow-md absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
+  @apply shadow-xl absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
   visibility: hidden;
   border-color: transparent;
   border-style: solid;
@@ -108,7 +108,7 @@
   }
 
   &:has([role='option']:not([hidden])) {
-    @apply border-neutral-500;
+    @apply border-gray-300 dark:border-neutral-500;
     visibility: visible !important;
   }
 }

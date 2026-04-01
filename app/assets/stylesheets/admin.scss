@@ -849,6 +849,8 @@ summary {
 .events-filter-select {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 .events-filter-select > label {
