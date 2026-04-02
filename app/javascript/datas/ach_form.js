@@ -1,4 +1,8 @@
-export default ({ payment_recipient, editing, validate_routing_number_url }) => ({
+export default ({
+  payment_recipient,
+  editing,
+  validate_routing_number_url,
+}) => ({
   payment_recipient,
   editing: editing || false,
   routingNumberHint: '',
@@ -10,9 +14,14 @@ export default ({ payment_recipient, editing, validate_routing_number_url }) => 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     const { valid, hint } = await fetch(validate_routing_number_url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+      },
       body: JSON.stringify({ value }),
-    }).then(r => r.json()).catch(() => ({ valid: false, hint: '' }))
+    })
+      .then(r => r.json())
+      .catch(() => ({ valid: false, hint: '' }))
 
     this.routingNumberHint = hint || ''
 
