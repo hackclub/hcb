@@ -107,8 +107,8 @@ class CardGrant < ApplicationRecord
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
-  scope :not_activated, -> { active.where(stripe_card_id: nil) }
-  scope :activated, -> { active.where.not(stripe_card_id: nil) }
+  scope :not_activated, -> { active.where(stripe_card_id: nil).or(CardGrant.active.where.not(id: Reimbursement::Report.all.select(:card_grant_id))) }
+  scope :stripe_activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
@@ -118,13 +118,11 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
-    if suspected_fraud?
+    if canceled? || expired?
       "error"
-    elsif canceled? || expired?
-      "muted"
     elsif pending_invite?
       "info"
-    elsif stripe_card.frozen? || stripe_card.inactive?
+    elsif stripe_card.frozen? || stripe_card.inactive? || suspected_fraud?
       "warning"
     else
       "success"
@@ -161,7 +159,7 @@ class CardGrant < ApplicationRecord
   end
 
   def pending_invite?
-    stripe_card.nil?
+    stripe_card.nil? && reimbursement_report.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)
