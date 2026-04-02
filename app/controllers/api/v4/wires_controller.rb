@@ -27,7 +27,6 @@ module Api
           :send_email_notification,
           *Wire.recipient_information_accessors
         )
-        
         @wire = @event.wires.build(wire_params.merge(user: current_user))
 
         authorize @wire
