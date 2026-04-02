@@ -710,9 +710,9 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
-        
+
         resources :tags, only: [:index, :show, :create, :destroy]
-        
+
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
