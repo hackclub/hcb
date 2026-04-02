@@ -43,7 +43,10 @@ RSpec.describe "Discord Webhook", type: :request do
     end
 
     context "with an invalid Discord signature" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DiscordController.method_defined?(:event_webhook)).to be(true)
+        expect_any_instance_of(DiscordController).not_to receive(:event_webhook)
+
         post "/discord/event_webhook",
              params: payload,
              headers: {
@@ -57,7 +60,10 @@ RSpec.describe "Discord Webhook", type: :request do
     end
 
     context "with no Discord signature" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DiscordController.method_defined?(:event_webhook)).to be(true)
+        expect_any_instance_of(DiscordController).not_to receive(:event_webhook)
+
         post "/discord/event_webhook",
              params: payload,
              headers: { "Content-Type" => "application/json" }
@@ -71,7 +77,7 @@ RSpec.describe "Discord Webhook", type: :request do
     let(:payload) { { type: 1 }.to_json }
 
     context "with a valid Discord signature" do
-      it "returns 200" do
+      it "returns 200 with PONG" do
         timestamp, signature = discord_signature(payload)
 
         post "/discord/interaction_webhook",
@@ -83,11 +89,15 @@ RSpec.describe "Discord Webhook", type: :request do
              }
 
         expect(response).to have_http_status(:ok)
+        expect(response.parsed_body["type"]).to eq(1)
       end
     end
 
     context "with an invalid Discord signature" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DiscordController.method_defined?(:interaction_webhook)).to be(true)
+        expect_any_instance_of(DiscordController).not_to receive(:interaction_webhook)
+
         post "/discord/interaction_webhook",
              params: payload,
              headers: {
@@ -101,7 +111,10 @@ RSpec.describe "Discord Webhook", type: :request do
     end
 
     context "with no Discord signature" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DiscordController.method_defined?(:interaction_webhook)).to be(true)
+        expect_any_instance_of(DiscordController).not_to receive(:interaction_webhook)
+
         post "/discord/interaction_webhook",
              params: payload,
              headers: { "Content-Type" => "application/json" }

@@ -30,7 +30,10 @@ RSpec.describe "Column Webhook", type: :request do
     end
 
     context "with an invalid Column signature" do
-      it "returns 400" do
+      it "returns 400 and does not process the webhook" do
+        expect(Column::WebhooksController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(Column::WebhooksController).not_to receive(:webhook)
+
         post "/webhooks/column",
              params: payload,
              headers: { "Column-Signature" => "invalidsignature", "Content-Type" => "application/json" }
@@ -40,7 +43,10 @@ RSpec.describe "Column Webhook", type: :request do
     end
 
     context "with no Column signature" do
-      it "returns 400" do
+      it "returns 400 and does not process the webhook" do
+        expect(Column::WebhooksController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(Column::WebhooksController).not_to receive(:webhook)
+
         post "/webhooks/column",
              params: payload,
              headers: { "Content-Type" => "application/json" }

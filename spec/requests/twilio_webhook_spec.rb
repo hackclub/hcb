@@ -33,24 +33,26 @@ RSpec.describe "Twilio Webhook", type: :request do
     end
 
     context "with an invalid Twilio signature" do
-      it "returns 403 and does not enqueue the processing job" do
-        expect {
-          post "/twilio/webhook",
-               params:,
-               headers: xml_headers.merge("X-Twilio-Signature" => "invalidsignature")
-        }.not_to have_enqueued_job(Twilio::ProcessWebhookJob)
+      it "returns 403 and does not process the webhook" do
+        expect(TwilioController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(TwilioController).not_to receive(:webhook)
+
+        post "/twilio/webhook",
+             params:,
+             headers: xml_headers.merge("X-Twilio-Signature" => "invalidsignature")
 
         expect(response).to have_http_status(:forbidden)
       end
     end
 
     context "with no Twilio signature" do
-      it "returns 403 and does not enqueue the processing job" do
-        expect {
-          post "/twilio/webhook",
-               params:,
-               headers: xml_headers
-        }.not_to have_enqueued_job(Twilio::ProcessWebhookJob)
+      it "returns 403 and does not process the webhook" do
+        expect(TwilioController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(TwilioController).not_to receive(:webhook)
+
+        post "/twilio/webhook",
+             params:,
+             headers: xml_headers
 
         expect(response).to have_http_status(:forbidden)
       end

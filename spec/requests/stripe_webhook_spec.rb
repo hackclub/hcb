@@ -38,7 +38,10 @@ RSpec.describe "Stripe Webhook", type: :request do
     end
 
     context "with an invalid Stripe signature" do
-      it "returns 400" do
+      it "returns 400 and does not process the webhook" do
+        expect(StripeController.private_method_defined?(:handle_charge_updated)).to be(true)
+        expect_any_instance_of(StripeController).not_to receive(:handle_charge_updated)
+
         post "/stripe/webhook",
              params: payload,
              headers: { "Stripe-Signature" => "t=1234567890,v1=invalidsignature", "Content-Type" => "application/json" }
@@ -48,7 +51,10 @@ RSpec.describe "Stripe Webhook", type: :request do
     end
 
     context "with no Stripe signature" do
-      it "returns 400" do
+      it "returns 400 and does not process the webhook" do
+        expect(StripeController.private_method_defined?(:handle_charge_updated)).to be(true)
+        expect_any_instance_of(StripeController).not_to receive(:handle_charge_updated)
+
         post "/stripe/webhook",
              params: payload,
              headers: { "Content-Type" => "application/json" }
