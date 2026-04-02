@@ -17,6 +17,8 @@ module Api
       before_action :set_paper_trail_whodunnit
 
       def paginate(list, &block)
+        @total_count = list.size
+
         limit = params[:limit]&.to_i || 25
         start_index = if params[:after]
                         list.index { |tx| block.call(tx) == params[:after] } + 1

@@ -21,7 +21,6 @@ module Api
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]
 
-        @total_count = @pending_transactions.count + @settled_transactions.count
         @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
 
         if @transactions.any?
