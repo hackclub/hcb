@@ -122,7 +122,7 @@ class Event
         transactions.each do |transaction|
           memo = transaction.memo
           amount_cents = transaction.amount_cents / 100.0
-          url = Rails.application.routes.url_helpers.url_for(transaction.local_hcb_code)
+          url = Rails.application.routes.url_helpers.url_for(transaction.local_hcb_code.hashid)
           if @event_group.present?
             write_row.call(memo, amount_cents, transaction.event.name, url, level: 1)
           else
@@ -159,6 +159,7 @@ class Event
         .joins(:canonical_event_mapping)
         .where(canonical_event_mapping: { event_id: events.map(&:id), subledger_id: nil })
         .where("date between ? AND ?", start_date, end_date)
+        .includes(:local_hcb_code)
         .strict_loading
     end
 
