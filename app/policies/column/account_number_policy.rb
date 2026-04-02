@@ -3,17 +3,11 @@
 module Column
   class AccountNumberPolicy < ApplicationPolicy
     def create?
-      admin_or_manager?
+      user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
     def update?
       user&.admin?
-    end
-
-    private
-
-    def admin_or_manager?
-      user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
   end
