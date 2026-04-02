@@ -70,7 +70,7 @@ included_events = statement_of_activity.events
 </p>
 
 <% if statement_of_activity.event_group || statement_of_activity.include_descendants %>
-  <details open>
+  <details>
     <summary>Included organizations (<%= included_events.count %>)</summary>
     <% if statement_of_activity.event_group && statement_of_activity.events.empty? %>
       <p>This group does not have any associated events</p>
