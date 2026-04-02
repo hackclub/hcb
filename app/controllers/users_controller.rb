@@ -427,6 +427,7 @@ class UsersController < ApplicationController
       :phone_number,
       :birthday,
       :profile_picture,
+      :seasonal_themes_enabled,
       # admin
       :pretend_is_not_admin,
       # security
@@ -436,7 +437,6 @@ class UsersController < ApplicationController
       :use_two_factor_authentication,
       # notifications
       :receipt_report_option,
-      :seasonal_themes_enabled,
       :comment_notifications,
       :charge_notifications,
       :monthly_donation_summary,
