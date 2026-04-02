@@ -1,14 +1,13 @@
 <%# locals: (statement_of_activity:) %>
 
-included_events = statement_of_activity.events
-  category_totals = statement_of_activity.category_totals
-  transactions_by_category = statement_of_activity.transactions_by_category
-  transactions = transactions_by_category.values.flatten
-  total_revenue = transactions.sum { |transaction| transaction.amount_cents.positive? ? transaction.amount_cents : 0 }
-  total_expense = transactions.sum { |transaction| transaction.amount_cents.negative? ? transaction.amount_cents : 0 }
-  net_asset_change = transactions.sum(&:amount_cents)
-  show_organization_column = statement_of_activity.event_group.present? || statement_of_activity.include_descendants
-%>
+<% included_events = statement_of_activity.events
+   category_totals = statement_of_activity.category_totals
+   transactions_by_category = statement_of_activity.transactions_by_category
+   transactions = transactions_by_category.values.flatten
+   total_revenue = transactions.sum { |transaction| transaction.amount_cents.positive? ? transaction.amount_cents : 0 }
+   total_expense = transactions.sum { |transaction| transaction.amount_cents.negative? ? transaction.amount_cents : 0 }
+   net_asset_change = transactions.sum(&:amount_cents)
+   show_organization_column = statement_of_activity.event_group.present? || statement_of_activity.include_descendants %>
 
 <h1 class="border-b-0">Statement of Activity</h1>
 
