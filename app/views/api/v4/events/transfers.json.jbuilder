@@ -6,8 +6,7 @@ json.stats do
   json.canceled_cents @stats[:canceled]
 end
 
-json.total_count @total_count
-json.has_more @has_more
+pagination_metadata(json)
 
 json.data @transfers do |transfer|
   json.id transfer.public_id
