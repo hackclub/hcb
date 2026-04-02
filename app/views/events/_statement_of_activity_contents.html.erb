@@ -1,7 +1,6 @@
 <%# locals: (statement_of_activity:) %>
 
-<%
-  included_events = statement_of_activity.events
+included_events = statement_of_activity.events
   category_totals = statement_of_activity.category_totals
   transactions_by_category = statement_of_activity.transactions_by_category
   transactions = transactions_by_category.values.flatten
