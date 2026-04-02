@@ -11,6 +11,7 @@
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
       editing: ach_transfer.account_number.present?,
+      validate_routing_number_url: validate_routing_number_ach_transfers_path,
     }.to_json})"
   }) do |form| %>
 
@@ -100,11 +101,11 @@
         </div>
 
         <div>
-          <div class="sm:flex items-center justify-between" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+          <div class="sm:flex items-center justify-between">
             <%= form.label :routing_number %>
-            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
+            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number" }, "@input.debounce.500ms" => "lookupBank($event.target.value)" %>
           </div>
-          <span class="muted" data-external-validation-target="hint"></span>
+          <span x-show="routingNumberHint" x-text="routingNumberHint" :class="routingNumberValid ? 'muted' : 'primary'"></span>
         </div>
 
         <div class="sm:flex items-center justify-between">
