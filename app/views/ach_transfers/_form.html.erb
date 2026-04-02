@@ -11,8 +11,7 @@
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
       editing: ach_transfer.account_number.present?,
-      validate_routing_number_url: validate_routing_number_ach_transfers_path,
-    }.to_json})"
+      }.to_json})"
   }) do |form| %>
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
@@ -100,17 +99,14 @@
           <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
-        <div>
+        <div
+          data-controller="external-validation"
+          data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
           <div class="sm:flex items-center justify-between">
             <%= form.label :routing_number %>
-            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number" }, "@input.debounce.500ms" => "lookupBank($event.target.value)" %>
+            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number", action: "input->external-validation#validate" } %>
           </div>
-          <div class="text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2"
-               x-show="routingNumberHint"
-               x-text="routingNumberHint"
-               :class="routingNumberValid ? 'muted' : 'primary'"
-               x-cloak>
-          </div>
+          <span class="muted text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2 empty:hidden" data-external-validation-target="hint"></span>
         </div>
 
         <div class="sm:flex items-center justify-between">
