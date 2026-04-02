@@ -6,7 +6,7 @@
   <% unless defined?(@back_url) && @back_url.nil? %>
     <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
   <% else %>
-    <%= render "application/logo", url: root_path %>
+    <%= render "application/logo" %>
   <% end %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
