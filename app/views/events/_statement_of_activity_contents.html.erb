@@ -114,13 +114,13 @@
                 <%= category_name %>
               </div>
 
-                <div class="px-2">
-                  <%= render_money category_total %>
-                </div>
-                <div class="px-2 text-sm text-muted">
-                  <%= number_with_delimiter(category_transactions.count) %> <%= "transaction".pluralize(category_transactions.count) %>
-                </div>
+              <div class="px-2">
+                <%= render_money category_total %>
+              </div>
 
+              <div class="px-2 text-sm text-muted">
+                <%= number_with_delimiter(category_transactions.count) %> <%= "transaction".pluralize(category_transactions.count) %>
+              </div>
             </div>
           </summary>
 
