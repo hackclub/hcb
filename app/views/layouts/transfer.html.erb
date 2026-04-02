@@ -3,10 +3,10 @@
 <% @hide_flash = true %>
 
 <nav class="border-b px-6 flex items-center gap-4 fixed top-0 left-0 backdrop-blur-xl h-20 md:h-24 w-full z-10">
-  <% if defined?(@back_url) && @back_url.nil? %>
-    <%= render "application/logo", url: root_path %>
-  <% else %>
+  <% unless defined?(@back_url) && @back_url.nil? %>
     <%= link_to inline_icon("view-back"), @back_url || event_transfers_path, class: "pop" %>
+  <% else %>
+    <%= render "application/logo", url: root_path %>
   <% end %>
   <div class="min-w-0">
     <h1 class="border-0 m-0 p-0 h2 truncate"><%= yield(:title) %></h1>
