@@ -1,7 +1,4 @@
-export default ({
-  payment_recipient,
-  editing,
-}) => ({
+export default ({ payment_recipient, editing }) => ({
   payment_recipient,
   editing: editing || false,
   init() {
