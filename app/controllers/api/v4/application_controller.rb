@@ -16,6 +16,18 @@ module Api
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
 
+      def paginate(list, &block)
+        limit = params[:limit]&.to_i || 25
+        start_index = if params[:after]
+                        list.index { |tx| block.call(tx) == params[:after] } + 1
+                      else
+                        0
+                      end
+        @has_more = list.length > start_index + limit
+
+        list.slice(start_index, limit)
+      end
+
       def not_found
         skip_authorization
         render json: { error: "not_found" }, status: :not_found

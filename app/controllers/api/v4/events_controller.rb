@@ -79,19 +79,7 @@ module Api
         all_transfers = query.transfers
 
         @stats = query.stats
-
-        limit = [[params[:limit]&.to_i || 25, 1].max, 100].min
-        @total_count = all_transfers.length
-
-        start_index = if params[:after].present?
-                        idx = all_transfers.index { |t| t.public_id == params[:after] }
-                        idx ? idx + 1 : 0
-                      else
-                        0
-                      end
-
-        @has_more = all_transfers.length > start_index + limit
-        @transfers = all_transfers.slice(start_index, limit) || []
+        @transfers = paginate(all_transfers, &:public_id)
       end
 
       private

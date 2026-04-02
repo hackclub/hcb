@@ -89,15 +89,7 @@ module Api
       private
 
       def paginate_transactions(transactions)
-        limit = params[:limit]&.to_i || 25
-        start_index = if params[:after]
-                        transactions.index { |tx| tx.local_hcb_code.public_id == params[:after] } + 1
-                      else
-                        0
-                      end
-        @has_more = transactions.length > start_index + limit
-
-        transactions.slice(start_index, limit)
+        paginate(transactions) { |tx| tx.local_hcb_code.public_id }
       end
 
       def filters
