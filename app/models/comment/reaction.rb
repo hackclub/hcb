@@ -24,6 +24,8 @@
 #
 class Comment
   class Reaction < ApplicationRecord
+    acts_as_paranoid
+
     belongs_to :comment
     belongs_to :reactor, class_name: "User"
 
