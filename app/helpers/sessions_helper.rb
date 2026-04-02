@@ -159,6 +159,8 @@ module SessionsHelper
     user
       &.user_sessions
       &.where&.not(id: current_session.id)
+      &.where(signed_out_at: nil)
+      &.where("expiration_at IS NULL OR expiration_at > ?", Time.now)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
 
