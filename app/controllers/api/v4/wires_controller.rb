@@ -8,7 +8,6 @@ module Api
       before_action :set_api_event, only: [:create]
 
       def create
-        
         wire_params = params.require(:wire).permit(
           :memo,
           :amount_cents,
