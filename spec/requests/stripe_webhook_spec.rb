@@ -28,12 +28,12 @@ RSpec.describe "Stripe Webhook", type: :request do
 
   describe "POST /stripe/webhook" do
     context "with a valid Stripe signature" do
-      it "does not return 400" do
+      it "returns 204" do
         post "/stripe/webhook",
              params: payload,
              headers: { "Stripe-Signature" => stripe_signature(payload), "Content-Type" => "application/json" }
 
-        expect(response).not_to have_http_status(:bad_request)
+        expect(response).to have_http_status(:no_content)
       end
     end
 

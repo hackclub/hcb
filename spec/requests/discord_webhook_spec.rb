@@ -27,7 +27,7 @@ RSpec.describe "Discord Webhook", type: :request do
     let(:payload) { { type: 0 }.to_json }
 
     context "with a valid Discord signature" do
-      it "does not return 401" do
+      it "returns 204" do
         timestamp, signature = discord_signature(payload)
 
         post "/discord/event_webhook",
@@ -38,7 +38,7 @@ RSpec.describe "Discord Webhook", type: :request do
                "Content-Type"          => "application/json"
              }
 
-        expect(response).not_to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:no_content)
       end
     end
 
@@ -71,7 +71,7 @@ RSpec.describe "Discord Webhook", type: :request do
     let(:payload) { { type: 1 }.to_json }
 
     context "with a valid Discord signature" do
-      it "does not return 401" do
+      it "returns 200" do
         timestamp, signature = discord_signature(payload)
 
         post "/discord/interaction_webhook",
@@ -82,7 +82,7 @@ RSpec.describe "Discord Webhook", type: :request do
                "Content-Type"          => "application/json"
              }
 
-        expect(response).not_to have_http_status(:unauthorized)
+        expect(response).to have_http_status(:ok)
       end
     end
 

@@ -20,7 +20,7 @@ RSpec.describe "Column Webhook", type: :request do
 
   describe "POST /webhooks/column" do
     context "with a valid Column signature" do
-      it "does not return 400" do
+      it "returns 200" do
         post "/webhooks/column",
              params: payload,
              headers: { "Column-Signature" => column_signature(payload), "Content-Type" => "application/json" }
