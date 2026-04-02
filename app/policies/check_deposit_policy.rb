@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class CheckDepositPolicy < ApplicationPolicy
-  
   def show?
     auditor_or_user?
   end
