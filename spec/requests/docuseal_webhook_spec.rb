@@ -31,7 +31,10 @@ RSpec.describe "Docuseal Webhook", type: :request do
     end
 
     context "with an invalid Docuseal secret" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DocusealController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(DocusealController).not_to receive(:webhook)
+
         post "/docuseal/webhook",
              params: payload,
              headers: { "X-Docuseal-Secret" => "wrong_secret" }
@@ -41,7 +44,10 @@ RSpec.describe "Docuseal Webhook", type: :request do
     end
 
     context "with no Docuseal secret" do
-      it "returns 401" do
+      it "returns 401 and does not process the webhook" do
+        expect(DocusealController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(DocusealController).not_to receive(:webhook)
+
         post "/docuseal/webhook",
              params: payload
 
