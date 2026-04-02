@@ -58,7 +58,7 @@ class LoginsController < ApplicationController
 
   # post to set preference
   def set_login_preference
-    continue_login(preference: params[:login_preference])
+    continue_login(preference: params[:login_preference].to_sym)
   end
 
   # post to request email login code
