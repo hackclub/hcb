@@ -4,11 +4,11 @@ class DocusealController < ActionController::Base
   protect_from_forgery except: :webhook
 
   def webhook
-    ActiveRecord::Base.transaction do
-      return render json: { success: false } unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
+    return head :unauthorized unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
 
+    ActiveRecord::Base.transaction do
       contract = Contract.find_by(external_id: params[:data][:submission_id])
-      return render json: { success: true } if contract.nil? || contract.signed? # sometimes contracts are sent using Docuseal that aren't in HCB
+      return head :ok if contract.nil? || contract.signed? # sometimes contracts are sent using Docuseal that aren't in HCB
 
       if params[:event_type] == "form.completed"
         party = contract.parties.detect { |party| party.docuseal_role == params[:data][:role] }
@@ -25,10 +25,10 @@ class DocusealController < ActionController::Base
       end
     end
 
-    return render json: { success: true }
+    head :ok
   rescue => e
     Rails.error.report(e)
-    return render json: { success: false }
+    head :internal_server_error
   end
 
 end
