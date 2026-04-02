@@ -1,29 +1,24 @@
 export default ({ payment_recipient, editing, validate_routing_number_url }) => ({
   payment_recipient,
   editing: editing || false,
-  validateRoutingNumberUrl: validate_routing_number_url,
   routingNumberHint: '',
-  routingNumberValid: false,
   async lookupBank(value) {
     if (!value) {
       this.routingNumberHint = ''
       return
     }
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
-    const { valid, hint } = await fetch(this.validateRoutingNumberUrl, {
+    const { valid, hint } = await fetch(validate_routing_number_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
       body: JSON.stringify({ value }),
     }).then(r => r.json()).catch(() => ({ valid: false, hint: '' }))
 
-    this.routingNumberValid = valid
     this.routingNumberHint = hint || ''
 
     if (valid && hint) {
       const bankNameField = document.getElementById('ach_transfer_bank_name')
-      if (bankNameField && !bankNameField.value) {
-        bankNameField.value = hint
-      }
+      if (bankNameField && !bankNameField.value) bankNameField.value = hint
     }
   },
   init() {

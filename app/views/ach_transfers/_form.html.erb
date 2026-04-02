@@ -105,7 +105,7 @@
             <%= form.label :routing_number %>
             <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number" }, "@input.debounce.500ms" => "lookupBank($event.target.value)" %>
           </div>
-          <div class="text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2 empty:hidden"
+          <div class="text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2"
                x-show="routingNumberHint"
                x-text="routingNumberHint">
           </div>
