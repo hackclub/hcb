@@ -53,12 +53,6 @@ module Api
         render json: icons.compact_blank
       end
 
-      def beacon_config
-        render json: {
-          signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY), current_user.email)
-        }
-      end
-
     end
   end
 end
