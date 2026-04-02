@@ -53,7 +53,7 @@
             <div class="sidebar--scroll-container">
               <%= yield(:header) %>
               <div class="hidden lg:block">
-                <%= render "application/flash", klass: "mt-6" unless @hide_flash %>
+                <%= render "application/flash", klass: "mt-2" unless @hide_flash %>
               </div>
               <%= yield(:nav) %>
             </div>
