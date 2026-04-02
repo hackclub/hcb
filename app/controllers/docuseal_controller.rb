@@ -3,9 +3,9 @@
 class DocusealController < ActionController::Base
   protect_from_forgery except: :webhook
 
-  def webhook
-    return head :unauthorized unless request.headers["X-Docuseal-Secret"] == Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
+  before_action :verify_signature
 
+  def webhook
     ActiveRecord::Base.transaction do
       contract = Contract.find_by(external_id: params[:data][:submission_id])
       return head :ok if contract.nil? || contract.signed? # sometimes contracts are sent using Docuseal that aren't in HCB
@@ -29,6 +29,17 @@ class DocusealController < ActionController::Base
   rescue => e
     Rails.error.report(e)
     head :internal_server_error
+  end
+
+  private
+
+  def verify_signature
+    unless ActiveSupport::SecurityUtils.secure_compare(
+      request.headers["X-Docuseal-Secret"].to_s,
+      Credentials.fetch(:DOCUSEAL, :WEBHOOK_SECRET)
+    )
+      head :unauthorized # calling head/render in a before_action stops the request from reaching the controller action
+    end
   end
 
 end
