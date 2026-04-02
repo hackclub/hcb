@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AddDeletedAtToAnnouncementBlocks < ActiveRecord::Migration[7.2]
+class AddDeletedAtToAnnouncementBlocks < ActiveRecord::Migration[8.0]
   disable_ddl_transaction!
 
   def change
