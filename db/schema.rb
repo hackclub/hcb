@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_02_000621) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2628,6 +2628,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
     t.string "full_name"
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
+    t.boolean "monthly_donation_summary", default: true
+    t.boolean "monthly_follower_summary", default: true
     t.bigint "payout_method_id"
     t.string "payout_method_type"
     t.text "phone_number"
