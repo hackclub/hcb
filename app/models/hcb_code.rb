@@ -26,10 +26,11 @@
 class HcbCode < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :txn
-
-  include Hashid::Rails
 
   include Commentable
   include Receiptable
@@ -715,6 +716,11 @@ class HcbCode < ApplicationRecord
 
   def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
     update(event_id: event&.id, subledger_id: subledger&.id)
+  end
+
+  def update_custom_memo!(memo)
+    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end
 
 end

@@ -26,7 +26,7 @@ class UsersController < ApplicationController
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details
+    :edit_admin, :admin_details, :admin_details_stripe_transactions
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -244,6 +244,12 @@ class UsersController < ApplicationController
     @permissions_overview = User::PermissionsOverview.new(user: @user)
 
     authorize @user
+  end
+
+  def admin_details_stripe_transactions
+    authorize @user
+
+    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) }).order(created_at: :desc)
   end
 
   def update

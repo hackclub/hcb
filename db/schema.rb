@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -21,7 +21,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "account_number_bidx"
     t.text "account_number_ciphertext"
     t.integer "amount"
@@ -194,15 +194,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "parameters"
-    t.text "rendered_email_html"
-    t.text "rendered_html"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
   end
 
   create_table "announcements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "author_id", null: false
     t.jsonb "content", null: false
     t.datetime "created_at", null: false
@@ -260,7 +258,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   end
 
   create_table "bank_fees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -488,7 +486,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.bigint "disbursement_id"
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "expiration_at"
+    t.date "expiration_at", null: false
     t.text "instructions"
     t.string "invite_message"
     t.string "keyword_lock"
@@ -528,7 +526,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   end
 
   create_table "checks", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "approved_at", precision: nil
     t.integer "check_number"
@@ -637,7 +635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   end
 
   create_table "contract_parties", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "contract_id", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
@@ -1279,6 +1277,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.citext "domain"
     t.bigint "event_id"
     t.boolean "immune_to_revocation", default: false, null: false
+    t.integer "max_accounts", default: 75, null: false
     t.text "remote_org_unit_id"
     t.text "remote_org_unit_path"
     t.datetime "updated_at", precision: nil, null: false
@@ -1636,6 +1635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
     t.bigint "referral_link_id"
+    t.jsonb "state"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
@@ -1727,14 +1727,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
     t.datetime "created_at", precision: nil, null: false
-    t.bigint "organizer_position_id"
-    t.text "reason"
+    t.bigint "organizer_position_id", null: false
+    t.text "reason", null: false
     t.boolean "subject_emails_should_be_forwarded", default: false, null: false
     t.boolean "subject_has_active_cards", default: false, null: false
     t.boolean "subject_has_outstanding_expenses_expensify", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_emburse", default: false, null: false
     t.boolean "subject_has_outstanding_transactions_stripe", default: false, null: false
-    t.bigint "submitted_by_id"
+    t.bigint "submitted_by_id", null: false
     t.datetime "updated_at", precision: nil, null: false
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
@@ -1770,6 +1770,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.datetime "accepted_at", precision: nil
     t.datetime "cancelled_at", precision: nil
     t.datetime "created_at", precision: nil, null: false
+    t.datetime "deleted_at"
     t.bigint "event_id", null: false
     t.boolean "initial", default: false
     t.integer "initial_control_allowance_amount_cents"
@@ -1781,6 +1782,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
     t.string "slug"
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id", null: false
+    t.index ["deleted_at"], name: "index_organizer_position_invites_on_deleted_at"
     t.index ["event_id"], name: "index_organizer_position_invites_on_event_id"
     t.index ["organizer_position_id"], name: "index_organizer_position_invites_on_organizer_position_id"
     t.index ["sender_id"], name: "index_organizer_position_invites_on_sender_id"
@@ -1811,14 +1813,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_06_000000) do
   create_table "organizer_positions", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
-    t.bigint "event_id"
+    t.bigint "event_id", null: false
     t.boolean "first_time", default: true
     t.bigint "fiscal_sponsorship_contract_id"
     t.boolean "is_signee", default: false
     t.integer "role", default: 100, null: false
     t.integer "sort_index"
     t.datetime "updated_at", precision: nil, null: false
-    t.bigint "user_id"
+    t.bigint "user_id", null: false
     t.index ["event_id"], name: "index_organizer_positions_on_event_id"
     t.index ["fiscal_sponsorship_contract_id"], name: "index_organizer_positions_on_fiscal_sponsorship_contract_id"
     t.index ["user_id"], name: "index_organizer_positions_on_user_id"

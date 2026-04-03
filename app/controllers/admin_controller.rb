@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def nav
+    @nav = Admin::Nav.new(page_title: params[:title])
+
+    render :nav, layout: false
+  end
+
   def task_size
     starting = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     size = pending_task params[:task_name].to_sym
@@ -486,7 +492,7 @@ class AdminController < Admin::BaseController
     relation = relation.reimbursement_requested if @pending
 
     @unprocessed_wise_report_ids = Reimbursement::Report
-                                   .where(id: Reimbursement::PayoutHolding.settled.select(:reimbursement_reports_id))
+                                   .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
                                    .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
                                    .select(:id)
                                    .pluck(:id)
@@ -754,8 +760,10 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @include_archived = params[:include_archived] == "1" ? true : nil
 
-    @applications = Event::Application.all
+    @applications = Event::Application.all.includes(:user)
+    @applications = @applications.not_archived unless @include_archived
     @applications = @applications.search_name(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
@@ -859,9 +867,9 @@ class AdminController < Admin::BaseController
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.disbursements.includes(:event)
+      relation = @event.disbursements.includes(:source_event)
     else
-      relation = Disbursement.includes(:event)
+      relation = Disbursement.includes(:source_event)
     end
 
     if @q
@@ -918,7 +926,13 @@ class AdminController < Admin::BaseController
 
     respond_to do |format|
       format.html do
-        @hcb_codes = @hcb_codes.page(@page).per(@per)
+        @hcb_codes = @hcb_codes.includes(
+          :event,
+          :comments,
+          :receipts,
+          canonical_pending_transactions: :event,
+          canonical_transactions: :event
+        ).page(@page).per(@per)
       end
       format.csv { render csv: @hcb_codes }
     end
@@ -1071,14 +1085,19 @@ class AdminController < Admin::BaseController
   def google_workspace_update
     @g_suite = GSuite.find(params[:id])
 
-    @g_suite = GSuiteService::Update.new(
-      g_suite_id: @g_suite.id,
-      domain: @g_suite.domain,
-      verification_key: params[:verification_key],
-      dkim_key: params[:dkim_key]
-    ).run
+    begin
+      @g_suite = GSuiteService::Update.new(
+        g_suite_id: @g_suite.id,
+        domain: @g_suite.domain,
+        verification_key: params[:verification_key],
+        dkim_key: params[:dkim_key],
+        max_accounts: params[:max_accounts]
+      ).run
 
-    redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { success: "Success" }
+    rescue ActiveRecord::RecordInvalid => e
+      redirect_to google_workspace_process_admin_path(@g_suite), flash: { error: e.record.errors.full_messages.to_sentence }
+    end
   end
 
   def google_workspace_toggle_revocation_immunity
@@ -1417,7 +1436,7 @@ class AdminController < Admin::BaseController
   def employees
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @employees = Employee.all.page(@page).per(@per).order(
+    @employees = Employee.all.includes(:event, :entity).page(@page).per(@per).order(
       Arel.sql("aasm_state = 'onboarding' DESC"),
       "employees.created_at desc"
     )
@@ -1458,7 +1477,7 @@ class AdminController < Admin::BaseController
     @status = params[:status].presence
     @service = params[:service].presence
 
-    @contracts = Contract.all.includes(:document, :contractable)
+    @contracts = Contract.all.includes(:document, :contractable, parties: :user)
     @contracts = @contracts.where(type: @type) if @type
     @contracts = @contracts.where(aasm_state: @status) if @status
     @contracts = @contracts.where(external_service: @service) if @service

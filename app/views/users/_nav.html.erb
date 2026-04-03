@@ -1,6 +1,5 @@
-<%= render "users/mobile_nav", selected: local_assigns[:selected] %>
 <% content_for(:header) do %>
-  <div class="flex items-center gap-3 lg:mb-2 lg:pt-4">
+  <div class="flex items-center gap-3 mb-2 pt-4">
     <%= render partial: "logo" %>
     <h3 class="my-0">HCB</h3>
   </div>
@@ -13,17 +12,17 @@
       style="border-radius: 8px;box-shadow: none;"
       data-behavior="command_bar_trigger">
       <span class="flex-grow text-left font-medium opacity-75">Jump to...</span>
-      <span class="key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
+      <span class="hidden sm:inline key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
         <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
       </span>
-      <span class="key opacity-75 w-6 rounded-md text-sm">
+      <span class="hidden sm:inline key opacity-75 w-6 rounded-md text-sm">
         K
       </span>
     </button>
   </div>
 
   <nav class="dock font-medium mt1">
-    <% users_mobile_nav(selected: local_assigns[:selected]).each do |item| %>
+    <% users_nav(selected: local_assigns[:selected]).each do |item| %>
       <%= dock_item item[:name],
         item[:path],
         tooltip: item[:tooltip],

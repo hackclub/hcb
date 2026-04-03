@@ -1,0 +1,75 @@
+<% title "Enter login code" %>
+<% content_for(:page_class) { "bg-snow" } %>
+
+<% content_for :info_pane do %>
+  <%= render partial: "logins/apply_info_pane" %>
+<% end %>
+
+<div class="flex flex-col flex-1 justify-center w-full <%= @login.for_application? ? "card" : "max-w-md" %>">
+  <%= render "logins/header", label: "Sign in to HCB" do %>
+    SMS code
+  <% end %>
+
+  <%= render "logins/badge", user: @login.user %>
+  <%= render partial: "users/login_code_auth_notice" %>
+
+  <p class="mt-0">
+    <% if @login.authentication_factors_count > 0 %>
+      For additional security, we've just sent a login code to your phone number ending in <%= @login.user.phone_number.last(4) %>
+    <% else %>
+      We just sent a login code to your phone number
+    <% end %>
+  </p>
+
+  <%= form_tag complete_login_path(@login), id: "login" do %>
+    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
+      <%= text_field_tag(
+            :login_code,
+            "",
+            class: "otp_code",
+            autocomplete: "one-time-code",
+            required: true,
+            inputmode: "numeric",
+            maxlength: "6",
+            autofocus: true,
+            data: { behavior: "otp_input", "op-ignore": true }
+          ) %>
+    <% else %>
+      <%= text_field_tag(
+            :login_code,
+            "",
+            placeholder: "Enter your login code",
+            class: "!max-w-full w-max",
+            autocomplete: "one-time-code",
+            required: true,
+            autofocus: true,
+            inputmode: "numeric",
+            data: { "op-ignore": true }
+          ) %>
+    <% end %>
+
+    <%= invisible_captcha :remember_me %>
+    <%= hidden_field_tag :method, :sms %>
+    <%= render partial: "logins/fingerprint_info" %>
+
+    <div class="flex flex-row justify-between items-center mt-4 gap-2">
+      <% if @login.available_factors.excluding(:sms).any? %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login), class: "block mt-0 no-underline" %>
+      <% end %>
+      <button type="submit" class="gap-2 btn ml-auto">
+        Continue
+      </button>
+    </div>
+  <% end %>
+
+  <%= render partial: "logins/environment_banner" %>
+</div>
+
+<%= render partial: "logins/footer" %>
+
+<% content_for :footer do %>
+  <%= link_to "← Back", new_application_path, class: "btn bg-muted" %>
+  <button type="submit" class="btn" form="login">
+    Continue →
+  </button>
+<% end %>
