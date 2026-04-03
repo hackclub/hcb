@@ -82,12 +82,11 @@ class Receipt < ApplicationRecord
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
       receiptable&.update(marked_no_or_lost_receipt_at: nil)
     end
-
-    self.assigned_at = Time.current if receiptable_id.present?
+    self.assigned_at = Time.current if receiptable.present?
   end
 
   before_update do
-    if receiptable_id_changed? && receiptable_id.present? && receiptable_id_was.nil?
+    if receiptable_id_changed? && receiptable_id_was.nil? && receiptable_id.present?
       self.assigned_at = Time.current
     end
   end
