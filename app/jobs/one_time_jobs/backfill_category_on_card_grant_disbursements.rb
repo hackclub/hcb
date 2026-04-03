@@ -7,7 +7,8 @@ module OneTimeJobs
       slug = "grants-stipends"
       category = TransactionCategory.find_or_create_by!(slug:)
 
-      disbursements.update(source_transaction_category: category, destination_transaction_category: category)
+      disbursements.where(source_transaction_category: nil).update(source_transaction_category: category)
+      disbursements.where(destination_transaction_category: nil).update(destination_transaction_category: category)
 
       hcb_codes = []
       disbursements.find_each(batch_size: 100) do |disbursement|
@@ -16,6 +17,8 @@ module OneTimeJobs
       end
 
       CanonicalTransaction.where(hcb_code: hcb_codes).find_each(batch_size: 100) do |ct|
+        next unless ct.category.nil?
+
         TransactionCategoryService
           .new(model: ct)
           .set!(
@@ -25,6 +28,8 @@ module OneTimeJobs
       end
 
       CanonicalPendingTransaction.where(hcb_code: hcb_codes).find_each(batch_size: 100) do |cpt|
+        next unless cpt.category.nil?
+
         TransactionCategoryService
           .new(model: cpt)
           .set!(
