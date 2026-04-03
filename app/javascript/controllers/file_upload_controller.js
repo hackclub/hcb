@@ -22,6 +22,7 @@ export default class extends Controller {
     this.previewTarget.classList.add('tooltipped')
     this.previewTarget.onclick = () => this.inputTarget.click()
     this.inputTarget.onchange = () => this.render()
+    this.inputTarget.addEventListener('cancel', () => this.render())
     window.addEventListener('turbo:morph', this.connect.bind(this))
   }
 
@@ -29,7 +30,14 @@ export default class extends Controller {
     const input = this.inputTarget
     const fileName = input.files.length > 0 ? input.files[0].name : ''
 
-    if (!fileName) return
+    if (!fileName) {
+      this.clearTarget.style.display = 'none'
+      this.clearTarget.innerHTML = ''
+      this.previewTarget.classList.remove('active')
+      this.previewTarget.classList.remove('tooltipped')
+      this.resetPreview()
+      return
+    }
     this.previewTarget.setAttribute('aria-label', fileName)
     this.previewTarget.innerHTML = `<img class="-ml-0.5 mr-2 w-4" src="https://cdn.jsdelivr.net/npm/file-icon-vectors@1.0.0/dist/icons/classic/${fileName.split('.').pop()}.svg" /> ${this.truncateMiddle(fileName)}`
     this.clearTarget.style.display = 'flex'
