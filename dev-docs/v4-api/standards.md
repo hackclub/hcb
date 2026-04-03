@@ -1,0 +1,307 @@
+# v4 API Standards
+
+This document defines the conventions and standards for the HCB v4 API. All new endpoints **must** follow these guidelines. When modifying existing endpoints, bring them into compliance where practical.
+
+---
+
+## Table of Contents
+
+- [Object Shape](#object-shape)
+- [IDs & Object References](#ids--object-references)
+- [Shallow Routing](#shallow-routing)
+- [Pagination](#pagination)
+- [Expanding Related Objects](#expanding-related-objects)
+- [Partials & Reuse](#partials--reuse)
+- [Error Responses](#error-responses)
+- [Naming Conventions](#naming-conventions)
+
+---
+
+## Object Shape
+
+Every top-level API object **must** include the following fields:
+
+| Field        | Type     | Description                                      |
+|--------------|----------|--------------------------------------------------|
+| `id`         | `string` | The public ID of the object (e.g. `txn_abc123`). |
+| `type`       | `string` | A machine-readable type label (e.g. `transaction`, `ach_transfer`). |
+| `created_at` | `string` | ISO 8601 timestamp of when the object was created. |
+
+Example:
+
+```json
+{
+  "id": "txn_h1izp",
+  "type": "transaction",
+  "created_at": "2025-03-15T12:00:00Z",
+  "amount_cents": -4500,
+  "memo": "Amazon Web Services"
+}
+```
+
+---
+
+## IDs & Object References
+
+- Always use **public IDs** (the `public_id` from `PublicIdentifiable`) in API responses. Never expose internal database IDs.
+- When referencing a related object by ID only (not expanded), use the pattern `<relation>_id`:
+
+```json
+{
+  "id": "ach_x9f3k",
+  "type": "ach_transfer",
+  "organization_id": "org_h1izp",
+  "sender_id": "usr_a8b2c"
+}
+```
+
+- When a related object is **expanded**, replace the `_id` field with the full object under the relation name:
+
+```json
+{
+  "id": "ach_x9f3k",
+  "type": "ach_transfer",
+  "organization": {
+    "id": "org_h1izp",
+    "type": "organization",
+    "name": "Hack Club HQ"
+  }
+}
+```
+
+---
+
+## Shallow Routing
+
+All endpoints **must** use shallow routing. Every resource should be accessible at its own top-level path. Parent context is passed as a query parameter when needed, not embedded in the URL hierarchy.
+
+### Good
+
+```
+GET    /api/v4/transactions/:id                          # show
+PATCH  /api/v4/transactions/:id                          # update
+GET    /api/v4/transactions?organization_id=org_h1izp    # list scoped to org
+POST   /api/v4/ach_transfers                             # create within org
+       body: { organization_id: org_h1izp }
+GET    /api/v4/cards/:id                                 # show
+GET    /api/v4/receipts?transaction_id=txn_abc           # list scoped to transaction
+```
+
+### Bad
+
+```
+POST   /api/v4/organizations/:org_id/ach_transfers
+GET    /api/v4/organizations/:org_id/transactions
+GET    /api/v4/organizations/:org_id/transactions/:txn_id/receipts/:receipt_id
+GET    /api/v4/organizations/:org_id/cards/:card_id/transactions/:txn_id
+```
+
+**Rule of thumb:** If a resource has its own ID, it gets its own top-level route. Use query parameters (e.g. `?organization_id=`, `?transaction_id=`) to scope listings and provide parent context for creation. Never nest resources inside other resources in the URL path.
+
+---
+
+## Pagination
+
+All list endpoints **must** return paginated responses using cursor-based pagination.
+
+### Response Envelope
+
+```json
+{
+  "total_count": 142,
+  "has_more": true,
+  "data": [
+    { "id": "txn_abc", "object": "transaction", "..." : "..." },
+    { "id": "txn_def", "object": "transaction", "..." : "..." }
+  ]
+}
+```
+
+| Field         | Type      | Description                                              |
+|---------------|-----------|----------------------------------------------------------|
+| `total_count` | `integer` | Total number of results matching the query.              |
+| `has_more`    | `boolean` | Whether more results exist beyond this page.             |
+| `data`        | `array`   | The page of results.                                     |
+
+### Query Parameters
+
+| Parameter | Default | Description                                                        |
+|-----------|---------|--------------------------------------------------------------------|
+| `limit`   | `25`    | Number of results to return (max `100`).                           |
+| `after`   | —       | Cursor: return results after this object's `id` (exclusive).       |
+
+Example request:
+
+```
+GET /api/v4/organizations/org_h1izp/transactions?limit=10&after=txn_abc
+```
+
+### Implementation Notes
+
+- Cursors should be the `public_id` of the last item on the current page.
+
+---
+
+## Expanding Related Objects
+
+To reduce payload size and unnecessary database work, related objects are **not** included by default. Developers opt in using the `expand` query parameter.
+
+```
+GET /api/v4/cards/crd_x9f3k?expand=user,organization
+```
+
+### How It Works
+
+- Without expansion, a related object appears as an ID string:
+  ```json
+  { "organization_id": "org_h1izp" }
+  ```
+- With `?expand=organization`, the full object replaces the ID field:
+  ```json
+  {
+    "organization": {
+      "id": "org_h1izp",
+      "object": "organization",
+      "name": "Hack Club HQ"
+    }
+  }
+  ```
+
+### Guidelines
+
+- Use the `expand?(:symbol)` helper in Jbuilder views to conditionally render expanded objects.
+- Certain contexts auto-expand relevant objects for convenience (e.g. listing cards under an organization auto-expands `user`). Document these per-endpoint.
+- Avoid deep expansion chains (e.g. `expand=organization.users.cards`). One level is sufficient.
+- Each endpoint should document which fields are expandable.
+
+### Currently Supported Expansions
+
+Check each endpoint's documentation for its supported expansions. Common ones include:
+
+| Expansion         | Available On                             |
+|-------------------|------------------------------------------|
+| `organization`    | transactions, cards, card grants         |
+| `user`            | cards, card grants                       |
+| `balance_cents`   | organizations                            |
+| `account_number`  | organizations (requires permission)      |
+| `users`           | organizations                            |
+| `total_spent_cents` | cards                                  |
+
+---
+
+## Partials & Reuse
+
+Every API-representable model **must** have a single canonical Jbuilder partial (e.g. `_ach_transfer.json.jbuilder`). All endpoints that render that object must use the partial.
+
+### Why?
+
+- A single source of truth for each object's shape.
+- Developers rely on the same fields appearing whether the object is returned from a show, list, or nested context.
+- Reduces drift and copy-paste bugs.
+
+### Rules
+
+1. **One partial per model.** Located at `app/views/api/v4/<resource>/_<resource>.json.jbuilder`.
+2. **Nest, don't duplicate.** If a transaction includes an ACH transfer, render `partial: "api/v4/transactions/ach_transfer"`.
+3. **Show endpoints are thin.** A `show.json.jbuilder` should be essentially:
+   ```ruby
+   json.partial! @ach_transfer
+   ```
+4. **List endpoints wrap in the pagination envelope**, then render partials for each item.
+
+### Example
+
+```ruby
+# app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
+
+json.id ach_transfer.public_id
+json.type "ach_transfer"
+json.created_at ach_transfer.created_at
+
+json.recipient_name ach_transfer.recipient_name
+json.recipient_email ach_transfer.recipient_email
+json.amount_cents ach_transfer.amount
+json.status ach_transfer.aasm_state
+
+json.organization ach_transfer.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
+json.sender do
+  if ach_transfer.creator.present?
+    json.partial! "api/v4/users/user", user: ach_transfer.creator
+  else
+    json.nil!
+  end
+end
+```
+
+---
+
+## Error Responses
+
+Errors follow a consistent shape:
+
+```json
+{
+  "error": "invalid_operation",
+  "messages": [
+    "You don't have enough money to send this transfer! Your balance is $42.00."
+  ]
+}
+```
+
+| Field      | Type            | Description                                          |
+|------------|-----------------|------------------------------------------------------|
+| `error`    | `string`        | A machine-readable error code.                       |
+| `messages` | `array<string>` | One or more human-readable descriptions.             |
+
+### Standard Error Codes
+
+| Code                 | HTTP Status | Meaning                                        |
+|----------------------|-------------|------------------------------------------------|
+| `invalid_auth`       | `401`       | Missing or invalid API token.                  |
+| `not_authorized`     | `403`       | Token is valid but lacks permission.           |
+| `not_found`          | `404`       | Resource does not exist.                       |
+| `invalid_operation`  | `400`/`422` | Request is well-formed but violates a business rule. |
+| `validation_error`   | `422`       | One or more fields failed validation.          |
+
+For validation errors, they should ideally be automatically handled by the application level error handling concern which exposes validation error messages. 
+
+---
+
+## Naming Conventions
+
+| Concept                  | Convention                                      | Example                          |
+|--------------------------|-------------------------------------------------|----------------------------------|
+| Money amounts            | Suffix with `_cents`, always integers            | `amount_cents`, `balance_cents` |
+| Booleans                 | Use natural predicates, no `is_` prefix in JSON  | `pending`, `declined`, `transparent` |
+| Timestamps               | Suffix with `_at`, ISO 8601 format               | `created_at`, `approved_at`     |
+| Dates (no time)          | Suffix with `_on` or `_date`                     | `scheduled_on`, `due_date`      |
+| Related object IDs       | Suffix with `_id`                                | `organization_id`, `sender_id`  |
+| Enum/status fields       | Lowercase snake_case strings                     | `"pending"`, `"in_transit"`     |
+| Collections in URL paths | Plural nouns                                     | `/transactions`, `/cards`       |
+
+### Amounts
+
+All monetary values are represented in **cents** (the smallest currency unit) as integers. Never use floats for money.
+
+```json
+{
+  "amount_cents": 4200,
+  "balance_cents": 150000
+}
+```
+
+---
+
+## Checklist for New Endpoints
+
+Before opening a PR that adds or modifies a V4 API endpoint, verify:
+
+- [ ] Every returned object has `id`, `type`, and `created_at`
+- [ ] Public IDs are used (never raw database IDs)
+- [ ] Routing is shallow (max one level of nesting)
+- [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
+- [ ] Related objects use `expand` and are not auto-included without reason
+- [ ] The model's canonical partial is used (not inlined fields)
+- [ ] Error responses use the standard shape
+- [ ] Money is in `_cents` as integers
+- [ ] Endpoint is authorized via Pundit policy
