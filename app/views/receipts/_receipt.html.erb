@@ -77,7 +77,7 @@
 
   <% unless defined?(hide_info) %>
     <footer class="flex items-center flex-row mt1" style="border-top: none;">
-      <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added #{"and matched with AI " if receipt.user == current_user && receipt.suggested_pairings.accepted.any?}", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
+      <%= relative_timestamp receipt.assigned_at || receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added #{"and matched with AI " if receipt.user == current_user && receipt.suggested_pairings.accepted.any?}", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
 
       <span style="flex-grow: 1;"></span>
 
