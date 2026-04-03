@@ -7,46 +7,56 @@ module UsersHelper
         name: "Home",
         path: root_path,
         icon: "home",
-        tooltip: "See all your organizations",
+        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
         selected: selected == :home
-      },
-      (if current_user.followed_events.any?
-         {
+      }
+    ]
+
+    if signed_in?
+      items += [
+        ({
            name: "Feed",
            path: my_feed_path,
            tooltip: "See announcements for organizations you're following",
            icon: "announcement",
            selected: selected == :feed
-         }
-       else
-         nil
-       end),
-      {
-        name: "Cards",
-        path: my_cards_path,
-        icon: "card",
-        tooltip: "See all your cards",
-        selected: selected == :cards,
-      },
-      {
-        name: "Receipts",
-        path: my_inbox_path,
-        icon: "receipt",
-        tooltip: "See transactions awaiting receipts",
-        selected: selected == :receipts,
-        async_badge: my_missing_receipts_icon_path,
-      },
-      {
-        name: "Reimbursements",
-        path: my_reimbursements_path,
-        icon: "reimbursement",
-        tooltip: "See expense reimbursements",
-        async_badge: my_reimbursements_icon_path,
-        selected: selected == :reimbursements
-      },
-    ].compact
+        } if current_user.followed_events.any?),
+        {
+          name: "Cards",
+          path: my_cards_path,
+          icon: "card",
+          tooltip: "See all your cards",
+          selected: selected == :cards,
+        },
+        {
+          name: "Receipts",
+          path: my_inbox_path,
+          icon: "receipt",
+          tooltip: "See transactions awaiting receipts",
+          selected: selected == :receipts,
+          async_badge: my_missing_receipts_icon_path,
+        },
+        {
+          name: "Reimbursements",
+          path: my_reimbursements_path,
+          icon: "reimbursement",
+          tooltip: "See expense reimbursements",
+          async_badge: my_reimbursements_icon_path,
+          selected: selected == :reimbursements
+        }
+      ]
+    end
 
-    if current_user.jobs.any?
+    unless current_user&.events&.any?
+      items << {
+        name: "Apply for HCB",
+        path: apply_path,
+        icon: "resources",
+        tooltip: "Start an application for HCB"
+      }
+    end
+
+    if current_user&.jobs&.any?
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -56,7 +66,7 @@ module UsersHelper
       }
     end
 
-    items
+    items.compact
   end
 
   def gravatar_url(email, name, id, size)

@@ -81,7 +81,8 @@ class User < ApplicationRecord
     organizer_position_invite: 2,
     card_grant: 3,
     grant: 4,
-    application_form: 5
+    application_form: 5,
+    first_robotics_form: 6
   }
 
   has_many :logins
@@ -101,6 +102,9 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
+  accepts_nested_attributes_for :affiliations
 
   has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
   has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
@@ -613,6 +617,10 @@ class User < ApplicationRecord
 
   def reimbursement_event_options
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
+  def show_first_dashboard?
+    card_grants.none? && events.none? && affiliations.where(name: "first").exists?
   end
 
   private

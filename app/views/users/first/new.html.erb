@@ -1,0 +1,51 @@
+<% title "FIRST on HCB" %>
+<% page_sm %>
+
+<h2 class="heading text-6xl my-8">
+  The
+  <em>
+    <strong style="font-weight: 800;">ultimate booster club</strong>
+  </em>
+  for FRC, FTC, and FLL teams
+</h2>
+
+<div class="container max-w-[26rem]">
+  <div class="card border mt3 mb3">
+    <p>
+      FIRST teams use HCB to reimburse its volunteers and external contributors. After entering your
+      email and the purpose of your reimbursement request, you'll receive an email from us with a portal to submit receipts
+      and enter payout information.
+    </p>
+    <%= form_with model: @user, url: first_index_path do |form| %>
+      <h3 class="heading">You</h3>
+      <div class="field">
+        <%= form.label :full_name %>
+        <%= form.text_field :full_name, value: "", placeholder: "Fiona Hackworth" %>
+      </div>
+      <div class="field">
+        <%= form.label :email, "Email address" %>
+        <%= form.email_field :email, value: "", placeholder: "orpheus@hackclub.com" %>
+      </div>
+      <h3 class="heading">Your team</h3>
+      <%= form.fields_for :affiliations do |affiliation| %>
+        <div class="field">
+          <%= affiliation.label :team_number %>
+          <div class="flex gap-2">
+            <%= affiliation.select :league, %w[FRC FTC FLL], {}, { class: "!w-[100px]" } %>
+            <%= affiliation.text_field :team_number, value: "", placeholder: "#9101", class: "!w-full !min-w-0" %>
+          </div>
+        </div>
+        <div class="field">
+          <%= affiliation.label :team_name, "Team name" %>
+          <%= affiliation.text_field :team_name, value: "", placeholder: "Green Mountain Robotics" %>
+        </div>
+        <%= affiliation.hidden_field :name, value: "first" %>
+      <% end %>
+      <%= form.fields_for :affiliations_attributes do %> <% end %>
+
+      <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
+
+      <%= form.submit "Sign up" %>
+    <% end %>
+  </div>
+</div>

@@ -31,6 +31,8 @@ class ApplicationController < ActionController::Base
   # update the current session's last_seen_at
   before_action { Current.session&.update_session_timestamps }
 
+  before_action :set_unverified_user
+
   before_action do
     # Disallow indexing and following
     response.set_header("X-Robots-Tag", "none")
@@ -146,6 +148,10 @@ class ApplicationController < ActionController::Base
 
     Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:)
     Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:)
+  end
+
+  def set_unverified_user
+    Current.unverified_user = User.find_signed(cookies.signed["user_token"], purpose: :unverified_persistence) if cookies.signed["user_token"].present?
   end
 
 end

@@ -28,11 +28,20 @@
           <% end %>
         </div>
       <% else %>
-        <%= link_to auth_users_path, class: "dock__item user-menu-trigger max-w-full" do %>
-          <%= inline_icon "door-enter", size: 28 %>
-          <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
-            <span class="truncate">Sign in</span>
-          </div>
+        <% if Current.unverified_user.present? %>
+          <%= button_to logins_path, params: { login: { purpose: "" }, email: Current.unverified_user.email }, class: "dock__item user-menu-trigger max-w-full" do %>
+            <%= inline_icon "email", size: 28 %>
+            <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
+              <span class="truncate">Verify your email</span>
+            </div>
+          <% end %>
+        <% else %>
+          <%= link_to auth_users_path, class: "dock__item user-menu-trigger max-w-full" do %>
+            <%= inline_icon "door-enter", size: 28 %>
+            <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
+              <span class="truncate">Sign in</span>
+            </div>
+          <% end %>
         <% end %>
       <% end %>
     </div>

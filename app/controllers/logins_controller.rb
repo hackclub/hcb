@@ -21,7 +21,7 @@ class LoginsController < ApplicationController
     referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
     @login = Login.new(state: { return_to: url_from(params[:return_to]), purpose: params[:purpose] }, referral_link_id:)
 
-    @prefill_email = params[:email] if params[:email].present?
+    @prefill_email = params[:email].presence || Current.unverified_user&.email.presence
     @signup = params[:signup] == "true"
   end
 

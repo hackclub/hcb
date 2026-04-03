@@ -1,0 +1,114 @@
+<% title "Home" %>
+<% page_md %>
+
+<%= render "users/nav", selected: :home %>
+
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
+  <div>
+    <span class="<%= "warning" if fall? %>">
+      Welcome to <span class="primary">HCB</span>
+    </span>
+  </div>
+  <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+</h1>
+
+<h2 class="heading text-6xl my-8">
+  The
+  <em>
+    <strong style="font-weight: 800;">ultimate booster club</strong>
+  </em>
+  for FRC, FTC, and FLL teams
+</h2>
+
+<div class="card flex flex-col bg-black !text-white gap-3">
+  <div class="flex flex-row items-stretch gap-4">
+  <div class="w-full">
+    <h2 class="heading mt-0 mb-3 w-full">
+      Get a free 3D printer!
+    </h2>
+    <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
+    <%= link_to "#", class: "btn bg-info gap-1 hidden md:inline-flex", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
+      Email your advisor about HCB →
+    <% end %>
+  </div>
+    <div class="min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+  </div>
+
+    <%= link_to "#", class: "btn bg-info gap-1  md:hidden" do %>
+      Email your advisor about HCB →
+    <% end %>
+
+  <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
+</div>
+
+<div class="flex gap-3 items-stretch justify-center flex-col md:flex-row my-4">
+  <div class="card w-full">
+    <h2 class="heading mt-0 mb-3">
+      HCB in action
+    </h2>
+    <p class="my-3">Green Mountain Robotics saves hundreds of hours on bookkeeping and accounting by using HCB to raise and spend money. HCB's online donation form makes grassroots crowdfunding easy, and HCB's 1-click invoicing makes collecting sponsor payments a breeze.</p>
+    <div class="flex flex-row my-4 pr-1 gap-4 justify-between">
+      <div class="flex flex-row items-center justify-start gap-1 w-full xl:w-max">
+        <%= inline_icon "payment-docs" %>
+        $66k raised
+      </div>
+      <div class="flex flex-row items-center justify-start gap-1 w-full xl:w-max">
+        <%= inline_icon "support-fill" %>
+        139 donors
+      </div>
+      <div class="hidden flex-row items-center justify-start gap-1 xl:flex">
+        <%= inline_icon "event-star" %>
+        3 years
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to "/green-mountain-robotics", class: "btn bg-success gap-1", target: :_blank do %>
+        Green Mountain Robotics on HCB →
+      <% end %>
+    </div>
+  </div>
+  <!--<div class="w-full overflow-hidden">
+    <img src="https://cdn.hackclub.com/019d4efc-8a51-7e6e-b9cb-7f20968445e8/image.png" class="w-full card p-[0.5px] h-full">
+  </div>-->
+  <div class="w-full card bg-[url('https://cdn.hackclub.com/019d4efc-8a51-7e6e-b9cb-7f20968445e8/image.png')] bg-left-top bg-cover"></div>
+</div>
+
+
+<div class="card my-4">
+  <h3 class="eyebrow my-0">
+    Team #11067
+  </h3>
+  <h2 class="heading my-3">
+    Give your finances superpowers
+  </h2>
+  <p>
+    HCB provides hundreds of <em>FIRST</em> teams with a powerful financial toolkit for raising and spending money. An online donation form, effortless expense reimbursements, and free debit cards help your team worry less about finances.
+  </p>
+  <div class="flex gap-3">
+    <%= link_to "#", class: "btn gap-1" do %>
+      Email your advisor about HCB
+    <% end %>
+    <!--
+    <%= link_to "#", class: "btn gap-1" do %>
+      See why 1,000 <em> FIRST </em> teams use HCB to raise money →
+    <% end %>
+    -->
+  </div>
+</div>
+
+<section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
+  <%= modal_header "Email your advisor" %>
+
+  <p>
+    Send an email to your advisor to ask them about running your team on HCB. Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
+  </p>
+
+  <%= form_with(model: false) do |form| %>
+    <div class="field">
+      <%= form.label :advisor_email, "Advisor email address" %>
+      <%= form.email_field :advisor_email %>
+    </div>
+
+    <%= form.submit "Send email & enter raffle" %>
+  <% end %>
+</section>

@@ -25,7 +25,7 @@ class Event
 
     belongs_to :affiliable, polymorphic: true
 
-    store_accessor :metadata, :league, :team_number, :size, :venue_name
+    store_accessor :metadata, :league, :team_number, :size, :venue_name, :team_name
 
     scope :robotics, -> { where(name: %w[first vex]) }
     scope :nonempty, -> { where.not(metadata: {}) }
@@ -68,7 +68,7 @@ class Event
     def metadata_contains_required_fields
       required_fields = case name
                         when "first"
-                          ["league", "team_number", "size"]
+                          ["league", "team_number"]
                         when "vex"
                           ["league", "team_number", "size"]
                         when "hack_club"
