@@ -663,7 +663,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :beacon_config
           get :intercom_token, to: "intercom#token"
         end
 
@@ -679,7 +678,6 @@ Rails.application.routes.draw do
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
-          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -713,6 +711,9 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
+
+        resources :tags, only: [:index, :show, :create, :destroy]
+
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
