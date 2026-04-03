@@ -177,6 +177,14 @@ Rails.application.routes.draw do
         get "data"
       end
     end
+
+    resources "first", only: [:index, :create] do
+      collection do
+        get "welcome", to: "first#new"
+      end
+    end
+
+
     resources :email_updates, only: [] do
       collection do
         get "verify"
