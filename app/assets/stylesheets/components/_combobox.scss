@@ -90,7 +90,7 @@
 }
 
 .hw-combobox__listbox {
-  @apply shadow-xl absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
+  @apply shadow-lg absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
   visibility: hidden;
   border-color: transparent;
   border-style: solid;
