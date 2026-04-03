@@ -20,29 +20,31 @@ export default class extends Controller {
   connect() {
     this.resetPreview()
     this.previewTarget.classList.add('tooltipped')
-    this.previewTarget.onclick = () => {
-      this._savedFiles = [...this.inputTarget.files]
-      this.inputTarget.click()
-    }
-    this.inputTarget.onchange = () => {
-      if (this.inputTarget.files.length === 0 && this._savedFiles?.length > 0) {
-        this._restoreSavedFiles()
-      } else {
-        this._savedFiles = null
-        this.render()
-      }
-    }
-    this.inputTarget.addEventListener('cancel', () => this._restoreSavedFiles())
+    this.previewTarget.onclick = () => this._openPicker()
+    this.inputTarget.onchange = () => this.render()
     window.addEventListener('turbo:morph', this.connect.bind(this))
   }
 
-  _restoreSavedFiles() {
-    if (this._savedFiles?.length > 0) {
-      const dt = new DataTransfer()
-      this._savedFiles.forEach(f => dt.items.add(f))
-      this.inputTarget.files = dt.files
+  _openPicker() {
+    if (this.inputTarget.files.length === 0) {
+      this.inputTarget.click()
+      return
     }
-    this._savedFiles = null
+
+    // A file is already selected — use a temporary input so that canceling
+    // the picker doesn't clear the original input.
+    const tmp = document.createElement('input')
+    tmp.type = 'file'
+    tmp.accept = this.inputTarget.accept || ''
+    tmp.multiple = this.inputTarget.multiple
+    tmp.onchange = () => {
+      if (tmp.files.length === 0) return
+      const dt = new DataTransfer()
+      ;[...tmp.files].forEach(f => dt.items.add(f))
+      this.inputTarget.files = dt.files
+      this.render()
+    }
+    tmp.click()
   }
 
   render() {
