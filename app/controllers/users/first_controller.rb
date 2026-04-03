@@ -6,7 +6,7 @@ module Users
 
     skip_after_action :verify_authorized
     skip_before_action :signed_in_user
-    
+
     def index
     end
 
@@ -16,7 +16,6 @@ module Users
     end
 
     def create
-      byebug
       @user = User.new(user_params)
 
       if User.where(email: @user.email).exists?
@@ -41,5 +40,6 @@ module Users
     def user_params
       params.require(:user).permit(:email, :full_name, affiliations_attributes: [:league, :team_number, :name])
     end
+
   end
 end
