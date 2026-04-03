@@ -4,6 +4,14 @@ class Event
   class StatementOfActivity
     prepend MemoWise
 
+    StatementCategory = Data.define(:slug, :label)
+
+    INTRA_ORG_TRANSFER = StatementCategory.new("intra-organization-transfer", "Intra-organization transfers")
+    INTER_ORG_TRANSFER = StatementCategory.new("inter-organization-transfer", "Inter-organization transfers")
+
+    INTERNAL_TRANSFER_SLUG = "internal-transfer"
+    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(?:500|550)-(\d+)\z/
+
     attr_reader(:event, :event_group, :include_descendants)
 
     def initialize(
@@ -51,15 +59,16 @@ class Event
     end
 
     memo_wise def transactions_by_category
-      transactions.includes(:category, :local_hcb_code, :event).group_by(&:category).sort_by do |category, _transactions|
+      grouped_transactions.sort_by do |category, _transactions|
         next Float::INFINITY if category.nil? # Put the "Uncategorized" category at the end
 
-        category_totals[category.slug] # I'm using SQL calculated totals since it is faster than Array's sum(&:amount_cents)
+        category_totals[category.slug]
       end.to_h
     end
 
     memo_wise def category_totals
-      transactions.includes(:category).group("category.slug").sum(:amount_cents)
+      totals = grouped_transactions.transform_keys { |cat| cat&.slug }.transform_values { |txns| txns.sum(&:amount_cents) }
+      totals
     end
 
     memo_wise def net_asset_change
@@ -153,6 +162,38 @@ class Event
     private
 
     attr_reader(:start_date_param, :end_date_param)
+
+    memo_wise def grouped_transactions
+      transactions.includes(:category, :local_hcb_code, :event).group_by do |transaction|
+        reporting_category_for(transaction)
+      end
+    end
+
+    def reporting_category_for(transaction)
+      category = transaction.category
+      return category unless category&.slug == INTERNAL_TRANSFER_SLUG
+
+      disbursement_id = transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
+      return category unless disbursement_id
+
+      intra_organization_disbursement_ids.include?(disbursement_id) ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
+    end
+
+    memo_wise def intra_organization_disbursement_ids
+      event_ids = events.map(&:id)
+
+      disbursement_ids = transactions.includes(:category).filter_map do |transaction|
+        next unless transaction.category&.slug == INTERNAL_TRANSFER_SLUG
+
+        transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
+      end.uniq
+
+      return Set.new if disbursement_ids.empty?
+
+      Disbursement.where(id: disbursement_ids, source_event_id: event_ids, event_id: event_ids)
+                  .pluck(:id)
+                  .to_set
+    end
 
     def transactions
       CanonicalTransaction
