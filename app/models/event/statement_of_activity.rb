@@ -69,6 +69,7 @@ class Event
     memo_wise def category_totals
       totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
 
+      # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers)
       if totals.key?(INTERNAL_TRANSFER_SLUG)
         virtual_totals = grouped_transactions
                          .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
