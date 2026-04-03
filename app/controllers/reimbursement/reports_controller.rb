@@ -430,7 +430,7 @@ module Reimbursement
     private
 
     def set_report_user_and_event
-      @report = Reimbursement::Report.find(params[:report_id] || params[:id])
+      @report = Reimbursement::Report.includes(expenses: [:approved_by, :receipts]).find(params[:report_id] || params[:id])
       @event = @report.event
       @user = @report.user
     rescue ActiveRecord::RecordNotFound

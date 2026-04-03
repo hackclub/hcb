@@ -120,6 +120,7 @@ module Reimbursement
     end
 
     def actions_turbo_stream
+      @expense.report.expenses.reload
       turbo_stream.replace("action-wrapper", partial: "reimbursement/reports/actions", locals: { report: @expense.report, user: @expense.report.user })
     end
 

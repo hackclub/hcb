@@ -1,5 +1,14 @@
 <% if report.expenses.any? %>
+  <% move_report_options = if admin_signed_in?
+      (current_user.reimbursement_reports.excluding(report) + Reimbursement::Report.all.pending.excluding(report)).reject(&:locked?).map { |r| [r.name, r.id] }
+    elsif current_user == report.user
+      current_user.reimbursement_reports.excluding(report).reject(&:locked?).map { |r| [r.name, r.id] }
+    else
+      report.event.reimbursement_reports.excluding(report).reject(&:locked?).map { |r| [r.name, r.id] }
+    end
+  %>
+  <% move_event_options = current_user.events.not_hidden.filter_demo_mode(false).map { |event| [event.name, event.id] } %>
   <% report.expenses.order(created_at: :asc).includes(:approved_by, :event, :receipts).each do |expense| %>
-    <%= render "reimbursement/expenses/expense", expense:, new: @editing == expense.id %>
+    <%= render "reimbursement/expenses/expense", expense:, new: @editing == expense.id, move_report_options:, move_event_options: %>
   <% end %>
 <% end %>

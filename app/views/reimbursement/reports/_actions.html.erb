@@ -1,4 +1,8 @@
 <% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
+<% loaded_expenses = report.expenses.load %>
+<% expenses_to_sum = loaded_expenses.reject(&:is_fee?) %>
+<% approved_to_sum = expenses_to_sum.select(&:approved?) %>
+<% complete_to_sum = expenses_to_sum.select { |e| e.memo.present? && !e.amount_cents.zero? && e.receipts.any? } %>
 
 <div class="flex flex-col-reverse" id="action-wrapper">
   <%# Using a reverse column flex container, we can
@@ -37,7 +41,7 @@
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
             <%= inline_icon "plus" %>
-            Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
+            Add <%= loaded_expenses.any? ? "another" : "an" %> expense
           </div>
         <% elsif !report.closed? %>
           <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
@@ -155,9 +159,9 @@
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
-              <% if report.expenses.none? %>
+              <% if loaded_expenses.empty? %>
                 Get started by adding an expense to this report.
-              <% elsif report.missing_receipts? || report.expenses.any? { |e| e.amount.zero? } %>
+              <% elsif report.missing_receipts? || loaded_expenses.any? { |e| e.amount.zero? } %>
                 <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
@@ -224,7 +228,7 @@
               Reimburse <%= report.amount_to_reimburse.format %>
             </div>
           </div>
-        <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>
+        <% elsif report.submitted? && policy(report).approve_all_expenses? && loaded_expenses.none?(&:approved?) %>
           <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
             <%= inline_icon "thumbsup" %>
             Approve all expenses
@@ -365,7 +369,7 @@
       Re-open report for review
     <% end %>
   <% end %>
-  <% if report.expenses.any? %>
+  <% if loaded_expenses.any? %>
     <div class="card mt2 flex-1 <%= "closed" if report.closed? || member_viewing %>">
       <div id="summary">
         <div class="stat stat--small" style="flex-shrink: 0;">
@@ -375,7 +379,7 @@
         <% if report.locked? %>
           <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
             <span class="stat__label">Expenses approved</span>
-            <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
+            <span class="stat__value"><%= approved_to_sum.size %>/<%= expenses_to_sum.size %></span>
           </div>
           <div class="stat stat--small" style="flex-shrink: 0;">
             <span class="stat__label">Amount approved</span>
@@ -390,11 +394,11 @@
         <% else %>
           <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
             <span class="stat__label">Total expenses</span>
-            <span class="stat__value"><%= report.expenses.to_sum.count %></span>
+            <span class="stat__value"><%= expenses_to_sum.size %></span>
           </div>
           <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
             <span class="stat__label">Complete</span>
-            <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
+            <span class="stat__value"><%= complete_to_sum.size %>/<%= expenses_to_sum.size %></span>
           </div>
         <% end %>
         <p class="mt-1 mb0" id="summary-hint">
