@@ -71,9 +71,9 @@ class Event
 
       if totals.key?(INTERNAL_TRANSFER_SLUG)
         virtual_totals = grouped_transactions
-          .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
-          .transform_keys(&:slug)
-          .transform_values { |txns| txns.sum(&:amount_cents) }
+                         .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
+                         .transform_keys(&:slug)
+                         .transform_values { |txns| txns.sum(&:amount_cents) }
 
         totals.except(INTERNAL_TRANSFER_SLUG).merge(virtual_totals)
       else
@@ -193,11 +193,11 @@ class Event
       event_ids = events.map(&:id)
 
       disbursement_ids = transactions
-        .joins(:category_mapping)
-        .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
-        .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
-        .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
-        .uniq
+                         .joins(:category_mapping)
+                         .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
+                         .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
+                         .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
+                         .uniq
 
       return Set.new if disbursement_ids.empty?
 
