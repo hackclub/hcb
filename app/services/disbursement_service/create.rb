@@ -24,7 +24,7 @@ module DisbursementService
       fronted: false,
       source_transaction_category_slug: nil,
       destination_transaction_category_slug: nil,
-      category_assignment_strategy: nil
+      category_assignment_strategy: "manual"
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)

@@ -6,7 +6,7 @@ module PendingTransactionEngine
       class OutgoingDisbursement
         def initialize(raw_pending_outgoing_disbursement_transaction:, category_assignment_strategy: "manual")
           @rpodt = raw_pending_outgoing_disbursement_transaction
-          @category_assignment_strategy = @category_assignment_strategy
+          @category_assignment_strategy = category_assignment_strategy
         end
 
         def run
