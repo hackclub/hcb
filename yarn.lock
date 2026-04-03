@@ -1196,6 +1196,11 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
+"@josefarias/hotwire_combobox@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@josefarias/hotwire_combobox/-/hotwire_combobox-0.4.1.tgz#d3536ffba107cbaf4111c19e4a8453202d1ef80a"
+  integrity sha512-JvfGC7osghQ8jl/ZkJjAEvvMj4ZecguhjNGcaqmPEBRDhPjSOhYziO9PsOXPUgjqcpLZx654VufWnYu1+aR8xQ==
+
 "@jridgewell/gen-mapping@^0.3.12":
   version "0.3.12"
   resolved "https://registry.yarnpkg.com/@jridgewell/gen-mapping/-/gen-mapping-0.3.12.tgz#2234ce26c62889f03db3d7fea43c1932ab3e927b"

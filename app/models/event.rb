@@ -933,6 +933,15 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
+  # both to_combobox_display and id are used for comboboxes
+  def to_combobox_display
+    "#{name} (#{id})"
+  end
+
+  def value
+    id
+  end
+
   private
 
   def point_of_contact_is_admin
