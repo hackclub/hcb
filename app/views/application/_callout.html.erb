@@ -1,8 +1,8 @@
 <% icon ||= type == "error" ? "important" : (type == "success" ? "emoji" : "info") %> <%# (success | info | warning | error) %>
 <% color ||= type == "error" ? "primary" : type %>
 
-<div class="<%= "card border b--#{color} #{"pb0" if local_assigns[:footer].present? } mt3 mb3 #{local_assigns[:class]}" %>">
-  <div class="<%= "flex items-center #{color}" %>">
+<div class="<%= "flex flex-col card border b--#{color} p-0 mt3 mb3 #{local_assigns[:class]}" %>">
+  <div class="<%= "flex items-center #{color}" %> p-4 pb-0">
     <%= inline_icon icon, size: 32, class: "mr1" %>
     <p class="bold mt0 mb0">
       <%= local_assigns[:title] %>
@@ -11,19 +11,21 @@
   </div>
 
   <% unless (block = yield).empty? %>
-    <div class="m0 mt1">
+    <div class="m0 mt1 flex-grow overflow-y-scroll scroll-fade p-4 pt-0 <%= "pb-0" if local_assigns[:footer].present? %>">
       <%= block %>
     </div>
   <% end %>
 
   <% if local_assigns[:footer].present? %>
-    <div class="border-top card__banner card__darker secondary mt2">
-      <% if local_assigns[:footer] == :questions %>
-        <strong>Questions?</strong>
-        <%= help_message %>
-      <% else %>
-        <%= local_assigns[:footer] %>
-      <% end %>
+    <div class="border-top card__banner card__darker secondary">
+      <p class="px-4 my-0">
+        <% if local_assigns[:footer] == :questions %>
+          <strong>Questions?</strong>
+          <%= help_message %>
+        <% else %>
+          <%= local_assigns[:footer] %>
+        <% end %>
+      </p>
     </div>
   <% end %>
 </div>

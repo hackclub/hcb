@@ -77,9 +77,9 @@ class InvoicesController < ApplicationController
 
     if organizer_signed_in?
       relation = relation.left_joins(:sponsor) if sort_column == "sponsors.name"
-      @invoices = relation.order(sort_column => sort_direction)
+      @invoices = relation.order(sort_column => sort_direction).includes(:sponsor).page(params[:page]).per(25)
     else
-      @invoices = relation.order(created_at: :desc)
+      @invoices = relation.order(created_at: :desc).includes(:sponsor).page(params[:page]).per(25)
     end
 
     @sponsor = Sponsor.new(event: @event)

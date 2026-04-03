@@ -149,6 +149,7 @@ Rails.application.routes.draw do
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
+      get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"
 
@@ -195,11 +196,15 @@ Rails.application.routes.draw do
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
       # Request a login code
-      post "login_code"
+      post "email"
+      post "sms"
 
       # TOTP
       get "totp"
       post "totp"
+
+      get "security_key"
+      post "security_key"
 
       get "backup_code"
       post "backup_code"
@@ -210,6 +215,7 @@ Rails.application.routes.draw do
 
   resources :admin, only: [] do
     collection do
+      get "nav", to: "admin#nav"
       get "bank_accounts", to: "admin#bank_accounts"
       get "hcb_codes", to: "admin#hcb_codes"
       get "bank_fees", to: "admin#bank_fees"
@@ -655,7 +661,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :beacon_config
           get :intercom_token, to: "intercom#token"
         end
 
@@ -671,7 +676,6 @@ Rails.application.routes.draw do
           resources :invoices, only: [:index]
           resources :sponsors, only: [:index]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
-          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -705,6 +709,9 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
+
+        resources :tags, only: [:index, :show, :create, :destroy]
+
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
@@ -854,6 +861,7 @@ Rails.application.routes.draw do
       member do
         get "personal_info"
         get "project_info"
+        get "videos"
         get "agreement"
         get "review"
         get "submission"
