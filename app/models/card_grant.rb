@@ -180,6 +180,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: topped_up_by.id,
         source_transaction_category_slug: "grants-stipends",
         destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
       disbursement.local_hcb_code.update_custom_memo!(custom_memo)
@@ -203,6 +204,7 @@ class CardGrant < ApplicationRecord
         requested_by_id: withdrawn_by.id,
         source_transaction_category_slug: "grants-stipends",
         destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
       disbursement.local_hcb_code.update_custom_memo!(custom_memo)
@@ -241,6 +243,7 @@ class CardGrant < ApplicationRecord
       requested_by_id: requested_by.id,
       source_transaction_category_slug: "grants-stipends",
       destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
     disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
@@ -353,6 +356,7 @@ class CardGrant < ApplicationRecord
       destination_subledger_id: subledger_id,
       source_transaction_category_slug: "grants-stipends",
       destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
     save!
   end
