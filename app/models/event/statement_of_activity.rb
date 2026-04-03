@@ -67,8 +67,18 @@ class Event
     end
 
     memo_wise def category_totals
-      totals = grouped_transactions.transform_keys { |cat| cat&.slug }.transform_values { |txns| txns.sum(&:amount_cents) }
-      totals
+      totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
+
+      if totals.key?(INTERNAL_TRANSFER_SLUG)
+        virtual_totals = grouped_transactions
+          .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
+          .transform_keys(&:slug)
+          .transform_values { |txns| txns.sum(&:amount_cents) }
+
+        totals.except(INTERNAL_TRANSFER_SLUG).merge(virtual_totals)
+      else
+        totals
+      end
     end
 
     memo_wise def net_asset_change
@@ -182,11 +192,12 @@ class Event
     memo_wise def intra_organization_disbursement_ids
       event_ids = events.map(&:id)
 
-      disbursement_ids = transactions.includes(:category).filter_map do |transaction|
-        next unless transaction.category&.slug == INTERNAL_TRANSFER_SLUG
-
-        transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
-      end.uniq
+      disbursement_ids = transactions
+        .joins(:category_mapping)
+        .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
+        .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
+        .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
+        .uniq
 
       return Set.new if disbursement_ids.empty?
 
