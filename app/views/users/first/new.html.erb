@@ -9,24 +9,43 @@
   for FRC, FTC, and FLL teams
 </h2>
 
+<hr>
+
+<p>
+  <em>FIRST</em> teams across the country use HCB to manage their finances.
+  Explore how HCB can help your team raise more money and make it easier to spend and reimburse.
+</p>
+
+<div class="card flex flex-col bg-black !text-white gap-3">
+  <div class="flex flex-row items-stretch gap-4">
+  <div class="w-full">
+    <h2 class="heading mt-0 mb-3 w-full">
+      Get a free 3D printer!
+    </h2>
+    <p class="my-0 md:my-2">Create an HCB account and email your advisor with information, and we'll sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
+
+  </div>
+    <div class="min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+  </div>
+
+
+  <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
+</div>
+
+
 <div class="container max-w-[26rem]">
   <div class="card border mt3 mb3">
-    <p>
-      FIRST teams use HCB to reimburse its volunteers and external contributors. After entering your
-      email and the purpose of your reimbursement request, you'll receive an email from us with a portal to submit receipts
-      and enter payout information.
-    </p>
+    <h2 class="heading mt-0">Create an HCB account</h2>
+    <p><em>Completely free. No commitment.</em></p>
     <%= form_with model: @user, url: first_index_path do |form| %>
-      <h3 class="heading">You</h3>
       <div class="field">
-        <%= form.label :full_name %>
+        <%= form.label :full_name, "Your full name" %>
         <%= form.text_field :full_name, value: "", placeholder: "Fiona Hackworth" %>
       </div>
       <div class="field">
-        <%= form.label :email, "Email address" %>
+        <%= form.label :email, "Your email address" %>
         <%= form.email_field :email, value: "", placeholder: "orpheus@hackclub.com" %>
       </div>
-      <h3 class="heading">Your team</h3>
       <%= form.fields_for :affiliations do |affiliation| %>
         <div class="field">
           <%= affiliation.label :team_number %>
