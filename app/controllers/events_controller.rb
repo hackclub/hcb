@@ -870,7 +870,7 @@ class EventsController < ApplicationController
       @event,
       start_date_param: params[:start],
       end_date_param: params[:end],
-      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants] || true),
     )
 
     respond_to do |format|

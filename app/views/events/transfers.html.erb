@@ -4,7 +4,7 @@
 <%= render "events/transfer_modal" if policy(@event).new_transfer? %>
 <%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
-<% if @transfers.empty? && organizer_signed_in? %>
+<% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:filter].present? %>
   <%= render "events/one_pager",
     title: "Transfers",
     screenshots: {

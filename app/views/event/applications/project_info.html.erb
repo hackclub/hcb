@@ -42,7 +42,7 @@
       </p>
       <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", "x-model": "description" %>
       <% unless @application.teen_led? %>
-        <p class="text-sm muted mt-1 mb-2"><span x-text="description_word_count">0</span>/50 words</p>
+        <p class="text-sm muted mt-1 mb-2" x-text="description_word_count_text"></p>
       <% end %>
     </div>
 
