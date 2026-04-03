@@ -419,7 +419,7 @@ code pre {
   margin: 0;
 }
 
-details {
+details:not(:has(> summary.visual-table-row)) {
   /* Make the <details> look more "clickable" */
   padding: 0.6rem 1rem;
   background: var(--hcb-bg-2);

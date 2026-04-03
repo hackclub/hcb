@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1635,6 +1635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
     t.datetime "created_at", null: false
     t.boolean "is_reauthentication", default: false, null: false
     t.bigint "referral_link_id"
+    t.jsonb "state"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
@@ -1769,6 +1770,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
     t.datetime "accepted_at", precision: nil
     t.datetime "cancelled_at", precision: nil
     t.datetime "created_at", precision: nil, null: false
+    t.datetime "deleted_at"
     t.bigint "event_id", null: false
     t.boolean "initial", default: false
     t.integer "initial_control_allowance_amount_cents"
@@ -1780,6 +1782,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_26_032310) do
     t.string "slug"
     t.datetime "updated_at", precision: nil, null: false
     t.bigint "user_id", null: false
+    t.index ["deleted_at"], name: "index_organizer_position_invites_on_deleted_at"
     t.index ["event_id"], name: "index_organizer_position_invites_on_event_id"
     t.index ["organizer_position_id"], name: "index_organizer_position_invites_on_organizer_position_id"
     t.index ["sender_id"], name: "index_organizer_position_invites_on_sender_id"
