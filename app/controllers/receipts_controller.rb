@@ -18,9 +18,7 @@ class ReceiptsController < ApplicationController
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
-        if params[:popover]&.starts_with?("HcbCode:")
-          flash[:popover] = params[:popover].gsub("HcbCode:", "")
-        end
+        apply_popover_flash
 
         if success
           flash[:success] = "Deleted receipt"
@@ -54,9 +52,7 @@ class ReceiptsController < ApplicationController
           flash[:success] = "Receipt added!"
         end
 
-        if params[:popover]&.starts_with?("HcbCode:")
-          flash[:popover] = params[:popover].gsub("HcbCode:", "")
-        end
+        apply_popover_flash
 
         if (safe_redirect = url_from(params[:redirect_url]))
           redirect_to safe_redirect
@@ -216,9 +212,7 @@ class ReceiptsController < ApplicationController
     respond_to do |format|
       format.turbo_stream { render turbo_stream: generate_streams }
       format.html         {
-        if params[:popover]&.starts_with?("HcbCode:")
-          flash[:popover] = params[:popover].gsub("HcbCode:", "")
-        end
+        apply_popover_flash
 
         if success
           flash[:success] = {
@@ -369,6 +363,12 @@ class ReceiptsController < ApplicationController
   def on_transaction_page?
     route = Rails.application.routes.recognize_path(request.referrer)
     return route[:controller].classify == "HcbCode"
+  end
+
+  def apply_popover_flash
+    if params[:popover]&.starts_with?("HcbCode:")
+      flash[:popover] = params[:popover].gsub("HcbCode:", "")
+    end
   end
 
   def set_transaction_display_data

@@ -19,45 +19,17 @@ class StripeCardsController < ApplicationController
   end
 
   def freeze
-    @card = StripeCard.find(params[:id])
-    authorize @card
-
-    begin
-      @card.freeze!(frozen_by: current_user)
-      flash[:success] = "Card frozen"
-    rescue => e
-      flash[:error] = "Card could not be frozen"
+    perform_card_action("Card frozen", "Card could not be frozen") do |card|
+      card.freeze!(frozen_by: current_user)
     end
-
-    redirect_back_or_to stripe_card_path(@card)
   end
 
   def cancel
-    @card = StripeCard.find(params[:id])
-    authorize @card
-
-    begin
-      @card.cancel!
-      flash[:success] = "Card canceled"
-    rescue => e
-      flash[:error] = "Card could not be canceled"
-    end
-
-    redirect_back_or_to stripe_card_path(@card)
+    perform_card_action("Card canceled", "Card could not be canceled", &:cancel!)
   end
 
   def defrost
-    @card = StripeCard.find(params[:id])
-    authorize @card
-
-    begin
-      @card.defrost!
-      flash[:success] = "Card defrosted"
-    rescue => e
-      flash[:error] = "Card could not be defrosted"
-    end
-
-    redirect_back_or_to @card
+    perform_card_action("Card defrosted", "Card could not be defrosted", &:defrost!)
   end
 
   def show
@@ -179,6 +151,18 @@ class StripeCardsController < ApplicationController
   end
 
   private
+
+  def perform_card_action(success_msg, error_msg)
+    @card = StripeCard.find(params[:id])
+    authorize @card
+    begin
+      yield @card
+      flash[:success] = success_msg
+    rescue
+      flash[:error] = error_msg
+    end
+    redirect_back_or_to stripe_card_path(@card)
+  end
 
   def suggested(field)
     return nil unless current_user
