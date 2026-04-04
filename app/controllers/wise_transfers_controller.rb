@@ -25,14 +25,7 @@ class WiseTransfersController < ApplicationController
     end
 
     if @wise_transfer.save
-      if wise_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: wise_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @wise_transfer.local_hcb_code
-        ).run!
-      end
+      attach_receipt_to_hcb_code(wise_transfer_params[:file], @wise_transfer.local_hcb_code)
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
     else
       render "new", status: :unprocessable_entity
@@ -88,7 +81,7 @@ class WiseTransfersController < ApplicationController
 
     @wise_transfer.mark_rejected!
 
-    @wise_transfer.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    add_rejection_comment(@wise_transfer)
 
     redirect_back_or_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "Wire has been canceled." }
   end

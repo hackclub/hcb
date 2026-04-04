@@ -93,14 +93,7 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
     ).run
 
-    if disbursement_params[:file]
-      ::ReceiptService::Create.new(
-        uploader: current_user,
-        attachments: disbursement_params[:file],
-        upload_method: :transfer_create_page,
-        receiptable: disbursement.local_hcb_code
-      ).run!
-    end
+    attach_receipt_to_hcb_code(disbursement_params[:file], disbursement.local_hcb_code)
 
     flash[:success] = "Transfer successfully requested."
 

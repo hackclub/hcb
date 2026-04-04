@@ -25,14 +25,7 @@ class WiresController < ApplicationController
     end
 
     if @wire.save
-      if wire_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: wire_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @wire.local_hcb_code
-        ).run!
-      end
+      attach_receipt_to_hcb_code(wire_params[:file], @wire.local_hcb_code)
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else
       render "new", status: :unprocessable_entity
@@ -100,7 +93,7 @@ class WiresController < ApplicationController
 
     @wire.mark_rejected!
 
-    @wire.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    add_rejection_comment(@wire)
 
     redirect_back_or_to wire_process_admin_path(@wire), flash: { success: "Wire has been canceled." }
   end

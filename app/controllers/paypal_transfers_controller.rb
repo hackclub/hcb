@@ -19,14 +19,7 @@ class PaypalTransfersController < ApplicationController
     authorize @paypal_transfer
 
     if @paypal_transfer.save
-      if paypal_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: paypal_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @paypal_transfer.local_hcb_code
-        ).run!
-      end
+      attach_receipt_to_hcb_code(paypal_transfer_params[:file], @paypal_transfer.local_hcb_code)
       redirect_to url_for(@paypal_transfer.local_hcb_code), flash: { success: "Your PayPal transfer has been sent!" }
     else
       render "new", status: :unprocessable_entity
@@ -50,7 +43,7 @@ class PaypalTransfersController < ApplicationController
 
     @paypal_transfer.mark_rejected!
 
-    @paypal_transfer.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    add_rejection_comment(@paypal_transfer)
 
     redirect_back_or_to paypal_transfer_process_admin_path(@paypal_transfer), flash: { success: "PayPal transfer has been canceled." }
   end

@@ -27,14 +27,7 @@ class IncreaseChecksController < ApplicationController
     end
 
     if @check.save
-      if check_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: check_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @check.local_hcb_code
-        ).run!
-      end
+      attach_receipt_to_hcb_code(check_params[:file], @check.local_hcb_code)
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
       render "new", status: :unprocessable_entity
@@ -59,7 +52,7 @@ class IncreaseChecksController < ApplicationController
   def reject
     authorize @check
 
-    @check.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+    add_rejection_comment(@check)
 
     @check.mark_rejected!
 

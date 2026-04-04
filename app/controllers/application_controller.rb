@@ -134,6 +134,21 @@ class ApplicationController < ActionController::Base
     flash[:confetti_emojis] = emojis.join(",") if emojis
   end
 
+  def attach_receipt_to_hcb_code(file, hcb_code)
+    return unless file
+
+    ::ReceiptService::Create.new(
+      uploader: current_user,
+      attachments: file,
+      upload_method: :transfer_create_page,
+      receiptable: hcb_code
+    ).run!
+  end
+
+  def add_rejection_comment(transfer)
+    transfer.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+  end
+
   def attach_appsignal_tags
     return unless defined?(Appsignal) && Appsignal.active?
 

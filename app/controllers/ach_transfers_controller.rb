@@ -57,14 +57,7 @@ class AchTransfersController < ApplicationController
     end
 
     if @ach_transfer.save
-      if ach_transfer_params[:file]
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: ach_transfer_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @ach_transfer.local_hcb_code
-        ).run!
-      end
+      attach_receipt_to_hcb_code(ach_transfer_params[:file], @ach_transfer.local_hcb_code)
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
       render :new, status: :unprocessable_entity
