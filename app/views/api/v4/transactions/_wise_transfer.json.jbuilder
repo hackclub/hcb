@@ -10,7 +10,7 @@ json.currency wise_transfer.currency
 json.amount_cents wise_transfer.amount_cents
 json.usd_amount_cents wise_transfer.usd_amount_cents if wise_transfer.usd_amount_cents.present?
 json.state wise_transfer.aasm_state
-json.organization_id wise_transfer.event_id
+json.organization_id wise_transfer.event.public_id
 
 json.return_reason wise_transfer.return_reason if wise_transfer.return_reason.present?
 
