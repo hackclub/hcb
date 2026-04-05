@@ -17,8 +17,6 @@ module Api
       before_action :set_paper_trail_whodunnit
 
       def paginate(list, &block)
-        @total_count = list.size
-
         limit = params[:limit]&.to_i || 25
         return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
 
@@ -30,9 +28,11 @@ module Api
                       else
                         0
                       end
-        @has_more = list.length > start_index + limit
 
-        list.slice(start_index, limit)
+        paged = Kaminari.paginate_array(list).page(1).per(limit).padding(start_index)
+        @total_count = paged.total_count
+        @has_more = paged.next_page.present?
+        paged.to_a
       end
 
       def not_found
