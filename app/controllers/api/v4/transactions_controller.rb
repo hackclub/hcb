@@ -21,7 +21,7 @@ module Api
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]
 
-        @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
+        @transactions = paginate(@pending_transactions + @settled_transactions) { |tx| tx.local_hcb_code.public_id }
 
         if @transactions.any?
           page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
@@ -57,8 +57,7 @@ module Api
 
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate(@hcb_codes, &:public_id)
       end
 
       def update
@@ -86,10 +85,6 @@ module Api
       end
 
       private
-
-      def paginate_transactions(transactions)
-        paginate(transactions) { |tx| tx.local_hcb_code.public_id }
-      end
 
       def filters
         filter_params = params.fetch(:filters, {}).permit(

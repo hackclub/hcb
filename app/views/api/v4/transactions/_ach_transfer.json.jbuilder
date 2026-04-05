@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+json_object(json, ach_transfer)
 json.recipient_name ach_transfer.recipient_name
 json.recipient_email ach_transfer.recipient_email
 json.bank_name ach_transfer.bank_name

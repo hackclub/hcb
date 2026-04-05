@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-json.created_at event.created_at
-json.id event.public_id
+json_object(json, event)
 json.parent_id event.parent&.public_id
 json.name event.name
 json.country event.country

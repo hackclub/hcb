@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-json.id donation.public_id
+json_object(json, donation)
 json.recurring donation.recurring?
 json.donor do
   json.name donation.name

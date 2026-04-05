@@ -9,65 +9,20 @@ end
 pagination_metadata(json)
 
 json.data @transfers do |transfer|
-  json.id transfer.public_id
-  json.created_at transfer.created_at
+  json_object(json, transfer)
 
   case transfer
   when AchTransfer
-    json.type "ach_transfer"
-    json.status transfer.aasm_state
-    json.recipient_name transfer.recipient_name
-    json.recipient_email transfer.recipient_email
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.amount
-  when IncreaseCheck
-    json.type "check"
-    json.status transfer.state_text.parameterize(separator: "_")
-    json.recipient_name transfer.recipient_name
-    json.recipient_email transfer.recipient_email
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.amount
-  when Check
-    json.type "check"
-    json.status nil
-    json.recipient_name transfer.recipient_name
-    json.recipient_email nil
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.amount
+    json.ach_transfer { json.partial! "api/v4/transactions/ach_transfer", ach_transfer: transfer }
+  when IncreaseCheck, Check
+    json.check { json.partial! "api/v4/transactions/check", check: transfer }
   when Disbursement
-    json.type "disbursement"
-    json.status transfer.v4_api_state
-    json.recipient_name transfer.destination_event.name
-    json.recipient_email nil
-    json.payment_for transfer.name
-    json.amount_cents transfer.amount
-    json.destination_organization do
-      json.partial! "api/v4/events/event", event: transfer.destination_event
-    end
+    json.disbursement { json.partial! "api/v4/transactions/disbursement", disbursement: transfer }
   when PaypalTransfer
-    json.type "paypal_transfer"
-    json.status transfer.aasm_state
-    json.recipient_name transfer.recipient_name
-    json.recipient_email transfer.recipient_email
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.amount_cents
+    json.paypal_transfer { json.partial! "api/v4/transactions/paypal_transfer", paypal_transfer: transfer }
   when Wire
-    json.type "wire"
-    json.status transfer.aasm_state
-    json.recipient_name transfer.recipient_name
-    json.recipient_email transfer.recipient_email
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.usd_amount_cents || transfer.amount_cents
-    json.local_currency transfer.currency
-    json.local_amount_cents transfer.amount_cents
+    json.wire { json.partial! "api/v4/transactions/wire", wire: transfer }
   when WiseTransfer
-    json.type "wise_transfer"
-    json.status transfer.aasm_state
-    json.recipient_name transfer.recipient_name
-    json.recipient_email transfer.recipient_email
-    json.payment_for transfer.payment_for
-    json.amount_cents transfer.usd_amount_cents_or_quoted
-    json.local_currency transfer.currency
-    json.local_amount_cents transfer.amount_cents
+    json.wise_transfer { json.partial! "api/v4/transactions/wise_transfer", wise_transfer: transfer }
   end
 end

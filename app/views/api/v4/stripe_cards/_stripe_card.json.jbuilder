@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-json.created_at stripe_card.created_at
-json.id stripe_card.public_id
+json_object(json, stripe_card)
 json.type stripe_card.card_type
 json.status stripe_card.status_text.parameterize(separator: "_")
 json.name stripe_card.name

@@ -1,5 +1,6 @@
-json.id receipt.public_id
-json.created_at receipt.created_at
+# frozen_string_literal: true
+
+json_object(json, receipt)
 json.url receipt.url
 json.preview_url receipt.preview(only_path: false)
 json.filename receipt.file.blob.filename

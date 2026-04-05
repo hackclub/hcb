@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-json.id disbursement.public_id
+json_object(json, disbursement)
 json.memo disbursement.local_hcb_code.memo
 json.status disbursement.v4_api_state
 # `transaction_id` will eventually be deprecated

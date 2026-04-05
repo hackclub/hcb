@@ -20,8 +20,13 @@ module Api
         @total_count = list.size
 
         limit = params[:limit]&.to_i || 25
+        return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
+
         start_index = if params[:after]
-                        list.index { |tx| block.call(tx) == params[:after] } + 1
+                        index = list.index { |item| block.call(item) == params[:after] }
+                        return render json: { error: "invalid_operation", messages: ["After parameter '#{params[:after]}' not found"] }, status: :bad_request if index.nil?
+
+                        index + 1
                       else
                         0
                       end

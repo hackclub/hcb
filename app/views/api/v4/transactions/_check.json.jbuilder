@@ -1,4 +1,6 @@
-json.id check.public_id
+# frozen_string_literal: true
+
+json_object(json, check)
 
 if policy(check.local_hcb_code).show?
   json.address_city check.is_a?(IncreaseCheck) ? check.address_city : nil

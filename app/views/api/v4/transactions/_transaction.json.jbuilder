@@ -7,7 +7,7 @@ is_cpt = tx.is_a?(CanonicalPendingTransaction)
 is_hcb_code = tx.is_a?(HcbCode)
 amount = transaction_amount(tx, event: @event)
 
-json.id hcb_code.public_id
+json_object(json, hcb_code)
 json.date tx.date
 json.amount_cents amount
 json.memo hcb_code.memo(event: @event)

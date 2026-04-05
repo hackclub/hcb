@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # attributes suitable for public consumption:
-json.id user.public_id
+json_object(json, user)
 json.avatar profile_picture_for(user, params[:avatar_size].presence&.to_i || 24)
 json.admin user.admin?
 json.auditor user.auditor?

@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
-json.id check_deposit.public_id
+json_object(json, check_deposit)
 json.status check_deposit.state_text.parameterize(separator: "_")
 json.amount_cents check_deposit.amount_cents
-json.created_at check_deposit.created_at
 json.updated_at check_deposit.updated_at
 
 if check_deposit.rejected? && check_deposit.rejection_reason.present?
