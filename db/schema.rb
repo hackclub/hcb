@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_06_230452) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1105,7 +1105,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
   end
 
   create_table "events", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "activated_at"
     t.text "address"
     t.boolean "can_front_balance", default: true, null: false
