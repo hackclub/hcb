@@ -5,7 +5,7 @@
 # Table name: fee_revenues
 #
 #  id           :bigint           not null, primary key
-#  aasm_state   :string
+#  aasm_state   :string           not null
 #  amount_cents :integer
 #  end          :date
 #  start        :date
