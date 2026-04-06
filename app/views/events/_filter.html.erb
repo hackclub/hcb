@@ -119,23 +119,27 @@
           <% end %>
         </div>
       <% end %>
-      <% if @user %>
-        <div class="badge badge-large bg-muted">
-          <%= avatar_for @user, size: 18 %>
-          <%= @user.name %>
+      <% if @user.present? %>
+        <% Array(@user).each do |user| %>
+          <div class="badge badge-large bg-muted">
+            <%= avatar_for user, size: 18 %>
+            <%= user.name %>
 
-          <%= link_to event_ledger_path(@event, upsert_query_params(user: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-            <%= inline_icon "view-close", size: 20 %>
-          <% end %>
-        </div>
+            <%= link_to event_ledger_path(@event, upsert_query_params(user: { remove: user.id })), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
       <% if @type %>
-        <div class="badge badge-large bg-muted">
-          <%= @type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
-          <%= link_to event_ledger_path(@event, upsert_query_params(type: nil)), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-            <%= inline_icon "view-close", size: 20 %>
-          <% end %>
-        </div>
+        <% Array(@type).each do |type| %>
+          <div class="badge badge-large bg-muted">
+            <%= type.humanize.gsub("Ach", "ACH").gsub("Paypal", "PayPal").gsub("Hcb", "HCB") %>
+            <%= link_to event_ledger_path(@event, upsert_query_params(type: { remove: type })), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
       <% if @direction %>
         <div class="badge badge-large bg-muted">
