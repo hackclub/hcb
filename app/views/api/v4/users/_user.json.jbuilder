@@ -8,7 +8,7 @@ json.auditor user.auditor?
 json.name user.initial_name
 
 # those which we'd like to expose less of:
-expand_pii(override_if: user == current_user || shares_org_with?(user)) do
+expand_pii(override_if: user == current_user || local_assigns[:show_email]) do
   json.email user.email
 end
 
