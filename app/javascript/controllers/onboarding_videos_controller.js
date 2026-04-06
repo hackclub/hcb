@@ -21,25 +21,25 @@ export default class extends Controller {
   }
 
   initializePlayers() {
-    this.playerTargets.forEach((el, index) => {
+    this.playerTargets.forEach(el => {
       const videoId = el.dataset.videoId
 
       const player = new YT.Player(el, {
         videoId: videoId,
         height: '100%',
         events: {
-          onStateChange: event => this.handleStateChange(index, event),
+          onStateChange: event => this.handleStateChange(videoId, event),
         },
       })
 
       this.players.push(player)
-      this.startedMap.set(index, false)
+      this.startedMap.set(videoId, false)
     })
   }
 
-  handleStateChange(index, event) {
+  handleStateChange(id, event) {
     if (event.data === YT.PlayerState.PLAYING) {
-      this.startedMap.set(index, true)
+      this.startedMap.set(id, true)
       this.checkAllStarted()
     }
   }
