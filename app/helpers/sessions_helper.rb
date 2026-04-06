@@ -158,9 +158,8 @@ module SessionsHelper
     # Destroy all the sessions except the current session
     user
       &.user_sessions
+      &.not_expired
       &.where&.not(id: current_session.id)
-      &.where(signed_out_at: nil)
-      &.where("expiration_at IS NULL OR expiration_at > ?", Time.now)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
 
