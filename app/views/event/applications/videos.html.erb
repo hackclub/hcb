@@ -13,7 +13,7 @@
   </div>
 <% end %>
 
-<div class="md:max-h-[75vh] flex flex-col gap-5">
+<div class="md:max-h-[75vh] flex flex-col gap-5" data-controller="onboarding-videos" data-onboarding-videos-button-id-value="continue_button">
   <div class="flex gap-3 items-start flex-grow">
     <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
       1
@@ -24,7 +24,7 @@
         <strong>Introduction</strong>
       </p>
 
-      <iframe class="aspect-[560/315] flex-grow min-h-0 max-w-full" src="https://www.youtube.com/embed/Ucz-QT2GPOk?si=Hoe7R62QCgokUgSW" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <div data-onboarding-videos-target="player" data-video-id="Ucz-QT2GPOk" class="flex-grow aspect-[560/315] min-h-0 max-w-full"></div>
     </div>
   </div>
 
@@ -38,12 +38,12 @@
         <strong>Rules & Regulations</strong>
       </p>
 
-      <iframe class="flex-grow aspect-[560/315] min-h-0 max-w-full" src="https://www.youtube.com/embed/LMh9FCm8iIE?si=qYV_l5IVGZMhhVvW" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      <div data-onboarding-videos-target="player" data-video-id="LMh9FCm8iIE" class="flex-grow aspect-[560/315] min-h-0 max-w-full"></div>
     </div>
   </div>
 </div>
 
 <% content_for :footer do %>
   <a class="btn bg-muted" href="<%= application_path(@application) %>">← Back</a>
-  <a class="btn bg-blue" href="<%= agreement_application_path(@application) %>">Continue →</a>
+  <%= button_to "Continue →", application_path(@application, return_to: agreement_application_path(@application)), class: "btn bg-blue", method: :patch, params: { event_application: { videos_watched: true } }, id: :continue_button, disabled: true %>
 <% end %>
