@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1014,6 +1014,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.boolean "videos_watched", default: false
     t.string "website_url"
     t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
