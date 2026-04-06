@@ -7,6 +7,7 @@
 #  id                                     :bigint           not null, primary key
 #  accepted_at                            :datetime
 #  cancelled_at                           :datetime
+#  deleted_at                             :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
 #  is_signee                              :boolean          default(FALSE)
@@ -22,6 +23,7 @@
 #
 # Indexes
 #
+#  index_organizer_position_invites_on_deleted_at             (deleted_at)
 #  index_organizer_position_invites_on_event_id               (event_id)
 #  index_organizer_position_invites_on_organizer_position_id  (organizer_position_id)
 #  index_organizer_position_invites_on_sender_id              (sender_id)
@@ -55,7 +57,11 @@
 #     creation.
 #
 class OrganizerPositionInvite < ApplicationRecord
+  acts_as_paranoid
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ivt
@@ -195,6 +201,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.cancelled_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -226,6 +234,8 @@ class OrganizerPositionInvite < ApplicationRecord
     end
 
     fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+
+    fs_contract
   end
 
   def on_contract_signed(contract)

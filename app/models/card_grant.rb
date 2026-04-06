@@ -47,6 +47,8 @@
 #
 class CardGrant < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   has_paper_trail
 
   include PublicIdentifiable
@@ -54,6 +56,7 @@ class CardGrant < ApplicationRecord
 
   include Freezable
   include Commentable
+  include HasPaperTrailHelpers
 
   belongs_to :event
   has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
@@ -175,10 +178,12 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
+        source_transaction_category_slug: "grants-stipends",
+        destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -197,10 +202,12 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
+        source_transaction_category_slug: "grants-stipends",
+        destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -234,9 +241,11 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
+      source_transaction_category_slug: "grants-stipends",
+      destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
-    disbursement.local_hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-    disbursement.local_hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -302,12 +311,6 @@ class CardGrant < ApplicationRecord
     (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
   end
 
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
-  end
-
   def last_time_change_to(...)
     versions.where_object_changes_to(...).last&.created_at
   end
@@ -351,6 +354,9 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
+      source_transaction_category_slug: "grants-stipends",
+      destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
     save!
   end

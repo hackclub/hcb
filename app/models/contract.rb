@@ -33,7 +33,15 @@
 #
 class Contract < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
+  def self.inherited(subclass)
+    # Force STI subclasses to use the same hashid configuration to ensure no
+    # salt is used.
+    super
+    subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
+  end
 
   acts_as_paranoid
   has_paper_trail
@@ -42,7 +50,7 @@ class Contract < ApplicationRecord
   belongs_to :contractable, polymorphic: true
 
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
-  has_many :parties
+  has_many :parties, dependent: :destroy
 
   validate :one_non_void_contract
 
@@ -61,6 +69,10 @@ class Contract < ApplicationRecord
       user = whodunnit_user
     end
     parties.create!(user:, role: :hcb)
+  end
+
+  before_destroy do
+    mark_voided! if may_mark_voided?
   end
 
   aasm timestamps: true, requires_lock: true do

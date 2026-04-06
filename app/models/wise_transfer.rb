@@ -53,12 +53,16 @@ class WiseTransfer < ApplicationRecord
 
   include HasWiseRecipient
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user
   has_paper_trail
+  include HasPaperTrailHelpers
 
   has_one :canonical_pending_transaction
 
@@ -179,12 +183,6 @@ class WiseTransfer < ApplicationRecord
 
   def state_text
     aasm_state.humanize
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def self.generate_detailed_quote(initial_local_amount)

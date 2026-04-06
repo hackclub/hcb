@@ -40,6 +40,8 @@
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px] w-full">
       <%= form_with model: @application || false, url: "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
+        <%= form.hidden_field(:referral_code, value: @referral_code) if @referral_code.present? %>
+
         <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
           <%= form.label :teen_led do %>
             Are you a teenager? <span class="text-primary">*</span>
