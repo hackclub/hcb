@@ -367,7 +367,7 @@
         <% if report.locked? %>
           <div class="stat shrink-0">
             <span class="stat__label">Expenses approved</span>
-            <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
+            <span class="stat__value stat--plain" style="--unit: ''"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
           <div class="stat shrink-0">
             <span class="stat__label">Amount approved</span>
