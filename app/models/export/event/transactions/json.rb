@@ -23,7 +23,7 @@ class Export
   module Event
     module Transactions
       class Json < Export
-        store_accessor :parameters, :event_id, :public_only
+        store_accessor :parameters, :event_id, :public_only, :tag_id, :user_id, :transaction_type, :direction, :minimum_amount, :maximum_amount, :missing_receipts, :category_slug, :merchant_id, :start_date, :end_date
         def async?
           event.canonical_transactions.size > 300
         end
@@ -41,12 +41,81 @@ class Export
         end
 
         def content
-          event.canonical_transactions.order("date desc").map do |ct|
+          transactions.map do |ct|
             row(ct)
           end.to_json
         end
 
         private
+
+        def transactions
+          # If no filters are applied, use simple query for backward compatibility
+          if no_filters_applied?
+            return event.canonical_transactions.order("date desc")
+          end
+
+          # Use TransactionGroupingEngine for consistent filtering
+          engine = TransactionGroupingEngine::Transaction::All.new(
+            event_id: event_id,
+            tag_id: tag_id,
+            expenses: direction == "expenses",
+            revenue: direction == "revenue",
+            minimum_amount: minimum_amount ? Money.from_amount(minimum_amount.to_f) : nil,
+            maximum_amount: maximum_amount ? Money.from_amount(maximum_amount.to_f) : nil,
+            start_date: start_date,
+            end_date: end_date,
+            user: user_id ? User.find_by(id: user_id) : nil,
+            missing_receipts: [true, "true"].include?(missing_receipts),
+            category: category_slug ? TransactionCategory.find_by(slug: category_slug) : nil,
+            merchant: merchant_id,
+            order_by: :date
+          )
+
+          grouped_transactions = engine.run
+
+          # Get the actual canonical transactions from the grouped results
+          ct_ids = grouped_transactions.flat_map(&:canonical_transaction_ids)
+          canonical_txs = CanonicalTransaction.includes(local_hcb_code: [:tags, :comments])
+                                              .where(id: ct_ids)
+                                              .order("date desc, id desc")
+
+          # Filter by transaction type if specified
+          if transaction_type.present?
+            canonical_txs = filter_by_type(canonical_txs)
+          end
+
+          canonical_txs
+        end
+
+        def no_filters_applied?
+          tag_id.blank? && user_id.blank? && transaction_type.blank? &&
+            direction.blank? && minimum_amount.blank? && maximum_amount.blank? &&
+            missing_receipts.blank? && category_slug.blank? && merchant_id.blank? &&
+            start_date.blank? && end_date.blank?
+        end
+
+        def filter_by_type(transactions)
+          case transaction_type
+          when "card_charge"
+            transactions.card_charge
+          when "ach"
+            transactions.ach
+          when "check"
+            transactions.check
+          when "other"
+            transactions.other
+          when "paypal"
+            transactions.paypal
+          when "wire"
+            transactions.wire
+          when "transfer"
+            transactions.transfer
+          when "hcb_transfer"
+            transactions.hcb_transfer
+          else
+            transactions
+          end
+        end
 
         def event
           @event ||= ::Event.find(event_id)
