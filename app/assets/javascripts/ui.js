@@ -859,3 +859,20 @@ if (navigator.setAppBadge) {
     }
   })
 }
+
+function updateScrollFadeClasses(el) {
+  const isScrolledToBottom =
+    el.scrollHeight < el.clientHeight + el.scrollTop + 1
+  const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
+  el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
+  el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+}
+
+document.querySelectorAll('.scroll-fade').forEach(scrollable => {
+  scrollable.addEventListener('scroll', e => {
+    const el = e.currentTarget
+    updateScrollFadeClasses(el)
+  })
+
+  updateScrollFadeClasses(scrollable)
+})
