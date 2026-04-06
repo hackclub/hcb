@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_06_231428) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1257,7 +1257,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
   end
 
   create_table "g_suite_revocations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.bigint "g_suite_id", null: false
