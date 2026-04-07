@@ -777,22 +777,24 @@ class AdminController < Admin::BaseController
   end
 
   def applications_funnel
-    all_apps = Event::Application.all
-
-    total = all_apps.count
-    project_info_complete = all_apps.where.not(name: [nil, ""]).where.not(description: [nil, ""]).count
-    personal_info_complete = all_apps.where.not(address_line1: nil).where.not(address_city: nil).where.not(address_country: nil).where.not(address_postal_code: nil).count
-    submitted = all_apps.where.not(submitted_at: nil).count
-    approved = all_apps.where.not(approved_at: nil).count
-    onboarded = all_apps.where.not(event_id: nil).count
+    result = Event::Application.pick(
+      Arel.sql(<<~SQL.squish)
+        COUNT(*),
+        COUNT(CASE WHEN name IS NOT NULL AND name != '' AND description IS NOT NULL AND description != '' THEN 1 END),
+        COUNT(CASE WHEN address_line1 IS NOT NULL AND address_city IS NOT NULL AND address_country IS NOT NULL AND address_postal_code IS NOT NULL THEN 1 END),
+        COUNT(CASE WHEN submitted_at IS NOT NULL THEN 1 END),
+        COUNT(CASE WHEN approved_at IS NOT NULL THEN 1 END),
+        COUNT(CASE WHEN event_id IS NOT NULL THEN 1 END)
+      SQL
+    )
 
     @funnel_data = [
-      { label: "Application created", count: total },
-      { label: "Tell us about your project completed", count: project_info_complete },
-      { label: "Tell us about yourself completed", count: personal_info_complete },
-      { label: "Submitted", count: submitted },
-      { label: "Approved & contract signed", count: approved },
-      { label: "Onboarded (organization created)", count: onboarded }
+      { label: "Application created", count: result[0] },
+      { label: "Tell us about your project completed", count: result[1] },
+      { label: "Tell us about yourself completed", count: result[2] },
+      { label: "Submitted", count: result[3] },
+      { label: "Approved & contract signed", count: result[4] },
+      { label: "Onboarded (organization created)", count: result[5] }
     ]
   end
 
