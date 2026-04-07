@@ -12,11 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< mxg-add-soft-deletion-to-comment-reactions
 ActiveRecord::Schema[8.0].define(version: 2026_04_02_000000) do
-=======
-ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
->>>>>>> main
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -197,10 +193,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_31_024739) do
   create_table "announcement_blocks", force: :cascade do |t|
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.jsonb "parameters"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
+    t.index ["deleted_at"], name: "index_announcement_blocks_on_deleted_at"
   end
 
   create_table "announcements", force: :cascade do |t|
