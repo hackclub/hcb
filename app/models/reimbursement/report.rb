@@ -318,7 +318,7 @@ module Reimbursement
     end
 
     def exceeds_event_balance?
-      submitted_at.present? && currency == "USD" && event.present? &&
+      !closed? && submitted_at.present? && currency == "USD" && event.present? &&
         !::Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
     end
 
