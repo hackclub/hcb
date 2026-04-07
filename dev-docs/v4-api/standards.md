@@ -169,7 +169,7 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
 
 ### Guidelines
 
-- Use the `expand?(:symbol)` helper in Jbuilder views to conditionally render expanded objects.
+- Use the `expand?(:symbol)` helper in jbuilder views to conditionally render expanded objects.
 - Certain contexts auto-expand relevant objects for convenience (e.g. listing cards under an organization auto-expands `user`). Document these per-endpoint.
 - Avoid deep expansion chains (e.g. `expand=organization.users.cards`). One level is sufficient.
 - Each endpoint should document which fields are expandable.
@@ -191,7 +191,7 @@ Check each endpoint's documentation for its supported expansions. Common ones in
 
 ## Partials & Reuse
 
-Every API-representable model **must** have a single canonical Jbuilder partial (e.g. `_ach_transfer.json.jbuilder`). All endpoints that render that object must use the partial.
+Every API-representable model **must** have a single canonical jbuilder partial (e.g. `_ach_transfer.json.jbuilder`). All endpoints that render that object must use the partial.
 
 ### Why?
 
