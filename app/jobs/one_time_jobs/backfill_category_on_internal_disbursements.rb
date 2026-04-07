@@ -32,5 +32,6 @@ module OneTimeJobs
           .set!(slug:, assignment_strategy: "automatic")
       end
     end
+
   end
 end
