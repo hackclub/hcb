@@ -16,8 +16,6 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  before_action :attach_appsignal_tags
-
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
@@ -32,6 +30,8 @@ class ApplicationController < ActionController::Base
   before_action { Current.session&.update_session_timestamps }
 
   before_action :set_unverified_user
+
+  before_action :attach_appsignal_tags
 
   before_action do
     # Disallow indexing and following
@@ -140,18 +140,20 @@ class ApplicationController < ActionController::Base
     return unless defined?(Appsignal) && Appsignal.active?
 
     error_reference = ErrorReference.from_request_id(request.uuid)
-    user_id = current_user&.id
+    user_id = current_user&.id || Current.unverified_user&.id
     session_id = Current.session&.id
     ip_address = request.remote_ip
     user_agent = request.user_agent
     referrer = request.referrer
+    unverified_user = Current.unverified_user.present?
 
-    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:)
-    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:)
+    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
+    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
   end
 
   def set_unverified_user
     Current.unverified_user = User.find_signed(cookies.signed["user_token"], purpose: :unverified_persistence) if cookies.signed["user_token"].present?
+    # TODO: Clear user_token cookie if a session is present
   end
 
 end
