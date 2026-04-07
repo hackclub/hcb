@@ -874,6 +874,7 @@ Rails.application.routes.draw do
         post "admin_reject"
         post "admin_activate"
         post "resend_to_cosigner"
+        post "mark_videos_watched"
       end
     end
   end

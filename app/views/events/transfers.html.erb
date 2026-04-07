@@ -1,7 +1,7 @@
 <% title "Transfers for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :transfers %>
-<%= render "events/transfer_modal" if policy(@event).new_transfer? %>
+<%= render "events/transfers/modal" if policy(@event).new_transfer? %>
 <%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
 <% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:filter].present? %>
@@ -73,7 +73,7 @@
 
   <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-      <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
     <% end %>
     <div class="filterbar">
       <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
