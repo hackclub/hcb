@@ -6,13 +6,6 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
-  INVOICE_COLUMNS = [
-    { key: "status" },
-    { key: "created_at", default: true, display: "Date" },
-    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
-    { key: "amount_due", right: true, display: "Amount" },
-  ].freeze
-
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -65,7 +58,7 @@ class InvoicesController < ApplicationController
     if organizer_signed_in?
       allowed_directions = %w[asc desc]
       sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
-      default_column = INVOICE_COLUMNS.find { |c| c[:default] }
+      default_column = INVOICE_COLUMNS.find { |c| c[:default] } || INVOICE_COLUMNS.first
       column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } || default_column
       sort_column = column_def.fetch(:column, column_def[:key])
 
@@ -232,6 +225,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
 
   def filtered_params
     params.require(:invoice).permit(

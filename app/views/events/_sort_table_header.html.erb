@@ -1,5 +1,5 @@
 <% if organizer_signed_in? %>
-  <% is_active = params[:sort] == sort || (params[:sort].nil? && defined?(default) && default) %>
+  <% is_active = params[:sort] == sort || (params[:sort].nil? && local_assigns[:default]) %>
   <% current_direction = params[:direction].presence || "desc" %>
   <% next_direction = current_direction == "asc" ? "desc" : "asc" %>
   <% direction = is_active ? next_direction : "desc" %>
@@ -10,7 +10,7 @@
     class: [
       "sort-button",
       ("sort-button--active" if is_active),
-      ("sort-button--right" if defined?(right) && right)
+      ("sort-button--right" if local_assigns[:right])
     ].compact.join(" ") do %>
     <%= display || sort.humanize %>
     <%= inline_icon(current_direction == "desc" ? "down-caret" : "up-caret", size: 16) %>
