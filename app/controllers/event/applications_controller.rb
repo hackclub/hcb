@@ -176,7 +176,7 @@ class Event
 
     def mark_videos_watched
       authorize @application
-      
+
       @application.update!(videos_watched: true)
 
       redirect_to agreement_application_path(@application)
