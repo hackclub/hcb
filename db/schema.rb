@@ -2047,6 +2047,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "receipts", force: :cascade do |t|
+    t.datetime "assigned_at"
     t.datetime "created_at", null: false
     t.boolean "data_extracted", default: false, null: false
     t.text "extracted_card_last4_ciphertext"

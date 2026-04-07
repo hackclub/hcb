@@ -6,13 +6,6 @@ class InvoicesController < ApplicationController
   before_action :set_event, only: [:index, :new, :create]
   skip_before_action :signed_in_user
 
-  INVOICE_COLUMNS = [
-    { key: "status" },
-    { key: "created_at", default: true, display: "Date" },
-    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
-    { key: "amount_due", right: true, display: "Amount" },
-  ].freeze
-
   def index
     authorize @event, :invoices?
     relation = @event.invoices
@@ -63,17 +56,17 @@ class InvoicesController < ApplicationController
     relation = relation.search_description(params[:q]) if params[:q].present?
 
     if organizer_signed_in?
-      allowed_directions = %w[asc desc]
-      sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
-      default_column = INVOICE_COLUMNS.find { |c| c[:default] }
-      column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } || default_column
-      sort_column = column_def.fetch(:column, column_def[:key])
-
+      sort_direction = params[:direction].in?(%w[asc desc]) ? params[:direction] : "desc"
+      column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } ||
+                   INVOICE_COLUMNS.find { |c| c[:default] } ||
+                   INVOICE_COLUMNS.first
       relation = relation.left_joins(column_def[:join]) if column_def[:join]
-      @invoices = relation.order(sort_column => sort_direction).includes(:sponsor).page(params[:page]).per(25)
+      relation = relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
     else
-      @invoices = relation.order(created_at: :desc).includes(:sponsor).page(params[:page]).per(25)
+      relation = relation.order(created_at: :desc)
     end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(25)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -232,6 +225,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
 
   def filtered_params
     params.require(:invoice).permit(
