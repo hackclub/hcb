@@ -12,9 +12,9 @@
       ("sort-button--active" if is_active),
       ("sort-button--right" if defined?(right) && right)
     ].compact.join(" ") do %>
-  <%= display || sort.humanize %>
-  <%= inline_icon(current_direction == "desc" ? "down-caret" : "up-caret", size: 16) %>
-<% end %>
+    <%= display || sort.humanize %>
+    <%= inline_icon(current_direction == "desc" ? "down-caret" : "up-caret", size: 16) %>
+  <% end %>
 <% else %>
   <%= display || sort.humanize %>
 <% end %>
