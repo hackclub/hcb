@@ -56,7 +56,7 @@
       <% end %>
       <%= ledger_instance ? link_to(contents, details_link, style: "color: inherit; min-width: 0;", data: popovers_enabled? && !@force_no_popover ? memo_popover_attrs : { turbo_frame: "_top" }) : content_tag(:span) { contents } %>
       <% if renamed %>
-        <%= render "hcb_codes/memo_stream", hcb_code: %>
+        <%= render "hcb_codes/memo/stream", hcb_code: %>
       <% end %>
     <% end %>
   <% end %>
