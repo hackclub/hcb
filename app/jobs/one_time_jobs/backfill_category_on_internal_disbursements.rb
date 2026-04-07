@@ -21,10 +21,7 @@ module OneTimeJobs
 
         TransactionCategoryService
           .new(model: ct)
-          .set!(
-            slug:,
-            assignment_strategy: "automatic"
-          )
+          .set!(slug:, assignment_strategy: "automatic")
       end
 
       CanonicalPendingTransaction.where(hcb_code: hcb_codes).find_each(batch_size: 100) do |cpt|
@@ -32,13 +29,8 @@ module OneTimeJobs
 
         TransactionCategoryService
           .new(model: cpt)
-          .set!(
-            slug:,
-            assignment_strategy: "automatic"
-          )
+          .set!(slug:, assignment_strategy: "automatic")
       end
     end
-
   end
-
 end

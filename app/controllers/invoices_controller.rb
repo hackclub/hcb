@@ -9,7 +9,7 @@ class InvoicesController < ApplicationController
   INVOICE_COLUMNS = [
     { key: "status" },
     { key: "created_at", default: true, display: "Date" },
-    { key: "sponsor_name", display: "To" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
     { key: "amount_due", right: true, display: "Amount" },
   ].freeze
 
@@ -62,21 +62,14 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    allowed_directions = %w[asc desc]
-    sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
-
-    sort_column =
-      case params[:sort]
-      when "created_at", "status", "amount_due"
-        params[:sort]
-      when "sponsor_name"
-        "sponsors.name"
-      else
-        "created_at"
-      end
-
     if organizer_signed_in?
-      relation = relation.left_joins(:sponsor) if sort_column == "sponsors.name"
+      allowed_directions = %w[asc desc]
+      sort_direction = params[:direction].in?(allowed_directions) ? params[:direction] : "desc"
+      default_column = INVOICE_COLUMNS.find { |c| c[:default] }
+      column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } || default_column
+      sort_column = column_def.fetch(:column, column_def[:key])
+
+      relation = relation.left_joins(column_def[:join]) if column_def[:join]
       @invoices = relation.order(sort_column => sort_direction).includes(:sponsor).page(params[:page]).per(25)
     else
       @invoices = relation.order(created_at: :desc).includes(:sponsor).page(params[:page]).per(25)
