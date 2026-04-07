@@ -619,7 +619,7 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
-    query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q]).run
+    query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q], stats: true).run
 
     @stats = query.stats
     @transfers = Kaminari.paginate_array(query.transfers).page(params[:page]).per(100)

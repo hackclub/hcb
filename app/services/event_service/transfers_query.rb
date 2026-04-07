@@ -4,15 +4,16 @@ module EventService
   class TransfersQuery
     attr_reader :stats, :transfers
 
-    def initialize(event:, filter: nil, search: nil)
+    def initialize(event:, filter: nil, search: nil, stats: false)
       @event = event
       @filter = filter
       @search = search
+      @compute_stats = stats
     end
 
     def run
       build_collections
-      compute_stats
+      compute_stats if @compute_stats
       apply_filter
       apply_search
       combine_and_sort

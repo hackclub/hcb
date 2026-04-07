@@ -75,7 +75,7 @@ module Api
       def transfers
         authorize @event, :show_in_v4?
 
-        query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q]).run
+        query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q], stats: @expand.include?(:stats)).run
         all_transfers = query.transfers
 
         @stats = query.stats

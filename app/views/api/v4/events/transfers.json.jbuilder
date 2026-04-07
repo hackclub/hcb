@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
-json.stats do
-  json.deposited_cents @stats[:deposited]
-  json.in_transit_cents @stats[:in_transit]
-  json.canceled_cents @stats[:canceled]
+if expand?(:stats)
+  json.stats do
+    json.deposited_cents @stats[:deposited]
+    json.in_transit_cents @stats[:in_transit]
+    json.canceled_cents @stats[:canceled]
+  end
 end
 
 pagination_metadata(json)
