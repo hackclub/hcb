@@ -24,18 +24,44 @@ Every top-level API object **must** include the following fields:
 | Field        | Type     | Description                                      |
 |--------------|----------|--------------------------------------------------|
 | `id`         | `string` | The public ID of the object (e.g. `txn_abc123`). |
-| `type`       | `string` | A machine-readable type label (e.g. `transaction`, `ach_transfer`). |
+| `object`     | `string` | A machine-readable type label (e.g. `transaction`, `ach_transfer`). Derived from the model name. |
 | `created_at` | `string` | ISO 8601 timestamp of when the object was created. |
 
-Example:
+### The `json_object` Helper
+
+Use the `json_object` helper to set these three fields consistently across all partials:
+
+```ruby
+def json_object(json, object)
+  json.id object.public_id
+  json.object object.model_name.element
+  json.created_at object.created_at
+end
+```
+
+This helper derives the `object` field automatically from the model's class name (e.g. an `AchTransfer` record produces `"ach_transfer"`), so you never need to hardcode it.
+
+Every canonical partial should begin with a call to `json_object`:
+
+```ruby
+# app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
+
+json_object(json, ach_transfer)
+
+json.recipient_name ach_transfer.recipient_name
+json.amount_cents ach_transfer.amount
+# ...
+```
+
+This produces:
 
 ```json
 {
-  "id": "txn_h1izp",
-  "type": "transaction",
+  "id": "ach_x9f3k",
+  "object": "ach_transfer",
   "created_at": "2025-03-15T12:00:00Z",
-  "amount_cents": -4500,
-  "memo": "Amazon Web Services"
+  "recipient_name": "Sal Khan",
+  "amount_cents": 4500
 }
 ```
 
@@ -44,12 +70,13 @@ Example:
 ## IDs & Object References
 
 - Always use **public IDs** (the `public_id` from `PublicIdentifiable`) in API responses. Never expose internal database IDs.
+- When creating a new public ID prefix it should be 3 letters.
 - When referencing a related object by ID only (not expanded), use the pattern `<relation>_id`:
 
 ```json
 {
   "id": "ach_x9f3k",
-  "type": "ach_transfer",
+  "object": "ach_transfer",
   "organization_id": "org_h1izp",
   "sender_id": "usr_a8b2c"
 }
@@ -60,10 +87,10 @@ Example:
 ```json
 {
   "id": "ach_x9f3k",
-  "type": "ach_transfer",
+  "object": "ach_transfer",
   "organization": {
     "id": "org_h1izp",
-    "type": "organization",
+    "object": "organization",
     "name": "Hack Club HQ"
   }
 }
@@ -178,14 +205,14 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
 
 Check each endpoint's documentation for its supported expansions. Common ones include:
 
-| Expansion         | Available On                             |
-|-------------------|------------------------------------------|
-| `organization`    | transactions, cards, card grants         |
-| `user`            | cards, card grants                       |
-| `balance_cents`   | organizations                            |
-| `account_number`  | organizations (requires permission)      |
-| `users`           | organizations                            |
-| `total_spent_cents` | cards                                  |
+| Expansion           | Available On                             |
+|---------------------|------------------------------------------|
+| `organization`      | transactions, cards, card grants         |
+| `user`              | cards, card grants                       |
+| `balance_cents`     | organizations                            |
+| `account_number`    | organizations (requires permission)      |
+| `users`             | organizations                            |
+| `total_spent_cents` | cards                                    |
 
 ---
 
@@ -197,7 +224,7 @@ Every API-representable model **must** have a single canonical jbuilder partial 
 
 - A single source of truth for each object's shape.
 - Developers rely on the same fields appearing whether the object is returned from a show, list, or nested context.
-- Reduces drift and copy-paste bugs.
+- Reduces copy-paste bugs.
 
 ### Rules
 
@@ -207,16 +234,14 @@ Every API-representable model **must** have a single canonical jbuilder partial 
    ```ruby
    json.partial! @ach_transfer
    ```
-4. **List endpoints wrap in the pagination envelope**, then render partials for each item.
+4. **List endpoints are wrapped in pagination**, then render partials for each item.
 
 ### Example
 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
 
-json.id ach_transfer.public_id
-json.type "ach_transfer"
-json.created_at ach_transfer.created_at
+json_object(json, ach_transfer)
 
 json.recipient_name ach_transfer.recipient_name
 json.recipient_email ach_transfer.recipient_email
@@ -296,7 +321,7 @@ All monetary values are represented in **cents** (the smallest currency unit) as
 
 Before opening a PR that adds or modifies a V4 API endpoint, verify:
 
-- [ ] Every returned object has `id`, `type`, and `created_at`
+- [ ] Every returned object has `id`, `object`, and `created_at` (via `json_object`)
 - [ ] Public IDs are used (never raw database IDs)
 - [ ] Routing is shallow (max one level of nesting)
 - [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
