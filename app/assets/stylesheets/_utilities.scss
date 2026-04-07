@@ -80,10 +80,6 @@
   }
 }
 
-.shade-yellow {
-  background-color: rgba($yellow, 0.125);
-}
-
 .transaction--positive > td > span > span > span.success-dark.medium {
   font-weight: 400;
 }
@@ -188,14 +184,6 @@ $shades: (
 
   .md-center {
     text-align: center;
-  }
-
-  .md-ml-auto {
-    margin-left: auto;
-  }
-
-  .md-mr-auto {
-    margin-right: auto;
   }
 }
 

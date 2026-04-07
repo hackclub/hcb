@@ -55,9 +55,6 @@ $palette: (
 
 :root {
   --shadow-border: inset 0 0 0 0.5px rgba(0, 0, 0, 0.125);
-  --shadow-border-xs: inset 0 0 0 0.5px rgba(0, 0, 0, 0.08);
-  --shadow-xs: 0 2px 2px rgba(0, 0, 0, 0.02);
-  --shadow-border-xs: var(--shadow-border), var(--shadow-sm);
   --shadow-sm: 0 2px 2px rgba(0, 0, 0, 0.04);
   --shadow-border-sm: var(--shadow-border), var(--shadow-sm);
   --shadow-md:
