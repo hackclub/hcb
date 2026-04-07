@@ -1016,6 +1016,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.boolean "videos_watched", default: false
     t.string "website_url"
     t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
