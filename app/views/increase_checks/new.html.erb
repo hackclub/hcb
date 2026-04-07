@@ -3,8 +3,8 @@
 <% subtitle "From #{@event.name}" %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment details" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
 <% end %>
 
 <% content_for :header do %>
@@ -13,8 +13,8 @@
     <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
 
     <div>
-      <div 
-        style="transform-origin: top left; width: 720px;" 
+      <div
+        style="transform-origin: top left; width: 720px;"
         class="pt-20 mx-auto pointer-events-auto"
         id="check-preview-container">
         <%= render "increase_checks/paper_check",
@@ -68,9 +68,9 @@
   <div data-scroll-seek-target="section" class="lg:-mt-8">
     <h3 class="mb-2" id="contact-information">Recipient details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
-      <div id="increase_check_name_field" data-controller="menu text-filter" 
-        data-menu-content-id-value="payment-recipient-search" 
-        data-menu-append-to-value="#increase_check_name_field" 
+      <div id="increase_check_name_field" data-controller="menu text-filter"
+        data-menu-content-id-value="payment-recipient-search"
+        data-menu-append-to-value="#increase_check_name_field"
         data-text-filter-empty-class="display-none">
         <%= form.label :recipient_name,
           "Legal name (use company name if applicable)" %>
@@ -112,7 +112,7 @@
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
-                <%= link_to event_payment_recipient_path(@event, payment_recipient), 
+                <%= link_to event_payment_recipient_path(@event, payment_recipient),
                   data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
                   <%= inline_icon "view-close", size: 24, class: "align-middle" %>
                 <% end %>
@@ -125,14 +125,14 @@
       <div>
         <%= form.label :recipient_email, "Email" %>
         <%= form.email_field :recipient_email,
-          placeholder: "fionah@gmail.com", 
-          required: true, 
+          placeholder: "fionah@gmail.com",
+          required: true,
           disabled: disabled,
-          data: { extraction_field: "seller_email" }, 
+          data: { extraction_field: "seller_email" },
           class: "!max-w-full" %>
       </div>
 
-      <%= render "events/notify_transfer_recipient", form: form, disabled: disabled %>
+      <%= render "events/transfers/notify_recipient", form: form, disabled: disabled %>
 
       <template x-if="!payment_recipient || editing">
         <div class="flex flex-col gap-3">
@@ -141,12 +141,12 @@
               "Street address (where we're mailing it to)" %>
             <div class="flex items-center gap-2">
               <%= form.text_field :address_line1,
-                placeholder: "1 Letterman Drive", 
-                required: true, 
+                placeholder: "1 Letterman Drive",
+                required: true,
                 disabled: disabled,
                 data: { extraction_field: "seller_address_line_1" } %>
               <%= form.text_field :address_line2,
-                placeholder: "Suite 500", 
+                placeholder: "Suite 500",
                 disabled: disabled,
                 data: { extraction_field: "seller_address_line_2" } %>
             </div>
@@ -156,8 +156,8 @@
             <div class="flex-auto">
               <%= form.label :address_city, "City" %>
               <%= form.text_field :address_city,
-                placeholder: "San Francisco", 
-                required: true, 
+                placeholder: "San Francisco",
+                required: true,
                 disabled: disabled,
                 data: { extraction_field: "seller_address_city" } %>
             </div>
@@ -176,10 +176,10 @@
 
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_zip, "ZIP" %>
-            <%= form.text_field :address_zip, 
+            <%= form.text_field :address_zip,
               class: "!max-w-[150px]",
-              placeholder: "94129", 
-              required: true, 
+              placeholder: "94129",
+              required: true,
               disabled: disabled,
               data: { extraction_field: "seller_address_zip" } %>
             <% @check.errors.messages_for(:address_zip).each do |message| %>
@@ -190,7 +190,7 @@
           <div class="flex items-center justify-between gap-2">
             <%= form.label :address_country, "Country" %>
             <%= form.text_field :address_country,
-              class: "!max-w-[150px] opacity-50", 
+              class: "!max-w-[150px] opacity-50",
               value: "United States",
               disabled: true %>
           </div>
@@ -199,9 +199,9 @@
 
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
-          <button type="button" 
-            class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" 
-            aria-label="Edit address details" 
+          <button type="button"
+            class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3"
+            aria-label="Edit address details"
             @click="editing = true">
             <%= inline_icon "pen", size: 18 %>
           </button>
@@ -244,10 +244,10 @@
         <span class="muted mb-1 block">
           This helps HCB keep record of transactions.
         </span>
-        <%= form.text_field :payment_for, 
+        <%= form.text_field :payment_for,
           placeholder: "Event venue",
-          required: true, 
-          disabled: disabled, 
+          required: true,
+          disabled: disabled,
           class: "!max-w-full" %>
       </div>
 
@@ -290,7 +290,7 @@
               step: 0.01,
               min: 1,
               required: true,
-              data: { 
+              data: {
                 behavior: "check_amount_field",
                 controller: "truncate-decimal",
                 action: "truncate-decimal#truncate blur->truncate-decimal#pad",
@@ -300,7 +300,7 @@
         </div>
       </div>
 
-      <%= render "events/transfer_attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
   </div>
 
@@ -309,7 +309,7 @@
       Send check
       <%= inline_icon "send" %>
     </button>
-    <a href="javascript:void(0)" 
+    <a href="javascript:void(0)"
       data-action="click->check-preview#scrollToTop"
       class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">
       Preview
