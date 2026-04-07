@@ -242,6 +242,12 @@ module Admin
             count: ->{ Event::Application.under_review.count }
           ),
           make_item(
+            name: "Application Funnel",
+            path: applications_funnel_admin_index_path,
+            count: ->{ 0 },
+            count_type: :records
+          ),
+          make_item(
             name: "Organizations",
             path: events_admin_index_path,
             count: ->{ Event.approved.count },

@@ -1,0 +1,43 @@
+<% title "Application Funnel" %>
+
+<h2 class="mt0 mb1">Application Funnel</h2>
+<p class="muted mb3">Shows how many applications progress through each stage.</p>
+
+<% total = @funnel_data.first[:count].to_f %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Stage</th>
+      <th class="text-right">Count</th>
+      <th class="text-right">% of previous</th>
+      <th class="text-right">% of total</th>
+      <th style="min-width: 200px;">Relative size</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @funnel_data.each_with_index do |stage, i| %>
+      <tr>
+        <td><%= stage[:label] %></td>
+        <td class="text-right tabular-nums"><%= number_with_delimiter(stage[:count]) %></td>
+        <td class="text-right tabular-nums muted">
+          <% if i > 0 %>
+            <% prev = @funnel_data[i - 1][:count].to_f %>
+            <% pct = prev > 0 ? (stage[:count] / prev * 100).round(1) : 0 %>
+            <%= pct %>%
+          <% else %>
+            —
+          <% end %>
+        </td>
+        <td class="text-right tabular-nums muted">
+          <% of_total = total > 0 ? (stage[:count] / total * 100).round(1) : 0 %>
+          <%= of_total %>%
+        </td>
+        <td>
+          <% bar_width = total > 0 ? (stage[:count] / total * 100).round(1) : 0 %>
+          <div style="background: var(--hcb-accent); height: 20px; width: <%= bar_width %>%; border-radius: 4px; min-width: <%= stage[:count] > 0 ? 2 : 0 %>px;"></div>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

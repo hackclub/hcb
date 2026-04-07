@@ -776,6 +776,26 @@ class AdminController < Admin::BaseController
     )
   end
 
+  def applications_funnel
+    all_apps = Event::Application.all
+
+    total = all_apps.count
+    project_info_complete = all_apps.where.not(name: [nil, ""]).where.not(description: [nil, ""]).count
+    personal_info_complete = all_apps.where.not(address_line1: nil).where.not(address_city: nil).where.not(address_country: nil).where.not(address_postal_code: nil).count
+    submitted = all_apps.where.not(submitted_at: nil).count
+    approved = all_apps.where.not(approved_at: nil).count
+    onboarded = all_apps.where.not(event_id: nil).count
+
+    @funnel_data = [
+      { label: "Application created", count: total },
+      { label: "Tell us about your project completed", count: project_info_complete },
+      { label: "Tell us about yourself completed", count: personal_info_complete },
+      { label: "Submitted", count: submitted },
+      { label: "Approved & contract signed", count: approved },
+      { label: "Onboarded (organization created)", count: onboarded }
+    ]
+  end
+
   def donations
     @page = params[:page] || 1
     @per = params[:per] || 20
