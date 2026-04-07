@@ -9,6 +9,9 @@
     <%= form.label :pending do %>
       <%= form.check_box :pending, checked: @pending %> Reimbursement Requested (Awaiting Review)
     <% end %>
+    <%= form.label :failed do %>
+      <%= form.check_box :failed, checked: @failed %> Payout holding failed
+    <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>
@@ -35,7 +38,7 @@
   </thead>
   <tbody>
     <% @reports.each do |report| %>
-      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %> <%= "admin-bg-orange" if report.id.in?(@unprocessed_wise_report_ids) %>">
+      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %> <%= "admin-bg-orange" if report.id.in?(@unprocessed_wise_report_ids) %> <%= "admin-bg-warning" if report.payout_holding&.failed? %>">
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>

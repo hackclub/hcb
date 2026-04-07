@@ -74,7 +74,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
@@ -165,8 +165,21 @@ class Event
     def agreement
       authorize @application
 
+      unless @application.videos_watched
+        redirect_to videos_application_path(@application)
+        return
+      end
+
       @contract = @application.contract
       @party = @contract.party :signee
+    end
+
+    def mark_videos_watched
+      authorize @application
+
+      @application.update!(videos_watched: true)
+
+      redirect_to agreement_application_path(@application)
     end
 
     def review
