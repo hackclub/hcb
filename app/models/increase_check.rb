@@ -352,7 +352,7 @@ class IncreaseCheck < ApplicationRecord
       address_line2:,
       address_city:,
       recipient_email:,
-      send_email_notification:, # TODO: disable email notification and send reissue mailer
+      send_email_notification:,
       address_zip:,
       payment_recipient_id:,
       reissued_for_id: id,
