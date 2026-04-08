@@ -317,6 +317,11 @@ module Reimbursement
       draft? && submitted_at.nil?
     end
 
+    def exceeds_event_balance?
+      submitted_at.present? && currency == "USD" && event.present? &&
+        !::Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
+    end
+
     def team_review_required?
       !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
