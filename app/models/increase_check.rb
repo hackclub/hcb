@@ -360,6 +360,8 @@ class IncreaseCheck < ApplicationRecord
 
     reissued_check.save!
 
+    Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+
     reissued_check.send_check!
   end
 
