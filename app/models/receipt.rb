@@ -213,7 +213,7 @@ class Receipt < ApplicationRecord
   end
 
   def self.reupload(old_receiptable:, new_receiptable:)
-    where(receiptable: old_receiptable).map do |receipt|
+    where(receiptable: old_receiptable).find_each do |receipt|
       ::ReceiptService::Create.new(
         receiptable: new_receiptable,
         uploader: receipt.user,
