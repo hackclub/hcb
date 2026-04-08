@@ -127,7 +127,7 @@
   </article>
 <% end %>
 
-<% unless @report.exceeds_event_balance? && !@report.closed? %>
+<% if @report.exceeds_event_balance? && !@report.closed? %>
   <%= render "application/callout",
       type: "warning",
       icon: "info",
