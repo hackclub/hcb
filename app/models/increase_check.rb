@@ -269,7 +269,7 @@ class IncreaseCheck < ApplicationRecord
       :muted
     elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
-    elsif increase_deposited?
+    elsif increase_deposited? || column_settled?
       :success
     else
       :info
