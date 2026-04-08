@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1446,6 +1446,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.string "recipient_name"
+    t.bigint "reissued_for_id"
     t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
@@ -1453,6 +1454,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
+    t.index ["reissued_for_id"], name: "index_increase_checks_on_reissued_for_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -2854,6 +2856,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_12_205901) do
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
+  add_foreign_key "increase_checks", "increase_checks", column: "reissued_for_id"
   add_foreign_key "increase_checks", "users"
   add_foreign_key "invoices", "fee_reimbursements"
   add_foreign_key "invoices", "invoice_payouts", column: "payout_id"

@@ -30,6 +30,7 @@
 #  event_id                :bigint           not null
 #  increase_id             :string
 #  payment_recipient_id    :bigint
+#  reissued_for_id         :bigint
 #  user_id                 :bigint
 #
 # Indexes
@@ -37,12 +38,14 @@
 #  index_increase_checks_on_column_id             (column_id) UNIQUE
 #  index_increase_checks_on_event_id              (event_id)
 #  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
+#  index_increase_checks_on_reissued_for_id       (reissued_for_id)
 #  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
 #  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (reissued_for_id => increase_checks.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
