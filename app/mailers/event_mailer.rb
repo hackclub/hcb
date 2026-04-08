@@ -9,8 +9,7 @@ class EventMailer < ApplicationMailer
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
     return if @donations.none?
 
-    @emails = @event.users.where(monthly_donation_summary: true).map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
+    @emails = @event.organizer_contact_emails { |users| users.where(monthly_donation_summary: true) }
     return if @emails.none?
 
     @total = @donations.sum(:amount)
@@ -25,8 +24,7 @@ class EventMailer < ApplicationMailer
     @follows = @event.event_follows.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
     return if @follows.none?
 
-    @emails = @event.users.where(monthly_follower_summary: true).map(&:email_address_with_name)
-    @emails << @event.config.contact_email if @event.config.contact_email.present?
+    @emails = @event.organizer_contact_emails { |users| users.where(monthly_follower_summary: true) }
     return if @emails.none?
 
     @total = @follows.length
