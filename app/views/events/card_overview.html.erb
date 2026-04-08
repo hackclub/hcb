@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
-<% if @event.stripe_cards.any? || !organizer_signed_in? %>
+<% if @event.stripe_cards.any? || !organizer_signed_in? || @has_filter %>
   <% if current_user.try(:full_name).try(:blank?) %>
     <h1 class="heading">
       <span class="flex items-center">
@@ -19,7 +19,7 @@
       </span>
 
       <div class="flex items-center gap-2">
-        <%= render "events/filter_cards_menu" unless @has_filter %>
+        <%= render "events/filters/filter_cards_menu" unless @has_filter %>
         <%= pop_icon_to @view == "list" ? "grid" : "list",
                         "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
         <% if organizer_signed_in?(as: :member) %>
@@ -31,7 +31,7 @@
       </div>
     </h1>
 
-    <%= render "events/filter_cards" if @has_filter %>
+    <%= render "events/filters/filter_cards" if @has_filter %>
 
     <% if control = @organizer_position&.active_spending_control %>
       <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>

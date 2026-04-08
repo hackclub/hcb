@@ -1,0 +1,43 @@
+<% title "Choose login method" %>
+<% content_for(:page_class) %>
+
+<% content_for :info_pane do %>
+  <%= render partial: "logins/apply_info_pane" %>
+<% end %>
+
+<div class="flex flex-col flex-1 justify-center <%= @login.for_application? ? "card" : "max-w-md" %> w-full">
+  <%= render "logins/header", label: "Sign in to HCB" do %>
+    Security key
+  <% end %>
+
+  <%= render "logins/badge", user: @login.user %>
+  <%= render partial: "users/login_code_auth_notice" %>
+
+  <%= form_with url: set_login_preference_login_path(@login), method: :post, data: @login.webauthn_available? ? { "controller" => "webauthn-auth", "webauthn-auth-target" => "authForm", "action" => "load->webauthn-auth#submit", webauthn_auth_login_id_value: @login.hashid } : {} do |form| %>
+    <div data-webauthn-auth-target="error" class="mb2 display-none">
+      <div class="absolute top-7 left-1/2 transform -translate-x-1/2 z-10">
+        <p class="flash error mb1 mx-auto">Security key authentication failed.</p>
+      </div>
+    </div>
+
+    <input type="checkbox" checked data-webauthn-auth-target="loginPreferenceWebauthnInput" class="hidden">
+
+    <div class="card card--inset flex flex-col items-center justify-start gap-3 my-3">
+      <%= inline_icon "fingerprint", size: 28, style: "padding: 3px" %>
+      <p class="m-0">Use your security key</p>
+    </div>
+
+    <%= form.hidden_field :email, value: @email, data: { "webauthn-auth-target" => "loginEmailInput" } %>
+
+    <div class="flex flex-row justify-between items-center my-4">
+      <% if @login.available_factors.excluding(:webauthn).any? %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login, return_to: @login.return_to), class: "block mt-0 no-underline" %>
+      <% end %>
+      <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton" } %>
+    </div>
+  <% end %>
+
+  <%= render partial: "logins/environment_banner" %>
+</div>
+
+<%= render partial: "logins/footer" %>

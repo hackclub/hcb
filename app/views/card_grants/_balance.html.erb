@@ -12,5 +12,9 @@
         The funds will not automatically be contributed towards your reimbursement report cap.
       <% end %>
     </i>
+  <% elsif card_grant.stripe_card&.frozen? %>
+    <i class="muted">
+      Refunds received while frozen will still process and be returned to the card.
+    </i>
   <% end %>
 </div>

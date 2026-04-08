@@ -58,32 +58,45 @@
         <% end %>
       </div>
     <% end %>
-    <div>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2 bold">Time-based one time passwords</span>
-      </legend>
+
       <%= turbo_frame_tag :totp_auth_card do %>
+        <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="totp">
+          <legend class="flex flex-row justify-start items-center">
+            <span class="h2 bold">Time-based one time passwords</span>
+          </legend>
+          <div class="flex flex-row gap-x-2">
+            <% if @user.totp.present? %>
+              <%= link_to user_disable_totp_path(@user), class: "btn px2 h4 bg-error", data: { turbo_method: :post }, disabled: do %>
+                <%= inline_icon "minus", size: home_action_size %>
+                Disable TOTP
+              <% end %>
+            <% end %>
+            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, onclick: "this.style.display='none'", disabled: do %>
+              <%= inline_icon "plus", size: home_action_size %>
+              <%= @user.totp.present? ? "Reset secret" : "Setup" %>
+            <% end %>
+          </div>
+        </div>
         <div class="card border b--info mt0 mb3">
           <% if @user.totp.present? %>
             <p>
               <% if disabled %>
                 <%= @user.name %> set up time-based one time passwords on <%= format_date @user.totp.created_at %>
               <% else %>
-                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
+                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>.
               <% end %>
             </p>
           <% else %>
             <p>
               <% if disabled %>
-                <%= @user.name %> currently doesn't have time-based one time passwords set up.
+                <%= @user.name %> doesn't currently have time-based one time passwords set up.
               <% else %>
-                  You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
+                You don't have time-based one time passwords set up currently.
               <% end %>
             </p>
           <% end %>
         </div>
       <% end %>
-    </div>
     <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
       <legend class="flex flex-row justify-start items-center">
         <span class="h2 bold">Security keys</span>

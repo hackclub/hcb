@@ -6,6 +6,11 @@ module Api
       extend ActiveSupport::Concern
 
       included do
+        # Rails searches rescue_from handlers in reverse definition order
+        rescue_from ActiveRecord::ActiveRecordError do
+          render json: { error: "internal_error", messages: ["Internal database error"] }, status: :internal_server_error
+        end
+
         rescue_from Pundit::NotAuthorizedError do
           render json: { error: "not_authorized" }, status: :forbidden
         end
@@ -37,10 +42,6 @@ module Api
 
         rescue_from ActiveRecord::ConnectionNotEstablished, ActiveRecord::DatabaseConnectionError do
           render json: { error: "service_unavailable", messages: ["Database unavailable"] }, status: :service_unavailable
-        end
-
-        rescue_from ActiveRecord::ActiveRecordError do
-          render json: { error: "internal_error", messages: ["Internal database error"] }, status: :internal_server_error
         end
       end
     end

@@ -66,6 +66,9 @@ class IncreaseCheck < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :ick
 
@@ -160,7 +163,7 @@ class IncreaseCheck < ApplicationRecord
       transitions from: :pending, to: :approved
 
       after_commit do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later unless reimbursement_payout_holding.present?
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
       end
     end
