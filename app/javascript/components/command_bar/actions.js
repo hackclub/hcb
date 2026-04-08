@@ -5,6 +5,15 @@ import Icon from '@hackclub/icons'
 import csrf from '../../common/csrf'
 import React from 'react'
 import ReimbursementIcon from '../icons/reimbursement'
+import SvgIcon, { preload } from '../icons/SvgIcon'
+
+preload(
+  '/icons/hashtag.svg',
+  '/icons/cheque.svg',
+  '/icons/perks.svg',
+  '/icons/receipt.svg',
+  '/icons/reimbursement.svg',
+)
 
 const restrictedFilter = e => !e.demo_mode
 
@@ -56,7 +65,7 @@ export const generateEventActions = data => {
       name: 'Account numbers',
       perform: () =>
         (window.location.pathname = `/${event.slug}/account-number`),
-      icon: <img src="/icons/hashtag.svg" width={16} height={16} />,
+      icon: <SvgIcon src="/icons/hashtag.svg" size={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -78,7 +87,7 @@ export const generateEventActions = data => {
       name: 'Check deposits',
       perform: () =>
         (window.location.pathname = `/${event.slug}/check-deposits`),
-      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
+      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -114,7 +123,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-perks`,
       name: 'Perks',
       perform: navigate(`/${event.slug}/promotions`),
-      icon: <img src="/icons/perks.svg" width={16} height={16} />,
+      icon: <SvgIcon src="/icons/perks.svg" size={16} />,
       parent: event.slug,
     })),
     ...data.filter(restrictedFilter).map(event => ({
@@ -191,7 +200,7 @@ export const initalActions = [
     keywords: 'receipts inbox',
     perform: navigate('/my/inbox'),
     section: 'Pages',
-    icon: <img src="/icons/receipt.svg" width={16} height={16} />,
+    icon: <SvgIcon src="/icons/receipt.svg" size={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -200,7 +209,7 @@ export const initalActions = [
     keywords: 'reimbursements report',
     perform: navigate('/my/reimbursements'),
     section: 'Pages',
-    icon: <img src="/icons/reimbursement.svg" width={16} height={16} />,
+    icon: <SvgIcon src="/icons/reimbursement.svg" size={16} />,
     priority: Priority.HIGH,
   },
   {
@@ -471,7 +480,7 @@ export const adminActions = (adminUrls, isPretending) => {
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Check deposits',
-      icon: <img src="/icons/cheque.svg" width={16} height={16} />,
+      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
       perform: navigate('/admin/check_deposits'),
     },
     {
