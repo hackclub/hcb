@@ -1,17 +1,14 @@
 <% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
 
-<div class="flex flex-col-reverse" id="action-wrapper">
-  <%# Using a reverse column flex container, we can
-      define the button hint next to the button states,
-      and it will get rendered above the button %>
+<div id="action-wrapper" class="mt-5">
   <% button_hint = "" %>
   <% button_hint = "This report has been approved and is pending reimbursement." if report.reimbursement_approved? %>
   <% button_hint = "The creator of this report has been reimbursed." if report.reimbursed? %>
   <% button_hint = "This report has been approved by #{@event.name}, but it's still pending approval from the HCB team." if report.reimbursement_requested? %>
 
   <% unless (report.closed? && !report.payout_holding&.failed?) || member_viewing %>
-    <div class="flex items-center justify-between mt2 mb3 sm:max-w-sm lg:max-w-full" style="gap: 1rem;" id="actions">
-      <div class="flex justify-start">
+    <div class="flex flex-col sm:flex-row !gap-2" id="actions">
+      <div class="flex *:w-full justify-start">
         <% if !report.locked? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
             <div class="add-expense-dropzone">
@@ -48,9 +45,9 @@
       </div>
 
       <% if report.locked? %>
-        <div style="flex-grow: 1;" class="flex justify-start items-center">
+        <div style="flex-grow: 1;" class="flex sm:justify-start sm:items-center">
           <% if report.reimbursement_requested? && !admin_signed_in? %>
-            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", method: :post do %>
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
@@ -58,7 +55,7 @@
               <% end %>
             <% end %>
           <% elsif current_user == report.user && report.submitted? %>
-            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted", method: :post do %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", method: :post do %>
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
@@ -66,7 +63,7 @@
               <% end %>
             <% end %>
           <% elsif !report.closed? %>
-            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
+            <button class="btn bg-light-warning w-full sm:w-auto" data-behavior="modal_trigger" data-modal="request_changes" id="request_changes_button">
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
@@ -78,7 +75,7 @@
       <% end %>
 
       <% if policy(report).update_currency? %>
-        <div style="flex-grow: 1;" class="flex justify-end">
+        <div style="flex-grow: 1;" class="flex sm:justify-end">
           <%= link_to reimbursement_report_update_currency_path(report), method: :post, class: "btn bg-secondary" do %>
             <%= inline_icon "transactions" %>
             Switch to <%= user.payout_method&.currency %>
@@ -86,7 +83,7 @@
         </div>
       <% end %>
 
-      <div style="flex-grow: 1;" class="flex justify-end">
+      <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
         <% if !user.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.payout_method.present? && user.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
@@ -352,11 +349,6 @@
           <% end %>
         <% end %>
       </div>
-
-      <p class="mt0 mb0" style="text-align: left;" id="button-hint">
-        <%= button_hint %>
-      </p>
-
     </div>
   <% end %>
   <% if report.rejected? && !member_viewing %>
@@ -366,18 +358,18 @@
     <% end %>
   <% end %>
   <% if report.expenses.any? %>
-    <div class="card mt2 flex-1 <%= "closed" if report.closed? || member_viewing %>">
-      <div id="summary">
-        <div class="stat stat--small" style="flex-shrink: 0;">
+    <div class="<%= "closed" if report.closed? || member_viewing %>">
+      <div id="summary" class="statset pb-6 mt-4">
+        <div class="stat shrink-0">
           <span class="stat__label">Amount requested</span>
           <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
         </div>
         <% if report.locked? %>
-          <div class="stat stat--small stat--plain" style="flex-shrink: 0;">
+          <div class="stat shrink-0">
             <span class="stat__label">Expenses approved</span>
-            <span class="stat__value"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
+            <span class="stat__value stat--plain" style="--unit: ''"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
-          <div class="stat stat--small" style="flex-shrink: 0;">
+          <div class="stat shrink-0">
             <span class="stat__label">Amount approved</span>
           <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount_to_reimburse.format(symbol: false) %></span>
           </div>
@@ -397,12 +389,14 @@
             <span class="stat__value"><%= report.expenses.to_sum.complete.count %>/<%= report.expenses.to_sum.count %></span>
           </div>
         <% end %>
-        <p class="mt-1 mb0" id="summary-hint">
-          <%= button_hint %>
-        </p>
       </div>
+      <% if button_hint.present? %>
+        <div class="card -mt-2 rounded-t-none text-center">
+          <%= button_hint %>
+        </div>
+      <% end %>
       <% if report.user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
-        <div class="border-top card__banner card__darker secondary mt-3 box-content mb-[-1rem] w-100">
+        <div class="card mt-2">
           <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
             Fetching latest estimate...
           <% end %>
