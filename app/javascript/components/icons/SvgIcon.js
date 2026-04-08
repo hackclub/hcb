@@ -35,7 +35,9 @@ export default function SvgIcon({ src, size = 16 }) {
   }, [src])
 
   if (!svgData) {
-    return <span style={{ display: 'inline-block', width: size, height: size }} />
+    return (
+      <span style={{ display: 'inline-block', width: size, height: size }} />
+    )
   }
 
   return (

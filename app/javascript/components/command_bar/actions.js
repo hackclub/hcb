@@ -12,7 +12,7 @@ preload(
   '/icons/cheque.svg',
   '/icons/perks.svg',
   '/icons/receipt.svg',
-  '/icons/reimbursement.svg',
+  '/icons/reimbursement.svg'
 )
 
 const restrictedFilter = e => !e.demo_mode
