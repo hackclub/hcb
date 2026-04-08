@@ -335,7 +335,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    stop!
+    stop! unless column_stopped? || column_pending_stop?
 
     reissued_check = event.increase_checks.build(
       user_id:,
