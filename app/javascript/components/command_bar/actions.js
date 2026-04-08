@@ -168,6 +168,15 @@ export const initalActions = [
     priority: Priority.HIGH,
   },
   {
+    id: 'my-feed',
+    name: 'Feed',
+    keywords: 'index',
+    perform: navigate('/my/feed'),
+    icon: <Icon glyph="announcement" size={16} />,
+    section: 'Pages',
+    priority: Priority.HIGH,
+  },
+  {
     id: 'my-cards',
     name: 'Cards',
     keywords: 'cards',
