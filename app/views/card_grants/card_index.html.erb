@@ -10,12 +10,54 @@
       <table>
         <thead>
           <tr>
-            <th>Status</th>
-            <th>Date</th>
-            <th>To</th>
-            <th>For</th>
-            <th>Amount</th>
-            <th class="text-right">Balance</th>
+            <th>
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "status", direction: grants_sort_direction("status")),
+                          class: "flex items-center",
+                          title: "Sort by Status" do %>
+                Status
+                <%= inline_icon grants_sort_icon("status"), size: 24 %>
+              <% end %>
+            </th>
+            <th>
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "date", direction: grants_sort_direction("date")),
+                          class: "flex items-center",
+                          title: "Sort by Date" do %>
+                Date
+                <%= inline_icon grants_sort_icon("date"), size: 24 %>
+              <% end %>
+            </th>
+            <th>
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "to", direction: grants_sort_direction("to")),
+                          class: "flex items-center",
+                          title: "Sort by Recipient" do %>
+                To
+                <%= inline_icon grants_sort_icon("to"), size: 24 %>
+              <% end %>
+            </th>
+            <th>
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "for", direction: grants_sort_direction("for")),
+                          class: "flex items-center",
+                          title: "Sort by Reason" do %>
+                For
+                <%= inline_icon grants_sort_icon("for"), size: 24 %>
+              <% end %>
+            </th>
+            <th>
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "amount", direction: grants_sort_direction("amount")),
+                          class: "flex items-center",
+                          title: "Sort by Amount" do %>
+                Amount
+                <%= inline_icon grants_sort_icon("amount"), size: 24 %>
+              <% end %>
+            </th>
+            <th class="text-right">
+              <%= link_to event_card_grant_card_overview_path(@event, sort: "balance", direction: grants_sort_direction("balance")),
+                          class: "flex items-center justify-end",
+                          title: "Sort by Balance" do %>
+                <%= inline_icon grants_sort_icon("balance"), size: 24 %>
+                Balance
+              <% end %>
+            </th>
             <th></th>
           </tr>
         </thead>
