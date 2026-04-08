@@ -476,6 +476,7 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @failed = params[:failed] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -490,6 +491,8 @@ class AdminController < Admin::BaseController
     relation = relation.search(@q) if @q
 
     relation = relation.reimbursement_requested if @pending
+
+    relation = relation.includes(:payout_holding).where(payout_holding: { aasm_state: :failed }) if @failed
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
