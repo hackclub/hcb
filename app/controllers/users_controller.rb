@@ -199,7 +199,7 @@ class UsersController < ApplicationController
     if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
       @user.totp&.mark_expired!
       @totp.mark_verified!
-      redirect_back_or_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
+      redirect_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
     else
       @invalid = true
       render :generate_totp
@@ -209,7 +209,7 @@ class UsersController < ApplicationController
   def disable_totp
     authorize @user
     @user.totp&.mark_expired!
-    redirect_back_or_to security_user_path(@user)
+    redirect_to security_user_path(@user)
   end
 
   def generate_backup_codes
