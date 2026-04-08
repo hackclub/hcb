@@ -308,6 +308,10 @@ class HcbCode < ApplicationRecord
     pt.try(:stripe_auth_dashboard_url) || ct.try(:stripe_auth_dashboard_url)
   end
 
+  def stripe_txn_dashboard_url
+    pt.try(:stripe_txn_dashboard_url) || ct.try(:stripe_txn_dashboard_url)
+  end
+
   def raw_emburse_transaction
     ct&.raw_emburse_transaction
   end
