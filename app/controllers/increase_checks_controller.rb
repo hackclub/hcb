@@ -71,7 +71,7 @@ class IncreaseChecksController < ApplicationController
 
     @check.stop!
 
-    redirect_back_or_to event_path(@check.event), flash: { success: "Check has been stopped." }
+    redirect_back_or_to url_for(@check.local_hcb_code), flash: { success: "Check has been stopped." }
   end
 
   def reissue
@@ -79,7 +79,7 @@ class IncreaseChecksController < ApplicationController
 
     @check.reissue!
 
-    redirect_back_or_to event_path(@check.event), flash: { success: "Check has been reissued!" }
+    redirect_back_or_to url_for(@check.reissued_as.local_hcb_code), flash: { success: "Check has been reissued!" }
   end
 
   private
