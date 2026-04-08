@@ -421,20 +421,26 @@ class UsersController < ApplicationController
 
   def user_params
     attributes = [
+      # account
       :full_name,
       :preferred_name,
       :phone_number,
+      :birthday,
       :profile_picture,
+      :seasonal_themes_enabled,
+      # admin
       :pretend_is_not_admin,
+      # security
       :sessions_reported,
       :session_validity_preference,
+      :use_sms_auth,
+      :use_two_factor_authentication,
+      # notifications
       :receipt_report_option,
-      :birthday,
-      :seasonal_themes_enabled,
       :comment_notifications,
       :charge_notifications,
-      :use_sms_auth,
-      :use_two_factor_authentication
+      :monthly_donation_summary,
+      :monthly_follower_summary
     ]
 
     if @user.stripe_cardholder
