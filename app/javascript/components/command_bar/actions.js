@@ -9,7 +9,6 @@ import ReimbursementIcon from '../icons/reimbursement'
 const restrictedFilter = e => !e.demo_mode
 
 export const generateEventActions = data => {
-  console.log(data)
   return [
     ...data.map(event => ({
       id: event.slug,
@@ -117,6 +116,15 @@ export const generateEventActions = data => {
         name: 'Sub-organizations',
         perform: navigate(`/${event.slug}/sub_organizations`),
         icon: <Icon glyph="channels" size={16} />,
+        parent: event.slug,
+      })),
+    ...data
+      .filter(e => e.features.card_grants)
+      .map(event => ({
+        id: `${event.slug}-card-grants`,
+        name: 'Grants',
+        perform: navigate(`/${event.slug}/card_grants`),
+        icon: <Icon glyph="bag" size={16} />,
         parent: event.slug,
       })),
     ...data.filter(restrictedFilter).map(event => ({
