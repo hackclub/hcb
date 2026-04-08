@@ -127,7 +127,7 @@
   </article>
 <% end %>
 
-<% if @report.exceeds_event_balance? && !@report.closed? %>
+<% unless @report.exceeds_event_balance? && !@report.closed? %>
   <%= render "application/callout",
       type: "warning",
       icon: "info",
@@ -238,13 +238,13 @@
       <div class="flex flex-row items-center mt-2 md:max-w-[50%]">
         <div style="flex-grow: 1;">
           <label class="bold" for="reimbursement_expense_memo">Memo</label>
-          <input required type="text" value="Estimated Wise fee" name="reimbursement_expense[memo]" readonly>
+          <input required="required" type="text" value="Estimated Wise fee" name="reimbursement_expense[memo]" readonly="">
         </div>
 
         <span class="bold muted flex self-end items-center justify-center ml1" style="width: 1rem; height: 48px;">$</span>
         <div class="ml1">
           <label class="bold" for="reimbursement_expense_value">Amount (USD)</label>
-          <input value="Loading..." type="text" name="reimbursement_expense[value]" readonly>
+          <input value="Loading..." type="text" name="reimbursement_expense[value]" readonly="">
         </div>
       </div>
     <% end %>
