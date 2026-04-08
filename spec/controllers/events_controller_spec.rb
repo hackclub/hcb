@@ -87,5 +87,20 @@ RSpec.describe EventsController do
         ]
       )
     end
+
+    it "returns card_grants: true for events on a plan with card grants enabled" do
+      user = create(:user)
+
+      event = create(:event, name: "Card Grant Event", plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:, sort_index: 1)
+
+      sign_in(user)
+
+      get(:index, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      card_grants_feature = response.parsed_body.find { |e| e["name"] == "Card Grant Event" }.dig("features", "card_grants")
+      expect(card_grants_feature).to eq(true)
+    end
   end
 end

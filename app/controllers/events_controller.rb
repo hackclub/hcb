@@ -1312,7 +1312,7 @@ class EventsController < ApplicationController
       member:,
       features: {
         subevents: event.subevents_enabled?,
-        card_grants: policy(event).card_grant_overview?
+        card_grants: event.plan.card_grants_enabled?
       }
     }
   end
