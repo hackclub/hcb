@@ -129,6 +129,8 @@ class IncreaseCheck < ApplicationRecord
 
   belongs_to :event
   belongs_to :user, optional: true
+  belongs_to :reissued_for, class_name: "IncreaseCheck", optional: true
+  has_one :reissued_as, class_name: "IncreaseCheck", foreign_key: :reissued_for_id, inverse_of: :reissued_for
 
   def payment_recipient_attributes
     %i[address_line1 address_line2 address_city address_state address_zip]
