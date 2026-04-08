@@ -21,7 +21,8 @@ module Api
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]
 
-        @transactions = paginate(@pending_transactions + @settled_transactions) { |tx| tx.local_hcb_code.public_id }
+        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code if params[:after].present?
+        @transactions = paginate(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
 
         if @transactions.any?
           page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
