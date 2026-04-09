@@ -256,11 +256,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def request_meeting?
-    manager?
+    signee?
   end
 
   def send_meeting_request?
-    manager?
+    signee?
   end
 
   private
@@ -295,6 +295,10 @@ class EventPolicy < ApplicationPolicy
 
   def manager?
     OrganizerPosition.role_at_least?(user, record, :manager)
+  end
+
+  def signee?
+    OrganizerPosition.find_by(event: record, user:).is_signee
   end
 
   def admin_or_manager?
