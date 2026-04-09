@@ -255,11 +255,11 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
-  def request_meeting?
+  def request_call?
     signee?
   end
 
-  def send_meeting_request?
+  def send_call_request?
     signee?
   end
 

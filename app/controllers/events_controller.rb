@@ -1039,7 +1039,7 @@ class EventsController < ApplicationController
     @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
   end
 
-  def request_meeting
+  def request_call
     authorize @event
 
     if @event.point_of_contact.present?
@@ -1054,13 +1054,13 @@ class EventsController < ApplicationController
     end
   end
 
-  def send_meeting_request
+  def send_call_request
     authorize @event
 
-    EventMailer.with(event: @event, user: current_user).meeting_requested.deliver_now
+    EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
     @event.config.update!(hide_onboarding_message: true)
 
-    flash[:success] = "Meeting requested! A member of our team will respond soon."
+    flash[:success] = "A member of our team will respond to schedule a call soon!"
     redirect_to event_path(@event)
   end
 
