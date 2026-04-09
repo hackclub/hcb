@@ -190,7 +190,7 @@ class Contract < ApplicationRecord
 
   # Adding this back temporarily while we work on fixing missing parties
   def signee_docuseal_url
-    "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
+    "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
   end
 
   def create_document!
