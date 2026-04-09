@@ -1042,14 +1042,14 @@ class EventsController < ApplicationController
   def request_meeting
     authorize @event
 
-    # if @event.point_of_contact.present?
-    #   onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
+    if @event.point_of_contact.present?
+      onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
 
-    #   if onboarder_record.present?
-    #     redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
-    #     return
-    #   end
-    # end
+      if onboarder_record.present?
+        redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
+        return
+      end
+    end
   end
 
   def send_meeting_request
@@ -1058,6 +1058,8 @@ class EventsController < ApplicationController
     EventMailer.with(event: @event, user: current_user).meeting_requested.deliver_now
 
     flash[:success] = "Meeting requested! A member of our team will respond soon."
+
+    redirect_to event_path(@event)
   end
 
   private
