@@ -260,6 +260,18 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transaction
+
+    raw_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
+  end
+
   def remote_stripe_iauth_id
     return nil unless raw_stripe_transaction
 
