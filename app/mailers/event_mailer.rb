@@ -57,6 +57,7 @@ class EventMailer < ApplicationMailer
          subject: "#{@user.name} from #{@event.name} requested an onboarding call",
          reply_to: @user.email_address_with_name
   end
+
   def transparency_mode_enabled
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
