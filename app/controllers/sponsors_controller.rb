@@ -51,8 +51,14 @@ class SponsorsController < ApplicationController
     authorize @sponsor
 
     @sponsor.destroy
-    flash[:success] = "Sponsor was successfully destroyed."
-    redirect_to sponsors_url
+
+    respond_to do |format|
+      format.html do
+        flash[:success] = "Sponsor was successfully destroyed."
+        redirect_to sponsors_url
+      end
+      format.json { head :no_content }
+    end
   end
 
   private
