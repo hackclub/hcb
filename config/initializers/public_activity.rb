@@ -60,7 +60,7 @@ class PublicActivity::Activity
       end
 
       User.admin.each do |user|
-        streams << [user, "activities"]
+        streams << [user, "admin_activities"]
       end
 
       streams.uniq.each do |stream|
