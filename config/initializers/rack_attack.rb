@@ -26,9 +26,27 @@ class Rack::Attack
 
   # Get the IP addresses of stripe as an array
   stripe_ips_webhooks = File.readlines(Rails.root.join("config/stripe_ips_webhooks.txt")).map(&:strip)
-  # Allow those IP addresses to send us as many webhooks as they like
-  Rack::Attack.safelist("allow from Stripe (To Webhooks)") do |req|
-    req.post? && stripe_ips_webhooks.include?(req.ip)
+  column_ips_webhooks = File.readlines(Rails.root.join("config/column_ips_webhooks.txt")).map(&:strip)
+
+  # Allow those IP addresses to send us as many webhooks as they like, but block all others
+  safelist("always allow Stripe IPs to send webhooks") do |req|
+    req.post? && stripe_ips_webhooks.include?(req.ip) && req.path == "/stripe/webhook"
+  end
+
+  safelist("always allow Column IPs to send webhooks") do |req|
+    req.post? && column_ips_webhooks.include?(req.ip) && req.path == "/webhooks/column"
+  end
+
+  blocklist("block Stripe webhooks from non-Stripe IPs") do |req|
+    next false unless req.path == "/stripe/webhook"
+
+    !stripe_ips_webhooks.include?(req.ip)
+  end
+
+  blocklist("block Column webhooks from non-Column IPs") do |req|
+    next false unless req.path == "/webhooks/column"
+
+    !column_ips_webhooks.include?(req.ip)
   end
 
   ### Throttle Spammy Clients ###
