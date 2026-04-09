@@ -2633,6 +2633,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.string "full_name"
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
+    t.boolean "monthly_donation_summary", default: true
+    t.boolean "monthly_follower_summary", default: true
     t.bigint "payout_method_id"
     t.string "payout_method_type"
     t.text "phone_number"

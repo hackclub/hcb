@@ -15,6 +15,8 @@
 #  full_name                     :string
 #  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)

@@ -430,7 +430,7 @@ export default class extends Controller {
           </div>
 
           <div data-role="weeks" class="grid grid-cols-7 gap-0 py-2"></div>
-          <button type="submit" class="btn w-full">Filter...</button>
+          <button type="submit" class="btn w-full">Filter</button>
         </div>
       </div>
     `
