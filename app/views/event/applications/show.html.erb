@@ -77,9 +77,16 @@
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
 
     <div class="w-full flex-grow flex items-center justify-end gap-4">
+      <% if @application.archived? %>
+        <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
+      <% else %>
+        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+      <% end %>
+
       <% admin_tool do %>
         <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
       <% end %>
+
       <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
     </div>
   <% end %>
