@@ -370,7 +370,7 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    Rails.error.unexpected "HcbCode#disbursement? accessed"
+    Rails.application.deprecators[:hcb].warn("HcbCode#disbursement? accessed")
 
     return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
   end

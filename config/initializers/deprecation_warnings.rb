@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-ActiveSupport::Notifications.subscribe("deprecation.rails") do |_name, _start, _finish, _id, payload|
+HcbDeprecator = ActiveSupport::Deprecation.new("1.0", "HCB")
+Rails.application.deprecators[:hcb] = HcbDeprecator
+
+def handle_deprecation(_name, _start, _finish, _id, payload)
   message = payload[:message]
   callstack = payload[:callstack]
   deprecation_horizon = payload[:deprecation_horizon]
@@ -13,7 +16,7 @@ ActiveSupport::Notifications.subscribe("deprecation.rails") do |_name, _start, _
   end
 
   Appsignal.report_error(ActiveSupport::DeprecationException.new(message)) do
-    Appsignal.set_namespace("deprecation.rails")
+    Appsignal.set_namespace("deprecation")
     Appsignal.set_action(appsignal_action)
     Appsignal.add_tags(
       deprecation: true,
@@ -26,3 +29,6 @@ ActiveSupport::Notifications.subscribe("deprecation.rails") do |_name, _start, _
     )
   end
 end
+
+ActiveSupport::Notifications.subscribe("deprecation.rails", &method(:handle_deprecation))
+ActiveSupport::Notifications.subscribe("deprecation.hcb", &method(:handle_deprecation))
