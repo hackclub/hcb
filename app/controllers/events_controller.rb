@@ -58,6 +58,7 @@ class EventsController < ApplicationController
     end
 
     render_tour @organizer_position, :welcome
+    @requesting_call = params[:request_call] == "true" && policy(@event).request_call?
   end
 
   def transaction_heatmap
@@ -1052,10 +1053,6 @@ class EventsController < ApplicationController
         return
       end
     end
-  end
-
-  def send_call_request
-    authorize @event
 
     EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
     @event.config.update!(hide_onboarding_message: true)

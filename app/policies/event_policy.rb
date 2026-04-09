@@ -259,10 +259,6 @@ class EventPolicy < ApplicationPolicy
     signee?
   end
 
-  def send_call_request?
-    signee?
-  end
-
   private
 
   def admin_or_member?

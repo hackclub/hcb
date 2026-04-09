@@ -68,17 +68,21 @@
     <%= render "events/account_number_modal" %>
   <% end %>
 
-  <% if !@event.config.hide_onboarding_message && policy(@event).request_call? && !@event.hcb_codes.exists? %>
-    <div class="card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
-      <div class="flex-1">
-        <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
-        <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform.</p>
+  <% if policy(@event).request_call? %>
+    <%= render "events/request_call_modal", auto_open: @requesting_call %>
+
+    <% unless @event.config.hide_onboarding_message || @event.hcb_codes.exists? %>
+      <div class="card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+        <div class="flex-1">
+          <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
+          <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform.</p>
+        </div>
+        <%= button_to request_call_event_path(@event), class: "btn" do %>
+          <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+          Schedule
+        <% end %>
       </div>
-      <%= link_to request_call_event_path(@event), class: "btn" do %>
-        <%= inline_icon "people-2", size: 16, class: "mr-1" %>
-        Schedule
-      <% end %>
-    </div>
+    <% end %>
   <% end %>
 
   <%= render "events/public_message" %>
