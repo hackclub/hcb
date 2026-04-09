@@ -14,12 +14,12 @@
   <% end %>
 
   <div class="mt2 muted center">
-    <% if defined? card_label %>
-      <%= card_label %>
-    <% elsif defined? show_purpose %>
-      <%= stripe_card.card_grant&.purpose %>
-    <% else %>
-      <%= stripe_card.name %>
+    <% if defined? show_purpose %>
+      <% if stripe_card.card_grant.present? %>
+        <%= stripe_card.card_grant.purpose %>
+      <% else %>
+        <%= stripe_card.name %>
+      <% end %>
     <% end %>
   </div>
 <% end %>
