@@ -1046,6 +1046,8 @@ class EventsController < ApplicationController
       onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
 
       if onboarder_record.present?
+        @event.config.update!(hide_onboarding_message: true)
+
         redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
         return
       end
@@ -1056,9 +1058,9 @@ class EventsController < ApplicationController
     authorize @event
 
     EventMailer.with(event: @event, user: current_user).meeting_requested.deliver_now
+    @event.config.update!(hide_onboarding_message: true)
 
     flash[:success] = "Meeting requested! A member of our team will respond soon."
-
     redirect_to event_path(@event)
   end
 

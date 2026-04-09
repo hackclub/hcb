@@ -68,7 +68,7 @@
     <%= render "events/account_number_modal" %>
   <% end %>
 
-  <% if policy(@event).request_meeting? && !@event.hcb_codes.exists? %>
+  <% if !@event.config.hide_onboarding_message && policy(@event).request_meeting? && !@event.hcb_codes.exists? %>
     <div class="card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
       <div class="flex-1">
         <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
