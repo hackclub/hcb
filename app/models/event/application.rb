@@ -118,7 +118,13 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted
+        transitions from: :draft, to: :submitted do
+          guard do
+            self.teen_led = user.is_teenager?
+            ready_to_submit?
+          end
+        end
+
         after do
           update!(teen_led: user.is_teenager?, archived_at: nil)
 
@@ -280,6 +286,10 @@ class Event
 
       if user.is_minor?
         required_fields.push("cosigner_email")
+      end
+
+      unless teen_led?
+        required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
       end
 
       missing_fields = required_fields.any? do |field|
