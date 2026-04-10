@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_06_215433) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -675,7 +675,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "disbursements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
@@ -795,7 +795,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "donations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.integer "amount_received"
     t.boolean "anonymous", default: false, null: false
