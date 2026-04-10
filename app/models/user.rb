@@ -622,10 +622,6 @@ class User < ApplicationRecord
     "#{full_name} (Email: #{email}, ID: #{id})"
   end
 
-  def value
-    id
-  end
-
   private
 
   def accessible_events(roles:)
