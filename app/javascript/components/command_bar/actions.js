@@ -128,15 +128,6 @@ export const generateEventActions = data => {
       parent: event.slug,
     })),
     ...data
-      .filter(e => e.features.subevents)
-      .map(event => ({
-        id: `${event.slug}-subevents`,
-        name: 'Sub-organizations',
-        perform: navigate(`/${event.slug}/sub_organizations`),
-        icon: <Icon glyph="channels" size={16} />,
-        parent: event.slug,
-      })),
-    ...data
       .filter(e => e.features.card_grants)
       .map(event => ({
         id: `${event.slug}-card-grants`,
