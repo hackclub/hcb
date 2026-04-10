@@ -290,6 +290,10 @@ class Event
 
       unless teen_led?
         required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
+
+        if committed_ammount&.positive?
+           required_fields.push("funding_source")
+        end
       end
 
       missing_fields = required_fields.any? do |field|
