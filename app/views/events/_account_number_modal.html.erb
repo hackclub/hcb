@@ -42,7 +42,8 @@
                     method: :patch,
                     params: { column_account_number: { deposit_only: !@event.column_account_number&.deposit_only } },
                     class: "btn bg-muted text-sm py-1 px-3",
-                    data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." } %>
+                    data: { turbo_confirm: "Are you sure you want to change this? Debits are usually disabled for account security." },
+                    disabled: !policy(@event.column_account_number).update? %>
     <% end %>
 
     <div class="details border-top pt2 mt2">
