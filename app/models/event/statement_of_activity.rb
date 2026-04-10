@@ -11,8 +11,6 @@ class Event
 
     INTERNAL_TRANSFER_SLUG = "internal-transfer"
     DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(?:500|550)-(\d+)\z/
-    DISBURSEMENT_HCB_CODE_SQL_PATTERN = "^HCB-(500|550)-\\d+$"
-    DISBURSEMENT_HCB_CODE_SQL_EXTRACT = "HCB-(?:500|550)-(\\d+)"
 
     attr_reader(:event, :event_group, :include_descendants)
 
@@ -71,9 +69,7 @@ class Event
     memo_wise def category_totals
       totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
 
-      # Use raw SQL aggregation for most totals (faster), then patch in virtual
-      # Intra/Inter org transfer totals from grouped_transactions, which splits
-      # Internal Transfers based on whether both sides are in scope.
+      # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers)
       if totals.key?(INTERNAL_TRANSFER_SLUG)
         virtual_totals = grouped_transactions
                          .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
@@ -200,8 +196,8 @@ class Event
       disbursement_ids = transactions
                          .joins(:category_mapping)
                          .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
-                         .where("canonical_transactions.hcb_code ~ ?", DISBURSEMENT_HCB_CODE_SQL_PATTERN)
-                         .pluck(Arel.sql("substring(canonical_transactions.hcb_code from '#{DISBURSEMENT_HCB_CODE_SQL_EXTRACT}')::int"))
+                         .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
+                         .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
                          .uniq
 
       return Set.new if disbursement_ids.empty?
