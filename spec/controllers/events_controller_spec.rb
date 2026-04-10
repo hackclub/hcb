@@ -87,6 +87,5 @@ RSpec.describe EventsController do
         ]
       )
     end
-
   end
 end
