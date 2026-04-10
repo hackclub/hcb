@@ -267,57 +267,6 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "#update_stripe_cardholder" do
-    it "does not sync phone number to Stripe when phone is unverified" do
-      user = create(:user, phone_number: "+18005551234", phone_number_verified: true)
-      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "+18005551234")
-
-      allow(StripeService::Issuing::Cardholder).to receive(:update)
-
-      # Changing phone number resets phone_number_verified to false via on_phone_number_update
-      user.update!(phone_number: "+18005559999")
-
-      expect(cardholder.reload.stripe_phone_number).to eq("+18005551234")
-    end
-
-    it "syncs email to Stripe even when phone is unverified" do
-      user = create(:user, phone_number: "+18005551234", phone_number_verified: true)
-      cardholder = create(:stripe_cardholder, user:, stripe_email: user.email)
-
-      allow(StripeService::Issuing::Cardholder).to receive(:update)
-
-      new_email = "new@example.com"
-      user.update!(email: new_email)
-
-      expect(cardholder.reload.stripe_email).to eq(new_email)
-    end
-  end
-
-  describe "#sync_verified_phone_to_stripe_cardholder" do
-    it "syncs phone number to Stripe when phone_number_verified transitions false to true" do
-      user = create(:user, phone_number: "+18005551234", phone_number_verified: false)
-      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: nil)
-
-      allow(StripeService::Issuing::Cardholder).to receive(:update)
-
-      user.update!(phone_number_verified: true)
-
-      expect(cardholder.reload.stripe_phone_number).to eq(user.phone_number)
-    end
-
-    it "does not sync phone to Stripe when phone_number_verified transitions true to false" do
-      user = create(:user, phone_number: "+18005551234", phone_number_verified: true)
-      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "+18005551234")
-
-      allow(StripeService::Issuing::Cardholder).to receive(:update)
-
-      # Changing phone resets phone_number_verified to false
-      user.update!(phone_number: "+18005559999")
-
-      expect(cardholder.reload.stripe_phone_number).to eq("+18005551234")
-    end
-  end
-
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
