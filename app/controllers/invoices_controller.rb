@@ -55,18 +55,12 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    if organizer_signed_in?
-      sort_direction = params[:direction].in?(%w[asc desc]) ? params[:direction] : "desc"
-      column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } ||
-                   INVOICE_COLUMNS.find { |c| c[:default] } ||
-                   INVOICE_COLUMNS.first
-      relation = relation.left_joins(column_def[:join]) if column_def[:join]
-      relation = relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
-    else
-      relation = relation.order(created_at: :desc)
-    end
-
-    @invoices = relation.includes(:sponsor).page(params[:page]).per(25)
+    @invoices = helpers.sorted_relation(
+      relation,
+      INVOICE_COLUMNS,
+      sort: [params[:sort], params[:direction]],
+      default: [:created_at, :desc]
+    ).includes(:sponsor).page(params[:page]).per(25)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
