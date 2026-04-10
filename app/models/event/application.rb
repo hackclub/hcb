@@ -293,7 +293,7 @@ class Event
       end
 
       missing_fields = required_fields.any? do |field|
-        self[field].nil?
+        !self[field].present?
       end
 
       !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
