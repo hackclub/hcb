@@ -14,10 +14,6 @@ class ChangeCursorToString < ActiveRecord::Migration[7.0]
   end
 
   def down
-    safety_assured do
-      change_table(:maintenance_tasks_runs) do |t|
-        t.change(:cursor, :bigint)
-      end
-    end
+    change_column :maintenance_tasks_runs, :cursor, :bigint, using: 'cursor::bigint'
   end
 end
