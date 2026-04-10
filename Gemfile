@@ -235,3 +235,5 @@ gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
 gem "intercom-rails"
+
+gem "maintenance_tasks", "~> 2.14"
