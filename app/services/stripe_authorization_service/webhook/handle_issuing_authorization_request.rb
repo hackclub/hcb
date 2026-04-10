@@ -111,7 +111,7 @@ module StripeAuthorizationService
       def forbidden_merchant?
         StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) ||
           StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
-      endzz
+      end
 
       def merchant_allowed?
         disallowed_categories = card&.card_grant&.disallowed_categories
