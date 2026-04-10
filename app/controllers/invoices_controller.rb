@@ -55,7 +55,18 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc).includes(:sponsor).page(params[:page]).per(25)
+    if organizer_signed_in?
+      sort_direction = params[:direction].in?(%w[asc desc]) ? params[:direction] : "desc"
+      column_def = INVOICE_COLUMNS.find { |c| c[:key] == params[:sort] } ||
+                   INVOICE_COLUMNS.find { |c| c[:default] } ||
+                   INVOICE_COLUMNS.first
+      relation = relation.left_joins(column_def[:join]) if column_def[:join]
+      relation = relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    else
+      relation = relation.order(created_at: :desc)
+    end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(25)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -63,6 +74,8 @@ class InvoicesController < ApplicationController
     @filter_options = filter_options
     helpers.validate_filter_options(@filter_options, params)
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
@@ -212,6 +225,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status", column: "aasm_state" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "item_amount", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
 
   def filtered_params
     params.require(:invoice).permit(
