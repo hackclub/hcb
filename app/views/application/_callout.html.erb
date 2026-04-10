@@ -11,8 +11,11 @@
   </div>
 
   <% unless (block = yield).empty? %>
-    <div class="m0 mt1 flex-grow overflow-y-scroll scroll-fade p-4 pt-0 <%= "pb-0" if local_assigns[:footer].present? %>">
+    <div class="m0 mt1 flex-grow overflow-y-auto scroll-fade p-4 pt-0 <%= "pb-0" if local_assigns[:footer].present? %>">
       <%= block %>
+      <% if local_assigns[:footer].present? %>
+        <div class="h-4 w-full"></div>
+      <% end %>
     </div>
   <% end %>
 
