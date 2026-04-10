@@ -36,14 +36,19 @@
     </tr>
   </thead>
   <tbody>
+    <% events_by_id = Event.with_deleted.where(id: @account_numbers.map(&:event_id)).index_by(&:id) %>
     <% @account_numbers.each do |an| %>
       <tr>
         <td><%= an.id %></td>
         <td>
-          <%= link_to event_path(an.event) do %>
-            <%= an.event.name.upcase %>
+          <% event = events_by_id[an.event_id] %>
+          <%= link_to event_path(event) do %>
+            <%= event.name.upcase %>
           <% end %>
-          (#<%= an.event.id %>)
+          (#<%= event.id %>)
+          <% if event.deleted? %>
+            <em>(deleted)</em>
+          <% end %>
         </td>
         <td><%= an.account_number %></td>
         <td><%= an.routing_number %></td>
