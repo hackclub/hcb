@@ -413,7 +413,7 @@ class Event
         required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
 
         if committed_amount&.positive?
-           required_fields.push("funding_source")
+          required_fields.push("funding_source")
         end
       end
 
