@@ -82,7 +82,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     end
 
     context "when user is admin" do
-      let(:user) { create(:user, admin: true) }
+      let(:user) { create(:user, :make_admin) }
       let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
       let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:) }
 
