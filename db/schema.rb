@@ -795,7 +795,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_06_221352) do
   end
 
   create_table "donations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.integer "amount_received"
     t.boolean "anonymous", default: false, null: false
