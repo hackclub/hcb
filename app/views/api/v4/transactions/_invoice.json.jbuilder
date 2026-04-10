@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-json.id invoice.public_id
+json_object(json, invoice)
 json.amount_cents invoice.item_amount
 json.sent_at invoice.created_at
 json.paid_at invoice.paid_at

@@ -1,4 +1,6 @@
-json.id card_grant.public_id
+# frozen_string_literal: true
+
+json_object(json, card_grant)
 json.user card_grant.user, partial: "api/v4/users/user", as: :user if expand?(:user)
 json.organization card_grant.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
 json.call(

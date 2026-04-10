@@ -619,58 +619,10 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
-    @ach_transfers = @event.ach_transfers
-    @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires
-    @wise_transfers = @event.wise_transfers
-    @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks
-    @disbursements = @event.outgoing_disbursements.includes(:destination_event)
+    query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q], stats: true).run
 
-    @disbursements = @disbursements.not_card_grant_related
-
-    @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
-    }
-
-    @ach_transfers = @ach_transfers.in_transit if params[:filter] == "in_transit"
-    @ach_transfers = @ach_transfers.deposited if params[:filter] == "deposited"
-    @ach_transfers = @ach_transfers.rejected if params[:filter] == "canceled"
-    @ach_transfers = @ach_transfers.search_recipient(params[:q]) if params[:q].present?
-
-    @checks = @checks.in_transit_or_in_transit_and_processed if params[:filter] == "in_transit"
-    @checks = @checks.deposited if params[:filter] == "deposited"
-    @checks = @checks.canceled if params[:filter] == "canceled"
-    @checks = @checks.search_recipient(params[:q]) if params[:q].present?
-
-    @increase_checks = @increase_checks.in_transit if params[:filter] == "in_transit"
-    @increase_checks = @increase_checks.deposited if params[:filter] == "deposited"
-    @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
-    @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
-
-    @disbursements = @disbursements.reviewing_or_processing if params[:filter] == "in_transit"
-    @disbursements = @disbursements.fulfilled if params[:filter] == "deposited"
-    @disbursements = @disbursements.rejected if params[:filter] == "canceled"
-    @disbursements = @disbursements.search_name(params[:q]) if params[:q].present?
-
-    @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:filter] == "in_transit"
-    @paypal_transfers = @paypal_transfers.deposited if params[:filter] == "deposited"
-    @paypal_transfers = @paypal_transfers.rejected if params[:filter] == "canceled"
-    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
-
-    @wires = @wires.approved.or(@wires.pending) if params[:filter] == "in_transit"
-    @wires = @wires.deposited if params[:filter] == "deposited"
-    @wires = @wires.rejected if params[:filter] == "canceled"
-    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
-
-    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:filter] == "in_transit"
-    @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
-    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
-    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
-
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @stats = query.stats
+    @transfers = Kaminari.paginate_array(query.transfers).page(params[:page]).per(100)
   end
 
   def new_transfer

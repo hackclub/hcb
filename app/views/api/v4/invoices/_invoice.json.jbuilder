@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-json.id invoice.public_id
+json_object(json, invoice)
 json.status invoice.state_text
-json.created_at invoice.created_at
 json.to invoice.sponsor.name
 json.amount_due invoice.amount_due
 if policy(invoice).show_in_v4?

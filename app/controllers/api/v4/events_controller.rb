@@ -72,6 +72,16 @@ module Api
 
       require_oauth2_scope "organizations:read", :balance_by_date
 
+      def transfers
+        authorize @event, :show_in_v4?
+
+        query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q], stats: @expand.include?(:stats)).run
+        all_transfers = query.transfers
+
+        @stats = query.stats
+        @transfers = paginate(all_transfers, &:public_id)
+      end
+
       private
 
       def set_event

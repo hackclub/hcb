@@ -41,6 +41,7 @@ RSpec.describe Api::V4::CardGrantsController do
       recipient = card_grant.user
 
       serialized_event = {
+        "object"                            => "event",
         "id"                                => event.public_id,
         "parent_id"                         => nil,
         "name"                              => "Test Event",
@@ -59,7 +60,9 @@ RSpec.describe Api::V4::CardGrantsController do
 
       expect(response.parsed_body).to eq(
         {
+          "object"                     => "card_grant",
           "id"                         => card_grant.public_id,
+          "created_at"                 => card_grant.created_at.iso8601(3),
           "amount_cents"               => 123_45,
           "card_id"                    => nil,
           "one_time_use"               => true,
@@ -75,7 +78,9 @@ RSpec.describe Api::V4::CardGrantsController do
           "expires_on"                 => card_grant.expiration_at.iso8601,
           "disbursements"              => [
             {
+              "object"                  => "disbursement",
               "id"                      => disbursement.public_id,
+              "created_at"              => disbursement.created_at.iso8601(3),
               "memo"                    => "Grant to recipient",
               "status"                  => "completed",
               "transaction_id"          => disbursement.local_hcb_code.public_id,
@@ -86,23 +91,27 @@ RSpec.describe Api::V4::CardGrantsController do
               "from"                    => serialized_event,
               "to"                      => serialized_event,
               "sender"                  => {
-                "id"       => user.public_id,
-                "name"     => "Orpheus D",
-                "email"    => "orpheus@hackclub.com",
-                "admin"    => false,
-                "auditor"  => false,
-                "avatar"   => "https://gravatar.com/avatar/stubbed",
-                "birthday" => nil,
+                "object"     => "user",
+                "id"         => user.public_id,
+                "created_at" => user.created_at.iso8601(3),
+                "name"       => "Orpheus D",
+                "email"      => "orpheus@hackclub.com",
+                "admin"      => false,
+                "auditor"    => false,
+                "avatar"     => "https://gravatar.com/avatar/stubbed",
+                "birthday"   => nil,
               },
             }
           ],
           "organization"               => serialized_event,
           "user"                       => {
-            "id"      => recipient.public_id,
-            "name"    => "recipient",
-            "admin"   => false,
-            "auditor" => false,
-            "avatar"  => "https://gravatar.com/avatar/stubbed",
+            "object"     => "user",
+            "id"         => recipient.public_id,
+            "created_at" => recipient.created_at.iso8601(3),
+            "name"       => "recipient",
+            "admin"      => false,
+            "auditor"    => false,
+            "avatar"     => "https://gravatar.com/avatar/stubbed",
           },
         }
       )
