@@ -255,6 +255,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def request_call?
+    signee?
+  end
+
   private
 
   def admin_or_member?
@@ -287,6 +291,10 @@ class EventPolicy < ApplicationPolicy
 
   def manager?
     OrganizerPosition.role_at_least?(user, record, :manager)
+  end
+
+  def signee?
+    OrganizerPosition.find_by(event: record, user:).is_signee
   end
 
   def admin_or_manager?

@@ -50,6 +50,14 @@ class EventMailer < ApplicationMailer
     mail(to: @emails, subject: "#{@event.name} has a negative balance")
   end
 
+  def call_requested
+    @user = params[:user]
+
+    mail to: @event.point_of_contact.email_address_with_name,
+         subject: "#{@user.name} from #{@event.name} requested an onboarding call",
+         reply_to: @user.email_address_with_name
+  end
+
   def transparency_mode_enabled
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end

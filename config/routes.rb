@@ -1041,6 +1041,7 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      post "request_call"
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end

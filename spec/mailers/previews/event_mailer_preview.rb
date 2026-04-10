@@ -22,6 +22,10 @@ class EventMailerPreview < ActionMailer::Preview
       .negative_balance
   end
 
+  def call_requested
+    EventMailer.with(event: Event.last, user: Event.last.users.first).call_requested
+  end
+
   def transparency_mode_enabled
     EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_enabled
   end
