@@ -4,11 +4,7 @@ class ApplicationController < ActionController::Base
   # set Current.session - this should come first as
   # a large portion of the code below this depends on this
   before_action do
-    Current.session = begin
-      # Find a valid session (not expired) using the session token
-      session_token = cookies.encrypted[:session_token]
-      session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
-    end
+    Current.session = find_current_session
   end
 
   include Pundit::Authorization
@@ -20,8 +16,7 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  before_action :attach_error_reference
-  before_action :attach_user_id
+  before_action :attach_appsignal_tags
 
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
@@ -139,14 +134,18 @@ class ApplicationController < ActionController::Base
     flash[:confetti_emojis] = emojis.join(",") if emojis
   end
 
-  def attach_error_reference
-    error_reference = ErrorReference.from_request_id(request.uuid)
-    Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
-  end
+  def attach_appsignal_tags
+    return unless defined?(Appsignal) && Appsignal.active?
 
-  def attach_user_id
+    error_reference = ErrorReference.from_request_id(request.uuid)
     user_id = current_user&.id
-    Appsignal.add_tags(user_id:) if defined?(Appsignal) && Appsignal.active?
+    session_id = Current.session&.id
+    ip_address = request.remote_ip
+    user_agent = request.user_agent
+    referrer = request.referrer
+
+    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:)
+    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:)
   end
 
 end

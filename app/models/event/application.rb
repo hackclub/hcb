@@ -37,6 +37,7 @@
 #  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
+#  videos_watched               :boolean          default(FALSE)
 #  website_url                  :string
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -64,9 +65,10 @@ class Event
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
@@ -118,10 +120,10 @@ class Event
       event :mark_submitted do
         transitions from: :draft, to: :submitted
         after do
-          update!(teen_led: user.is_teenager?)
+          update!(teen_led: user.is_teenager?, archived_at: nil)
 
           if teen_led?
-            create_contract
+            send_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
             mark_under_review!
@@ -137,10 +139,12 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: [:submitted, :under_review], to: :approved
+        transitions from: :under_review, to: :approved
         after do
-          unless teen_led?
-            create_contract unless contract.present?
+          if teen_led?
+            contract.party(:hcb).schedule_reminders
+          else
+            send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
         end
@@ -149,6 +153,8 @@ class Event
       event :mark_rejected do
         transitions from: [:submitted, :under_review], to: :rejected
         after do |rejection_message|
+          contract.mark_voided! if contract.present?
+
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
@@ -158,11 +164,13 @@ class Event
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
+
     def rejection_messages
       generic = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -173,7 +181,7 @@ class Event
       adult = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -184,7 +192,7 @@ class Event
       mission = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -192,10 +200,22 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:
       }
     end
 
@@ -203,8 +223,8 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
-      return "Sign the fiscal sponsorship agreement" if submitted?
-      return "Start spending!" if approved?
+      return "Sign the fiscal sponsorship agreement" if (submitted? && teen_led?) || (approved? && !teen_led?)
+      return "Start spending!" if event.present?
       return "" if rejected?
     end
 
@@ -212,7 +232,7 @@ class Event
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted? || under_review?
+      return 100 if submitted? || under_review? || approved?
 
       0
     end
@@ -233,7 +253,7 @@ class Event
       !teen_led?
     end
 
-    def create_contract
+    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -249,8 +269,8 @@ class Event
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!
-      fs_contract.party(:cosigner)&.notify
+      fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
 
       fs_contract
     end
@@ -266,7 +286,7 @@ class Event
         self[field].nil?
       end
 
-      !missing_fields && !user.onboarding?
+      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
     end
 
     def response_time
@@ -291,7 +311,7 @@ class Event
     def check_cosigner_update
       if contract.present? && cosigner_email_previously_changed?
         contract.mark_voided!
-        create_contract
+        send_contract
       end
     end
 
@@ -305,33 +325,39 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!(risk_level:, tags: [])
+    def activate_event!(risk_level:, tags: [], point_of_contact: nil)
       contract.party(:hcb).sync_with_docuseal
+      contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
 
-      poc = contract.party(:hcb).user
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
 
-      Event.create!(
-        name:,
-        country: address_country,
-        point_of_contact_id: poc.id,
-        application: self,
-        event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
-        risk_level:
-      )
-      contract.create_document!
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
+        Event.create!(
+          name:,
+          country: address_country,
+          point_of_contact_id: poc_user.id,
+          application: self,
+          event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+          risk_level:
+        )
+        contract.create_document!
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
-      invite = service.model
-      service.run!
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        invite = service.model
+        service.run!
 
-      invite.accept(application_contract: contract)
+        invite.accept(application_contract: contract)
 
-      affiliations.each do |affiliation|
-        affiliation_copy = affiliation.dup
-        affiliation_copy.affiliable = event
-        affiliation_copy.save!
+        affiliations.each do |affiliation|
+          affiliation_copy = affiliation.dup
+          affiliation_copy.affiliable = event
+          affiliation_copy.save!
+        end
       end
+
+      schedule_airtable_sync
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
@@ -339,7 +365,15 @@ class Event
     end
 
     def archive!
+      contract&.mark_voided! if contract&.may_mark_voided?
+
       update!(archived_at: Time.current)
+    end
+
+    def unarchive!
+      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+
+      update!(archived_at: nil)
     end
 
     def archived?

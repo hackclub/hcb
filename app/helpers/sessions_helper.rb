@@ -116,8 +116,19 @@ module SessionsHelper
     @current_user ||= current_session&.user
   end
 
+  def blazer_current_user
+    @blazer_current_user ||= find_current_session&.user
+  end
+
   def current_session
     Current.session
+  end
+
+  # Find a valid session (not expired) using the session token
+  # Use current_session unless not running in a subclass of ApplicationController
+  def find_current_session
+    session_token = cookies.encrypted[:session_token]
+    session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
   end
 
   def signed_in_user
@@ -147,6 +158,7 @@ module SessionsHelper
     # Destroy all the sessions except the current session
     user
       &.user_sessions
+      &.not_expired
       &.where&.not(id: current_session.id)
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end

@@ -5,6 +5,7 @@
 # Table name: announcement_blocks
 #
 #  id              :bigint           not null, primary key
+#  deleted_at      :datetime
 #  parameters      :jsonb
 #  type            :string           not null
 #  created_at      :datetime         not null
@@ -14,6 +15,7 @@
 # Indexes
 #
 #  index_announcement_blocks_on_announcement_id  (announcement_id)
+#  index_announcement_blocks_on_deleted_at       (deleted_at)
 #
 # Foreign Keys
 #
@@ -22,6 +24,8 @@
 class Announcement
   class Block < ApplicationRecord
     self.ignored_columns += ["rendered_html", "rendered_email_html"]
+
+    acts_as_paranoid
 
     belongs_to :announcement
     has_one :event, through: :announcement

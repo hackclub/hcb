@@ -26,10 +26,11 @@
 class HcbCode < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :txn
-
-  include Hashid::Rails
 
   include Commentable
   include Receiptable
@@ -121,6 +122,7 @@ class HcbCode < ApplicationRecord
     return :card_grant if card_grant?
     return :disbursement if outgoing_disbursement? || incoming_disbursement?
     return :card_charge if stripe_card?
+    return :card_force_capture if stripe_force_capture?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
@@ -305,6 +307,10 @@ class HcbCode < ApplicationRecord
 
   def stripe_auth_dashboard_url
     pt.try(:stripe_auth_dashboard_url) || ct.try(:stripe_auth_dashboard_url)
+  end
+
+  def stripe_txn_dashboard_url
+    pt.try(:stripe_txn_dashboard_url) || ct.try(:stripe_txn_dashboard_url)
   end
 
   def raw_emburse_transaction
@@ -565,6 +571,7 @@ class HcbCode < ApplicationRecord
   # HCB-350: PayPal Transfers
   # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
+  # HCB-601: Stripe force captures (always required)
   # @sampoder
 
   # receipt_required (the scope) diverges from receipt_required?
@@ -579,6 +586,7 @@ class HcbCode < ApplicationRecord
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-601%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
@@ -600,7 +608,7 @@ class HcbCode < ApplicationRecord
     # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
     return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
 
-    return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
+    return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
     # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
     false
@@ -715,6 +723,11 @@ class HcbCode < ApplicationRecord
 
   def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
     update(event_id: event&.id, subledger_id: subledger&.id)
+  end
+
+  def update_custom_memo!(memo)
+    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end
 
 end

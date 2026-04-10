@@ -3,6 +3,7 @@
 class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
+    before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -12,7 +13,9 @@ class Event
 
     def index
       skip_authorization
+
       @applications = current_user.applications.active
+      @referral_code = params[:ref]
     end
 
     def apply
@@ -21,14 +24,16 @@ class Event
       if signed_in? && current_user.applications.draft.one?
         redirect_to application_path(current_user.applications.draft.first)
       elsif signed_in? && current_user.applications.any?
-        redirect_to applications_path
+        redirect_to applications_path(ref: params[:ref])
       else
-        redirect_to new_application_path
+        redirect_to new_application_path(ref: params[:ref])
       end
     end
 
     def new
       skip_authorization
+
+      @referral_code = params[:ref]
     end
 
     def show
@@ -69,7 +74,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
@@ -106,6 +111,7 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
+        party.update!(user: current_user)
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -124,7 +130,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level])
+      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
@@ -135,10 +141,10 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
+        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -152,11 +158,28 @@ class Event
       authorize @application
     end
 
+    def videos
+      authorize @application
+    end
+
     def agreement
       authorize @application
 
+      unless @application.videos_watched
+        redirect_to videos_application_path(@application)
+        return
+      end
+
       @contract = @application.contract
       @party = @contract.party :signee
+    end
+
+    def mark_videos_watched
+      authorize @application
+
+      @application.update!(videos_watched: true)
+
+      redirect_to agreement_application_path(@application)
     end
 
     def review
@@ -175,21 +198,11 @@ class Event
       @application.save!
 
       if user_params.present?
-        success = current_user.update(user_params)
+        success = @application.user.update(user_params)
         if params[:autosave] != "true" && !success
-          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: current_user })
+          render turbo_stream: turbo_stream.replace(:user_errors, partial: "event/applications/error", locals: { user: @application.user })
           return
         end
-      end
-
-      if application_params[:cosigner_email].present? && @application.contract.present?
-        # The case where the cosigner email changed is handled by an after_save callback
-        unless @application.cosigner_email_previously_changed?
-          @application.contract.party(:cosigner).notify
-        end
-
-        flash[:success] = "Resent agreement to parent"
-        return redirect_back_or_to application_path(@application)
       end
 
       if params[:autosave] != "true"
@@ -226,6 +239,28 @@ class Event
       redirect_to applications_path
     end
 
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
+    end
+
+    def resend_to_cosigner
+      authorize @application
+
+      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+      # If the user resends to the same email, the after_save callback does not handle this
+      unless @application.cosigner_email_previously_changed?
+        @application.contract.party(:cosigner).notify
+      end
+
+      flash[:success] = "Resent agreement to parent"
+      redirect_back_or_to application_path(@application)
+    end
+
     private
 
     def set_application
@@ -243,6 +278,12 @@ class Event
     def record_pageview
       if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
+      end
+    end
+
+    def prevent_access_after_submission
+      unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
       end
     end
 

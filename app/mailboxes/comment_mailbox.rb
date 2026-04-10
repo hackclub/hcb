@@ -21,7 +21,7 @@ class CommentMailbox < ApplicationMailbox
     return bounce_missing_comment unless @comment && @commentable && ensure_permissions?
 
     comment = @commentable.comments.build({
-                                            content: EmailReplyParser.parse_reply(text || body),
+                                            content: EmailReplyParser.parse_reply(text || body).encode("utf-8", invalid: :replace, undef: :replace),
                                             file: @attachments&.first,
                                             admin_only: @comment.admin_only,
                                             user: @user
