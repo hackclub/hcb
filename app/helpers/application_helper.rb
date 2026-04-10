@@ -8,7 +8,7 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
-  def sorted_relation(relation, columns, sort:, default:, authorized: true)
+  def sorted_relation(relation, columns, sort:, default:)
     sort_key, sort_direction = organizer_signed_in? ? sort : default
     default_key, default_direction = default
 
