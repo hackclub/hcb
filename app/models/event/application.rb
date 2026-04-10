@@ -295,13 +295,13 @@ class Event
       unless teen_led?
         required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
 
-        if committed_ammount&.positive?
+        if committed_amount&.positive?
            required_fields.push("funding_source")
         end
       end
 
       missing_fields = required_fields.any? do |field|
-        !self[field].present?
+        self[field].nil? || self[field] == ""
       end
 
       !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
