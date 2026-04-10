@@ -41,14 +41,12 @@
         <td><%= an.id %></td>
         <td>
           <% event = an.event || Event.with_deleted.find_by(id: an.event_id) %>
-          <% if event %>
-            <%= link_to event_path(event) do %>
-              <%= event.name.upcase %>
-            <% end %>
-            (#<%= event.id %>)
-            <% if event.deleted? %>
-              <em>(deleted)</em>
-            <% end %>
+          <%= link_to event_path(event) do %>
+            <%= event.name.upcase %>
+          <% end %>
+          (#<%= event.id %>)
+          <% if event.deleted? %>
+            <em>(deleted)</em>
           <% end %>
         </td>
         <td><%= an.account_number %></td>
