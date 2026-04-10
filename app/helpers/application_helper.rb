@@ -20,7 +20,6 @@ module ApplicationHelper
     relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
   end
 
-
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 
