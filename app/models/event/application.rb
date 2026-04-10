@@ -118,15 +118,10 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted do
-          guard do
-            self.teen_led = user.is_teenager?
-            ready_to_submit?
-          end
-        end
+        transitions from: :draft, to: :submitted, if: :ready_to_submit?
 
         after do
-          update!(teen_led: user.is_teenager?, archived_at: nil)
+          update!(archived_at: nil)
 
           if teen_led?
             send_contract
