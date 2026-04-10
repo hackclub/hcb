@@ -2,7 +2,7 @@
 
 <%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card overflow-visible" do |form| %>
   <div class="flex flex-col sm:flex-row items-center mt-1 gap-2">
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-full sm:!max-w-[200px]" %>
     <div class="flex flex-col sm:flex-row shrink-0 gap-2 -mt-1 w-full sm:w-[unset]">
         <%= combobox_tag :user_id, user_search_admin_index_path, placeholder: "User", class: "!max-w-full !min-w-full sm:!min-w-56", value: @user&.to_combobox_display %>

@@ -2,7 +2,7 @@
 
 <%= form_with method: :get, class: "card" do |form| %>
   <div class="flex items-center gap-2">
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>

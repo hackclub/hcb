@@ -1,7 +1,7 @@
 <% title "Organizations" %>
 
 <%= form_with local: true, class: "card overflow-visible", url: events_admin_index_path, method: :get do |form| %>
-  <%= render "events/search", form: %>
+  <%= render "events/filters/search", form: %>
   <div class="block mt-2">
     <% export_button = capture do %>
       <button class="mt-2 mr-1 btn bg-info">Search</button>
