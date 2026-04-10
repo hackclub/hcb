@@ -282,6 +282,10 @@ class Event
     end
 
     def ready_to_submit?
+      application_ready_to_submit? && user_ready_to_submit?
+    end
+
+    def application_ready_to_submit?
       required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
 
       if user.is_minor?
@@ -300,7 +304,17 @@ class Event
         !self[field].present?
       end
 
-      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+    end
+
+    def user_ready_to_submit?
+      required_fields = ["full_name", "phone_number", "birthday"]
+
+      missing_fields = required_fields.any? do |field|
+        !user[field].present?
+      end
+
+      !missing_fields
     end
 
     def response_time
