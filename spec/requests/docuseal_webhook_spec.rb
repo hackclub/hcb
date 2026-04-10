@@ -21,34 +21,37 @@ RSpec.describe "Docuseal Webhook", type: :request do
 
   describe "POST /docuseal/webhook" do
     context "with a valid Docuseal secret" do
-      it "returns 200 with success" do
+      it "returns 200" do
         post "/docuseal/webhook",
              params: payload,
              headers: { "X-Docuseal-Secret" => webhook_secret }
 
         expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["success"]).to be true
       end
     end
 
     context "with an invalid Docuseal secret" do
-      it "returns 200 with failure" do
+      it "returns 401 and does not process the webhook" do
+        expect(DocusealController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(DocusealController).not_to receive(:webhook)
+
         post "/docuseal/webhook",
              params: payload,
              headers: { "X-Docuseal-Secret" => "wrong_secret" }
 
-        expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["success"]).to be false
+        expect(response).to have_http_status(:unauthorized)
       end
     end
 
     context "with no Docuseal secret" do
-      it "returns 200 with failure" do
+      it "returns 401 and does not process the webhook" do
+        expect(DocusealController.method_defined?(:webhook)).to be(true)
+        expect_any_instance_of(DocusealController).not_to receive(:webhook)
+
         post "/docuseal/webhook",
              params: payload
 
-        expect(response).to have_http_status(:ok)
-        expect(response.parsed_body["success"]).to be false
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
