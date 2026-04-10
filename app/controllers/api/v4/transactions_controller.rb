@@ -94,7 +94,7 @@ module Api
                         cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code
                         index = transactions.index { |tx| tx.hcb_code == cursor_hcb_code }
                         return render json: { error: "Invalid cursor" }, status: :bad_request unless index
-      
+
                         index + 1
                       else
                         0
