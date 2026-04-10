@@ -54,7 +54,7 @@ class EventMailer < ApplicationMailer
     @user = params[:user]
 
     mail to: @event.point_of_contact.email_address_with_name,
-         subject: "#{@user.name} from #{@event.name} requested an onboarding call",
+         subject: "#{@user.name} from #{@event.name} #{"(PoC #{@event.point_of_contact.name})" if @event.point_of_contact.present?} requested an onboarding call",
          reply_to: @user.email_address_with_name
   end
 
