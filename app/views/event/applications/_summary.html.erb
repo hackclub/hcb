@@ -41,6 +41,18 @@
         <p class="mb-0 whitespace-pre-wrap"><%= application.political_description %></p>
       <% end %>
     </div>
+    <div>
+      <p class="text-sm muted mb-1">Previously applied to HCB</p>
+      <p class="mb-0">
+        <% if @application.previously_applied == true %>
+          Yes
+        <% elsif @application.previously_applied == false %>
+          No
+        <% else %>
+          <%= missing %>
+        <% end %>
+      </p>
+    </div>
     <% unless application.teen_led? %>
       <div>
         <p class="text-sm muted mb-1">Planning duration</p>
@@ -66,18 +78,6 @@
           <p class="mb-0 whitespace-pre-wrap"><%= application.funding_source.present? ? application.funding_source : missing %></p>
         </div>
       <% end %>
-      <div>
-        <p class="text-sm muted mb-1">Previously applied to HCB</p>
-        <p class="mb-0">
-          <% if @application.previously_applied == true %>
-            Yes
-          <% elsif @application.previously_applied == false %>
-            No
-          <% else %>
-            <%= missing %>
-          <% end %>
-        </p>
-      </div>
     <% end %>
     <div>
       <p class="text-sm muted mb-1">Affiliations</p>
