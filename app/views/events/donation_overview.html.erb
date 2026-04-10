@@ -17,7 +17,7 @@
       </div>
     <% end %>
     <% if @event.donation_page_available? %>
-      <%= render partial: "events/share_donation_page" %>
+      <%= render partial: "events/donations/share_page" %>
     <% end %>
   </h1>
 
@@ -108,7 +108,7 @@
 
   <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-      <%= render "events/search", form: %>
+      <%= render "events/filters/search", form: %>
     <% end %>
     <div class="filterbar">
       <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": !["refunded"].include?(params[:filter]), role: "tab" %>
@@ -210,7 +210,7 @@
     <% end %>
     <div class="flex flex-row-reverse gap-2 justify-end">
       <%= pop_icon_to "settings", edit_event_path(@event, tab: "donations") %>
-      <%= render partial: "events/share_donation_page", is_blankslate: true %>
+      <%= render partial: "events/donations/share_page", is_blankslate: true %>
     </div>
   <% end %>
 <% end %>

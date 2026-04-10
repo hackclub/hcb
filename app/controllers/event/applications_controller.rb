@@ -174,6 +174,14 @@ class Event
       @party = @contract.party :signee
     end
 
+    def mark_videos_watched
+      authorize @application
+
+      @application.update!(videos_watched: true)
+
+      redirect_to agreement_application_path(@application)
+    end
+
     def review
       authorize @application
     end
@@ -260,7 +268,7 @@ class Event
     end
 
     def application_params
-      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :accessibility_notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size, :funding_source, :previously_applied, :videos_watched)
+      params.require(:event_application).permit(:name, :description, :political_description, :website_url, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :referrer, :referral_code, :accessibility_notes, :cosigner_email, :teen_led, :annual_budget, :committed_amount, :planning_duration, :team_size, :funding_source, :previously_applied)
     end
 
     def user_params
