@@ -1,51 +1,51 @@
 <%# donation %>
 <% if @hcb_code.donation? && @hcb_code.donation.present? %>
-  <%= render partial: "hcb_codes/donation", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/donation", locals: {} %>
 <% end %>
 
 <%# invoice %>
 <% if @hcb_code.invoice? && @hcb_code.invoice.present? %>
-  <%= render partial: "hcb_codes/invoice", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/invoice", locals: {} %>
 <% end %>
 
 <%# ach_transfer %>
 <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
-  <%= render partial: "hcb_codes/ach_transfer", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/ach_transfer", locals: {} %>
 <% end %>
 
 <%# check %>
 <% if @hcb_code.check? && @hcb_code.check.present? %>
-  <%= render partial: "hcb_codes/check", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/check", locals: {} %>
 <% end %>
 
 <%# check %>
 <% if @hcb_code.increase_check? && @hcb_code.increase_check.present? %>
-  <%= render partial: "hcb_codes/increase_check", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/increase_check", locals: {} %>
 <% end %>
 
 <%# check deposit %>
 <% if @hcb_code.check_deposit? && @hcb_code.check_deposit.present? %>
-  <%= render partial: "hcb_codes/check_deposit", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/check_deposit", locals: {} %>
 <% end %>
 
 <%# stripe card %>
 <% if (@hcb_code.stripe_card? || @hcb_code.stripe_force_capture?) && @hcb_code.stripe_card.present? %>
-  <%= render partial: "hcb_codes/stripe_card", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/stripe_card", locals: {} %>
 <% end %>
 
 <%# outgoing disbursement %>
 <% if @hcb_code.outgoing_disbursement? && @hcb_code.outgoing_disbursement.present? %>
-  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.outgoing_disbursement } %>
+  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: @hcb_code.outgoing_disbursement } %>
 <% end %>
 
 <%# incoming disbursement %>
 <% if @hcb_code.incoming_disbursement? && @hcb_code.incoming_disbursement.present? %>
-  <%= render partial: "hcb_codes/disbursement", locals: { disbursement: @hcb_code.incoming_disbursement } %>
+  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: @hcb_code.incoming_disbursement } %>
 <% end %>
 
 <%# bank fee %>
 <% if @hcb_code.bank_fee? && @hcb_code.bank_fee.present? %>
-  <%= render partial: "hcb_codes/bank_fee", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/bank_fee", locals: {} %>
 <% end %>
 
 <%# expense payout %>
@@ -60,25 +60,25 @@
 
 <%# fee revenue %>
 <% if @hcb_code.fee_revenue? && @hcb_code.fee_revenue.present? %>
-  <%= render partial: "hcb_codes/fee_revenue", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/fee_revenue", locals: {} %>
 <% end %>
 
 <%# paypal transfer %>
 <% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
-  <%= render "hcb_codes/paypal_transfer" %>
+  <%= render "hcb_codes/transaction_types/paypal_transfer" %>
 <% end %>
 
 <%# wire %>
 <% if @hcb_code.wire? && @hcb_code.wire.present? %>
-  <%= render "hcb_codes/wire" %>
+  <%= render "hcb_codes/transaction_types/wire" %>
 <% end %>
 
 <%# wise_transfer %>
 <% if @hcb_code.wise_transfer? && @hcb_code.wise_transfer.present? %>
-  <%= render "hcb_codes/wise_transfer" %>
+  <%= render "hcb_codes/transaction_types/wise_transfer" %>
 <% end %>
 
 <%# unknown (most likely a direct to bank account transaction) %>
 <% if @hcb_code.unknown? || @hcb_code.outgoing_fee_reimbursement? %>
-  <%= render partial: "hcb_codes/unknown", locals: {} %>
+  <%= render partial: "hcb_codes/transaction_types/unknown", locals: {} %>
 <% end %>
