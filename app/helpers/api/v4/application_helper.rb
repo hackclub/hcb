@@ -63,7 +63,7 @@ module Api
       def shares_org_with?(user)
         return false if current_user.nil? || user.nil?
 
-        @current_user_event_ids ||= OrganizerPosition.where(user: current_user).pluck(:event_id)
+        @current_user_event_ids ||= current_user.readable_events.pluck(:id)
         return false if @current_user_event_ids.empty?
 
         OrganizerPosition.where(user:, event_id: @current_user_event_ids).exists?
