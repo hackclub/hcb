@@ -276,7 +276,7 @@ class Event
     end
 
     def ready_to_submit?
-      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
 
       if user.is_minor?
         required_fields.push("cosigner_email")
