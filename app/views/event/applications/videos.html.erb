@@ -45,5 +45,5 @@
 
 <% content_for :footer do %>
   <a class="btn bg-muted" href="<%= application_path(@application) %>">← Back</a>
-  <%= button_to "Continue →", application_path(@application, return_to: agreement_application_path(@application)), class: "btn bg-blue", method: :patch, params: { event_application: { videos_watched: true } }, id: :continue_button, disabled: true %>
+  <%= button_to "Continue →", mark_videos_watched_application_path(@application), class: "btn bg-blue", method: :post, params: { event_application: { videos_watched: true } }, id: :continue_button, disabled: !@application.videos_watched %>
 <% end %>

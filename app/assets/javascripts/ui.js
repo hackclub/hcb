@@ -861,18 +861,26 @@ if (navigator.setAppBadge) {
 }
 
 function updateScrollFadeClasses(el) {
-  const isScrolledToBottom =
-    el.scrollHeight < el.clientHeight + el.scrollTop + 1
-  const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
-  el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
-  el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+  if (el.scrollHeight > el.clientHeight) {
+    const isScrolledToBottom =
+      el.scrollHeight < el.clientHeight + el.scrollTop + 1
+    const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
+    el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
+    el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+  }
 }
 
-document.querySelectorAll('.scroll-fade').forEach(scrollable => {
-  scrollable.addEventListener('scroll', e => {
-    const el = e.currentTarget
-    updateScrollFadeClasses(el)
-  })
+function attachScrollFadeListeners() {
+  document.querySelectorAll('.scroll-fade').forEach(scrollable => {
+    scrollable.addEventListener('scroll', e => {
+      const el = e.currentTarget
+      updateScrollFadeClasses(el)
+    })
 
-  updateScrollFadeClasses(scrollable)
-})
+    updateScrollFadeClasses(scrollable)
+  })
+}
+
+$(document).on('turbo:load', attachScrollFadeListeners)
+$(document).on('turbo:frame-load', attachScrollFadeListeners)
+$(document).on('turbo:after-stream-render', attachScrollFadeListeners)
