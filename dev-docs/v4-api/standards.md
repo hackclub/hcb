@@ -273,13 +273,13 @@ Errors follow a consistent shape:
 
 ### Standard Error Codes
 
-| Code                 | HTTP Status | Meaning                                        |
-|----------------------|-------------|------------------------------------------------|
-| `invalid_auth`       | `401`       | Missing or invalid API token.                  |
-| `not_authorized`     | `403`       | Token is valid but lacks permission.           |
-| `not_found`          | `404`       | Resource does not exist.                       |
-| `invalid_operation`  | `400`/`422` | Request is well-formed but violates a business rule. |
-| `validation_error`   | `422`       | One or more fields failed validation.          |
+| Code                 | HTTP Status | Meaning                                              |
+|----------------------|-------------|------------------------------------------------------|
+| `bad_request`        | `400`       | Request is well-formed but violates a business rule. |
+| `unauthorized`       | `401`       | Missing or invalid API token.                        |
+| `forbidden`          | `403`       | Token is valid but lacks permission.                 |
+| `not_found`          | `404`       | Resource does not exist.                             |
+| `validation_error`   | `422`       | One or more fields failed validation.                |
 
 For validation errors, they should ideally be automatically handled by the application level error handling concern which exposes validation error messages. 
 
