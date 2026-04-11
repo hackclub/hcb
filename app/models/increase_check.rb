@@ -325,6 +325,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def stop!
+    raise ArgumentError, "Stopping checks is not yet supported"
     raise ArgumentError, "Check must have a column id" if column_id.nil?
     raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
@@ -340,6 +341,8 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
+    raise ArgumentError, "Reissuing checks is not yet supported"
+
     stop! unless column_stopped? || column_pending_stop?
 
     reissued_check = event.increase_checks.build(
