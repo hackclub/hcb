@@ -107,7 +107,7 @@
       <% end %>
 
       <div class="avatar-row" style="max-width: 300px;">
-        <% User.where(id: [2501, 1803, 8507, 16174, 2046]).each do |user| %>
+        <% User.where(id: [2501, 1803, 8507, 16174, 2046]).find_each do |user| %>
           <%= avatar_for user, size: 30 %>
         <% end %>
       </div>

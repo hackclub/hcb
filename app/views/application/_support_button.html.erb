@@ -1,10 +1,10 @@
 
 <div data-controller="menu" data-menu-placement-value="top-end">
   <% routing = begin
-        Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-      rescue
-        {}
-      end %>
+       Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
+     rescue
+       {}
+     end %>
 
   <a
     type="button"

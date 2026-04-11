@@ -32,14 +32,14 @@ module UsersHelper
       }
     end
 
-      items << {
-        name: "Cards",
-        path: my_cards_path,
-        icon: "card",
-        tooltip: "See all your cards",
-        selected: selected == :cards,
-      }
-    
+    items << {
+      name: "Cards",
+      path: my_cards_path,
+      icon: "card",
+      tooltip: "See all your cards",
+      selected: selected == :cards,
+    }
+
 
     if current_user&.events&.any? || current_user&.cards&.any?
       items << {
