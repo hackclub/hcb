@@ -23,6 +23,10 @@
 
 <% months = (@start_date..@end_date).select { |date| date.day == 1 }.reverse %>
 
+<% admin_tool do %>
+  <%= link_to "Statement of Activity", event_statement_of_activity_path(@event), class: "btn" %>
+<% end %>
+
 <% if months.none? %>
   <%= blankslate "No financial statements yet" %>
 <% else %>

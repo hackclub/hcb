@@ -5,7 +5,7 @@
 # Table name: donations
 #
 #  id                                   :bigint           not null, primary key
-#  aasm_state                           :string
+#  aasm_state                           :string           not null
 #  amount                               :integer
 #  amount_received                      :integer
 #  anonymous                            :boolean          default(FALSE), not null

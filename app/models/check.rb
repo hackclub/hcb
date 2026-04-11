@@ -5,7 +5,7 @@
 # Table name: checks
 #
 #  id                     :bigint           not null, primary key
-#  aasm_state             :string
+#  aasm_state             :string           not null
 #  amount                 :integer
 #  approved_at            :datetime
 #  check_number           :integer
