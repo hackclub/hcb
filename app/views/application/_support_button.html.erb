@@ -6,12 +6,6 @@
         {}
       end %>
 
-  <% url_params = {
-        url: "#{request.base_url}#{request.original_fullpath}",
-        location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-        user_id: current_user&.id
-      } %>
-
   <a
     type="button"
     class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
