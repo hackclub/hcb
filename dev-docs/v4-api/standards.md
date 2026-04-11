@@ -13,6 +13,7 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Expanding Related Objects](#expanding-related-objects)
 - [Partials & Reuse](#partials--reuse)
 - [Error Responses](#error-responses)
+- [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
 
 ---
@@ -285,6 +286,26 @@ For validation errors, they should ideally be automatically handled by the appli
 
 ---
 
+## Admin Access
+
+By default, the API behaves as if admin users have "pretend not to be an admin" enabled. This applies even HCB staff with admin privileges will only see what a regular user sees. Admin capabilities are **never active by default**.
+
+To gain admin permissions via the API, the token must explicitly carry an admin scope:
+
+| Scope          | Description                                                          |
+|----------------|----------------------------------------------------------------------|
+| `admin:read`   | Grants read-only access to admin-level data (e.g. all organizations, internal fields). |
+| `admin:write`  | Grants the ability to perform write actions reserved for admins.     |
+
+`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed.
+
+### Implementation Notes
+
+- Always check for the admin scope explicitly. Do not fall back to checking if the authenticated user is an admin.
+- Endpoints that expose admin-only data or actions must document which scope they require.
+
+---
+
 ## Naming Conventions
 
 | Concept                  | Convention                                      | Example                          |
@@ -323,3 +344,4 @@ Before opening a PR that adds or modifies a V4 API endpoint, verify:
 - [ ] Error responses use the standard shape
 - [ ] Money is in `_cents` as integers
 - [ ] Endpoint is authorized via Pundit policy
+- [ ] Admin-only behavior requires an explicit `admin:read` or `admin:write` scope (never inferred from user role)
