@@ -103,14 +103,14 @@
   <div class="flex flex-row gap-4">
     <%= link_to "#", class: "btn" do %>
       <%= inline_icon "event-add" %>
-        Book a meeting
-      <% end %>
+      Book a meeting
+    <% end %>
 
-      <div class="avatar-row" style="max-width: 300px;">
-        <% User.where(id: [2501, 1803, 8507, 16174, 2046]).find_each do |user| %>
-          <%= avatar_for user, size: 30 %>
-        <% end %>
-      </div>
+    <div class="avatar-row" style="max-width: 300px;">
+      <% User.where(id: [2501, 1803, 8507, 16174, 2046]).find_each do |user| %>
+        <%= avatar_for user, size: 30 %>
+      <% end %>
+    </div>
   </div>
 </div>
 
