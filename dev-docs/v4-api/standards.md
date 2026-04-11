@@ -279,7 +279,6 @@ Errors follow a consistent shape:
 | `unauthorized`       | `401`       | Missing or invalid API token.                        |
 | `forbidden`          | `403`       | Token is valid but lacks permission.                 |
 | `not_found`          | `404`       | Resource does not exist.                             |
-| `validation_error`   | `422`       | One or more fields failed validation.                |
 
 For validation errors, they should ideally be automatically handled by the application level error handling concern which exposes validation error messages. 
 
