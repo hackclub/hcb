@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_06_230452) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_06_231006) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -941,7 +941,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_06_230452) do
   end
 
   create_table "employee_payments", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents", default: 0, null: false
     t.datetime "approved_at"
     t.datetime "created_at", null: false
@@ -1187,7 +1187,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_06_230452) do
   end
 
   create_table "fee_revenues", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.date "end"

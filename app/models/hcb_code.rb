@@ -586,7 +586,6 @@ class HcbCode < ApplicationRecord
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-601%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
