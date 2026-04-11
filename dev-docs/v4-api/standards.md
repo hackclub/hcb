@@ -176,6 +176,7 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
   ```json
   { "organization_id": "org_h1izp" }
   ```
+  - An exception to this would be object arrays as those can't be represented as an ID string
 - With `?expand=organization`, the full object replaces the ID field:
   ```json
   {
@@ -185,7 +186,7 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
       "name": "Hack Club HQ"
     }
   }
-  ```
+  ``` 
 
 ### Guidelines
 
