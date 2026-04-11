@@ -107,9 +107,6 @@ RSpec.describe IncreaseChecksController do
       new_check = check.reload.reissued_as
       expect(response).to redirect_to(hcb_code_path(new_check.local_hcb_code))
 
-      # Columns that legitimately differ between the original and reissued check.
-      # Any column NOT in this list must match — so if a new attribute is added to
-      # IncreaseCheck without being copied in reissue!, this test will catch it.
       columns_that_differ = %w[
         id created_at updated_at approved_at aasm_state reissued_for_id
         column_id column_status column_delivery_status column_object check_number
