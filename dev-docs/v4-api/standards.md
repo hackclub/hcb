@@ -164,7 +164,7 @@ GET /api/v4/organizations/org_h1izp/transactions?limit=10&after=txn_abc
 
 ## Expanding Related Objects
 
-To reduce payload size and unnecessary database work, related objects are **not** included by default. Developers opt in using the `expand` query parameter.
+To reduce payload size and unnecessary database work, related objects are **not** included by default. Developers opt in using the `expand` query parameter. The expand query parameter takes in the field name as the `key` not the type of the association.
 
 ```
 GET /api/v4/cards/crd_x9f3k?expand=user,organization
