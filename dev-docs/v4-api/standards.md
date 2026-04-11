@@ -31,17 +31,10 @@ Every top-level API object **must** include the following fields:
 
 Use the `json_object` helper to set these three fields consistently across all partials:
 
-```ruby
-def json_object(json, object)
-  json.id object.public_id
-  json.object object.model_name.element
-  json.created_at object.created_at
-end
-```
 
 This helper derives the `object` field automatically from the model's class name (e.g. an `AchTransfer` record produces `"ach_transfer"`), so you never need to hardcode it.
 
-Every canonical partial should begin with a call to `json_object`:
+Every object's partial should begin with a call to `json_object`:
 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
