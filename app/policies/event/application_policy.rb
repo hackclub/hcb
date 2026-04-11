@@ -55,6 +55,10 @@ class Event
     alias_method :agreement?, :show?
     alias_method :review?, :show?
 
+    def mark_videos_watched?
+      user.admin? || record.user == user
+    end
+
     def submission?
       (record.user == user && !record.draft?) || user.auditor?
     end

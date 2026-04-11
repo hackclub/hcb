@@ -3,7 +3,7 @@
 <% instance = @hcb_code.hashid %>
 
 <% admin_tool("mt1") do %>
-  <%= link_to "View on Stripe", @hcb_code.stripe_auth_dashboard_url, class: "btn bg-accent" %>
+  <%= link_to "View on Stripe", @hcb_code.stripe_card? ? @hcb_code.stripe_auth_dashboard_url : @hcb_code.stripe_txn_dashboard_url, class: "btn bg-accent" %>
   <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), method: :post, class: "btn bg-error" %>
 <% end %>
 
