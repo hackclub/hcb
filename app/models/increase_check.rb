@@ -351,6 +351,7 @@ class IncreaseCheck < ApplicationRecord
       address_line1:,
       address_line2:,
       address_city:,
+      address_state:,
       recipient_email:,
       send_email_notification:,
       address_zip:,
