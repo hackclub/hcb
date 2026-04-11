@@ -96,11 +96,11 @@ RSpec.describe IncreaseChecksController do
       allow(ColumnService).to receive(:post)
         .with("/transfers/checks/issue", anything)
         .and_return({
-          "id" => "col_new",
-          "check_number" => "1002",
-          "status" => "issued",
-          "delivery_status" => "created",
-        })
+                      "id"              => "col_new",
+                      "check_number"    => "1002",
+                      "status"          => "issued",
+                      "delivery_status" => "created",
+                    })
 
       post(:reissue, params: { id: check.id })
 
