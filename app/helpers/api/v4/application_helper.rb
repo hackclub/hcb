@@ -63,10 +63,10 @@ module Api
       def shares_org_with?(user)
         return false if current_user.nil? || user.nil?
 
-        @current_user_event_ids ||= current_user.readable_events.pluck(:id)
+        @current_user_event_ids ||= current_user.manageable_events.pluck(:id)
         return false if @current_user_event_ids.empty?
 
-        @current_user_event_ids.to_set.intersect?(user.readable_events.pluck(:id))
+        @current_user_event_ids.to_set.intersect?(user.organizer_positions.pluck(:event_id))
       end
 
       def expand_pii(override_if: false)
