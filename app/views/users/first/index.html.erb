@@ -1,7 +1,7 @@
 <% title "Home" %>
 <% page_md %>
 
-<%= render "users/nav", selected: :home %>
+<%= render "users/nav", selected: current_user&.redirect_to_first_dashboard? ? :home : :first %>
 
 <h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>
@@ -92,6 +92,25 @@
       See why 1,000 <em> FIRST </em> teams use HCB to raise money →
     <% end %>
     -->
+  </div>
+</div>
+
+<div class="card card--sunken flex flex-col items-center p-10 gap-5">
+  <h2 class="heading text-4xl my-0 !w-max">
+    Ready to get started?
+  </h2>
+  <p class="my-0">Our team is standing by to help your robotics team succeed.</p>
+  <div class="flex flex-row gap-4">
+    <%= link_to "#", class: "btn" do %>
+      <%= inline_icon "event-add" %>
+        Book a meeting
+      <% end %>
+
+      <div class="avatar-row" style="max-width: 300px;">
+        <% User.where(id: [2501, 1803, 8507, 16174, 2046]).each do |user| %>
+          <%= avatar_for user, size: 30 %>
+        <% end %>
+      </div>
   </div>
 </div>
 

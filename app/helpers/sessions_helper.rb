@@ -141,6 +141,16 @@ module SessionsHelper
     end
   end
 
+  def signed_in_or_unverified_user
+    unless signed_in? || Current.unverified_user.present?
+      if request.fullpath == "/"
+        redirect_to auth_users_path(require_reload: true, signup: params[:signup])
+      else
+        redirect_to auth_users_path(return_to: request.original_url, require_reload: true, signup: params[:signup])
+      end
+    end
+  end
+
   def signed_in_admin
     unless auditor_signed_in?
       redirect_to auth_users_path(require_reload: true), flash: { error: "You’ll need to sign in as an admin." }

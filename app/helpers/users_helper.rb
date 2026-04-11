@@ -12,51 +12,54 @@ module UsersHelper
       }
     ]
 
-    if signed_in?
-      items += [
-        (if current_user.followed_events.any?
-           {
-             name: "Feed",
-             path: my_feed_path,
-             tooltip: "See announcements for organizations you're following",
-             icon: "announcement",
-             selected: selected == :feed
-           }
-         end),
-        {
-          name: "Cards",
-          path: my_cards_path,
-          icon: "card",
-          tooltip: "See all your cards",
-          selected: selected == :cards,
-        },
-        {
-          name: "Receipts",
-          path: my_inbox_path,
-          icon: "receipt",
-          tooltip: "See transactions awaiting receipts",
-          selected: selected == :receipts,
-          async_badge: my_missing_receipts_icon_path,
-        },
-        {
-          name: "Reimbursements",
-          path: my_reimbursements_path,
-          icon: "reimbursement",
-          tooltip: "See expense reimbursements",
-          async_badge: my_reimbursements_icon_path,
-          selected: selected == :reimbursements
-        }
-      ]
-    end
-
-    unless current_user&.events&.any?
+    if current_user&.show_first_dashboard? && !current_user&.redirect_to_first_dashboard?
       items << {
-        name: "Apply for HCB",
-        path: apply_path,
+        name: "FIRST",
+        path: first_index_path,
+        tooltip: "Explore HCB for FIRST teams",
         icon: "resources",
-        tooltip: "Start an application for HCB"
+        selected: selected == :first
       }
     end
+
+    if current_user&.followed_events&.any?
+      items << {
+        name: "Feed",
+        path: my_feed_path,
+        tooltip: "See announcements for organizations you're following",
+        icon: "announcement",
+        selected: selected == :feed
+      }
+    end
+
+      items << {
+        name: "Cards",
+        path: my_cards_path,
+        icon: "card",
+        tooltip: "See all your cards",
+        selected: selected == :cards,
+      }
+    
+
+    if current_user&.events&.any? || current_user&.cards&.any?
+      items << {
+        name: "Receipts",
+        path: my_inbox_path,
+        icon: "receipt",
+        tooltip: "See transactions awaiting receipts",
+        selected: selected == :receipts,
+        async_badge: my_missing_receipts_icon_path,
+      }
+    end
+
+    items << {
+      name: "Reimbursements",
+      path: my_reimbursements_path,
+      icon: "reimbursement",
+      tooltip: "See expense reimbursements",
+      async_badge: (my_reimbursements_icon_path if signed_in?),
+      selected: selected == :reimbursements
+    }
 
     if current_user&.jobs&.any?
       items << {
@@ -65,6 +68,16 @@ module UsersHelper
         icon: "person-badge",
         tooltip: "Submit invoices & get paid",
         selected: selected == :payroll
+      }
+    end
+
+    unless signed_in?
+      items << {
+        name: "Verify your email",
+        path: auth_users_path(return_to: request.path),
+        icon: "email-exclamation",
+        tooltip: "Verify your email address",
+        selected: false
       }
     end
 

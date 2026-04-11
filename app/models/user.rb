@@ -623,6 +623,10 @@ class User < ApplicationRecord
     card_grants.none? && events.none? && affiliations.where(name: "first").exists?
   end
 
+  def redirect_to_first_dashboard?
+    show_first_dashboard? && true
+  end
+
   private
 
   def accessible_events(roles:)
