@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_11_143808) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2653,6 +2653,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
+    t.boolean "verified", default: false, null: false
     t.string "webauthn_id"
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
