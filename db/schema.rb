@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_06_231006) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -193,10 +193,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   create_table "announcement_blocks", force: :cascade do |t|
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.jsonb "parameters"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.index ["announcement_id"], name: "index_announcement_blocks_on_announcement_id"
+    t.index ["deleted_at"], name: "index_announcement_blocks_on_deleted_at"
   end
 
   create_table "announcements", force: :cascade do |t|
@@ -576,10 +578,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   create_table "comment_reactions", force: :cascade do |t|
     t.bigint "comment_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "emoji", null: false
     t.bigint "reactor_id", null: false
     t.datetime "updated_at", null: false
     t.index ["comment_id"], name: "index_comment_reactions_on_comment_id"
+    t.index ["deleted_at"], name: "index_comment_reactions_on_deleted_at"
     t.index ["emoji"], name: "index_comment_reactions_on_emoji"
     t.index ["reactor_id"], name: "index_comment_reactions_on_reactor_id"
   end
@@ -671,7 +675,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   end
 
   create_table "disbursements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
@@ -791,7 +795,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   end
 
   create_table "donations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.integer "amount_received"
     t.boolean "anonymous", default: false, null: false
@@ -937,7 +941,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   end
 
   create_table "employee_payments", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents", default: 0, null: false
     t.datetime "approved_at"
     t.datetime "created_at", null: false
@@ -955,7 +959,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   end
 
   create_table "employees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.bigint "entity_id", null: false
@@ -1014,6 +1018,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.boolean "videos_watched", default: false
     t.string "website_url"
     t.index ["event_id"], name: "index_event_applications_on_event_id"
     t.index ["user_id"], name: "index_event_applications_on_user_id"
@@ -1182,7 +1187,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
   end
 
   create_table "fee_revenues", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.date "end"
@@ -2628,6 +2633,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_29_192134) do
     t.string "full_name"
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
+    t.boolean "monthly_donation_summary", default: true
+    t.boolean "monthly_follower_summary", default: true
     t.bigint "payout_method_id"
     t.string "payout_method_type"
     t.text "phone_number"
