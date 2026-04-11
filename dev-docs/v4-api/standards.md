@@ -35,6 +35,16 @@ Use the `json_object` helper to set these three fields consistently across all p
 
 This helper derives the `object` field automatically from the model's class name (e.g. an `AchTransfer` record produces `"ach_transfer"`), so you never need to hardcode it.
 
+#### Object Name Overrides
+
+Some internal model names don't match their public API name. The helper consults a centralized override list before falling back to the class name:
+
+| Model   | API `object` value |
+|---------|--------------------|
+| `Event` | `"organization"`   |
+
+If you need to add a new override, update the override list in the `json_object` helper. **Do not** pass the name manually at the call site.
+
 Every object's partial should begin with a call to `json_object`:
 
 ```ruby
