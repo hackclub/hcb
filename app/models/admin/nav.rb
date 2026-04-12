@@ -316,7 +316,7 @@ module Admin
           make_item(
             name: "W9s",
             path: admin_w9s_path,
-            count: ->{ W9.all.count },
+            count: ->{ W9.count },
             count_type: :records
           )
         ]
