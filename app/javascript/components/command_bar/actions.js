@@ -588,7 +588,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="leaders" size={16} />,
       perform: navigate('/admin/users'),
     },
-    // TODO: card designs
+    {
+      id: 'admin-card-designs',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Card designs',
+      icon: <Icon glyph="card" size={16} />,
+      perform: navigate('/admin/stripe_card_personalization_designs'),
+    },
     // TODO: emails
     // TODO: unknown merchants
     {
