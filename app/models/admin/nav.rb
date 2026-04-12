@@ -249,6 +249,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "OPDRs",
+            path: organizer_position_deletion_requests_path,
+            count: ->{ OrganizerPositionDeletionRequest.under_review.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Google Workspace Requests",
             path: google_workspaces_admin_index_path,
             count: ->{ GSuite.needs_ops_review.count }

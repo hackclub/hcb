@@ -507,6 +507,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/events'),
     },
     {
+      id: 'admin-opdrs',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'OPDRs',
+      icon: <Icon glyph="member-remove" size={16} />,
+      perform: navigate('/organizer_position_deletion_requests'),
+    },
+    {
       id: 'admin-gsuite',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -692,14 +700,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Organization balances',
       icon: <Icon glyph="payment" size={16} />,
       perform: navigate('/admin/balances'),
-    },
-    {
-      id: 'admin-opdrs',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'OPDRs',
-      icon: <Icon glyph="member-remove" size={16} />,
-      perform: navigate('/organizer_position_deletion_requests'),
     },
     {
       id: 'admin-check-deposits',
