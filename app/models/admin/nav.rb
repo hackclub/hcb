@@ -266,7 +266,7 @@ module Admin
             count_type: :records
           ),
           make_item(
-            name: "Google Workspace Requests",
+            name: "Google Workspaces",
             path: google_workspaces_admin_index_path,
             count: ->{ GSuite.needs_ops_review.count }
           ),
