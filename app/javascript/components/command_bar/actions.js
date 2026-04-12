@@ -449,6 +449,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/hcb_codes'),
     },
     {
+      id: 'admin-unknown-merchants',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Unknown merchants',
+      icon: <Icon glyph="search" size={16} />,
+      perform: navigate('/admin/unknown_merchants'),
+    },
+    {
       id: 'admin-audits',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -635,14 +643,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Emails',
       icon: <Icon glyph="email" size={16} />,
       perform: navigate('/admin/emails'),
-    },
-    {
-      id: 'admin-unknown-merchants',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Unknown merchants',
-      icon: <Icon glyph="search" size={16} />,
-      perform: navigate('/admin/unknown_merchants'),
     },
     {
       id: 'admin-referral-programs',

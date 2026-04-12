@@ -206,6 +206,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "Unknown Merchants",
+            path: unknown_merchants_admin_index_path,
+            count: ->{ Rails.cache.fetch("admin_unknown_merchants")&.length || 0 },
+            count_type: :records
+          ),
+          make_item(
             name: "Audits",
             path: admin_ledger_audits_path,
             count: ->{ Admin::LedgerAudit.pending.count },
@@ -373,12 +379,6 @@ module Admin
             name: "Emails",
             path: emails_admin_index_path,
             count: ->{ Ahoy::Message.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Unknown Merchants",
-            path: unknown_merchants_admin_index_path,
-            count: ->{ Rails.cache.fetch("admin_unknown_merchants")&.length || 0 },
             count_type: :records
           ),
           make_item(
