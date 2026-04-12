@@ -354,45 +354,40 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
     },
     {
-      id: 'admin-applications-airtable',
+      id: 'admin-ach-transfers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications (Airtable)',
-      icon: <Icon glyph="align-left" size={16} />,
-      perform: () => (window.location.href = adminUrls['Applications']),
+      name: 'ACH transfers',
+      icon: <Icon glyph="payment-transfer" size={16} />,
+      perform: () => (window.location.href = '/admin/ach'),
     },
     {
-      id: 'admin-applications-hcb',
+      id: 'admin-checks',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Applications (HCB)',
-      icon: <Icon glyph="post" size={16} />,
-      perform: navigate('/admin/applications'),
+      name: 'Checks',
+      icon: <Icon glyph="payment-docs" size={16} />,
+      perform: () => (window.location.href = '/admin/increase_checks'),
     },
     {
-      id: 'admin-contracts',
+      id: 'admin-disbursements',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Contracts',
-      icon: <Icon glyph="docs" size={16} />,
-      perform: navigate('/admin/contracts'),
+      name: 'Disbursements',
+      icon: <Icon glyph="payment-transfer" size={16} />,
+      perform: () => (window.location.href = '/admin/disbursements'),
     },
+    // TODO: paypal
     {
-      id: 'admin-blazer',
+      id: 'admin-wires',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Blazer',
-      icon: <Icon glyph="bolt" size={16} />,
-      perform: navigate('/blazer'),
+      name: 'Wires',
+      icon: <Icon glyph="web" size={16} />,
+      perform: () => (window.location.href = '/admin/wires'),
     },
-    {
-      id: 'admin-flipper',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Flipper',
-      icon: <Icon glyph="flag-fill" size={16} />,
-      perform: navigate('/flipper/features'),
-    },
+    // TODO: wise
+    // TODO: reimbursements
     {
       id: 'admin-ledger',
       section: 'Admin Tools',
@@ -409,88 +404,10 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/pending_ledger'),
     },
-    {
-      id: 'admin-bank-fees',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Bank fees',
-      icon: <Icon glyph="bank-circle" size={16} />,
-      perform: navigate('/admin/bank_fees'),
-    },
-    {
-      id: 'admin-referral-programs',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Referral programs',
-      icon: <Icon glyph="share" size={16} />,
-      perform: navigate('/admin/referral_programs'),
-    },
-    {
-      id: 'admin-active-teens-leaderboard',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Active teenagers leaderboard',
-      icon: <Icon glyph="leader" size={16} />,
-      perform: navigate('/admin/active_teenagers_leaderboard'),
-    },
-    {
-      id: 'admin-new-teens-leaderboard',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'New teenagers leaderboard',
-      icon: <Icon glyph="member-add" size={16} />,
-      perform: navigate('/admin/new_teenagers_leaderboard'),
-    },
-
-    {
-      id: 'admin-common-documents',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Common documents',
-      icon: <Icon glyph="docs" size={16} />,
-      perform: navigate('/documents'),
-    },
-    {
-      id: 'admin-organizations',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Organizations',
-      icon: <Icon glyph="explore" size={16} />,
-      perform: () => (window.location.href = '/admin/events'),
-    },
-    {
-      id: 'admin-organization-balances',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Organization balances',
-      icon: <Icon glyph="payment" size={16} />,
-      perform: navigate('/admin/balances'),
-    },
-    {
-      id: 'admin-opdrs',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'OPDRs',
-      icon: <Icon glyph="member-remove" size={16} />,
-      perform: () =>
-        (window.location.href = '/organizer_position_deletion_requests'),
-    },
-    {
-      id: 'admin-users',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Users',
-      icon: <Icon glyph="leaders" size={16} />,
-      perform: () => (window.location.href = '/admin/users'),
-    },
-    {
-      id: 'admin-check-deposits',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Check deposits',
-      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
-      perform: navigate('/admin/check_deposits'),
-    },
+    // TODO: raw transactions
+    // TODO: intrafi transactions
+    // TODO: hcb codes
+    // TODO: audits
     {
       id: 'admin-donations',
       section: 'Admin Tools',
@@ -524,44 +441,20 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/sponsors'),
     },
     {
-      id: 'admin-ach-transfers',
+      id: 'admin-applications-hcb',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'ACH transfers',
-      icon: <Icon glyph="payment-transfer" size={16} />,
-      perform: () => (window.location.href = '/admin/ach'),
+      name: 'Applications (HCB)',
+      icon: <Icon glyph="post" size={16} />,
+      perform: navigate('/admin/applications'),
     },
     {
-      id: 'admin-checks',
+      id: 'admin-organizations',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'Checks',
-      icon: <Icon glyph="payment-docs" size={16} />,
-      perform: () => (window.location.href = '/admin/increase_checks'),
-    },
-    {
-      id: 'admin-wires',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Wires',
-      icon: <Icon glyph="web" size={16} />,
-      perform: () => (window.location.href = '/admin/wires'),
-    },
-    {
-      id: 'admin-disbursements',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Disbursements',
-      icon: <Icon glyph="payment-transfer" size={16} />,
-      perform: () => (window.location.href = '/admin/disbursements'),
-    },
-    {
-      id: 'admin-cards',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Cards',
-      icon: <Icon glyph="card" size={16} />,
-      perform: () => (window.location.href = '/admin/stripe_cards'),
+      name: 'Organizations',
+      icon: <Icon glyph="explore" size={16} />,
+      perform: () => (window.location.href = '/admin/events'),
     },
     {
       id: 'admin-gsuite',
@@ -570,6 +463,138 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Google Workspaces',
       icon: <Icon glyph="google" size={16} />,
       perform: () => (window.location.href = '/admin/google_workspaces'),
+    },
+    // TODO: account numbers
+    // TODO: employees
+    // TODO: payments
+    // TODO: w9s
+    // TODO: bank accounts
+    {
+      id: 'admin-hcb-fees',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'HCB fees',
+      icon: <Icon glyph="bank-circle" size={16} />,
+      perform: navigate('/admin/bank_fees'),
+    },
+    // TODO: fee revenues
+    // TODO: column statements
+    {
+      id: 'admin-users',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Users',
+      icon: <Icon glyph="leaders" size={16} />,
+      perform: () => (window.location.href = '/admin/users'),
+    },
+    // TODO: card designs
+    // TODO: emails
+    // TODO: unknown merchants
+    {
+      id: 'admin-referral-programs',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Referral programs',
+      icon: <Icon glyph="share" size={16} />,
+      perform: navigate('/admin/referral_programs'),
+    },
+    // TODO: event groups
+    {
+      id: 'admin-contracts',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Contracts',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/admin/contracts'),
+    },
+    {
+      id: 'admin-active-teens-leaderboard',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Active teenagers leaderboard',
+      icon: <Icon glyph="leader" size={16} />,
+      perform: navigate('/admin/active_teenagers_leaderboard'),
+    },
+    {
+      id: 'admin-new-teens-leaderboard',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'New teenagers leaderboard',
+      icon: <Icon glyph="member-add" size={16} />,
+      perform: navigate('/admin/new_teenagers_leaderboard'),
+    },
+
+
+
+
+
+
+
+    // not in nav
+    {
+      id: 'admin-applications-airtable',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Applications (Airtable)',
+      icon: <Icon glyph="align-left" size={16} />,
+      perform: () => (window.location.href = adminUrls['Applications']),
+    },
+    {
+      id: 'admin-blazer',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Blazer',
+      icon: <Icon glyph="bolt" size={16} />,
+      perform: navigate('/blazer'),
+    },
+    {
+      id: 'admin-flipper',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Flipper',
+      icon: <Icon glyph="flag-fill" size={16} />,
+      perform: navigate('/flipper/features'),
+    },
+    {
+      id: 'admin-common-documents',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Common documents',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/documents'),
+    },
+    {
+      id: 'admin-organization-balances',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Organization balances',
+      icon: <Icon glyph="payment" size={16} />,
+      perform: navigate('/admin/balances'),
+    },
+    {
+      id: 'admin-opdrs',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'OPDRs',
+      icon: <Icon glyph="member-remove" size={16} />,
+      perform: () =>
+        (window.location.href = '/organizer_position_deletion_requests'),
+    },
+    {
+      id: 'admin-check-deposits',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Check deposits',
+      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
+      perform: navigate('/admin/check_deposits'),
+    },
+    {
+      id: 'admin-cards',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Cards',
+      icon: <Icon glyph="card" size={16} />,
+      perform: () => (window.location.href = '/admin/stripe_cards'),
     },
     {
       id: 'admin-gsuite-waitlist',
