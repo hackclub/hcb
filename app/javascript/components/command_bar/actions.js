@@ -350,6 +350,7 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="bolt" size={16} />,
       priority: Priority.HIGH,
     },
+    // spending
     {
       id: 'admin-ach-transfers',
       section: 'Admin Tools',
@@ -406,6 +407,7 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <SvgIcon src="/icons/reimbursement.svg" size={16} />,
       perform: navigate('/admin/reimbursements'),
     },
+    // ledger
     {
       id: 'admin-ledger',
       section: 'Admin Tools',
@@ -454,6 +456,7 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="flag" size={16} />,
       perform: navigate('/admin/ledger_audits'),
     },
+    // incoming money
     {
       id: 'admin-donations',
       section: 'Admin Tools',
@@ -486,6 +489,7 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="purse" size={16} />,
       perform: navigate('/admin/sponsors'),
     },
+    // organizations
     {
       id: 'admin-applications-hcb',
       section: 'Admin Tools',
@@ -518,9 +522,11 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <SvgIcon src="/icons/hashtag.svg" size={16} />,
       perform: navigate('/admin/account_numbers'),
     },
+    // payroll
     // TODO: employees
     // TODO: payments
     // TODO: w9s
+    // misc
     // TODO: bank accounts
     {
       id: 'admin-hcb-fees',
@@ -576,13 +582,6 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
     },
-
-
-
-
-
-
-
     // not in nav
     {
       id: 'admin-applications-airtable',
