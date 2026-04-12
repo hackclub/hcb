@@ -629,6 +629,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/users'),
     },
     {
+      id: 'admin-cards',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Cards',
+      icon: <Icon glyph="card" size={16} />,
+      perform: navigate('/admin/stripe_cards'),
+    },
+    {
       id: 'admin-card-designs',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -708,14 +716,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Flipper',
       icon: <Icon glyph="flag-fill" size={16} />,
       perform: navigate('/flipper/features'),
-    },
-    {
-      id: 'admin-cards',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Cards',
-      icon: <Icon glyph="card" size={16} />,
-      perform: navigate('/admin/stripe_cards'),
     },
     {
       id: 'admin-gsuite-waitlist',

@@ -370,6 +370,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "Stripe Cards",
+            path: stripe_cards_admin_index_path,
+            count: ->{ StripeCard.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Card Designs",
             path: stripe_card_personalization_designs_admin_index_path,
             count: ->{ StripeCard::PersonalizationDesign.count },
