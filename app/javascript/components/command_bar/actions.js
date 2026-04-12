@@ -539,7 +539,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="payment-transfer" size={16} />,
       perform: navigate('/admin/employee_payments'),
     },
-    // TODO: w9s
+    {
+      id: 'admin-w9s',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'W9s',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/admin/w9s'),
+    },
     // misc
     // TODO: bank accounts
     {
