@@ -46,8 +46,7 @@ export const generateEventActions = data => {
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-announcements`,
       name: 'Announcements',
-      perform: () =>
-        (window.location.pathname = `/${event.slug}/announcements`),
+      perform: navigate(`/${event.slug}/announcements`),
       icon: <Icon glyph="announcement" size={16} />,
       parent: event.slug,
     })),
@@ -62,8 +61,7 @@ export const generateEventActions = data => {
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-account-number`,
       name: 'Account numbers',
-      perform: () =>
-        (window.location.pathname = `/${event.slug}/account-number`),
+      perform: navigate(`/${event.slug}/account-number`),
       icon: <SvgIcon src="/icons/hashtag.svg" size={16} />,
       parent: event.slug,
     })),
@@ -84,8 +82,7 @@ export const generateEventActions = data => {
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-check-deposit`,
       name: 'Check deposits',
-      perform: () =>
-        (window.location.pathname = `/${event.slug}/check-deposits`),
+      perform: navigate(`/${event.slug}/check-deposits`),
       icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
       parent: event.slug,
     })),
@@ -144,7 +141,7 @@ export const generateEventActions = data => {
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-documents`,
       name: 'Documents',
-      perform: () => (window.location.pathname = `/${event.slug}/documents`),
+      perform: navigate(`/${event.slug}/documents`),
       icon: <Icon glyph="docs" size={16} />,
       parent: event.slug,
     })),
@@ -633,8 +630,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'OPDRs',
       icon: <Icon glyph="member-remove" size={16} />,
-      perform: () =>
-        (window.location.href = '/organizer_position_deletion_requests'),
+      perform: navigate('/organizer_position_deletion_requests'),
     },
     {
       id: 'admin-check-deposits',
@@ -658,8 +654,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Google Workspace waitlist',
       icon: <Icon glyph="google" size={16} />,
-      perform: () =>
-        (window.location.href = adminUrls['Google Workspace Waitlist']),
+      perform: navigate(adminUrls['Google Workspace Waitlist']),
     },
     {
       id: 'admin-disputes',
