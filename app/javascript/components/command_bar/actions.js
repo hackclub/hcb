@@ -440,7 +440,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/raw_intrafi_transactions'),
     },
-    // TODO: hcb codes
+    {
+      id: 'admin-hcb-codes',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'HCB codes',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/hcb_codes'),
+    },
     // TODO: audits
     {
       id: 'admin-donations',
