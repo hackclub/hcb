@@ -381,7 +381,7 @@ export const adminActions = (adminUrls, isPretending) => {
       id: 'admin-paypal',
       section: 'Admin Tools',
       priority: Priority.HIGH,
-      name: 'PayPal',
+      name: 'PayPal transfers',
       icon: <Icon glyph="paypal" size={16} />,
       perform: () => (window.location.href = '/admin/paypal_transfers'),
     },
@@ -393,7 +393,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="web" size={16} />,
       perform: () => (window.location.href = '/admin/wires'),
     },
-    // TODO: wise
+    {
+      id: 'admin-wise',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Wise transfers',
+      icon: <SvgIcon src="/icons/wise.svg" size={16} />,
+      perform: () => (window.location.href = '/admin/wise_transfers'),
+    },
     // TODO: reimbursements
     {
       id: 'admin-ledger',
