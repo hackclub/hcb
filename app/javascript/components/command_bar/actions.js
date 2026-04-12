@@ -11,7 +11,8 @@ preload(
   '/icons/cheque.svg',
   '/icons/perks.svg',
   '/icons/receipt.svg',
-  '/icons/reimbursement.svg'
+  '/icons/reimbursement.svg',
+  '/icons/wise.svg'
 )
 
 const restrictedFilter = e => !e.demo_mode
@@ -512,7 +513,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="google" size={16} />,
       perform: navigate('/admin/google_workspaces'),
     },
-    // TODO: account numbers
+    {
+      id: 'admin-account-numbers',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Account numbers',
+      icon: <SvgIcon src="/icons/hashtag.svg" size={16} />,
+      perform: navigate('/admin/account_numbers'),
+    },
     // TODO: employees
     // TODO: payments
     // TODO: w9s
