@@ -5,7 +5,7 @@ module OneTimeJobs
     def perform
       expense_payouts = Reimbursement::ExpensePayout.where(reimbursement_expenses_id: Reimbursement::Expense.where(type: "Reimbursement::Expense::Fee"))
       slug = "wise-fee"
-      category = TransactionCategory.find_or_create_by!(slug:)
+      TransactionCategory.find_or_create_by!(slug:)
 
       hcb_codes = HcbCode.where(hcb_code: expense_payouts.select(:hcb_code))
 
