@@ -126,7 +126,7 @@ module Admin
         name: "Spending",
         items: [
           make_item(
-            name: "ACHs",
+            name: "ACH Transfers",
             path: ach_admin_index_path,
             count: ->{ AchTransfer.pending.count },
             count_type: :tasks
@@ -144,7 +144,7 @@ module Admin
             count_type: :tasks
           ),
           make_item(
-            name: "PayPal",
+            name: "PayPal Transfers",
             path: paypal_transfers_admin_index_path,
             count: ->{ PaypalTransfer.pending.count },
             count_type: :tasks
@@ -156,7 +156,7 @@ module Admin
             count_type: :tasks
           ),
           make_item(
-            name: "Wise transfers",
+            name: "Wise Transfers",
             path: wise_transfers_admin_index_path,
             count: ->{ WiseTransfer.pending.count },
             count_type: :tasks
@@ -200,7 +200,7 @@ module Admin
             count_type: :records
           ),
           make_item(
-            name: "HCB codes",
+            name: "HCB Codes",
             path: hcb_codes_admin_index_path,
             count: ->{ HcbCode.count },
             count_type: :records
@@ -244,7 +244,7 @@ module Admin
             count_type: :records
           ),
           make_item(
-            name: "Check deposits",
+            name: "Check Deposits",
             path: admin_check_deposits_path,
             count: ->{ CheckDeposit.unprocessed.count },
             count_type: :tasks
@@ -270,7 +270,7 @@ module Admin
             count_type: :records
           ),
           make_item(
-            name: "Organization balances",
+            name: "Organization Balances",
             path: balances_admin_index_path,
             count: ->{ Event.approved.count },
             count_type: :records
