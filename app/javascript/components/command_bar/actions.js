@@ -18,7 +18,6 @@ preload(
 const restrictedFilter = e => !e.demo_mode
 
 export const generateEventActions = data => {
-  console.log(data)
   return [
     ...data.map(event => ({
       id: event.slug,
@@ -119,6 +118,15 @@ export const generateEventActions = data => {
       icon: <Icon glyph="people-2" size={16} />,
       parent: event.slug,
     })),
+    ...data
+      .filter(e => e.features.card_grants)
+      .map(event => ({
+        id: `${event.slug}-card-grants`,
+        name: 'Grants',
+        perform: navigate(`/${event.slug}/card_grants`),
+        icon: <Icon glyph="bag" size={16} />,
+        parent: event.slug,
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-perks`,
       name: 'Perks',
