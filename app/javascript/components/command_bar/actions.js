@@ -581,6 +581,22 @@ export const adminActions = (adminUrls, isPretending) => {
     },
     // misc
     {
+      id: 'admin-blazer',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Blazer',
+      icon: <Icon glyph="bolt" size={16} />,
+      perform: navigate('/blazer'),
+    },
+    {
+      id: 'admin-flipper',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Flipper',
+      icon: <Icon glyph="flag-fill" size={16} />,
+      perform: navigate('/flipper/features'),
+    },
+    {
       id: 'admin-common-documents',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -692,7 +708,7 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
     },
-    // not in nav
+    // airtable
     {
       id: 'admin-applications-airtable',
       section: 'Admin Tools',
@@ -700,22 +716,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
       perform: navigate(adminUrls['Applications']),
-    },
-    {
-      id: 'admin-blazer',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Blazer',
-      icon: <Icon glyph="bolt" size={16} />,
-      perform: navigate('/blazer'),
-    },
-    {
-      id: 'admin-flipper',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Flipper',
-      icon: <Icon glyph="flag-fill" size={16} />,
-      perform: navigate('/flipper/features'),
     },
     {
       id: 'admin-gsuite-waitlist',

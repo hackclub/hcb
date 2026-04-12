@@ -334,6 +334,18 @@ module Admin
         name: "Misc",
         items: [
           make_item(
+            name: "Blazer",
+            path: blazer_path,
+            count: ->{ Blazer::Query.count },
+            count_type: :records
+          ),
+          make_item(
+            name: "Flipper",
+            path: flipper_path,
+            count: ->{ Flipper.features.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Common Documents",
             path: common_documents_path,
             count: ->{ Document.common.count },
