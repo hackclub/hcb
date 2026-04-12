@@ -548,7 +548,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/w9s'),
     },
     // misc
-    // TODO: bank accounts
+    {
+      id: 'admin-bank-accounts',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Bank accounts',
+      icon: <Icon glyph="bank" size={16} />,
+      perform: navigate('/admin/bank_accounts'),
+    },
     {
       id: 'admin-hcb-fees',
       section: 'Admin Tools',
