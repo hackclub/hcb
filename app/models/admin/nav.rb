@@ -254,6 +254,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "Organization balances",
+            path: balances_admin_index_path,
+            count: ->{ 0 },
+            count_type: :records
+          ),
+          make_item(
             name: "OPDRs",
             path: organizer_position_deletion_requests_path,
             count: ->{ OrganizerPositionDeletionRequest.under_review.count },
@@ -264,7 +270,6 @@ module Admin
             path: google_workspaces_admin_index_path,
             count: ->{ GSuite.needs_ops_review.count }
           ),
-
           make_item(
             name: "Account Numbers",
             path: account_numbers_admin_index_path,

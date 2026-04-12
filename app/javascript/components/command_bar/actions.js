@@ -515,6 +515,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/events'),
     },
     {
+      id: 'admin-organization-balances',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Organization balances',
+      icon: <Icon glyph="payment" size={16} />,
+      perform: navigate('/admin/balances'),
+    },
+    {
       id: 'admin-opdrs',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -700,14 +708,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Common documents',
       icon: <Icon glyph="docs" size={16} />,
       perform: navigate('/documents'),
-    },
-    {
-      id: 'admin-organization-balances',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Organization balances',
-      icon: <Icon glyph="payment" size={16} />,
-      perform: navigate('/admin/balances'),
     },
     {
       id: 'admin-cards',
