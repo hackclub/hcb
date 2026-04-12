@@ -564,7 +564,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="bank-circle" size={16} />,
       perform: navigate('/admin/bank_fees'),
     },
-    // TODO: fee revenues
+    {
+      id: 'admin-fee-revenues',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Fee revenues',
+      icon: <Icon glyph="bank-circle" size={16} />,
+      perform: navigate('/admin/fee_revenues'),
+    },
     // TODO: column statements
     {
       id: 'admin-users',
