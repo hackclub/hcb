@@ -424,7 +424,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/pending_ledger'),
     },
-    // TODO: raw transactions
+    {
+      id: 'admin-raw-transactions',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Raw transactions',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/raw_transactions'),
+    },
     // TODO: intrafi transactions
     // TODO: hcb codes
     // TODO: audits
