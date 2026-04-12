@@ -448,7 +448,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/hcb_codes'),
     },
-    // TODO: audits
+    {
+      id: 'admin-audits',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Audits',
+      icon: <Icon glyph="flag" size={16} />,
+      perform: navigate('/admin/ledger_audits'),
+    },
     {
       id: 'admin-donations',
       section: 'Admin Tools',
