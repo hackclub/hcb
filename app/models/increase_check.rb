@@ -325,45 +325,48 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def stop!
-    raise ArgumentError, "Check must have a column id" if column_id.nil?
-    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
+    raise ArgumentError, "Stopping checks is not yet supported"
+    # raise ArgumentError, "Check must have a column id" if column_id.nil?
+    # raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
-    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+    # column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
-    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+    # reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
 
-    update!(
-      column_object: column_check,
-      column_status: column_check["status"],
-      column_delivery_status: column_check["delivery_status"],
-    )
+    # update!(
+    #   column_object: column_check,
+    #   column_status: column_check["status"],
+    #   column_delivery_status: column_check["delivery_status"],
+    # )
   end
 
   def reissue!
-    stop! unless column_stopped? || column_pending_stop?
+    raise ArgumentError, "Reissuing checks is not yet supported"
 
-    reissued_check = event.increase_checks.build(
-      user_id:,
-      memo:,
-      amount:,
-      payment_for:,
-      recipient_name:,
-      address_line1:,
-      address_line2:,
-      address_city:,
-      address_state:,
-      recipient_email:,
-      send_email_notification:,
-      address_zip:,
-      payment_recipient_id:,
-      reissued_for_id: id,
-    )
+    # stop! unless column_stopped? || column_pending_stop?
 
-    reissued_check.save!
+    # reissued_check = event.increase_checks.build(
+    #   user_id:,
+    #   memo:,
+    #   amount:,
+    #   payment_for:,
+    #   recipient_name:,
+    #   address_line1:,
+    #   address_line2:,
+    #   address_city:,
+    #   address_state:,
+    #   recipient_email:,
+    #   send_email_notification:,
+    #   address_zip:,
+    #   payment_recipient_id:,
+    #   reissued_for_id: id,
+    # )
 
-    Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+    # reissued_check.save!
 
-    reissued_check.send_check!
+    # Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+
+    # reissued_check.send_check!
   end
 
   private
