@@ -531,7 +531,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="person-badge" size={16} />,
       perform: navigate('/admin/employees'),
     },
-    // TODO: payments
+    {
+      id: 'admin-payments',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Payments',
+      icon: <Icon glyph="payment-transfer" size={16} />,
+      perform: navigate('/admin/employee_payments'),
+    },
     // TODO: w9s
     // misc
     // TODO: bank accounts
