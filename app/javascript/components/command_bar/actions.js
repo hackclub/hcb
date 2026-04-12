@@ -4,7 +4,6 @@ import { Priority } from 'kbar'
 import Icon from '@hackclub/icons'
 import csrf from '../../common/csrf'
 import React from 'react'
-import ReimbursementIcon from '../icons/reimbursement'
 import SvgIcon, { preload } from '../icons/SvgIcon'
 
 preload(
@@ -108,7 +107,7 @@ export const generateEventActions = data => {
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
       perform: navigate(`/${event.slug}/reimbursements`),
-      icon: <ReimbursementIcon size={16} />,
+      icon: <SvgIcon src="/icons/reimbursement.svg" size={16} />,
       parent: event.slug,
     })),
     ...data.map(event => ({
@@ -394,14 +393,21 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: () => (window.location.href = '/admin/wires'),
     },
     {
-      id: 'admin-wise',
+      id: 'admin-wise-transfers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
       name: 'Wise transfers',
       icon: <SvgIcon src="/icons/wise.svg" size={16} />,
       perform: () => (window.location.href = '/admin/wise_transfers'),
     },
-    // TODO: reimbursements
+    {
+      id: 'admin-reimbursements',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Reimbursements',
+      icon: <SvgIcon src="/icons/reimbursement.svg" size={16} />,
+      perform: () => (window.location.href = '/admin/reimbursements'),
+    },
     {
       id: 'admin-ledger',
       section: 'Admin Tools',
