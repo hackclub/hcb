@@ -432,7 +432,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/raw_transactions'),
     },
-    // TODO: intrafi transactions
+    {
+      id: 'admin-intrafi-transactions',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Intrafi transactions',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/raw_intrafi_transactions'),
+    },
     // TODO: hcb codes
     // TODO: audits
     {
