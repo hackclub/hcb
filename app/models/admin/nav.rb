@@ -128,37 +128,44 @@ module Admin
           make_item(
             name: "ACHs",
             path: ach_admin_index_path,
-            count: ->{ AchTransfer.pending.count }
+            count: ->{ AchTransfer.pending.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Checks",
             path: increase_checks_admin_index_path,
-            count: ->{ IncreaseCheck.pending.count }
+            count: ->{ IncreaseCheck.pending.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Disbursements",
             path: disbursements_admin_index_path,
-            count: ->{ Disbursement.reviewing.count }
+            count: ->{ Disbursement.reviewing.count },
+            count_type: :tasks
           ),
           make_item(
             name: "PayPal",
             path: paypal_transfers_admin_index_path,
-            count: ->{ PaypalTransfer.pending.count }
+            count: ->{ PaypalTransfer.pending.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Wires",
             path: wires_admin_index_path,
-            count: ->{ Wire.pending.count }
+            count: ->{ Wire.pending.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Wise transfers",
             path: wise_transfers_admin_index_path,
-            count: ->{ WiseTransfer.pending.count }
+            count: ->{ WiseTransfer.pending.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Reimbursements",
             path: reimbursements_admin_index_path,
-            count: ->{ Reimbursement::Report.reimbursement_requested.count }
+            count: ->{ Reimbursement::Report.reimbursement_requested.count },
+            count_type: :tasks
           )
         ]
       )
@@ -171,7 +178,8 @@ module Admin
           make_item(
             name: "Ledger",
             path: ledger_admin_index_path,
-            count: ->{ CanonicalTransaction.not_stripe_top_up.unmapped.count }
+            count: ->{ CanonicalTransaction.not_stripe_top_up.unmapped.count },
+            count_type: :records
           ),
           make_item(
             name: "Pending Ledger",
@@ -182,7 +190,8 @@ module Admin
           make_item(
             name: "Raw Transactions",
             path: raw_transactions_admin_index_path,
-            count: ->{ RawCsvTransaction.unhashed.count }
+            count: ->{ RawCsvTransaction.unhashed.count },
+            count_type: :records
           ),
           make_item(
             name: "Intrafi Transactions",
@@ -193,13 +202,14 @@ module Admin
           make_item(
             name: "HCB codes",
             path: hcb_codes_admin_index_path,
-            count: ->{ 0 },
+            count: ->{ HcbCode.count },
             count_type: :records
           ),
           make_item(
             name: "Audits",
             path: admin_ledger_audits_path,
-            count: ->{ Admin::LedgerAudit.pending.count }
+            count: ->{ Admin::LedgerAudit.pending.count },
+            count_type: :tasks
           ),
         ]
       )
@@ -212,27 +222,32 @@ module Admin
           make_item(
             name: "Donations",
             path: donations_admin_index_path,
-            count: ->{ 0 }
+            count: ->{ Donation.count },
+            count_type: :records
           ),
           make_item(
             name: "Recurring Donations",
             path: recurring_donations_admin_index_path,
-            count: ->{ 0 }
+            count: ->{ RecurringDonation.count },
+            count_type: :records
           ),
           make_item(
             name: "Invoices",
             path: invoices_admin_index_path,
-            count: ->{ 0 }
+            count: ->{ Invoice.count },
+            count_type: :records
           ),
           make_item(
             name: "Sponsors",
             path: sponsors_admin_index_path,
-            count: ->{ 0 }
+            count: ->{ Sponsor.count },
+            count_type: :records
           ),
           make_item(
             name: "Check deposits",
             path: admin_check_deposits_path,
-            count: ->{ CheckDeposit.unprocessed.count }
+            count: ->{ CheckDeposit.unprocessed.count },
+            count_type: :tasks
           )
         ]
       )
@@ -245,7 +260,8 @@ module Admin
           make_item(
             name: "Applications (HCB)",
             path: applications_admin_index_path,
-            count: ->{ Event::Application.under_review.count }
+            count: ->{ Event::Application.under_review.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Organizations",
@@ -256,7 +272,7 @@ module Admin
           make_item(
             name: "Organization balances",
             path: balances_admin_index_path,
-            count: ->{ 0 },
+            count: ->{ Event.approved.count },
             count_type: :records
           ),
           make_item(
@@ -268,7 +284,8 @@ module Admin
           make_item(
             name: "Google Workspaces",
             path: google_workspaces_admin_index_path,
-            count: ->{ GSuite.needs_ops_review.count }
+            count: ->{ GSuite.needs_ops_review.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Account Numbers",
@@ -287,7 +304,8 @@ module Admin
           make_item(
             name: "Employees",
             path: employees_admin_index_path,
-            count: ->{ Employee.onboarding.count }
+            count: ->{ Employee.onboarding.count },
+            count_type: :tasks
           ),
           make_item(
             name: "Payments",
