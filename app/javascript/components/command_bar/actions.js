@@ -358,7 +358,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'ACH transfers',
       icon: <Icon glyph="payment-transfer" size={16} />,
-      perform: () => (window.location.href = '/admin/ach'),
+      perform: navigate('/admin/ach'),
     },
     {
       id: 'admin-checks',
@@ -366,7 +366,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Checks',
       icon: <Icon glyph="payment-docs" size={16} />,
-      perform: () => (window.location.href = '/admin/increase_checks'),
+      perform: navigate('/admin/increase_checks'),
     },
     {
       id: 'admin-disbursements',
@@ -374,7 +374,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Disbursements',
       icon: <Icon glyph="payment-transfer" size={16} />,
-      perform: () => (window.location.href = '/admin/disbursements'),
+      perform: navigate('/admin/disbursements'),
     },
     {
       id: 'admin-paypal',
@@ -382,7 +382,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'PayPal transfers',
       icon: <Icon glyph="paypal" size={16} />,
-      perform: () => (window.location.href = '/admin/paypal_transfers'),
+      perform: navigate('/admin/paypal_transfers'),
     },
     {
       id: 'admin-wires',
@@ -390,7 +390,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Wires',
       icon: <Icon glyph="web" size={16} />,
-      perform: () => (window.location.href = '/admin/wires'),
+      perform: navigate('/admin/wires'),
     },
     {
       id: 'admin-wise-transfers',
@@ -398,7 +398,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Wise transfers',
       icon: <SvgIcon src="/icons/wise.svg" size={16} />,
-      perform: () => (window.location.href = '/admin/wise_transfers'),
+      perform: navigate('/admin/wise_transfers'),
     },
     {
       id: 'admin-reimbursements',
@@ -406,7 +406,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Reimbursements',
       icon: <SvgIcon src="/icons/reimbursement.svg" size={16} />,
-      perform: () => (window.location.href = '/admin/reimbursements'),
+      perform: navigate('/admin/reimbursements'),
     },
     {
       id: 'admin-ledger',
@@ -414,7 +414,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Ledger',
       icon: <Icon glyph="list" size={16} />,
-      perform: () => (window.location.href = '/admin/ledger'),
+      perform: navigate('/admin/ledger'),
     },
     {
       id: 'admin-pending-ledger',
@@ -434,7 +434,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Donations',
       icon: <Icon glyph="support" size={16} />,
-      perform: () => (window.location.href = '/admin/donations'),
+      perform: navigate('/admin/donations'),
     },
     {
       id: 'admin-recurring-donations',
@@ -450,7 +450,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Invoices',
       icon: <Icon glyph="docs-fill" size={16} />,
-      perform: () => (window.location.href = '/admin/invoices'),
+      perform: navigate('/admin/invoices'),
     },
     {
       id: 'admin-sponsors',
@@ -458,7 +458,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Sponsors',
       icon: <Icon glyph="purse" size={16} />,
-      perform: () => (window.location.href = '/admin/sponsors'),
+      perform: navigate('/admin/sponsors'),
     },
     {
       id: 'admin-applications-hcb',
@@ -474,7 +474,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Organizations',
       icon: <Icon glyph="explore" size={16} />,
-      perform: () => (window.location.href = '/admin/events'),
+      perform: navigate('/admin/events'),
     },
     {
       id: 'admin-gsuite',
@@ -482,7 +482,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Google Workspaces',
       icon: <Icon glyph="google" size={16} />,
-      perform: () => (window.location.href = '/admin/google_workspaces'),
+      perform: navigate('/admin/google_workspaces'),
     },
     // TODO: account numbers
     // TODO: employees
@@ -505,7 +505,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Users',
       icon: <Icon glyph="leaders" size={16} />,
-      perform: () => (window.location.href = '/admin/users'),
+      perform: navigate('/admin/users'),
     },
     // TODO: card designs
     // TODO: emails
@@ -557,7 +557,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Applications (Airtable)',
       icon: <Icon glyph="align-left" size={16} />,
-      perform: () => (window.location.href = adminUrls['Applications']),
+      perform: navigate(adminUrls['Applications']),
     },
     {
       id: 'admin-blazer',
@@ -614,7 +614,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Cards',
       icon: <Icon glyph="card" size={16} />,
-      perform: () => (window.location.href = '/admin/stripe_cards'),
+      perform: navigate('/admin/stripe_cards'),
     },
     {
       id: 'admin-gsuite-waitlist',
@@ -631,7 +631,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Disputes',
       icon: <Icon glyph="important" size={16} />,
-      perform: () => (window.location.href = adminUrls['Disputes']),
+      perform: navigate(adminUrls['Disputes']),
     },
     {
       id: 'admin-feedback',
@@ -639,7 +639,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Feedback',
       icon: <Icon glyph="message-new" size={16} />,
-      perform: () => (window.location.href = adminUrls['Feedback']),
+      perform: navigate(adminUrls['Feedback']),
     },
     {
       id: 'admin-stickers',
@@ -647,7 +647,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Stickers',
       icon: <Icon glyph="sticker" size={16} />,
-      perform: () => (window.location.href = adminUrls['Stickers']),
+      perform: navigate(adminUrls['Stickers']),
     },
     {
       id: 'admin-hackathons',
@@ -655,7 +655,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Hackathons',
       icon: <Icon glyph="event-code" size={16} />,
-      perform: () => (window.location.href = adminUrls['Hackathons']),
+      perform: navigate(adminUrls['Hackathons']),
     },
     {
       id: 'admin-1passwords',
@@ -663,7 +663,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: '1Password',
       icon: <Icon glyph="private" size={16} />,
-      perform: () => (window.location.href = adminUrls['1Password']),
+      perform: navigate(adminUrls['1Password']),
     },
     {
       id: 'admin-domains',
@@ -671,7 +671,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'Domains',
       icon: <Icon glyph="web" size={16} />,
-      perform: () => (window.location.href = adminUrls['Domains']),
+      perform: navigate(adminUrls['Domains']),
     },
     {
       id: 'admin-event-helper',
@@ -679,7 +679,7 @@ export const adminActions = (adminUrls, isPretending) => {
       priority: Priority.HIGH,
       name: 'The Event Helper',
       icon: <Icon glyph="relaxed" size={16} />,
-      perform: () => (window.location.href = adminUrls['The Event Helper']),
+      perform: navigate(adminUrls['The Event Helper']),
     },
   ]
 }
