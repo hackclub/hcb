@@ -620,7 +620,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="share" size={16} />,
       perform: navigate('/admin/referral_programs'),
     },
-    // TODO: event groups
+    {
+      id: 'admin-event-groups',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Event groups',
+      icon: <Icon glyph="group" size={16} />,
+      perform: navigate('/admin/event_groups'),
+    },
     {
       id: 'admin-contracts',
       section: 'Admin Tools',
