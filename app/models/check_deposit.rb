@@ -29,6 +29,7 @@
 #
 class CheckDeposit < ApplicationRecord
   include Freezable
+  include HasState
   has_paper_trail
 
   include Hashid::Rails
@@ -121,6 +122,10 @@ class CheckDeposit < ApplicationRecord
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
 
   def state
+    increase_status.to_sym
+  end
+
+  def state_color
     return :muted if column_id.nil? && increase_id.nil?
     return :error if rejected? || returned?
     return :success if local_hcb_code.ct.present?

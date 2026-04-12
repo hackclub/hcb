@@ -66,6 +66,7 @@ class AchTransfer < ApplicationRecord
   set_public_id_prefix :ach
 
   include AASM
+  include HasState
   include Commentable
   include Payoutable
   include Payment
@@ -314,7 +315,7 @@ class AchTransfer < ApplicationRecord
     end
   end
 
-  def state
+  def state_color
     case status
     when :deposited then :success
     when :in_transit then :info

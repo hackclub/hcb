@@ -35,7 +35,7 @@
         <span class="regular"><%= render_money disbursement.amount %></span>
       </span>
     <% end %>
-    <span class="badge h4 bg-<%= disbursement.state %> order-1">
+    <span class="badge h4 bg-<%= disbursement.state_color %> order-1">
       <%= disbursement.state_text.humanize %>
       <%= inline_icon disbursement.state_icon, size: 20 if disbursement.state_icon %>
     </span>

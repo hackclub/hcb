@@ -111,6 +111,7 @@ class Invoice < ApplicationRecord
 
   extend FriendlyId
   include AASM
+  include HasState
 
   include Freezable
 
@@ -232,7 +233,7 @@ class Invoice < ApplicationRecord
     canonical_transactions.count >= 2 || manually_marked_as_paid? || completed_deprecated?
   end
 
-  def state
+  def state_color
     return :success if paid_v2? && deposited?
     return :success if paid_v2? && event.can_front_balance?
     return :success if manually_marked_as_paid?

@@ -34,6 +34,7 @@ class PaypalTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
 
   include AASM
+  include HasState
   include Payoutable
 
   belongs_to :event
@@ -115,7 +116,7 @@ class PaypalTransfer < ApplicationRecord
     end
   end
 
-  def state
+  def state_color
     if pending?
       :muted
     elsif rejected?

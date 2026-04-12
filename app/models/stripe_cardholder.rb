@@ -30,6 +30,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class StripeCardholder < ApplicationRecord
+  include HasState
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "issuing/cardholders", :stripe_id
 
@@ -66,6 +67,10 @@ class StripeCardholder < ApplicationRecord
   before_validation :set_default_billing_address
 
   def state
+    remote_status.to_sym
+  end
+
+  def state_color
     return :success if remote_status == "active"
     return :error if remote_status == "blocked"
     return :error if remote_status == "disabled"

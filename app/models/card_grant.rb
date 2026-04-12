@@ -46,6 +46,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class CardGrant < ApplicationRecord
+  include HasState
   include Hashid::Rails
   hashid_config salt: ""
 
@@ -118,6 +119,10 @@ class CardGrant < ApplicationRecord
   delegate :name, to: :user
 
   def state
+    status.to_sym
+  end
+
+  def state_color
     if suspected_fraud?
       "error"
     elsif canceled? || expired?

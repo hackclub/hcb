@@ -56,6 +56,7 @@ class IncreaseCheck < ApplicationRecord
   has_paper_trail
 
   include AASM
+  include HasState
   include Payoutable
   include Freezable
   include Payment
@@ -264,7 +265,7 @@ class IncreaseCheck < ApplicationRecord
     increase_id.present?
   end
 
-  def state
+  def state_color
     if pending?
       :muted
     elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?

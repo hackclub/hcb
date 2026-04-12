@@ -26,6 +26,7 @@ class BankFee < ApplicationRecord
   has_paper_trail
 
   include AASM
+  include HasState
   include HasBookTransfer
 
   include Hashid::Rails
@@ -58,7 +59,7 @@ class BankFee < ApplicationRecord
     end
   end
 
-  def state
+  def state_color
     return :success if settled?
     return :info if in_transit?
 

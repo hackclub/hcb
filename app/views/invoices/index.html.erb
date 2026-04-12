@@ -64,7 +64,7 @@
         <% @invoices.each do |i| %>
           <tr class="clickable">
             <td>
-              <span class="ml0 badge bg-<%= i.state %>"><%= i.state_text %></span>
+              <span class="ml0 badge bg-<%= i.state_color %>"><%= i.state_text %></span>
             </td>
             <td>
               <%= format_date i.created_at %>

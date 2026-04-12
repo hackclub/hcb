@@ -66,6 +66,7 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include HasState
   include Freezable
   include UsersHelper
 
@@ -164,7 +165,7 @@ class Donation < ApplicationRecord
     in_transit_at || created_at
   end
 
-  def state
+  def state_color
     return :success if deposited?
     return :success if in_transit? && event.can_front_balance?
     return :info if in_transit?

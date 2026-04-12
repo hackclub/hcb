@@ -23,7 +23,7 @@
           <% @paginated_card_grants.each do |card_grant| %>
             <tr>
               <td>
-                <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
+                <span class="ml0 badge bg-<%= card_grant.state_color %>"><%= card_grant.state_text %></span>
               </td>
               <td>
                 <%= format_date card_grant.created_at %>

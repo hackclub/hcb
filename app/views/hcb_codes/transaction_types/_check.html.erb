@@ -17,7 +17,7 @@
         <span class="regular muted"> a&nbsp;check for </span>
         <span class="regular"><%= render_money @hcb_code.check.amount %></span>
       </span>
-      <span class="badge h4 ml2 nowrap bg-<%= @hcb_code.check.state %>">
+      <span class="badge h4 ml2 nowrap bg-<%= @hcb_code.check.state_color %>">
         <%= @hcb_code.check.status_text %>
       </span>
     </div>

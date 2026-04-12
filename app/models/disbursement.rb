@@ -51,6 +51,7 @@ class Disbursement < ApplicationRecord
   pg_search_scope :search_name, against: [:name]
 
   include AASM
+  include HasState
 
   include Freezable
 
@@ -287,7 +288,7 @@ class Disbursement < ApplicationRecord
     }
   end
 
-  def state
+  def state_color
     if fulfilled?
       :success
     elsif processed? || pending?
@@ -308,8 +309,6 @@ class Disbursement < ApplicationRecord
       :info
     end
   end
-
-  alias_method :status, :state
 
   def v3_api_state
     state_text.underscore
