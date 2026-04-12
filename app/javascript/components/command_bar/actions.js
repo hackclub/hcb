@@ -377,7 +377,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="payment-transfer" size={16} />,
       perform: () => (window.location.href = '/admin/disbursements'),
     },
-    // TODO: paypal
+    {
+      id: 'admin-paypal',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'PayPal',
+      icon: <Icon glyph="paypal" size={16} />,
+      perform: () => (window.location.href = '/admin/paypal_transfers'),
+    },
     {
       id: 'admin-wires',
       section: 'Admin Tools',
