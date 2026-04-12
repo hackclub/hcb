@@ -328,6 +328,12 @@ module Admin
         name: "Misc",
         items: [
           make_item(
+            name: "Common Documents",
+            path: common_documents_path,
+            count: ->{ Document.common.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Bank Accounts",
             path: bank_accounts_admin_index_path,
             count: ->{ BankAccount.failing.count },

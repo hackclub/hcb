@@ -573,6 +573,14 @@ export const adminActions = (adminUrls, isPretending) => {
     },
     // misc
     {
+      id: 'admin-common-documents',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Common documents',
+      icon: <Icon glyph="docs" size={16} />,
+      perform: navigate('/documents'),
+    },
+    {
       id: 'admin-bank-accounts',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -700,14 +708,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Flipper',
       icon: <Icon glyph="flag-fill" size={16} />,
       perform: navigate('/flipper/features'),
-    },
-    {
-      id: 'admin-common-documents',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Common documents',
-      icon: <Icon glyph="docs" size={16} />,
-      perform: navigate('/documents'),
     },
     {
       id: 'admin-cards',
