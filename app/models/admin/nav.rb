@@ -228,6 +228,11 @@ module Admin
             name: "Sponsors",
             path: sponsors_admin_index_path,
             count: ->{ 0 }
+          ),
+          make_item(
+            name: "Check deposits",
+            path: admin_check_deposits_path,
+            count: ->{ CheckDeposit.unprocessed.count }
           )
         ]
       )

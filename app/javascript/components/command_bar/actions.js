@@ -489,6 +489,14 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="purse" size={16} />,
       perform: navigate('/admin/sponsors'),
     },
+    {
+      id: 'admin-check-deposits',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Check deposits',
+      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
+      perform: navigate('/admin/check_deposits'),
+    },
     // organizations
     {
       id: 'admin-applications-hcb',
@@ -700,14 +708,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Organization balances',
       icon: <Icon glyph="payment" size={16} />,
       perform: navigate('/admin/balances'),
-    },
-    {
-      id: 'admin-check-deposits',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'Check deposits',
-      icon: <SvgIcon src="/icons/cheque.svg" size={16} />,
-      perform: navigate('/admin/check_deposits'),
     },
     {
       id: 'admin-cards',
