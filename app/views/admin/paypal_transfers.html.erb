@@ -1,4 +1,4 @@
-<% title "PayPal" %>
+<% title "PayPal Transfers" %>
 
 <%= form_with local: true, url: paypal_transfers_admin_index_path, method: :get do |form| %>
   <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
