@@ -523,7 +523,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/account_numbers'),
     },
     // payroll
-    // TODO: employees
+    {
+      id: 'admin-employees',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Employees',
+      icon: <Icon glyph="person-badge" size={16} />,
+      perform: navigate('/admin/employees'),
+    },
     // TODO: payments
     // TODO: w9s
     // misc
