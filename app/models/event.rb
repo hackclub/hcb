@@ -5,7 +5,7 @@
 # Table name: events
 #
 #  id                                           :bigint           not null, primary key
-#  aasm_state                                   :string
+#  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
