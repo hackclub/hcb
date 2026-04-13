@@ -1,3 +1,5 @@
+<%# locals: (sort:, display: nil, default: false, right: false) %>
+
 <% if organizer_signed_in? %>
   <% is_active = params[:sort] == sort || (params[:sort].nil? && local_assigns[:default]) %>
   <% current_direction = params[:direction].presence || "desc" %>
