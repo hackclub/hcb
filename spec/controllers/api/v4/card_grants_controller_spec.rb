@@ -53,7 +53,6 @@ RSpec.describe Api::V4::CardGrantsController do
         "icon"                              => nil,
         "donation_page_available"           => true,
         "playground_mode"                   => false,
-        "playground_mode_meeting_requested" => false,
         "transparent"                       => true
       }
 
