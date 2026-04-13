@@ -466,7 +466,7 @@ class Event < ApplicationRecord
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
-  after_update if: :is_public_previously_changed? do
+  after_update_commit if: :is_public_previously_changed? do
     version = self.versions.where_object_changes(is_public:).last
     whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
 
