@@ -59,7 +59,7 @@
 #
 class Event < ApplicationRecord
   self.ignored_columns += ["demo_mode_request_meeting_at"]
-  
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
