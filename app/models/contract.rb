@@ -83,7 +83,7 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after do |reissue_signee_message = nil, reissue_cosigner_message = nil|
+      after_commit do |reissue_signee_message = nil, reissue_cosigner_message = nil|
         if reissue_signee_message.present? || reissue_cosigner_message.present?
           party(:signee).notify_reissued(message: reissue_signee_message)
           party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
