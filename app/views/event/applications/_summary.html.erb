@@ -4,6 +4,10 @@
   <em>Blank</em>
 <% end %>
 
+<% missing = capture do %>
+  <em class="text-primary">Missing</em>
+<% end %>
+
 <div>
   <div class="flex items-center justify-between gap-4 mb-4">
     <h3 class="text-2xl my-0">Project Information</h3>
@@ -17,11 +21,11 @@
   <div class="card card--breakdown p-4 space-y-4">
     <div>
       <p class="text-sm muted mb-1 mt-0">Project name</p>
-      <p class="mb-0 font-medium"><%= application.name.present? ? application.name : blank %></p>
+      <p class="mb-0 font-medium"><%= application.name.present? ? application.name : missing %></p>
     </div>
     <div>
       <p class="text-sm muted mb-1">Project description</p>
-      <p class="mb-0 whitespace-pre-wrap"><%= application.description.present? ? application.description : blank %></p>
+      <p class="mb-0 whitespace-pre-wrap"><%= application.description.present? ? application.description : missing %></p>
     </div>
     <div>
       <p class="text-sm muted mb-1">Website</p>
@@ -37,39 +41,43 @@
         <p class="mb-0 whitespace-pre-wrap"><%= application.political_description %></p>
       <% end %>
     </div>
+    <div>
+      <p class="text-sm muted mb-1">Previously applied to HCB</p>
+      <p class="mb-0">
+        <% if @application.previously_applied == true %>
+          Yes
+        <% elsif @application.previously_applied == false %>
+          No
+        <% else %>
+          <%= missing %>
+        <% end %>
+      </p>
+    </div>
     <% unless application.teen_led? %>
       <div>
+        <p class="text-sm muted mb-1">Planning duration</p>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.planning_duration.present? ? application.planning_duration : missing %></p>
+      </div>
+      <div>
         <p class="text-sm muted mb-1">Team size</p>
-        <p class="mb-0 whitespace-pre-wrap"><%= application.team_size.present? ? application.team_size : blank %></p>
+        <p class="mb-0 whitespace-pre-wrap"><%= application.team_size.present? ? application.team_size : missing %></p>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <p class="text-sm muted mb-1 mt-0">Annual budget</p>
-          <p class="mb-0 whitespace-pre-wrap"><%= application.annual_budget.present? ? application.annual_budget.format : blank %></p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.annual_budget.present? ? application.annual_budget.format : missing %></p>
         </div>
         <div>
           <p class="text-sm muted mb-1 mt-0">Committed amount</p>
-          <p class="mb-0 whitespace-pre-wrap"><%= application.committed_amount.present? ? application.committed_amount.format : blank %></p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.committed_amount.present? ? application.committed_amount.format : missing %></p>
         </div>
       </div>
       <% if application.committed_amount&.positive? %>
         <div>
           <p class="text-sm muted mb-1">Funding source</p>
-          <p class="mb-0 whitespace-pre-wrap"><%= application.funding_source.present? ? application.funding_source : blank %></p>
+          <p class="mb-0 whitespace-pre-wrap"><%= application.funding_source.present? ? application.funding_source : missing %></p>
         </div>
       <% end %>
-      <div>
-        <p class="text-sm muted mb-1">Previously applied to HCB</p>
-        <p class="mb-0">
-          <% if @application.previously_applied == true %>
-            Yes
-          <% elsif @application.previously_applied == false %>
-            No
-          <% else %>
-            <%= blank %>
-          <% end %>
-        </p>
-      </div>
     <% end %>
     <div>
       <p class="text-sm muted mb-1">Affiliations</p>
@@ -102,26 +110,26 @@
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-sm muted mb-1 mt-0">Full name</p>
-        <p class="mb-0"><%= application.user.full_name.present? ? application.user.full_name : blank %></p>
+        <p class="mb-0"><%= application.user.full_name.present? ? application.user.full_name : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1 mt-0">Email</p>
-        <p class="mb-0"><%= application.user.email.present? ? application.user.email : blank %></p>
+        <p class="mb-0"><%= application.user.email.present? ? application.user.email : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">Phone number</p>
-        <p class="mb-0"><%= application.user.phone_number.present? ? application.user.phone_number : blank %></p>
+        <p class="mb-0"><%= application.user.phone_number.present? ? application.user.phone_number : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">Birthday</p>
-        <p class="mb-0"><%= application.user.birthday.present? ? application.user.birthday.strftime("%B %-d, %Y") : blank %></p>
+        <p class="mb-0"><%= application.user.birthday.present? ? application.user.birthday.strftime("%B %-d, %Y") : missing %></p>
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-sm muted mb-1">Street address</p>
-        <p class="mb-0"><%= application.address_line1.present? ? application.address_line1 : blank %></p>
+        <p class="mb-0"><%= application.address_line1.present? ? application.address_line1 : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">Line 2</p>
@@ -129,26 +137,26 @@
       </div>
       <div>
         <p class="text-sm muted mb-1">City</p>
-        <p class="mb-0"><%= application.address_city.present? ? application.address_city : blank %></p>
+        <p class="mb-0"><%= application.address_city.present? ? application.address_city : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">State</p>
-        <p class="mb-0"><%= application.address_state.present? ? application.address_state : blank %></p>
+        <p class="mb-0"><%= application.address_state.present? ? application.address_state : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">Zip code</p>
-        <p class="mb-0"><%= application.address_postal_code.present? ? application.address_postal_code : blank %></p>
+        <p class="mb-0"><%= application.address_postal_code.present? ? application.address_postal_code : missing %></p>
       </div>
       <div>
         <p class="text-sm muted mb-1">Country</p>
-        <p class="mb-0"><%= application.address_country.present? ? application.address_country : blank %></p>
+        <p class="mb-0"><%= application.address_country.present? ? application.address_country : missing %></p>
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-sm muted mb-1">How did you hear about HCB?</p>
-        <p class="mb-0"><%= application.referrer.present? ? application.referrer : blank %></p>
+        <p class="mb-0"><%= application.referrer.present? ? application.referrer : missing %></p>
       </div>
       <% admin_tool do %>
         <div>
@@ -165,10 +173,10 @@
       </div>
     <% end %>
 
-    <% if application.user.is_minor? && application.cosigner_email.present? %>
+    <% if application.user.is_minor? %>
       <div>
         <p class="text-sm muted mb-1">Parent email</p>
-        <p class="mb-0"><%= application.cosigner_email %></p>
+        <p class="mb-0"><%= application.cosigner_email.present? ? application.cosigner_email : missing %></p>
       </div>
 
       <% admin_tool "p-2" do %>

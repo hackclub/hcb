@@ -5,7 +5,7 @@
 # Table name: g_suite_revocations
 #
 #  id                   :bigint           not null, primary key
-#  aasm_state           :string
+#  aasm_state           :string           not null
 #  deleted_at           :datetime
 #  one_week_notice_sent :boolean          default(FALSE), not null
 #  other_reason         :text

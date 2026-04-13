@@ -212,6 +212,17 @@ class Receipt < ApplicationRecord
     false
   end
 
+  def self.reupload(old_receiptable:, new_receiptable:)
+    where(receiptable: old_receiptable).find_each do |receipt|
+      ::ReceiptService::Create.new(
+        receiptable: new_receiptable,
+        uploader: receipt.user,
+        attachments: [receipt.file.blob],
+        upload_method: :duplicate,
+      ).run!
+    end
+  end
+
   def duplicated?
     if receiptable
       return Receipt.where.not(receiptable_type:, receiptable_id:)
