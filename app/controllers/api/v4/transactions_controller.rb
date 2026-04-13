@@ -91,7 +91,13 @@ module Api
       def paginate_transactions(transactions)
         limit = params[:limit]&.to_i || 25
         start_index = if params[:after]
-                        transactions.index { |tx| tx.local_hcb_code.public_id == params[:after] } + 1
+                        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless cursor_hcb_code
+
+                        index = transactions.index { |tx| tx.hcb_code == cursor_hcb_code }
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless index
+
+                        index + 1
                       else
                         0
                       end

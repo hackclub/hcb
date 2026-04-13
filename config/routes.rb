@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   constraints AdminConstraint do
     mount Sidekiq::Web => "/sidekiq"
+    mount MaintenanceTasks::Engine, at: "/maintenance_tasks"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
@@ -435,6 +436,8 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "stop"
+      post "reissue"
     end
   end
 
