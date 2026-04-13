@@ -12,7 +12,6 @@
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -59,6 +58,8 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+  
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
