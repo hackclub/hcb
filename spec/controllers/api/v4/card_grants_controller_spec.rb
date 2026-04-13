@@ -41,19 +41,19 @@ RSpec.describe Api::V4::CardGrantsController do
       recipient = card_grant.user
 
       serialized_event = {
-        "id"                                => event.public_id,
-        "parent_id"                         => nil,
-        "name"                              => "Test Event",
-        "slug"                              => "test-event",
-        "background_image"                  => nil,
-        "country"                           => nil,
-        "created_at"                        => event.created_at.iso8601(3),
-        "fee_percentage"                    => 0.0,
-        "financially_frozen"                => false,
-        "icon"                              => nil,
-        "donation_page_available"           => true,
-        "playground_mode"                   => false,
-        "transparent"                       => true
+        "id"                      => event.public_id,
+        "parent_id"               => nil,
+        "name"                    => "Test Event",
+        "slug"                    => "test-event",
+        "background_image"        => nil,
+        "country"                 => nil,
+        "created_at"              => event.created_at.iso8601(3),
+        "fee_percentage"          => 0.0,
+        "financially_frozen"      => false,
+        "icon"                    => nil,
+        "donation_page_available" => true,
+        "playground_mode"         => false,
+        "transparent"             => true
       }
 
       expect(response.parsed_body).to eq(
