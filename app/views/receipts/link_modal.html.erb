@@ -3,7 +3,7 @@
         controller: "receipt-select",
         turbo: @streams
       } do |form| %>
-    <% if @receipts.size == 0 %>
+    <% if @receipts.empty? %>
       <%= blankslate "Receipt Bin is empty." %>
     <% else %>
       <div class="receipt__search mb3 m0 p0">
