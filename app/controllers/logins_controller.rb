@@ -155,6 +155,8 @@ class LoginsController < ApplicationController
     end
 
     if @login.complete? && @login.user_session.present?
+      @login.user.update(verified: true) if @login.user.unverified?
+
       if @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application?
