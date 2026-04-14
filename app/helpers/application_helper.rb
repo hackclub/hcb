@@ -9,7 +9,7 @@ module ApplicationHelper
   end
 
   def sorted_relation(relation, columns, sort:, default:)
-    sort_key, sort_direction = sort&.first ? sort : default
+    sort_key, sort_direction = (organizer_signed_in? && sort&.first) ? sort : default
     default_key, default_direction = default
 
     sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
