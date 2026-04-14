@@ -619,9 +619,10 @@ class User < ApplicationRecord
   def update_stripe_cardholder
     return unless stripe_cardholder&.stripe_id.present?
 
-    attrs = { stripe_email: email }
-    attrs[:stripe_phone_number] = phone_number if phone_number_verified?
-    stripe_cardholder.update!(**attrs)
+    stripe_cardholder.update!(
+      stripe_email: email,
+      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+    )
   end
 
   def namae(legal: false)
