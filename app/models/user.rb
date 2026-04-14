@@ -174,12 +174,11 @@ class User < ApplicationRecord
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
-  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
   after_update :queue_sync_with_loops_job
-  after_update :sync_verified_phone_to_stripe_cardholder, if: -> { phone_number_verified_previously_changed?(from: false, to: true) }
 
   before_update :set_default_seasonal_theme
 
@@ -623,12 +622,6 @@ class User < ApplicationRecord
     attrs = { stripe_email: email }
     attrs[:stripe_phone_number] = phone_number if phone_number_verified?
     stripe_cardholder.update!(**attrs)
-  end
-
-  def sync_verified_phone_to_stripe_cardholder
-    return unless stripe_cardholder&.stripe_id.present?
-
-    stripe_cardholder.update!(stripe_phone_number: phone_number)
   end
 
   def namae(legal: false)
