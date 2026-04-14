@@ -127,14 +127,6 @@
   </article>
 <% end %>
 
-<% if @report.exceeds_event_balance? && !@report.closed? %>
-  <%= render "application/callout",
-      type: "warning",
-      icon: "info",
-      title: "Waiting on #{@report.event.name}" do %>
-    This reimbursement exceeds <%= @report.event.name %>'s available balance. The <%= @report.event.name %> team may need time to secure additional funds to process this reimbursement.
-  <% end %>
-<% end %>
 <% if @report.draft? %>
   <section class="hidden md:flex items-start justify-center mt2 mb2" style="gap: 16px; position: relative;">
     <article class="card w-100">

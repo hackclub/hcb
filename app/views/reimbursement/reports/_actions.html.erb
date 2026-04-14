@@ -351,6 +351,11 @@
       </div>
     </div>
   <% end %>
+  <% if report.exceeds_event_balance? && !report.closed? %>
+    <% button_hint = capture do %>
+      <span class="bold warning">Warning</span>: This reimbursement exceeds <%= report.event.name %>'s available balance. The <%= report.event.name %> team may need time to secure additional funds to process this reimbursement.
+    <% end %>
+  <% end %>
   <% if report.rejected? && !member_viewing %>
     <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted mt2", method: :post do %>
       <%= inline_icon "view-reload" %>
