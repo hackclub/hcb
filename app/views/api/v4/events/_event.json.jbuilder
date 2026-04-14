@@ -10,7 +10,7 @@ json.financially_frozen event.financially_frozen?
 json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
 json.donation_page_available event.donation_page_available?
 json.playground_mode event.demo_mode?
-json.playground_mode_meeting_requested event.demo_mode_request_meeting_at.present?
+json.playground_mode_meeting_requested nil # This field is deprecated and will be removed
 json.transparent event.is_public?
 json.fee_percentage event.revenue_fee.to_f
 json.background_image event.background_image.attached? ? Rails.application.routes.url_helpers.url_for(event.background_image) : nil
