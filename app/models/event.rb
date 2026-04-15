@@ -12,7 +12,6 @@
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -59,6 +58,8 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -466,7 +467,7 @@ class Event < ApplicationRecord
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
-  after_update if: :is_public_previously_changed? do
+  after_update_commit if: :is_public_previously_changed? do
     version = self.versions.where_object_changes(is_public:).last
     whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
 
@@ -932,6 +933,10 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def to_combobox_display
+    "#{name} (#{id})"
   end
 
   private
