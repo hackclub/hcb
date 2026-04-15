@@ -181,6 +181,8 @@ Rails.application.routes.draw do
     resources "first", only: [:index, :create] do
       collection do
         get "welcome", to: "first#new"
+        get "team", to: "first#team"
+        delete "sign_out", to: "first#sign_out"
       end
     end
 

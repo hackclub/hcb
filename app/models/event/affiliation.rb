@@ -25,7 +25,7 @@ class Event
 
     belongs_to :affiliable, polymorphic: true
 
-    store_accessor :metadata, :league, :team_number, :size, :venue_name, :team_name
+    store_accessor :metadata, :league, :team_number, :size, :venue_name, :team_name, :role
 
     scope :robotics, -> { where(name: %w[first vex]) }
     scope :nonempty, -> { where.not(metadata: {}) }
@@ -61,6 +61,57 @@ class Event
 
     def to_s
       [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
+    end
+
+    def tba_team_info
+      return nil unless is_first? && team_number.present?
+
+      self.class.tba_lookup(league, team_number)
+    end
+
+    def tba_team_name
+      tba_team_info&.dig(:team_name)
+    end
+
+    def tba_avatar
+      tba_team_info&.dig(:avatar)
+    end
+
+    TBA_API_KEY = "cmm9aanMS9BWlqGTC5gwGIfeVPL1LuBzVa0g6bOUk4XqwZ7XnrX43sRSJcfzzGf4"
+    TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
+
+    def self.tba_lookup(league, team_number)
+      league = league.to_s.downcase
+      team_number = team_number.to_s
+
+      conn = Faraday.new(url: TBA_BASE_URL) do |f|
+        f.headers["X-TBA-Auth-Key"] = TBA_API_KEY
+      end
+
+      team_key = "frc#{team_number}"
+      team_response = conn.get("team/#{team_key}")
+
+      return nil unless team_response.success?
+
+      team_data = JSON.parse(team_response.body)
+
+      avatar = nil
+      media_response = conn.get("team/#{team_key}/media/#{Date.today.year}")
+      if media_response.success?
+        media = JSON.parse(media_response.body)
+        avatar_media = media.find { |m| m["type"] == "avatar" }
+        if avatar_media
+          base64 = avatar_media.dig("details", "base64Image")
+          avatar = base64.present? ? "data:image/png;base64,#{base64}" : avatar_media["direct_url"].presence
+        end
+      end
+
+      {
+        league: league,
+        team_number: team_number,
+        team_name: team_data["nickname"],
+        avatar: avatar
+      }
     end
 
     private

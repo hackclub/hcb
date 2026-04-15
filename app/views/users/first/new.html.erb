@@ -31,38 +31,95 @@
   <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
 </div>
 
-<div class="container max-w-[26rem]">
-  <div class="card border mt3 mb3">
-    <h2 class="heading mt-0">Create an HCB account</h2>
-    <p><em>Completely free. No commitment.</em></p>
-    <%= form_with model: @user, url: first_index_path do |form| %>
+<div class="container max-w-[36rem]">
+  <%= form_with model: @user, url: first_index_path do |form| %>
+    <div class="card mt3 mb2">
+      <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+        <%= inline_icon "person", size: 22 %>
+        About you
+      </h3>
+      <p class="muted h5 mt-1 mb-3">Tell us a little about yourself.</p>
       <div class="field">
-        <%= form.label :full_name, "Your full name" %>
+        <%= form.label :full_name, "Full name" %>
         <%= form.text_field :full_name, value: "", placeholder: "Fiona Hackworth" %>
       </div>
-      <div class="field">
-        <%= form.label :email, "Your email address" %>
+      <div class="field mb-0">
+        <%= form.label :email, "Email address" %>
         <%= form.email_field :email, value: "", placeholder: "orpheus@hackclub.com" %>
       </div>
-      <%= form.fields_for :affiliations do |affiliation| %>
-        <div class="field">
-          <%= affiliation.label :team_number %>
-          <div class="flex gap-2">
-            <%= affiliation.select :league, %w[FRC FTC FLL], {}, { class: "!w-[100px]" } %>
-            <%= affiliation.text_field :team_number, value: "", placeholder: "#9101", class: "!w-full !min-w-0" %>
+    </div>
+
+    <%= form.fields_for :affiliations do |affiliation| %>
+      <div class="card mb2">
+        <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+          <%= inline_icon "group", size: 22 %>
+          Your team
+        </h3>
+        <p class="muted h5 mt-1 mb-3">Which team are you part of?</p>
+        <div data-controller="first-team-lookup">
+          <div class="field">
+            <%= affiliation.label :team_number %>
+            <div class="flex gap-2">
+              <%= affiliation.select :league, %w[FRC FTC FLL], {}, { class: "!w-[100px]", data: { first_team_lookup_target: "league", action: "change->first-team-lookup#lookup" } } %>
+              <div class="input flex gap-2 items-center py-0 !w-full !min-w-0">
+                <span class="bold muted">#</span>
+                <%= affiliation.text_field :team_number, value: "", placeholder: "9101", class: "!p-0 !border-none !shadow-none min-h-auto !w-full", data: { first_team_lookup_target: "teamNumber", action: "input->first-team-lookup#lookup" } %>
+              </div>
+            </div>
+          </div>
+          <div class="field mb-0">
+            <%= affiliation.label :team_name, "Team name" %>
+            <%= affiliation.text_field :team_name, value: "", placeholder: "Green Mountain Robotics", data: { first_team_lookup_target: "teamName" } %>
           </div>
         </div>
-        <div class="field">
-          <%= affiliation.label :team_name, "Team name" %>
-          <%= affiliation.text_field :team_name, value: "", placeholder: "Green Mountain Robotics" %>
+      </div>
+
+      <div class="card mb3">
+        <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+          <%= inline_icon "person-badge", size: 22 %>
+          Your role
+        </h3>
+        <p class="muted h5 mt-1 mb-3">What's your role on the team?</p>
+        <div class="field field--options trio max-w-none mb-0">
+          <%= affiliation.radio_button :role, "student_leader" %>
+          <%= affiliation.label :role, value: "student_leader" do %>
+            <%= inline_icon "leader", size: 28 %>
+            <strong>Student Leader</strong>
+          <% end %>
+          <%= affiliation.radio_button :role, "student_member" %>
+          <%= affiliation.label :role, value: "student_member" do %>
+            <%= inline_icon "person-badge", size: 28 %>
+            <strong>Student Member</strong>
+          <% end %>
+          <%= affiliation.radio_button :role, "parent_volunteer" %>
+          <%= affiliation.label :role, value: "parent_volunteer" do %>
+            <%= inline_icon "people-2", size: 28 %>
+            <strong>Parent/Volunteer</strong>
+          <% end %>
+          <%= affiliation.radio_button :role, "head_coach" %>
+          <%= affiliation.label :role, value: "head_coach" do %>
+            <%= inline_icon "leaders", size: 28 %>
+            <strong>Head Coach</strong>
+          <% end %>
+          <%= affiliation.radio_button :role, "mentor_advisor" %>
+          <%= affiliation.label :role, value: "mentor_advisor" do %>
+            <%= inline_icon "admin", size: 28 %>
+            <strong>Mentor</strong>
+          <% end %>
+          <%= affiliation.radio_button :role, "other" %>
+          <%= affiliation.label :role, value: "other" do %>
+            <%= inline_icon "profile", size: 28 %>
+            <strong>Other</strong>
+          <% end %>
         </div>
-        <%= affiliation.hidden_field :name, value: "first" %>
-      <% end %>
-      <%= form.fields_for :affiliations_attributes do %> <% end %>
+      </div>
 
-      <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
-
-      <%= form.submit "Sign up" %>
+      <%= affiliation.hidden_field :name, value: "first" %>
     <% end %>
-  </div>
+    <%= form.fields_for :affiliations_attributes do %> <% end %>
+
+    <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
+
+    <%= form.submit "Sign up" %>
+  <% end %>
 </div>

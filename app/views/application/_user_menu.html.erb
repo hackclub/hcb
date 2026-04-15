@@ -55,6 +55,10 @@
               <%= inline_icon "email-exclamation", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
               Verify your email
             <% end %>
+            <%= link_to sign_out_first_index_path, method: :delete do %>
+              <%= inline_icon "door-leave", size: 23 %>
+              Sign out
+            <% end %>
           <% end %>
         </div>
       <% else %>
