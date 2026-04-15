@@ -220,11 +220,11 @@ class Event
     def submit
       authorize @application
 
-      if @application.ready_to_submit?
+      begin
         @application.mark_submitted!
         confetti!
         redirect_to application_path(@application)
-      else
+      rescue AASM::InvalidTransition
         flash[:error] = "This application is not ready to submit"
         redirect_to review_application_path(@application)
       end
