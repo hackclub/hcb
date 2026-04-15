@@ -132,7 +132,7 @@
         <% @donations.each do |d| %>
           <tr class="clickable">
             <td>
-              <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
+              <span class="ml0 badge bg-<%= d.state_color %>"><%= d.state_text %></span>
             </td>
             <td>
               <%= format_date d.created_at %>

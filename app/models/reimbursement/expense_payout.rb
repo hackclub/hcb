@@ -29,6 +29,7 @@ module Reimbursement
     has_paper_trail
 
     include AASM
+    include HasState
     include HasBookTransfer
 
     include Hashid::Rails
@@ -83,7 +84,7 @@ module Reimbursement
       end
     end
 
-    def state
+    def state_color
       return :success if settled?
       return :info if in_transit?
 

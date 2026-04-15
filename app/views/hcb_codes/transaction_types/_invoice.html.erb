@@ -58,7 +58,7 @@
         </span>
       <% end %>
 
-      <span class="badge h4 bg-<%= @invoice.state %>">
+      <span class="badge h4 bg-<%= @invoice.state_color %>">
         <%= @invoice.state_text %>
         <%= inline_icon @invoice.state_icon, size: 20 if @invoice.state_icon %>
       </span>

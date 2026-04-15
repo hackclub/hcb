@@ -49,6 +49,7 @@ class WiseTransfer < ApplicationRecord
   has_encrypted :recipient_information, type: :json
 
   include AASM
+  include HasState
   include Freezable
 
   include HasWiseRecipient

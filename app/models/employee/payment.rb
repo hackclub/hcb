@@ -31,6 +31,7 @@
 class Employee
   class Payment < ApplicationRecord
     include AASM
+    include HasState
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.employee.event.id }, only: [:create]

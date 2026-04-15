@@ -51,7 +51,7 @@
             <% elsif can_view_any_check_images %>
               <td></td>
             <% end %>
-            <td><span class="badge bg-<%= check_deposit.state %> m0"><%= check_deposit.state_text %></span></td>
+            <td><span class="badge bg-<%= check_deposit.state_color %> m0"><%= check_deposit.state_text %></span></td>
             <td><%= format_date check_deposit.created_at %></td>
             <td>
               <%= render_money check_deposit.amount_cents %>

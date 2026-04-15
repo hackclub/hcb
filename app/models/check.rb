@@ -53,6 +53,7 @@ class Check < ApplicationRecord
   set_public_id_prefix :chk
 
   include AASM
+  include HasState
 
   include PgSearch::Model
   pg_search_scope :search_recipient, associated_against: { lob_address: :name, event: :name }, against: [:memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "checks.created_at"
@@ -136,7 +137,7 @@ class Check < ApplicationRecord
     end
   end
 
-  def state
+  def state_color
     case status
     when :scheduled, :created
       "pending"

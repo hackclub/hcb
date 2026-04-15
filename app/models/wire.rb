@@ -59,6 +59,7 @@ class Wire < ApplicationRecord
   validates_length_of :payment_for, maximum: 140
 
   include AASM
+  include HasState
   include Freezable
   include Payment
 
@@ -153,7 +154,7 @@ class Wire < ApplicationRecord
     end
   end
 
-  def state
+  def state_color
     if pending?
       :muted
     elsif rejected? || failed?
