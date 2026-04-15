@@ -107,7 +107,7 @@ module Reimbursement
       raise ArgumentError, "must be a failed payout holding" unless failed?
       raise ArgumentError, "ACH must have been rejected / failed" unless ach_transfer.nil? || ach_transfer.failed? || ach_transfer.rejected?
       raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
-      raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.column_rejected? || increase_check.column_stopped?
+      raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.nil? || increase_check.column_rejected? || increase_check.column_stopped?
       raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 
       ActiveRecord::Base.transaction do
