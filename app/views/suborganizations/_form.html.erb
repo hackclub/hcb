@@ -16,7 +16,7 @@
 
   <div class="field">
     <%= form.label :email, "Organizer email", class: "bold" %>
-    <% if event.config.subevent_plan == Event::Plan::HackClubAffiliate.name || event.config.subevent_plan == Event::Plan::HackClubHQ.name %>
+    <% if event.config.subevent_plan.in?([Event::Plan::HackClubAffiliate.name, Event::Plan::HackClubHQ.name]) %>
       <p class="h5 muted mt0 mb1">This should be the full time HQ point of contact for this project. This is likely a gap year.</p>
     <% end %>
     <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
