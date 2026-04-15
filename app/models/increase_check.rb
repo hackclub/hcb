@@ -361,7 +361,9 @@ class IncreaseCheck < ApplicationRecord
 
     reissued_check.save!
 
-    Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+    reimbursement_payout_holding.update!(increase_check_id: reissued_check.id) if reimbursement_payout_holding.present?
+
+    Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code) unless reimbursement_payout_holding.present?
 
     reissued_check.send_check!
   end
