@@ -1,28 +1,25 @@
 <% title "Disbursements" %>
 
-<%= form_with local: true, url: disbursements_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-  <fieldset>
+<%= form_with local: true, class: "card overflow-visible", url: disbursements_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :reviewing do %>
-      <%= form.check_box :reviewing, checked: @reviewing %>
-      Reviewing
+      <%= form.check_box :reviewing, checked: @reviewing %> Reviewing
     <% end %>
     <%= form.label :pending do %>
-      <%= form.check_box :pending, checked: @pending, class: "ml1" %>
-      Pending
+      <%= form.check_box :pending, checked: @pending %> Pending
     <% end %>
     <%= form.label :processing do %>
-      <%= form.check_box :processing, checked: @processing, class: "ml1" %>
-      Processing
+      <%= form.check_box :processing, checked: @processing %> Processing
     <% end %>
-  </fieldset>
-  <%= form.submit "Search" %>
-  <%= link_to disbursement_new_admin_index_path do %>
-    <button class="bg-primary">
-      New Disbursement
-    </button>
-  <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+    <%= link_to disbursement_new_admin_index_path do %>
+      <button class="btn bg-primary" type="button">New Disbursement</button>
+    <% end %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
