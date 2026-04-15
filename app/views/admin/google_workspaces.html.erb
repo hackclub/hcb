@@ -1,35 +1,32 @@
 <% title "Google Workspace Requests" %>
 
-<%= form_with local: true, url: google_workspaces_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-  <fieldset>
+<%= form_with local: true, class: "card overflow-visible", url: google_workspaces_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :needs_ops_review do %>
-      <%= form.check_box :needs_ops_review, checked: @needs_ops_review %>
-      Needs Ops Review
+      <%= form.check_box :needs_ops_review, checked: @needs_ops_review %> Needs Ops Review
     <% end %>
     <%= form.label :configuring do %>
-      <%= form.check_box :configuring, checked: @configuring, class: "ml1" %>
-      Configuring
+      <%= form.check_box :configuring, checked: @configuring %> Configuring
     <% end %>
     <%= form.label :verification_error do %>
-      <%= form.check_box :verification_error, checked: @verification_error, class: "ml1" %>
-      Verification Error
+      <%= form.check_box :verification_error, checked: @verification_error %> Verification Error
     <% end %>
     <%= form.label :revocation_present do %>
-      <%= form.check_box :revocation_present, checked: @revocation_present, class: "ml1" %>
-      Has Revocation
+      <%= form.check_box :revocation_present, checked: @revocation_present %> Has Revocation
     <% end %>
     <%= form.label :pending_deletion do %>
-      <%= form.check_box :pending_deletion, checked: @pending_deletion, class: "ml1" %>
-      Revoked, Ready for Deletion
+      <%= form.check_box :pending_deletion, checked: @pending_deletion %> Revoked, Ready for Deletion
     <% end %>
-  </fieldset>
-  <%= form.submit "Search" %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
-  <%= form.submit "Attempt to verify all currently verifying domains" %>
+  <%= form.submit "Attempt to verify all currently verifying domains", class: "mt-2" %>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

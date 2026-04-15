@@ -1,15 +1,16 @@
 <% title "ACHs" %>
 
-<%= form_with local: true, url: ach_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-  <div class="mb1">
-    <%= form.label :pending do %>
-      <%= form.check_box :pending, checked: @pending %>
-      Pending
-    <% end %>
+<%= form_with local: true, class: "card overflow-visible", url: ach_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
   </div>
-  <%= form.submit "Search" %>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :pending do %>
+      <%= form.check_box :pending, checked: @pending %> Pending
+    <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

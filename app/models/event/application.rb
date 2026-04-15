@@ -118,9 +118,10 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted
+        transitions from: :draft, to: :submitted, if: :ready_to_submit?
+
         after do
-          update!(teen_led: user.is_teenager?, archived_at: nil)
+          update!(archived_at: nil)
 
           if teen_led?
             send_contract
@@ -275,20 +276,6 @@ class Event
       fs_contract
     end
 
-    def ready_to_submit?
-      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
-
-      if user.is_minor?
-        required_fields.push("cosigner_email")
-      end
-
-      missing_fields = required_fields.any? do |field|
-        self[field].nil?
-      end
-
-      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
-    end
-
     def response_time
       teen_led? ? "2 business days" : "2 weeks"
     end
@@ -409,6 +396,42 @@ class Event
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
         errors.add(:cosigner_email, "cannot change after the cosigner has signed")
       end
+    end
+
+    def ready_to_submit?
+      application_ready_to_submit? && user_ready_to_submit?
+    end
+
+    def application_ready_to_submit?
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
+
+      if user.is_minor?
+        required_fields.push("cosigner_email")
+      end
+
+      unless teen_led?
+        required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
+
+        if committed_amount&.positive?
+          required_fields.push("funding_source")
+        end
+      end
+
+      missing_fields = required_fields.any? do |field|
+        self[field].nil? || self[field] == ""
+      end
+
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+    end
+
+    def user_ready_to_submit?
+      required_fields = ["full_name", "phone_number", "birthday"]
+
+      missing_fields = required_fields.any? do |field|
+        !user[field].present?
+      end
+
+      !missing_fields
     end
 
   end
