@@ -73,7 +73,7 @@
 <p>This transfer's status is <b><%= @paypal_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
 
 <% if @paypal_transfer.may_mark_approved? %>
-  <%= button_to "💸 Approve and send transfer", approve_paypal_transfer_path(@paypal_transfer), method: :post, data: { confirm: "Have you manually sent this transfer? HCB doesn't programmatically send PayPal transfers." } %>
+  <%= button_to "💸 Approve and send transfer", approve_paypal_transfer_path(@paypal_transfer), method: :post, class: "btn bg-success", data: { confirm: "Have you manually sent this transfer? HCB doesn't programmatically send PayPal transfers." } %>
 <% end %>
 
 <% if @paypal_transfer.may_mark_rejected? %>
@@ -82,11 +82,11 @@
       <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
     </div>
-    <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+    <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." }, class: "btn btn--destroy" %>
     <small>(This requires you to communicate to the organizer about the reason why.)</small>
   <% end %>
 <% end %>
 
 <% if @paypal_transfer.may_mark_failed? %>
-  <%= button_to "Mark failed", mark_failed_paypal_transfer_path(@paypal_transfer) %>
+  <%= button_to "Mark failed", mark_failed_paypal_transfer_path(@paypal_transfer), class: "btn btn--destroy" %>
 <% end %>

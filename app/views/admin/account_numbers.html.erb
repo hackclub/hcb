@@ -7,7 +7,7 @@
     <%= form.select :account_number_type, [["All", "0"], ["Deposit only", "1"], ["Spend + Deposit", "2"]], selected: @account_number_type %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 

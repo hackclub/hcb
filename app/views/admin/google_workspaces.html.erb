@@ -21,12 +21,12 @@
     <%= form.label :pending_deletion do %>
       <%= form.check_box :pending_deletion, checked: @pending_deletion %> Revoked, Ready for Deletion
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
 <%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
-  <%= form.submit "Attempt to verify all currently verifying domains", class: "mt-2" %>
+  <%= form.submit "Attempt to verify all currently verifying domains", class: "btn btn-default mt-2" %>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

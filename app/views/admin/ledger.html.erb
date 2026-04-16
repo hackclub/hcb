@@ -32,7 +32,7 @@
         Mapped by Human
         <% end %>
     </fieldset>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
@@ -97,7 +97,7 @@
 
   <div class="flex mt-2 gap-2 items-center justify-end">
       <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !w-56" %>
-      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
+      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?", class: "btn bg-success" %>
   </div>
 <% end %>
 

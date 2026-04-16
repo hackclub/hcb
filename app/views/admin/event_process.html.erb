@@ -5,11 +5,13 @@
 
   <%= form_with(model: false, local: true, url: event_toggle_approved_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Mark as pending",
+      class: "btn btn-default",
       data: { confirm: "This event was previously approved. Are you sure you want to undo that and mark it as pending?" } %>
   <% end %>
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
+      class: "btn btn--destroy",
       data: { confirm: "Are you sure you want to reject this event? This can not be undone." } %>
   <% end %>
 
@@ -17,11 +19,12 @@
   <p>This event is currently <strong>pending</strong> your review.</p>
 
   <%= form_with(model: false, local: true, url: event_toggle_approved_admin_path(@event), method: :put) do |form| %>
-    <%= form.submit "Approve event" %>
+    <%= form.submit "Approve event", class: "btn bg-success" %>
   <% end %>
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
+      class: "btn btn--destroy",
       data: { confirm: "Are you sure you want to reject this event? This can not be undone." } %>
   <% end %>
 

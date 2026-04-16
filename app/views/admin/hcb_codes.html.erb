@@ -16,7 +16,7 @@
       <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
   <% end %>
   <div class="ml-auto">
-    <%= form.submit "Search" %>
+    <%= form.submit "Search", class: "btn bg-info" %>
     <%= link_to @params.merge(format: :csv) do %>
       <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
     <% end %>

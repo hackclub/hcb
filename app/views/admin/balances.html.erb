@@ -3,7 +3,7 @@
 <%= form_with local: true, action: :balances, method: :get, data: { "turbo": "false" } do |form| %>
   <div class="inline-block">
     <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
-    <%= button_tag("Search") %>
+    <%= button_tag("Search", class: "btn bg-info") %>
     <%= render partial: "admin/events_filter", locals: { form:, submit_disable_with_false: true, show_new: false } %>
     <br><br>
 
@@ -25,9 +25,9 @@
             EXPORT
           </b>
         </span>
-        <%= button_tag("CSV", value: "csv", name: "format", disable_with: false, formtarget: "_blank") %>
-        <%= button_tag("JSON", value: "json", name: "format", disable_with: false, formtarget: "_blank") %>
-        <%= button_tag("CSV (breakdown)", value: "true", name: "monthly_breakdown", type: "submit", formaction: "/admin/balances.csv", disable_with: false, formtarget: "_blank") %>
+        <%= button_tag("CSV", value: "csv", name: "format", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
+        <%= button_tag("JSON", value: "json", name: "format", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
+        <%= button_tag("CSV (breakdown)", value: "true", name: "monthly_breakdown", type: "submit", formaction: "/admin/balances.csv", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
       </div>
     </div>
   </div>

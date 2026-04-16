@@ -6,7 +6,7 @@
   </div>
   <%= form_with local: true, url: raw_intrafi_transactions_import_admin_index_path, method: :post, class: "mb-0" do |form| %>
     <%= form.file_field :file, accept: ".csv", class: "mb-0" %>
-    <%= form.submit class: "mb-0", value: "Import" %>
+    <%= form.submit class: "btn btn-default mb-0", value: "Import" %>
   <% end %>
 </div>
 

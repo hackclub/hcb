@@ -7,7 +7,7 @@
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 

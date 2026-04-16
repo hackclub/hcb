@@ -4,9 +4,7 @@
   Displaying <%= pluralize(@count, "Bank Account") %>.
 </p>
 
-<%= link_to new_bank_account_path do %>
-  <button class="mb2">Link new bank account</button>
-<% end %>
+<%= link_to "Link new bank account", new_bank_account_path, class: "btn btn-default mb2" %>
 
 <div class="table-container">
 <table>
@@ -31,7 +29,7 @@
         <td><%= ba.failed_at %></td>
         <td><%= ba.failure_count %></td>
         <td>
-          <%= button_to ba.should_sync_v2? ? "Disable" : "Enable", ba, method: :patch, class: ("admin-bg-red" if ba.should_sync_v2?), params: { bank_account: { should_sync_v2: !ba.should_sync_v2? } } %>
+          <%= button_to ba.should_sync_v2? ? "Disable" : "Enable", ba, method: :patch, class: (ba.should_sync_v2? ? "btn btn--destroy" : "btn btn-default"), params: { bank_account: { should_sync_v2: !ba.should_sync_v2? } } %>
           <%= link_to "Reauthenticate", bank_account_reauthenticate_path(ba) %>
         </td>
       </tr>

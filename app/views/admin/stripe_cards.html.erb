@@ -3,7 +3,7 @@
 <%= form_with method: :get, class: "card" do |form| %>
   <div class="flex items-center gap-2">
     <%= form.text_field :q, value: @q, placeholder: "Search", class: "!max-w-full w-full" %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 

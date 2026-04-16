@@ -136,7 +136,7 @@
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
     </div>
     <%= form.submit "Reject disbursement",
-      class: "admin-bg-orange",
+      class: "btn btn--destroy",
       data: { confirm: "Are you sure you want to reject this disbursement?" } %>
   <% end %>
 <% else %>
@@ -148,7 +148,7 @@
   <% end %>
 
   <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
-    <%= form.submit "Approve disbursement" %>
+    <%= form.submit "Approve disbursement", class: "btn bg-success" %>
   <% end %>
 
   <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
@@ -157,7 +157,7 @@
       <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
     </div>
     <%= form.submit "Reject disbursement",
-      class: "admin-bg-orange",
+      class: "btn btn--destroy",
       data: { confirm: "Are you sure you want to reject this disbursement?" } %>
   <% end %>
 <% end %>

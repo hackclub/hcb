@@ -8,7 +8,7 @@
     <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 

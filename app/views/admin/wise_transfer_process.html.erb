@@ -159,7 +159,7 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
-        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "my-3" %>
+        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "btn bg-success my-3" %>
 
       </fieldset>
 
@@ -171,7 +171,7 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." }, class: "btn btn--destroy" %>
         <% end %>
 
       </fieldset>
@@ -198,7 +198,7 @@
                 ) %>
           </div>
 
-          <%= form.submit "Save", class: "mb-0" %>
+          <%= form.submit "Save", class: "btn bg-success mb-0" %>
         <% end %>
       </fieldset>
 
@@ -225,7 +225,7 @@
             Insufficient funds, please reject this transfer
           </p>
           <div class="flex flex-row justify-start items-center gap-3 mb-4 mt-2">
-            <%= form.submit "🏦 Update amount", class: "mb-0" %>
+            <%= form.submit "🏦 Update amount", class: "btn bg-success mb-0" %>
             <em class="m-0"><small class="m-0">This will update the pending amount</small></em>
           </div>
         <% end %>
@@ -237,7 +237,7 @@
             <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
             <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
           </div>
-          <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
+          <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "btn btn-default mb-0" %>
         <% end %>
 
       </fieldset>
@@ -251,7 +251,7 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." }, class: "btn btn--destroy" %>
         <% end %>
 
       </fieldset>
@@ -270,7 +270,7 @@
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
             <%= form.text_area :reason, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Mark failed", data: { confirm: "Mark as failed?" } %>
+          <%= form.submit "Mark failed", data: { confirm: "Mark as failed?" }, class: "btn btn-default" %>
         <% end %>
       </fieldset>
     <% end %>

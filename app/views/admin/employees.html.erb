@@ -3,7 +3,7 @@
 <%= form_with method: :get, class: "card" do |form| %>
   <div class="flex items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
@@ -33,7 +33,7 @@
           <% if employee.onboarding? %>
             <%= form_with model: false, local: true, url: employee_onboard_path(employee), method: :post do |form| %>
               <%= form.text_field :gusto_id, style: "width: 300px;", placeholder: "Gusto ID" %>
-              <%= form.submit "Onboard" %>
+              <%= form.submit "Onboard", class: "btn bg-success" %>
             <% end %>
           <% end %>
           <%= link_to "Mark terminated", employee_terminate_path(employee), method: :post if employee.onboarded? %>
