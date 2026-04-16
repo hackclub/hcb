@@ -1,5 +1,15 @@
 <% title "Disbursements" %>
 
+<div class="flex w-full mb-2 items-center">
+  <h2 class="flex-1">Disbursements</h2>
+  <%= link_to disbursement_new_admin_index_path do %>
+    <button class="btn bg-primary" type="button">
+      <%= inline_icon "plus" %>
+      New disbursement
+    </button>
+  <% end %>
+</div>
+
 <%= form_with local: true, class: "card overflow-visible", url: disbursements_admin_index_path, method: :get do |form| %>
   <div class="flex flex-col sm:flex-row items-center gap-2">
     <%= render "events/filters/search", form: %>
@@ -16,18 +26,8 @@
       <%= form.check_box :processing, checked: @processing %> Processing
     <% end %>
     <%= form.submit "Search", class: "btn bg-info ml-auto" %>
-    <%= link_to disbursement_new_admin_index_path do %>
-      <button class="btn bg-primary" type="button">New Disbursement</button>
-    <% end %>
   </div>
 <% end %>
-
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @disbursements, entry_name: "disbursements" %>
-  </div>
-  <%= paginate @disbursements %>
-</div>
 
 <div class="table-container">
 <table>
@@ -75,6 +75,13 @@
     <% end %>
   </tbody>
 </table>
+
+  <div class="table-footer">
+    <div class="flex-grow">
+      <%= page_entries_info @disbursements, entry_name: "disbursements" %>
+    </div>
+    <%= paginate @disbursements %>
+  </div>
 </div>
 
 <%= paginate @disbursements %>

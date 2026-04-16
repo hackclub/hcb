@@ -28,13 +28,6 @@
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @invoices, entry_name: "invoices" %>
-  </div>
-  <%= paginate @invoices %>
-</div>
-
 <div class="table-container">
 <table>
   <thead>
@@ -75,6 +68,15 @@
     <% end %>
   </tbody>
 </table>
+
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @invoices, entry_name: "invoices" %>
+  </div>
+  <%= paginate @invoices %>
+</div>
+
 </div>
 
 <%= paginate @invoices %>

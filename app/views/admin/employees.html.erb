@@ -7,10 +7,6 @@
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <%= page_entries_info @employees, entry_name: "employees" %>
-</div>
-
 <div class="table-container">
 <table>
   <thead>
@@ -42,6 +38,11 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <%= page_entries_info @employees, entry_name: "employees" %>
+</div>
+
 </div>
 
 <%= paginate @employees %>

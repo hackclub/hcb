@@ -215,6 +215,19 @@ details:not(:has(> summary.visual-table-row)) {
 
 .table-container {
   max-width: unset !important;
+  margin-top: 15px;
+}
+
+.table-footer {
+  background-color: rgba(200, 200, 200, 0.2);
+  padding: 0 20px;
+  border-radius: 10px;
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  left: 10px;
+  min-height: 50px;
 }
 
 .skip-to-main {
