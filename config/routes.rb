@@ -228,6 +228,8 @@ Rails.application.routes.draw do
       get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
+      get "event_search", to: "admin#event_search"
+      get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
