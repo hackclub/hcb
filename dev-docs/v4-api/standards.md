@@ -28,10 +28,18 @@ Every top-level API object **must** include the following fields:
 | `object`     | `string` | A machine-readable type label (e.g. `transaction`, `ach_transfer`). Derived from the model name. |
 | `created_at` | `string` | ISO 8601 timestamp of when the object was created. |
 
-### The `json_object` Helper
+### The `object_shape` Helper
 
-Use the `json_object` helper to set these three fields consistently across all partials:
+Use the `object_shape` helper to set these three fields consistently across all partials:
 
+```ruby
+def object_shape(json, object, &block)
+  json.id object.public_id
+  json.object object.model_name.element
+  block.call
+  json.created_at object.created_at
+end
+```
 
 This helper derives the `object` field automatically from the model's class name (e.g. an `AchTransfer` record produces `"ach_transfer"`), so you never need to hardcode it.
 
@@ -43,14 +51,14 @@ Some internal model names don't match their public API name. The helper consults
 |---------|--------------------|
 | `Event` | `"organization"`   |
 
-If you need to add a new override, update the override list in the `json_object` helper. **Do not** pass the name manually at the call site.
+If you need to add a new override, update the override list in the `object_shape` helper. **Do not** pass the name manually at the call site.
 
-Every object's partial should begin with a call to `json_object`:
+Every object's partial should begin with a call to `object_shape`:
 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
 
-json_object(json, ach_transfer)
+object_shape(json, ach_transfer)
 
 json.recipient_name ach_transfer.recipient_name
 json.amount_cents ach_transfer.amount
@@ -246,7 +254,7 @@ Every API-representable model **must** have a single canonical jbuilder partial 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
 
-json_object(json, ach_transfer)
+object_shape(json, ach_transfer)
 
 json.recipient_name ach_transfer.recipient_name
 json.recipient_email ach_transfer.recipient_email
@@ -345,7 +353,7 @@ All monetary values are represented in **cents** (the smallest currency unit) as
 
 Before opening a PR that adds or modifies a V4 API endpoint, verify:
 
-- [ ] Every returned object has `id`, `object`, and `created_at` (via `json_object`)
+- [ ] Every returned object has `id`, `object`, and `created_at` (via `object_shape`)
 - [ ] Public IDs are used (never raw database IDs)
 - [ ] Routing is shallow (max one level of nesting)
 - [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
