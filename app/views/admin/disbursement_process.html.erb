@@ -8,7 +8,7 @@
 
 <h3>Disbursement Details</h3>
 
-<table class="table--autosize no-stripes">
+<table class="table-container table--autosize">
   <tbody>
   <tr>
     <td class="text-right">HCB Code:</td>
@@ -80,7 +80,7 @@
 <% if @disbursement.transactions_helper.settled_destination.empty? && @disbursement.transactions_helper.pending_destination.empty? %>
   <p>Destination transactions for this disbursement have not been created yet. Once created, they will have the following properties:</p>
 
-  <table class="table--autosize no-stripes">
+  <table class="table-container table--autosize">
     <tr>
       <td class="text-right">
         Category:

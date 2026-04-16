@@ -9,7 +9,7 @@
         method: :patch,
         id: dom_id(@event, :event_groups_form)
       ) do %>
-    <table class="no-stripes min-w-0 w-auto">
+    <table class="table-container min-w-0 w-auto">
       <tbody>
       <% @event_groups.each do |group| %>
         <% check_box_id = [dom_id(@event), dom_id(group)].join("_") %>

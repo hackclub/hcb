@@ -2,7 +2,7 @@
 
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
-<table class="no-stripes <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+<table class="table-container <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
   <tbody>
     <tr>
       <th>ID</th>
@@ -152,7 +152,7 @@
 <% if @potential_donation_payouts.present? %>
   <h4>Potential DonationPayouts to Map to</h4>
 
-  <table>
+  <table class="table-container">
     <tbody>
       <% @potential_donation_payouts.each do |pdp| %>
         <tr>
@@ -172,7 +172,7 @@
 <% if @potential_invoice_payouts.present? %>
   <h4>Potential InvoicePayouts to Map to</h4>
 
-  <table>
+  <table class="table-container">
     <tbody>
       <% @potential_invoice_payouts.each do |pdp| %>
         <tr>
@@ -191,7 +191,7 @@
 <% if @canonical_pending_transactions.present? %>
   <h4>Potential Pending Transactions to Map to</h4>
 
-  <table>
+  <table class="table-container">
     <tbody>
       <% @canonical_pending_transactions.each do |cpt| %>
         <tr>
