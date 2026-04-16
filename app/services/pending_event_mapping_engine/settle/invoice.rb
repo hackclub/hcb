@@ -36,7 +36,7 @@ module PendingEventMappingEngine
               canonical_transaction: ct,
               canonical_pending_transaction: cpt
             ).run!
-          else
+          elsif invoice.manually_marked_as_paid? || invoice.arriving_late?
             # invoice.manually_marked_as_paid? as true typically
             # special case for invoices that are marked paid but are missing a payout! these seem to be sent to bill.com
             # these typically can match based on amount cents and nearest date as a result

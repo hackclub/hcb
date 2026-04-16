@@ -16,6 +16,9 @@
 
   <div class="field">
     <%= form.label :email, "Organizer email", class: "bold" %>
+    <% if event.config.subevent_plan.in?([Event::Plan::HackClubAffiliate.name, Event::Plan::HackClubHQ.name]) %>
+      <p class="h5 muted mt0 mb1">This should be the full time HQ point of contact for this project. This is likely a gap year.</p>
+    <% end %>
     <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
   </div>
 
@@ -25,7 +28,7 @@
   </div>
 
   <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-menu-update-on-resize-value="true" data-menu-content-id-value="scoped_tag_menu" data-menu-append-to-value="#add_scoped_tag_field">
-    <%= form.label "scoped_tags[]", "Tags", class: "bold mb-1" %>
+    <%= form.label "scoped_tags[]", "Tags", class: "bold" %>
 
     <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
       <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
