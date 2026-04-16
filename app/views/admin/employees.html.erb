@@ -11,7 +11,8 @@
   <%= page_entries_info @employees, entry_name: "employees" %>
 </div>
 
-<table class="table-container">
+<div class="table-container">
+<table>
   <thead>
     <tr>
       <th>Name</th>
@@ -41,5 +42,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
 
 <%= paginate @employees %>

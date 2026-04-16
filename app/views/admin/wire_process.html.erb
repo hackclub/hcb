@@ -26,7 +26,8 @@
   <div>
     <h3>Transfer Details</h3>
 
-    <table class="table-container table--autosize">
+    <div class="table-container">
+    <table class="table--autosize">
       <tbody>
         <tr>
           <td>Event:</td>
@@ -119,6 +120,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <%= render partial: "receipts/receipt", collection: @wire.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
   </div>

@@ -33,7 +33,8 @@
   <div>
     <h3>Transfer Details</h3>
     <p>Requested at <%= format_datetime @wise_transfer.created_at %></p>
-    <table class="table-container w-full table-fixed border-box max-w-[500px] min-w-0">
+    <div class="table-container">
+    <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
       <tbody>
         <tr>
           <td>HCB Code</td>
@@ -91,8 +92,10 @@
         <% end %>
       </tbody>
     </table>
+    </div>
 
-    <table class="table-container w-full table-fixed border-box max-w-[500px] min-w-0">
+    <div class="table-container">
+    <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
       <tbody>
         <tr>
           <td>Sent To:</td>
@@ -146,6 +149,7 @@
         <% end %>
       </tbody>
     </table>
+    </div>
   </div>
 
   <div>

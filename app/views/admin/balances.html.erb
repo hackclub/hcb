@@ -36,7 +36,8 @@
 
 <p><%= pluralize(@count, "result") %></p>
 
-<table class="table-container">
+<div class="table-container">
+<table>
   <thead>
   <tr>
     <% @headers.each do |header| %>
@@ -64,6 +65,7 @@
   <% end %>
   </tbody>
 </table>
+</div>
 
 <% if @count.zero? %>
   <%= blankslate "No events." %>

@@ -18,7 +18,8 @@
   <%= paginate @messages %>
 </div>
 
-<table class="table-container">
+<div class="table-container">
+<table>
   <thead>
     <tr>
       <th class="w-16">ID</th>
@@ -51,6 +52,7 @@
     <% end %>
   </tbody>
 </table>
+</div>
 
 <% @messages.each do |msg| %>
   <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">

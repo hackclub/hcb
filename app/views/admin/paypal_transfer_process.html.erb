@@ -10,7 +10,8 @@
 
 <h3>Transfer Details</h3>
 
-<table class="table-container table--autosize">
+<div class="table-container">
+<table class="table--autosize">
   <tbody>
     <tr>
       <td style="text-align: right;">Requested at:</td>
@@ -63,6 +64,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 <%= render partial: "receipts/receipt", collection: @paypal_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
 

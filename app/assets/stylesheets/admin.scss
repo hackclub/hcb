@@ -502,9 +502,8 @@ video {
   background: #ec3750;
 }
 
-.table--autosize {
-  width: auto;
-  min-width: 0;
+.table-container {
+  max-width: unset !important;
 }
 
 .nav-row-scroll-container .nav-item:not(:last-child) {
@@ -660,21 +659,6 @@ form:has(> #admin-logout-button) {
     padding: 0;
     margin: 0;
     color: inherit;
-  }
-}
-.command-bar-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  color: inherit;
-  transition: background-color 0.125s ease-in-out;
-  cursor: pointer;
-  &:hover {
-    transition-duration: 0s;
-  }
-  &:active {
-    transition-duration: 0.125s;
   }
 }
 

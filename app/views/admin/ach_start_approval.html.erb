@@ -27,7 +27,8 @@
     <h3>Transfer Details</h3>
 
     <%= turbo_frame_tag "admin_ach_#{@ach_transfer.id}" do %>
-      <table class="table-container table--autosize">
+      <div class="table-container">
+      <table class="table--autosize">
         <tbody>
           <% if @ach_transfer.creator %>
             <tr>
@@ -141,6 +142,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% end %>
 
     <% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>

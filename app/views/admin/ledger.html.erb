@@ -44,7 +44,8 @@
 </div>
 
 <%= form_with local: true, url: set_event_multiple_transactions_path, method: :post do |form| %>
-  <table class="table-container">
+  <div class="table-container">
+  <table>
     <thead>
       <tr>
         <th class="w-8"></th>
@@ -88,6 +89,7 @@
       <% end %>
     </tbody>
   </table>
+  </div>
 
   <% if @canonical_transactions.empty? %>
     <%= blankslate "No transactions match your search parameters" %>

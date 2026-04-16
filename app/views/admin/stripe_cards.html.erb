@@ -11,7 +11,8 @@
   <%= page_entries_info @cards, entry_name: "cards" %>
 </div>
 
-<table class="table-container">
+<div class="table-container">
+<table>
   <thead>
     <tr>
       <th>ID</th>
@@ -39,5 +40,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
 
 <%= paginate @cards %>
