@@ -506,31 +506,6 @@ video {
   list-style: none;
   padding: 0;
   height: 30px;
-  .first {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .prev {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .page {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .next {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .last {
-    padding: 0;
-    float: none;
-    border: none;
-  }
 }
 
 .admin-bg-red {
@@ -547,10 +522,6 @@ video {
 
 .admin-bg-transit {
   background-color: var(--hcb-accent-transit) !important;
-}
-
-.admin-bg-active {
-  background: var(--hcb-accent-active) !important;
 }
 
 .admin-bg-warning {
@@ -614,10 +585,6 @@ video {
   flex-direction: row;
 }
 
-.admin-nav-item:active {
-  pointer-events: none;
-}
-
 .admin-menu-content {
   min-width: calc(100vw / 6);
   width: calc(100vw / 6);
@@ -644,57 +611,6 @@ nav {
   gap: 8px;
 }
 
-summary:hover + detail,
-detail:hover,
-details:hover > .dropdown {
-  display: block;
-}
-
-detail,
-.dropdown {
-  display: none;
-}
-
-.role-badge {
-  margin-bottom: 0px !important;
-}
-
-.sub-items {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid var(--hcb-bg-3);
-  box-shadow: var(--shadow-lg);
-  border-top: none;
-  border-radius: 0px 0px 4px 4px;
-  z-index: 999;
-  overflow: hidden;
-  position: relative;
-  margin-top: -5px;
-  padding-top: 9px;
-  margin-left: -2px;
-}
-
-.sub-items > a:last-child {
-  border-radius: 0px 0px 4px 4px;
-}
-
-.sub-items > a {
-  text-transform: capitalize;
-  pointer-events: auto;
-  color: var(--hcb-tx-1);
-  text-decoration: none;
-  background: #fff;
-  min-width: 220px;
-  padding: 8px 12px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  &:not(:first-child) {
-    border-top: 1px solid var(--hcb-bg-3);
-  }
-}
-
 .badge {
   margin-left: 0.4rem;
 }
@@ -703,45 +619,12 @@ detail,
   margin-left: 0.2rem;
 }
 
-.sub-items > a:hover {
-  color: var(--hcb-tx-1);
-  background: var(--hcb-bg-2);
-}
-
 .nav-item {
   padding: 4px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-}
-
-.role-badge {
-  padding-right: 12px;
-  margin-bottom: 16px;
-}
-
-.role-badge > b {
-  text-transform: uppercase;
-}
-
-.badge-admin {
-  background: rgba(236, 55, 80, 0.4);
-}
-
-.h-38 {
-  height: 38px;
-}
-
-.admin-nav-item {
-  position: relative;
-}
-
-.admin-nav-item {
-  padding: 0 !important;
-  background: none !important;
-  border: none !important;
-  border-radius: none !important;
 }
 
 summary {
