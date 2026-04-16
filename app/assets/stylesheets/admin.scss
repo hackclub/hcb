@@ -38,10 +38,6 @@ $mono:
   overflow: hidden;
 }
 
-// // https://raw.githubusercontent.com/waldyrious/downstyler/master/downstyler.css
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Make HTML more responsive (adapted from https://fluidity.sexy ← note: dead link)               */
-// /* ---------------------------------------------------------------------------------------------- */
 img,
 canvas,
 iframe,
@@ -56,9 +52,6 @@ pre {
   overflow-x: auto;
 }
 
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Box-model fix (adapted from https://css-tricks.com/box-sizing/)                                */
-// /* ---------------------------------------------------------------------------------------------- */
 html {
   box-sizing: border-box;
 }
@@ -68,63 +61,9 @@ html {
   box-sizing: border-box;
 }
 
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Size text according to screen width (adapted from https://css-tricks.com/molten-leading-css/)  */
-// /* ---------------------------------------------------------------------------------------------- */
 html {
   font-size: clamp(1rem, calc(8px + 0.5vw), 1.2rem);
 }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Improved typography (adapted from http://bettermotherfuckingwebsite.com)                       */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { line-height: 1.5; margin: 0 auto; max-width: 300em; padding: 1em; }
-// h1, h2, h3, h4, h5, h6 { margin-top: 1em; margin-bottom: 0.5em; line-height: 1.2; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Improved contrast (adapted from https://jgthms.com/web-design-in-4-minutes/)                   */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { color: #333; }
-// :not(a[href]) b, :not(a[href]) strong, th { color: #222; }
-// a[href] { color: RoyalBlue; } a[href]:visited { color: BlueViolet; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Clean table style table (adapted from http://getskeleton.com)                                  */
-// /* ---------------------------------------------------------------------------------------------- */
-// table { border-collapse: collapse; }
-// th, td { padding-left: .5em; padding-right: 1em; text-align: left; border: 1px solid #ddd; }
-// th, thead, tfoot { background: #eee; font-weight: bold; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Logarithmic size scale for headings (https://github.com/waldyrious/downstyler/issues/30)       */
-// /* ---------------------------------------------------------------------------------------------- */
-// h1 { color: #111; font-size: 200.00%; /* 2^(6/6) */ }
-// h2 { color: #222; font-size: 178.18%; /* 2^(5/6) */ }
-// h3 { color: #333; font-size: 158.74%; /* 2^(4/6) */ }
-// h4 { color: #444; font-size: 141.42%; /* 2^(3/6) */ }
-// h5 { color: #555; font-size: 125.99%; /* 2^(2/6) */ }
-// h6 { color: #666; font-size: 112.25%; /* 2^(1/6) */ }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Additional adjustments.                                                                        */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { font-family: 'Libertinus Serif', 'Crimson Text', serif; }
-// pre, code, kbd, samp, tt { padding: .1em .3em; margin: 0 .1em; font-size: 80%; }
-// pre, code, kbd, samp, tt { background: #eee; border: 1px solid #ccc; }
-// pre > code { border: none; margin: 0; padding: 0; font-size: 100%; }
-// textarea { vertical-align: text-top; }
-// textarea, input[type=text], input:not([type]) { font-family: monospace; font-size: 80%; }
-// input[type] { font-family: sans-serif; font-size: 100%; }
-// blockquote { padding-left: 1em; margin-left: 0; border-left: 5px solid #ddd; color: #666; }
-// img[align="right"] { margin-left: 1em; } img[align="left"] { margin-right: 1em; }
-// figcaption { font: caption; color: #999; font-size: 75% !important; }
-// *[class*="social"] svg, *[class*="icon"] svg, svg[class*="icon"], img[class*="emoji"][src$=".svg"]
-// { max-height: 30px; } /* Prevent blowing up SVG images that are meant to be small */
-// *[class*="logo" i] svg, *[id*="logo" i] svg { max-width: 100px; }
-
-/* ---------------------------------------------------------------------------------------------- */
-/* CLASSLESS HACK CLUB THEME                                                                      */
-/* ---------------------------------------------------------------------------------------------- */
 
 :root {
   --hcb-font-sans:
@@ -143,7 +82,7 @@ html {
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
   --hcb-link-tx: #ffffff;
-  --hcb-accent: #338eda; // button color
+  --hcb-accent: #338eda;
   --hcb-primary: #ec3750;
   --hcb-accent-red: #ffcccc;
   --hcb-accent-orange: #ff8c38;
@@ -163,7 +102,7 @@ html[data-dark='true'] {
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
   --hcb-link-tx: #ffffff;
-  --hcb-accent: #338eda; // button color
+  --hcb-accent: #338eda;
   --hcb-accent-red: #916262;
   --hcb-accent-orange: #bf6a2e;
   --hcb-accent-pending: #544d29;
@@ -195,25 +134,21 @@ html,
 input,
 select,
 button {
-  /* Set body font family */
   font-family: var(--hcb-font-sans);
 }
 
 body {
-  /* Center body in page */
   margin: 0 auto;
   border-radius: 6px;
   word-break: break-word;
   overflow-wrap: break-word;
   background: var(--hcb-bg-1);
 
-  /* Main body text */
   color: var(--hcb-tx-2);
   line-height: 1.5;
 }
 
 ::selection {
-  /* Set background color for selected text */
   background: var(--hcb-accent);
   color: var(--hcb-accent-tx);
 }
@@ -277,7 +212,6 @@ a:hover {
 }
 
 abbr:hover {
-  /* Set the '?' cursor while hovering an abbreviation */
   cursor: help;
 }
 
@@ -300,7 +234,6 @@ header {
   background: var(--hcb-bg-2);
   border-bottom: 1px solid var(--hcb-bg-3);
   padding: 2rem 1.5rem;
-  /* This sets the right and left margins to cancel out the body's margins. It's width is still the same, but the background stretches across the page's width. */
   margin: -2rem calc(50% - 50vw) 2rem;
   padding-left: calc(50vw - 50%);
   padding-right: calc(50vw - 50%);
@@ -372,7 +305,6 @@ code,
 pre,
 kbd,
 samp {
-  /* Set the font family for monospaced elements */
   font-family: var(--hcb-font-mono);
 }
 
@@ -380,17 +312,14 @@ code,
 samp,
 kbd,
 pre {
-  /* The main preformatted style. This is changed slightly across different cases. */
   background: var(--hcb-bg-2);
   border: 1px solid var(--hcb-bg-3);
   border-radius: 4px;
   padding: 3px 6px;
-  /* font-size is relative to containing element, so it scales for titles*/
   font-size: 0.8em;
 }
 
 kbd {
-  /* Makes the kbd element look like a keyboard key */
   border-bottom: 3px solid var(--hcb-bg-3);
 }
 
@@ -401,7 +330,6 @@ pre {
 }
 
 pre code {
-  /* When <code> is in a <pre>, reset it's formatting to blend in */
   background: inherit;
   font-size: inherit;
   color: inherit;
@@ -411,7 +339,6 @@ pre code {
 }
 
 code pre {
-  /* When <pre> is in a <code>, reset it's formatting to blend in */
   display: inline;
   background: inherit;
   font-size: inherit;
@@ -422,7 +349,6 @@ code pre {
 }
 
 details:not(:has(> summary.visual-table-row)) {
-  /* Make the <details> look more "clickable" */
   padding: 0.6rem 1rem;
   background: var(--hcb-bg-2);
   border: 1px solid var(--hcb-bg-3);
@@ -430,23 +356,19 @@ details:not(:has(> summary.visual-table-row)) {
 }
 
 summary {
-  /* Makes the <summary> look more like a "clickable" link with the pointer cursor */
   cursor: pointer;
   font-weight: bold;
 }
 
 details[open] {
-  /* Adjust the <details> padding while open */
   padding-bottom: 0.75rem;
 }
 
 details[open] summary {
-  /* Adjust the <details> padding while open */
   margin-bottom: 6px;
 }
 
 details[open] > *:last-child {
-  /* Resets the bottom margin of the last element in the <details> while <details> is opened. This prevents double margins/paddings. */
   margin-bottom: 0;
 }
 
@@ -455,12 +377,10 @@ dt {
 }
 
 dd::before {
-  /* Add an arrow to data table definitions */
   content: '→ ';
 }
 
 hr {
-  /* Reset the border of the <hr> separator, then set a better line */
   border: 0;
   border-bottom: 1px solid var(--hcb-bg-3);
   margin: 1rem auto;
@@ -471,7 +391,6 @@ legend {
 }
 
 table {
-  /* border-collapse sets the table's elements to share borders, rather than floating as separate "boxes". */
   border-collapse: collapse;
   width: 100%;
   min-width: 76rem;
@@ -489,7 +408,6 @@ thead th {
 }
 
 tr:nth-child(even) {
-  /* Set every other cell slightly darker. Improves readability. */
   background: var(--hcb-bg-2);
 }
 
@@ -505,13 +423,11 @@ table caption {
 }
 
 textarea {
-  /* Don't let the <textarea> extend off the screen naturally or when dragged by the user */
   max-width: 100%;
 }
 
 ol,
 ul {
-  /* Replace the browser default padding */
   padding-left: 2rem;
 }
 
@@ -551,7 +467,6 @@ video {
   max-width: 100%;
 }
 
-/* Skip to main navigation item */
 .skip-to-main {
   left: -999px;
   position: absolute;
@@ -577,8 +492,6 @@ video {
   z-index: 999;
 }
 
-/* Pagination styles */
-// https://stackoverflow.com/questions/13320851/custom-css-with-kaminari-with-bootstrap
 .pagination a,
 .pagination span.current,
 .pagination span.gap {
@@ -620,7 +533,6 @@ video {
   }
 }
 
-/* Inline styles converted here */
 .admin-bg-red {
   background-color: var(--hcb-accent-red) !important;
 }
@@ -630,7 +542,6 @@ video {
 }
 
 .admin-bg-pending {
-  /* Needs !important to override the default table-row alternating pattern */
   background-color: var(--hcb-accent-pending) !important;
 }
 
@@ -645,8 +556,6 @@ video {
 .admin-bg-warning {
   background: #ec3750;
 }
-
-/* Table column width utility classes adapted from Tailwind CSS https://tailwindcss.com/docs/width  */
 
 .w-96 {
   width: 24rem;
@@ -679,8 +588,6 @@ video {
   width: 2rem;
 }
 
-/* Autosize table on process pages */
-
 .table--autosize {
   width: auto;
   min-width: 0;
@@ -698,8 +605,6 @@ video {
 .flex-grow {
   flex-grow: 1;
 }
-
-/* The navigation bar used for admin pages */
 
 .nav-row-scroll-container .nav-item:not(:last-child) {
   border-right: 1px solid var(--hcb-bg-3) !important;
@@ -833,7 +738,6 @@ detail,
 }
 
 .admin-nav-item {
-  /* Make the <details> look more "clickable" */
   padding: 0 !important;
   background: none !important;
   border: none !important;
@@ -841,7 +745,6 @@ detail,
 }
 
 summary {
-  /* Makes the <summary> look more like a "clickable" link with the pointer cursor */
   cursor: pointer;
   font-weight: bold;
 }
