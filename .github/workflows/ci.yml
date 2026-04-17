@@ -150,15 +150,22 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
         run: bundler exec rails db:create db:schema:load RAILS_ENV=test
-      # Skip `yarn build` (webpack/JS bundles) — no spec fetches or
-      # asserts on the compiled JS. `yarn build:css` still runs because
-      # mailer layouts call `<%= stylesheet_link_tag "mailer" %>`, and
-      # without a precompiled `app/assets/builds/mailer.css` Sprockets
-      # tries to compile `mailer.scss` at render time, which requires
-      # the `sassc` gem (loaded only in the :assets group) and fails
-      # with `LoadError: cannot load such file -- sassc`.
-      - name: Build CSS
-        run: yarn build:css
+      # Skip `yarn build` (webpack, ~18 s) — no spec fetches or asserts
+      # on the compiled JS. The application layout still renders
+      # `javascript_include_tag "bundle"`, and Sprockets resolves it
+      # through `app/assets/config/manifest.js` (`link_tree ../builds`),
+      # so we stub an empty `bundle.js` for the manifest to find.
+      #
+      # `yarn build:css` stays because mailer layouts call
+      # `stylesheet_link_tag "mailer"` and, without a precompiled
+      # `mailer.css`, Sprockets falls back to compiling `mailer.scss`
+      # at render time — which pulls in the `sassc` gem (only loaded
+      # in the :assets group) and fails.
+      - name: Build CSS + stub empty JS bundle
+        run: |
+          yarn build:css
+          mkdir -p app/assets/builds
+          : > app/assets/builds/bundle.js
       - name: Run RSpec
         env:
           ${{ insert }}: ${{ secrets }}
