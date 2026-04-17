@@ -11,7 +11,7 @@
     "x-data" => "ach(#{{
       payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
       editing: ach_transfer.account_number.present?,
-    }.to_json})"
+      }.to_json})"
   }) do |form| %>
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
@@ -99,12 +99,14 @@
           <%= form.text_field :bank_name, class: "!max-w-[250px]", placeholder: "Name of the bank", required: true, disabled:, data: { extraction_field: "bank_name" } %>
         </div>
 
-        <div>
-          <div class="sm:flex items-center justify-between" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+        <div
+          data-controller="external-validation"
+          data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+          <div class="sm:flex items-center justify-between">
             <%= form.label :routing_number %>
-            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { action: "input->external-validation#validate", extraction_field: "routing_number" } %>
+            <%= form.text_field :routing_number, placeholder: "123456789", required: true, disabled:, class: "fs-mask !max-w-[250px]", data: { extraction_field: "routing_number", action: "input->external-validation#validate" } %>
           </div>
-          <span class="muted" data-external-validation-target="hint"></span>
+          <span class="muted text-sm mt-1 block muted text-center bg-gray-100 dark:bg-neutral-700 rounded-sm py-2 empty:hidden" data-external-validation-target="hint"></span>
         </div>
 
         <div class="sm:flex items-center justify-between">
@@ -146,8 +148,8 @@
       <%= form.date_field :invoiced_at, disabled:, style: "max-width: 190px", max: Date.current %>
     </div>
 
-    <%= render "events/notify_transfer_recipient", form:, disabled: %>
-    <%= render "events/transfer_attach_receipt", form:, disabled: %>
+    <%= render "events/transfers/notify_recipient", form:, disabled: %>
+    <%= render "events/transfers/attach_receipt", form:, disabled: %>
   </div>
   </div>
 
@@ -169,8 +171,4 @@
     Send transfer
     <%= inline_icon "send" %>
   </button>
-  <p class="muted mt-3 text-center text-sm">
-    <%= inline_icon "warning", class: "align-middle mr-0.5 -mt-0.5", size: 20 %>
-    ACH transfers are <strong>irreversible</strong> and can't be canceled.
-  </p>
 <% end %>

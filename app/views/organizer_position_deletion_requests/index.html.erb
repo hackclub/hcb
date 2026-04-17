@@ -1,5 +1,5 @@
-<% title "Deletion Requests" %>
-<h1>Deletion Requests</h1>
+<% title "OPDRs" %>
+<h1>OPDRs</h1>
 
 <% if @opdrs.any? %>
   <small class="muted mb2 inline-block"><%= page_entries_info @opdrs, entry_name: "deletion requests" %></small>
@@ -18,18 +18,14 @@
     <tbody>
       <% @opdrs.each do |opdr| %>
         <tr class="<%= "shade-yellow" if opdr.under_review? %>">
-          <td>
-            <%= link_to opdr.event do %>
-              <%= opdr.event.name %> <%= inline_icon "delete", size: 24, class: "muted align-bottom" if opdr.event.deleted? %>
-            <% end %>
-          </td>
+          <td><%= link_to opdr.event.name, event_path(opdr.event) %></td>
           <td><%= user_mention opdr.submitted_by %></td>
           <td><%= user_mention opdr.organizer_position.user %></td>
-          <td class="flex items-center">
+          <td>
             <%= status_badge opdr.status_badge_type %>
             <%= opdr.status.to_s.humanize %>
           </td>
-          <td><%= link_to (opdr.under_review? ? "Process" : "View"), opdr, class: opdr.under_review? ? "btn" : "" %></td>
+          <td><%= link_to (opdr.under_review? ? "Process" : "View"), opdr, class: "btn" %></td>
         </tr>
       <% end %>
     </tbody>
