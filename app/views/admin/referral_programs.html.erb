@@ -18,9 +18,9 @@
 
           <div class="flex flex-row gap-2">
             <%= link_to users_admin_index_path(referral_program_id: program.id) do %>
-              <button>View users</button>
+              <button class="btn">View users</button>
             <% end %>
-            <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="bg-warning">Create link</button>
+            <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="btn bg-warning">Create link</button>
           </div>
         </div>
         <div class="flex flex-col items-center p-4 gap-3 w-100 mb-0">

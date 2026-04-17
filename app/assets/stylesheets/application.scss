@@ -131,7 +131,8 @@ table {
   width: 100%;
 }
 
-tr {
+tr,
+.visual-table-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.0625);
   border-bottom-width: 0.5px;
 
@@ -686,4 +687,24 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   &.is-active {
     @apply bg-primary text-white;
   }
+}
+
+.scroll-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--top-mask-size, 0),
+    black calc(100% - var(--bottom-mask-size, 0)),
+    transparent 100%
+  );
+  --top-mask-size: 0px;
+  --bottom-mask-size: 0px;
+}
+
+.scroll-fade.is-top-overflowing {
+  --top-mask-size: 48px !important;
+}
+
+.scroll-fade.is-bottom-overflowing {
+  --bottom-mask-size: 48px !important;
 }

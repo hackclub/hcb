@@ -77,11 +77,9 @@
       </p>
     <% end %>
     <div>
-      <% admin_tool(style: "margin-right: 0px; padding-right: 0px;") do %>
-        <strong>Fee</strong>
-      <% end %>
-      <% admin_tool(style: "margin-left: -0.5rem; padding-left: 0px;") do %>
-        <% if @canonical_pending_transaction.amount_cents > 0 %>
+      <% if @canonical_pending_transaction.amount_cents > 0 %>
+        <% admin_tool do %>
+          <strong>Fee</strong>
           <%= form_with model: @canonical_pending_transaction, html: { data: { controller: "form" } } do |form| %>
             <%= hidden_field_tag :redirect_to, request.original_fullpath %>
             <div class="field--checkbox">

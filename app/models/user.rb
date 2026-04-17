@@ -15,6 +15,8 @@
 #  full_name                     :string
 #  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
@@ -179,6 +181,8 @@ class User < ApplicationRecord
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
   after_update :queue_sync_with_loops_job
+
+  after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
   before_update :set_default_seasonal_theme
 
@@ -583,6 +587,12 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
+
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
+  end
+
   def only_draft_application?
     return false unless events.none? && card_grants.none? &&
                         organizer_position_invites.none? && contracts.none? &&
@@ -607,6 +617,10 @@ class User < ApplicationRecord
 
   def reimbursement_event_options
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
   end
 
   private
@@ -706,6 +720,10 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def update_draft_applications
+    applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
   end
 
 end

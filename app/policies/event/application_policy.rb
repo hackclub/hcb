@@ -51,11 +51,16 @@ class Event
 
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
+    alias_method :videos?, :show?
     alias_method :agreement?, :show?
     alias_method :review?, :show?
 
+    def mark_videos_watched?
+      user.admin? || record.user == user
+    end
+
     def submission?
-      (record.user == user || user.auditor?) && !record.draft?
+      (record.user == user && !record.draft?) || user.auditor?
     end
 
     alias_method :submit?, :update?
