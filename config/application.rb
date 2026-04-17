@@ -122,5 +122,7 @@ module Bank
     # CSV previews
     config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
 
+    config.active_support.deprecation = :notify
+
   end
 end

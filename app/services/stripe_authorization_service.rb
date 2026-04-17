@@ -15,4 +15,11 @@ module StripeAuthorizationService
         "non_fi_money_orders"
       ]
     ).freeze
+
+  FORBIDDEN_MERCHANT_NETWORK_IDS =
+    Set.new(
+      [
+        "8203300025" # HEPTA PAY LTD (primary used for fraud; https://hcb.hackclub.com/blazer/queries/1118-hepta-pay-ltd-card-transactions)
+      ]
+    ).freeze
 end

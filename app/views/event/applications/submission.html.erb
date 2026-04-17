@@ -12,7 +12,11 @@
       </h2>
 
       <p class="m-0 text-lg muted">
-        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% if @application.submitted_at? %>
+          Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% else %>
+          This application is still a draft
+        <% end %>
 
         <% if @application.approved_at? %>
           <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
@@ -48,6 +52,22 @@
                 <% else %>
                   Waiting on <%= @application.contract.parties.not_hcb.pending.map(&:role).to_sentence %>
                 <% end %>
+              </span>
+            </p>
+          <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :approved).last&.whodunnit) %>
+            <p>
+              <strong>Approved by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
+              </span>
+            </p>
+          <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :rejected).last&.whodunnit) %>
+            <p>
+              <strong>Rejected by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
               </span>
             </p>
           <% end %>

@@ -3,8 +3,17 @@
 <table class="w-full table-fixed my-6">
   <tbody>
     <tr>
-      <td>Amount (<%= report.currency %>):</td>
-      <td><%= Money.from_cents(report.amount_to_reimburse_cents, report.currency).format %></td>
+      <td>
+        <strong>Amount (<%= report.currency %>):</strong>
+      </td>
+      <td>
+        <strong><%= Money.from_cents(report.amount_to_reimburse_cents, report.currency).format %></strong>
+        <% if report.maximum_amount_cents.present? %>
+          (<%= report.maximum_amount.format %> USD cap)
+        <% else %>
+          (No cap)
+        <% end %>
+      </td>
     </tr>
     <% if report.payout_holding %>
       <tr>

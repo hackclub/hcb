@@ -5,7 +5,7 @@
 # Table name: ach_transfers
 #
 #  id                        :bigint           not null, primary key
-#  aasm_state                :string
+#  aasm_state                :string           not null
 #  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  amount                    :integer
@@ -58,6 +58,9 @@ class AchTransfer < ApplicationRecord
   has_encrypted :routing_number
   blind_index :routing_number
   monetize :amount, as: "amount_money"
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ach
