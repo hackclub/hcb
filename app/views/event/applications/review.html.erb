@@ -24,7 +24,7 @@
   <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
     <%= form.hidden_field :return_to, value: review_application_path(@application) %>
   <% end %>
-  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.ready_to_submit?}", disabled: !@application.ready_to_submit?, "aria-label": "This application is not ready to submit" do %>
+  <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.may_mark_submitted?}", disabled: !@application.may_mark_submitted?, "aria-label": "This application is not ready to submit" do %>
     Submit application
   <% end %>
 <% end %>
