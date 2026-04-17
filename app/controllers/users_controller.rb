@@ -426,7 +426,7 @@ class UsersController < ApplicationController
 
   def user_params
     attributes = [
-    # account
+      # account
       :first_name,
       :last_name,
       :full_name,
