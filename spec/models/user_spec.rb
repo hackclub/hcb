@@ -267,6 +267,82 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "security configuration change emails" do
+    describe "phone_number changes" do
+      it "does not send an email when phone_number changes from nil to a value (signup)" do
+        user = create(:user, phone_number: nil)
+
+        expect {
+          user.update!(phone_number: "+18556254225")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when phone_number changes from one value to another" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: "+14155550123")
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number changes from a value to nil" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: nil)
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number is not changed" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_sms_auth changes" do
+      it "sends an email when SMS authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+        expect {
+          user.update!(use_sms_auth: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when SMS authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_sms_auth: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_two_factor_authentication changes" do
+      it "sends an email when two-factor authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when two-factor authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
