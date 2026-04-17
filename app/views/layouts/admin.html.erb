@@ -5,6 +5,8 @@
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
+    <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true %>
+    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
   </head>
   <body class="overflow-x-hidden min-h-screen flex flex-col max-w-[100vw]">
     <a class="skip-to-main" href="#main">Skip to main content</a>
@@ -34,7 +36,15 @@
           </b>
         <% end %>
 
-        <div class="flex-1 gap-1 flex justify-end">
+        <div class="flex-1 gap-1 flex justify-end items-center">
+          <%= link_to flipper_path, 'aria-label': "View transactions awaiting receipts", class: "menu__action w-8 h-8 justify-center tooltipped" do %>
+            <%= inline_icon "flag", size: home_action_size %>
+          <% end %>
+          <%= link_to blazer_path, 'aria-label': "View transactions awaiting receipts", class: "menu__action w-8 h-8 justify-center" do %>
+            <%= inline_icon "terminal", size: home_action_size %>
+          <% end %>
+          <div class="w-0.5 h-7 bg-gray-200 mx-2 rounded-full"></div>
+
           <div data-controller="menu">
             <a
               href="javascript:void(0)"

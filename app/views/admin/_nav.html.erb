@@ -20,13 +20,17 @@
         <div class="menu__content rounded-t-none -mt-2.5 admin-menu-content !bg-white/50 backdrop-blur-lg dark:!bg-[rgba(0,0,0,0.8)]" data-menu-target="<%= "content" unless skeleton %>">
           <% unless skeleton %>
             <% section.items.each do |item| %>
-              <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
-                <%= item.name %>
-                <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
-                  <%= item.count %>
-                </span>
+              <% if item.divider? %>
+                <hr class="my-1 border-gray-300">
+                <h4 class="px-3 mt-2 mb-1 text-sm font-semibold text-gray-500"><%= item.name %></h4>
+              <% else %>
+                <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
+                  <%= item.name %>
+                  <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
+                    <%= item.count %>
+                  </span>
+                <% end %>
               <% end %>
-              <div class="menu__divider last:hidden"></div>
             <% end %>
           <% end %>
         </div>
