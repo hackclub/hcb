@@ -249,6 +249,15 @@ class User < ApplicationRecord
     if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
       User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
+
+    if phone_number_previously_changed? && phone_number.blank? && phone_number_previously_was.present?
+      change = if Current.session&.impersonated?
+        "Phone number was removed by HCB support"
+      else
+        "Phone number was removed"
+      end
+      User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
+    end
   end
 
   scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
