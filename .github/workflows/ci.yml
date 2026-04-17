@@ -99,7 +99,7 @@ jobs:
       matrix:
         # Bumping this number adds more parallel runners. Keep it in sync
         # with SHARD_TOTAL below.
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     services:
       postgres:
         image: postgres:15
@@ -168,12 +168,12 @@ jobs:
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
           SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_TOTAL: 4
+          SHARD_TOTAL: 8
         # Deterministic round-robin split of spec files across shards. We
         # sort the file list first so each runner computes the same ordering,
         # then `awk` keeps only the files whose 1-based index mod SHARD_TOTAL
-        # maps to this shard. With 143 spec files over 4 shards, each shard
-        # runs ~35 files. This is simple and doesn't require extra gems;
+        # maps to this shard. With 143 spec files over 8 shards, each shard
+        # runs ~18 files. This is simple and doesn't require extra gems;
         # upgrade to a balancer (ci-queue, knapsack_pro) later if shards
         # drift apart in wall time.
         run: |
