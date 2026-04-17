@@ -285,12 +285,26 @@ RSpec.describe User, type: :model do
         }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
       end
 
-      it "does not send an email when phone_number changes from a value to nil" do
+      it "sends an email when the user clears their own phone_number" do
         user = create(:user, phone_number: "+18556254225")
 
         expect {
           user.update!(phone_number: nil)
-        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+          .with(user:, change: "Phone number was removed")
+      end
+
+      it "sends an admin-initiated email when an impersonating admin clears the phone_number" do
+        admin = create(:user, :make_admin)
+        user = create(:user, phone_number: "+18556254225")
+        Current.session = build(:user_session, user:, impersonated_by: admin)
+
+        expect {
+          user.update!(phone_number: nil)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+          .with(user:, change: "Phone number was removed by HCB support")
+      ensure
+        Current.session = nil
       end
 
       it "does not send an email when phone_number is not changed" do
