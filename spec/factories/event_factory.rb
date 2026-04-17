@@ -33,21 +33,17 @@ FactoryBot.define do
     end
 
     trait :with_positive_balance do
+      # Event#balance is derived from the sum of amount_cents on mapped
+      # canonical_transactions (see Event#settled_balance_cents). We insert
+      # a single positive CanonicalTransaction + mapping directly instead of
+      # running the full RawCsv -> Hashed -> Canonical import pipeline, which
+      # costs ~1 second per use and is already covered by its own specs.
+      #
+      # 100_000 cents ($1,000) matches the original amount created by the
+      # import pipeline (RawCsvTransaction#amount=1_000 is monetized to cents).
       after :create do |event|
-        raw_csv_transaction = RawCsvTransactionService::Create.new(
-          unique_bank_identifier: "FSMAIN",
-          date: 3.days.ago.iso8601(3),
-          memo: "🏦 Test Donation",
-          amount: 1_000
-        ).run
-
-        TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
-        TransactionEngine::CanonicalTransactionService::Import::All.new.run
-
-        CanonicalEventMapping.create!(
-          canonical_transaction_id: CanonicalTransaction.find_by!(memo: raw_csv_transaction.memo).id,
-          event_id: event.id,
-        )
+        canonical_transaction = create(:canonical_transaction, amount_cents: 100_000, memo: "🏦 Test Donation")
+        create(:canonical_event_mapping, canonical_transaction:, event:)
       end
     end
   end
