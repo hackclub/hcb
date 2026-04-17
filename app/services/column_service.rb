@@ -122,8 +122,8 @@ class ColumnService
   # This should only be shown to admins since it may contain sensitive information.
   # https://column.com/docs/workingwithapi/errors
   def self.error_to_admin_message(faraday_error)
-    message = e.response_body["message"]
-    details = e.response_body["details"]&.map { |k, v| "#{k}: #{v}" }&.to_sentence
+    message = faraday_error.response_body["message"]
+    details = faraday_error.response_body["details"]&.map { |k, v| "#{k}: #{v}" }&.to_sentence
     [message, details].compact.join(" ")
   end
 
