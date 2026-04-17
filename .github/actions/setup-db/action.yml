@@ -5,10 +5,57 @@ runs:
   steps:
     - name: Install postgres client
       shell: bash
-      run: sudo apt-get install libpq-dev
-    - name: Build App
+      # libpq-dev for gem compilation; postgresql-client provides
+      # pg_dump/psql/createdb used by the cache fast path below.
+      run: sudo apt-get install -y libpq-dev postgresql-client
+    - name: Detect postgres server version
+      id: pg-version
+      shell: bash
+      env:
+        PGHOST: localhost
+        PGUSER: postgres
+        PGPASSWORD: postgres
+      # Read the live server's major version so the cache key tracks
+      # the service image automatically — bumping `postgres:15` →
+      # `postgres:16` in the workflow invalidates dumps produced under
+      # the old server without anyone touching this file.
+      run: |
+        set -euo pipefail
+        major=$(psql -d postgres -tAc 'SHOW server_version_num' | awk '{print int($1/10000)}')
+        echo "major=$major" >> "$GITHUB_OUTPUT"
+    - name: Cache DB schema dump
+      # `rails db:schema:load` is deterministic given db/schema.rb, so a
+      # cache hit produces the same tables + schema_migrations state as
+      # a fresh load. We also hash this action file so edits to the
+      # dump/restore flags bust caches that were produced under the old
+      # flags.
+      id: schema-cache
+      uses: actions/cache@v5
+      with:
+        path: /tmp/schema.sql
+        key: ${{ runner.os }}-pg${{ steps.pg-version.outputs.major }}-schema-${{ hashFiles('db/schema.rb', '.github/actions/setup-db/action.yml') }}
+    - name: Load DB schema
       shell: bash
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+        PGHOST: localhost
+        PGUSER: postgres
+        PGPASSWORD: postgres
         RAILS_ENV: test
-      run: bundle exec rails db:create db:schema:load
+      # Fast path (cache hit): createdb + psql < dump (~2 s).
+      # Slow path (cache miss): rails db:create + db:schema:load, then
+      # pg_dump the result so future runs with the same db/schema.rb
+      # hit the fast path. `rails db:schema:load` populates
+      # `schema_migrations` and `ar_internal_metadata`, which pg_dump
+      # captures as data so restore produces identical state.
+      run: |
+        set -euo pipefail
+        if [ "${{ steps.schema-cache.outputs.cache-hit }}" = "true" ] && [ -s /tmp/schema.sql ]; then
+          echo "Restoring cached schema dump..."
+          createdb bank_test
+          psql -d bank_test -v ON_ERROR_STOP=1 -f /tmp/schema.sql > /dev/null
+        else
+          echo "Cache miss; loading schema via Rails..."
+          bundle exec rails db:create db:schema:load
+          pg_dump --no-owner --no-privileges --no-comments bank_test > /tmp/schema.sql
+        fi
