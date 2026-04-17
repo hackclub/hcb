@@ -150,15 +150,15 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
         run: bundler exec rails db:create db:schema:load RAILS_ENV=test
-      # Previously ran `yarn build && yarn build:css` here (~22 s).
-      # None of the specs hit a code path that consumes the compiled
-      # JS/CSS output: controller specs with `render_views` emit
-      # `stylesheet_link_tag` URLs but never fetch them, and no spec
-      # asserts on CSS/JS content. Sprockets in the test env serves
-      # missing assets as missing files without raising at render time.
-      # If a future spec regresses this assumption, the failure mode is
-      # an obvious `ActionView::Template::Error` referencing the missing
-      # manifest entry — add `yarn build` back if that happens.
+      # Skip `yarn build` (webpack/JS bundles) — no spec fetches or
+      # asserts on the compiled JS. `yarn build:css` still runs because
+      # mailer layouts call `<%= stylesheet_link_tag "mailer" %>`, and
+      # without a precompiled `app/assets/builds/mailer.css` Sprockets
+      # tries to compile `mailer.scss` at render time, which requires
+      # the `sassc` gem (loaded only in the :assets group) and fails
+      # with `LoadError: cannot load such file -- sassc`.
+      - name: Build CSS
+        run: yarn build:css
       - name: Run RSpec
         env:
           ${{ insert }}: ${{ secrets }}
