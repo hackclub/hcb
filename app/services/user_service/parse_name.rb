@@ -50,6 +50,6 @@ module UserService
       parts = [@family_name, @suffix].compact_blank
       parts.empty? ? nil : parts.join(" ").presence
     end
+
   end
 end
-

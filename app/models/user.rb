@@ -333,8 +333,8 @@ class User < ApplicationRecord
     @initial_name ||= if name.strip.split(" ").count == 1
                         name
                       else
-                        first = (read_attribute(:first_name)&.split(" ")&.first || read_attribute(:last_name)&.split(" ")&.first || name)[0..20]
-                        last_source = read_attribute(:last_name) || read_attribute(:first_name) || ""
+                        first = (self[:first_name]&.split(" ")&.first || self[:last_name]&.split(" ")&.first || name)[0..20]
+                        last_source = self[:last_name] || self[:first_name] || ""
                         last = (last_source.split(" ").first || "")[0, 1]
                         last.blank? ? first : "#{first} #{last}"
                       end

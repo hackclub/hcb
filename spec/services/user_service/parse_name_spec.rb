@@ -125,4 +125,3 @@ RSpec.describe UserService::ParseName do
     end
   end
 end
-
