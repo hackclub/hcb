@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - main
+# Default to least-privilege for the GITHUB_TOKEN. Individual jobs that
+# need to write back to the repo (e.g. posting PR review suggestions)
+# widen their own permissions block below.
+permissions:
+  contents: read
 jobs:
   rubocop:
     name: Rubocop
@@ -26,6 +31,11 @@ jobs:
     name: 'Suggest lint changes'
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
+    # parkerbxyz/suggest-changes posts review comments with suggested
+    # edits, which requires write access to the PR.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
