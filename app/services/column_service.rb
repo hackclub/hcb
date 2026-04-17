@@ -119,4 +119,12 @@ class ColumnService
     post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
   end
 
+  # This should only be shown to admins since it may contain sensitive information.
+  # https://column.com/docs/workingwithapi/errors
+  def self.error_to_admin_message(faraday_error)
+    message = e.response_body["message"]
+    details = e.response_body["details"]&.map { |k, v| "#{k}: #{v}" }&.to_sentence
+    [message, details].compact.join(" ")
+  end
+
 end
