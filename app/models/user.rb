@@ -46,6 +46,12 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
+  # Character regex for name validation (supports international characters)
+  NAME_CHARACTERS_REGEX = /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/
+
+  # Full name format regex (must have first and last name - at least two words)
+  FULL_NAME_FORMAT_REGEX = /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/
+
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include Hashid::Rails
@@ -193,18 +199,18 @@ class User < ApplicationRecord
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
   validates :full_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
+    with: FULL_NAME_FORMAT_REGEX,
     message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
   }, unless: -> { first_name_in_database.present? || last_name_in_database.present? }
 
   validates :first_name, presence: true, if: -> { first_name_in_database.present? || last_name_in_database.present? }
   validates :first_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    with: NAME_CHARACTERS_REGEX,
     message: "must contain only letters and can't contain special characters.", allow_blank: true,
   }
 
   validates :last_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    with: NAME_CHARACTERS_REGEX,
     message: "must contain only letters and can't contain special characters.", allow_blank: true,
   }
 
@@ -305,19 +311,21 @@ class User < ApplicationRecord
   end
 
   def first_name(legal: false)
-    return read_attribute(:first_name) unless legal
-
-    read_attribute(:first_name) || (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
+    # Return the stored first_name as-is. The database stores the complete first name
+    # (which may include particles like "von" from Namae parsing).
+    # For legal names, fall back to parsing full_name if first_name is not set.
+    read_attribute(:first_name) || (legal ? (namae(legal:)&.given || namae(legal:)&.particle)&.join(" ") : nil)
   end
 
   def last_name(legal: false)
-    return read_attribute(:last_name) unless legal
-
-    read_attribute(:last_name) || namae(legal:)&.family&.split(" ")&.last
+    # Return the stored last_name as-is. The database stores the complete last name
+    # (which may include suffixes like "Jr." from Namae parsing).
+    # For legal names, fall back to parsing full_name if last_name is not set.
+    read_attribute(:last_name) || (legal ? namae(legal:)&.family : nil)
   end
 
   def reconstructed_full_name
-    parts = [self[:first_name], self[:last_name]].compact
+    parts = [self[:first_name], self[:last_name]].compact_blank
     parts.empty? ? nil : parts.join(" ")
   end
 
@@ -325,8 +333,9 @@ class User < ApplicationRecord
     @initial_name ||= if name.strip.split(" ").count == 1
                         name
                       else
-                        first = (self[:first_name] || self[:last_name] || name)[0..20]
-                        last = (self[:last_name] || self[:first_name] || "")[0, 1]
+                        first = (read_attribute(:first_name)&.split(" ")&.first || read_attribute(:last_name)&.split(" ")&.first || name)[0..20]
+                        last_source = read_attribute(:last_name) || read_attribute(:first_name) || ""
+                        last = (last_source.split(" ").first || "")[0, 1]
                         last.blank? ? first : "#{first} #{last}"
                       end
   end
@@ -346,7 +355,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || reconstructed_full_name || email_handle
+    preferred_name.presence || reconstructed_full_name || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -411,11 +420,11 @@ class User < ApplicationRecord
 
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
-    first_name_in_database.blank?
+    first_name_in_database.blank? && full_name_in_database.blank?
   end
 
   def was_onboarding?
-    first_name_before_last_save.blank? && first_name_previously_changed?
+    first_name_before_last_save.blank? && full_name_before_last_save.blank? && (first_name_previously_changed? || full_name_previously_changed?)
   end
 
   def active_mailbox_address
@@ -660,7 +669,7 @@ class User < ApplicationRecord
   private
 
   def sync_full_name_from_split_names
-    self.full_name = reconstructed_full_name
+    self.full_name = reconstructed_full_name if reconstructed_full_name.present?
   end
 
   def accessible_events(roles:)

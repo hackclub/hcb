@@ -10,8 +10,8 @@ class PopulateFirstAndLastNames < ActiveRecord::Migration[8.0]
       namae = Namae.parse(user.full_name).first
       updates << {
         id: user.id,
-        first_name: (namae&.given || namae&.particle)&.split(" ")&.first,
-        last_name: namae&.family&.split(" ")&.last,
+        first_name: [namae&.given, namae&.particle].compact_blank.join(" ").presence || namae&.family,
+        last_name: [namae&.family, namae&.suffix].compact_blank.join(" ").presence,
       }
 
       if updates.size >= BATCH_SIZE
