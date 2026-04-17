@@ -106,13 +106,6 @@ samp {
   font-family: var(--hcb-font-mono);
 }
 
-details:not(:has(> summary.visual-table-row)) {
-  padding: 0.6rem 1rem;
-  background: var(--hcb-bg-2);
-  border: 1px solid var(--hcb-bg-3);
-  border-radius: 4px;
-}
-
 .pagination > li {
   margin-top: 0 !important;
 }

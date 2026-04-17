@@ -65,6 +65,10 @@
     <%= render(partial: "admin/flash") %>
 
     <div id="main" class="bg-snow dark:bg-dark flex-1 w-[100vw] overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
+      <div class="flex w-full mb-2 items-center gap-2">
+        <h2 class="flex-1"><%= title %></h2>
+        <%= yield(:admin_actions) %>
+      </div>
       <%= yield %>
     </div>
 

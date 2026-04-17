@@ -1,7 +1,6 @@
 <% submit_disable_with_false ||= false %>
-<% action_buttons ||= nil %>
 
-<div class="events-filter-select">
+<div class="flex flex-wrap gap-2">
   <%= form.label :transparent do %>
     Transparent
     <%= form.select :transparent, [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]], selected: @transparent %>
@@ -96,4 +95,4 @@
   <% end %>
 </fieldset>
 
-<%= action_buttons %>
+<button class="mt-2 mr-1 btn bg-info">Search</button>

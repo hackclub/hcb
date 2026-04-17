@@ -1,13 +1,16 @@
 <% title "Raw Transactions" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: raw_transactions_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "Select Bank Account", selected: @unique_bank_identifier }, { width: 250, class: "mb-2", style: "max-width: 250px" }) %>
-  <%= form.submit "Search", class: "btn bg-info" %>
+<% content_for(:admin_actions) do %>
   <%= link_to raw_transaction_new_admin_index_path do %>
     <button class="btn bg-primary">
       New Raw Transaction
     </button>
   <% end %>
+<% end %>
+
+<%= form_with local: true, class: "card overflow-visible", url: raw_transactions_admin_index_path, method: :get do |form| %>
+  <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "Select Bank Account", selected: @unique_bank_identifier }, { width: 250, class: "mb-2", style: "max-width: 250px" }) %>
+  <%= form.submit "Search", class: "btn bg-info" %>
 <% end %>
 
 <div class="table-container">

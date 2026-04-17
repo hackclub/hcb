@@ -1,14 +1,14 @@
 <% title "Disbursements" %>
 
-<div class="flex w-full mb-2 items-center">
-  <h2 class="flex-1">Disbursements</h2>
+<% content_for(:admin_actions) do %>
   <%= link_to disbursement_new_admin_index_path do %>
     <button class="btn bg-primary" type="button">
       <%= inline_icon "plus" %>
       New disbursement
     </button>
   <% end %>
-</div>
+<% end %>
+
 
 <%= form_with local: true, class: "card overflow-visible", url: disbursements_admin_index_path, method: :get do |form| %>
   <div class="flex flex-col sm:flex-row items-center gap-2">
