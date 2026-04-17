@@ -33,11 +33,9 @@ FactoryBot.define do
     end
 
     trait :with_positive_balance do
-      # Event#balance is derived from the sum of amount_cents on mapped
-      # canonical_transactions (see Event#settled_balance_cents). We insert
-      # a single positive CanonicalTransaction + mapping directly instead of
-      # running the full Raw*Transaction -> Hashed -> Canonical import
-      # pipeline, which costs ~1 second per use.
+      # Event#balance sums amount_cents on mapped canonical_transactions
+      # (see Event#settled_balance_cents), so a single positive mapping
+      # is enough to give the event a balance for tests that need one.
       after :create do |event|
         canonical_transaction = create(:canonical_transaction, amount_cents: 100_000, memo: "🏦 Test Donation")
         create(:canonical_event_mapping, canonical_transaction:, event:)
