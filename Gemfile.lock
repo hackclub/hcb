@@ -935,7 +935,7 @@ GEM
       nkf
       rubyzip (>= 2.4.0, < 4.0)
     xxhash (0.7.0)
-    yard (0.9.37)
+    yard (0.9.42)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
     zeitwerk (2.7.4)
