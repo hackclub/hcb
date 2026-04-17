@@ -163,7 +163,7 @@ RSpec.describe Api::V4::EventsController do
       create(:organizer_position, user: other_user,   event: shared_event)
 
       helper = helper_instance.call(current_user)
-      expect(current_user).to receive(:manageable_events).once.and_call_original
+      expect(current_user).to receive(:readable_events).once.and_call_original
 
       helper.shares_org_with?(other_user)
       helper.shares_org_with?(other_user)
