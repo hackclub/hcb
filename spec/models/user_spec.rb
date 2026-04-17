@@ -319,6 +319,15 @@ RSpec.describe User, type: :model do
           user.update!(use_sms_auth: false)
         }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
       end
+
+      it "does not send an email when use_sms_auth is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
     end
 
     describe "use_two_factor_authentication changes" do
@@ -339,6 +348,16 @@ RSpec.describe User, type: :model do
         expect {
           user.update!(use_two_factor_authentication: false)
         }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when use_two_factor_authentication is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
       end
     end
   end
