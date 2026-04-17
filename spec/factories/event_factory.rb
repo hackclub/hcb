@@ -8,11 +8,10 @@ FactoryBot.define do
       organizers { [] }
     end
 
-    # Build the plan with the factory's `plan_type` up front. Without this,
-    # `Event#before_validation` builds a plan of the fallback type (Standard)
-    # and `after(:create)` had to UPDATE the plan to the desired type
-    # afterwards — an extra INSERT + UPDATE round trip on every
-    # `create(:event)`, paid on all ~250 event creations per suite run.
+    # Set the plan type up front. `Event#before_validation` builds a
+    # plan with the fallback type (Event::Plan::Standard) when none is
+    # set, so building the plan here saves an UPDATE + reload per
+    # `create(:event)` — hit on ~250 event creations per suite run.
     after(:build) do |event, context|
       event.build_plan(type: context.plan_type.to_s) if context.plan_type.present? && event.plan.nil?
     end
@@ -22,9 +21,9 @@ FactoryBot.define do
         create(:organizer_position, event:, user:)
       end
 
-      # Reload to clear cached associations (e.g. `plan`) that other tests
-      # rely on being fresh after various callbacks run — see
-      # spec/models/event_spec.rb "uses the standard plan as a fallback".
+      # Clear cached associations (e.g. `plan`) so specs like
+      # spec/models/event_spec.rb "uses the standard plan as a fallback"
+      # see post-callback state rather than the factory's in-memory copy.
       event.reload
     end
 
