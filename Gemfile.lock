@@ -109,7 +109,7 @@ GEM
       csv
       parser
       prism
-    addressable (2.8.8)
+    addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     ahoy_email (3.0.0)
       actionmailer (>= 7.1)
@@ -642,7 +642,7 @@ GEM
       activerecord (>= 6.1)
       i18n (>= 0.5.0)
       railties (>= 6.1)
-    public_suffix (7.0.2)
+    public_suffix (7.0.5)
     puma (6.6.1)
       nio4r (~> 2.0)
     pundit (2.5.2)
