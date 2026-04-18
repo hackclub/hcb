@@ -201,7 +201,7 @@ class User < ApplicationRecord
   validates :full_name, format: {
     with: FULL_NAME_FORMAT_REGEX,
     message: "must contain your first and last name and may only include letters, spaces, hyphens, apostrophes, periods, and commas.", allow_blank: true,
-  }, unless: -> { first_name_in_database.present? || last_name_in_database.present? }
+  }, unless: -> { first_name.present? || last_name.present? }
 
   validates :first_name, presence: true, if: -> { first_name_in_database.present? || last_name_in_database.present? }
   validates :first_name, format: {
