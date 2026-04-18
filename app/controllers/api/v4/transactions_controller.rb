@@ -22,6 +22,19 @@ module Api
         if params[:type].present? && @settled_transactions.any?
           hcb_codes_by_code = HcbCode.where(hcb_code: @settled_transactions.map(&:hcb_code)).index_by(&:hcb_code)
           @settled_transactions.each { |t| t.local_hcb_code = hcb_codes_by_code[t.hcb_code] }
+
+          # The hcb_transfer filter also reads `outgoing_disbursement` /
+          # `incoming_disbursement` on each row, which are otherwise unmemoized
+          # `Disbursement.find_by`s. Bulk-load + assign once.
+          if params[:type] == "hcb_transfer"
+            disbursement_hcb_codes = hcb_codes_by_code.values.select { |hc| hc.outgoing_disbursement? || hc.incoming_disbursement? }
+            disbursements_by_id = Disbursement.where(id: disbursement_hcb_codes.map(&:hcb_i2)).index_by(&:id)
+            disbursement_hcb_codes.each do |hc|
+              disbursement = disbursements_by_id[hc.hcb_i2.to_i]
+              hc.outgoing_disbursement = disbursement&.outgoing_disbursement if hc.outgoing_disbursement?
+              hc.incoming_disbursement = disbursement&.incoming_disbursement if hc.incoming_disbursement?
+            end
+          end
         end
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
