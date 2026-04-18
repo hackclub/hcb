@@ -7,10 +7,10 @@ FactoryBot.define do
     last_name { Faker::Name.last_name }
 
     after(:build) do |user|
-      if user.full_name.present?
+      if user.full_name.present? && (user.first_name.blank? || user.last_name.blank?)
         parsed = UserService::ParseName.new(full_name: user.full_name).run
-        user.first_name = parsed.first_name
-        user.last_name = parsed.last_name
+        user.first_name = parsed.first_name if user.first_name.blank?
+        user.last_name = parsed.last_name if user.last_name.blank?
       end
     end
 
