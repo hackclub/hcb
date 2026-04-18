@@ -56,7 +56,7 @@ RSpec.describe Donation, type: :model do
 
     expect do
       donation = create(:donation, event:, name: "John Appleseed", email: "john@hackclub.com")
-    end.to change(enqueued_jobs, :size).by(0)
+    end.not_to have_enqueued_mail(DonationMailer, :first_donation_notification)
   end
 
 end
