@@ -17,6 +17,13 @@ module Api
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(**filters).run
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(**filters).run
 
+        # `filter_transaction_type` reads `t.local_hcb_code.<predicate>?` for every settled
+        # row. Without preloading, that's a SELECT per row — multi-second N+1 on large orgs.
+        if params[:type].present? && @settled_transactions.any?
+          hcb_codes_by_code = HcbCode.where(hcb_code: @settled_transactions.map(&:hcb_code)).index_by(&:hcb_code)
+          @settled_transactions.each { |t| t.local_hcb_code = hcb_codes_by_code[t.hcb_code] }
+        end
+
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]
