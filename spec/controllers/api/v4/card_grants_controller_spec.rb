@@ -89,7 +89,7 @@ RSpec.describe Api::V4::CardGrantsController do
                 "id"         => user.public_id,
                 "name"       => "Orpheus D",
                 "email"      => "orpheus@hackclub.com",
-                "first_name" => "Orpheus",
+                "first_name" => "Orpheus the",
                 "last_name"  => "Dinosaur",
                 "admin"      => false,
                 "auditor"    => false,
