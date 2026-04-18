@@ -68,11 +68,11 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end
 
-    it "re-notifies at the same count after the 24h cache window elapses" do
+    it "re-notifies at the same count after the 25h cache window elapses" do
       stub_counts(current: 5)
       service.run
 
-      travel_to(25.hours.from_now) do
+      travel_to(26.hours.from_now) do
         expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
       end
     end
@@ -135,11 +135,11 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
       expect(twilio_send).to have_received(:run!).once
     end
 
-    it "re-sends after 24h" do
+    it "re-sends after 25h" do
       stub_counts(current: 3, future: 11)
       service.run
 
-      travel_to(25.hours.from_now) do
+      travel_to(26.hours.from_now) do
         service.run
       end
 
