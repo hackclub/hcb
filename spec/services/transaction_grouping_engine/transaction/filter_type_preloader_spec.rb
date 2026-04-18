@@ -157,5 +157,150 @@ RSpec.describe TransactionGroupingEngine::Transaction::FilterTypePreloader do
         expect(RawStripeTransaction).not_to have_received(:find)
       end
     end
+
+    # Accuracy / data-integrity guarantees: the preloader must attach the
+    # *exact same* records the lazy path would have loaded — anything else
+    # could surface as a financial data leak.
+    describe "preload accuracy" do
+      it "attaches the same local_hcb_code (by id) the lazy path would load" do
+        3.times { create(:canonical_event_mapping, event:, canonical_transaction: create(:canonical_transaction)) }
+
+        baseline = settled_for(event)
+        baseline_ids_by_code = baseline.to_h { |t| [t.hcb_code, t.local_hcb_code.id] }
+
+        preloaded = settled_for(event)
+        described_class.new(settled_transactions: preloaded, type: "ach_transfer").run!
+
+        preloaded.each do |t|
+          local = t.instance_variable_get(:@local_hcb_code)
+          expect(local.id).to eq(baseline_ids_by_code.fetch(t.hcb_code))
+          expect(local.hcb_code).to eq(t.hcb_code)
+        end
+      end
+
+      context "with type: 'hcb_transfer'" do
+        it "attaches the same Disbursement (by id) the lazy path would load" do
+          # one outgoing + one incoming row to exercise both writers
+          outgoing_disb = create(:disbursement, source_event: event, event: create(:event))
+          incoming_disb = create(:disbursement, source_event: create(:event), event: event)
+          make_disbursement_settled_tx(event, outgoing_disb,
+                                       hcb_code: outgoing_disb.outgoing_hcb_code,
+                                       amount_cents: -outgoing_disb.amount)
+          make_disbursement_settled_tx(event, incoming_disb,
+                                       hcb_code: incoming_disb.incoming_hcb_code,
+                                       amount_cents: incoming_disb.amount)
+
+          baseline = settled_for(event)
+          baseline_disb_ids = baseline.to_h do |t|
+            local = t.local_hcb_code
+            disb_id =
+              if local.outgoing_disbursement?
+                local.outgoing_disbursement&.disbursement&.id
+              elsif local.incoming_disbursement?
+                local.incoming_disbursement&.disbursement&.id
+              end
+            [t.hcb_code, disb_id]
+          end
+
+          preloaded = settled_for(event)
+          described_class.new(settled_transactions: preloaded, type: "hcb_transfer").run!
+
+          preloaded.each do |t|
+            local = t.instance_variable_get(:@local_hcb_code)
+            attached =
+              if local.outgoing_disbursement?
+                local.outgoing_disbursement&.disbursement&.id
+              elsif local.incoming_disbursement?
+                local.incoming_disbursement&.disbursement&.id
+              end
+            expect(attached).to eq(baseline_disb_ids.fetch(t.hcb_code))
+          end
+        end
+
+        it "never assigns outgoing_disbursement onto an incoming HcbCode (or vice versa)" do
+          outgoing_disb = create(:disbursement, source_event: event, event: create(:event))
+          incoming_disb = create(:disbursement, source_event: create(:event), event: event)
+          make_disbursement_settled_tx(event, outgoing_disb,
+                                       hcb_code: outgoing_disb.outgoing_hcb_code,
+                                       amount_cents: -outgoing_disb.amount)
+          make_disbursement_settled_tx(event, incoming_disb,
+                                       hcb_code: incoming_disb.incoming_hcb_code,
+                                       amount_cents: incoming_disb.amount)
+
+          settled = settled_for(event)
+          described_class.new(settled_transactions: settled, type: "hcb_transfer").run!
+
+          settled.each do |t|
+            local = t.instance_variable_get(:@local_hcb_code)
+            outgoing_iv = local.instance_variable_defined?(:@outgoing_disbursement) ? local.instance_variable_get(:@outgoing_disbursement) : :unset
+            incoming_iv = local.instance_variable_defined?(:@incoming_disbursement) ? local.instance_variable_get(:@incoming_disbursement) : :unset
+
+            if local.outgoing_disbursement?
+              expect(outgoing_iv).not_to eq(:unset), "outgoing HcbCode should have outgoing_disbursement preloaded"
+              expect(incoming_iv).to eq(:unset), "outgoing HcbCode must NOT have incoming_disbursement assigned"
+            elsif local.incoming_disbursement?
+              expect(incoming_iv).not_to eq(:unset), "incoming HcbCode should have incoming_disbursement preloaded"
+              expect(outgoing_iv).to eq(:unset), "incoming HcbCode must NOT have outgoing_disbursement assigned"
+            end
+          end
+        end
+      end
+
+      context "with type: 'card_charge'" do
+        it "attaches the same canonical_transactions and raw_stripe_transactions (by id) the lazy path would load" do
+          rst1 = create(:raw_stripe_transaction)
+          rst2 = create(:raw_stripe_transaction)
+          ct1 = create(:canonical_transaction, transaction_source: rst1)
+          ct2 = create(:canonical_transaction, transaction_source: rst2)
+          create(:canonical_event_mapping, event:, canonical_transaction: ct1)
+          create(:canonical_event_mapping, event:, canonical_transaction: ct2)
+
+          baseline_settled = settled_for(event)
+          baseline_by_hcb_code = baseline_settled.to_h do |t|
+            [t.hcb_code, {
+              ct_ids: t.canonical_transactions.map(&:id).sort,
+              rst_id: t.canonical_transactions.first.raw_stripe_transaction&.id,
+            }]
+          end
+
+          preloaded = settled_for(event)
+          described_class.new(settled_transactions: preloaded, type: "card_charge").run!
+
+          preloaded.each do |t|
+            attached_ct_ids = t.canonical_transactions.map(&:id).sort
+            attached_rst_id = t.canonical_transactions.first.raw_stripe_transaction&.id
+            expected = baseline_by_hcb_code.fetch(t.hcb_code)
+            expect(attached_ct_ids).to eq(expected[:ct_ids])
+            expect(attached_rst_id).to eq(expected[:rst_id])
+          end
+        end
+      end
+
+      it "never attaches another event's HcbCode to a settled row" do
+        # Two events with disbursement-flavored rows of similar shape.
+        other_event = create(:event)
+        disb_a = create(:disbursement, source_event: event, event: create(:event))
+        disb_b = create(:disbursement, source_event: other_event, event: create(:event))
+        make_disbursement_settled_tx(event, disb_a,
+                                     hcb_code: disb_a.outgoing_hcb_code,
+                                     amount_cents: -disb_a.amount)
+        make_disbursement_settled_tx(other_event, disb_b,
+                                     hcb_code: disb_b.outgoing_hcb_code,
+                                     amount_cents: -disb_b.amount)
+
+        settled = settled_for(event)
+        # Sanity: the engine itself only returned event A's rows.
+        expect(settled.map(&:hcb_code)).to contain_exactly(disb_a.outgoing_hcb_code)
+
+        described_class.new(settled_transactions: settled, type: "hcb_transfer").run!
+
+        settled.each do |t|
+          local = t.instance_variable_get(:@local_hcb_code)
+          # The HcbCode for disb_b must never be attached to a row from event A.
+          expect(local.hcb_code).not_to eq(disb_b.outgoing_hcb_code)
+          expect(local.hcb_code).to eq(t.hcb_code)
+        end
+      end
+    end
   end
 end
