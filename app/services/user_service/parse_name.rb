@@ -33,7 +33,7 @@ module UserService
 
     # Returns the formatted first name (given name + particle if present).
     # Stores what should go in the database first_name column.
-    # Example: "von Braun" for "Wernher von Braun"
+    # Example: "Wernher von" for "Wernher von Braun"
     def first_name
       return nil if @given_name.nil? && @family_name.nil?
 
