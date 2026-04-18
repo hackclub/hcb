@@ -21,11 +21,7 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
-  def edit_overview?
-    auditor_or_manager?
-  end
-
-  def edit_purpose?
+  def edit_actions?
     auditor_or_manager?
   end
 
@@ -33,7 +29,15 @@ class CardGrantPolicy < ApplicationPolicy
     auditor_or_manager?
   end
 
-  def edit_actions?
+  def edit_expiration?
+    auditor_or_manager?
+  end
+
+  def edit_overview?
+    auditor_or_manager?
+  end
+
+  def edit_purpose?
     auditor_or_manager?
   end
 

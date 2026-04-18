@@ -31,6 +31,9 @@ class CheckDeposit < ApplicationRecord
   include Freezable
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :cdp
 
@@ -118,8 +121,8 @@ class CheckDeposit < ApplicationRecord
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
 
   def state
-    return :muted if column_id.nil? && increase_id.nil?
     return :error if rejected? || returned?
+    return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?

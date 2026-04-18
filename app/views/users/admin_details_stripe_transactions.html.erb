@@ -1,0 +1,12 @@
+<%= turbo_frame_tag :admin_details_stripe_transactions do %>
+  <% if @stripe_transactions.any? %>
+    <% admin_tool "p-3" do %>
+      <h3 class="mb2 mt1">Stripe transactions</h3>
+      <table>
+        <% @stripe_transactions.each do |tx| %>
+          <%= render "canonical_transactions/canonical_transaction", ct: tx %>
+        <% end %>
+      </table>
+    <% end %>
+  <% end %>
+<% end %>

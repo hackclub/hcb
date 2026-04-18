@@ -1,0 +1,49 @@
+<% title "HCB Onboarding Videos" %>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Watch HCB's onboarding videos
+    </h2>
+
+    <p class="mt-0 text-lg muted">
+      Before signing the agreement, watch these two short videos to
+      understand how HCB operates
+    </p>
+  </div>
+<% end %>
+
+<div class="md:max-h-[75vh] flex flex-col gap-5" data-controller="onboarding-videos" data-onboarding-videos-button-id-value="continue_button">
+  <div class="flex gap-3 items-start flex-grow">
+    <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+      1
+    </div>
+
+    <div class="flex flex-col flex-grow gap-3">
+      <p class="text-lg mb-0 mt-1">
+        <strong>Introduction</strong>
+      </p>
+
+      <div data-onboarding-videos-target="player" data-video-id="Ucz-QT2GPOk" class="flex-grow aspect-[560/315] min-h-0 max-w-full"></div>
+    </div>
+  </div>
+
+  <div class="flex gap-3 items-start flex-grow">
+    <div class="flex items-center justify-center rounded-full border border-gray-300 h-8 w-8 shrink-0">
+      2
+    </div>
+
+    <div class="flex flex-col flex-grow gap-3">
+      <p class="text-lg mb-0 mt-1">
+        <strong>Rules & Regulations</strong>
+      </p>
+
+      <div data-onboarding-videos-target="player" data-video-id="LMh9FCm8iIE" class="flex-grow aspect-[560/315] min-h-0 max-w-full"></div>
+    </div>
+  </div>
+</div>
+
+<% content_for :footer do %>
+  <a class="btn bg-muted" href="<%= application_path(@application) %>">← Back</a>
+  <%= button_to "Continue →", mark_videos_watched_application_path(@application), class: "btn bg-blue", method: :post, params: { event_application: { videos_watched: true } }, id: :continue_button, disabled: !@application.videos_watched %>
+<% end %>
