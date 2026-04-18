@@ -23,6 +23,23 @@ module Api
           hcb_codes_by_code = HcbCode.where(hcb_code: @settled_transactions.map(&:hcb_code)).index_by(&:hcb_code)
           @settled_transactions.each { |t| t.local_hcb_code = hcb_codes_by_code[t.hcb_code] }
 
+          # The card_charge filter reads `t.raw_stripe_transaction` which walks
+          # `ct -> transaction_source` — both lazy lookups per row. Bulk-load
+          # the CTs (and their stripe sources) and assign once.
+          if params[:type] == "card_charge"
+            ct_ids = @settled_transactions.flat_map(&:canonical_transaction_ids)
+            cts_by_id = CanonicalTransaction.where(id: ct_ids).index_by(&:id)
+            stripe_source_ids = cts_by_id.values.select { |ct| ct.transaction_source_type == RawStripeTransaction.name }.map(&:transaction_source_id)
+            rsts_by_id = RawStripeTransaction.where(id: stripe_source_ids).index_by(&:id)
+            cts_by_id.each_value do |ct|
+              ct.raw_stripe_transaction = rsts_by_id[ct.transaction_source_id] if ct.transaction_source_type == RawStripeTransaction.name
+            end
+            @settled_transactions.each do |t|
+              t.canonical_transactions = t.canonical_transaction_ids.filter_map { |id| cts_by_id[id] }
+                                                                    .sort_by { |ct| [ct.date, ct.id] }.reverse
+            end
+          end
+
           # The hcb_transfer filter also reads `outgoing_disbursement` /
           # `incoming_disbursement` on each row, which are otherwise unmemoized
           # `Disbursement.find_by`s. Bulk-load + assign once.
