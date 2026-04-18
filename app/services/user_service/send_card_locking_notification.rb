@@ -24,12 +24,10 @@ module UserService
         end
 
       elsif future_count >= 10
-        if @user.phone_number.present? && @user.phone_number_verified?
-          if Rails.cache.write("card_locking_pre_lock_sms:#{@user.id}", true, expires_in: 25.hours, unless_exist: true)
-            message = "You have ten or more transactions missing receipts. In the next twenty-four hours, your cards will be locked unless receipts are uploaded for these transactions. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+        if @user.phone_number.present? && @user.phone_number_verified? && Rails.cache.write("card_locking_pre_lock_sms:#{@user.id}", true, expires_in: 25.hours, unless_exist: true)
+          message = "You have ten or more transactions missing receipts. In the next twenty-four hours, your cards will be locked unless receipts are uploaded for these transactions. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
 
-            TwilioMessageService::Send.new(@user, message).run!
-          end
+          TwilioMessageService::Send.new(@user, message).run!
         end
       end
     end
