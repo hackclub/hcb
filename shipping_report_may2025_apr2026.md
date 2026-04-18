@@ -1,14 +1,104 @@
 # HCB Shipping Report: May 2025 – April 2026
 
-A compilation of user-facing features and improvements merged to `main` in `hackclub/hcb` since May 1, 2025. Items already covered in [hcb-engr blog posts](https://github.com/hackclub/hcb-engr/tree/main/content/posts) have been excluded (notably: Organization announcements, Discord bot, Monthly announcements, Wise / global transfers, Event affiliations, Receipt status in emails, HCB Mobile, UI3, Mobile navigation, Transfer improvements, Organization settings notifications, New organization invite UI, Summary notification settings, Invoice sorting).
+A compilation of user-facing features and improvements merged to `main` in `hackclub/hcb` since May 1, 2025. Items that already have a post in [hcb-engr](https://github.com/hackclub/hcb-engr/tree/main/content/posts) are listed below with a ✅ badge and a link to the existing post — the rest still need writing.
 
-Admin-only features, V4 API changes aimed at technical integrators, internal refactors, CI/test/dependency work, and one-off bug fixes have also been excluded.
+Admin-only features, V4 API changes aimed at technical integrators, internal refactors, CI/test/dependency work, and one-off bug fixes have been excluded.
 
 Source data: 2,292 merged PRs between 2025-05-01 and 2026-04-18.
 
 ---
 
-## Important features shipped (blog-post-worthy)
+## Already blogged (since May 2025)
+
+These features shipped in this window and have a live post on the HCB engineering blog. Included here so the full picture is visible — no new writing needed, but the PRs are listed in case you want to credit contributors or link back.
+
+### ✅ Organization Announcements (Tier 1)
+Organizations can publish updates, newsletters, and announcements directly from HCB to their members.
+- **Authors:** @Luke-Oldenburg, @polypixeldev, @garyhtou, @24c02, @davidcornu
+- **PRs:** #10830 (core), #10904 (follow + monthly email + home highlight), #11056 (Atom feeds), #10893 (custom elements), #10974 (auto-follow organizers), #11077 (frontend polish)
+- **Post:** [`organization-announcements`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/organization-announcements)
+
+### ✅ HCB Discord Bot
+A Discord bot that notifies your team of HCB events — card charges, receipts, donations — with actionable buttons for attaching receipts and viewing transactions.
+- **Authors:** @YodaLightsabr, @polypixeldev, @Luke-Oldenburg, @sampoder
+- **PRs:** #11791 (core), #11839 (user & event integration tabs), #11871 (attach-receipt button), #12527 (view-transaction button), #12728 (PDF receipt support)
+- **Post:** [`discord-bot`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/discord-bot)
+
+### ✅ Monthly Announcements
+Automatically-scheduled monthly summaries of an organization's activity — donations, spending, cards — delivered as an announcement that members can follow.
+- **Authors:** @Luke-Oldenburg, @polypixeldev
+- **PRs:** #10975 (auto-scheduling), #11083 (callout), #11146 (spending summary blocks), #11299 (enable/disable lifecycle), #12018 (auto-enable job), #11945 (unlink from transparency)
+- **Post:** [`monthly-announcements`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/monthly-announcements)
+
+### ✅ International Transfers via Wise
+Send money in dozens of currencies via Wise, including ACH, SWIFT wires, and Interac — with live quotes, transparent FX fees, and a "Convert to Wise" shortcut on reimbursement reports.
+- **Authors:** @YodaLightsabr, @davidcornu, @sampoder
+- **PRs:** #11168 (international transfers), #11429 (international reimbursements), #11578 (quote + cost breakdown UI), #11783 (convert-to-Wise on reimbursements), #11268 (Interac support), #12449 ($50,000 cap), #12729 (Wise in transfer wizard)
+- **Post:** Wise transfers blog (Nov 4, 2025 in the hcb-engr history)
+
+### ✅ Event Affiliations
+Link your event to a school, robotics team, or other institution you're affiliated with — unlocks special partner perks and a visual affiliation badge on your dashboard.
+- **Authors:** @Luke-Oldenburg, @polypixeldev, @YodaLightsabr
+- **PRs:** #10764 (core), #12709 (polymorphic affiliable), #12898 (remove button), #13131 (validation), #13326 (admin edit)
+- **Post:** [`event-affiliations`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/event-affiliations)
+
+### ✅ Receipt Status in Emails
+Receipt upload confirmation emails now show a dynamic image of your receipt and its approval/rejection status, so you can see at a glance whether everything's in order.
+- **Author:** @polypixeldev
+- **PRs:** #10491 (dynamic image), #11873 (works signed out), #11906 (PNG switch), #12099 (higher resolution)
+- **Post:** [`receipt-status-emails`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/receipt-status-emails)
+
+### ✅ HCB Mobile Release
+The HCB mobile app (iOS + Android) launched: manage cards, upload receipts, approve reimbursements, and more from your phone. Apple Smart Banner + Android App Links auto-route web links into the app when installed.
+- **Authors:** @Mohamad-Mortada, @YodaLightsabr and the mobile team
+- **PRs:** #10971 (mobile deep-linking), #12305 (install stats), #12383/#12384 (smart banner + app links), #11360 (sub-orgs in mobile nav)
+- **Post:** [`hcb-mobile-release`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/hcb-mobile-release)
+
+### ✅ UI3 — HCB's visual refresh
+A site-wide refresh of HCB's visual language — new colors, typography, component polish, rolled out across the core product.
+- **Authors:** @lachlanjc, @garyhtou, @manuthecoder and the design team
+- **PRs:** #7741 (visual refresh across core components), #8474 (UI3), plus countless component-level follow-ups
+- **Post:** UI3 post (Dec 24, 2025 in hcb-engr history)
+
+### ✅ Mobile Navigation: Desktop Sidebar on Phones
+Mobile users now see the same sidebar navigation as desktop — no more cramped hamburger menu for power users.
+- **Author:** @manuthecoder
+- **PR:** #13148
+- **Post:** [`mobile-navigation-improvements`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/mobile-navigation-improvements)
+
+### ✅ Transfer Improvements
+A cleaner, more consistent transfer flow across ACH, check, wire, Wise, and HCB-to-HCB: the transfer wizard, improved "in-transit" filter, routing-number hints, and reliable currency handling.
+- **Authors:** @manuthecoder, @Luke-Oldenburg, @sampoder
+- **PRs:** #12729 (wizard), #12358 (in-transit filter), #13376 (routing-number hints), #11222 (currency warnings)
+- **Post:** Transfer improvements (Mar 31, 2026 in hcb-engr history)
+
+### ✅ Organization Settings Change Notifications
+Organization members get notified whenever transparency mode or monthly announcements are toggled on or off.
+- **Author:** @polypixeldev
+- **PR:** #12036
+- **Post:** [`organization-settings-notifications`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/organization-settings-notifications)
+
+### ✅ Redesigned Organization Invitations
+A fresh UI for inviting teammates into an organization — clearer hierarchy, better role explanations, and smoother acceptance flow.
+- **Authors:** @manuthecoder, @Luke-Oldenburg, @garyhtou
+- **PRs:** #11970 (invite flow redesign), #12653 (UI hierarchy improvements)
+- **Post:** [`redesigned-organization-invitations`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/redesigned-organization-invitations)
+
+### ✅ Summary Notification Settings
+A dedicated preferences page for choosing which periodic summary emails you get (monthly spend, donation digests, announcement follow-ups, etc.).
+- **Authors:** @Luke-Oldenburg, @garyhtou
+- **PR:** #13371
+- **Post:** [`summary-notification-settings`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/summary-notification-settings)
+
+### ✅ Sort Your Invoices
+Invoices are now sortable by amount, status, date, and more — click a column header to sort.
+- **Author:** @manuthecoder
+- **PRs:** #10651 (sorting ability), #13255 (refactored sort header logic)
+- **Post:** [`sort-your-invoices`](https://github.com/hackclub/hcb-engr/tree/main/content/posts/sort-your-invoices)
+
+---
+
+## Important features shipped (blog-post-worthy — not yet blogged)
 
 Each of these would merit its own blog post — they're substantial, visible to nearly all users, and introduce new capabilities or rethink a major flow.
 
@@ -216,7 +306,7 @@ These are real improvements users will notice, but aren't big enough to merit a 
 
 - **Date range:** 2025-05-01 → 2026-04-18
 - **Total merged PRs reviewed:** 2,292
-- **Excluded categories:** admin panel features, V4 API additions aimed at technical integrators, internal refactors, CI/test/dependency work, bug fixes without visible user impact, and anything already covered by an existing hcb-engr blog post.
-- **Already covered elsewhere:** Organization announcements (#10830), Discord bot, Monthly announcements, Wise/global transfers & reimbursements (#11168/#11429), Event affiliations, Receipt status in emails, HCB Mobile release, UI3 refresh, Mobile navigation sidebar (#13148), Transfer improvements, Organization settings notifications, New organization invite UI, Summary notification settings (#13371), Invoice sorting.
+- **Excluded categories:** admin panel features, V4 API additions aimed at technical integrators, internal refactors, CI/test/dependency work, and bug fixes without visible user impact.
+- **Already blogged:** listed at the top with links to the existing `hcb-engr` posts.
 
 When drafting individual posts, the PRs listed are a good jumping-off point for screenshots, commit examples, and contributor credit.
