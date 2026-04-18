@@ -314,7 +314,12 @@ class User < ApplicationRecord
     # Return the stored first_name as-is. The database stores the complete first name
     # (which may include particles like "von" from Namae parsing).
     # For legal names, fall back to parsing full_name if first_name is not set.
-    read_attribute(:first_name) || (legal ? (namae(legal:)&.given || namae(legal:)&.particle)&.join(" ") : nil)
+    return read_attribute(:first_name) if read_attribute(:first_name)
+    return nil unless legal
+
+    parsed_name = namae(legal:)
+    parts = [parsed_name&.given, parsed_name&.particle].compact_blank
+    parts.empty? ? nil : parts.join(" ")
   end
 
   def last_name(legal: false)
