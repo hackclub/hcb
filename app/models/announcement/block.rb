@@ -4,18 +4,18 @@
 #
 # Table name: announcement_blocks
 #
-#  id                  :bigint           not null, primary key
-#  parameters          :jsonb
-#  rendered_email_html :text
-#  rendered_html       :text
-#  type                :string           not null
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  announcement_id     :bigint           not null
+#  id              :bigint           not null, primary key
+#  deleted_at      :datetime
+#  parameters      :jsonb
+#  type            :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  announcement_id :bigint           not null
 #
 # Indexes
 #
 #  index_announcement_blocks_on_announcement_id  (announcement_id)
+#  index_announcement_blocks_on_deleted_at       (deleted_at)
 #
 # Foreign Keys
 #
@@ -23,18 +23,14 @@
 #
 class Announcement
   class Block < ApplicationRecord
+    self.ignored_columns += ["rendered_html", "rendered_email_html"]
+
+    acts_as_paranoid
+
     belongs_to :announcement
     has_one :event, through: :announcement
 
     before_save { self.parameters ||= {} }
-    after_create :refresh!
-
-    def refresh!
-      self.rendered_html = render
-      self.rendered_email_html = render(is_email: true)
-
-      save!
-    end
 
     def render(event: nil, is_email: false)
       if event.present? && event != announcement.event

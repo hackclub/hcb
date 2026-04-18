@@ -53,12 +53,16 @@ class WiseTransfer < ApplicationRecord
 
   include HasWiseRecipient
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :wse
 
   belongs_to :event
   belongs_to :user
   has_paper_trail
+  include HasPaperTrailHelpers
 
   has_one :canonical_pending_transaction
 
@@ -153,18 +157,11 @@ class WiseTransfer < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted?
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def status_color
@@ -186,12 +183,6 @@ class WiseTransfer < ApplicationRecord
 
   def state_text
     aasm_state.humanize
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def self.generate_detailed_quote(initial_local_amount)

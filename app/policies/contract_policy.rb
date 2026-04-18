@@ -9,4 +9,8 @@ class ContractPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def reissue?
+    user&.admin?
+  end
+
 end

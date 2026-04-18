@@ -47,6 +47,7 @@
 #
 class Wire < ApplicationRecord
   has_paper_trail
+  include HasPaperTrailHelpers
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
@@ -60,6 +61,9 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
   include Payment
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :wir
@@ -109,7 +113,7 @@ class Wire < ApplicationRecord
 
     event :mark_approved do
       after_commit do
-        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
       end
       transitions from: :pending, to: :approved
     end
@@ -167,18 +171,11 @@ class Wire < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted? # don't access local_hcb_code before saving.
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def usd_amount_cents
@@ -245,12 +242,6 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def column_wire_details

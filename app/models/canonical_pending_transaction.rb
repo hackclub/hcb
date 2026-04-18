@@ -162,7 +162,9 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
 
   after_create_commit unless: -> { ledger_item.present? } do
-    update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+    safely do
+      update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+    end
   end
 
   after_commit if: -> { ledger_item.present? } do
@@ -336,6 +338,18 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def raw_stripe_transaction
     nil # used by canonical_transaction. necessary to implement as nil given hcb code generation
+  end
+
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transaction
+
+    raw_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
   end
 
   def remote_stripe_iauth_id

@@ -1,10 +1,15 @@
 <% title "Employees" %>
 
-<%= form_with method: :get do |form| %>
-  <%= form.text_field :q, value: @q, placeholder: "Search", class: "w-100" %>
+<%= form_with method: :get, class: "card" do |form| %>
+  <div class="flex items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
-<%= page_entries_info @employees, entry_name: "employees" %>
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <%= page_entries_info @employees, entry_name: "employees" %>
+</div>
 
 <table>
   <thead>

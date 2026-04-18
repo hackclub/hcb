@@ -1,0 +1,146 @@
+<% @check = @hcb_code.increase_check %>
+<% @account_details = @check.increase? ? @event.increase_account_number : @event.column_account_number %>
+
+<link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
+
+<% if @hcb_code.increase_check.column_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.increase_check.column_id}", class: "btn bg-accent", target: "_blank" %>
+  <% end %>
+<% end %>
+
+<% if @hcb_code.increase_check.increase_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View on Increase", "https://dashboard.increase.com/transfers/#{@hcb_code.increase_check.increase_id}", class: "btn bg-accent", target: "_blank" %>
+  <% end %>
+<% end %>
+
+<%= render "increase_checks/paper_check",
+      check_number: @check.check_number,
+      date: (@check.approved_at || @check.created_at).strftime("%b %d, %Y"),
+      recipient_name: @check.recipient_name,
+      amount: @check.amount,
+      memo: @check.memo,
+      account_details: @account_details %>
+
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
+    <div class="flex items-center justify-between" style="gap: 8px">
+      <span class="flex-auto mr1">
+        <span class="regular muted">Check to</span>
+        <%= @hcb_code.increase_check.recipient_name %>
+        <span class="regular muted">for</span>
+        <span class="regular"><%= render_money @hcb_code.increase_check.amount %></span>
+      </span>
+      <span class="badge h4 nowrap bg-<%= @hcb_code.increase_check.state %>">
+        <%= @hcb_code.increase_check.state_text %>
+      </span>
+    </div>
+  <% end %>
+
+  <section class="hcb-code--details">
+    <div>
+      <% if @hcb_code.increase_check.sent? %>
+        <strong>Sent by</strong>
+      <% else %>
+        <strong>Requested by</strong>
+      <% end %>
+      <%= user_mention @hcb_code.increase_check.user %>
+    </div>
+    <% if @hcb_code.increase_check.sent? %>
+      <div>
+        <strong>Sent at</strong>
+        <%= format_datetime @hcb_code.increase_check.approved_at %>
+      </div>
+    <% else %>
+      <div>
+        <strong>Requested at</strong>
+        <%= format_datetime @hcb_code.increase_check.created_at %>
+      </div>
+    <% end %>
+    <% if @hcb_code.increase_check.reimbursement_payout_holding.present? %>
+      <div>
+        <strong>Reimbursing</strong>
+       <%= link_to @hcb_code.increase_check.reimbursement_payout_holding.report.name, @hcb_code.increase_check.reimbursement_payout_holding.report, data: { turbo_frame: "_top" } %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="hcb-code--info">
+    <p>
+      <strong>Sent to</strong>
+      <%= @hcb_code.increase_check.recipient_name %>
+    </p>
+
+    <p>
+      <strong>Addressed to</strong>
+      <%= @hcb_code.increase_check.address %>
+    </p>
+
+    <p>
+      <strong>Recipient email</strong>
+      <%= @hcb_code.increase_check.recipient_email || "(no email provided)" %>
+    </p>
+
+    <p>
+      <strong>Check memo</strong>
+      <%= @hcb_code.increase_check.memo %>
+    </p>
+
+    <p>
+      <strong>Payment purpose</strong>
+      <%= @hcb_code.increase_check.payment_for %>
+    </p>
+
+    <% if @hcb_code.increase_check.check_number.present? %>
+      <p>
+        <strong>Check number</strong>
+        <span class="font-mono"><%= @hcb_code.increase_check.check_number %></span>
+      </p>
+    <% end %>
+
+    <% if @hcb_code.increase_check.increase_status.present? %>
+      <% admin_tool "", "p" do %>
+        <strong>Status</strong>
+        <%= @hcb_code.increase_check.increase_status.humanize %>
+      <% end %>
+    <% end %>
+
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
+
+  <% if @hcb_code.increase_check.may_mark_rejected? || @hcb_code.increase_check.column_id.present? %>
+    <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
+      <% if @hcb_code.increase_check.may_mark_rejected? %>
+        <% cancel_button = button_to "Cancel check", reject_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", data: { turbo_confirm: "Are you sure you want to cancel this check?" }, disabled: !policy(@hcb_code.increase_check).reject? %>
+        <% if policy(@hcb_code.increase_check).reject? %>
+          <%= cancel_button %>
+        <% else %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel checks!">
+            <%= cancel_button %>
+          </div>
+        <% end %>
+
+        <% admin_tool do %>
+          <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+        <% end %>
+      <% end %>
+
+      <% if @hcb_code.increase_check.column_id.present? %>
+        <% stop_button = button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", data: { turbo_confirm: "This action will stop the check and is irreversible." }, disabled: !policy(@hcb_code.increase_check).stop? %>
+        <% if policy(@hcb_code.increase_check).stop? %>
+          <%= stop_button %>
+        <% elsif @hcb_code.increase_check.can_stop? %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can stop checks!">
+            <%= stop_button %>
+          </div>
+        <% end %>
+
+        <% admin_tool("flex gap-3") do %>
+          <%= button_to "Reissue", reissue_increase_check_path(@hcb_code.increase_check), class: "btn bg-muted", target: "_blank", data: { turbo_confirm: "This action will stop the current check and issue a new one for the same amount." }, disabled: !policy(@hcb_code.increase_check).reissue? %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

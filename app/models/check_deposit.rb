@@ -31,6 +31,9 @@ class CheckDeposit < ApplicationRecord
   include Freezable
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :cdp
 
@@ -114,17 +117,12 @@ class CheckDeposit < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
 
   def state
-    return :muted if column_id.nil? && increase_id.nil?
     return :error if rejected? || returned?
+    return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?

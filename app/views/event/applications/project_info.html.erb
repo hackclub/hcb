@@ -14,8 +14,9 @@
 
 <div class=" mb-6">
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card card--outline mb-6" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>' }">
-
+  <div
+    class="card card--outline mb-6"
+    x-data="application_project_info({ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>', description: '<%= @application.description %>' })">
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
@@ -25,10 +26,24 @@
 
     <div class="field">
       <%= form.label :description do %>
-        Tell us about your project <span class="text-primary">*</span>
+        <% if @application.teen_led? %>
+          Tell us about your project
+        <% else %>
+          Describe your mission's charitable purpose
+        <% end %>
+        <span class="text-primary">*</span>
       <% end %>
-      <p class="text-sm muted mt-1 mb-2">Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!</p>
-      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
+      <p class="text-sm muted mt-1 mb-2">
+        <% if @application.teen_led? %>
+          Are you running a hackathon, leading a robotics team, organizing a nonprofit, building a project, or something else? We want to know!
+        <% else %>
+          Please share some additional details about your project’s charitable mission, operations and reason for seeking fiscal sponsorship. (minimum 50 words)
+        <% end %>
+      </p>
+      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", "x-model": "description" %>
+      <% unless @application.teen_led? %>
+        <p class="text-sm muted mt-1 mb-2" x-text="description_word_count_text"></p>
+      <% end %>
     </div>
 
     <div class="field">
@@ -71,10 +86,10 @@
       <%= form.label :team_size do %>
         How many people are on your team? <span class="text-primary">*</span>
       <% end %>
-      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false", step: 1, min: 1 %>
     </div>
 
-    <div class="flex flex-row w-full gap-4 mt-4">
+    <div class="flex flex-row w-full gap-4 my-4">
       <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
         <%= form.label :annual_budget do %>
           Annual budget <span class="text-primary">*</span>
@@ -101,13 +116,19 @@
       </div>
     </div>
 
-    <div class="field m-0 mt-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
+    <div class="field m-0 my-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
       <%= form.label :funding_source do %>
         What is the source of your funding? <span class="text-primary">*</span>
       <% end %>
       <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
     </div>
 
+    <div class="field m-0">
+      <%= form.label :previously_applied do %>
+        Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
+      <% end %>
+      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], (@application.previously_applied.nil? ? @application.user.organizer_positions.with_deleted.joins(:organizer_position_invite).where(is_signee: true, organizer_position_invite: { initial: true }).exists? : @application.previously_applied).to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+    </div>
   </div>
 
 <% end %>
@@ -122,13 +143,13 @@
     <% end %>
   </div>
 
-  <%= render partial: "events/settings/affiliation", collection: @application.affiliations %>
+  <%= render partial: "events/settings/affiliation", collection: @application.affiliations.nonempty %>
 <% end %>
 </div>
 
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">
     <button id="submit_application" class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
-    <button class="btn bg-muted" formnovalidate="formnovalidate" formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+    <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
   </div>
 <% end %>

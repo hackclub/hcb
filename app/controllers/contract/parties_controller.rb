@@ -22,7 +22,7 @@ class Contract
         return
       elsif @contract.voided?
         flash[:error] = "This contract has been voided."
-        redirect_to root_path
+        redirect_to @contract.redirect_path
         return
       elsif @contract.pending?
         flash[:error] = "This contract has not been sent yet. Try again later."
@@ -44,7 +44,12 @@ class Contract
       authorize @party
 
       if @party.signee? && @contract.signed?
-        redirect_to @contract.contractable
+        if @contract.contractable.is_a?(Event::Application)
+          redirect_to application_path(@contract.contractable)
+        elsif @contract.contractable.is_a?(OrganizerPositionInvite)
+          redirect_to organizer_position_invite_path(@contract.contractable)
+        end
+
         return
       end
 

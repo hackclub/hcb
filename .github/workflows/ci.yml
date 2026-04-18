@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - main
+# Default to least-privilege for the GITHUB_TOKEN. Individual jobs that
+# need to write back to the repo (e.g. posting PR review suggestions)
+# widen their own permissions block below.
+permissions:
+  contents: read
 jobs:
   rubocop:
     name: Rubocop
@@ -26,6 +31,11 @@ jobs:
     name: 'Suggest lint changes'
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
+    # parkerbxyz/suggest-changes posts review comments with suggested
+    # edits, which requires write access to the PR.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -90,8 +100,16 @@ jobs:
       - name: Run Prettier
         run: yarn format:check
   rspec:
-    name: RSpec
+    name: RSpec (shard ${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel remaining shards when one fails — we want to see all
+      # failures in a single run rather than a slow loop of retries.
+      fail-fast: false
+      matrix:
+        # Bumping this number adds more parallel runners. Keep it in sync
+        # with SHARD_TOTAL below.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     services:
       postgres:
         image: postgres:15
@@ -159,11 +177,26 @@ jobs:
           REDIS_URL: redis://localhost:6379
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
-        run: bundle exec rspec --tag ~skip
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: 8
+        # Deterministic round-robin split of spec files across shards. We
+        # sort the file list first so each runner computes the same ordering,
+        # then `awk` keeps only the files whose 1-based index mod SHARD_TOTAL
+        # maps to this shard. With 143 spec files over 8 shards, each shard
+        # runs ~18 files. This is simple and doesn't require extra gems;
+        # upgrade to a balancer (ci-queue, knapsack_pro) later if shards
+        # drift apart in wall time.
+        run: |
+          specs=$(find spec -name '*_spec.rb' | sort | awk -v i="$SHARD_INDEX" -v n="$SHARD_TOTAL" 'NR % n == (i - 1) % n { print }')
+          echo "Running $(echo "$specs" | wc -l) spec files on shard $SHARD_INDEX/$SHARD_TOTAL"
+          bundle exec rspec --tag ~skip $specs
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
-          name: simplecov-report
+          # Each shard generates its own coverage file; name them uniquely
+          # so the upload action doesn't clash. Merging into a single report
+          # can be done in a downstream job if needed.
+          name: simplecov-report-shard-${{ matrix.shard }}
           path: coverage/coverage.json
   annotate:
     name: Annotate

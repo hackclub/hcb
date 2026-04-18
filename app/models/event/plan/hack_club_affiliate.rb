@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -53,6 +53,17 @@ class Event
         return 14 if date < Date.new(2025, 4, 11) # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743055747682219
 
         35 # custom rate for HQ events
+      end
+
+      def contract_docuseal_template_id
+        2838847
+      end
+
+      def contract_skip_prefills
+        {
+          "Contract Signee" => ["Telephone", "Email", "The Project"],
+          "HCB"             => ["HCB ID"]
+        }
       end
 
     end
