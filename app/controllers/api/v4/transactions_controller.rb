@@ -17,42 +17,10 @@ module Api
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(**filters).run
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(**filters).run
 
-        # `filter_transaction_type` reads `t.local_hcb_code.<predicate>?` for every settled
-        # row. Without preloading, that's a SELECT per row — multi-second N+1 on large orgs.
-        if params[:type].present? && @settled_transactions.any?
-          hcb_codes_by_code = HcbCode.where(hcb_code: @settled_transactions.map(&:hcb_code)).index_by(&:hcb_code)
-          @settled_transactions.each { |t| t.local_hcb_code = hcb_codes_by_code[t.hcb_code] }
-
-          # The card_charge filter reads `t.raw_stripe_transaction` which walks
-          # `ct -> transaction_source` — both lazy lookups per row. Bulk-load
-          # the CTs (and their stripe sources) and assign once.
-          if params[:type] == "card_charge"
-            ct_ids = @settled_transactions.flat_map(&:canonical_transaction_ids)
-            cts_by_id = CanonicalTransaction.where(id: ct_ids).index_by(&:id)
-            stripe_source_ids = cts_by_id.values.select { |ct| ct.transaction_source_type == RawStripeTransaction.name }.map(&:transaction_source_id)
-            rsts_by_id = RawStripeTransaction.where(id: stripe_source_ids).index_by(&:id)
-            cts_by_id.each_value do |ct|
-              ct.raw_stripe_transaction = rsts_by_id[ct.transaction_source_id] if ct.transaction_source_type == RawStripeTransaction.name
-            end
-            @settled_transactions.each do |t|
-              t.canonical_transactions = t.canonical_transaction_ids.filter_map { |id| cts_by_id[id] }
-                                                                    .sort_by { |ct| [ct.date, ct.id] }.reverse
-            end
-          end
-
-          # The hcb_transfer filter also reads `outgoing_disbursement` /
-          # `incoming_disbursement` on each row, which are otherwise unmemoized
-          # `Disbursement.find_by`s. Bulk-load + assign once.
-          if params[:type] == "hcb_transfer"
-            disbursement_hcb_codes = hcb_codes_by_code.values.select { |hc| hc.outgoing_disbursement? || hc.incoming_disbursement? }
-            disbursements_by_id = Disbursement.where(id: disbursement_hcb_codes.map(&:hcb_i2)).index_by(&:id)
-            disbursement_hcb_codes.each do |hc|
-              disbursement = disbursements_by_id[hc.hcb_i2.to_i]
-              hc.outgoing_disbursement = disbursement&.outgoing_disbursement if hc.outgoing_disbursement?
-              hc.incoming_disbursement = disbursement&.incoming_disbursement if hc.incoming_disbursement?
-            end
-          end
-        end
+        TransactionGroupingEngine::Transaction::FilterTypePreloader.new(
+          settled_transactions: @settled_transactions,
+          type: params[:type]
+        ).run!
 
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
