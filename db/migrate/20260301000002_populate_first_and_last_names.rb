@@ -15,12 +15,12 @@ class PopulateFirstAndLastNames < ActiveRecord::Migration[8.0]
       }
 
       if updates.size >= BATCH_SIZE
-        User.upsert_all(updates, update_only: [:first_name, :last_name], unique_by: :id)
+        User.upsert_all(updates, update_only: [:first_name, :last_name])
         updates.clear
       end
     end
 
-    User.upsert_all(updates, update_only: [:first_name, :last_name], unique_by: :id) if updates.any?
+    User.upsert_all(updates, update_only: [:first_name, :last_name]) if updates.any?
   end
 
   def down
