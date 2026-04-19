@@ -58,7 +58,7 @@ class RecurringDonation < ApplicationRecord
 
   validates :name, presence: true
   validates :email, presence: true
-  validates_email_format_of :email
+  validates_email_format_of :email, if: :email_changed?
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
   validates_uniqueness_of :stripe_subscription_id
   validates_uniqueness_of :email,
