@@ -113,21 +113,27 @@ function EmptyState() {
 
 function SearchAndResults({ current_event_slug }) {
   const [actions, setActions] = useState([])
-  const { query, search, searching, searched, searchedFor, currentRootActionId } =
-    useKBar(state => {
-      return {
-        state,
-        search: state.currentRootActionId?.startsWith('search')
-          ? state.searchQuery
-          : null,
-        searching: state.currentRootActionId?.startsWith('search'),
-        searched: state.currentRootActionId?.startsWith('results:'),
-        searchedFor: state.currentRootActionId?.startsWith('results:')
-          ? state.currentRootActionId?.replace('results: ', '')
-          : '',
-        currentRootActionId: state.currentRootActionId,
-      }
-    })
+  const {
+    query,
+    search,
+    searching,
+    searched,
+    searchedFor,
+    currentRootActionId,
+  } = useKBar(state => {
+    return {
+      state,
+      search: state.currentRootActionId?.startsWith('search')
+        ? state.searchQuery
+        : null,
+      searching: state.currentRootActionId?.startsWith('search'),
+      searched: state.currentRootActionId?.startsWith('results:'),
+      searchedFor: state.currentRootActionId?.startsWith('results:')
+        ? state.currentRootActionId?.replace('results: ', '')
+        : '',
+      currentRootActionId: state.currentRootActionId,
+    }
+  })
 
   useRegisterActions(actions, [actions])
 
@@ -138,20 +144,7 @@ function SearchAndResults({ current_event_slug }) {
         if (response.ok) {
           const data = await response.json()
           const eventActions = generateEventActions(data)
-          const browseAllActions = current_event_slug
-            ? [
-                {
-                  id: `${current_event_slug}-browse-all`,
-                  name: 'Browse all organizations',
-                  icon: <Icon glyph="explore" size={16} />,
-                  parent: current_event_slug,
-                  priority: Priority.HIGH,
-                  perform: () => query.setCurrentRootAction(null),
-                  section: 'Navigation',
-                },
-              ]
-            : []
-          setActions([...actions, ...eventActions, ...browseAllActions])
+          setActions([...actions, ...eventActions])
         }
       } catch (error) {
         console.error('Error:', error)
