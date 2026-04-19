@@ -143,7 +143,7 @@ export function KBarInput(props) {
       {currentRootActionId && (
         <button
           onClick={() => query.setCurrentRootAction(parent)}
-          class="pop ml-3 w-7 h-7 -mr-2 z-10"
+          className="pop ml-3 w-7 h-7 -mr-2 z-10"
           aria-label="Go back"
         >
           <Icon glyph="view-back" size={20} />
