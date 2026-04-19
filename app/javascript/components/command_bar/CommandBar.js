@@ -1,6 +1,6 @@
 /* eslint react/prop-types:0 */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
   KBarProvider,
   KBarPortal,
@@ -22,6 +22,7 @@ export default function CommandBar({
   admin_override_pretend = false,
   adminUrls = {},
   has_followed_events = false,
+  current_event_slug = null,
 }) {
   return (
     <div style={{ position: 'relative', zIndex: '100000000' }}>
@@ -40,16 +41,37 @@ export default function CommandBar({
         }}
       >
         <ButtonTrigger />
+        <EventRootSetter current_event_slug={current_event_slug} />
         <KBarPortal>
           <KBarPositioner
             style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
           >
-            <SearchAndResults />
+            <SearchAndResults current_event_slug={current_event_slug} />
           </KBarPositioner>
         </KBarPortal>
       </KBarProvider>
     </div>
   )
+}
+
+function EventRootSetter({ current_event_slug }) {
+  const { query, visualState } = useKBar(state => ({
+    visualState: state.visualState,
+  }))
+  const prevVisualState = useRef(null)
+
+  useEffect(() => {
+    if (
+      current_event_slug &&
+      visualState !== 'hidden' &&
+      prevVisualState.current === 'hidden'
+    ) {
+      query.setCurrentRootAction(current_event_slug)
+    }
+    prevVisualState.current = visualState
+  }, [visualState, current_event_slug, query])
+
+  return null
 }
 
 const ButtonTrigger = () => {
@@ -89,9 +111,9 @@ function EmptyState() {
   )
 }
 
-function SearchAndResults() {
+function SearchAndResults({ current_event_slug }) {
   const [actions, setActions] = useState([])
-  const { search, searching, searched, searchedFor, currentRootActionId } =
+  const { query, search, searching, searched, searchedFor, currentRootActionId } =
     useKBar(state => {
       return {
         state,
@@ -108,6 +130,23 @@ function SearchAndResults() {
     })
 
   useRegisterActions(actions, [actions])
+
+  const backActions = useMemo(() => {
+    if (!current_event_slug) return []
+    return [
+      {
+        id: `${current_event_slug}-browse-all`,
+        name: 'Browse all organizations',
+        icon: <Icon glyph="explore" size={16} />,
+        parent: current_event_slug,
+        priority: Priority.HIGH,
+        perform: () => query.setCurrentRootAction(null),
+        section: 'Navigation',
+      },
+    ]
+  }, [current_event_slug, query])
+
+  useRegisterActions(backActions, [backActions])
 
   useEffect(() => {
     async function fetchOrganizations() {
