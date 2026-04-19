@@ -23,14 +23,26 @@ class EventsController < ApplicationController
     authorize Event
     respond_to do |format|
       format.json do
-        events =
+        user_events =
           @current_user
           .events
           .with_attached_logo
           .preload(:config, :plan)
           .reorder("organizer_positions.sort_index ASC", "events.id ASC")
           .strict_loading
-          .map { |event| serialize_event(event, member: true) }
+          .to_a
+
+        events = user_events.map { |event| serialize_event(event, member: true) }
+
+        user_event_ids = user_events.map(&:id)
+        sub_orgs = Event
+          .where(parent_id: user_event_ids)
+          .where.not(id: user_event_ids)
+          .with_attached_logo
+          .preload(:config, :plan, :parent)
+          .strict_loading
+
+        events.concat(sub_orgs.map { |event| serialize_event(event, member: true, parent_slug: event.parent.slug) })
 
         if auditor_signed_in?
           events.concat(
@@ -1303,13 +1315,14 @@ class EventsController < ApplicationController
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
   end
 
-  def serialize_event(event, member:)
+  def serialize_event(event, member:, parent_slug: nil)
     {
       name: event.name,
       slug: event.slug,
       logo: event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : "none",
       demo_mode: event.demo_mode,
       member:,
+      parent_slug:,
       features: {
         subevents: event.subevents_enabled?,
         card_grants: event.plan.card_grants_enabled?
