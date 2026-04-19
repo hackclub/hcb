@@ -111,7 +111,7 @@ function EmptyState() {
   )
 }
 
-function SearchAndResults({ current_event_slug }) {
+function SearchAndResults() {
   const [actions, setActions] = useState([])
   const { search, searching, searched, searchedFor, currentRootActionId } =
     useKBar(state => {
