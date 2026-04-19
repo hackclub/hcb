@@ -113,27 +113,21 @@ function EmptyState() {
 
 function SearchAndResults({ current_event_slug }) {
   const [actions, setActions] = useState([])
-  const {
-    query,
-    search,
-    searching,
-    searched,
-    searchedFor,
-    currentRootActionId,
-  } = useKBar(state => {
-    return {
-      state,
-      search: state.currentRootActionId?.startsWith('search')
-        ? state.searchQuery
-        : null,
-      searching: state.currentRootActionId?.startsWith('search'),
-      searched: state.currentRootActionId?.startsWith('results:'),
-      searchedFor: state.currentRootActionId?.startsWith('results:')
-        ? state.currentRootActionId?.replace('results: ', '')
-        : '',
-      currentRootActionId: state.currentRootActionId,
-    }
-  })
+  const { search, searching, searched, searchedFor, currentRootActionId } =
+    useKBar(state => {
+      return {
+        state,
+        search: state.currentRootActionId?.startsWith('search')
+          ? state.searchQuery
+          : null,
+        searching: state.currentRootActionId?.startsWith('search'),
+        searched: state.currentRootActionId?.startsWith('results:'),
+        searchedFor: state.currentRootActionId?.startsWith('results:')
+          ? state.currentRootActionId?.replace('results: ', '')
+          : '',
+        currentRootActionId: state.currentRootActionId,
+      }
+    })
 
   useRegisterActions(actions, [actions])
 
