@@ -1,6 +1,6 @@
 /* eslint react/prop-types:0 */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   KBarProvider,
   KBarPortal,
@@ -131,30 +131,27 @@ function SearchAndResults({ current_event_slug }) {
 
   useRegisterActions(actions, [actions])
 
-  const backActions = useMemo(() => {
-    if (!current_event_slug) return []
-    return [
-      {
-        id: `${current_event_slug}-browse-all`,
-        name: 'Browse all organizations',
-        icon: <Icon glyph="explore" size={16} />,
-        parent: current_event_slug,
-        priority: Priority.HIGH,
-        perform: () => query.setCurrentRootAction(null),
-        section: 'Navigation',
-      },
-    ]
-  }, [current_event_slug, query])
-
-  useRegisterActions(backActions, [backActions])
-
   useEffect(() => {
     async function fetchOrganizations() {
       try {
         const response = await fetch('/events.json')
         if (response.ok) {
           const data = await response.json()
-          setActions([...actions, ...generateEventActions(data)])
+          const eventActions = generateEventActions(data)
+          const browseAllActions = current_event_slug
+            ? [
+                {
+                  id: `${current_event_slug}-browse-all`,
+                  name: 'Browse all organizations',
+                  icon: <Icon glyph="explore" size={16} />,
+                  parent: current_event_slug,
+                  priority: Priority.HIGH,
+                  perform: () => query.setCurrentRootAction(null),
+                  section: 'Navigation',
+                },
+              ]
+            : []
+          setActions([...actions, ...eventActions, ...browseAllActions])
         }
       } catch (error) {
         console.error('Error:', error)
