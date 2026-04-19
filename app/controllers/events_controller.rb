@@ -36,11 +36,11 @@ class EventsController < ApplicationController
 
         user_event_ids = user_events.map(&:id)
         sub_orgs = Event
-          .where(parent_id: user_event_ids)
-          .where.not(id: user_event_ids)
-          .with_attached_logo
-          .preload(:config, :plan, :parent)
-          .strict_loading
+                   .where(parent_id: user_event_ids)
+                   .where.not(id: user_event_ids)
+                   .with_attached_logo
+                   .preload(:config, :plan, :parent)
+                   .strict_loading
 
         events.concat(sub_orgs.map { |event| serialize_event(event, member: true, parent_slug: event.parent.slug) })
 

@@ -32,20 +32,24 @@ const eventIcon = event =>
 
 export const generateEventActions = data => {
   return [
-    ...data.filter(e => !e.parent_slug).map(event => ({
-      id: event.slug,
-      name: event.name,
-      icon: eventIcon(event),
-      priority: !event.member ? Priority.LOW : Priority.HIGH,
-      section: 'Organizations',
-    })),
-    ...data.filter(e => e.parent_slug).map(event => ({
-      id: event.slug,
-      name: event.name,
-      icon: eventIcon(event),
-      priority: Priority.NORMAL,
-      section: 'Sub-organizations',
-    })),
+    ...data
+      .filter(e => !e.parent_slug)
+      .map(event => ({
+        id: event.slug,
+        name: event.name,
+        icon: eventIcon(event),
+        priority: !event.member ? Priority.LOW : Priority.HIGH,
+        section: 'Organizations',
+      })),
+    ...data
+      .filter(e => e.parent_slug)
+      .map(event => ({
+        id: event.slug,
+        name: event.name,
+        icon: eventIcon(event),
+        priority: Priority.NORMAL,
+        section: 'Sub-organizations',
+      })),
     ...data.map(event => ({
       id: `${event.slug}-home`,
       name: 'Home',
