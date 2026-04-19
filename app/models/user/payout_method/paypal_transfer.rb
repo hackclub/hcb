@@ -15,7 +15,7 @@ class User
       include Shared
 
       self.table_name = "user_payout_method_paypal_transfers"
-      validates_email_format_of :recipient_email
+      validates_email_format_of :recipient_email, if: :recipient_email_changed?
       validates_presence_of :recipient_email
       normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
