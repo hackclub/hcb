@@ -3,6 +3,7 @@
 import { RichTextarea, createRegexRenderer } from 'rich-textarea'
 import React, { useState, useEffect } from 'react'
 import { useKBar } from 'kbar'
+import Icon from '@hackclub/icons'
 
 const renderer = createRegexRenderer([
   [
@@ -124,10 +125,41 @@ export function KBarInput(props) {
     )
   }, [actions, currentRootActionId, defaultPlaceholder, placeholder])
 
+  const parent =
+    currentRootActionId && actions[currentRootActionId]
+      ? actions[currentRootActionId].parent
+      : undefined
+
   return (
     <div
-      style={{ borderBottom: '1px solid var(--kbar-border)', marginBottom: 10 }}
+      style={{
+        borderBottom: '1px solid var(--kbar-border)',
+        marginBottom: 10,
+        display: 'flex',
+        alignItems: 'center',
+      }}
     >
+      {currentRootActionId && (
+        <button
+          onClick={() => query.setCurrentRootAction(parent)}
+          style={{
+            flexShrink: 0,
+            marginLeft: 12,
+            padding: '3px 6px',
+            background: 'var(--kbar-overlay)',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            color: 'var(--kbar-foreground)',
+            opacity: 0.7,
+          }}
+          aria-label="Go back"
+        >
+          <Icon glyph="view-back" size={16} />
+        </button>
+      )}
       <RichTextarea
         {...rest}
         style={{
