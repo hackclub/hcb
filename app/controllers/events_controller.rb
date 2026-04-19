@@ -1327,7 +1327,7 @@ class EventsController < ApplicationController
         subevents: event.subevents_enabled?,
         card_grants: event.plan.card_grants_enabled?
       }
-    }
+    }.compact
   end
 
 end
