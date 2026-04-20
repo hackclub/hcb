@@ -20,7 +20,7 @@
               and adhere to the instructions provided by <%= card_grant.event.name + (":" if card_grant.instructions.present?) %>
             <% end %>
             <% if card_grant.instructions.present? %>
-              <div></div>
+              <div></div> <%# this empty <div> exists for layout purposes to handle checkbox alignment %>
               <div class="card card--sunken py-0">
                 <%= MarkdownService.instance.render(card_grant.instructions) %>
               </div>
