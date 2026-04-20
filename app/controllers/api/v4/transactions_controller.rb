@@ -66,8 +66,7 @@ module Api
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
 
         if params.key? :memo
-          @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: params[:memo]) }
-          @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: params[:memo]) }
+          @hcb_code.update_custom_memo!(params[:memo])
         end
 
         render "show"
@@ -92,7 +91,13 @@ module Api
       def paginate_transactions(transactions)
         limit = params[:limit]&.to_i || 25
         start_index = if params[:after]
-                        transactions.index { |tx| tx.local_hcb_code.public_id == params[:after] } + 1
+                        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless cursor_hcb_code
+
+                        index = transactions.index { |tx| tx.hcb_code == cursor_hcb_code }
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless index
+
+                        index + 1
                       else
                         0
                       end

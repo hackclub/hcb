@@ -74,7 +74,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
@@ -111,6 +111,7 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
+        party.update!(user: current_user)
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -129,7 +130,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level])
+      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
@@ -140,7 +141,7 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
+        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
       end
 
       authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
@@ -157,11 +158,28 @@ class Event
       authorize @application
     end
 
+    def videos
+      authorize @application
+    end
+
     def agreement
       authorize @application
 
+      unless @application.videos_watched
+        redirect_to videos_application_path(@application)
+        return
+      end
+
       @contract = @application.contract
       @party = @contract.party :signee
+    end
+
+    def mark_videos_watched
+      authorize @application
+
+      @application.update!(videos_watched: true)
+
+      redirect_to agreement_application_path(@application)
     end
 
     def review
@@ -202,11 +220,11 @@ class Event
     def submit
       authorize @application
 
-      if @application.ready_to_submit?
+      begin
         @application.mark_submitted!
         confetti!
         redirect_to application_path(@application)
-      else
+      rescue AASM::InvalidTransition
         flash[:error] = "This application is not ready to submit"
         redirect_to review_application_path(@application)
       end

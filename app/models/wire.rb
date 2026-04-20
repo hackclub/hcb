@@ -47,6 +47,7 @@
 #
 class Wire < ApplicationRecord
   has_paper_trail
+  include HasPaperTrailHelpers
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
@@ -60,6 +61,9 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
   include Payment
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :wir
@@ -91,7 +95,7 @@ class Wire < ApplicationRecord
   end
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
@@ -109,7 +113,7 @@ class Wire < ApplicationRecord
 
     event :mark_approved do
       after_commit do
-        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
       end
       transitions from: :pending, to: :approved
     end
@@ -238,12 +242,6 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
-  end
-
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
   end
 
   def column_wire_details

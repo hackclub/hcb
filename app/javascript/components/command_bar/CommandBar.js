@@ -1,6 +1,6 @@
 /* eslint react/prop-types:0 */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   KBarProvider,
   KBarPortal,
@@ -21,12 +21,16 @@ export default function CommandBar({
   admin = false,
   admin_override_pretend = false,
   adminUrls = {},
+  has_followed_events = false,
+  current_event_slug = null,
 }) {
   return (
     <div style={{ position: 'relative', zIndex: '100000000' }}>
       <KBarProvider
         actions={[
-          ...initalActions,
+          ...initalActions.filter(
+            a => a.id !== 'my-feed' || has_followed_events
+          ),
           ...(admin || admin_override_pretend
             ? adminActions(adminUrls, !admin && admin_override_pretend)
             : []),
@@ -37,6 +41,7 @@ export default function CommandBar({
         }}
       >
         <ButtonTrigger />
+        <EventRootSetter current_event_slug={current_event_slug} />
         <KBarPortal>
           <KBarPositioner
             style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
@@ -47,6 +52,26 @@ export default function CommandBar({
       </KBarProvider>
     </div>
   )
+}
+
+function EventRootSetter({ current_event_slug }) {
+  const { query, visualState } = useKBar(state => ({
+    visualState: state.visualState,
+  }))
+  const prevVisualState = useRef(null)
+
+  useEffect(() => {
+    if (
+      current_event_slug &&
+      visualState !== 'hidden' &&
+      prevVisualState.current === 'hidden'
+    ) {
+      query.setCurrentRootAction(current_event_slug)
+    }
+    prevVisualState.current = visualState
+  }, [visualState, current_event_slug, query])
+
+  return null
 }
 
 const ButtonTrigger = () => {
@@ -112,7 +137,8 @@ function SearchAndResults() {
         const response = await fetch('/events.json')
         if (response.ok) {
           const data = await response.json()
-          setActions([...actions, ...generateEventActions(data)])
+          const eventActions = generateEventActions(data)
+          setActions([...actions, ...eventActions])
         }
       } catch (error) {
         console.error('Error:', error)
