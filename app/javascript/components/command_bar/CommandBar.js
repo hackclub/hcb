@@ -46,7 +46,7 @@ export default function CommandBar({
           <KBarPositioner
             style={{ zIndex: 1000, backgroundColor: 'var(--kbar-dim)' }}
           >
-            <SearchAndResults current_event_slug={current_event_slug} />
+            <SearchAndResults />
           </KBarPositioner>
         </KBarPortal>
       </KBarProvider>
