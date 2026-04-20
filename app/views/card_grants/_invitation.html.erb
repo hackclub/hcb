@@ -10,18 +10,28 @@
           Before you can start spending, you need to agree to the Card Issuing Terms and pledge to use the card responsibly.
         </p>
         <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
-          <% if card_grant.purpose.present? %>
-            <div class="field field--checkbox mb2">
+          <% if card_grant.purpose.present? || card_grant.instructions.present? %>
+            <div class="field field--checkbox mb2" style="display: grid; grid-template-columns: min-content 1fr;">
               <%= form.check_box :purpose, required: true %>
               <%= form.label :purpose do %>
-                I will only use this card for the provided purpose: <strong><%= card_grant.purpose %></strong>
+                I will only use this card for the intended purpose
+                <% if card_grant.purpose.present? %>
+                  (<strong><%= card_grant.purpose %></strong>)
+                <% end %>
+                and adhere to the instructions provided by <%= card_grant.event.name + (":" if card_grant.instructions.present?) %>
+              <% end %>
+              <% if card_grant.instructions.present? %>
+                <div></div>
+                <div class="card card--sunken py-0">
+                  <%= MarkdownService.instance.render(card_grant.instructions) %>
+                </div>
               <% end %>
             </div>
           <% end %>
           <div class="field field--checkbox mb2">
             <%= form.check_box :policy, required: true %>
             <%= form.label :policy do %>
-              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraud will result in a ban
+              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraudulent activity will result in a ban
             <% end %>
           </div>
           <div class="field field--checkbox mb2">
