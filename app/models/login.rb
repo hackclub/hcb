@@ -9,23 +9,24 @@
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
 #  is_reauthentication      :boolean          default(FALSE), not null
+#  state                    :jsonb
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  referral_link_id         :bigint
-#  referral_program_id      :bigint
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
 # Indexes
 #
-#  index_logins_on_referral_link_id     (referral_link_id)
-#  index_logins_on_referral_program_id  (referral_program_id)
-#  index_logins_on_user_id              (user_id)
-#  index_logins_on_user_session_id      (user_session_id)
+#  index_logins_on_referral_link_id  (referral_link_id)
+#  index_logins_on_user_id           (user_id)
+#  index_logins_on_user_session_id   (user_session_id)
 #
 class Login < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
 
   belongs_to :user
   belongs_to :user_session, class_name: "User::Session", optional: true
@@ -33,13 +34,15 @@ class Login < ApplicationRecord
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })
 
-  belongs_to :referral_program, class_name: "Referral::Program", optional: true
   belongs_to :referral_link, class_name: "Referral::Link", optional: true
 
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, :backup_code, prefix: :authenticated_with
+  AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code].freeze
+  store_accessor :authentication_factors, *AUTHENTICATION_FACTORS, prefix: :authenticated_with
+
+  store_accessor :state, :return_to, :purpose
 
   EXPIRATION = 15.minutes
 
@@ -52,6 +55,12 @@ class Login < ApplicationRecord
       # how did we create session when it's not complete?!
       Rails.error.unexpected "An incomplete login #{id} has a session #{user_session.id} present."
       errors.add(:base, "An incomplete login has a session present.")
+    end
+  end
+
+  validate do
+    if state.to_json.bytesize > 10.kilobytes
+      errors.add(:base, "Login state exceeds 10KB.")
     end
   end
 
@@ -80,6 +89,10 @@ class Login < ApplicationRecord
   end
 
   before_create(:sync_is_reauthentication)
+
+  def for_application?
+    purpose == "application"
+  end
 
   def authentication_factors_count
     return 0 if authentication_factors.nil?

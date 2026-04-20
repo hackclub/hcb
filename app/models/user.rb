@@ -13,7 +13,10 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
@@ -41,9 +44,10 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
-  BLACKLISTED_DOMAINS = ["aboodbab.com"].freeze
-
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :usr
@@ -60,7 +64,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -78,10 +82,12 @@ class User < ApplicationRecord
     reimbursement_report: 1,
     organizer_position_invite: 2,
     card_grant: 3,
-    grant: 4
+    grant: 4,
+    application_form: 5
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
   has_many :user_sessions, class_name: "User::Session", dependent: :destroy
@@ -130,6 +136,7 @@ class User < ApplicationRecord
   has_many :checks, inverse_of: :creator
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+  has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
@@ -162,7 +169,8 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
+  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -173,6 +181,8 @@ class User < ApplicationRecord
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
   after_update :queue_sync_with_loops_job
+
+  after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
   before_update :set_default_seasonal_theme
 
@@ -187,7 +197,7 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validate :email_not_in_blacklisted_domains, on: :create
+  validates :email, nondisposable: true, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
@@ -302,7 +312,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -348,11 +358,17 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
+  def locked_by
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+  end
+
   def lock!
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
     user_sessions.destroy_all
+    # Invalidate all API tokens
+    api_tokens.accessible.update_all(revoked_at: Time.current)
   end
 
   def unlock!
@@ -365,7 +381,7 @@ class User < ApplicationRecord
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank?
+    full_name_before_last_save.blank? && full_name_previously_changed?
   end
 
   def active_mailbox_address
@@ -429,9 +445,17 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def teenager?
+  def is_teenager?
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
+  end
+
+  def is_minor?
+    age&.<(18)
+  end
+
+  def was_teenager_on_join?
+    age_on(created_at)&.<=(18)
   end
 
   def last_seen_at
@@ -451,7 +475,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
@@ -563,7 +587,48 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
+
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
+  end
+
+  def only_draft_application?
+    return false unless events.none? && card_grants.none? &&
+                        organizer_position_invites.none? && contracts.none? &&
+                        reimbursement_reports.none?
+
+    apps = applications.limit(2).to_a
+
+    apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
+  end
+
+  def phone_number_update_count(since:)
+    versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
+  end
+
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  def reimbursement_event_options
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
+  end
+
   private
+
+  def accessible_events(roles:)
+    event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
+    Event.where(id: event_ids)
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
@@ -650,18 +715,15 @@ class User < ApplicationRecord
     # Skip if user ever updated their seasonal_themes_enabled setting
     return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
 
-    self.seasonal_themes_enabled = teenager?
+    self.seasonal_themes_enabled = is_teenager?
   end
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
   end
 
-  def email_not_in_blacklisted_domains
-    domain = email.split("@").last.downcase
-    if BLACKLISTED_DOMAINS.include?(domain)
-      errors.add(:email, "is invalid. Please use a different email address.")
-    end
+  def update_draft_applications
+    applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
   end
 
 end

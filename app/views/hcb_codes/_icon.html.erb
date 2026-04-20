@@ -55,14 +55,12 @@
   <% elsif Rails.cache.fetch("tx_#{tx.hcb_code}/card_grant", expires_in: 12.hours) { tx.local_hcb_code.card_grant? } %>
     <% label = "Outgoing grant" %>
     <% icon = inline_icon "bag" %>
-  <% elsif tx.local_hcb_code.disbursement? %>
-    <% if tx.amount.negative? %>
-      <% label = "Outgoing transfer" %>
-      <% icon = inline_icon "door-leave" %>
-    <% else %>
-      <% label = "Incoming transfer" %>
-      <% icon = inline_icon "door-enter" %>
-    <% end %>
+  <% elsif tx.local_hcb_code.incoming_disbursement? %>
+    <% label = "Incoming transfer" %>
+    <% icon = inline_icon "door-enter" %>
+  <% elsif tx.local_hcb_code.outgoing_disbursement? %>
+    <% label = "Outgoing transfer" %>
+    <% icon = inline_icon "door-leave" %>
   <% else %>
     <% label = "Bank account transaction" %>
     <% icon = inline_icon "cash" %>

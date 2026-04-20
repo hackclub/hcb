@@ -6,7 +6,7 @@ module PendingEventMappingEngine
       def run
         unsettled.find_each(batch_size: 100) do |cpt|
           # 1. identify disbursement
-          disbursement = cpt.disbursement
+          disbursement = cpt.incoming_disbursement
           Rails.error.unexpected("Disbursement not found for canonical pending transaction #{cpt.id}") unless disbursement
           next unless disbursement
 

@@ -105,7 +105,7 @@ class CardGrant
     def analyze!
       conn = Faraday.new url: "https://api.openai.com" do |c|
         c.request :json
-        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        c.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI, :PRE_AUTHORIZATION) }
         c.response :json
         c.response :raise_error
       end

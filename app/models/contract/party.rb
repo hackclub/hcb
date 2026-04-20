@@ -5,7 +5,7 @@
 # Table name: contract_parties
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  deleted_at     :datetime
 #  external_email :string
 #  role           :string           not null
@@ -25,7 +25,6 @@ class Contract
   class Party < ApplicationRecord
     include AASM
     include Hashid::Rails
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     acts_as_paranoid
     has_paper_trail
@@ -40,6 +39,7 @@ class Contract
     validates :role, uniqueness: { scope: :contract }
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
+    validate :email_cannot_change_after_sign
 
     validates_email_format_of :external_email, allow_nil: true, allow_blank: true
     normalizes :external_email, with: ->(external_email) { external_email.strip.downcase }
@@ -51,7 +51,7 @@ class Contract
       event :mark_signed do
         transitions from: :pending, to: :signed
         after do
-          contract.on_party_signed
+          contract.on_party_signed(self)
         end
 
       end
@@ -63,6 +63,10 @@ class Contract
 
     def notify
       Contract::PartyMailer.with(party: self).notify.deliver_later
+    end
+
+    def notify_reissued(message: nil)
+      Contract::PartyMailer.with(party: self, message:).reissued.deliver_later
     end
 
     def docuseal_signature_url
@@ -84,13 +88,43 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event.name}'s agreement as HCB Operations"
+        "Sign #{contract.event_name}'s agreement as HCB Operations"
+      elsif cosigner?
+        "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
       else
-        "You've been invited to sign an agreement for #{contract.event.name} on HCB 📝"
+        "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
       end
     end
 
+    def reissue_email_subject
+      "There was an issue in the agreement you signed for #{contract.event_name} on HCB 📝"
+    end
+
+    def reminder_email_subject
+      "[Action Needed] Sign the fiscal sponsorship agremeent for #{contract.event_name} on HCB 📝"
+    end
+
+    # We may miss a webhook or load a page before we've received the webhook,
+    # so we can manually sync the party with this method!
+    def sync_with_docuseal
+      self.with_lock do
+        if pending? && docuseal_submission&.[]("status") == "completed"
+          mark_signed!
+        end
+      end
+    end
+
+    def schedule_reminders
+      Contract::Party::ReminderJob.set(wait: 3.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 7.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 14.days).perform_later(self)
+    end
+
     private
+
+    def docuseal_submission
+      contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
 
     def signee_is_user
       if signee? && user.nil?
@@ -101,6 +135,12 @@ class Contract
     def contract_is_pending
       unless contract.pending?
         errors.add(:contract, "cannot have parties added after it is sent")
+      end
+    end
+
+    def email_cannot_change_after_sign
+      if self["aasm_state"] == "signed" && (user_changed? || external_email_changed?)
+        errors.add(:base, "The signing party cannot change after it has signed the contract")
       end
     end
 

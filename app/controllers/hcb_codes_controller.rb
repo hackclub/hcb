@@ -8,6 +8,7 @@ class HcbCodesController < ApplicationController
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
+    authorize @hcb_code
     @event =
       begin
         # Attempt to retrieve the event using the context of the
@@ -31,8 +32,6 @@ class HcbCodesController < ApplicationController
     hcb = @hcb_code.hcb_code
     hcb_id = @hcb_code.hashid
 
-    authorize @hcb_code
-
     return not_found if @hcb_code.unused?
 
     if params[:show_details] == "true" && @hcb_code.ach_transfer?
@@ -54,8 +53,15 @@ class HcbCodesController < ApplicationController
       render :show
     end
   rescue Pundit::NotAuthorizedError => e
-    if @hcb_code.stripe_card.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
+    if @hcb_code.stripe_card&.card_grant.present? && current_user == @hcb_code.stripe_card.card_grant.user
       redirect_to card_grant_path(@hcb_code.stripe_card.card_grant, frame: params[:frame])
+    elsif @hcb_code.outgoing_disbursement?
+      incoming_hcb_code = @hcb_code.outgoing_disbursement.disbursement.incoming_disbursement.local_hcb_code
+      if signed_in? && HcbCodePolicy.new(current_user, incoming_hcb_code).show?
+        redirect_to hcb_code_path(incoming_hcb_code.hashid)
+      else
+        raise
+      end
     else
       raise unless @event.is_public? && !params[:redirect_to_sign_in]
 
@@ -84,7 +90,7 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
@@ -124,11 +130,10 @@ class HcbCodesController < ApplicationController
     hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
-    @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
-    @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
+    @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
     if @hcb_code.card_grant?
@@ -138,24 +143,6 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code
     end
-  end
-
-  def comment
-    @hcb_code = HcbCode.find(params[:id])
-
-    authorize @hcb_code
-
-    ::HcbCodeService::Comment::Create.new(
-      hcb_code_id: @hcb_code.id,
-      content: params[:content],
-      file: params[:file],
-      admin_only: params[:admin_only],
-      current_user:
-    ).run
-
-    redirect_to params[:redirect_url]
-  rescue => e
-    redirect_to params[:redirect_url], flash: { error: e.message }
   end
 
   include HcbCodeHelper # for disputed_transactions_airtable_form_url and attach_receipt_url

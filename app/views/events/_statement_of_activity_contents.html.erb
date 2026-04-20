@@ -1,5 +1,14 @@
 <%# locals: (statement_of_activity:) %>
 
+<% included_events = statement_of_activity.events
+   category_totals = statement_of_activity.category_totals
+   transactions_by_category = statement_of_activity.transactions_by_category
+   transactions = transactions_by_category.values.flatten
+   total_revenue = transactions.sum { |transaction| transaction.amount_cents.positive? ? transaction.amount_cents : 0 }
+   total_expense = transactions.sum { |transaction| transaction.amount_cents.negative? ? transaction.amount_cents : 0 }
+   net_asset_change = transactions.sum(&:amount_cents)
+   show_organization_column = statement_of_activity.event_group.present? || statement_of_activity.include_descendants %>
+
 <h1 class="border-b-0">Statement of Activity</h1>
 
 <div class="flex gap-4 items-center">
@@ -20,7 +29,6 @@
         <%= form.check_box(
               :include_descendants,
               checked: statement_of_activity.include_descendants,
-              include_hidden: false,
               data: { action: "change->form#submit" },
               class: "mb-0"
             ) %>
@@ -55,19 +63,19 @@
     <% end %>
   <% end %>
   had a change in net assets
-  of <%= render_money statement_of_activity.net_asset_change %>;
-  after having raised <%= render_money statement_of_activity.total_revenue %> and
-  spent <%= render_money statement_of_activity.total_expense.abs %>.
+  of <%= render_money net_asset_change %>;
+  after having raised <%= render_money total_revenue %> and
+  spent <%= render_money total_expense.abs %>.
 </p>
 
 <% if statement_of_activity.event_group || statement_of_activity.include_descendants %>
   <details>
-    <summary>Included events</summary>
+    <summary>Included organizations (<%= included_events.count %>)</summary>
     <% if statement_of_activity.event_group && statement_of_activity.events.empty? %>
       <p>This group does not have any associated events</p>
     <% else %>
       <ul>
-        <% statement_of_activity.events.each do |event| %>
+        <% included_events.each do |event| %>
           <li>
             <%= link_to(event.name, event_path(event)) %>
           </li>
@@ -77,28 +85,74 @@
   </details>
 <% end %>
 
-<table>
-  <thead>
-  <tr>
-    <th>Category</th>
-    <th>Total Amount</th>
-  </tr>
-  </thead>
-  <tbody>
-  <% if statement_of_activity.category_totals.empty? %>
-    <tr>
-      <td colspan="2" class="text-center p-14">
-        There were no transactions in this date range.
-      </td>
-    </tr>
-  <% else %>
-    <% statement_of_activity.category_totals.each do |category_slug, amount_cents_sum| %>
-      <% category = TransactionCategory::Definition::ALL[category_slug] %>
-      <tr>
-        <td title="<%= category&.slug %>"><%= category&.label || "Uncategorized" %></td>
-        <td><%= render_money amount_cents_sum %></td>
-      </tr>
-    <% end %>
-  <% end %>
-  </tbody>
-</table>
+<% if transactions_by_category.empty? %>
+  <p>There were no transactions in this date range.</p>
+<% else %>
+    <article class="table-container mb-4">
+      <table class="table-fixed w-full !min-w-0">
+        <thead>
+          <tr>
+            <th class="w-[40%]">Transaction Memo</th>
+            <th>Amount</th>
+            <% if show_organization_column %>
+              <th>Organization</th>
+            <% end %>
+            <th>ID</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+      <% transactions_by_category.each do |category, category_transactions| %>
+        <% category_name = category&.label || "Uncategorized" %>
+        <% category_total = category_totals[category&.slug] %>
+
+        <details class="relative">
+          <summary class="visual-table-row py-1 px-2" style="background: rgba(0, 0, 0, 0.01);">
+            <div class="inline-flex justify-start items-baseline absolute right-0 w-full">
+              <div class="w-[40%] pl-6">
+                <%= category_name %>
+              </div>
+
+              <div class="px-2">
+                <%= render_money category_total %>
+              </div>
+
+              <div class="px-2 text-sm text-muted">
+                <%= number_with_delimiter(category_transactions.count) %> <%= "transaction".pluralize(category_transactions.count) %>
+              </div>
+            </div>
+          </summary>
+
+          <table class="!min-w-0">
+            <thead>
+              <tr>
+                <th class="w-[40%]">Transaction Memo</th>
+                <th>Amount</th>
+                <% if show_organization_column %>
+                  <th>Organization</th>
+                <% end %>
+                <th>ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% category_transactions.each do |transaction| %>
+                <% transaction_url = transaction.local_hcb_code.present? ? url_for(transaction.local_hcb_code) : nil %>
+
+                <tr>
+                  <td><%= transaction.memo %></td>
+                  <td><%= render_money transaction.amount_cents %></td>
+                  <% if show_organization_column %>
+                    <td><%= link_to(transaction.event.name, event_path(transaction.event)) %></td>
+                  <% end %>
+                  <td>
+                    <%= link_to transaction.local_hcb_code.hashid, transaction_url %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </details>
+      <% end %>
+    </article>
+<% end %>

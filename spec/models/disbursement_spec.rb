@@ -292,9 +292,16 @@ RSpec.describe Disbursement, type: :model do
   end
 
   describe "helper methods" do
-    describe "#hcb_code" do
+
+    describe "#outgoing_hcb_code" do
       it "returns the correct HCB code format" do
-        expect(disbursement.hcb_code).to eq("HCB-500-#{disbursement.id}")
+        expect(disbursement.outgoing_hcb_code).to eq("HCB-500-#{disbursement.id}")
+      end
+    end
+
+    describe "#incoming_hcb_code" do
+      it "returns the correct HCB code format" do
+        expect(disbursement.incoming_hcb_code).to eq("HCB-550-#{disbursement.id}")
       end
     end
 

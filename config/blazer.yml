@@ -2,7 +2,7 @@
 
 data_sources:
   main:
-    url: <%= ENV["DATABASE_URL"] %>
+    url: <%= ENV["BLAZER_DATABASE_URL"].presence || ENV["DATABASE_URL"] %>
 
     # statement timeout, in seconds
     # none by default
@@ -70,7 +70,7 @@ audit: true
 # user_class: User
 
 # method name for the current user
-# user_method: current_user
+user_method: blazer_current_user
 
 # method name for the display name
 # user_name: name

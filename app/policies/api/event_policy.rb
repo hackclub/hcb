@@ -71,7 +71,7 @@ module Api
     end
 
     def user?
-      record.users.include?(user)
+      OrganizerPosition.role_at_least?(user, record, :reader)
     end
 
     def is_not_demo_mode?

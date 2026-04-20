@@ -101,6 +101,9 @@ FriendlyId.defaults do |config|
     404
     500
     mobile
+    deprecated
+    apply
+    maintenance_tasks
   ]
 
   # This adds an option to to treat reserved words as conflicts rather than exceptions.

@@ -3,7 +3,7 @@
 <% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
-<% reversible_disbursement = hcb_code.disbursement? && hcb_code.disbursement.present? && policy(hcb_code.disbursement.destination_event).create_transfer? %>
+<% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
 
 <% merchant_not_allowed = hcb_code.stripe_card? && hcb_code.pt.hcb_decline_reason == :merchant_not_allowed && hcb_code.stripe_card&.card_grant.present? %>
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
@@ -24,10 +24,10 @@
       <% end %>
       <% if reversible_disbursement %>
         <%= link_to new_disbursement_path(
-              source_event_id: hcb_code.disbursement.destination_event.id,
-              event_id: hcb_code.disbursement.source_event.id,
-              amount: (hcb_code.disbursement.amount.to_f / 100),
-              message: "Reversing: #{hcb_code.disbursement.name}"
+              source_event_id: hcb_code.incoming_disbursement.destination_event.id,
+              event_id: hcb_code.incoming_disbursement.source_event.id,
+              amount: (hcb_code.incoming_disbursement.amount.to_f / 100),
+              message: "Reversing: #{hcb_code.incoming_disbursement.name}"
             ), class: "flex items-center" do %>
           <%= inline_icon "reply", size: 24 %>
           Reverse HCB transfer

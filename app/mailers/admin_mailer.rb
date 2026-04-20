@@ -64,7 +64,7 @@ class AdminMailer < ApplicationMailer
 
     Disbursement.reviewing.find_each do |disbursement|
       if disbursement.created_at < 24.hours.ago
-        next if disbursement.comments.any? { |c| c.user.admin? } || disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
 
         @tasks << {
           url: disbursement_process_admin_url(disbursement),

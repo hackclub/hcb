@@ -58,7 +58,7 @@ gem "aasm" # state machine
 gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
 
-gem "friendly_id", "~> 5.5.1" # slugs
+gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
 
 gem "active_storage_validations", "3.0.1" # file validations
@@ -78,6 +78,7 @@ gem "wicked_pdf" # HTML to PDF conversion
 gem "write_xlsx" # Export Excel files
 gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version of `rubyzip`. See https://github.com/cxn03651/write_xlsx/issues/127
 
+gem "nondisposable" # disallow temporary/disposable email addresses
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
 gem "browser", "~> 6.2" # browser detection
@@ -209,7 +210,7 @@ gem "rotp"
 
 gem "ruby-limiter"
 
-gem "ahoy_email", "~> 2.4"
+gem "ahoy_email", "~> 3.0"
 
 gem "email_reply_parser"
 
@@ -223,7 +224,7 @@ gem "irb"
 
 gem "pstore"
 
-gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.22"
 
 gem "prosemirror_to_html"
 
@@ -234,3 +235,6 @@ gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
 gem "intercom-rails"
+gem "hotwire_combobox"
+
+gem "maintenance_tasks", "~> 2.14"

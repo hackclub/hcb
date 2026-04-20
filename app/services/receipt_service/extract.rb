@@ -38,7 +38,7 @@ module ReceiptService
 
       conn = Faraday.new url: "https://api.openai.com" do |f|
         f.request :json
-        f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI_API_KEY) }
+        f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI, :RECEIPT_EXTRACTION) }
         f.response :raise_error
         f.response :json
       end
@@ -98,7 +98,7 @@ module ReceiptService
           [hcb_code, "ai_memo"],
           action: :replace,
           target: "ai_memo",
-          partial: "hcb_codes/ai_memo",
+          partial: "hcb_codes/memo/ai",
           locals: { hcb_code: }
         )
       end

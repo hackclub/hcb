@@ -33,16 +33,18 @@ module Api
       def transaction_amount(tx, event: nil)
         return tx.amount.cents if !tx.is_a?(HcbCode)
 
-        if tx.disbursement? && event == tx.disbursement.source_event
-          return -tx.disbursement.amount
-        elsif tx.disbursement? && event == tx.disbursement.destination_event
-          return tx.disbursement.amount
+        if tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.source_event
+          return -tx.outgoing_disbursement.disbursement.amount
+        elsif tx.outgoing_disbursement? && event == tx.outgoing_disbursement.disbursement.destination_event
+          return tx.outgoing_disbursement.disbursement.amount # incoming that needs a backfill
         end
 
+        # return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
+        return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
 
-        return tx.amount.cents
+        tx.amount.cents
       end
 
       def expand?(key)
@@ -56,6 +58,21 @@ module Api
         yield
       ensure
         @expand = before
+      end
+
+      def shares_org_with?(user)
+        return false if current_user.nil? || user.nil?
+
+        # Events that the current user has access to view
+        @current_user_event_ids ||= current_user.readable_events.pluck(:id)
+        return false if @current_user_event_ids.empty?
+
+        # Does it overlap with events that the user has organizer positions in?
+        # We're explicitly checking for OPs instead of access because your email
+        # is not visible just because you have (read) access to an org. The
+        # emails addresses of organizers in a parent org is not visible to the
+        # organizers of a child org.
+        @current_user_event_ids.to_set.intersect?(user.organizer_positions.pluck(:event_id))
       end
 
       def expand_pii(override_if: false)

@@ -8,6 +8,18 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
+  def sorted_relation(relation, columns, sort:, default:)
+    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : default
+    default_key, default_direction = default
+
+    sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
+    column_def = columns.find { |c| c[:key] == sort_key.to_s } ||
+                 columns.find { |c| c[:key] == default_key.to_s } ||
+                 columns.first
+    relation = relation.left_joins(column_def[:join]) if column_def[:join]
+    relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+  end
+
   def render_money(amount, opts = {})
     amount = amount.cents if amount.is_a?(Money)
 
@@ -38,7 +50,11 @@ module ApplicationHelper
   end
 
   def render_transaction_amount(amount)
-    render_money amount
+    if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
+      content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
+    else
+      render_money amount
+    end
   end
 
   def render_percentage(decimal, params = {})
@@ -274,13 +290,20 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
     rescue Stripe::InvalidRequestError
-      puts "Can't access stripe object, skipping"
+      Rails.logger.warn "Can't access stripe object, skipping"
+      nil
     rescue NoMethodError
-      puts "Not a stripe object, skipping"
+      Rails.logger.warn "Not a stripe object, skipping"
+      nil
     end
 
     if stripe_obj.nil?

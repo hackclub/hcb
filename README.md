@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ef837ac0539217c_image.png">
-    <img src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/af6d676a11c64b6c_image.png" width="126" alt="HCB logo">
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ef837ac0539217c_image.png">
+    <img src="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/af6d676a11c64b6c_image.png" width="126" alt="HCB logo">
   </picture>
   <h1>HCB by Hack Club</h1>
 
@@ -36,9 +36,7 @@ by reading [our documentation](/dev-docs)).
 ## I found a security vulnerability! What should I do?
 
 Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
-report the vulnerability. We currently don't have a bug bounty program but, as a
-token of appreciation, we'd love to mail you a t-shirt and give you a shoutout
-on our GitHub.
+report the vulnerability. To learn more about bug bounties, visit https://security.hackclub.com
 
 ## Quick start
 

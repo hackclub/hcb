@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -28,7 +28,7 @@ class Event
       end
 
       def description
-        "👻 oo scary! you're looking at the internal workings of HCB. shield your eyes, you may not like what you see."
+        "FOR ENGINEERING/TRANSACTION ENGINE USE ONLY. 👻 oo scary! you're looking at the internal workings of HCB. shield your eyes, you may not like what you see."
       end
 
       def features
