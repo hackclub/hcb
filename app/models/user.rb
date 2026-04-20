@@ -15,6 +15,8 @@
 #  full_name                     :string
 #  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
@@ -44,6 +46,9 @@
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :usr
 
@@ -59,7 +64,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -131,6 +136,7 @@ class User < ApplicationRecord
   has_many :checks, inverse_of: :creator
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+  has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
@@ -175,6 +181,8 @@ class User < ApplicationRecord
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
   after_update :queue_sync_with_loops_job
+
+  after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
   before_update :set_default_seasonal_theme
 
@@ -579,6 +587,12 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
+
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
+  end
+
   def only_draft_application?
     return false unless events.none? && card_grants.none? &&
                         organizer_position_invites.none? && contracts.none? &&
@@ -593,7 +607,28 @@ class User < ApplicationRecord
     versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
   end
 
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  def reimbursement_event_options
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
+  end
+
   private
+
+  def accessible_events(roles:)
+    event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
+    Event.where(id: event_ids)
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
@@ -685,6 +720,10 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def update_draft_applications
+    applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
   end
 
 end

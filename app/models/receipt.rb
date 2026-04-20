@@ -45,6 +45,9 @@ class Receipt < ApplicationRecord
 
   include StripeAuthorizationsHelper
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :rct
 
@@ -207,6 +210,17 @@ class Receipt < ApplicationRecord
     end
 
     false
+  end
+
+  def self.reupload(old_receiptable:, new_receiptable:)
+    where(receiptable: old_receiptable).find_each do |receipt|
+      ::ReceiptService::Create.new(
+        receiptable: new_receiptable,
+        uploader: receipt.user,
+        attachments: [receipt.file.blob],
+        upload_method: :duplicate,
+      ).run!
+    end
   end
 
   def duplicated?
