@@ -69,7 +69,7 @@ class DisbursementsController < ApplicationController
            end.then { |r| q.present? ? r.search_name(q) : r }
 
     events = if sending && !is_admin
-               base.to_a.select { |e| e.balance_available > 0 }.first(20)
+               sendable_event_search_results(base)
              else
                base.limit(20).select(:id, :name).to_a
              end
@@ -79,6 +79,28 @@ class DisbursementsController < ApplicationController
     end
 
     render turbo_stream: helpers.async_combobox_options(options)
+  end
+
+  def sendable_event_search_results(base)
+    results = []
+    offset = 0
+    batch_size = 20
+
+    loop do
+      batch = base.offset(offset).limit(batch_size).select(:id, :name).to_a
+      break if batch.empty?
+
+      batch.each do |event|
+        next unless event.balance_available > 0
+
+        results << event
+        return results if results.size >= 20
+      end
+
+      offset += batch_size
+    end
+
+    results
   end
 
   def create
