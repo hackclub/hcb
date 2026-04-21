@@ -44,7 +44,9 @@ class ApiToken < ApplicationRecord
   scope :accessible, -> { not_expired.and(not_revoked) }
 
   has_encrypted :token
+  has_encrypted :refresh_token, migrating: true
   blind_index :token
+  blind_index :refresh_token, migrating: true
 
   belongs_to :user
 
