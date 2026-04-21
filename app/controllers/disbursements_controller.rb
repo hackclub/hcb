@@ -5,6 +5,11 @@ class DisbursementsController < ApplicationController
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
+  EventSearchOption = Struct.new(:id, :display) do
+    def to_combobox_display = display
+  end
+  private_constant :EventSearchOption
+
   def show
     authorize @disbursement
 
@@ -53,13 +58,27 @@ class DisbursementsController < ApplicationController
 
   def event_search
     skip_authorization
-    @q = params[:q].presence
-    @events = if admin_signed_in?
-                Event.order(Event::CUSTOM_SORT)
-              else
-                current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
-              end.then { |r| @q.present? ? r.search_name(@q) : r }.limit(20).select(:id, :name)
-    render turbo_stream: helpers.async_combobox_options(@events)
+    q = params[:q].presence
+    sending = params[:sending] == "true"
+    is_admin = admin_signed_in?
+
+    base = if is_admin
+             Event.order(Event::CUSTOM_SORT)
+           else
+             current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
+           end.then { |r| q.present? ? r.search_name(q) : r }
+
+    events = if sending && !is_admin
+               base.to_a.select { |e| e.balance_available > 0 }.first(20)
+             else
+               base.limit(20).select(:id, :name).to_a
+             end
+
+    options = events.map do |e|
+      EventSearchOption.new(e.id, is_admin ? "#{e.name} (#{e.id})" : e.name)
+    end
+
+    render turbo_stream: helpers.async_combobox_options(options)
   end
 
   def create

@@ -1,6 +1,7 @@
-<%# locals: (form:, field_name:, label:, disabled:, default_event:) %>
+<%# locals: (form:, field_name:, label:, disabled:, default_event:, sending: false) %>
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <%= combobox_tag "disbursement[#{field_name}]", event_search_disbursements_path, placeholder: "Select one...", disabled: disabled, value: default_event&.to_combobox_display, class: "!max-w-full" %>
+  <% display_value = default_event&.then { |e| admin_signed_in? ? "#{e.name} (#{e.id})" : e.name } %>
+  <%= combobox_tag "disbursement[#{field_name}]", event_search_disbursements_path(sending: sending), placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
 </div>

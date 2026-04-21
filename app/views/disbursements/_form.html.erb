@@ -22,7 +22,7 @@
     <h3 class="mb-2">Payment details</h3>
     <div class="card mb-4 relative">
       <div class="flex gap-2">
-        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, default_event: source_event, label: "From" } %>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, default_event: source_event, label: "From", sending: true } %>
         <%= inline_icon "view-forward", class: "mt-[30px]" %>
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, default_event: destination_event, label: "To" } %>
       </div>
