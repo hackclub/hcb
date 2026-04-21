@@ -1,4 +1,4 @@
-<%# locals: (disbursement:, event: nil, source_event: nil, destination_event: nil, allowed_source_events:, allowed_destination_events:) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, destination_event: nil) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
@@ -22,9 +22,9 @@
     <h3 class="mb-2">Payment details</h3>
     <div class="card mb-4 relative">
       <div class="flex gap-2">
-        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, events: allowed_source_events, default_event: source_event, sending: true } %>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, default_event: source_event, label: "From" } %>
         <%= inline_icon "view-forward", class: "mt-[30px]" %>
-        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, events: allowed_destination_events, default_event: destination_event, receiving: true, allow_custom_events: source_event&.plan&.unrestricted_disbursements_enabled? } %>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, default_event: destination_event, label: "To" } %>
       </div>
 
       <div class="flex items-center justify-between">

@@ -47,28 +47,24 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-
-    @allowed_source_events = if admin_signed_in?
-                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                             else
-                               current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                             end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if admin_signed_in?
-                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                                  elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-                                    Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
-                                  else
-                                    current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                                  end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-
     authorize @disbursement
     render layout: "transfer"
   end
 
+  def event_search
+    skip_authorization
+    @q = params[:q].presence
+    @events = if admin_signed_in?
+                Event.order(Event::CUSTOM_SORT)
+              else
+                current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
+              end.then { |r| @q.present? ? r.search_name(@q) : r }.limit(20).select(:id, :name)
+    render turbo_stream: helpers.async_combobox_options(@events)
+  end
+
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
+    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id]) ||
+                    Event.find_by(id: disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 

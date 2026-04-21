@@ -482,6 +482,9 @@ Rails.application.routes.draw do
   end
 
   resources :disbursements, only: [:new, :create, :show, :edit, :update] do
+    collection do
+      get :event_search
+    end
     post "mark_fulfilled"
     post "reject"
     post "cancel"
