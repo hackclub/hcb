@@ -9,7 +9,7 @@
 
 <% if Date.today <= Date.new(2026, 5, 4) %>
   <% championship = Date.new(2026, 4, 28)..Date.new(2026, 5, 2) %>
-  <% at_championship = championship === Date.today %>
+  <% at_championship = championship.cover?(Date.today) %>
   <% upcoming = Date.today < championship.first %>
   <% is_first_org = @event.respond_to?(:affiliations) && @event.affiliations.any?(&:is_first?) %>
   <%= render "application/callout", type: "warning", title: upcoming ? "Upcoming delays in transfer processing" : "Delayed transfer processing", class: "mt-2 mb-0" do %>
