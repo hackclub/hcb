@@ -105,7 +105,7 @@ class DisbursementsController < ApplicationController
 
   def create
     @source_event = Event.find_by_public_id(disbursement_params[:source_event_id]) ||
-                    Event.find_by(id: disbursement_params[:source_event_id])
+                    Event.find(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
@@ -158,7 +158,7 @@ class DisbursementsController < ApplicationController
       redirect_to event_transfers_path(@source_event)
     end
 
-  rescue ArgumentError, ActiveRecord::RecordInvalid => e
+  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
     flash[:error] = e.message
     redirect_to new_disbursement_path(source_event_id: @source_event)
   rescue ActiveRecord::RecordNotFound => e
