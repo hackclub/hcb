@@ -97,7 +97,7 @@ module Column
         column_delivery_status: @object[:delivery_status],
       )
 
-      check.reimbursement_payout_holding.mark_failed! if check.column_rejected? || check.column_stopped?
+      check.reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present? && (check.column_rejected? || check.column_stopped?)
     end
 
     # Column uses the "settled" state to represent when the
