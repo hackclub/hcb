@@ -410,7 +410,7 @@ class Event
       end
 
       unless teen_led?
-        required_fields += ["planning_duration", "team_size", "annual_budget", "committed_amount"]
+        required_fields += ["planning_duration", "team_size", "annual_budget_cents", "committed_amount_cents"]
 
         if committed_amount&.positive?
           required_fields.push("funding_source")

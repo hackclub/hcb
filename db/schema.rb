@@ -222,6 +222,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
     t.integer "expires_in"
     t.inet "ip_address"
     t.string "refresh_token"
+    t.text "refresh_token_bidx"
+    t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
     t.string "scopes"
     t.string "token_bidx"
@@ -230,6 +232,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
     t.bigint "user_id", null: false
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
+    t.index ["refresh_token_bidx"], name: "index_api_tokens_on_refresh_token_bidx", unique: true
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
