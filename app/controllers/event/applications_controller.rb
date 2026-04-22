@@ -21,9 +21,9 @@ class Event
     def apply
       skip_authorization
 
-      if signed_in? && current_user.applications.draft.one?
-        redirect_to application_path(current_user.applications.draft.first)
-      elsif signed_in? && current_user.applications.any?
+      if signed_in? && current_user.applications.not_archived.draft.one?
+        redirect_to application_path(current_user.applications.not_archived.draft.first)
+      elsif signed_in? && current_user.applications.not_archived.any?
         redirect_to applications_path(ref: params[:ref])
       else
         redirect_to new_application_path(ref: params[:ref])
