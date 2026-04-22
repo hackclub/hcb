@@ -4,7 +4,7 @@
 <% content_for :info_pane do %>
   <div class="flex flex-col">
     <h2 class="text-4xl">
-      <%= @application.may_mark_submitted? ? "Review" : "Finish" %> your application
+      Review your application
     </h2>
 
     <% unless @application.may_mark_submitted? %>
