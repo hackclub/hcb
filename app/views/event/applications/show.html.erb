@@ -37,6 +37,15 @@
       </div>
     <% end %>
 
+    <% if @application.archived? %>
+      <div class="w-full md:max-w-2xl">
+        <%= render "application/callout", type: "warning", title: "This application is archived", class: "mt-2 mb-4" do %>
+          You archived this application on <%= local_time(@application.archived_at, "%B %e") %> at <%= local_time(@application.archived_at, "%l:%M%P") %>.
+          You can unarchive it by clicking the "Unarchive application" button in the bottom-right corner.
+        <% end %>
+      </div>
+    <% end %>
+
     <h3 class="m-0 muted">
       <% if !@application.approved? || @application.contract&.party(:signee)&.pending? || @application.contract&.party(:cosigner)&.pending? %>
         Here's what's next for <%= @application.name %>
