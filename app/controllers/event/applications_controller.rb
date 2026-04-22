@@ -225,7 +225,7 @@ class Event
         confetti!
         redirect_to application_path(@application)
       rescue AASM::InvalidTransition
-        flash[:error] = "This application is not ready to submit"
+        flash[:error] = "This application is not ready to submit. See the summary for what's missing."
         redirect_to review_application_path(@application)
       end
     end
