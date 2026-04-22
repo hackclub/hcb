@@ -114,7 +114,10 @@
     <% if defined?(receiptable) && receiptable&.missing_receipt? %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
-        <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id), method: :post do %>
+        <%= button_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id),
+              class: "bg-transparent border-none cursor-pointer link-reset muted",
+              form: { "data-turbo" => (defined?(turbo) ? turbo : "false").to_s },
+              params: { ledger_instance: @ledger_instance }.compact do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>
