@@ -51,7 +51,7 @@ class IncreaseChecksController < ApplicationController
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
 
   rescue Faraday::Error => e
-    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to increase_check_process_admin_path(@check), flash: { error: e }
   end

@@ -199,6 +199,11 @@ class EventsController < ApplicationController
       @all_transactions.reject!(&:likely_account_verification_related?)
     end
 
+    TransactionGroupingEngine::Transaction::FilterTypePreloader.new(
+      settled_transactions: @all_transactions,
+      type: @type
+    ).run!
+
     type_results = self.class.filter_transaction_type(@type, settled_transactions: @all_transactions, pending_transactions: @pending_transactions)
     @all_transactions = type_results[:settled_transactions]
     @pending_transactions = type_results[:pending_transactions]

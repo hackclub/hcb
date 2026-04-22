@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -222,6 +222,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
     t.integer "expires_in"
     t.inet "ip_address"
     t.string "refresh_token"
+    t.text "refresh_token_bidx"
+    t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
     t.string "scopes"
     t.string "token_bidx"
@@ -230,6 +232,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
     t.bigint "user_id", null: false
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
+    t.index ["refresh_token_bidx"], name: "index_api_tokens_on_refresh_token_bidx", unique: true
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -1660,6 +1663,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_08_015031) do
     t.bigint "user_id", null: false
     t.index ["address"], name: "index_mailbox_addresses_on_address", unique: true
     t.index ["user_id"], name: "index_mailbox_addresses_on_user_id"
+  end
+
+  create_table "maintenance_tasks_runs", force: :cascade do |t|
+    t.text "arguments"
+    t.text "backtrace"
+    t.datetime "created_at", null: false
+    t.string "cursor"
+    t.datetime "ended_at"
+    t.string "error_class"
+    t.string "error_message"
+    t.string "job_id"
+    t.integer "lock_version", default: 0, null: false
+    t.text "metadata"
+    t.datetime "started_at"
+    t.string "status", default: "enqueued", null: false
+    t.string "task_name", null: false
+    t.bigint "tick_count", default: 0, null: false
+    t.bigint "tick_total"
+    t.float "time_running", default: 0.0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_name", "status", "created_at"], name: "index_maintenance_tasks_runs", order: { created_at: :desc }
   end
 
   create_table "metrics", force: :cascade do |t|

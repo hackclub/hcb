@@ -1,12 +1,12 @@
 <% title "Organizations" %>
 
-<%= form_with local: true, url: events_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], style: "vertical-align: top; width: 100%", placeholder: "Search Query" %>
-  <div class="block">
+<%= form_with local: true, class: "card overflow-visible", url: events_admin_index_path, method: :get do |form| %>
+  <%= render "events/filters/search", form: %>
+  <div class="block mt-2">
     <% export_button = capture do %>
-      <button class="bg-info">Search</button>
+      <button class="mt-2 mr-1 btn bg-info">Search</button>
       <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
-        <button type="button" class="bg-muted ml2" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
+        <button type="button" class="mt-2 btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
     <% end %>
     <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button } %>
