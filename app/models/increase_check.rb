@@ -340,32 +340,34 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def reissue!
-    stop! unless column_stopped? || column_pending_stop?
+    raise ArgumentError, "Reissuing checks is not yet supported"
 
-    reissued_check = event.increase_checks.build(
-      user_id:,
-      memo:,
-      amount:,
-      payment_for:,
-      recipient_name:,
-      address_line1:,
-      address_line2:,
-      address_city:,
-      address_state:,
-      recipient_email:,
-      send_email_notification:,
-      address_zip:,
-      payment_recipient_id:,
-      reissued_for_id: id,
-    )
+    # stop! unless column_stopped? || column_pending_stop?
 
-    reissued_check.save!
+    # reissued_check = event.increase_checks.build(
+    #   user_id:,
+    #   memo:,
+    #   amount:,
+    #   payment_for:,
+    #   recipient_name:,
+    #   address_line1:,
+    #   address_line2:,
+    #   address_city:,
+    #   address_state:,
+    #   recipient_email:,
+    #   send_email_notification:,
+    #   address_zip:,
+    #   payment_recipient_id:,
+    #   reissued_for_id: id,
+    # )
 
-    reimbursement_payout_holding.update!(increase_check_id: reissued_check.id) if reimbursement_payout_holding.present?
+    # reissued_check.save!
 
-    Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+    # reimbursement_payout_holding.update!(increase_check_id: reissued_check.id) if reimbursement_payout_holding.present?
 
-    reissued_check.send_check!
+    # Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
+
+    # reissued_check.send_check!
   end
 
   private

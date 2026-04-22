@@ -75,65 +75,65 @@ RSpec.describe IncreaseChecksController do
     end
   end
 
-  describe "reissue" do
-    it "copies all attributes to the reissued check" do
-      user = create(:user, :make_admin)
-      event = create(:event, :with_positive_balance)
-      check = event.increase_checks.create!(
-        build_check_attributes(column_id: "col_original", column_status: "issued")
-      )
+  # describe "reissue" do
+  #   it "copies all attributes to the reissued check" do
+  #     user = create(:user, :make_admin)
+  #     event = create(:event, :with_positive_balance)
+  #     check = event.increase_checks.create!(
+  #       build_check_attributes(column_id: "col_original", column_status: "issued")
+  #     )
 
-      sign_in(user)
+  #     sign_in(user)
 
-      allow(ColumnService).to receive(:post)
-        .with("/transfers/checks/col_original/stop-payment", idempotency_key: "stop_col_original")
-        .and_return({ "status" => "stopped", "delivery_status" => "failed" })
+  #     allow(ColumnService).to receive(:post)
+  #       .with("/transfers/checks/col_original/stop-payment", idempotency_key: "stop_col_original")
+  #       .and_return({ "status" => "stopped", "delivery_status" => "failed" })
 
-      allow(ColumnService).to receive(:post)
-        .with(match(/\/account-numbers\z/), anything)
-        .and_return({ "id" => "acno_test", "account_number" => "123", "routing_number" => "456", "bic" => "789" })
+  #     allow(ColumnService).to receive(:post)
+  #       .with(match(/\/account-numbers\z/), anything)
+  #       .and_return({ "id" => "acno_test", "account_number" => "123", "routing_number" => "456", "bic" => "789" })
 
-      allow(ColumnService).to receive(:post)
-        .with("/transfers/checks/issue", anything)
-        .and_return({
-                      "id"              => "col_new",
-                      "check_number"    => "1002",
-                      "status"          => "issued",
-                      "delivery_status" => "created",
-                    })
+  #     allow(ColumnService).to receive(:post)
+  #       .with("/transfers/checks/issue", anything)
+  #       .and_return({
+  #                     "id"              => "col_new",
+  #                     "check_number"    => "1002",
+  #                     "status"          => "issued",
+  #                     "delivery_status" => "created",
+  #                   })
 
-      post(:reissue, params: { id: check.id })
+  #     post(:reissue, params: { id: check.id })
 
-      new_check = check.reload.reissued_as
-      expect(response).to redirect_to(hcb_code_path(new_check.local_hcb_code))
+  #     new_check = check.reload.reissued_as
+  #     expect(response).to redirect_to(hcb_code_path(new_check.local_hcb_code))
 
-      columns_that_differ = %w[
-        id created_at updated_at approved_at aasm_state reissued_for_id
-        column_id column_status column_delivery_status column_object check_number
-      ]
+  #     columns_that_differ = %w[
+  #       id created_at updated_at approved_at aasm_state reissued_for_id
+  #       column_id column_status column_delivery_status column_object check_number
+  #     ]
 
-      columns_to_compare = check.attributes.keys - columns_that_differ
+  #     columns_to_compare = check.attributes.keys - columns_that_differ
 
-      expect(new_check.attributes.slice(*columns_to_compare))
-        .to eq(check.attributes.slice(*columns_to_compare))
-    end
+  #     expect(new_check.attributes.slice(*columns_to_compare))
+  #       .to eq(check.attributes.slice(*columns_to_compare))
+  #   end
 
-    it "denies non-admins" do
-      user = create(:user)
-      event = create(:event, :with_positive_balance)
-      create(:organizer_position, user:, event:)
-      check = event.increase_checks.create!(
-        build_check_attributes(column_id: "col_test_deny", column_status: "issued")
-      )
+  #   it "denies non-admins" do
+  #     user = create(:user)
+  #     event = create(:event, :with_positive_balance)
+  #     create(:organizer_position, user:, event:)
+  #     check = event.increase_checks.create!(
+  #       build_check_attributes(column_id: "col_test_deny", column_status: "issued")
+  #     )
 
-      sign_in(user)
+  #     sign_in(user)
 
-      post(:reissue, params: { id: check.id })
+  #     post(:reissue, params: { id: check.id })
 
-      expect(response).to redirect_to(root_path)
-      expect(flash[:error]).to be_present
-    end
-  end
+  #     expect(response).to redirect_to(root_path)
+  #     expect(flash[:error]).to be_present
+  #   end
+  # end
 
   describe "create" do
     def increase_check_params
