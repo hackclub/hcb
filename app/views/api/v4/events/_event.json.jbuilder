@@ -33,7 +33,7 @@ end
 
 if expand?(:users)
   json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
-    json.partial! "api/v4/users/user", user: op.user
+    json.partial! "api/v4/users/user", user: op.user, show_email: shares_org_with?(op.user)
     json.joined_at op.created_at
     json.role op.role
   end
