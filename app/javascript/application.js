@@ -43,6 +43,9 @@ import './controllers'
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
 
+import { confirm } from './confirm'
+Turbo.setConfirmMethod(confirm)
+
 import persist from '@alpinejs/persist'
 import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'

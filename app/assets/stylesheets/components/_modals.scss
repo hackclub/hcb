@@ -235,3 +235,65 @@
   white-space: nowrap;
   border: 0;
 }
+
+// Custom confirm dialog — replaces the native browser confirm() prompt
+dialog#hcb-confirm {
+  background-color: $white;
+  box-shadow: var(--shadow-modal);
+  padding: 2rem;
+  border-radius: var(--radius-2xl);
+  border: none;
+  width: 36rem;
+  max-width: 95vw;
+
+  &::backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  &[open] {
+    animation: hcb-confirm-in 0.15s ease-out;
+  }
+
+  .hcb-confirm__message {
+    margin: 0 0 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .hcb-confirm__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  @media screen and (max-width: 32em) {
+    border-radius: 1rem 1rem 0 0;
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    max-width: 100vw;
+    width: 100vw;
+
+    .hcb-confirm__actions {
+      flex-direction: row-reverse;
+      .hcb-confirm__ok,
+      .hcb-confirm__cancel {
+        flex: 1;
+      }
+    }
+  }
+}
+
+@keyframes hcb-confirm-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
