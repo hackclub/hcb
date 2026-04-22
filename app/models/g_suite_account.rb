@@ -107,12 +107,12 @@ class GSuiteAccount < ApplicationRecord
     self.save
   end
 
-  # Engineer-only via Rails console. Disconnects this account from HCB
+  # Engineer-only via Rails console. Removes this account from HCB
   # management, leaving the Google Workspace user (and its aliases) intact.
   # Intended for use in the Rails console when a user's account is being
   # transferred to the unmanaged hackclub.com domain from an HCB managed domain
   # (e.g., events.hackclub.com).
-  def disconnect!(confirm:)
+  def unmanage!(confirm:)
     raise ArgumentError, "confirm must match address" unless confirm == address
 
     # Materialize once so the in-memory `skip_gsuite_sync` we set below
@@ -121,7 +121,7 @@ class GSuiteAccount < ApplicationRecord
     aliases = g_suite_aliases.reload.to_a
 
     Rails.logger.info(
-      "[GSuiteAccount#disconnect!] disconnecting " \
+      "[GSuiteAccount#unmanage!] unmanaging " \
       "id=#{id} address=#{address} g_suite_id=#{g_suite_id} " \
       "aliases=#{aliases.size}"
     )

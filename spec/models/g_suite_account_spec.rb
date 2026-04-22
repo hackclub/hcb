@@ -6,7 +6,7 @@ RSpec.describe GSuiteAccount, type: :model do
   let(:g_suite) { create(:g_suite, domain: "example.com") }
   let(:g_suite_account) { create(:g_suite_account, g_suite:) }
 
-  describe "#disconnect!" do
+  describe "#unmanage!" do
     let(:gsuite_service) { instance_double(GsuiteService, delete_gsuite_user: true) }
 
     before do
@@ -18,7 +18,7 @@ RSpec.describe GSuiteAccount, type: :model do
     context "when confirm does not match address" do
       it "raises ArgumentError and does not destroy the account" do
         expect do
-          g_suite_account.disconnect!(confirm: "wrong@example.com")
+          g_suite_account.unmanage!(confirm: "wrong@example.com")
         end.to raise_error(ArgumentError, /confirm must match address/)
 
         expect(GSuiteAccount.exists?(g_suite_account.id)).to be true
@@ -29,7 +29,7 @@ RSpec.describe GSuiteAccount, type: :model do
         g_suite_account.reload
 
         expect do
-          g_suite_account.disconnect!(confirm: "wrong@example.com") rescue nil
+          g_suite_account.unmanage!(confirm: "wrong@example.com") rescue nil
         end.not_to change(GSuiteAlias, :count)
       end
     end
@@ -39,7 +39,7 @@ RSpec.describe GSuiteAccount, type: :model do
         it "destroys the account" do
           id = g_suite_account.id
 
-          g_suite_account.disconnect!(confirm: g_suite_account.address)
+          g_suite_account.unmanage!(confirm: g_suite_account.address)
 
           expect(GSuiteAccount.exists?(id)).to be false
         end
@@ -47,7 +47,7 @@ RSpec.describe GSuiteAccount, type: :model do
         it "does not call Google Workspace to delete the user" do
           allow(Rails.env).to receive(:production?).and_return(true)
 
-          g_suite_account.disconnect!(confirm: g_suite_account.address)
+          g_suite_account.unmanage!(confirm: g_suite_account.address)
 
           expect(gsuite_service).not_to have_received(:delete_gsuite_user)
         end
@@ -63,7 +63,7 @@ RSpec.describe GSuiteAccount, type: :model do
           account_id = g_suite_account.id
           alias_ids = g_suite_account.g_suite_aliases.map(&:id)
 
-          g_suite_account.disconnect!(confirm: g_suite_account.address)
+          g_suite_account.unmanage!(confirm: g_suite_account.address)
 
           expect(GSuiteAccount.exists?(account_id)).to be false
           expect(GSuiteAlias.where(id: alias_ids)).to be_empty
@@ -72,14 +72,14 @@ RSpec.describe GSuiteAccount, type: :model do
         it "does not call Google Workspace to delete any alias" do
           expect_any_instance_of(::Partners::Google::GSuite::DeleteUserAlias).not_to receive(:run)
 
-          g_suite_account.disconnect!(confirm: g_suite_account.address)
+          g_suite_account.unmanage!(confirm: g_suite_account.address)
         end
 
         it "rolls back the destroy when an alias destroy fails" do
           allow_any_instance_of(GSuiteAlias).to receive(:destroy!).and_raise(ActiveRecord::RecordNotDestroyed.new("boom"))
 
           expect do
-            g_suite_account.disconnect!(confirm: g_suite_account.address)
+            g_suite_account.unmanage!(confirm: g_suite_account.address)
           end.to raise_error(ActiveRecord::RecordNotDestroyed)
 
           expect(GSuiteAccount.exists?(g_suite_account.id)).to be true
@@ -92,7 +92,7 @@ RSpec.describe GSuiteAccount, type: :model do
           expect_any_instance_of(::Partners::Google::GSuite::DeleteUserAlias).not_to receive(:run)
 
           expect do
-            g_suite_account.disconnect!(confirm: g_suite_account.address)
+            g_suite_account.unmanage!(confirm: g_suite_account.address)
           end.to raise_error(ActiveRecord::RecordNotDestroyed)
 
           expect(gsuite_service).not_to have_received(:delete_gsuite_user)
@@ -105,7 +105,8 @@ RSpec.describe GSuiteAccount, type: :model do
 
         expect(Rails.logger).to receive(:info).with(
           a_string_including(
-            "[GSuiteAccount#disconnect!]",
+            "[GSuiteAccount#unmanage!]",
+            "unmanaging",
             "id=#{g_suite_account.id}",
             "address=#{g_suite_account.address}",
             "g_suite_id=#{g_suite_account.g_suite_id}",
@@ -113,7 +114,7 @@ RSpec.describe GSuiteAccount, type: :model do
           )
         )
 
-        g_suite_account.disconnect!(confirm: g_suite_account.address)
+        g_suite_account.unmanage!(confirm: g_suite_account.address)
       end
     end
   end
