@@ -437,7 +437,7 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
-    Rails.application.deprecators[:hcb].warn("HcbCode#disbursement accessed")
+    Rails.application.deprecators[:hcb].warn "HcbCode#disbursement accessed"
 
     return nil unless disbursement?
 
