@@ -55,7 +55,12 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc).includes(:sponsor).page(params[:page]).per(25)
+    @invoices = helpers.sorted_relation(
+      relation,
+      INVOICE_COLUMNS,
+      sort: [params[:sort], params[:direction]],
+      default: [:created_at, :desc]
+    ).includes(:sponsor).page(params[:page]).per(25)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -63,6 +68,8 @@ class InvoicesController < ApplicationController
     @filter_options = filter_options
     helpers.validate_filter_options(@filter_options, params)
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
@@ -212,6 +219,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
 
   def filtered_params
     params.require(:invoice).permit(
