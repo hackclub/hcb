@@ -377,3 +377,19 @@ jobs:
           bundler-cache: true
       - name: Run Brakeman
         run: bundle exec brakeman -q
+  annotations:
+    name: Check model annotations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - name: Run annotaterb
+        run: bundle exec annotaterb models --frozen
