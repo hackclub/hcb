@@ -4,7 +4,7 @@
   <div class="md:max-w-[800px] w-full space-y-8 pb-5">
     <div class="flex flex-col mt-2">
       <span class="badge bg-<%= @application.status_color %> m-0 w-max">
-        <%= @application.aasm_state.humanize %>
+        <%= @application.archived? ? "Archived" : @application.aasm_state.humanize %>
       </span>
 
       <h2 class="text-4xl mt-2">
@@ -22,6 +22,10 @@
           <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
         <% elsif @application.rejected_at? %>
           <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%P") %>
+        <% end %>
+
+        <% if @application.archived_at? %>
+          <br>Archived on <%= local_time(@application.archived_at, "%B %e") %> at <%= local_time(@application.archived_at, "%l:%M%P") %>
         <% end %>
       </p>
     </div>
