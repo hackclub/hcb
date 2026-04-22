@@ -1,0 +1,40 @@
+import { Controller } from '@hotwired/stimulus'
+import showConfirm from '../confirm'
+
+export default class extends Controller {
+  static values = {
+    message: { type: String, default: 'Are you sure?' },
+    title: { type: String, default: 'Are you sure?' },
+    confirmText: { type: String, default: 'Confirm' },
+  }
+
+  async request(event) {
+    // For checkbox change events: only confirm when unchecking
+    if (event.type === 'change' && event.target.type === 'checkbox' && event.target.checked) return
+
+    // Prevent default (e.g. label activating its checkbox) so we control the outcome
+    if (event.type === 'click') event.preventDefault()
+
+    const confirmed = await showConfirm(this.messageValue, {
+      title: this.titleValue,
+      confirmText: this.confirmTextValue,
+    })
+
+    if (!confirmed) {
+      // Restore unchecked checkbox and resync any dependent controllers (e.g. accordion)
+      if (event.type === 'change' && event.target.type === 'checkbox') {
+        event.target.checked = true
+        event.target.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      return
+    }
+
+    // For click on a label: check any hidden checkbox inside before submitting
+    if (event.type === 'click') {
+      const checkbox = this.element.querySelector('input[type="checkbox"]')
+      if (checkbox) checkbox.checked = true
+    }
+
+    this.element.closest('form')?.requestSubmit()
+  }
+}
