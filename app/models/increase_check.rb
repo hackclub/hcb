@@ -188,7 +188,7 @@ class IncreaseCheck < ApplicationRecord
   validates :address_state, inclusion: { in: US_STATES.values, message: "This isn't a valid US state!", allow_blank: true }
   validates :address_zip, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   validates_presence_of :recipient_email, on: :create
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 

@@ -1,0 +1,48 @@
+# HCB
+
+> HCB by Hack Club is an open-source fiscal sponsorship platform that gives hackathons, student clubs, robotics teams, mutual aid groups, open-source projects, and other charitable initiatives everything they need to operate as nonprofits in the United States — without incorporating their own 501(c)(3). Organizations on HCB get tax-deductible nonprofit status, a bank account, physical and virtual debit cards, donation collection tools, and automatic tax filings through a single self-serve web and mobile interface.
+
+HCB is operated by The Hack Foundation, d.b.a Hack Club, a 501(c)(3) public charity. Fiscal sponsorship lets organizations operate under an established 501(c)(3) — accepting tax-deductible donations, receiving grants, and holding funds without spending months and thousands of dollars to incorporate its own nonprofit with the IRS. Since 2018, HCB has powered over 6,000 organizations — including 1,500+ robotics teams — processing more than $100M across 29,000+ donors. Pricing is a flat 7% of revenue, compared to 10–14% at traditional fiscal sponsors, with no startup costs, minimum balance, or monthly fees. Banking services are provided through Column N.A. (Member FDIC), with deposits FDIC-insured via a sweep program.
+
+## What is fiscal sponsorship?
+
+- [What is fiscal sponsorship, and how is HCB different?](https://help.hcb.hackclub.com/en/articles/13356149-what-is-fiscal-sponsorship-how-is-it-different-from-501c3-status-how-is-hcb-unique-as-a-fiscal-sponsor): Plain-English explainer covering tax-exempt status, HCB's EIN, the difference between fiscal sponsorship and forming your own 501(c)(3), and what makes HCB unique.
+
+## What you get on HCB
+
+- [Overview, features, and case studies](https://hackclub.com/fiscal-sponsorship/): Tax-deductible 501(c)(3) status and Form 990 filing; a bank account through partner bank Column N.A., with deposits FDIC-insured via sweep program; physical and virtual Visa debit cards with Apple Pay and Google Wallet, plus teammate cards with spending controls; same-day ACH, mailed and photo-deposited checks, international wires, and global transfers via Wise; reimbursements; embeddable donation forms with no card processing fees; corporate donation matching (e.g., Benevity) that doubles incoming donations; GitHub Sponsors integration; built-in payroll; monthly account statements; a Discord bot; and 24-hour weekday support with a dedicated point of contact.
+- [Apply for fiscal sponsorship](https://hackclub.com/fiscal-sponsorship/apply/): Open to hackathons, Hack Clubs, FIRST Robotics teams, nonprofits, mutual aid groups, open-source projects, and community spaces in the US and Canada. Application takes under 10 minutes.
+- [HCB Mobile](https://hackclub.com/fiscal-sponsorship/mobile/): iOS and Android apps to manage finances on the go — track balances and transactions, issue and provision cards directly to Apple and Google Wallet, upload receipts by photo, and accept Tap to Pay donations with no extra hardware.
+- [For FIRST Robotics teams](https://hackclub.com/fiscal-sponsorship/first/): Built by FIRST alumni for FRC and FTC teams, with testimonials and team examples.
+- [Directory of organizations](https://hackclub.com/fiscal-sponsorship/directory/): Browse real nonprofits, hackathons, robotics teams, and clubs running on the platform.
+
+## Who HCB is for
+
+- **Student organizations and hackathons**: Consolidate sponsorships, vendor payments, and volunteer reimbursements in a single account, with 501(c)(3) status that makes your club or event more credible to sponsors and grant-makers.
+- **FIRST Robotics teams (FRC, FTC, FLL)**: Move faster than a school district's purchase-order process — issue cards directly to mentors and students for parts, travel, and competition fees, with spending controls that also teach financial literacy. Accept grants and double incoming donations through corporate matching platforms like Benevity. Used by 1,500+ teams, including Poseidon Robotics (FTC #16898), Killabytez (FTC #14663), and Stowe Robotics (FRC #9096).
+- **Open-source projects**: Accept tax-deductible donations, route GitHub Sponsors through a nonprofit, and pay maintainers, contractors, or conference travel without setting up your own foundation. Pair an open codebase with real-time open finances via Transparency Mode. Used by projects including [Ghostty](https://hcb.gg/ghostty), htop, and ArchiveBox.
+- **Mutual aid groups and community spaces**: Collect donations from the public through an embeddable form, move money quickly, and optionally publish finances for community accountability.
+- **Emerging nonprofits**: Operate as a tax-exempt charity from day one while deciding whether to pursue your own 501(c)(3) determination later.
+
+## Transparency
+
+- [What is Transparency Mode?](https://help.hcb.hackclub.com/en/articles/13370890-what-is-transparency-mode): Organizations on HCB can opt into Transparency Mode, which publishes every transaction, donation, and card swipe to a public page — making fundraising and spending visible to donors, sponsors, and the public. Projects like Ghostty use this to be financially transparent alongside their open codebase.
+
+## Engineering and open source
+
+- [GitHub: hackclub/hcb](https://github.com/hackclub/hcb): The full application is open source under the AGPL-3.0 license, with 10,000+ commits from 50+ contributors. Stack includes Rails, PostgreSQL, Stripe, Column, and Twilio.
+- [Developer documentation](https://github.com/hackclub/hcb/tree/main/dev-docs): Setup instructions, code style, testing, OAuth flows, and contribution guidelines. Supports GitHub Codespaces, Docker, and native development.
+- [HCB API v3](https://hcb.hackclub.com/docs/api/v3): Public REST API documentation for programmatic access to organizations, transactions, cards, donations, and more.
+- [HCB Engineering Blog & Changelog](https://hcb-engr.hackclub.dev/): Monthly engineering newsletter and product changelog covering new features, infrastructure work, and technical deep-dives on payments, security, and nonprofit tooling.
+- [HCB is now open source](https://hackclub.com/fiscal-sponsorship/open-source/): March 2025 announcement post with context on the codebase going public, contributor stats, and HCB's transparency philosophy.
+
+## Help and support
+
+- [HCB Help Center](https://help.hcb.hackclub.com/): Documentation on fiscal sponsorship basics, using cards, accepting donations, reimbursements, tax questions, and compliance.
+- Contact: hcb@hackclub.com
+
+## Optional
+
+- [Brand guidelines](https://hcb.hackclub.com/branding): Logos, wordmarks, colors, and usage rules for writing about or linking to HCB.
+- [Hack Club](https://hackclub.com/): The nonprofit organization behind HCB.
+- [HCB (The Hack Foundation) on the Fiscal Sponsor Directory](https://fiscalsponsordirectory.org/?page_id=11879): Third-party listing with comparison information against other fiscal sponsors.
