@@ -400,6 +400,10 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+      - name: Install Poppler
+        run: |
+          sudo apt-get update
+          sudo apt -y install libpoppler-glib-dev
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
       - name: Setup database
