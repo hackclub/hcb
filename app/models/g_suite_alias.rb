@@ -19,6 +19,8 @@
 #  fk_rails_...  (g_suite_account_id => g_suite_accounts.id)
 #
 class GSuiteAlias < ApplicationRecord
+  attr_accessor :skip_gsuite_sync
+
   belongs_to :g_suite_account
   has_one :g_suite, through: :g_suite_account
 
@@ -31,6 +33,8 @@ class GSuiteAlias < ApplicationRecord
   end
 
   before_destroy do
+    next if skip_gsuite_sync
+
     delete_alias_with_google
   end
 
