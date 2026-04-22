@@ -10,7 +10,12 @@ export default class extends Controller {
 
   async request(event) {
     // For checkbox change events: only confirm when unchecking
-    if (event.type === 'change' && event.target.type === 'checkbox' && event.target.checked) return
+    if (
+      event.type === 'change' &&
+      event.target.type === 'checkbox' &&
+      event.target.checked
+    )
+      return
 
     // Prevent default (e.g. label activating its checkbox) so we control the outcome
     if (event.type === 'click') event.preventDefault()
