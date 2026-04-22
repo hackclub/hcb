@@ -19,6 +19,8 @@
 #  fk_rails_...  (g_suite_account_id => g_suite_accounts.id)
 #
 class GSuiteAlias < ApplicationRecord
+  has_paper_trail
+
   attr_accessor :skip_gsuite_sync
 
   belongs_to :g_suite_account
