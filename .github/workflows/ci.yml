@@ -380,16 +380,32 @@ jobs:
   annotations:
     name: Check model annotations
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Setup database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+          RAILS_ENV: test
+        run: bundle exec rails db:create db:schema:load
       - name: Run annotaterb
         run: bundle exec annotaterb models --frozen
