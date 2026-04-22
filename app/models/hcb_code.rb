@@ -289,6 +289,10 @@ class HcbCode < ApplicationRecord
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
   end
 
+  def stripe_authorization_method
+    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("authorization_method") || raw_stripe_transaction&.stripe_transaction&.dig("authorization_method")
+  end
+
   def stripe_refund?
     ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
   end
