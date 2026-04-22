@@ -452,16 +452,20 @@ class HcbCode < ApplicationRecord
     end
   end
 
+  attr_writer :incoming_disbursement, :outgoing_disbursement
+
   def incoming_disbursement
     return nil unless incoming_disbursement?
+    return @incoming_disbursement if defined?(@incoming_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
+    @incoming_disbursement = Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
   end
 
   def outgoing_disbursement
     return nil unless outgoing_disbursement?
+    return @outgoing_disbursement if defined?(@outgoing_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+    @outgoing_disbursement = Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
   end
 
   def card_grant

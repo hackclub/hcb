@@ -13,6 +13,7 @@
 
 <div class="flex flex-col items-center flex-grow">
   <div class="md:max-w-[600px] w-full mt-7 space-y-8 pb-5">
+    <%= render "event/applications/review_delay_callout" %>
     <%= render "event/applications/summary", application: @application, allow_edits: true %>
   </div>
 </div>
