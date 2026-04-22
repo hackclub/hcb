@@ -7,5 +7,6 @@ function showConfirm(message, { title = 'Are you sure?', confirmText = 'Confirm'
 
 Turbo.config.confirmationMethod = message => showConfirm(message, { dangerMode: true })
 window.showConfirm = showConfirm
+window.swal = swal
 
 export default showConfirm
