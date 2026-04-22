@@ -288,7 +288,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   def disbursement
-    Rails.error.unexpected "CanonicalPendingTransaction#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "CanonicalPendingTransaction#disbursement accessed"
     return nil unless raw_pending_outgoing_disbursement_transaction || raw_pending_incoming_disbursement_transaction
 
     (outgoing_disbursement || incoming_disbursement)&.disbursement
