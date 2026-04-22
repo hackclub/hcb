@@ -6,7 +6,7 @@
 #
 #  id                          :bigint           not null, primary key
 #  accepted_at                 :datetime
-#  address                     :text
+#  address                     :text             not null
 #  backup_email                :text
 #  first_name                  :string
 #  initial_password_ciphertext :text

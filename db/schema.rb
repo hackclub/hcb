@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_22_221928) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1241,7 +1241,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
 
   create_table "g_suite_accounts", force: :cascade do |t|
     t.datetime "accepted_at", precision: nil
-    t.text "address"
+    t.text "address", null: false
     t.text "backup_email"
     t.datetime "created_at", precision: nil, null: false
     t.bigint "creator_id"
