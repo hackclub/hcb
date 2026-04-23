@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (stripe_card:)
+# locals: (stripe_card:, object: nil)
 
 json.created_at stripe_card.created_at
 json.id stripe_card.public_id

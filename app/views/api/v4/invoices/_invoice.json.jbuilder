@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (invoice:)
+# locals: (invoice:, object: nil)
 
 json.id invoice.public_id
 json.status invoice.state_text

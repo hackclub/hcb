@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (sponsor:)
+# locals: (sponsor:, object: nil)
 
 json.id sponsor.public_id
 json.address_city sponsor.address_city
