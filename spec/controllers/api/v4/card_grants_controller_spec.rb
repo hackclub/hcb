@@ -98,7 +98,7 @@ RSpec.describe Api::V4::CardGrantsController do
                 "avatar"   => "https://gravatar.com/avatar/stubbed",
                 "birthday" => nil,
               },
-              "created_at" => disbursement.created_at.iso8601(3)
+              "created_at"              => disbursement.created_at.iso8601(3)
             }
           ],
           "organization"               => serialized_event,
@@ -110,7 +110,7 @@ RSpec.describe Api::V4::CardGrantsController do
             "auditor" => false,
             "avatar"  => "https://gravatar.com/avatar/stubbed",
           },
-          "created_at"=> card_grant.created_at.iso8601(3)
+          "created_at"                 => card_grant.created_at.iso8601(3)
         }
       )
     end
