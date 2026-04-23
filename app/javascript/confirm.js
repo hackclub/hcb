@@ -1,5 +1,4 @@
 import swal from 'sweetalert'
-import { Turbo } from '@hotwired/turbo-rails'
 
 function showConfirm(
   message,
@@ -13,8 +12,13 @@ function showConfirm(
   }).then(v => !!v)
 }
 
-Turbo.config.confirmationMethod = message =>
-  showConfirm(message, { dangerMode: true })
+document.addEventListener('turbo:confirm', (event) => {
+  event.preventDefault()
+  showConfirm(event.detail.message, { dangerMode: true }).then(confirmed => {
+    event.detail.resume(confirmed)
+  })
+})
+
 window.showConfirm = showConfirm
 window.swal = swal
 
