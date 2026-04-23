@@ -365,13 +365,22 @@ object_shape(json, ach_transfer) do
   json.amount_cents ach_transfer.amount
   json.status ach_transfer.aasm_state
 
-  json.organization ach_transfer.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
-  json.sender do
-    if ach_transfer.creator.present?
-      json.partial! "api/v4/users/user", user: ach_transfer.creator
-    else
-      json.nil!
+  if expand?(:organization)
+    json.organization ach_transfer.event, partial: "api/v4/events/event", as: :event
+  else
+    json.organization_id ach_transfer.event.public_id
+  end
+  
+  if expand?(:sender)
+    json.sender do
+      if ach_transfer.creator.present?
+        json.partial! "api/v4/users/user", user: ach_transfer.creator
+      else
+        json.nil!
+      end
     end
+  else
+    json.sender_id ach_transfer.creator&.public_id
   end
 end
 ```
