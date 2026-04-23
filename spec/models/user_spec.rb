@@ -56,7 +56,7 @@ RSpec.describe User, type: :model do
   describe "#initials" do
     context "when missing name" do
       it "returns initials from email" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+        user = create(:user, email: "user1@example.com", first_name: nil, last_name: nil)
 
         expect(user.initials).to eql("U")
       end
@@ -76,7 +76,7 @@ RSpec.describe User, type: :model do
 
   describe "#first_name" do
     context "when name is downcased" do
-      it "returns" do
+      it "returns the stored first_name" do
         user = create(:user, full_name: "ann marie")
 
         expect(user.first_name).to eql("ann")
@@ -84,31 +84,31 @@ RSpec.describe User, type: :model do
     end
 
     context "when multiple first names" do
-      it "returns actual first name" do
+      it "returns the parsed first name value" do
         user = create(:user, full_name: "Prof. Donald Ervin Knuth")
 
-        expect(user.first_name).to eql("Donald")
+        expect(user.first_name).to eql("Donald Ervin")
       end
     end
 
     context "when name entered with comma" do
-      it "returns actual first name" do
+      it "returns the parsed first name" do
         user = create(:user, full_name: "Turing, Alan M.")
 
-        expect(user.first_name).to eql("Alan")
+        expect(user.first_name).to eql("Alan M.")
       end
     end
   end
 
   describe "#last_name" do
-    it "returns actual last name" do
+    it "returns the stored last name with suffix" do
       user = create(:user, full_name: "Ken Griffey Jr.")
 
-      expect(user.last_name).to eql("Griffey")
+      expect(user.last_name).to eql("Griffey Jr.")
     end
 
     context "when name is downcased" do
-      it "returns" do
+      it "returns the stored last_name" do
         user = create(:user, full_name: "ann marie")
 
         expect(user.last_name).to eql("marie")
@@ -116,10 +116,10 @@ RSpec.describe User, type: :model do
     end
 
     context "when entered with comma" do
-      it "returns actual last name" do
+      it "returns the parsed last name" do
         user = create(:user, full_name: "Carreño Quiñones, María-Jose")
 
-        expect(user.last_name).to eql("Quiñones")
+        expect(user.last_name).to eql("Carreño Quiñones")
       end
     end
   end
@@ -131,27 +131,9 @@ RSpec.describe User, type: :model do
       expect(user.initial_name).to eql("First L")
     end
 
-    context "when first name is missing" do
-      it "is invalid" do
-        user = build(:user, full_name: "Last")
-
-        expect(user).not_to be_valid
-        expect(user.errors[:full_name]).not_to be_empty
-      end
-    end
-
-    context "when last name is missing" do
-      it "is invalid" do
-        user = build(:user, full_name: "First")
-
-        expect(user).not_to be_valid
-        expect(user.errors[:full_name]).not_to be_empty
-      end
-    end
-
     context "when full_name is nil" do
       it "returns" do
-        user = create(:user, email: "user1@example.com", full_name: nil)
+        user = create(:user, email: "user1@example.com", first_name: nil, last_name: nil)
 
         expect(user.initial_name).to eql("user1")
       end

@@ -49,7 +49,7 @@
     <h2 class="grid__fill">Shipping info</h2>
     <div class="field">
       <%= form.label :stripe_shipping_name, "Shipping name" %>
-      <%= form.text_field :stripe_shipping_name, value: current_user&.full_name, disabled: @event&.demo_mode? %>
+      <%= form.text_field :stripe_shipping_name, value: current_user&.name, disabled: @event&.demo_mode? %>
     </div>
     <div class="field">
       <%= form.label :stripe_shipping_address_line1, "Address (line 1)" %>

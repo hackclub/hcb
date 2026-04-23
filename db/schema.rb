@@ -2656,8 +2656,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
     t.integer "creation_method"
     t.string "discord_id"
     t.text "email", null: false
+    t.string "first_name"
     t.string "full_name"
     t.boolean "joined_as_teenager"
+    t.string "last_name"
     t.datetime "locked_at", precision: nil
     t.boolean "monthly_donation_summary", default: true
     t.boolean "monthly_follower_summary", default: true
