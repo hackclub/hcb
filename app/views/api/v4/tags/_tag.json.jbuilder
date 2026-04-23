@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (tag:)
+# locals: (json:, tag:)
 
 json.id tag.public_id
 json.label tag.label

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (wise_transfer:)
+# locals: (json:, wise_transfer:)
 
 json.id wise_transfer.public_id
 

@@ -1,4 +1,4 @@
-# locals: (check:)
+# locals: (json:, check:)
 
 json.id check.public_id
 

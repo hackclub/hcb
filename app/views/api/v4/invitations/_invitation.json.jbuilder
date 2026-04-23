@@ -1,4 +1,4 @@
-# locals: (invitation:)
+# locals: (json:, invitation:)
 
 json.id invitation.public_id
 json.created_at invitation.created_at

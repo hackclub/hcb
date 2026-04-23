@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (check_deposit:)
+# locals: (json:, check_deposit:)
 
 json.status check_deposit.state_text.parameterize(separator: "_")
 

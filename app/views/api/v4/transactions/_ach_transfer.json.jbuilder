@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (ach_transfer:)
+# locals: (json:, ach_transfer:)
 
 json.recipient_name ach_transfer.recipient_name
 json.recipient_email ach_transfer.recipient_email

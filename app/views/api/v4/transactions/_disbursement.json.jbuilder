@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (disbursement:)
+# locals: (json:, disbursement:)
 
 json.id disbursement.public_id
 json.memo disbursement.local_hcb_code.memo

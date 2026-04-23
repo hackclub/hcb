@@ -1,4 +1,4 @@
-# locals: (card_grant:, object: nil)
+# locals: (json:, card_grant:, object: nil)
 
 json.id card_grant.public_id
 json.user card_grant.user, partial: "api/v4/users/user", as: :user if expand?(:user)
