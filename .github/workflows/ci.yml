@@ -38,6 +38,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Set up Node
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -48,7 +49,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
       - name: Install JS packages
         # With node_modules already on disk, `--frozen-lockfile` is a
         # fast consistency check; on cache miss it installs the full
@@ -81,6 +82,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
       - name: Set up Node
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -89,7 +91,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
       - name: Install JS packages
         run: yarn install --frozen-lockfile --prefer-offline
       - name: Run ESLint
@@ -101,6 +103,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
       - name: Set up Node
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -109,7 +112,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
       - name: Install JS packages
         run: yarn install --frozen-lockfile --prefer-offline
       - name: Run Prettier
@@ -152,6 +155,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -162,7 +166,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
       - name: Install JS packages
         # With node_modules already on disk, `--frozen-lockfile` is a
         # fast consistency check; on cache miss it installs the full
@@ -244,6 +248,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Setup Node
+        id: setup-node
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -254,7 +259,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
       - name: Install JS packages
         # With node_modules already on disk, `--frozen-lockfile` is a
         # fast consistency check; on cache miss it installs the full
