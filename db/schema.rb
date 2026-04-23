@@ -581,10 +581,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
   create_table "comment_reactions", force: :cascade do |t|
     t.bigint "comment_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "emoji", null: false
     t.bigint "reactor_id", null: false
     t.datetime "updated_at", null: false
     t.index ["comment_id"], name: "index_comment_reactions_on_comment_id"
+    t.index ["deleted_at"], name: "index_comment_reactions_on_deleted_at"
     t.index ["emoji"], name: "index_comment_reactions_on_emoji"
     t.index ["reactor_id"], name: "index_comment_reactions_on_reactor_id"
   end
@@ -2073,7 +2075,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
   end
 
   create_table "receipts", force: :cascade do |t|
-    t.datetime "assigned_at"
     t.datetime "created_at", null: false
     t.boolean "data_extracted", default: false, null: false
     t.text "extracted_card_last4_ciphertext"
