@@ -17,7 +17,7 @@
         data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
     <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
       <% if pinnable %>
-        <%= link_to pin_hcb_code_path(hcb_code, event: @event), method: :post, class: "flex items-center", data: { confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+        <%= link_to pin_hcb_code_path(hcb_code, event: @event), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
           <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
         <% end %>
@@ -34,7 +34,7 @@
         <% end %>
       <% end %>
       <% if flagable %>
-        <%= link_to invoice_as_personal_transaction_hcb_code_path(id: hcb_code.hashid), method: :post, class: "flex items-center", data: { confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
+        <%= link_to invoice_as_personal_transaction_hcb_code_path(id: hcb_code.hashid), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
           <%= inline_icon "sad", size: 24 %>
           Flag as personal transaction
         <% end %>
@@ -58,13 +58,13 @@
         <% end %>
       <% end %>
       <% if allowable_on_card %>
-        <%= link_to permit_merchant_event_card_grant_path(id: hcb_code.stripe_card.card_grant.hashid, event_id: hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), method: :post, class: "flex items-center", data: { confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} on this grant card." } do %>
+        <%= link_to permit_merchant_event_card_grant_path(id: hcb_code.stripe_card.card_grant.hashid, event_id: hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} on this grant card." } do %>
           <%= inline_icon "checkmark", size: 24 %>
           Allow merchant on this card
         <% end %>
       <% end %>
       <% if allowable_on_event %>
-        <%= link_to permit_merchant_event_path(hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), method: :post, class: "flex items-center", data: { confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} across all grant cards for #{hcb_code.stripe_card.card_grant.event.name}." } do %>
+        <%= link_to permit_merchant_event_path(hcb_code.stripe_card.card_grant.event.slug, merchant: hcb_code.stripe_merchant["network_id"]), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to allow this merchant? This will permit future purchases from #{humanized_merchant_name hcb_code.stripe_merchant} across all grant cards for #{hcb_code.stripe_card.card_grant.event.name}." } do %>
           <%= inline_icon "event-check", size: 24 %>
           Allow merchant across <%= hcb_code.stripe_card.card_grant.event.name %>
         <% end %>
