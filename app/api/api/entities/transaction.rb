@@ -70,7 +70,7 @@ module Api
           end
           expose :missing, documentation: { type: "boolean" } do |hcb_code, options|
             # This logic really needs to be moved inside the HcbCode model
-            hcb_code.type == :card_charge &&
+            [:card_charge, :card_force_capture].include?(hcb_code.type) &&
               !hcb_code.no_or_lost_receipt? &&
               hcb_code.receipts.none?
           end

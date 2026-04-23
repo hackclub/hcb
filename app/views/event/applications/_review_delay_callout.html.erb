@@ -1,0 +1,11 @@
+<% if Date.today <= Date.new(2026, 5, 4) %>
+  <% upcoming = Date.today < Date.new(2026, 4, 28) %>
+  <%= render "application/callout", type: "warning", title: upcoming ? "Upcoming delays in application reviews" : "Delayed application reviews", class: "mt-2 mb-4" do %>
+    <% if upcoming %>
+      From April 28 to May 4, our team will have limited availability.
+      Applications submitted during that window may take about 1 week to review.
+    <% else %>
+      Our team has limited availability through May 4. Application reviews may take about 1 week.
+    <% end %>
+  <% end %>
+<% end %>

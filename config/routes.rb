@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   constraints AdminConstraint do
     mount Sidekiq::Web => "/sidekiq"
+    mount MaintenanceTasks::Engine, at: "/maintenance_tasks"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
@@ -196,11 +197,15 @@ Rails.application.routes.draw do
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
       # Request a login code
-      post "login_code"
+      post "email"
+      post "sms"
 
       # TOTP
       get "totp"
       post "totp"
+
+      get "security_key"
+      post "security_key"
 
       get "backup_code"
       post "backup_code"
@@ -223,6 +228,8 @@ Rails.application.routes.draw do
       get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
+      get "event_search", to: "admin#event_search"
+      get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
@@ -429,6 +436,8 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "stop"
+      post "reissue"
     end
   end
 
@@ -657,7 +666,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :beacon_config
           get :intercom_token, to: "intercom#token"
         end
 
@@ -670,10 +678,7 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
-          resources :invoices, only: [:index]
-          resources :sponsors, only: [:index]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
-          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create]
@@ -684,7 +689,6 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create] do
             collection do
@@ -707,6 +711,9 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
+
+        resources :tags, only: [:index, :show, :create, :destroy]
+
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
@@ -734,10 +741,11 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :invoices, only: [:show, :create]
+        resources :invoices, only: [:index, :show, :create]
         resources :checks, only: [:index, :create, :show]
-        resources :sponsors, only: [:show, :create]
+        resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :ach_transfers, only: [:create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -856,6 +864,7 @@ Rails.application.routes.draw do
       member do
         get "personal_info"
         get "project_info"
+        get "videos"
         get "agreement"
         get "review"
         get "submission"
@@ -868,6 +877,7 @@ Rails.application.routes.draw do
         post "admin_reject"
         post "admin_activate"
         post "resend_to_cosigner"
+        post "mark_videos_watched"
       end
     end
   end
