@@ -10,13 +10,22 @@
 # Usage:
 #   bin/erblint           # check only
 #   bin/erblint -a        # autocorrect
-#   ERB_JOBS=4 bin/erblint -a
+#   ERB_JOBS=4 bin/erblint -a   # override auto-detected cpu count
 set -eo pipefail
 
 # Run from repo root so `find app/views` resolves regardless of cwd.
 cd "$(dirname "$0")/.."
 
-ERB_JOBS=${ERB_JOBS:-8}
+default_jobs() {
+  if command -v nproc >/dev/null 2>&1; then
+    nproc
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    sysctl -n hw.ncpu
+  else
+    echo 4
+  fi
+}
+ERB_JOBS=${ERB_JOBS:-$(default_jobs)}
 [[ "$ERB_JOBS" =~ ^[1-9][0-9]*$ ]] || {
   echo "ERB_JOBS must be a positive integer (got: $ERB_JOBS)" >&2
   exit 2
