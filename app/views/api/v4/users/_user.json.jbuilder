@@ -13,7 +13,6 @@ object_shape(json, user, created_at: false) do
   end
 
   expand_pii(override_if: user == current_user) do
-    json.created_at user.created_at
     json.birthday user.birthday
     if expand?(:shipping_address)
       json.shipping_address do
