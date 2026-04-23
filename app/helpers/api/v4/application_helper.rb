@@ -79,6 +79,20 @@ module Api
         yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
       end
 
+      # Check whether the current token grants admin access at the given level.
+      # :read  → auditor (ignores pretend_is_not_admin)
+      # :write → admin   (ignores pretend_is_not_admin)
+      # Token must explicitly carry the matching admin:read / admin:write scope.
+      def can_admin?(level)
+        return false unless current_token&.scopes&.include?("admin:#{level}")
+
+        case level.to_sym
+        when :read  then current_user&.auditor?
+        when :write then current_user&.admin?
+        else false
+        end
+      end
+
     end
   end
 end

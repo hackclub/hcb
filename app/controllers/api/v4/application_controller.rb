@@ -40,10 +40,18 @@ module Api
         @current_user = current_token&.user
       end
 
-      def require_admin!
-        unless current_user&.admin?
-          render json: { error: "invalid_auth" }, status: :unauthorized
+      def can_admin?(level)
+        return false unless current_token&.scopes&.include?("admin:#{level}")
+
+        case level.to_sym
+        when :read  then current_user&.auditor?
+        when :write then current_user&.admin?
+        else false
         end
+      end
+
+      def require_admin_scope!(level)
+        render json: { error: "invalid_auth" }, status: :unauthorized unless can_admin?(level)
       end
 
       def require_trusted_oauth_app!
