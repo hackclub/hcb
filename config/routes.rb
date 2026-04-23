@@ -754,7 +754,6 @@ Rails.application.routes.draw do
     end
   end
 
-  post "api/v1/users/find", to: "api#user_find"
   get "api/current_user", to: "api#the_current_user"
   get "api/flags", to: "api#flags"
 
