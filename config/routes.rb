@@ -706,6 +706,12 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :organizer_positions, only: [:index] do
+          member do
+            post "removal_request"
+          end
+        end
+
         resources :transactions, only: [:show] do
           member do
             post "mark_no_receipt"
