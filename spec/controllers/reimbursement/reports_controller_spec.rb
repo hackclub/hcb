@@ -113,6 +113,26 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
 
+    context "when the report is backed by a card grant" do
+      it "blocks changing the event even for admins" do
+        admin = create(:user, :make_admin)
+        source_event = create(:event)
+        destination_event = create(:event)
+        card_grant = create(:card_grant, event: source_event, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event: source_event, card_grant:)
+
+        sign_in(admin)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: destination_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(source_event)
+      end
+    end
+
     context "reviewer_id assignment" do
       it "does not assign the reviewer when set by a non-manager creator" do
         creator = create(:user)
