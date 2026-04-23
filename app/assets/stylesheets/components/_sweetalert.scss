@@ -1,6 +1,8 @@
 .swal-overlay {
   .swal-modal {
     border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-modal);
+
     font-family: inherit;
 
     [data-dark='true'] & {
@@ -47,10 +49,6 @@
 
   .swal-button--confirm.swal-button--danger {
     @extend .bg-error;
-  }
-
-  .swal-button--cancel {
-    /* @extend .btn; */
   }
 }
 
