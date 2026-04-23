@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# locals: (event:)
 
 json.created_at event.created_at
 json.id event.public_id

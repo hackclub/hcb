@@ -1,3 +1,5 @@
+# locals: (receipt:)
+
 json.id receipt.public_id
 json.created_at receipt.created_at
 json.url receipt.url

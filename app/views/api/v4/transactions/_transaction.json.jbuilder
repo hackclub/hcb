@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# locals: (tx:)
 
 # This partial is capable of rendering `HcbCode`, `CanonicalPendingTransaction`, and `CanonicalTransactionGrouped` instances
 

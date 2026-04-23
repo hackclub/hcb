@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# locals: (user:, show_email: nil)
 
 # attributes suitable for public consumption:
 json.id user.public_id

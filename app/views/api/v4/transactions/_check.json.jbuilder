@@ -1,3 +1,5 @@
+# locals: (check:)
+
 json.id check.public_id
 
 if policy(check.local_hcb_code).show?

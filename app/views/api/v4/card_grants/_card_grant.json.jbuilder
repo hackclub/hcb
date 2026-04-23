@@ -1,3 +1,5 @@
+# locals: (card_grant:)
+
 json.id card_grant.public_id
 json.user card_grant.user, partial: "api/v4/users/user", as: :user if expand?(:user)
 json.organization card_grant.event, partial: "api/v4/events/event", as: :event if expand?(:organization)

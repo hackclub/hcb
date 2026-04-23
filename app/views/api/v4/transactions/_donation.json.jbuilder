@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# locals: (donation:)
 
 json.id donation.public_id
 json.recurring donation.recurring?

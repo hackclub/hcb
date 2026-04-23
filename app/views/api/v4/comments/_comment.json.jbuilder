@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# locals: (comment:)
 
 json.id comment.public_id
 json.created_at comment.created_at
