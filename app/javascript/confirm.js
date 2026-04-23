@@ -13,7 +13,7 @@ function showConfirm(
   }).then(v => !!v)
 }
 
-Turbo.config.confirmationMethod = message =>
+Turbo.config.forms.confirm = message =>
   showConfirm(message, { dangerMode: true })
 window.showConfirm = showConfirm
 window.swal = swal
