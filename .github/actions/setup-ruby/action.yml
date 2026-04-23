@@ -1,0 +1,14 @@
+name: Set up Ruby
+description: Installs libpoppler (required by native gems) and Ruby with bundler cache.
+runs:
+  using: composite
+  steps:
+    - name: Install Poppler
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt -y install libpoppler-glib-dev
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true

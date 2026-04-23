@@ -1,0 +1,14 @@
+name: Set up test database
+description: Installs the postgres client and creates the test database schema. Requires setup-ruby to have run first.
+runs:
+  using: composite
+  steps:
+    - name: Install postgres client
+      shell: bash
+      run: sudo apt-get install libpq-dev
+    - name: Build App
+      shell: bash
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
+        RAILS_ENV: test
+      run: bundle exec rails db:create db:schema:load

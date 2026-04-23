@@ -15,16 +15,8 @@ jobs:
     name: Rubocop
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run Rubocop
         run: bundle exec rubocop
   suggest_lint_changes:
@@ -37,34 +29,9 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Set up Node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          # Handles the yarn download cache automatically, keyed on
-          # yarn.lock — no separate actions/cache step needed for it.
-          cache: yarn
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
-      - name: Install JS packages
-        # With node_modules already on disk, `--frozen-lockfile` is a
-        # fast consistency check; on cache miss it installs the full
-        # tree. Either way we end up with a lockfile-matching tree.
-        run: yarn install --frozen-lockfile --prefer-offline
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
       - name: Run Lint
         run: bin/lint -c
       - name: Comment suggested changes
@@ -73,58 +40,24 @@ jobs:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run erb_lint
         run: bundle exec erb_lint app/views/
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Set up Node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          cache: yarn
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
-      - name: Install JS packages
-        run: yarn install --frozen-lockfile --prefer-offline
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-node
       - name: Run ESLint
         run: yarn lint
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Set up Node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          cache: yarn
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
-      - name: Install JS packages
-        run: yarn install --frozen-lockfile --prefer-offline
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-node
       - name: Run Prettier
         run: yarn format:check
   rspec:
@@ -162,41 +95,10 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Setup Node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          # Handles the yarn download cache automatically, keyed on
-          # yarn.lock — no separate actions/cache step needed for it.
-          cache: yarn
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
-      - name: Install JS packages
-        # With node_modules already on disk, `--frozen-lockfile` is a
-        # fast consistency check; on cache miss it installs the full
-        # tree. Either way we end up with a lockfile-matching tree.
-        run: yarn install --frozen-lockfile --prefer-offline
-      - name: Install postgres client
-        run: sudo apt-get install libpq-dev
-      - name: Build App
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
-          RAILS_ENV: test
-        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/setup-db
       - name: Build Assets
         run: yarn build && yarn build:css
       - name: Run RSpec
@@ -244,23 +146,9 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Install postgres client
-        run: sudo apt-get install libpq-dev
-      - name: Build App
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
-          RAILS_ENV: test
-        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-db
       - name: Run annotaterb
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
@@ -270,34 +158,9 @@ jobs:
     name: Zeitwerk
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Setup Node
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-          # Handles the yarn download cache automatically, keyed on
-          # yarn.lock — no separate actions/cache step needed for it.
-          cache: yarn
-      - name: Cache node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
-      - name: Install JS packages
-        # With node_modules already on disk, `--frozen-lockfile` is a
-        # fast consistency check; on cache miss it installs the full
-        # tree. Either way we end up with a lockfile-matching tree.
-        run: yarn install --frozen-lockfile --prefer-offline
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
       - name: Run zeitwerk:check
         env:
           RAILS_ENV: test
@@ -320,18 +183,10 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: ./.github/actions/setup-ruby
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
       - name: Get new migration versions
@@ -395,15 +250,7 @@ jobs:
     name: Brakeman
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run Brakeman
         run: bundle exec brakeman -q
