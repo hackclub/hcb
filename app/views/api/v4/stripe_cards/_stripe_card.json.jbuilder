@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (stripe_card:)
 
 json.created_at stripe_card.created_at

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (disbursement:)
 
 json.id disbursement.public_id

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (hcb_code:)
 
 stripe_transaction = hcb_code.ct&.raw_stripe_transaction&.stripe_transaction

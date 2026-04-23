@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (ach_transfer:)
 
 json.recipient_name ach_transfer.recipient_name

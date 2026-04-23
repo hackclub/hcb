@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (check_deposit:)
 
 json.id check_deposit.public_id

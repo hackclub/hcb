@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # locals: (invoice:)
 
 json.id invoice.public_id
