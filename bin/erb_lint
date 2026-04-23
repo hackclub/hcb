@@ -8,9 +8,9 @@
 # all workers finish, so errors read as coherent blocks instead of interleaved.
 #
 # Usage:
-#   bin/erblint           # check only
-#   bin/erblint -a        # autocorrect
-#   ERB_JOBS=4 bin/erblint -a   # override auto-detected cpu count
+#   bin/erb_lint           # check only
+#   bin/erb_lint -a        # autocorrect
+#   ERB_JOBS=4 bin/erb_lint -a   # override auto-detected cpu count
 set -eo pipefail
 
 # Run from repo root so `find app/views` resolves regardless of cwd.
@@ -31,7 +31,7 @@ ERB_JOBS=${ERB_JOBS:-$(default_jobs)}
   exit 2
 }
 
-echo "erblint: running ${ERB_JOBS} workers" >&2
+echo "erb_lint: running ${ERB_JOBS} workers" >&2
 
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT

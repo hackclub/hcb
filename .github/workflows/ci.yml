@@ -72,7 +72,7 @@ jobs:
         with:
           bundler-cache: true
       - name: Run erb_lint
-        run: bin/erblint
+        run: bin/erb_lint
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
