@@ -127,17 +127,16 @@
     <% if @opdr.under_review? %>
       <%= link_to "Close request",
                   organizer_position_deletion_request_close_path(@opdr.id),
-                  method: :post,
                   data: {
-                    confirm: "This will mark the request as processed. " \
-                              "Only continue if no follow-up is needed for this request."
+                    turbo_method: :post,
+                    turbo_confirm: "This will mark the request as processed. " \
+                                   "Only continue if no follow-up is needed for this request."
                   },
                   class: "btn bg-accent" %>
     <% elsif @opdr.organizer_position.deleted_at.nil? %>
       <%= link_to "Open request",
                   organizer_position_deletion_request_open_path(@opdr.id),
-                  method: :post,
-                  data: { confirm: "This will re-open the request." },
+                  data: { turbo_method: :post, turbo_confirm: "This will re-open the request." },
                   class: "btn bg-info" %>
     <% end %>
   </article>

@@ -39,7 +39,7 @@
 <section class="card__banner card__darker">
   <%= link_to "Verify ⧉", @g_suite.verification_url, target: :blank, class: "btn bg-success mr2" %>
   <%= link_to "Edit", edit_event_g_suite_path(@g_suite, event_id: @g_suite.event.slug), class: "btn mr2" %>
-  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn--destroy mr2" %>
+  <%= link_to "Delete", g_suite_path(@g_suite, event_id: @g_suite.event.slug), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "btn btn--destroy mr2" %>
   <%= link_to "DNS Check", "https://dnschecker.org/#TXT/#{@g_suite.domain}", class: "btn" %>
 </section>
 </article>
