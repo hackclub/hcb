@@ -2,8 +2,7 @@
 
 <% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
 <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-            method: :post,
-            data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
+            data: { turbo_method: :post, turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
             class: "btn btn--list-item",
             disabled: !policy(card_grant).cancel? do %>
   <%= inline_icon "reply", size: 20 %>

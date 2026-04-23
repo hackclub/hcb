@@ -146,10 +146,10 @@
             <%= form.check_box :charge_fee %>
             <%= form.label :charge_fee, "Charge #{@wire.event.name} $25 to cover transfer fee?", class: "bold ml-2" %>
           </div>
-          <%= form.submit "💸 Approve and automatically send transfer", data: { confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "mb-0" %>
+          <%= form.submit "💸 Approve and automatically send transfer", data: { turbo_confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "mb-0" %>
         <% end %>
         <hr>
-        <%= button_to "🔧 Approve and manually send transfer", approve_wire_path(@wire), method: :post, data: { confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
+        <%= button_to "🔧 Approve and manually send transfer", approve_wire_path(@wire), method: :post, data: { turbo_confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
       </fieldset>
 
       <fieldset class="px-6 py-3">
@@ -161,7 +161,7 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
         <% end %>
       </fieldset>
     <% else %>
