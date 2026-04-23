@@ -49,7 +49,7 @@ module Reimbursement
       if expense_params[:event_id].presence
         event = Event.find(expense_params[:event_id])
         report = event.reimbursement_reports.build({ user: @expense.report.user })
-        authorize report
+        authorize report, :change_event?
         ActiveRecord::Base.transaction do
           report.save!
           @expense.update!(reimbursement_report_id: report.id, expense_number: nil, aasm_state: :pending, approved_by_id: nil)
