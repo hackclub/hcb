@@ -8,7 +8,6 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 
 - [Basics](#basics)
 - [Authentication](#authentication)
-- [Rate Limits](#rate-limits)
 - [Object Shape](#object-shape)
 - [IDs & Object References](#ids--object-references)
 - [Object Arrays](#object-arrays)
@@ -19,6 +18,7 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Error Responses](#error-responses)
 - [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
+- [Rate Limits](#rate-limits)
 
 ---
 
@@ -98,12 +98,6 @@ Content-Type: application/json
 ```
 
 Your application **must** handle token refresh. Requests made with an expired token will receive a `401 Unauthorized`.
-
----
-
-## Rate Limits
-
-Requests are throttled at **1,000 requests per 5 minutes per IP address**. Requests that exceed this limit receive a `429 Too Many Requests` response.
 
 ---
 
@@ -460,6 +454,12 @@ All monetary values are represented in **cents** (the smallest currency unit) as
   "balance_cents": 150000
 }
 ```
+
+---
+
+## Rate Limits
+
+Requests are throttled at **1,000 requests per 5 minutes per IP address**. Requests that exceed this limit receive a `429 Too Many Requests` response.
 
 ---
 
