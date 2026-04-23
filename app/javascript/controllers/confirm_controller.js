@@ -9,7 +9,6 @@ export default class extends Controller {
   }
 
   async request(event) {
-    // For checkbox change events: only confirm when unchecking
     if (
       event.type === 'change' &&
       event.target.type === 'checkbox' &&
@@ -17,7 +16,6 @@ export default class extends Controller {
     )
       return
 
-    // Prevent default (e.g. label activating its checkbox) so we control the outcome
     if (event.type === 'click') event.preventDefault()
 
     const confirmed = await showConfirm(this.messageValue, {
@@ -26,7 +24,6 @@ export default class extends Controller {
     })
 
     if (!confirmed) {
-      // Restore unchecked checkbox and resync any dependent controllers (e.g. accordion)
       if (event.type === 'change' && event.target.type === 'checkbox') {
         event.target.checked = true
         event.target.dispatchEvent(new Event('change', { bubbles: true }))
@@ -34,7 +31,6 @@ export default class extends Controller {
       return
     }
 
-    // For click on a label: check any hidden checkbox inside before submitting
     if (event.type === 'click') {
       const checkbox = this.element.querySelector('input[type="checkbox"]')
       if (checkbox) checkbox.checked = true
