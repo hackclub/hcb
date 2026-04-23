@@ -1,12 +1,34 @@
-<% title @application.draft? ? "Apply" : "Application status" %>
+<% if @application.archived? %>
+  <% title "Archived application" %>
 
-<% if @application.draft? %>
+  <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+    <h2 class="text-3xl md:text-4xl m-0">This application has been archived.</h2>
+    <p class="max-w-xl md:text-center">
+      You archived <%= @application.name.present? ? "your application for #{@application.name}" : "this application" %> on <%= local_time(@application.archived_at, "%B %e") %> at <%= local_time(@application.archived_at, "%l:%M%P") %>.
+      If you'd like to continue with this application, you can unarchive it.
+    </p>
+
+    <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
+
+    <% content_for :footer do %>
+      <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
+
+      <div class="w-full flex-grow flex items-center justify-end gap-4">
+        <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
+      </div>
+    <% end %>
+  </div>
+<% elsif @application.draft? %>
+  <% title "Apply" %>
   <%= render partial: "begin", locals: { application: @application } %>
 <% elsif @application.rejected? %>
+  <% title "Application status" %>
+
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
     <h2 class="text-3xl md:text-4xl m-0">Your application has been reviewed</h2>
     <p>A status update on your application has been emailed to <%= @application.user.email %>.</p>
   </div>
+
   <% content_for :footer do %>
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
 
@@ -21,6 +43,8 @@
     </div>
   <% end %>
 <% else %>
+  <% title "Application status" %>
+
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
     <%= render partial: "progress_bar", locals: { steps: @steps } %>
     <h2 class="text-3xl md:text-4xl m-0">
@@ -34,15 +58,6 @@
     <% unless @application.approved? %>
       <div class="w-full md:max-w-2xl">
         <%= render "event/applications/review_delay_callout" %>
-      </div>
-    <% end %>
-
-    <% if @application.archived? %>
-      <div class="w-full md:max-w-2xl">
-        <%= render "application/callout", type: "warning", title: "This application is archived", class: "mt-2 mb-4" do %>
-          You archived this application on <%= local_time(@application.archived_at, "%B %e") %> at <%= local_time(@application.archived_at, "%l:%M%P") %>.
-          You can unarchive it by clicking the "Unarchive application" button in the bottom-right corner.
-        <% end %>
       </div>
     <% end %>
 
@@ -92,9 +107,7 @@
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
 
     <div class="w-full flex-grow flex items-center justify-end gap-4">
-      <% if @application.archived? %>
-        <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
-      <% else %>
+      <% unless @application.archived? %>
         <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
       <% end %>
 
