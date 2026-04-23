@@ -31,6 +31,8 @@ ERB_JOBS=${ERB_JOBS:-$(default_jobs)}
   exit 2
 }
 
+echo "erblint: running ${ERB_JOBS} workers" >&2
+
 tmpdir=$(mktemp -d)
 trap 'rm -rf "$tmpdir"' EXIT
 
