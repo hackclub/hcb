@@ -6,8 +6,12 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 
 ## Table of Contents
 
+- [Basics](#basics)
+- [Authentication](#authentication)
+- [Rate Limits](#rate-limits)
 - [Object Shape](#object-shape)
 - [IDs & Object References](#ids--object-references)
+- [Object Arrays](#object-arrays)
 - [Shallow Routing](#shallow-routing)
 - [Pagination](#pagination)
 - [Expanding Related Objects](#expanding-related-objects)
@@ -15,6 +19,91 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Error Responses](#error-responses)
 - [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
+
+---
+
+## Basics
+
+- **All requests and responses use JSON.** Always send `Content-Type: application/json` and expect `application/json` back.
+- There is no XML, form-encoded, or multipart support.
+
+---
+
+## Authentication
+
+The v4 API uses **OAuth 2.0** (via Doorkeeper). Every request must include a valid Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer hcb_<token>
+```
+
+### Creating an OAuth Application
+
+There are two ways to register an app in development:
+
+**Option A — Web UI**
+
+1. Go to [localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications) and press "New Application".
+2. Set the name to anything, the redirect URI to `http://localhost:3000/`, and scopes to `read write`. Leave "Confidential" checked (see [oauth.net/2/client-types](https://oauth.net/2/client-types) for context).
+3. Press "Submit", save the `client_id` and `client_secret` shown, then press "Authorize".
+
+**Option B — Rails console**
+
+```ruby
+app = Doorkeeper::Application.create(
+  name: "tester",
+  redirect_uri: "http://localhost:3000/",
+  scopes: ["read", "write"],
+  confidential: false
+)
+```
+
+Save the `uid` and `secret` from the output.
+
+### Getting an Access Token (Authorization Code flow)
+
+1. Direct the user to:
+   ```
+   /api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read%20write
+   ```
+2. After the user approves, copy the `code` from the redirect URL.
+3. Exchange it for a token:
+   ```
+   POST /api/v4/oauth/token
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code
+   code=<CODE>
+   client_id=<UID>
+   client_secret=<SECRET>
+   redirect_uri=http://localhost:3000/
+   ```
+
+HCB also supports the `device_code` grant type for CLI tools and devices without a browser. See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) — HCB uses the scope `api/v4/oauth` instead of `oauth`.
+
+### Token Expiry & Refresh
+
+Access tokens expire after **2 hours**. Every token response includes a `refresh_token` that can be used to get a new access token without re-authorizing the user:
+
+```
+POST /api/v4/oauth/token
+Content-Type: application/json
+
+{
+  "grant_type": "refresh_token",
+  "refresh_token": "<refresh_token>",
+  "client_id": "<client_id>",
+  "client_secret": "<client_secret>"
+}
+```
+
+Your application **must** handle token refresh. Requests made with an expired token will receive a `401 Unauthorized`.
+
+---
+
+## Rate Limits
+
+Requests are throttled at **1,000 requests per 5 minutes per IP address**. Requests that exceed this limit receive a `429 Too Many Requests` response.
 
 ---
 
@@ -53,16 +142,17 @@ Some internal model names don't match their public API name. The helper consults
 
 If you need to add a new override, update the override list in the `object_shape` helper. **Do not** pass the name manually at the call site.
 
-Every object's partial should begin with a call to `object_shape`:
+Every object's partial should wrap all fields in a call to `object_shape`:
 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
+# locals: (ach_transfer:)
 
-object_shape(json, ach_transfer)
-
-json.recipient_name ach_transfer.recipient_name
-json.amount_cents ach_transfer.amount
-# ...
+object_shape(json, ach_transfer) do
+  json.recipient_name ach_transfer.recipient_name
+  json.amount_cents ach_transfer.amount
+  # ...
+end
 ```
 
 This produces:
@@ -71,9 +161,9 @@ This produces:
 {
   "id": "ach_x9f3k",
   "object": "ach_transfer",
-  "created_at": "2025-03-15T12:00:00Z",
   "recipient_name": "Sal Khan",
-  "amount_cents": 4500
+  "amount_cents": 4500,
+  "created_at": "2025-03-15T12:00:00Z"
 }
 ```
 
@@ -107,6 +197,22 @@ This produces:
   }
 }
 ```
+
+---
+
+## Object Arrays
+
+**Never include an array of API objects inside another object's response.** If a resource has a list of related objects, that list belongs at its own index endpoint — not embedded in the parent.
+
+For example, a `user` object must never include a list of organizations. The caller should instead request:
+
+```
+GET /api/v4/organizations?user_id=usr_abc123
+```
+
+This keeps payloads predictable, makes pagination possible, and avoids over-fetching.
+
+The one exception is arrays that do **not** contain API objects (e.g. an array of plain strings or numbers). This should be extremely rare — if you find yourself reaching for it, it is almost always a sign that the data belongs in a separate endpoint.
 
 ---
 
@@ -242,31 +348,36 @@ Every API-representable model **must** have a single canonical jbuilder partial 
 ### Rules
 
 1. **One partial per model.** Located at `app/views/api/v4/<resource>/_<resource>.json.jbuilder`.
-2. **Nest, don't duplicate.** If a transaction includes an ACH transfer, render `partial: "api/v4/transactions/ach_transfer"`.
-3. **Show endpoints are thin.** A `show.json.jbuilder` should be essentially:
+2. **Always declare strict locals.** Every partial must begin with a strict locals magic comment. This makes the partial's dependencies explicit and raises an error if unexpected variables are passed. See the [Rails 7.1 strict locals guide](https://blog.appsignal.com/2024/09/11/ruby-on-rails-7-1-partial-strict-locals-and-their-gotchas.html) for details.
+   ```ruby
+   # locals: (ach_transfer:)
+   ```
+3. **Nest, don't duplicate.** If a transaction includes an ACH transfer, render `partial: "api/v4/transactions/ach_transfer"`.
+4. **Show endpoints are thin.** A `show.json.jbuilder` should be essentially:
    ```ruby
    json.partial! @ach_transfer
    ```
-4. **List endpoints are wrapped in pagination**, then render partials for each item.
+5. **List endpoints are wrapped in pagination**, then render partials for each item.
 
 ### Example
 
 ```ruby
 # app/views/api/v4/ach_transfers/_ach_transfer.json.jbuilder
+# locals: (ach_transfer:)
 
-object_shape(json, ach_transfer)
+object_shape(json, ach_transfer) do
+  json.recipient_name ach_transfer.recipient_name
+  json.recipient_email ach_transfer.recipient_email
+  json.amount_cents ach_transfer.amount
+  json.status ach_transfer.aasm_state
 
-json.recipient_name ach_transfer.recipient_name
-json.recipient_email ach_transfer.recipient_email
-json.amount_cents ach_transfer.amount
-json.status ach_transfer.aasm_state
-
-json.organization ach_transfer.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
-json.sender do
-  if ach_transfer.creator.present?
-    json.partial! "api/v4/users/user", user: ach_transfer.creator
-  else
-    json.nil!
+  json.organization ach_transfer.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
+  json.sender do
+    if ach_transfer.creator.present?
+      json.partial! "api/v4/users/user", user: ach_transfer.creator
+    else
+      json.nil!
+    end
   end
 end
 ```
@@ -293,6 +404,8 @@ Errors follow a consistent shape:
 
 ### Standard Error Codes
 
+HTTP status codes should use Rails' symbolic names (e.g. `render json: ..., status: :not_found`). See the [Rails HTTP status code reference](https://kapeli.com/cheat_sheets/HTTP_Status_Codes_Rails.docset/Contents/Resources/Documents/index) for the full list.
+
 | Code                 | HTTP Status | Meaning                                              |
 |----------------------|-------------|------------------------------------------------------|
 | `bad_request`        | `400`       | Request is well-formed but violates a business rule. |
@@ -315,12 +428,13 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 | `admin:read`   | Grants read-only access to admin-level data (e.g. all organizations, internal fields). |
 | `admin:write`  | Grants the ability to perform write actions reserved for admins.     |
 
-`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed.
+`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed. 
 
 ### Implementation Notes
 
 - Always check for the admin scope explicitly. Do not fall back to checking if the authenticated user is an admin.
 - Endpoints that expose admin-only data or actions must document which scope they require.
+- You must have both the API scope and the access_level to gain access
 
 ---
 
@@ -357,8 +471,10 @@ Before opening a PR that adds or modifies a V4 API endpoint, verify:
 - [ ] Public IDs are used (never raw database IDs)
 - [ ] Routing is shallow (max one level of nesting)
 - [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
+- [ ] No arrays of API objects are embedded in a response (use a scoped index endpoint instead)
 - [ ] Related objects use `expand` and are not auto-included without reason
 - [ ] The model's canonical partial is used (not inlined fields)
+- [ ] Every partial declares strict locals (`# locals: (<resource>:)`)
 - [ ] Error responses use the standard shape
 - [ ] Money is in `_cents` as integers
 - [ ] Endpoint is authorized via Pundit policy
