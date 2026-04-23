@@ -5,7 +5,7 @@
 # Table name: ach_transfers
 #
 #  id                        :bigint           not null, primary key
-#  aasm_state                :string
+#  aasm_state                :string           not null
 #  account_number_bidx       :string
 #  account_number_ciphertext :text
 #  amount                    :integer
@@ -95,7 +95,7 @@ class AchTransfer < ApplicationRecord
   validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }, allow_blank: true
   validates :bank_name, presence: true, on: :create, unless: :payment_recipient
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
   validates_presence_of :recipient_email, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create

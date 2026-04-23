@@ -80,6 +80,16 @@ class DisbursementsController < ApplicationController
                               disbursement_params["scheduled_on(3i)"].to_i)
     end
 
+    if disbursement_params[:source_transaction_category_slug].present? || disbursement_params[:destination_transaction_category_slug].present?
+      source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
+      destination_transaction_category_slug = disbursement_params[:destination_transaction_category_slug].presence
+      category_assignment_strategy = "manual"
+    else
+      source_transaction_category_slug = "internal-transfer"
+      destination_transaction_category_slug = "internal-transfer"
+      category_assignment_strategy = "automatic"
+    end
+
     disbursement = DisbursementService::Create.new(
       name: disbursement_params[:name],
       destination_event_id: @destination_event.id,
@@ -89,8 +99,9 @@ class DisbursementsController < ApplicationController
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
       fronted: @source_event.plan.front_disbursements_enabled?,
-      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
-      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
+      source_transaction_category_slug:,
+      destination_transaction_category_slug:,
+      category_assignment_strategy:
     ).run
 
     if disbursement_params[:file]

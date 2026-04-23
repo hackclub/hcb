@@ -22,8 +22,12 @@ module Reimbursement
 
       if @report.save
         if report_params[:receipt_id]
+          receipt = Receipt.find(report_params[:receipt_id])
+
+          authorize receipt, :link?
+
           @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
-          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+          receipt.update!(receiptable: @expense)
         end
         if current_user && user == current_user
           redirect_to @report

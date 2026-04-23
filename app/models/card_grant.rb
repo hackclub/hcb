@@ -91,7 +91,7 @@ class CardGrant < ApplicationRecord
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
 
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
   delegate :balance, to: :subledger
@@ -178,6 +178,9 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
+        source_transaction_category_slug: "grants-stipends",
+        destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
       disbursement.local_hcb_code.update_custom_memo!(custom_memo)
@@ -199,6 +202,9 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
+        source_transaction_category_slug: "grants-stipends",
+        destination_transaction_category_slug: "grants-stipends",
+        category_assignment_strategy: "automatic"
       ).run
 
       disbursement.local_hcb_code.update_custom_memo!(custom_memo)
@@ -235,6 +241,9 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
+      source_transaction_category_slug: "grants-stipends",
+      destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
     disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
@@ -345,6 +354,9 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
+      source_transaction_category_slug: "grants-stipends",
+      destination_transaction_category_slug: "grants-stipends",
+      category_assignment_strategy: "automatic"
     ).run
     save!
   end

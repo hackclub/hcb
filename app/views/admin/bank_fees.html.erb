@@ -1,8 +1,12 @@
 <% title "HCB Fees" %>
 
-<%= form_with local: true, url: bank_fees_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { selected: @event_id, include_blank: "Select An Event" }, { width: 250, style: "max-width: 250px" } ) %>
-  <%= form.submit "Search", class: "ml1" %>
+<%= form_with local: true, class: "card overflow-visible", url: bank_fees_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
