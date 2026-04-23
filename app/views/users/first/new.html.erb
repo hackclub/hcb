@@ -1,22 +1,17 @@
 <% title "FIRST on HCB" %>
 <% page_sm %>
 
-<h2 class="heading text-6xl my-8">
-  The
-  <em>
-    <strong style="font-weight: 800;">ultimate booster club</strong>
-  </em>
-  for FRC, FTC, and FLL teams
-</h2>
+<div class="py-6">
+  <h2 class="heading text-6xl inline">
+    The
+    <em>
+      <strong style="font-weight: 800;">ultimate booster club</strong>
+    </em>
+    for FRC, FTC, and FLL teams
+  </h2>
+</div>
 
-<hr>
-
-<p>
-  <em>FIRST</em> teams across the country use HCB to manage their finances.
-  Explore how HCB can help your team raise more money and make it easier to spend and reimburse.
-</p>
-
-<div class="card flex flex-col bg-black !text-white gap-3">
+<div class="card flex flex-col bg-black !text-white gap-3 my-4">
   <div class="flex flex-row items-stretch gap-4">
   <div class="w-full">
     <h2 class="heading mt-0 mb-3 w-full">
@@ -33,7 +28,7 @@
 
 <div class="container max-w-[36rem]">
   <%= form_with model: @user, url: first_index_path do |form| %>
-    <div class="card mt3 mb2">
+    <div class="card mt-8 mb-4">
       <h3 class="heading mt-0 mb-0 flex items-center gap-2">
         <%= inline_icon "person", size: 22 %>
         About you
@@ -50,9 +45,9 @@
     </div>
 
     <%= form.fields_for :affiliations do |affiliation| %>
-      <div class="card mb2">
+      <div class="card mb-4">
         <h3 class="heading mt-0 mb-0 flex items-center gap-2">
-          <%= inline_icon "group", size: 22 %>
+          <%= inline_icon "flag", size: 22 %>
           Your team
         </h3>
         <p class="muted h5 mt-1 mb-3">Which team are you part of?</p>
@@ -74,13 +69,13 @@
         </div>
       </div>
 
-      <div class="card mb3">
+      <div class="card mb-4">
         <h3 class="heading mt-0 mb-0 flex items-center gap-2">
           <%= inline_icon "person-badge", size: 22 %>
           Your role
         </h3>
         <p class="muted h5 mt-1 mb-3">What's your role on the team?</p>
-        <div class="field field--options trio max-w-none mb-0">
+        <div class="field field--options max-w-none mb-0">
           <%= affiliation.radio_button :role, "student_leader" %>
           <%= affiliation.label :role, value: "student_leader" do %>
             <%= inline_icon "leader", size: 28 %>
@@ -120,6 +115,11 @@
 
     <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
 
-    <%= form.submit "Sign up" %>
+    <div class="card card--sunken flex flex-row justify-between items-center mb-8">
+      <em class="m-0">
+        Your raffle entry is just a few clicks away!
+      </em>
+      <%= form.submit "Sign up" %>
+    </div>
   <% end %>
 </div>
