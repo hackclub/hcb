@@ -72,7 +72,9 @@ jobs:
         with:
           bundler-cache: true
       - name: Run erb_lint
-        run: bundle exec erb_lint app/views/
+        run: bin/erblint
+        env:
+          ERB_JOBS: 4
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
