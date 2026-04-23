@@ -1,40 +1,40 @@
 # frozen_string_literal: true
 
-json.created_at event.created_at
-json.id event.public_id
-json.parent_id event.parent&.public_id
-json.name event.name
-json.country event.country
-json.slug event.slug
-json.financially_frozen event.financially_frozen?
-json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
-json.donation_page_available event.donation_page_available?
-json.playground_mode event.demo_mode?
-json.playground_mode_meeting_requested nil # This field is deprecated and will be removed
-json.transparent event.is_public?
-json.fee_percentage event.revenue_fee.to_f
-json.background_image event.background_image.attached? ? Rails.application.routes.url_helpers.url_for(event.background_image) : nil
+object_shape(json, event, object_name: "organization") do
+  json.parent_id event.parent&.public_id
+  json.name event.name
+  json.country event.country
+  json.slug event.slug
+  json.financially_frozen event.financially_frozen?
+  json.icon event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : nil
+  json.donation_page_available event.donation_page_available?
+  json.playground_mode event.demo_mode?
+  json.playground_mode_meeting_requested nil # This field is deprecated and will be removed
+  json.transparent event.is_public?
+  json.fee_percentage event.revenue_fee.to_f
+  json.background_image event.background_image.attached? ? Rails.application.routes.url_helpers.url_for(event.background_image) : nil
 
-if expand?(:balance_cents)
-  json.balance_cents event.balance_available
-  json.fee_balance_cents event.fronted_fee_balance_v2_cents
-end
+  if expand?(:balance_cents)
+    json.balance_cents event.balance_available
+    json.fee_balance_cents event.fronted_fee_balance_v2_cents
+  end
 
-if expand?(:reporting)
-  json.total_spent_cents event.total_spent_cents
-  json.total_raised_cents event.total_raised
-end
+  if expand?(:reporting)
+    json.total_spent_cents event.total_spent_cents
+    json.total_raised_cents event.total_raised
+  end
 
-if policy(event).account_number? && expand?(:account_number)
-  json.account_number event.account_number
-  json.routing_number event.routing_number
-  json.swift_bic_code event.bic_code
-end
+  if policy(event).account_number? && expand?(:account_number)
+    json.account_number event.account_number
+    json.routing_number event.routing_number
+    json.swift_bic_code event.bic_code
+  end
 
-if expand?(:users)
-  json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
-    json.partial! "api/v4/users/user", user: op.user, show_email: shares_org_with?(op.user)
-    json.joined_at op.created_at
-    json.role op.role
+  if expand?(:users)
+    json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
+      json.partial! "api/v4/users/user", user: op.user, show_email: shares_org_with?(op.user)
+      json.joined_at op.created_at
+      json.role op.role
+    end
   end
 end
