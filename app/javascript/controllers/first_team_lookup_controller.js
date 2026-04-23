@@ -14,6 +14,9 @@ export default class extends Controller {
 
     if (!league || !teamNumber) return
 
+    let value = this.teamNameTarget.value
+    this.setLoading(true)
+
     try {
       const response = await fetch(
         `/first/team?league=${encodeURIComponent(league)}&team_number=${encodeURIComponent(teamNumber)}`
@@ -21,11 +24,21 @@ export default class extends Controller {
       if (!response.ok) return
 
       const data = await response.json()
-      if (data.team_name) {
-        this.teamNameTarget.value = data.team_name
-      }
+      value = data.team_name
     } catch {
       // silently ignore lookup failures
+    } finally {
+      this.setLoading(false, value)
+    }
+  }
+
+  setLoading(loading, value) {
+    this.teamNameTarget.disabled = loading
+
+    if (loading) {
+      this.teamNameTarget.value = "Loading..."
+    } else {
+      this.teamNameTarget.value = value
     }
   }
 }
