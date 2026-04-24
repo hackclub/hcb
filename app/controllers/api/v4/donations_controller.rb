@@ -6,6 +6,7 @@ module Api
       include SetEvent
 
       before_action :set_api_event, only: [:create]
+      before_action :set_donation, only: [:payment_intent]
       before_action :require_trusted_oauth_app!, only: [:payment_intent]
 
       def create
@@ -34,9 +35,9 @@ module Api
       end
 
       def payment_intent
-        amount = params[:amount_cents]
-        if params[:fee_covered] && @event.config.cover_donation_fees
-          amount /= (1 - @event.revenue_fee).ceil
+        amount = @donation.amount
+        if @donation.fee_covered
+          amount /= (1 - @donation.event.revenue_fee).ceil
         end
 
         payment_intent = StripeService::PaymentIntent.create({
@@ -45,11 +46,17 @@ module Api
                                                                payment_method_types: ["card_present"],
                                                                capture_method: "automatic",
                                                                statement_descriptor: "HCB",
-                                                               statement_descriptor_suffix: StripeService::StatementDescriptor.format(@event.short_name, as: :suffix),
-                                                               metadata: { donation: true, event_id: @event.id },
+                                                               statement_descriptor_suffix: StripeService::StatementDescriptor.format(@donation.event.short_name, as: :suffix),
+                                                               metadata: { donation: true, donation_id: @donation.id, event_id: @donation.event.id },
                                                              })
 
-        render json: { payment_intent_id: payment_intent.id }, status: :created
+        render json: { payment_intent_id: payment_intent.id, client_secret: payment_intent.client_secret }, status: :created
+      end
+
+      private
+
+      def set_donation
+        @donation = Donation.find(params[:id])
       end
 
     end
