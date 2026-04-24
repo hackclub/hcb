@@ -46,10 +46,6 @@
   .swal-button--confirm {
     @extend .bg-blue;
   }
-
-  .swal-button--confirm.swal-button--danger {
-    @extend .bg-error;
-  }
 }
 
 .swal-overlay--show-modal .swal-modal {
