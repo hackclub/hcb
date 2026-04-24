@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (json:, event:, object: nil)
+# locals: (json:, event:)
 
 json.created_at event.created_at
 json.id event.public_id
