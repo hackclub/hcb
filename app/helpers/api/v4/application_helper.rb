@@ -10,7 +10,7 @@ module Api
 
       def object_shape(json, object, object_name: nil, created_at: true, &block)
         json.id object.public_id
-        json.object object_name || object.model_name.element
+        json.object object_name || object.model_name.singular
         block.call
         json.created_at object.created_at if created_at
       end
