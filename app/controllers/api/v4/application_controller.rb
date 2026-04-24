@@ -40,14 +40,18 @@ module Api
         @current_user = current_token&.user
       end
 
+      ADMIN_SCOPES = {
+        read: ->(user){ user&.auditor? },
+        write: ->(user){ user&.admin? }
+      }.freeze
       def can_admin?(level)
-        return false unless current_token&.scopes&.include?("admin:#{level}")
+        raise ArgumentError, "Level must be a symbol" unless level.is_a?(Symbol)
+        raise ArgumentError, "Invalid admin level: #{level}" unless ADMIN_SCOPES.keys.include?(level)
 
-        case level.to_sym
-        when :read  then current_user&.auditor?
-        when :write then current_user&.admin?
-        else false
-        end
+        has_scope = current_token&.scopes&.include?("admin:#{level}")
+        has_level = ADMIN_SCOPES[level].call(current_user)
+
+        has_scope && has_level
       end
 
       def require_admin_scope!(level)
