@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # locals: (json:, receipt:)
 
 object_shape(json, receipt) do

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # locals: (json:, card_grant:)
 
 object_shape(json, card_grant) do

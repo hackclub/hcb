@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # locals: (json:, invitation:)
 
 object_shape(json, invitation) do
