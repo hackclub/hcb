@@ -42,10 +42,11 @@
       <h3 class="mb-2">Admin</h3>
 
       <div class="field field--checkbox">
-        <%= form.check_box :should_charge_fee, switch: true, disabled: !admin_signed_in? %>
-        <%= form.label :should_charge_fee do %>
-          Charge fiscal sponsorship fee?
-        <% end %>
+        <%= form.label :should_charge_fee, "Charge fiscal sponsorship fee?" %>
+        <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+          <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
+          <span class="slider"></span>
+        </label>
       </div>
 
       <% category_select = ->(field) {
