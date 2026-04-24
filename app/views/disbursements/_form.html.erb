@@ -42,7 +42,7 @@
       <h3 class="mb-2">Admin</h3>
 
       <div class="field field--checkbox">
-        <%= form.check_box :should_charge_fee, disabled: !admin_signed_in? %>
+        <%= form.check_box :should_charge_fee, switch: true, disabled: !admin_signed_in? %>
         <%= form.label :should_charge_fee do %>
           Charge fiscal sponsorship fee?
         <% end %>
