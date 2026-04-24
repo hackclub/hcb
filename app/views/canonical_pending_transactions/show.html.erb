@@ -82,9 +82,12 @@
           <strong>Fee</strong>
           <%= form_with model: @canonical_pending_transaction, html: { data: { controller: "form" } } do |form| %>
             <%= hidden_field_tag :redirect_to, request.original_fullpath %>
-            <div class="field--checkbox">
-              <%= form.check_box :fee_waived, switch: true, data: { action: "form#submit" } %>
+            <div class="field field--checkbox">
               <%= form.label :fee_waived, "Fee (#{number_to_percentage(@canonical_pending_transaction.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true)}) waived?" %>
+              <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+                <%= form.check_box :fee_waived, data: { action: "form#submit" } %>
+                <span class="slider"></span>
+              </label>
             </div>
           <% end %>
         <% end %>
