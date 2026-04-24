@@ -152,7 +152,7 @@ class MyController < ApplicationController
 
   def feed
     @event_follows = current_user.event_follows
-    @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
+    @all_announcements = Announcement.published.where(event_id: @event_follows.select(:event_id)).order(published_at: :desc, created_at: :desc)
     @announcements = @all_announcements.page(params[:page]).per(10)
   end
 
