@@ -31,13 +31,13 @@
 
   <% admin_tool do %>
     <div class="field field--checkbox">
-      <%= form.check_box :fronted %>
+      <%= form.check_box :fronted, switch: true %>
       <%= form.label :fronted, "Fronted" %>
     </div>
 
     <% if @canonical_pending_transaction.amount_cents > 0 %>
       <div class="field field--checkbox">
-        <%= form.check_box :fee_waived %>
+        <%= form.check_box :fee_waived, switch: true %>
         <%= form.label :fee_waived, "Fee (#{number_to_percentage(@canonical_pending_transaction.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true)}) waived?" %>
       </div>
     <% end %>
