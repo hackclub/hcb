@@ -188,7 +188,7 @@
 
           <% unless @ach_transfer.scheduled_on.present? %>
             <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
-              <%= form.submit "⚡ Send in realtime", data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." } %>
+              <%= form.submit "⚡ Send in realtime", data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
             <% end %>
           <% end %>
         </div>
