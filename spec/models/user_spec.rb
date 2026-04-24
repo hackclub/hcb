@@ -267,6 +267,78 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#update_stripe_cardholder" do
+    it "updates phone number on stripe cardholder when phone is verified" do
+      user = create(:user, phone_number: "+18556254225", email: "old@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "0000000000", stripe_email: "old@example.com")
+      # Set verified after creation since on_phone_number_update resets it during create
+      user.update_column(:phone_number_verified, true)
+      user.reload
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(email: "new@example.com")
+      cardholder.reload
+
+      expect(cardholder.stripe_email).to eq("new@example.com")
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "clears phone number on stripe cardholder when phone is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      # Changing phone number triggers on_phone_number_update which sets phone_number_verified = false
+      user.update!(phone_number: "+12025551234")
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "does nothing when stripe cardholder has no stripe_id" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_id: nil, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "does nothing when user has no stripe cardholder" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "triggers when phone_number_verified changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+  end
+
+  describe "#on_phone_number_update" do
+    it "resets phone_number_verified when phone number changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(phone_number: "+12025551234")
+
+      expect(user.phone_number_verified).to eq(false)
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
