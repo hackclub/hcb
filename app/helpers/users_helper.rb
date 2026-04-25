@@ -253,8 +253,8 @@ module UsersHelper
                 object.user
               end
     mention = user_mention(creator, default_name: "Anonymous User", **options)
-    content_tag :div, class: "comment__name" do
-      mention + relative_timestamp(object.created_at, prefix: options[:prefix], class: "h5 muted")
+    content_tag :div, class: "comment__name flex-nowrap gap-2" do
+      mention + relative_timestamp(object.created_at, prefix: options[:prefix], class: "h5 muted truncate")
     end
   end
 
