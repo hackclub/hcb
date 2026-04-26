@@ -84,10 +84,11 @@ class DisbursementsController < ApplicationController
   def sendable_event_search_results(base)
     results = []
     offset = 0
-    batch_size = 20
+    batch_size = 50
+    max_scanned = 300
 
-    loop do
-      batch = base.offset(offset).limit(batch_size).select(:id, :name).to_a
+    while offset < max_scanned
+      batch = base.offset(offset).limit(batch_size).select(:id, :name, :can_front_balance).to_a
       break if batch.empty?
 
       batch.each do |event|
@@ -158,12 +159,8 @@ class DisbursementsController < ApplicationController
       redirect_to event_transfers_path(@source_event)
     end
 
-  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
+  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ActiveRecord::StatementInvalid => e
     flash[:error] = e.message
-    redirect_to new_disbursement_path(source_event_id: @source_event)
-  rescue ActiveRecord::RecordNotFound => e
-    skip_authorization
-    flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
   end
 
