@@ -68,8 +68,14 @@ class DisbursementsController < ApplicationController
   end
 
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
-    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
+    if admin_signed_in?
+      @source_event = Event.find(disbursement_params[:source_event_id])
+      @destination_event = params[:receiving_other] == "on" ? Event.friendly.find(disbursement_params[:event_id]) : Event.find(disbursement_params[:event_id])
+    else
+      @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
+      @destination_event = params[:receiving_other] == "on" ? Event.find_by_public_id(disbursement_params[:event_id]) : Event.find(disbursement_params[:event_id])
+    end
+
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
