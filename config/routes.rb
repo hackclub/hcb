@@ -701,7 +701,7 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
 
           resources :donations, path: "donations", only: [:create] do
-            collection do
+            member do
               post "payment_intent"
             end
           end
@@ -764,8 +764,6 @@ Rails.application.routes.draw do
     end
   end
 
-  post "api/v1/users/find", to: "api#user_find"
-  post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
   get "api/flags", to: "api#flags"
 
