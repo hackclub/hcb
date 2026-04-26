@@ -441,4 +441,16 @@ module ApplicationHelper
     end
   end
 
+  def custom_tooltip(direction = nil, partial = nil, &block)
+    content_tag(:span, class: "custom-tooltip #{"custom-tooltip--#{direction}" if direction}") do
+      partial || block.call
+    end
+  end
+
+  def turbo_custom_tooltip(direction, frame, src)
+    content_tag(:span, class: "custom-tooltip #{"custom-tooltip--#{direction}" if direction}") do
+      turbo_frame_tag(frame, src:, loading: :lazy)
+    end
+  end
+
 end
