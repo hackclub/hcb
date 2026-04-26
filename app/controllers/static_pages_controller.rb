@@ -20,9 +20,7 @@ class StaticPagesController < ApplicationController
 
       featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
-      @featured_events = featured_event_ids.map do |id|
-        Event.find_by_public_id(id)
-      end.select do |event|
+      @featured_events = Event.where(public_id: featured_event_ids).index_by(&:public_id).values_at(*featured_event_ids).select do |event|
         event&.is_public? && event.is_indexable?
       end.sample(6)
 
