@@ -1149,8 +1149,11 @@ class AdminController < Admin::BaseController
 
   def set_event_multiple_transactions
     ActiveRecord::Base.transaction do
+      selected_keys = params.select { |_, value| value == "1" }.keys
+      valid_ids = CanonicalTransaction.where(id: selected_keys).pluck(:id).map(&:to_s).to_set
+
       params.each do |key, value|
-        next unless value == "1" && CanonicalTransaction.find(key)
+        next unless value == "1" && valid_ids.include?(key.to_s)
 
         begin
           @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(
@@ -1496,7 +1499,7 @@ class AdminController < Admin::BaseController
   end
 
   def new_teenagers_leaderboard
-    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
+    @link_creators = User.where(id: Referral::Link.select(:creator_id)).includes(:referral_links)
   end
 
   def contracts
