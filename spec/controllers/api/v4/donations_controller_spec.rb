@@ -6,7 +6,7 @@ RSpec.describe Api::V4::DonationsController do
   render_views
 
   describe "#create" do
-    it "persists the message and echoes it back in the response" do
+    it "creates a donation" do
       user  = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
@@ -26,10 +26,25 @@ RSpec.describe Api::V4::DonationsController do
       }, as: :json
 
       expect(response).to have_http_status(:created)
-      expect(response.parsed_body["message"]).to eq(message)
+      donation = event.donations.sole
 
-      donation = Donation.find_by_public_id(response.parsed_body["id"])
-      expect(donation.message).to eq(message)
+      expect(response.parsed_body).to include(
+        {
+          "id"         => donation.public_id,
+          "object"     => "donation",
+          "recurring"  => false,
+          "donor"      => {
+            "name"  => "Donor",
+            "email" => "donor@example.com",
+          },
+          "message"    => message,
+          "donated_at" => donation.donated_at.iso8601(3),
+          "refunded"   => false,
+          "deposited"  => false,
+          "in_transit" => false,
+          "created_at" => donation.created_at.iso8601(3),
+        }
+      )
     end
   end
 end
