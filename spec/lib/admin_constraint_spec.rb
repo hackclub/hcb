@@ -34,7 +34,7 @@ RSpec.describe AdminConstraint do
     end
 
     context "when the session belongs to a non-admin user" do
-      let(:user) { create(:user, :make_verified) }
+      let(:user) { create(:user) }
       let!(:session) { create(:user_session, verified: true, user:, expiration_at: 7.days.from_now) }
       let(:session_token) { session.session_token }
 

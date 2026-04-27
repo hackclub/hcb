@@ -44,7 +44,7 @@ RSpec.describe AuditorConstraint do
     end
 
     context "when the session belongs to a regular user" do
-      let(:user) { create(:user, :make_verified) }
+      let(:user) { create(:user) }
       let!(:session) { create(:user_session, verified: true, user:, expiration_at: 7.days.from_now) }
       let(:session_token) { session.session_token }
 

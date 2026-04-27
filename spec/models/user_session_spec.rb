@@ -44,7 +44,7 @@ RSpec.describe User::Session, type: :model do
 
     it "returns true if the most recently created login is less than 2 hours old" do
       freeze_time do
-        user = create(:user, :make_verified)
+        user = create(:user)
         Flipper.enable(:sudo_mode_2015_07_21, user)
         user_session = create(:user_session, verified: true, user:)
         _initial_login = create(
