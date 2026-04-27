@@ -46,6 +46,7 @@ class User
     belongs_to :impersonated_by, class_name: "User", optional: true
     belongs_to :webauthn_credential, optional: true
     has_many :logins, foreign_key: "user_session_id", inverse_of: :user_session
+    has_many :referral_attributions, class_name: "Referral::Attribution", foreign_key: "user_session_id", inverse_of: :user_session
 
     validate :verified_matches_user_verified
 
