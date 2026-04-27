@@ -18,7 +18,7 @@ module SearchService
         elsif @auditor
           users = User.where.not(full_name: nil)
         else
-          users = User.where(id: OrganizerPosition.where(event: @user.events).select(:user_id))
+          users = User.where(id: OrganizerPosition.where(event_id: @user.organizer_positions.select(:event_id)).select(:user_id))
         end
         @query["conditions"]&.each do |condition|
           case condition[:property]
