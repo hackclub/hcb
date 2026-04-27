@@ -166,7 +166,7 @@ class User < ApplicationRecord
 
   belongs_to :payout_method, polymorphic: true, optional: true
   validate :valid_payout_method
-  validate :elevated_users_must_be_verified
+  validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
   has_encrypted :birthday, type: :date
@@ -642,7 +642,7 @@ class User < ApplicationRecord
 
   def auditors_must_be_verified
     if auditor? && !verified?
-      errors.add(:verified, "must be true for elevated users")
+      errors.add(:verified, "must be true for auditors")
     end
   end
 
