@@ -1364,7 +1364,8 @@ class AdminController < Admin::BaseController
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @users = User.where(id: Event.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
+    omitted_plan_types = Event::Plan.that(:omit_stats).collect(&:name)
+    @users = User.where(id: OrganizerPosition.joins(event: :plan).where(event_plans: { type: omitted_plan_types, aasm_state: :active }).select(:user_id)).page(@page).per(@per).order(created_at: :desc)
 
   end
 
