@@ -1365,7 +1365,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     omitted_plan_types = Event::Plan.that(:omit_stats).collect(&:name)
-    @users = User.where(id: OrganizerPosition.joins(event: :plan).where(event_plans: { type: omitted_plan_types, aasm_state: :active }).select(:user_id)).page(@page).per(@per).order(created_at: :desc)
+    @users = User.where(id: OrganizerPosition.where(event_id: Event.joins(:plan).where(event_plans: { type: omitted_plan_types, aasm_state: :active })).select(:user_id)).page(@page).per(@per).order(created_at: :desc)
 
   end
 
