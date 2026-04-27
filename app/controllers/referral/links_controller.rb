@@ -8,19 +8,18 @@ module Referral
       @link = Referral::Link.find_by(slug: params[:id]).presence
 
       if @link
-        unless signed_in?
-          skip_authorization
-          return redirect_to auth_users_path(referral: @link.slug)
-        end
-
-        authorize(@link)
+        authorize @link
 
         Rails.error.handle do
           Referral::Attribution.create!(user: current_user, program: @link.program, link: @link)
         end
 
-        # This is only configurable by admins
-        redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
+        if signed_in?
+          # This is only configurable by admins
+          redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
+        else
+          redirect_to auth_users_path(referral: @link.slug)
+        end
       else
         skip_authorization
 
