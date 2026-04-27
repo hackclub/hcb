@@ -7,46 +7,22 @@ module Users
     skip_after_action :verify_authorized
     skip_before_action :signed_in_user
 
-    TBA_API_KEY = Credentials.fetch(:THE_BLUE_ALLIANCE, :API_KEY)
-    TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
-
     def index
+      return redirect_to welcome_first_index_path unless signed_in? || Current.unverified_user.present?
     end
 
     def team
-      league = params[:league].to_s.downcase
-      team_number = params[:team_number].to_s
-
-      conn = Faraday.new(url: TBA_BASE_URL) do |f|
-        f.headers["X-TBA-Auth-Key"] = TBA_API_KEY
+      if ["FTC", "FLL"].include?(params[:league])
+        return render json: { error: "Team prefill is unsupported for #{params[:league]}" }, status: :not_found
       end
 
-      team_key = "frc#{team_number}"
-      team_response = conn.get("team/#{team_key}")
+      result = Event::Affiliation.tba_lookup(params[:league], params[:team_number])
 
-      unless team_response.success?
+      if result.nil?
         return render json: { error: "Team not found" }, status: :not_found
       end
 
-      team_data = JSON.parse(team_response.body)
-
-      avatar = nil
-      media_response = conn.get("team/#{team_key}/media/#{Date.today.year}")
-      if media_response.success?
-        media = JSON.parse(media_response.body)
-        avatar_media = media.find { |m| m["type"] == "avatar" }
-        if avatar_media
-          base64 = avatar_media.dig("details", "base64Image")
-          avatar = base64.present? ? "data:image/png;base64,#{base64}" : avatar_media["direct_url"].presence
-        end
-      end
-
-      render json: {
-        league: league,
-        team_number: team_number,
-        team_name: team_data["nickname"],
-        avatar: avatar
-      }
+      render json: result
     end
 
     def sign_out
@@ -55,6 +31,8 @@ module Users
     end
 
     def new
+      return redirect_to first_index_path if signed_in? || Current.unverified_user.present?
+
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user = User.new(affiliations: [Event::Affiliation.new])
     end
