@@ -5,8 +5,8 @@ class DisbursementsController < ApplicationController
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
-  EventSearchOption = Struct.new(:id, :display) do
-    def to_combobox_display = display
+  EventSearchOption = Struct.new(:id, :label) do
+    def to_combobox_display = label
   end
   private_constant :EventSearchOption
 
