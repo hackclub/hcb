@@ -17,13 +17,13 @@ RSpec.describe User::Session, type: :model do
   context "when user is locked" do
     it "can't be created" do
       user = create(:user, locked_at: Time.now)
-      expect { create(:user_session, user:) }.to raise_error(ActiveRecord::RecordInvalid)
+      expect { create(:user_session, verified: true, user:) }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it "can be be created when impersonated" do
       user = create(:user, locked_at: Time.now)
       admin_user = create(:user, access_level: :admin)
-      user_session = create(:user_session, user:, impersonated_by: admin_user)
+      user_session = create(:user_session, verified: true, user:, impersonated_by: admin_user)
       expect(user_session).to be_valid
     end
   end
@@ -44,9 +44,9 @@ RSpec.describe User::Session, type: :model do
 
     it "returns true if the most recently created login is less than 2 hours old" do
       freeze_time do
-        user = create(:user)
+        user = create(:user, :make_verified)
         Flipper.enable(:sudo_mode_2015_07_21, user)
-        user_session = create(:user_session, user:)
+        user_session = create(:user_session, verified: true, user:)
         _initial_login = create(
           :login,
           user:,
@@ -104,7 +104,7 @@ RSpec.describe User::Session, type: :model do
       user = create(:user, full_name: "Hack Clubber")
 
       PublicActivity.with_tracking do
-        create(:user_session, user:)
+        create(:user_session, verified: true, user:)
       end
 
       activity = PublicActivity::Activity.sole
@@ -117,7 +117,7 @@ RSpec.describe User::Session, type: :model do
       user = create(:user, full_name: "Hack Clubber")
 
       PublicActivity.with_tracking do
-        create(:user_session, user:, impersonated_by: admin)
+        create(:user_session, verified: true, user:, impersonated_by: admin)
       end
 
       activity = PublicActivity::Activity.sole
