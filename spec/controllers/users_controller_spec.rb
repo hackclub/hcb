@@ -34,7 +34,7 @@ RSpec.describe UsersController do
       impersonated_user = create(:user, full_name: "Impersonated User")
       impersonated_user.lock!
 
-      initial_session = create_session(admin_user, verified: true)
+      create_session(admin_user, verified: true)
 
       post(:impersonate, params: { id: impersonated_user.id })
       expect(response).to redirect_to(root_path)
