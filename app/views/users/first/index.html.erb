@@ -12,31 +12,32 @@
   <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<h2 class="heading text-6xl my-8">
-  The
-  <em>
-    <strong style="font-weight: 800;">ultimate booster club</strong>
-  </em>
+<h2 class="text-5xl md:text-6xl my-8">
+  The <span class="italic" style="font-weight: 800;">ultimate booster club</span>
+  
   for FRC, FTC, and FLL teams
 </h2>
 
 <div class="card flex flex-col bg-black !text-white gap-3">
-  <div class="flex flex-row items-stretch gap-4">
-  <div class="w-full">
-    <h2 class="heading mt-0 mb-3 w-full">
-      Get a free 3D printer!
-    </h2>
-    <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
-    <%= link_to "#", class: "btn bg-info gap-1 hidden md:inline-flex", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
-      Email your advisor about HCB →
-    <% end %>
-  </div>
-    <div class="min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+  <div class="flex flex-row items-stretch gap-4 flex-wrap md:flex-nowrap">
+    <div class="flex-grow">
+      <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="md:hidden max-w-[50%] aspect-video pb-4">
+
+      <h2 class="heading mt-0 mb-3 w-full">
+        Get a free 3D printer!
+      </h2>
+      <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
+      <%= link_to "#", class: "btn bg-info gap-1 hidden md:inline-flex", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
+        Email your advisor about HCB →
+      <% end %>
+    </div>
+
+    <div class="hidden md:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
   </div>
 
-    <%= link_to "#", class: "btn bg-info gap-1  md:hidden" do %>
-      Email your advisor about HCB →
-    <% end %>
+  <%= link_to "#", class: "btn bg-info gap-1  md:hidden" do %>
+    Email your advisor about HCB →
+  <% end %>
 
   <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
 </div>
@@ -117,10 +118,10 @@
 </div>
 
 <div class="card card--sunken flex flex-col items-center p-10 gap-5">
-  <h2 class="heading text-4xl my-0 !w-max">
+  <h2 class="text-4xl my-0 text-center w-full">
     Ready to get started?
   </h2>
-  <p class="my-0">Our team is standing by to help your robotics team succeed.</p>
+  <p class="my-0 text-center">Our team is standing by to help your robotics team succeed.</p>
   <div class="flex flex-row gap-4">
     <%= link_to "#", class: "btn" do %>
       <%= inline_icon "event-add" %>
