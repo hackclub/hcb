@@ -36,7 +36,7 @@ RSpec.describe User::Session, type: :model do
     end
 
     it "returns false if there are no associated logins" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       Flipper.enable(:sudo_mode_2015_07_21, user_session.user)
 
       expect(user_session).not_to be_sudo_mode
@@ -75,7 +75,7 @@ RSpec.describe User::Session, type: :model do
 
   describe "#last_reauthenticated_at" do
     it "returns nil if there was only an initial login" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
@@ -83,7 +83,7 @@ RSpec.describe User::Session, type: :model do
     end
 
     it "returns the latest reauthentication time" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
