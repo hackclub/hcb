@@ -1,11 +1,5 @@
 
 <div data-controller="menu" data-menu-placement-value="top-end">
-  <% routing = begin
-       Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-     rescue
-       {}
-     end %>
-
   <a
     type="button"
     class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
