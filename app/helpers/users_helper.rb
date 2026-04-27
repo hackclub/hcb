@@ -28,14 +28,16 @@ module UsersHelper
         tooltip: "See all your cards",
         selected: selected == :cards,
       },
-      {
-        name: "Receipts",
-        path: my_inbox_path,
-        icon: "receipt",
-        tooltip: "See transactions awaiting receipts",
-        selected: selected == :receipts,
-        async_badge: my_missing_receipts_icon_path,
-      },
+      (if current_user.events.any? || current_user.card_grants.any? || current_user.reimbursement_reports.any?
+         {
+           name: "Receipts",
+           path: my_inbox_path,
+           icon: "receipt",
+           tooltip: "See transactions awaiting receipts",
+           selected: selected == :receipts,
+           async_badge: my_missing_receipts_icon_path,
+         }
+       end),
       {
         name: "Reimbursements",
         path: my_reimbursements_path,
