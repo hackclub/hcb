@@ -14,7 +14,7 @@ export default class extends Controller {
 
     if (!league || !teamNumber) return
 
-    if (league == "FTC" || league == "FLL") return
+    if (league == 'FTC' || league == 'FLL') return
 
     let value = this.teamNameTarget.value
     this.setLoading(true)
@@ -38,7 +38,7 @@ export default class extends Controller {
     this.teamNameTarget.disabled = loading
 
     if (loading) {
-      this.teamNameTarget.value = "Loading..."
+      this.teamNameTarget.value = 'Loading...'
     } else {
       this.teamNameTarget.value = value
     }
