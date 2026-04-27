@@ -48,20 +48,20 @@
     <div class="w-max flex-shrink-0">
       <h3 class="heading my-0"><%= current_user(allow_unverified: true).full_name %></h3>
       <p class="my-0 muted">
-        <% if affiliation.team_name.present? %>
-          <%= affiliation.team_name %> ·
-        <% end %>
         <%= affiliation.league&.upcase %> #<%= affiliation.team_number %>
+        <% if affiliation.team_name.present? %>
+          · <%= affiliation.team_name %>
+        <% end %>
       </p>
       <% if affiliation.role.present? %>
         <p class="my-0 muted"><%= affiliation.role.titleize %></p>
       <% end %>
     </div>
+
     <div class="flex-grow w-full">
     </div>
-    <div class="w-max">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAABGdBTUEAALGPC/xhBQAAAw5JREFUWEfFmC9vFEEYh88gMASBQqD5EISgCKKuktbVkaAQGD4BSSFYTNE1yEocEnMJmg+AIISEYJY8033gd8Psdm9vS9/kl5l55/3z7Ozu3bWrpeza9Vvd+mi/iHnvvnoT7Me7ww1dOWgLDB9i3n06LvrvoENgj16uu/fdtyLm+IT82Z1dPugUsFqCAqgWB50DVutSQJcAq5Wgs59RglEL7Pnnrow2Uu5NlfkAZg/UYwwbQSR4ZQlmkaPVXvf2xv2i9Z17Rca2Tk6Z79qa3inmPcammajyilRC1aohh07MGP3WRhcCflx/6d68OttIQmNgqYRENRiiFusaeBROIwBIRkSxhPu696D71XVFzBMuJYQagyOe+SRAjCBUwyHAct3ysTY3811bP/2stwK0GLIQEoaxnufpksejgtxr1WMtsOoxhs2gVkGa1fPWSB5w5meeEs7bjW8SIJaQWTRPSV/d3HWeYO5TU9FHODQZEBuCrFUD+PJ4gihj9LlO/1aA2FTIlvK5Yy54S7PgMJLmQgp3UZ5wswHz9R9qaINaFwEKN/kjprZMtoBNFX6/tpRvJiJmCMy4xQAtMganErIWe8ax3gmQXxnIYqlsNFfWp17fdjsjkSsUhvXj/RdFzG3kibWg8av0Ezv79DSSLZINhRTs9sMn3c3Xx2VkjdzDf/fDsyLWWWdRwGwIHB/GACn8QgrKKBzSb61FAZGnwRxAf54lINKXcAmoFgH0QaZ4NmUPQL7KbKhacMgaxOz8gmgU8ErrxvhqSGK81RmrBNz59LQs1mqIH8i83TVcAvsILAx4cMqYDXPOHoA8l8zrfSS48fzJydi32c0o9P3k8KnNs1lCAsgbzrqWOYvDaRZktJmQAvjxQ0zCuX9pcNoYpABDkKx3huNtVL2rWPpo4O0eg0TMh+Cm9NqwdGaQ89ynkS8OStCEdL9+Y7NW1nae+xuWARlUr7HzxgenNkcJeL7/9x9DfVqxsdqtXv/Y1KQWSGvdh/+xsdpDvYq52Uqo/WlTwdJaNdOX/sVsCth2tlr9BgIYeVt0KI8LAAAAAElFTkSuQmCC" height="48">
-    </div>
+
+    <img src="<%= "https://www.thebluealliance.com/avatar/2026/frc#{affiliation.team_number}.png" %>" height="48" alt="">
   </div>
 <% end %>
 
