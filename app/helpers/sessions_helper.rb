@@ -105,8 +105,8 @@ module SessionsHelper
     create_session unless Current.session.present?
   end
 
-  def signed_in?
-    !current_user.nil?
+  def signed_in?(allow_unverified: false)
+    !current_user(allow_unverified:).nil?
   end
 
   def auditor_signed_in?
@@ -154,8 +154,12 @@ module SessionsHelper
     @organizer_signed_in[key]
   end
 
-  def current_user
-    @current_user ||= current_session&.user
+  def current_user(allow_unverified: false)
+    if allow_unverified
+      @current_unverified_user ||= current_session&.user(allow_unverified: true)
+    else
+      @current_user ||= current_session&.user
+    end
   end
 
   def blazer_current_user
@@ -184,7 +188,7 @@ module SessionsHelper
   end
 
   def signed_in_or_unverified_user
-    unless signed_in? || Current.unverified_user.present?
+    unless signed_in?(allow_unverified: true)
       if request.fullpath == "/"
         redirect_to auth_users_path(require_reload: true, signup: params[:signup])
       else

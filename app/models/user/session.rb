@@ -130,7 +130,13 @@ class User
     end
 
     def unverified_user
+      return nil if verified?
+
       user(allow_unverified: true)
+    end
+
+    def unverified?
+      !verified?
     end
 
     private

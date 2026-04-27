@@ -8,7 +8,7 @@ module Users
     skip_before_action :signed_in_user
 
     def index
-      return redirect_to welcome_first_index_path unless signed_in? || Current.unverified_user.present?
+      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
     end
 
     def team
@@ -31,7 +31,7 @@ module Users
     end
 
     def new
-      return redirect_to first_index_path if signed_in? || Current.unverified_user.present?
+      return redirect_to first_index_path if signed_in?(allow_unverified: true)
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user = User.new(affiliations: [Event::Affiliation.new])
@@ -48,7 +48,7 @@ module Users
       @user.creation_method = :first_robotics_form
       @user.save!
 
-      cookies.signed["user_token"] = @user.signed_id(expires_in: 2.weeks, purpose: :unverified_persistence)
+      create_session(user: @user, verified: false)
 
       redirect_to first_index_path
     rescue ActiveRecord::RecordInvalid => e

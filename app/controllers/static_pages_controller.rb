@@ -13,7 +13,7 @@ class StaticPagesController < ApplicationController
   end
 
   def index
-    return redirect_to first_index_path if (current_user || Current.unverified_user)&.show_first_dashboard?
+    return redirect_to first_index_path if current_user(allow_unverified: true)&.show_first_dashboard?
 
     return redirect_to auth_users_path(require_reload: true, signup: params[:signup]) unless signed_in?
 

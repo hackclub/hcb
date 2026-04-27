@@ -31,8 +31,6 @@ class ApplicationController < ActionController::Base
   # update the current session's last_seen_at
   before_action { Current.session&.update_session_timestamps }
 
-  before_action :set_unverified_user
-
   before_action :attach_appsignal_tags
 
   before_action do
@@ -142,20 +140,15 @@ class ApplicationController < ActionController::Base
     return unless defined?(Appsignal) && Appsignal.active?
 
     error_reference = ErrorReference.from_request_id(request.uuid)
-    user_id = current_user&.id || Current.unverified_user&.id
+    user_id = current_user(allow_unverified: true)&.id
     session_id = Current.session&.id
     ip_address = request.remote_ip
     user_agent = request.user_agent
     referrer = request.referrer
-    unverified_user = Current.unverified_user.present?
+    unverified_user = Current.session.unverified?
 
     Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
     Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
-  end
-
-  def set_unverified_user
-    Current.unverified_user = User.find_signed(cookies.signed["user_token"], purpose: :unverified_persistence) if cookies.signed["user_token"].present?
-    # TODO: Clear user_token cookie if a session is present
   end
 
 end
