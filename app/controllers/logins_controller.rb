@@ -150,7 +150,9 @@ class LoginsController < ApplicationController
     # has not created a user session before
     @login.with_lock do
       if @login.complete? && @login.user_session.nil?
-        @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+        @login.user.update(verified: true) unless @login.user.verified?
+        sign_out
+        @login.update(user_session: create_session(user: @login.user, verified: true, fingerprint_info:))
       end
     end
 

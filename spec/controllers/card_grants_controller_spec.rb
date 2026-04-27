@@ -11,7 +11,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       expect(event.card_grant_setting).to be_nil
 
@@ -25,7 +25,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       expect(event.card_grant_setting).to be_nil
 
@@ -56,7 +56,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -81,7 +81,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -104,7 +104,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -128,7 +128,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       card_grant = create(
         :card_grant,
@@ -164,7 +164,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       card_grant = create(
         :card_grant,

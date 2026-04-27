@@ -20,6 +20,8 @@ class ApplicationController < ActionController::Base
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
 
+  before_action :ensure_created_session
+
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
 

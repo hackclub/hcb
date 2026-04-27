@@ -17,10 +17,11 @@
 #  session_token_ciphertext :text
 #  signed_out_at            :datetime
 #  timezone                 :string
+#  verified                 :boolean          default(FALSE), not null
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  impersonated_by_id       :bigint
-#  user_id                  :bigint           not null
+#  user_id                  :bigint
 #  webauthn_credential_id   :bigint
 #
 # Indexes
@@ -41,10 +42,12 @@ class User
     has_encrypted :session_token
     blind_index :session_token
 
-    belongs_to :user
+    belongs_to :user, optional: true
     belongs_to :impersonated_by, class_name: "User", optional: true
     belongs_to :webauthn_credential, optional: true
     has_many :logins, foreign_key: "user_session_id", inverse_of: :user_session
+
+    validate :verified_matches_user_verified
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
@@ -54,9 +57,12 @@ class User
     scope :expired, -> { where("expiration_at <= ?", Time.now) }
     scope :not_expired, -> { where("expiration_at > ?", Time.now) }
     scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
+    scope :verified, -> { where(verified: true) }
+    scope :unverified, -> { where(verified: false) }
 
     after_create_commit do
       next if impersonated?
+      next unless user.present?
       next unless user.user_sessions.size > 1
       next unless fingerprint.present?
       next unless user.user_sessions.excluding(self).where(fingerprint:).none?
@@ -82,7 +88,7 @@ class User
       return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
       updates = { last_seen_at: Time.now }
-      updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, user.session_validity_preference.seconds.from_now].min unless impersonated?
+      updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, (user || User.new).session_validity_preference.seconds.from_now].min unless impersonated?
       update_columns(**updates)
     end
 
@@ -116,10 +122,28 @@ class User
       logins.complete.reauthentication.max_by(&:created_at)&.created_at
     end
 
+    def user(allow_unverified: false)
+      return nil unless verified? || allow_unverified
+
+      super()
+    end
+
+    def unverified_user
+      user(allow_unverified: true)
+    end
+
     private
 
+    def verified_matches_user_verified
+      if verified? && !user&.verified?
+        errors.add("Unverified users cannot have verified sessions")
+      elsif !verified? && user&.verified?
+        errors.add("Verified users cannot have unverified sessions")
+      end
+    end
+
     def user_is_unlocked
-      if user.locked? && !impersonated?
+      if user&.locked? && !impersonated?
         errors.add(:user, "Your HCB account has been locked.")
       end
     end

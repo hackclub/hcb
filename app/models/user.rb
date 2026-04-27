@@ -31,6 +31,7 @@
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
+#  verified                      :boolean          default(FALSE), not null
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
@@ -165,6 +166,7 @@ class User < ApplicationRecord
 
   belongs_to :payout_method, polymorphic: true, optional: true
   validate :valid_payout_method
+  validate :elevated_users_must_be_verified
   accepts_nested_attributes_for :payout_method
 
   has_encrypted :birthday, type: :date
@@ -181,6 +183,7 @@ class User < ApplicationRecord
   validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :sign_out_unverified_sessions, if: -> { verified_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
@@ -636,6 +639,16 @@ class User < ApplicationRecord
   end
 
   private
+
+  def auditors_must_be_verified
+    if auditor? && !verified?
+      errors.add(:verified, "must be true for elevated users")
+    end
+  end
+
+  def sign_out_unverified_sessions
+    user_sessions.not_expired.unverified.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
 
   def accessible_events(roles:)
     event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys

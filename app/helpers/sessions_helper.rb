@@ -16,16 +16,17 @@ module SessionsHelper
   IMPERSONATED_SESSION_DURATION = SESSION_DURATION_OPTIONS.fetch("1 hour")
 
   class AccountLockedError < StandardError; end
+  class NoSessionError < StandardError; end
 
   def impersonate_user(user)
     sign_out
-    sign_in(user:, impersonate: true)
+    create_session(user:, verified: user.verified, impersonate: true)
   end
 
   def unimpersonate_user
     curses = current_session
     sign_out
-    sign_in(user: curses.impersonated_by)
+    create_session(user: curses.impersonated_by, verified: true)
   end
 
   # DEPRECATED - begin to start deprecating and ultimately replace with sign_in_and_set_cookie
@@ -48,7 +49,8 @@ module SessionsHelper
       timezone: fingerprint_info[:timezone],
       ip: fingerprint_info[:ip],
       webauthn_credential:,
-      expiration_at:
+      expiration_at:,
+      verified: true
     )
 
     if impersonate
@@ -61,6 +63,46 @@ module SessionsHelper
     Current.session = user_session
 
     user_session
+  end
+
+  def create_session(user: nil, verified: false, fingerprint_info: {}, impersonate: false, webauthn_credential: nil)
+    session_token = SecureRandom.urlsafe_base64
+    session_duration =
+      if impersonate
+        IMPERSONATED_SESSION_DURATION
+      else
+        (user || User.new).session_validity_preference
+      end
+    expiration_at = session_duration.seconds.from_now
+    cookies.encrypted[:session_token] = { value: session_token, expires: User::Session::MAX_SESSION_DURATION.from_now, httponly: true }
+    cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar) if user.present?
+    user_session = User::Session.build(
+      session_token:,
+      fingerprint: fingerprint_info[:fingerprint],
+      device_info: fingerprint_info[:device_info],
+      os_info: fingerprint_info[:os_info],
+      timezone: fingerprint_info[:timezone],
+      ip: fingerprint_info[:ip],
+      webauthn_credential:,
+      expiration_at:,
+      verified:,
+      user:
+    )
+
+    if impersonate
+      user_session.impersonated_by = current_user
+    else
+      raise(AccountLockedError, "Your HCB account has been locked.") if user&.locked?
+    end
+
+    user_session.save!
+    Current.session = user_session
+
+    user_session
+  end
+
+  def ensure_created_session
+    create_session unless Current.session.present?
   end
 
   def signed_in?

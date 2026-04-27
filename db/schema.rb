@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_27_000829) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2627,7 +2627,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
     t.datetime "signed_out_at"
     t.string "timezone"
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
+    t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
     t.index ["impersonated_by_id"], name: "index_user_sessions_on_impersonated_by_id"
     t.index ["session_token_bidx"], name: "index_user_sessions_on_session_token_bidx"
@@ -2677,6 +2678,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_10_205826) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
+    t.boolean "verified", default: false, null: false
     t.string "webauthn_id"
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
