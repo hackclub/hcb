@@ -645,11 +645,11 @@ class HcbCode < ApplicationRecord
     users = []
     users += self.comments.includes(:user).map(&:user)
     users += self.comments.flat_map(&:mentioned_users)
-    users += self.events.flat_map(&:users).reject(&:my_threads?)
+    users += self.events.includes(:users).flat_map(&:users).reject(&:my_threads?)
     users += [author] if author
 
     if comment.admin_only?
-      users += self.events.map(&:point_of_contact)
+      users += self.events.includes(:point_of_contact).map(&:point_of_contact)
       return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
     end
 
