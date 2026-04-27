@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_27_000829) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_27_213320) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2131,10 +2131,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_27_000829) do
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
     t.index ["user_id", "referral_link_id"], name: "index_referral_attributions_on_user_id_and_referral_link_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+    t.index ["user_session_id"], name: "index_referral_attributions_on_user_session_id"
   end
 
   create_table "referral_links", force: :cascade do |t|
@@ -2940,6 +2942,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_27_000829) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
+  add_foreign_key "referral_attributions", "user_sessions"
   add_foreign_key "referral_attributions", "users"
   add_foreign_key "referral_links", "referral_programs", column: "program_id"
   add_foreign_key "referral_links", "users", column: "creator_id"

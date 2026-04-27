@@ -10,6 +10,7 @@
 #  referral_link_id    :bigint           not null
 #  referral_program_id :bigint           not null
 #  user_id             :bigint
+#  user_session_id     :bigint
 #
 # Indexes
 #
@@ -17,18 +18,21 @@
 #  index_referral_attributions_on_referral_program_id           (referral_program_id)
 #  index_referral_attributions_on_user_id                       (user_id)
 #  index_referral_attributions_on_user_id_and_referral_link_id  (user_id,referral_link_id) UNIQUE
+#  index_referral_attributions_on_user_session_id               (user_session_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (referral_link_id => referral_links.id)
 #  fk_rails_...  (referral_program_id => referral_programs.id)
 #  fk_rails_...  (user_id => users.id)
+#  fk_rails_...  (user_session_id => user_sessions.id)
 #
 module Referral
   class Attribution < ApplicationRecord
     belongs_to :program, class_name: "Referral::Program", foreign_key: "referral_program_id", inverse_of: :attributions
     belongs_to :link, class_name: "Referral::Link", foreign_key: "referral_link_id", inverse_of: :attributions
     belongs_to :user, optional: true # Referee (person being referred)
+    belongs_to :user_session, optional: true, class_name: "User::Session"
 
   end
 end
