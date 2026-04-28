@@ -48,15 +48,15 @@
     <%= avatar_for current_user(allow_unverified: true), size: 48 %>
     <div class="w-max flex-shrink-0">
       <h3 class="heading my-0"><%= current_user(allow_unverified: true).full_name %></h3>
+      <% if affiliation.role.present? %>
+        <p class="my-0"><%= affiliation.role.titleize %></p>
+      <% end %>
       <p class="my-0 muted">
         <%= affiliation.league&.upcase %> #<%= affiliation.team_number %>
         <% if affiliation.team_name.present? %>
           · <%= affiliation.team_name %>
         <% end %>
       </p>
-      <% if affiliation.role.present? %>
-        <p class="my-0 muted"><%= affiliation.role.titleize %></p>
-      <% end %>
     </div>
 
     <div class="flex-grow w-full">
