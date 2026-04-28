@@ -52,6 +52,9 @@ module Users
       @user = User.find_by!(email: user_params[:email])
       @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params: }, user: @user)
 
+      program = "first-worlds-2026-mbneo"
+      Raffle.create!(user: @user, program:) unless Raffle.where(user: @user, program:).any?
+
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
       redirect_to choose_login_preference_login_path(@login)
