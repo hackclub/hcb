@@ -11,7 +11,7 @@
       Welcome to <span class="primary">HCB</span>
     </span>
   </div>
-  <span class="badge ml-0 text-sm rounded-xl caps <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+  <span class="badge ml-0 text-sm rounded-xl caps hidden md:inline <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
 <h2 class="text-5xl md:text-6xl my-8">
