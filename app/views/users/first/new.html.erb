@@ -32,6 +32,11 @@
 <div class="px-6 md:px-7">
   <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-16">
     <div class="flex-1 min-w-0 max-w-xl">
+
+      <div class="mt-8">
+        <%= render "application/flash" unless @hide_flash %>
+      </div>
+
       <%= form_with model: @user, url: first_index_path do |form| %>
         <div class="card mt-8 mb-4">
           <h3 class="heading mt-0 mb-0 flex items-center gap-2">
@@ -186,3 +191,5 @@
     </aside>
   </div>
 </div>
+
+<% @hide_flash = true %>
