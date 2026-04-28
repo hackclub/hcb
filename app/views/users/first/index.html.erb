@@ -20,9 +20,9 @@
   for FRC, FTC, and FLL teams
 </h2>
 
-<div class="card flex flex-col bg-black !text-white gap-3">
-  <%# this is how im checking age since they arent entering their birthday %>
-  <% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
+<%# this is how im checking age since they arent entering their birthday %>
+<% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
+  <div class="card flex flex-col bg-black !text-white gap-3">
     <% if !Event::Affiliation.where(affiliable_type: "Event", metadata: { league: affiliation&.league, team_number: affiliation&.team_number }) && !Raffle.where(user: current_user, program: "first-worlds-2026-airpods").any? %>
       <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
         <div class="flex-grow">
@@ -80,10 +80,9 @@
         </div>
       <% end %>
     <% end %>
-  <% end %>
-
-  <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
-</div>
+    <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
+  </div>
+<% end %>
 
 <% if affiliation %>
   <div class="card my-4 flex flex-row items-center gap-4">
