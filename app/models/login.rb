@@ -94,6 +94,10 @@ class Login < ApplicationRecord
     purpose == "application"
   end
 
+  def for_first?
+    purpose == "first"
+  end
+
   def authentication_factors_count
     return 0 if authentication_factors.nil?
 

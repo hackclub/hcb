@@ -165,7 +165,11 @@ class LoginsController < ApplicationController
     end
 
     if @login.complete? && @login.user_session.present?
-      if @referral_link.present?
+      if @login.for_first?
+        affiliations_attributes = @login.state.dig("user_params", "affiliations_attributes")
+        @login.user.update!(affiliations_attributes:)
+        redirect_to first_index_path
+      elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application?
         redirect_to edit_user_path(@user.slug, return_to: @login.return_to)

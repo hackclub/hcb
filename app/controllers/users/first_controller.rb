@@ -26,7 +26,8 @@ module Users
     end
 
     def sign_out
-      cookies.delete("user_token")
+      helpers.sign_out
+
       redirect_to auth_users_path
     end
 
@@ -38,19 +39,22 @@ module Users
     end
 
     def create
-      @user = User.new(user_params)
+      unless User.where(email: user_params[:email]).exists?
+        @user = User.new(user_params)
+        @user.creation_method = :first_robotics_form
+        @user.save!
 
-      if User.where(email: @user.email).exists?
-        flash[:error] = "That email is already taken"
-        redirect_back_or_to welcome_first_index_path
+        create_session(user: @user, verified: false)
+
+        redirect_to first_index_path and return
       end
 
-      @user.creation_method = :first_robotics_form
-      @user.save!
+      @user = User.find_by!(email: user_params[:email])
+      @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params: }, user: @user)
 
-      create_session(user: @user, verified: false)
+      cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
-      redirect_to first_index_path
+      redirect_to choose_login_preference_login_path(@login)
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
 
