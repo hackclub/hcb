@@ -40,13 +40,13 @@
         <% end %>
       <% end %>
       <% if open_invoice %>
-        <%= link_to "#", data: { behavior: "modal_trigger", modal: "manually_mark_as_paid" }, class: "flex items-center" do %>
+        <%= link_to "#", data: { behavior: "modal_trigger", action: "menu#close", modal: "manually_mark_as_paid" }, class: "flex items-center" do %>
           <%= inline_icon "checkmark", size: 24 %>
           Manually mark as paid
         <% end %>
       <% end %>
       <% if hcb_code.donation? %>
-        <%= link_to "#", data: { behavior: "modal_trigger", modal: "update" }, class: "flex items-center" do %>
+        <%= link_to "#", data: { behavior: "modal_trigger", action: "menu#close", modal: "update" }, class: "flex items-center" do %>
           <%= inline_icon "person", size: 24 %>
           Edit donor
         <% end %>
