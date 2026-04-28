@@ -23,7 +23,7 @@ class RafflesController < ApplicationController
         respond_to do |format|
           format.turbo_stream { render turbo_stream: turbo_stream.refresh(request_id: nil) }
           format.html do
-            redirect_to root_path
+            redirect_back_or_to root_path
           end
         end
       else

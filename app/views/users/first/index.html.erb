@@ -22,7 +22,7 @@
 
 <div class="card flex flex-col bg-black !text-white gap-3">
   <%# this is how im checking age since they arent entering their birthday %>
-  <% if ["student_leader", "student_member"].include?(affiliation&.role) %>
+  <% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
     <% if !Event::Affiliation.where(affiliable_type: "Event", league: affiliation&.league, team_number: affiliation&.team_number) && !Raffle.where(user: current_user, program: "first-worlds-2026-airpods").any? %>
       <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
         <div class="flex-grow">
@@ -43,7 +43,7 @@
       <%= link_to "#", class: "btn bg-info gap-1  sm:hidden" do %>
         Email your advisor about HCB →
       <% end %>
-    <% elsif %>
+    <% elsif !Raffle.where(user: current_user, program: "first-worlds-2026-printer").any? %>
       <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
         <div class="flex-grow">
           <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
@@ -51,9 +51,10 @@
           <h2 class="heading mt-0 mb-3 w-full">
             Get a free 3D printer!
           </h2>
-          <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
-          <%= link_to "#", class: "btn bg-info gap-1 hidden sm:inline-flex mt-2", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
-            Email your advisor about HCB →
+          <p class="my-0 md:my-2">Good news! You're a member of a robotics team that runs on HCB. Click the button below and get a chance to win a free Bambu Lab A1.</p>
+          <%= form_with(url: raffles_path, method: :post) do |form| %>
+            <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+            <%= form.submit "Enter raffle" %>
           <% end %>
         </div>
 
