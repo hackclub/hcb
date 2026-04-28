@@ -74,7 +74,7 @@ module UsersHelper
     unless signed_in?
       items << {
         name: "Verify your email",
-        path: auth_users_path(return_to: request.path),
+        path: verify_email_first_index_path,
         icon: "email-exclamation",
         tooltip: "Verify your email address",
         selected: false

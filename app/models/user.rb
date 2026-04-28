@@ -638,6 +638,10 @@ class User < ApplicationRecord
     "#{full_name} (Email: #{email}, ID: #{id})"
   end
 
+  def unverified?
+    !verified?
+  end
+
   private
 
   def auditors_must_be_verified

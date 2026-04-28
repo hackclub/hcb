@@ -38,6 +38,16 @@ module Users
       @user = User.new(affiliations: [Event::Affiliation.new])
     end
 
+    def verify_email
+      return redirect_to welcome_first_index_path unless current_user(allow_unverified: true)&.unverified?
+
+      @login = Login.create!(state: { purpose: "first", return_to: first_index_path }, user: current_user(allow_unverified: true))
+
+      cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
+
+      redirect_to choose_login_preference_login_path(@login)
+    end
+
     def create
       unless User.where(email: user_params[:email]).exists?
         @user = User.new(user_params)

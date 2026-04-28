@@ -43,8 +43,8 @@
       <%= link_to "#", class: "btn bg-info gap-1  sm:hidden" do %>
         Email your advisor about HCB →
       <% end %>
-    <% elsif !Raffle.where(user: current_user, program: "first-worlds-2026-printer").any? %>
-      <% if current_user.events.where(id: Event::Affiliation.where(affiliable_type: "Event", metadata: { league: affiliation&.league, team_number: affiliation&.team_number }).select(:affiliable_id)).any? %>
+    <% elsif !Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer").any? %>
+      <% if current_user(allow_unverified: true).events.where(id: Event::Affiliation.where(affiliable_type: "Event", metadata: { league: affiliation&.league, team_number: affiliation&.team_number }).select(:affiliable_id)).any? %>
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
           <div class="flex-grow">
             <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">

@@ -167,7 +167,7 @@ class LoginsController < ApplicationController
     if @login.complete? && @login.user_session.present?
       if @login.for_first?
         affiliations_attributes = @login.state.dig("user_params", "affiliations_attributes")
-        @login.user.update!(affiliations_attributes:)
+        @login.user.update!(affiliations_attributes:) if affiliations_attributes
         redirect_to first_index_path
       elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)

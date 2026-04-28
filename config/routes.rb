@@ -183,6 +183,7 @@ Rails.application.routes.draw do
       collection do
         get "welcome", to: "first#new"
         get "team", to: "first#team"
+        get "verify_email", to: "first#verify_email"
         delete "sign_out", to: "first#sign_out"
       end
     end
