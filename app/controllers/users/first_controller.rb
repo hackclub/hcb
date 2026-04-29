@@ -54,6 +54,7 @@ module Users
     end
 
     def create
+      program = nil
       program = "first-worlds-2026-macbook" if ["student_leader", "student_member"].include?(user_params.dig(:affiliations_attributes, "0", "role"))
 
       unless User.where(email: user_params[:email]).exists?
