@@ -77,6 +77,46 @@ class Event
       tba_team_info&.dig(:avatar)
     end
 
+    # Returns the Event whose FIRST affiliation matches the user's FIRST
+    # affiliation by league + team_number, or nil. Users only have at most one
+    # FIRST affiliation today (the /first/welcome form allows only one), so a
+    # `.first` lookup is sufficient.
+    def self.matching_first_event_for(user)
+      aff = user&.affiliations&.find_by(name: "first")
+      return nil unless aff&.league.present? && aff&.team_number.present?
+
+      Event.joins(:affiliations)
+           .where(affiliations: { name: "first" })
+           .where("affiliations.metadata->>'league' = ?", aff.league)
+           .where("affiliations.metadata->>'team_number' = ?", aff.team_number)
+           .first
+    end
+
+    # True when the user and event share a FIRST affiliation
+    # (same league + team_number). Doesn't consider membership.
+    def self.first_affiliation_matches?(user, event)
+      return false if user.nil? || event.nil?
+
+      aff = user.affiliations.find_by(name: "first")
+      return false unless aff&.league.present? && aff&.team_number.present?
+
+      event.affiliations
+           .where(name: "first")
+           .where("metadata->>'league' = ?", aff.league)
+           .where("metadata->>'team_number' = ?", aff.team_number)
+           .exists?
+    end
+
+    # True when the user has a matching FIRST affiliation with the event AND
+    # is not already an organizer of it. Used to gate both the "Request to
+    # join" UI and the controller endpoint that creates the invite request.
+    def self.eligible_to_request_invite?(user, event)
+      return false if user.nil? || event.nil?
+      return false if event.users.exists?(id: user.id)
+
+      first_affiliation_matches?(user, event)
+    end
+
     TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
 
     def self.tba_lookup(league, team_number)

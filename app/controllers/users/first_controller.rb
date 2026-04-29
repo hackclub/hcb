@@ -17,10 +17,25 @@ module Users
     end
 
     def request_org_invite
-      # validation
-      event = Event.find(params[[:event_id]])
-      opil = event.organizer_position_invite_links.create!({ creator: event.users.first, expires_in: 1.minute.from_now }) # this expires it near immediately
-      OrganizerPositionInvite::Request.create!(requester: current_user, link: opil)
+      user = current_user(allow_unverified: true)
+      event = Event::Affiliation.matching_first_event_for(user)
+
+      unless Event::Affiliation.eligible_to_request_invite?(user, event)
+        redirect_to first_index_path, flash: { error: "You're not eligible to request to join this organization." } and return
+      end
+
+      if event.organizer_position_invite_requests.pending.exists?(requester_id: user.id)
+        redirect_to first_index_path, flash: { warning: "You already have a pending request." } and return
+      end
+
+      ActiveRecord::Base.transaction do
+        # The link exists only to satisfy the Request → Link FK; it expires
+        # immediately so it can't be reused as a join URL.
+        link = event.organizer_position_invite_links.create!(creator: user, expires_in: 0)
+        OrganizerPositionInvite::Request.create!(requester: user, link:)
+      end
+
+      redirect_to first_index_path, flash: { success: "Request sent! Your team member will review it." }
     end
 
     def team

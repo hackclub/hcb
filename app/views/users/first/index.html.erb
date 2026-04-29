@@ -59,7 +59,8 @@
 
 <%# this is how im checking age since they arent entering their birthday %>
 <% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
-  <% if !Event::Affiliation.where(affiliable_type: "Event").where("metadata ->> 'league' = ?", affiliation&.league).where("metadata ->> 'team_number' = ?", affiliation&.team_number).any? %>
+  <% matching_event = Event::Affiliation.matching_first_event_for(current_user(allow_unverified: true)) %>
+  <% if matching_event.nil? %>
     <% unless Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods").any? %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
@@ -84,7 +85,7 @@
       </div>
     <% end %>
   <% elsif !Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer").any? %>
-    <% if current_user(allow_unverified: true).events.where(id: Event::Affiliation.where(affiliable_type: "Event").where("metadata ->> 'league' = ?", affiliation&.league).where("metadata ->> 'team_number' = ?", affiliation&.team_number).select(:affiliable_id)).any? %>
+    <% if matching_event.users.exists?(id: current_user(allow_unverified: true).id) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
           <div class="flex-grow">
@@ -106,6 +107,7 @@
         </div>
       </div>
     <% else %>
+      <% pending_request = matching_event.organizer_position_invite_requests.pending.exists?(requester: current_user(allow_unverified: true)) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
           <div class="flex-grow">
@@ -116,10 +118,18 @@
             </h2>
             <p class="my-0 md:my-2">
               Good news&mdash;<strong><%= affiliation.team_name.presence || "your team" %></strong> (<%= affiliation.league&.upcase %> #<%= affiliation.team_number %>) is already running on HCB!
-              Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+              <% if pending_request %>
+                Your request to join <strong><%= matching_event.name %></strong> is pending&mdash;One of your team members will review it soon. Once approved, we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+              <% else %>
+                Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+              <% end %>
             </p>
             <div class="mb-6 mt-4">
-              <%= button_to "Request to join", request_org_invite_first_index_path(affiliation), method: :post %>
+              <% if pending_request %>
+                <button type="button" class="btn" disabled>Request pending</button>
+              <% else %>
+                <%= button_to "Request to join", request_org_invite_first_index_path, method: :post %>
+              <% end %>
             </div>
           </div>
 
