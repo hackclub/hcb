@@ -9,15 +9,15 @@
   </a>
 </div>
 <script>
-  const helpIcon = document.getElementById('help-icon');
+  const intercomTrigger = document.getElementById('intercom-trigger');
 
   if(document.documentElement.clientWidth >= 1024)
   window.addEventListener("load", () => {
     window.Beacon('config', {
       display: {
         position: 'left',
-        horizontalOffset: helpIcon.getBoundingClientRect().left,
-        verticalOffset: document.documentElement.clientHeight - helpIcon.getBoundingClientRect().bottom + 25,
+        horizontalOffset: intercomTrigger.getBoundingClientRect().left,
+        verticalOffset: document.documentElement.clientHeight - intercomTrigger.getBoundingClientRect().bottom + 25,
       }
     });
   })
