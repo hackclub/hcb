@@ -19,7 +19,6 @@ RSpec.describe "POST /first/request_org_invite rate-limit registration" do
   end
 
   it "limits the throttle to 2 requests per day" do
-    request_org_invite_block = source[/throttle\([^)]*request_org_invite.*?\Aend|throttle\([^)]*request_org_invite[^}]*\}/m]
     block = source[/throttle\("first\/request_org_invite\/user".*?\bend\b/m]
 
     expect(block).to be_present, "Could not locate the request_org_invite throttle block in rack_attack.rb"
