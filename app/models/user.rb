@@ -631,7 +631,7 @@ class User < ApplicationRecord
   end
 
   def redirect_to_first_dashboard?
-    show_first_dashboard? && card_grants.none? && events.none?
+    show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
   def to_combobox_display
