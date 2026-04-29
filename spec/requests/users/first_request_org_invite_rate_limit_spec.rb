@@ -11,7 +11,7 @@ RSpec.describe "POST /first/request_org_invite rate-limit registration" do
   let(:source) { File.read(Rails.root.join("config/initializers/rack_attack.rb")) }
 
   it "is covered by a Rack::Attack throttle scoped to /first/request_org_invite" do
-    expect(source).to match(%r{throttle\([^)]*request_org_invite[^)]*\)}),
+    expect(source).to match(/throttle\([^)]*request_org_invite[^)]*\)/),
                       "Expected a `throttle(...)` rule whose name references `request_org_invite` " \
                       "to be registered in config/initializers/rack_attack.rb. Without it, a " \
                       "signed-in user can spam OrganizerPositionInvite::Request rows (and the " \
