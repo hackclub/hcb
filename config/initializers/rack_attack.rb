@@ -133,6 +133,19 @@ class Rack::Attack
     end
   end
 
+  # Throttle POST /first/request_org_invite to 2 per day per signed-in user.
+  # Each request creates an OrganizerPositionInvite::Request and dispatches a
+  # notification email to event managers; the in-controller "no pending
+  # request" guard only blocks identical re-submits, leaving room for
+  # request → manager-denial → request loops to spam managers. Keyed on the
+  # encrypted session_token cookie (stable per session) — unauthenticated
+  # requests are rejected at the controller and aren't counted.
+  throttle("first/request_org_invite/user", limit: 2, period: 1.day) do |req|
+    if req.path == "/first/request_org_invite" && req.post?
+      req.cookies["session_token"]
+    end
+  end
+
   ### Custom Throttle Response ###
 
   # By default, Rack::Attack returns an HTTP 429 for throttled responses,
