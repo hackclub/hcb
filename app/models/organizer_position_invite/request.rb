@@ -46,6 +46,9 @@ class OrganizerPositionInvite
 
       event :approve do
         transitions from: :pending, to: :approved
+        after do
+          Raffle.find_or_create_by!(user: requester, program: "first-worlds-2026-printer") if link.event.affiliations.where(name: "first").any?
+        end
       end
 
       event :deny do

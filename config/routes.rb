@@ -184,6 +184,7 @@ Rails.application.routes.draw do
         get "welcome", to: "first#new"
         get "team", to: "first#team"
         post "verify_email", to: "first#verify_email"
+        post "request_org_invite", to: "first#request_org_invite"
         delete "sign_out", to: "first#sign_out"
       end
     end

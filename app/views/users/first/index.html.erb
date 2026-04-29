@@ -119,7 +119,7 @@
               Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
             </p>
             <div class="mb-6 mt-4">
-              <button type="button" class="btn" disabled>Request to join</button>
+              <%= button_to "Request to join", request_org_invite_first_index_path(affiliation), method: :post %>
             </div>
           </div>
 

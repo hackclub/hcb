@@ -16,6 +16,13 @@ module Users
       @airpods_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods")
     end
 
+    def request_org_invite
+      # validation
+      event = Event.find(params[[:event_id]])
+      opil = event.organizer_position_invite_links.create!({ creator: event.users.first, expires_in: 1.minute.from_now }) # this expires it near immediately
+      OrganizerPositionInvite::Request.create!(requester: current_user, link: opil)
+    end
+
     def team
       if ["ftc", "fll"].include?(params[:league])
         return render json: { error: "Team prefill is unsupported for #{params[:league]}" }, status: :not_found
