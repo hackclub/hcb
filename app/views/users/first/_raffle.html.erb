@@ -2,14 +2,30 @@
 
 <div class="my-4 flex rounded-lg bg-white dark:bg-black overflow-hidden border-2 border-dashed border-blue">
   <div class="flex-1 p-5">
-    <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Confirmed</p>
+    <% if raffle.confirmed? %>
+      <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Confirmed</p>
+    <% else %>
+      <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Pending</p>
+    <% end %>
     <h2 class="heading mt-0 mb-1"><%= raffle_name %></h2>
-    <p class="muted text-sm mt-0 mb-3">FIRST Championships 2026 · Must be a student to be eligible</p>
+    <p class="muted text-sm mt-0 mb-1">FIRST Championships 2026 · Must be a student to be eligible</p>
+    <% unless raffle.confirmed? %>
+      <p class="muted text-sm mt-0 mb-3">
+        Awaiting verification &mdash; make sure you sent the email with <code>hcb-raffles@hackclub.com</code> in CC. It may take a few hours for us to confirm.
+      </p>
+    <% end %>
     <p class="text-xs muted mb-0">Entered <%= raffle.created_at.strftime("%B %-d, %Y") %></p>
   </div>
   <div class="border-0 border-l-2 border-dashed self-stretch border-blue"></div>
   <div class="w-32 p-5 flex flex-col items-center justify-center text-center gap-1 shrink-0">
     <p class="text-xs uppercase tracking-widest muted mt-0 mb-1">Ticket No.</p>
-    <p class="font-mono font-bold text-2xl my-0"><%= raffle.ticket_number || "——" %></p>
+    <p class="font-mono font-bold text-2xl my-0 <%= "muted" unless raffle.confirmed? %>"><%= raffle.ticket_number || "——" %></p>
   </div>
 </div>
+
+<% if raffle.pending? && raffle.program == "first-worlds-2026-airpods" %>
+  <p class="text-xs muted text-center -mt-2 mb-4">
+    Didn't send it?
+    <%= link_to "Resend the email", "#", "data-behavior": "modal_trigger", "data-modal": "modal", class: "underline" %>
+  </p>
+<% end %>

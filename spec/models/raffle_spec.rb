@@ -28,4 +28,40 @@ RSpec.describe Raffle, type: :model do
                               "INSERT successfully. Add a unique index so the DB enforces the invariant."
     end
   end
+
+  describe "confirmation state" do
+    let(:user) { create(:user) }
+
+    it "auto-confirms raffles for programs that don't require confirmation" do
+      raffle = described_class.create!(user:, program: "first-worlds-2026-printer")
+
+      expect(raffle).to be_confirmed
+      expect(raffle).not_to be_pending
+    end
+
+    it "creates raffles in a pending state for programs requiring confirmation" do
+      raffle = described_class.create!(user:, program: "first-worlds-2026-airpods")
+
+      expect(raffle).to be_pending
+      expect(raffle).not_to be_confirmed
+    end
+
+    it "lists the airpods program as requiring confirmation" do
+      expect(Raffle::PROGRAMS_REQUIRING_CONFIRMATION).to include("first-worlds-2026-airpods")
+    end
+
+    describe "#confirm!" do
+      it "flips a pending raffle to confirmed" do
+        raffle = described_class.create!(user:, program: "first-worlds-2026-airpods")
+
+        expect { raffle.confirm! }.to change { raffle.reload.confirmed? }.from(false).to(true)
+      end
+
+      it "is a no-op on already-confirmed raffles" do
+        raffle = described_class.create!(user:, program: "first-worlds-2026-printer")
+
+        expect { raffle.confirm! }.not_to(change { raffle.reload.updated_at })
+      end
+    end
+  end
 end

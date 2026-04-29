@@ -318,19 +318,54 @@
 <section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
   <%= modal_header "Email your advisor" %>
 
-  <p>
+raffle_subject = "Booster club for our robotics team"
+    raffle_cc = "hcb-raffles@hackclub.com"
+    encoded_cc = ERB::Util.url_encode(raffle_cc)
+    encoded_subject = ERB::Util.url_encode(raffle_subject)
+    encoded_body = ERB::Util.url_encode(@advisor_email_body)
+    gmail_url = "https://mail.google.com/mail/?view=cm&fs=1&cc=#{encoded_cc}&su=#{encoded_subject}&body=#{encoded_body}"
+    outlook_url = "https://outlook.office.com/mail/deeplink/compose?cc=#{encoded_cc}&subject=#{encoded_subject}&body=#{encoded_body}"
+    mailto_url = "mailto:?cc=#{encoded_cc}&subject=#{encoded_subject}&body=#{encoded_body}"
+    copy_text = "To: <your advisor>\nCC: #{raffle_cc}\nSubject: #{raffle_subject}\n\n#{@advisor_email_body}"
+  %>
+
+  <p class="mt-0">
     Send an email to your advisor to ask them about running your team on HCB.
     Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
-    <br>
-    <br>
-    Send an email by <%= mail_to nil, "clicking here", cc: "hcb-raffles@hackclub.com", subject: "Booster club for our robotics team", body: @advisor_email_body %> and then press the button below to sign up for our AirPods raffle!
+  </p>
+
+  <h3 class="heading text-base mt-4 mb-2">Step 1 &mdash; Send the email</h3>
+
+  <div class="flex flex-col gap-2 mb-2">
+    <%= link_to gmail_url, target: "_blank", rel: "noopener", class: "btn bg-info text-center" do %>
+      Open in Gmail
+    <% end %>
+    <%= link_to outlook_url, target: "_blank", rel: "noopener", class: "btn bg-info text-center" do %>
+      Open in Outlook
+    <% end %>
+    <%= link_to mailto_url, class: "btn bg-info text-center" do %>
+      Use my default mail app
+    <% end %>
+  </div>
+
+  <p class="text-sm text-center mb-4 mt-0">
+    <%= copy_to_clipboard(copy_text, class: "muted underline") do %>
+      Or copy the email
+    <% end %>
+  </p>
+
+  <h3 class="heading text-base mt-4 mb-2">Step 2 &mdash; Confirm you sent it</h3>
+
+  <p>
+    <strong>We check every entry.</strong>
+    Make sure your email is sent and that <code><%= raffle_cc %></code> is in the CC line. Entries without a verified email won't be eligible for the drawing. It may take a few hours for us to confirm receipt.
   </p>
 
   <%= form_with(url: raffles_path, method: :post) do |form| %>
     <%= form.hidden_field :program, value: "first-worlds-2026-airpods" %>
-    <%= form.submit "Enter raffle", data: { confirm: "Before entering, please confirm you have met the criteria: you are 18 or younger and have sent the provided email CCing hcb-raffles@hackclub.com" } %>
+    <%= form.submit "I sent the email" %>
   <% end %>
 
   <br>
-  <i class="muted">Must be 18 years of age or younger, have CCd <%= mail_to "hcb-raffles@hackclub.com" %> in your email, and used the <a href="mailto:?cc=hcb-raffles@hackclub.com&subject=Join%20hundreds%20of%20other%20FIRST%20teams%20on%20HCB!&body=lorem%20ipsum">provided message</a> to be eligible.</i>
+  <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to raffle_cc %> in your email to be eligible.</i>
 </section>
