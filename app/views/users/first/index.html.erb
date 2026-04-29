@@ -318,17 +318,6 @@
 <section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
   <%= modal_header "Email your advisor" %>
 
-raffle_subject = "Booster club for our robotics team"
-    raffle_cc = "hcb-raffles@hackclub.com"
-    encoded_cc = ERB::Util.url_encode(raffle_cc)
-    encoded_subject = ERB::Util.url_encode(raffle_subject)
-    encoded_body = ERB::Util.url_encode(@advisor_email_body)
-    gmail_url = "https://mail.google.com/mail/?view=cm&fs=1&cc=#{encoded_cc}&su=#{encoded_subject}&body=#{encoded_body}"
-    outlook_url = "https://outlook.office.com/mail/deeplink/compose?cc=#{encoded_cc}&subject=#{encoded_subject}&body=#{encoded_body}"
-    mailto_url = "mailto:?cc=#{encoded_cc}&subject=#{encoded_subject}&body=#{encoded_body}"
-    copy_text = "To: <your advisor>\nCC: #{raffle_cc}\nSubject: #{raffle_subject}\n\n#{@advisor_email_body}"
-  %>
-
   <p class="mt-0">
     Send an email to your advisor to ask them about running your team on HCB.
     Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
@@ -337,19 +326,27 @@ raffle_subject = "Booster club for our robotics team"
   <h3 class="heading text-base mt-4 mb-2">Step 1 &mdash; Send the email</h3>
 
   <div class="flex flex-col gap-2 mb-2">
-    <%= link_to gmail_url, target: "_blank", rel: "noopener", class: "btn bg-info text-center" do %>
+    <%= link_to @gmail_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center" do %>
+      <svg viewBox="0 0 256 193" xmlns="http://www.w3.org/2000/svg" width="20" height="16" aria-hidden="true">
+        <path d="M58.182 192.05V93.14L27.507 65.077 0 49.504v125.091c0 9.658 7.825 17.455 17.455 17.455h40.727Z" fill="#4285F4" />
+        <path d="M197.818 192.05h40.727c9.659 0 17.455-7.826 17.455-17.455V49.505l-31.156 17.837-27.026 25.798v98.91Z" fill="#34A853" />
+        <path d="m58.182 93.14-4.174-38.647 4.174-36.989L128 69.868l69.818-52.364 4.669 33.95-4.669 41.685L128 145.504z" fill="#EA4335" />
+        <path d="M197.818 17.504V93.14L256 49.504V26.231c0-21.585-24.64-33.89-41.89-20.945l-16.292 12.218Z" fill="#FBBC04" />
+        <path d="M0 49.504l26.759 20.07L58.182 93.14V17.504L41.89 5.286C24.61-7.66 0 4.646 0 26.231v23.273Z" fill="#C5221F" />
+      </svg>
       Open in Gmail
     <% end %>
-    <%= link_to outlook_url, target: "_blank", rel: "noopener", class: "btn bg-info text-center" do %>
+    <%= link_to @outlook_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center" do %>
+      <%= image_tag "microsoft-outlook.svg", alt: "", width: 20, height: 20, "aria-hidden": "true" %>
       Open in Outlook
     <% end %>
-    <%= link_to mailto_url, class: "btn bg-info text-center" do %>
+    <%= link_to @mailto_compose_url, class: "btn bg-info gap-2 justify-center" do %>
       Use my default mail app
     <% end %>
   </div>
 
   <p class="text-sm text-center mb-4 mt-0">
-    <%= copy_to_clipboard(copy_text, class: "muted underline") do %>
+    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!") do %>
       Or copy the email
     <% end %>
   </p>
@@ -358,7 +355,7 @@ raffle_subject = "Booster club for our robotics team"
 
   <p>
     <strong>We check every entry.</strong>
-    Make sure your email is sent and that <code><%= raffle_cc %></code> is in the CC line. Entries without a verified email won't be eligible for the drawing. It may take a few hours for us to confirm receipt.
+    You must be 18 years of age or younger to be eligible. Make sure your email is sent and that <code><%= @advisor_email_cc %></code> is in the CC line. Entries without a verified email won't be eligible for the drawing. It may take a few hours for us to confirm receipt.
   </p>
 
   <%= form_with(url: raffles_path, method: :post) do |form| %>
@@ -367,5 +364,5 @@ raffle_subject = "Booster club for our robotics team"
   <% end %>
 
   <br>
-  <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to raffle_cc %> in your email to be eligible.</i>
+  <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
 </section>

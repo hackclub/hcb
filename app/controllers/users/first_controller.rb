@@ -24,6 +24,15 @@ module Users
 
         Here's a website with more information: https://hackclub.com/fiscal-sponsorship/first/. Seems like it'd be good fit for our team!
       EMAIL
+
+      @advisor_email_subject = "Booster club for our robotics team"
+      @advisor_email_cc = "hcb-raffles@hackclub.com"
+
+      compose_params = { cc: @advisor_email_cc, subject: @advisor_email_subject, body: @advisor_email_body }
+      @gmail_compose_url = "https://mail.google.com/mail/?#{URI.encode_www_form(view: "cm", fs: 1, cc: @advisor_email_cc, su: @advisor_email_subject, body: @advisor_email_body)}"
+      @outlook_compose_url = "https://outlook.office.com/mail/deeplink/compose?#{URI.encode_www_form(compose_params)}"
+      @mailto_compose_url = "mailto:?#{URI.encode_www_form(compose_params)}"
+      @copy_email_text = "To: <your advisor>\nCC: #{@advisor_email_cc}\nSubject: #{@advisor_email_subject}\n\n#{@advisor_email_body}"
     end
 
     def request_org_invite

@@ -10,12 +10,12 @@ class RafflesController < ApplicationController
 
   def create
     if Raffle.where(user: current_user(allow_unverified: true), program: params[:program]).any?
-      flash[:error] = "You are already entered in this raffle."
+      flash[:success] = "Raffle joined!"
 
       respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.refresh(request_id: nil) }
         format.html do
-          redirect_to root_path
+          redirect_back_or_to root_path
         end
       end
     else
