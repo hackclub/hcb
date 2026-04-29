@@ -45,5 +45,8 @@ class CheckDepositPolicy < ApplicationPolicy
     auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
+  def user_who_can_transfer?
+    EventPolicy.new(user, record.event).create_transfer?
+  end
 
 end

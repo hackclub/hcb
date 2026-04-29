@@ -31,9 +31,6 @@ class WirePolicy < ApplicationPolicy
 
   private
 
-  def user_who_can_transfer?
-    EventPolicy.new(user, record.event).create_transfer?
-  end
 
   def auditor_or_user?
     auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
@@ -43,5 +40,8 @@ class WirePolicy < ApplicationPolicy
     admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
+  def user_who_can_transfer?
+    EventPolicy.new(user, record.event).create_transfer?
+  end
 
 end
