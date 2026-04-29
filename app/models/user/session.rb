@@ -51,7 +51,7 @@ class User
     validate :verified_matches_user_verified
 
     include PublicActivity::Model
-    tracked owner: proc{ |controller, record| record.impersonated_by || record.user }, recipient: proc { |controller, record| record.impersonated_by || record.user }, only: [:create]
+    tracked owner: proc { |controller, record| record.impersonated_by || record.user(allow_unverified: true) }, recipient: proc { |controller, record| record.impersonated_by || record.user(allow_unverified: true) }, only: [:create]
 
     scope :impersonated, -> { where.not(impersonated_by_id: nil) }
     scope :not_impersonated, -> { where(impersonated_by_id: nil) }
@@ -84,12 +84,28 @@ class User
     LAST_SEEN_AT_COOLDOWN = 5.minutes
 
     MAX_SESSION_DURATION = 3.weeks
+    MAX_UNVERIFIED_SESSION_DURATION = 7.days
 
     def update_session_timestamps
       return if last_seen_at&.after? LAST_SEEN_AT_COOLDOWN.ago # prevent spamming writes
 
+      underlying_user = user(allow_unverified: true)
+      if unverified? && underlying_user&.verified?
+        # Zombie session — invariant violation that should never occur (see
+        # `verified_matches_user_verified` validation and the
+        # `sign_out_unverified_sessions` callback in User). If we hit one
+        # anyway, actively revoke it instead of letting it linger to natural
+        # expiry.
+        update_columns(signed_out_at: Time.now, expiration_at: Time.now)
+        return
+      end
+
       updates = { last_seen_at: Time.now }
-      updates[:expiration_at] = [created_at + MAX_SESSION_DURATION, (user || User.new).session_validity_preference.seconds.from_now].min unless impersonated?
+      unless impersonated?
+        effective_max = unverified? ? MAX_UNVERIFIED_SESSION_DURATION : MAX_SESSION_DURATION
+        preference = (underlying_user || User.new).session_validity_preference.seconds.from_now
+        updates[:expiration_at] = [created_at + effective_max, preference].min
+      end
       update_columns(**updates)
     end
 
@@ -142,10 +158,16 @@ class User
     private
 
     def verified_matches_user_verified
-      if verified? && !user&.verified?
-        errors.add("Unverified users cannot have verified sessions")
-      elsif !verified? && user&.verified?
-        errors.add("Verified users cannot have unverified sessions")
+      # Bypass the `User::Session#user` override (which returns nil for
+      # unverified sessions) so we can compare against the actual associated
+      # user regardless of session-verification state.
+      actual_user = association(:user).load_target
+      return if actual_user.nil?
+
+      if verified? && !actual_user.verified?
+        errors.add(:verified, "session cannot be verified for an unverified user")
+      elsif !verified? && actual_user.verified?
+        errors.add(:verified, "session cannot be unverified for a verified user")
       end
     end
 

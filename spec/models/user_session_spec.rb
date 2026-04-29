@@ -135,5 +135,75 @@ RSpec.describe User::Session, type: :model do
         .text
         .squish
     end
+
+    specify "attributes unverified session creation to the underlying user in the audit feed" do
+      user = create(:user, verified: false, full_name: "Unverified User")
+
+      PublicActivity.with_tracking do
+        User::Session.create!(
+          user:,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      activity = PublicActivity::Activity.sole
+      expect(activity.owner_id).to eq(user.id)
+      expect(activity.owner_type).to eq("User")
+    end
+  end
+
+  describe "verified/unverified mismatch validation" do
+    it "rejects a verified session for an unverified user" do
+      unverified_user = create(:user, verified: false)
+
+      session = build(
+        :user_session,
+        user: unverified_user,
+        verified: true,
+      )
+
+      expect(session).not_to be_valid
+      expect { session.errors.full_messages }.not_to raise_error
+      expect(session.errors.full_messages.join(" ")).to match(/verified/i)
+    end
+
+    it "rejects an unverified session for a verified user" do
+      verified_user = create(:user, verified: true)
+
+      session = build(
+        :user_session,
+        user: verified_user,
+        verified: false,
+      )
+
+      expect(session).not_to be_valid
+      expect { session.errors.full_messages }.not_to raise_error
+    end
+  end
+
+  describe "#update_session_timestamps" do
+    it "honors the underlying user's session_validity_preference even when the session is unverified" do
+      preference_seconds = SessionsHelper::SESSION_DURATION_OPTIONS.fetch("15 minutes")
+      user = create(
+        :user,
+        verified: false,
+        session_validity_preference: preference_seconds,
+      )
+      session = create(
+        :user_session,
+        user:,
+        verified: false,
+        last_seen_at: 1.hour.ago,
+        expiration_at: 3.weeks.from_now,
+      )
+
+      session.update_session_timestamps
+
+      session.reload
+      expected_max = preference_seconds.seconds.from_now + 1.minute # generous slack
+      expect(session.expiration_at).to be <= expected_max
+    end
   end
 end
