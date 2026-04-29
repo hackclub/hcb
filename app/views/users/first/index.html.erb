@@ -5,7 +5,7 @@
 
 <% affiliation = current_user(allow_unverified: true)&.affiliations&.find_by(name: "first") %>
 
-<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-start justify-start sm:justify-between text-left w-auto m-0 mt-10 sm:mt-3 gap-2">
   <div>
     <span class="<%= "warning" if fall? %>">
       Welcome to <span class="primary">HCB</span>
@@ -14,7 +14,7 @@
   <span class="badge ml-0 text-sm rounded-xl caps hidden md:inline <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
 </h1>
 
-<h2 class="text-5xl md:text-6xl my-8">
+<h2 class="text-4xl sm:text-5xl md:text-6xl my-8 text-balance">
   The <span class="italic" style="font-weight: 800;">ultimate booster club</span>
 
   for FRC, FTC, and FLL teams
@@ -114,12 +114,12 @@
             <h2 class="heading mt-0 mb-3 w-full">
               Get a free 3D printer!
             </h2>
-            <p class="my-0 md:my-2">Request to join your team's organization on HCB, and when your request is approved, we'll automatically sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
-            <div class="mb-6">
-              <%= form_with(url: raffles_path, method: :post) do |form| %>
-                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-                <%= form.submit "Enter raffle", disabled: true %>
-              <% end %>
+            <p class="my-0 md:my-2">
+              Good news&mdash;<strong><%= affiliation.team_name.presence || "your team" %></strong> (<%= affiliation.league&.upcase %> #<%= affiliation.team_number %>) is already running on HCB!
+              Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+            </p>
+            <div class="mb-6 mt-4">
+              <button type="button" class="btn" disabled>Request to join</button>
             </div>
           </div>
 
@@ -173,31 +173,31 @@
   </p>
 </div>
 
-<div class="grid grid-cols-2">
-  <div class="card">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div class="card !mb-0">
     <div class="flex flex-row items-center gap-2">
-      <%= inline_icon "bank-account" %>
+      <%= inline_icon "bank-account", class: "flex-shrink-0" %>
       <h2 class="heading my-0">501(c)(3) nonprofit status</h2>
     </div>
     <p>Forget about filing paperwork and become part of Hack Club's legal entity to operate as a 501(c)(3) nonprofit.</p>
   </div>
-  <div class="card">
+  <div class="card !mb-0">
     <div class="flex flex-row items-center gap-2">
-      <%= inline_icon "briefcase" %>
+      <%= inline_icon "briefcase", class: "flex-shrink-0" %>
       <h2 class="heading my-0">Corporate matching</h2>
     </div>
     <p>Instantly double your incoming donations with corporate matching platforms like Benevity.<p>
   </div>
-  <div class="card">
+  <div class="card !mb-0">
     <div class="flex flex-row items-center gap-2">
-      <%= inline_icon "support" %>
+      <%= inline_icon "support", class: "flex-shrink-0" %>
       <h2 class="heading my-0">Online donation form</h2>
     </div>
     <p>Fund your team through grassroots support with an online donation page. Accept credit card donations instantly with zero card processing fees.</p>
   </div>
-  <div class="card">
+  <div class="card !mb-0">
     <div class="flex flex-row items-center gap-2">
-      <%= inline_icon "card" %>
+      <%= inline_icon "card", class: "flex-shrink-0" %>
       <h2 class="heading my-0">Debit cards</h2>
     </div>
     <p>Spend your funds anywhere instantly with free physical and virtual debit cards. Plus, invite team members with built-in spending controls to develop financial literacy.</p>
@@ -209,8 +209,8 @@
     Ready to get started?
   </h2>
   <p class="my-0 text-center">Our team is standing by to help your robotics team succeed.</p>
-  <div class="flex flex-row gap-4">
-    <%= link_to "#", class: "btn" do %>
+  <div class="flex flex-row flex-wrap items-center justify-center gap-4">
+    <%= link_to "#", class: "btn whitespace-nowrap flex-shrink-0" do %>
       <%= inline_icon "event-add" %>
       Book a meeting
     <% end %>
