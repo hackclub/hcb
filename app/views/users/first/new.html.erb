@@ -127,9 +127,9 @@
 
         <%= invisible_captcha :remember_me %>
 
-        <div class="card card--sunken flex flex-row justify-between items-center mb-8">
+        <div class="card card--sunken flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
           <em>See how HCB can make running a FIRST team easier</em>
-          <%= form.submit "Sign up" %>
+          <%= form.submit "Sign up", class: "w-full sm:w-auto flex-shrink-0" %>
         </div>
       <% end %>
     </div>
