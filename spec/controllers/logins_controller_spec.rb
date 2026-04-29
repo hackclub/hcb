@@ -480,4 +480,35 @@ RSpec.describe LoginsController do
       expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: reauthenticate_logins_url))
     end
   end
+
+  describe "verifying a previously-unverified user (e.g. claiming a shadow account)" do
+    # When a victim's email was pre-claimed by an attacker via the
+    # `Users::FirstController#create` shadow-signup flow, the attacker's
+    # browser holds an unverified `User::Session` row pointing at the User.
+    # Once the victim runs the standard /login flow and the User flips to
+    # `verified=true`, every lingering unverified session attached to that
+    # User MUST be invalidated — otherwise the attacker can keep silently
+    # observing the victim data via `current_user(allow_unverified: true)` and
+    # falsifying the User's `last_seen_at`.
+    it "invalidates every unverified session attached to the user when they become verified" do
+      user = create(:user, verified: false)
+      attacker_session = create(
+        :user_session,
+        user:,
+        verified: false,
+        expiration_at: 3.weeks.from_now,
+        signed_out_at: nil,
+      )
+
+      user.update!(verified: true)
+      attacker_session.reload
+
+      aggregate_failures "lingering shadow session is killed" do
+        expect(attacker_session.expiration_at).to be <= Time.current,
+                                                  "attacker session not expired (expires at #{attacker_session.expiration_at})"
+        expect(User::Session.not_expired.find_by(session_token: attacker_session.session_token)).to be_nil,
+                                                                                                    "attacker session is still resolvable via session_token lookup, so the cookie they held remains valid"
+      end
+    end
+  end
 end
