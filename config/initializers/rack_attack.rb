@@ -112,7 +112,7 @@ class Rack::Attack
   # single Login row can become a bombing channel without rate limits. The
   # first cap is per IP (cross-victim flood); the second is per Login hashid
   # (sustained flood against one victim).
-  LOGIN_FACTOR_TRIGGER_PATH = %r{\A/logins/[^/]+/(?:email|sms)\z}
+  LOGIN_FACTOR_TRIGGER_PATH = /\A\/logins\/[^\/]+\/(?:email|sms)\z/
 
   throttle("logins/factor-trigger/ip", limit: 5, period: 20.seconds) do |req|
     if req.post? && LOGIN_FACTOR_TRIGGER_PATH.match?(req.path)
@@ -121,7 +121,7 @@ class Rack::Attack
   end
 
   throttle("logins/factor-trigger/login", limit: 3, period: 1.minute) do |req|
-    if req.post? && (m = req.path.match(%r{\A/logins/(?<hashid>[^/]+)/(?:email|sms)\z}))
+    if req.post? && (m = req.path.match(/\A\/logins\/(?<hashid>[^\/]+)\/(?:email|sms)\z/))
       m[:hashid]
     end
   end

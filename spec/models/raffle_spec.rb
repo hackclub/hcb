@@ -12,9 +12,9 @@ RSpec.describe Raffle, type: :model do
       second_run = 5.times.map { described_class.generate_ticket_number }
 
       expect(first_run).not_to eq(second_run),
-                                "Raffle.generate_ticket_number is reproducible from a known PRNG seed " \
-                                "(first run #{first_run.inspect}, second run #{second_run.inspect}). " \
-                                "Use SecureRandom (or another CSPRNG) so ticket numbers are not predictable."
+                               "Raffle.generate_ticket_number is reproducible from a known PRNG seed " \
+                               "(first run #{first_run.inspect}, second run #{second_run.inspect}). " \
+                               "Use SecureRandom (or another CSPRNG) so ticket numbers are not predictable."
     end
 
     it "enforces ticket_number uniqueness with a database-level unique index" do
