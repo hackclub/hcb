@@ -17,6 +17,10 @@ module Users
     end
 
     def request_org_invite
+      if Date.current >= Date.new(2026, 5, 3)
+        redirect_to first_index_path, flash: { error: "This feature is no longer available." } and return
+      end
+
       user = current_user(allow_unverified: true)
       event = Event::Affiliation.matching_first_event_for(user)
 
