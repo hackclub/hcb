@@ -51,7 +51,6 @@ class User
     validate :verified_matches_user_verified
 
     include PublicActivity::Model
-    tracked owner: proc { |controller, record| record.impersonated_by || record.user(allow_unverified: true) }, recipient: proc { |controller, record| record.impersonated_by || record.user(allow_unverified: true) }, only: [:create]
 
     scope :impersonated, -> { where.not(impersonated_by_id: nil) }
     scope :not_impersonated, -> { where(impersonated_by_id: nil) }
@@ -60,6 +59,8 @@ class User
     scope :recently_expired_within, ->(date) { expired.where("expiration_at >= ?", date) }
     scope :verified, -> { where(verified: true) }
     scope :unverified, -> { where(verified: false) }
+
+    after_save_commit :create_login_activity, if: -> { user_id_before_last_save.nil? && user.present? }
 
     after_create_commit do
       next if impersonated?
@@ -183,6 +184,11 @@ class User
     # @return [ActiveSupport::TimeWithZone, nil]
     def last_authenticated_at
       logins.complete.max_by(&:created_at)&.created_at
+    end
+
+    def create_login_activity
+      activity_user = impersonated_by || user(allow_unverified: true)
+      create_activity key: "user_session.create", owner: activity_user, recipient: activity_user
     end
 
   end
