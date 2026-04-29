@@ -60,7 +60,7 @@ class User
     scope :verified, -> { where(verified: true) }
     scope :unverified, -> { where(verified: false) }
 
-    after_save :create_login_activity, if: -> { user_id_before_last_save.nil? && user.present? }
+    after_save :create_login_activity, if: -> { user_id_before_last_save.nil? && user(allow_unverified: true).present? }
 
     after_create_commit do
       next if impersonated?
