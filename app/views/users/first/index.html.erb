@@ -204,7 +204,7 @@
   </div>
 </div>
 
-<div class="card card--sunken flex flex-col items-center p-10 gap-5">
+<div class="card card--sunken flex flex-col items-center p-10 mt-4 gap-5">
   <h2 class="text-4xl my-0 text-center w-full">
     Ready to get started?
   </h2>
@@ -231,8 +231,7 @@
     Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
     <br>
     <br>
-    <%# https://mailtolinkgenerator.com/ %>
-    Send an email by <a href="mailto:?cc=hcb-raffles@hackclub.com&subject=Join%20hundreds%20of%20other%20FIRST%20teams%20on%20HCB!&body=lorem%20ipsum">clicking here</a> and then press the button below to sign up for our AirPods raffle!
+    Send an email by <%= mail_to "hcb-raffles@hackclub.com", "clicking here", subject: "Booster club for our robotics team", body: @advisor_email_body %> and then press the button below to sign up for our AirPods raffle!
   </p>
 
   <%= form_with(url: raffles_path, method: :post) do |form| %>
