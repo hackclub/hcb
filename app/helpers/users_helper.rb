@@ -12,7 +12,7 @@ module UsersHelper
       }
     ]
 
-    if current_user&.show_first_dashboard? && !current_user&.redirect_to_first_dashboard?
+    if current_user(allow_unverified: true)&.show_first_dashboard? && !current_user(allow_unverified: true)&.redirect_to_first_dashboard?
       items << {
         name: "FIRST",
         path: first_index_path,

@@ -627,11 +627,11 @@ class User < ApplicationRecord
   end
 
   def show_first_dashboard?
-    card_grants.none? && events.none? && affiliations.where(name: "first").exists?
+    affiliations.where(name: "first").exists?
   end
 
   def redirect_to_first_dashboard?
-    show_first_dashboard? && true
+    show_first_dashboard? && card_grants.none? && events.none?
   end
 
   def to_combobox_display
