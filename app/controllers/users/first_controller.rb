@@ -16,7 +16,7 @@ module Users
     end
 
     def team
-      if ["FTC", "FLL"].include?(params[:league])
+      if ["ftc", "fll"].include?(params[:league])
         return render json: { error: "Team prefill is unsupported for #{params[:league]}" }, status: :not_found
       end
 

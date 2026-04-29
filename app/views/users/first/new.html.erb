@@ -65,7 +65,7 @@
               <div class="field">
                 <%= affiliation.label :team_number %>
                 <div class="flex gap-2">
-                  <%= affiliation.select :league, %w[FRC FTC FLL], {}, { class: "!w-[100px]", data: { first_team_lookup_target: "league", action: "change->first-team-lookup#lookup" } } %>
+                  <%= affiliation.select :league, [["FRC", "frc"], ["FTC", "ftc"], ["FLL", "fll"]], {}, { class: "!w-[100px]", data: { first_team_lookup_target: "league", action: "change->first-team-lookup#lookup" } } %>
                   <div class="input flex gap-2 items-center py-0 !w-full !min-w-0">
                     <span class="bold muted">#</span>
                     <%= affiliation.text_field :team_number, placeholder: "9101", class: "!p-0 !border-none !shadow-none min-h-auto !w-full", data: { first_team_lookup_target: "teamNumber", action: "input->first-team-lookup#lookup" } %>
