@@ -77,7 +77,6 @@ class Event
       tba_team_info&.dig(:avatar)
     end
 
-    TBA_API_KEY = "cmm9aanMS9BWlqGTC5gwGIfeVPL1LuBzVa0g6bOUk4XqwZ7XnrX43sRSJcfzzGf4"
     TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
 
     def self.tba_lookup(league, team_number)
@@ -85,7 +84,7 @@ class Event
       team_number = team_number.to_s
 
       conn = Faraday.new(url: TBA_BASE_URL) do |f|
-        f.headers["X-TBA-Auth-Key"] = TBA_API_KEY
+        f.headers["X-TBA-Auth-Key"] = Credentials.fetch(:THE_BLUE_ALLIANCE, :API_KEY)
       end
 
       team_key = "frc#{team_number}"
