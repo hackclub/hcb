@@ -108,21 +108,51 @@ RSpec.describe "Users::FirstController", type: :request do
         teammate2.affiliations.create!(name: "first", metadata: affiliation_metadata)
       end
 
-      it "renders teammate avatars inside the AirPods raffle card" do
-        get "/first"
-        expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Get a free AirPods Pro 3")
-        expect(response.body).to include("Maya")
-        expect(response.body).to include("Eli")
-        expect(response.body).to include("FRC #9999")
-        expect(response.body).to include("are already on HCB")
+      context "and the user is a student" do
+        it "renders teammate avatars inside the AirPods raffle card" do
+          get "/first"
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to include("Get a free AirPods Pro 3")
+          expect(response.body).to include("Maya")
+          expect(response.body).to include("Eli")
+          expect(response.body).to include("FRC #9999")
+          expect(response.body).to include("are already interested in HCB")
+        end
+
+        it "does not render the adults-only standalone card" do
+          get "/first"
+          expect(response.body).not_to include("Your teammates are interested")
+        end
+      end
+
+      context "and the user is a head_coach" do
+        let(:user_role) { "head_coach" }
+
+        it "renders the standalone teammate card with the start-organization CTA" do
+          get "/first"
+          expect(response).to have_http_status(:ok)
+          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("are already interested in HCB")
+          expect(response.body).to include("Start your team&#39;s organization")
+        end
+      end
+
+      context "and the user is a mentor_advisor" do
+        let(:user_role) { "mentor_advisor" }
+
+        it "renders the standalone teammate card with the start-organization CTA" do
+          get "/first"
+          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("Start your team&#39;s organization")
+        end
       end
     end
 
     context "when no teammates have signed up" do
       it "does not render the teammate sentence" do
         get "/first"
-        expect(response.body).not_to include("are already on HCB")
+        expect(response.body).not_to include("are already interested in HCB")
+        expect(response.body).not_to include("Your teammates are interested")
       end
     end
 
@@ -132,7 +162,7 @@ RSpec.describe "Users::FirstController", type: :request do
       it "renders the page without errors" do
         get "/first"
         expect(response).to have_http_status(:ok)
-        expect(response.body).not_to include("are already on HCB")
+        expect(response.body).not_to include("are already interested in HCB")
       end
     end
   end

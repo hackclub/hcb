@@ -45,6 +45,36 @@
   </div>
 <% end %>
 
+<% if ["head_coach", "mentor_advisor"].include?(affiliation&.role) && @team_event.nil? && @teammates.present? %>
+  <div class="card my-4">
+    <div class="flex flex-row items-center gap-3 mb-3">
+      <div class="avatar-row">
+        <% @teammates.each do |teammate| %>
+          <%= avatar_for teammate, size: 30 %>
+        <% end %>
+      </div>
+      <h3 class="heading my-0">Your teammates are interested</h3>
+    </div>
+
+    <% names = @teammates.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
+    <% leftover = @teammates_total - @teammates.size %>
+    <% team_label = "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}" %>
+    <% sentence = case @teammates.size
+                  when 1
+                    leftover.zero? ? "#{names[0]} from #{team_label} is already interested in HCB" : "#{names[0]} and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
+                  when 2
+                    leftover.zero? ? "#{names[0]} and #{names[1]} from #{team_label} are already interested in HCB" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
+                  else
+                    extras = leftover + (@teammates.size - 2)
+                    "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already interested in HCB"
+                  end %>
+
+    <p class="my-2"><%= sentence %>. Get your team's organization set up to fundraise and spend together.</p>
+
+    <%= link_to "Start your team's organization →", apply_path, class: "btn" %>
+  </div>
+<% end %>
+
 <% if @macbook_raffle.present? %>
   <%= render "users/first/raffle", raffle: @macbook_raffle, raffle_name: "MacBook Neo" %>
 <% end %>
@@ -86,12 +116,12 @@
                 <% team_label = "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}" %>
                 <% sentence = case @teammates.size
                               when 1
-                                leftover.zero? ? "#{names[0]} from #{team_label} is already on HCB" : "#{names[0]} and #{pluralize(leftover, 'other')} from #{team_label} are already on HCB"
+                                leftover.zero? ? "#{names[0]} from #{team_label} is already interested in HCB" : "#{names[0]} and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
                               when 2
-                                leftover.zero? ? "#{names[0]} and #{names[1]} from #{team_label} are already on HCB" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} from #{team_label} are already on HCB"
+                                leftover.zero? ? "#{names[0]} and #{names[1]} from #{team_label} are already interested in HCB" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
                               else
                                 extras = leftover + (@teammates.size - 2)
-                                "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already on HCB"
+                                "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already interested in HCB"
                               end %>
                 <p class="my-0 text-sm text-white/80"><%= sentence %></p>
               </div>
