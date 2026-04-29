@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "users/nav", selected: :reimbursements %>
 
-<% if false %>
+<% if current_user(allow_unverified: true).verified? %>
   <h1 class="heading flex-col sm:flex-row border-0 mb-0">
     <span>
       Reimbursements
@@ -158,9 +158,9 @@
           description: "Organize and store expense receipts to track each expense easily."
         }
       ] do %>
-    <%= link_to auth_users_path(return_to: my_reimbursements_path), class: "btn" do %>
-      <%= inline_icon "email" %>
-      Verify your email first
-    <% end %>
+      <%= link_to auth_users_path(return_to: my_reimbursements_path), class: "btn" do %>
+        <%= inline_icon "email" %>
+        Verify your email first
+      <% end %>
   <% end %>
 <% end %>
