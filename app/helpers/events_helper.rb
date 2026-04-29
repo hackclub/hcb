@@ -400,8 +400,8 @@ module EventsHelper
       lines << "  e#{e.parent_id} --> e#{e.id}"
     end
 
-    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b,stroke-width:2px,font-family:system-ui,filter:drop-shadow(0 3px 8px rgba(0,0,0,0.25))"
-    lines << "  classDef default fill:#f5f7fa,color:#1f2d3d,stroke:#c0ccda,stroke-width:1.5px,font-family:system-ui,filter:drop-shadow(0 2px 6px rgba(0,0,0,0.1))"
+    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b,stroke-width:2px,font-family:system-ui"
+    lines << "  classDef default fill:#f5f7fa,color:#1f2d3d,stroke:#c0ccda,stroke-width:1.5px,font-family:system-ui"
     lines.join("\n")
   end
 
