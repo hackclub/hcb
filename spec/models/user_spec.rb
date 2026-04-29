@@ -197,6 +197,14 @@ RSpec.describe User, type: :model do
       expect(user).to be_is_teenager
       expect(user.teenager).to be true
     end
+
+    it "lets birthday take precedence over a FIRST student affiliation when both are present" do
+      user = create(:user, birthday: 30.years.ago, affiliations_attributes: [first_student_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).to be false
+      expect(user.joined_as_teenager).to be false
+    end
   end
 
   describe "#locked?" do

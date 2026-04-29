@@ -452,10 +452,9 @@ class User < ApplicationRecord
   end
 
   def is_teenager?
-    return true if first_robotics_student?
+    return age <= 18 if birthday.present?
 
-    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
-    age&.<=(18)
+    first_robotics_student?
   end
 
   def is_minor?
@@ -463,9 +462,9 @@ class User < ApplicationRecord
   end
 
   def was_teenager_on_join?
-    return true if first_robotics_student?
+    return age_on(created_at || Time.current) <= 18 if birthday.present?
 
-    age_on(created_at || Time.current)&.<=(18)
+    first_robotics_student?
   end
 
   FIRST_STUDENT_ROLES = %w[student_leader student_member].freeze
