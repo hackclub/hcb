@@ -88,10 +88,12 @@
               Get a free 3D printer!
             </h2>
             <p class="my-0 md:my-2">Good news! You're a member of a robotics team that runs on HCB. Click the button below and get a chance to win a free Bambu Lab A1.</p>
-            <%= form_with(url: raffles_path, method: :post) do |form| %>
-              <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-              <%= form.submit "Enter raffle" %>
-            <% end %>
+            <div class="mb-6">
+              <%= form_with(url: raffles_path, method: :post) do |form| %>
+                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+                <%= form.submit "Enter raffle" %>
+              <% end %>
+            </div>
           </div>
 
           <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
@@ -105,10 +107,12 @@
               Get a free 3D printer!
             </h2>
             <p class="my-0 md:my-2">Request to join your team's organization on HCB, and when your request is approved, we'll automatically sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
-            <%= form_with(url: raffles_path, method: :post) do |form| %>
-              <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-              <%= form.submit "Enter raffle" %>
-            <% end %>
+            <div class="mb-6">
+              <%= form_with(url: raffles_path, method: :post) do |form| %>
+                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+                <%= form.submit "Enter raffle" %>
+              <% end %>
+            </div>
           </div>
 
           <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
