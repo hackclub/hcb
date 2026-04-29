@@ -152,6 +152,42 @@ RSpec.describe User::Session, type: :model do
       expect(activity.owner_id).to eq(user.id)
       expect(activity.owner_type).to eq("User")
     end
+
+    specify "does not create an activity for a session with no associated user" do
+      PublicActivity.with_tracking do
+        User::Session.create!(
+          user: nil,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      expect(PublicActivity::Activity.count).to eq(0)
+    end
+
+    specify "creates an activity when a user is later assigned to a previously anonymous session" do
+      user = create(:user, full_name: "Hack Clubber")
+
+      session = PublicActivity.with_tracking do
+        User::Session.create!(
+          user: nil,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      expect(PublicActivity::Activity.count).to eq(0)
+
+      PublicActivity.with_tracking do
+        session.update!(user:, verified: true)
+      end
+
+      activity = PublicActivity::Activity.sole
+      expect(activity.owner_id).to eq(user.id)
+      expect(activity.owner_type).to eq("User")
+    end
   end
 
   describe "verified/unverified mismatch validation" do
