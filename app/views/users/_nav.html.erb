@@ -30,7 +30,8 @@
         tooltip: item[:tooltip],
         icon: item[:icon],
         async_badge: item[:async_badge],
-        selected: item[:selected] %>
+        selected: item[:selected],
+        **item.slice(:method) %>
     <% end %>
     <div>
       <% if signed_in? %>

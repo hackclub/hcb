@@ -77,7 +77,8 @@ module UsersHelper
         path: verify_email_first_index_path,
         icon: "email-exclamation",
         tooltip: "Verify your email address",
-        selected: false
+        selected: false,
+        method: :post
       }
     end
 
