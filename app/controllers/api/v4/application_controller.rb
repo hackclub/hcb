@@ -7,6 +7,7 @@ module Api
       include Pundit::Authorization
       include PublicActivity::StoreController
       include ErrorHandling
+      include AdminScopeCheckable
 
       attr_reader :current_user
 
@@ -31,6 +32,10 @@ module Api
 
       private
 
+      def pundit_user
+        current_user && ApiAdminContext.new(current_user, current_token)
+      end
+
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
         unless @current_token&.accessible?
@@ -40,22 +45,11 @@ module Api
         @current_user = current_token&.user
       end
 
-      ADMIN_SCOPES = {
-        read: ->(user){ user&.auditor? },
-        write: ->(user){ user&.admin? }
-      }.freeze
-      def can_admin?(level)
-        raise ArgumentError, "Level must be a symbol" unless level.is_a?(Symbol)
-        raise ArgumentError, "Invalid admin level: #{level}" unless ADMIN_SCOPES.keys.include?(level)
-
-        has_scope = current_token&.scopes&.include?("admin:#{level}")
-        has_level = ADMIN_SCOPES[level].call(current_user)
-
-        has_scope && has_level
-      end
-
       def require_admin_scope!(level)
-        render json: { error: "invalid_auth" }, status: :unauthorized unless can_admin?(level)
+        unless can_admin?(level)
+          skip_authorization
+          render json: { error: "invalid_auth" }, status: :unauthorized
+        end
       end
 
       def require_trusted_oauth_app!
