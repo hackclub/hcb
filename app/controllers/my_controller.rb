@@ -21,7 +21,10 @@ class MyController < ApplicationController
   end
 
   def cards
-    return unless signed_in?
+    unless signed_in?
+      @stripe_cards = []
+      return
+    end
 
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
