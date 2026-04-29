@@ -133,6 +133,27 @@
                 Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
               <% end %>
             </p>
+            <% if @team_org_members.present? %>
+              <div class="flex flex-row items-center gap-3 mt-4">
+                <div class="avatar-row">
+                  <% @team_org_members.each do |member| %>
+                    <%= avatar_for member, size: 30 %>
+                  <% end %>
+                </div>
+                <% names = @team_org_members.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
+                <% leftover = @team_org_members_total - @team_org_members.size %>
+                <% sentence = case @team_org_members.size
+                              when 1
+                                leftover.zero? ? "#{names[0]} is on this team" : "#{names[0]} and #{pluralize(leftover, 'other')} are on this team"
+                              when 2
+                                leftover.zero? ? "#{names[0]} and #{names[1]} are on this team" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} are on this team"
+                              else
+                                extras = leftover + (@team_org_members.size - 2)
+                                "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} are on this team"
+                              end %>
+                <p class="my-0 text-sm"><%= sentence %></p>
+              </div>
+            <% end %>
             <div class="mb-6 mt-4">
               <% if pending_request %>
                 <button type="button" class="btn" disabled>Request pending</button>
