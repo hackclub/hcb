@@ -75,7 +75,7 @@ module Users
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
 
-      redirect_back_or_to welcome_first_index_path
+      render :new, status: :unprocessable_entity
     end
 
     private

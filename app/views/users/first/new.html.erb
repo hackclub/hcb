@@ -37,7 +37,7 @@
         <%= render "application/flash" unless @hide_flash %>
       </div>
 
-      <%= form_with model: @user, url: first_index_path do |form| %>
+      <%= form_with model: @user, url: first_index_path, class: "no-error-styling" do |form| %>
         <div class="card mt-8 mb-4">
           <h3 class="heading mt-0 mb-0 flex items-center gap-2">
             <%= inline_icon "person", size: 22 %>
@@ -46,11 +46,11 @@
           <p class="muted h5 mt-1 mb-3">Tell us a little about yourself.</p>
           <div class="field">
             <%= form.label :full_name, "Full name" %>
-            <%= form.text_field :full_name, value: "", placeholder: "Fiona Hackworth" %>
+            <%= form.text_field :full_name, placeholder: "Fiona Hackworth" %>
           </div>
           <div class="field mb-0">
             <%= form.label :email, "Email address" %>
-            <%= form.email_field :email, value: "", placeholder: "orpheus@hackclub.com" %>
+            <%= form.email_field :email, placeholder: "orpheus@hackclub.com" %>
           </div>
         </div>
 
@@ -68,13 +68,13 @@
                   <%= affiliation.select :league, %w[FRC FTC FLL], {}, { class: "!w-[100px]", data: { first_team_lookup_target: "league", action: "change->first-team-lookup#lookup" } } %>
                   <div class="input flex gap-2 items-center py-0 !w-full !min-w-0">
                     <span class="bold muted">#</span>
-                    <%= affiliation.text_field :team_number, value: "", placeholder: "9101", class: "!p-0 !border-none !shadow-none min-h-auto !w-full", data: { first_team_lookup_target: "teamNumber", action: "input->first-team-lookup#lookup" } %>
+                    <%= affiliation.text_field :team_number, placeholder: "9101", class: "!p-0 !border-none !shadow-none min-h-auto !w-full", data: { first_team_lookup_target: "teamNumber", action: "input->first-team-lookup#lookup" } %>
                   </div>
                 </div>
               </div>
               <div class="field mb-0">
                 <%= affiliation.label :team_name, "Team name" %>
-                <%= affiliation.text_field :team_name, value: "", placeholder: "Green Mountain Robotics", data: { first_team_lookup_target: "teamName" } %>
+                <%= affiliation.text_field :team_name, placeholder: "Green Mountain Robotics", data: { first_team_lookup_target: "teamName" } %>
               </div>
             </div>
           </div>
