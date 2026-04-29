@@ -8,6 +8,13 @@ module Api
 
       attr_reader :current_user, :current_token
 
+      def object_shape(json, object, object_name: nil, created_at: true, &block)
+        json.id object.public_id
+        json.object object_name || object.model_name.singular
+        block.call
+        json.created_at object.created_at if created_at
+      end
+
       def pagination_metadata(json)
         json.total_count @total_count
         json.has_more @has_more

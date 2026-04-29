@@ -3,7 +3,7 @@
 module Referral
   class LinkPolicy < ApplicationPolicy
     def show?
-      user.present?
+      true
     end
 
     def create?

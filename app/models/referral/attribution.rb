@@ -9,7 +9,7 @@
 #  updated_at          :datetime         not null
 #  referral_link_id    :bigint           not null
 #  referral_program_id :bigint           not null
-#  user_id             :bigint           not null
+#  user_id             :bigint
 #
 # Indexes
 #
@@ -28,7 +28,7 @@ module Referral
   class Attribution < ApplicationRecord
     belongs_to :program, class_name: "Referral::Program", foreign_key: "referral_program_id", inverse_of: :attributions
     belongs_to :link, class_name: "Referral::Link", foreign_key: "referral_link_id", inverse_of: :attributions
-    belongs_to :user # Referee (person being referred)
+    belongs_to :user, optional: true # Referee (person being referred)
 
   end
 end
