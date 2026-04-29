@@ -48,7 +48,7 @@
 <% if ["head_coach", "mentor_advisor"].include?(affiliation&.role) && @team_event.nil? && @teammates.present? %>
   <div class="card my-4">
     <div class="flex flex-row items-center gap-3 mb-3">
-      <div class="avatar-row flex-shrink-0">
+      <div class="avatar-row avatar-row--no-transform flex-shrink-0">
         <% @teammates.each do |teammate| %>
           <%= avatar_for teammate, size: 32 %>
         <% end %>
@@ -106,7 +106,7 @@
             <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our AirPods raffle! Get a chance to win a free AirPods Pro 3.</p>
             <% if @teammates.present? %>
               <div class="flex flex-row items-center gap-3 mt-4">
-                <div class="avatar-row flex-shrink-0">
+                <div class="avatar-row avatar-row--no-transform flex-shrink-0">
                   <% @teammates.each do |teammate| %>
                     <%= avatar_for teammate, size: 32 %>
                   <% end %>
@@ -187,7 +187,7 @@
             </p>
             <% if @team_org_members.present? %>
               <div class="flex flex-row items-center gap-3 mt-4">
-                <div class="avatar-row flex-shrink-0">
+                <div class="avatar-row avatar-row--no-transform flex-shrink-0">
                   <% @team_org_members.each do |member| %>
                     <%= avatar_for member, size: 32 %>
                   <% end %>
