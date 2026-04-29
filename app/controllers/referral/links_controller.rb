@@ -14,12 +14,8 @@ module Referral
           Referral::Attribution.create!(user: current_user, session: current_session, program: @link.program, link: @link)
         end
 
-        if signed_in?
-          # This is only configurable by admins
-          redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
-        else
-          redirect_to auth_users_path(referral: @link.slug)
-        end
+        # This is only configurable by admins
+        redirect_to @link.program.redirect_to.presence || root_path, allow_other_host: true
       else
         skip_authorization
 
