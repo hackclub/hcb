@@ -54,13 +54,14 @@ module Users
     end
 
     def create
+      program = "first-worlds-2026-macbook" if ["student_leader", "student_member"].include?(user_params.dig(:affiliations_attributes, "0", "role"))
+
       unless User.where(email: user_params[:email]).exists?
         @user = User.new(user_params)
         @user.creation_method = :first_robotics_form
         @user.save!
 
-        program = "first-worlds-2026-macbook"
-        Raffle.find_or_create_by!(user: @user, program:)
+        Raffle.find_or_create_by!(user: @user, program:) if program.present?
 
         create_session(user: @user, verified: false)
 
@@ -68,7 +69,7 @@ module Users
       end
 
       @user = User.find_by!(email: user_params[:email])
-      @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params:, raffle: "first-worlds-2026-macbook" }, user: @user)
+      @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params:, raffle: program }, user: @user)
 
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
