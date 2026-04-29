@@ -161,4 +161,43 @@ RSpec.describe UsersController do
       expect(user.reload.payout_method_type).to eq(nil)
     end
   end
+
+  describe "settings access for unverified users" do
+    def sign_in_unverified
+      user = create(:user, verified: false)
+      user_session = User::Session.create!(
+        user:,
+        verified: false,
+        session_token: SecureRandom.urlsafe_base64,
+        expiration_at: 7.days.from_now,
+      )
+      cookies.encrypted[:session_token] = {
+        value: user_session.session_token,
+        expires: User::Session::MAX_SESSION_DURATION.from_now,
+        httponly: true,
+      }
+      user_session
+    end
+
+    settings_actions = %i[
+      edit
+      edit_address
+      edit_payout
+      edit_featurepreviews
+      edit_security
+      edit_notifications
+      edit_integrations
+      edit_admin
+    ]
+
+    settings_actions.each do |action|
+      it "redirects ##{action} to the auth page" do
+        sign_in_unverified
+
+        get(action)
+
+        expect(response).to redirect_to(/\/users\/auth/)
+      end
+    end
+  end
 end
