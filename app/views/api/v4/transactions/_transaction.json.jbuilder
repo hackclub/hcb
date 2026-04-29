@@ -28,11 +28,11 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
   json.lost_receipt hcb_code.no_or_lost_receipt?
   json.appearance hcb_code.incoming_disbursement.special_appearance_name if hcb_code.incoming_disbursement&.special_appearance?
 
-if can_admin?(:read)
-  json._debug do
-    json.hcb_code hcb_code.hcb_code
+  if can_admin?(:read)
+    json._debug do
+      json.hcb_code hcb_code.hcb_code
+    end
   end
-end
 
   if policy(hcb_code).show?
     json.card_charge    { json.partial! "api/v4/transactions/card_charge",    hcb_code:                                                   } if hcb_code.stripe_card? || hcb_code.stripe_force_capture?
