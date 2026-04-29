@@ -48,9 +48,9 @@
 <% if ["head_coach", "mentor_advisor"].include?(affiliation&.role) && @team_event.nil? && @teammates.present? %>
   <div class="card my-4">
     <div class="flex flex-row items-center gap-3 mb-3">
-      <div class="avatar-row">
+      <div class="avatar-row flex-shrink-0">
         <% @teammates.each do |teammate| %>
-          <%= avatar_for teammate, size: 30 %>
+          <%= avatar_for teammate, size: 32 %>
         <% end %>
       </div>
       <h3 class="heading my-0">Your teammates are interested</h3>
@@ -105,10 +105,10 @@
             </h2>
             <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our AirPods raffle! Get a chance to win a free AirPods Pro 3.</p>
             <% if @teammates.present? %>
-              <div class="flex flex-row items-center gap-3 mt-3">
-                <div class="avatar-row">
+              <div class="flex flex-row items-center gap-3 mt-4">
+                <div class="avatar-row flex-shrink-0">
                   <% @teammates.each do |teammate| %>
-                    <%= avatar_for teammate, size: 30 %>
+                    <%= avatar_for teammate, size: 32 %>
                   <% end %>
                 </div>
                 <% names = @teammates.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
@@ -123,7 +123,7 @@
                                 extras = leftover + (@teammates.size - 2)
                                 "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already interested in HCB"
                               end %>
-                <p class="my-0 text-sm text-white/80"><%= sentence %></p>
+                <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
               </div>
             <% end %>
             <%= link_to "#", class: "btn bg-info gap-1 hidden sm:inline-flex mt-2", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
@@ -187,9 +187,9 @@
             </p>
             <% if @team_org_members.present? %>
               <div class="flex flex-row items-center gap-3 mt-4">
-                <div class="avatar-row">
+                <div class="avatar-row flex-shrink-0">
                   <% @team_org_members.each do |member| %>
-                    <%= avatar_for member, size: 30 %>
+                    <%= avatar_for member, size: 32 %>
                   <% end %>
                 </div>
                 <% names = @team_org_members.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
@@ -203,7 +203,7 @@
                                 extras = leftover + (@team_org_members.size - 2)
                                 "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} are on this team"
                               end %>
-                <p class="my-0 text-sm"><%= sentence %></p>
+                <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
               </div>
             <% end %>
             <div class="mb-6 mt-4">
