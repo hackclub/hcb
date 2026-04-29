@@ -77,10 +77,10 @@ class Rack::Attack
   # Another common method of attack is to use a swarm of computers with
   # different IPs to try brute-forcing a password for a specific account.
 
-  # Paths that initiate a Login flow. /login is the canonical entry point;
+  # Paths that initiate a Login flow. /logins is the canonical entry point;
   # /first creates a Login on the existing-user branch of the FIRST signup
   # form. Both should share the same per-IP and per-email throttles.
-  LOGIN_INITIATION_PATHS = ["/login", "/first"].freeze
+  LOGIN_INITIATION_PATHS = ["/logins", "/first"].freeze
 
   # Throttle POST requests to login-initiation paths by IP address
   #
@@ -101,7 +101,7 @@ class Rack::Attack
   # on wood!)
   throttle("logins/email", limit: 5, period: 20.seconds) do |req|
     if LOGIN_INITIATION_PATHS.include?(req.path) && req.post?
-      # /login uses params[:email]; /first uses params[:user][:email].
+      # /logins uses params[:email]; /first uses params[:user][:email].
       raw = req.params["email"] || req.params.dig("user", "email")
       raw.to_s.downcase.gsub(/\s+/, "").presence
     end
