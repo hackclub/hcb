@@ -4,6 +4,9 @@
   <p>
     Your request to join <%= @invite.event.name %> has been approved as a <%= @invite.role %>!
   </p>
+  <p>
+    <%= link_to "Click here", @invite %> to log in and accept the invite.
+  </p>
 <% elsif @invite.event.demo_mode? == false || @invite.initial? == false %>
   <p>
     <% if @invite.contracts.where(aasm_state: :signed).any? %>

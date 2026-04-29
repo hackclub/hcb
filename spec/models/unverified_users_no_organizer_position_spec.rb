@@ -70,6 +70,12 @@ RSpec.describe "Unverified users cannot have an OrganizerPosition" do
   end
 
   describe "OrganizerPositionInvite::Request#approve!" do
+    # Approving the Request is decoupled from the requester's verification
+    # status. The verification gate moves downstream to OPI#accept (and the OP
+    # validation), so a manager can approve the Request and the requester then
+    # has a normal "verify-then-accept" flow via the OPI email. This shape
+    # also keeps the printer-raffle invariant simple: raffle entry follows
+    # manager approval, not user verification.
     let(:event) { create(:event) }
 
     def build_request_for(user:)
@@ -77,27 +83,22 @@ RSpec.describe "Unverified users cannot have an OrganizerPosition" do
       OrganizerPositionInvite::Request.create!(requester: user, link:)
     end
 
-    it "refuses to transition to approved when the requester is unverified" do
+    it "transitions to approved when the requester is unverified" do
       requester = create(:user, verified: false)
       request_record = build_request_for(user: requester)
 
-      expect { request_record.approve! }.to raise_error(AASM::InvalidTransition)
-      expect(request_record.reload.aasm_state).to eq("pending")
+      expect { request_record.approve! }.to change { request_record.reload.aasm_state }.from("pending").to("approved")
     end
 
-    it "does not create a printer raffle entry when the unverified guard fires" do
+    it "still creates the printer raffle entry on approval when the requester is unverified but affiliation matches" do
       requester = create(:user, verified: false)
       requester.affiliations.create!(name: "first", league: "frc", team_number: "1234")
       event.affiliations.create!(name: "first", league: "frc", team_number: "1234")
       request_record = build_request_for(user: requester)
 
       expect {
-        begin
-          request_record.approve!
-        rescue AASM::InvalidTransition
-          # expected
-        end
-      }.not_to(change { Raffle.where(user: requester, program: "first-worlds-2026-printer").count })
+        request_record.approve!
+      }.to change { Raffle.where(user: requester, program: "first-worlds-2026-printer").count }.by(1)
     end
 
     it "transitions normally when the requester is verified" do
