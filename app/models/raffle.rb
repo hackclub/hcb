@@ -14,6 +14,7 @@
 # Indexes
 #
 #  index_raffles_on_program_and_user_id  (program,user_id) UNIQUE
+#  index_raffles_on_ticket_number        (ticket_number) UNIQUE
 #
 # Foreign Keys
 #
@@ -32,7 +33,7 @@ class Raffle < ApplicationRecord
 
   def self.generate_ticket_number
     high_end = 10**TICKET_NUMBER_LENGTH - 1
-    number = rand(1..high_end).to_s.rjust(TICKET_NUMBER_LENGTH, "0")
+    number = SecureRandom.random_number(high_end).to_s.rjust(TICKET_NUMBER_LENGTH, "0")
 
     return self.generate_ticket_number if self.exists?(ticket_number: number)
 
