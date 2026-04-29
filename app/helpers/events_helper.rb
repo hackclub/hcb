@@ -379,4 +379,29 @@ module EventsHelper
     end
   end
 
+  def subevent_mermaid_graph(root, all_events)
+    all_ids = all_events.map(&:id).to_set
+    lines = ["flowchart TD"]
+
+    all_events.each do |e|
+      safe_name = e.name.gsub('"', "'")
+      if e.id == root.id
+        lines << "  e#{e.id}([\"#{safe_name}\"]):::root"
+        lines << "  click e#{e.id} \"#{event_sub_organizations_path(root)}\" \"View sub-organizations\""
+      else
+        lines << "  e#{e.id}[\"#{safe_name}\"]"
+        lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{safe_name}\""
+      end
+    end
+
+    all_events.each do |e|
+      next if e.id == root.id
+      next unless all_ids.include?(e.parent_id)
+      lines << "  e#{e.parent_id} --> e#{e.id}"
+    end
+
+    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b"
+    lines.join("\n")
+  end
+
 end

@@ -1,0 +1,30 @@
+<% title "#{@event.name} – Sub-organization Tree" %>
+<% page_md %>
+<%= render "events/nav", selected: :sub_organizations %>
+
+<div class="flex items-center gap-2 mb-4">
+  <%= link_to event_sub_organizations_path(@event), class: "btn" do %>
+    <%= inline_icon "view-back" %>
+    Back to sub-organizations
+  <% end %>
+</div>
+
+<h1 class="heading flex items-center gap-2 border-0 mb-4">
+  Sub-organization tree
+</h1>
+
+<% if @all_events.length <= 1 %>
+  <%= blankslate "No sub-organizations to display" %>
+<% else %>
+  <div class="card p3" style="overflow-x: auto;">
+    <div class="mermaid">
+      <%= subevent_mermaid_graph(@event, @all_events) %>
+    </div>
+  </div>
+<% end %>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  // securityLevel: 'loose' is required for click handlers to navigate on node click
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
