@@ -118,7 +118,7 @@
             <div class="mb-6">
               <%= form_with(url: raffles_path, method: :post) do |form| %>
                 <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-                <%= form.submit "Enter raffle" %>
+                <%= form.submit "Enter raffle", disabled: true %>
               <% end %>
             </div>
           </div>
