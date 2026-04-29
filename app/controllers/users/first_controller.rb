@@ -134,24 +134,24 @@ module Users
       if @team_event
         positions_scope = @team_event.organizer_positions.where(deleted_at: nil).where.not(user_id: user.id)
         @team_org_members = positions_scope
-          .joins(:user)
-          .order(Arel.sql("users.verified DESC NULLS LAST, organizer_positions.role DESC, organizer_positions.created_at DESC"))
-          .limit(5)
-          .map(&:user)
+                            .joins(:user)
+                            .order(Arel.sql("users.verified DESC NULLS LAST, organizer_positions.role DESC, organizer_positions.created_at DESC"))
+                            .limit(5)
+                            .map(&:user)
         @team_org_members_total = positions_scope.count
       else
         peer_user_ids = Event::Affiliation
-          .where(affiliable_type: "User", name: "first")
-          .where("metadata ->> 'league' = ?", affiliation.league)
-          .where("metadata ->> 'team_number' = ?", affiliation.team_number)
-          .where.not(affiliable_id: user.id)
-          .pluck(:affiliable_id)
+                        .where(affiliable_type: "User", name: "first")
+                        .where("metadata ->> 'league' = ?", affiliation.league)
+                        .where("metadata ->> 'team_number' = ?", affiliation.team_number)
+                        .where.not(affiliable_id: user.id)
+                        .pluck(:affiliable_id)
 
         @teammates = User
-          .where(id: peer_user_ids)
-          .order(Arel.sql("verified DESC NULLS LAST, created_at DESC"))
-          .limit(5)
-          .to_a
+                     .where(id: peer_user_ids)
+                     .order(Arel.sql("verified DESC NULLS LAST, created_at DESC"))
+                     .limit(5)
+                     .to_a
         @teammates_total = peer_user_ids.size
       end
     end
