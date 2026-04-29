@@ -175,8 +175,7 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
-  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
+  before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 
   before_create :format_number
   before_save :on_phone_number_update
@@ -453,6 +452,8 @@ class User < ApplicationRecord
   end
 
   def is_teenager?
+    return true if first_robotics_student?
+
     # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
     age&.<=(18)
   end
@@ -462,7 +463,15 @@ class User < ApplicationRecord
   end
 
   def was_teenager_on_join?
-    age_on(created_at)&.<=(18)
+    return true if first_robotics_student?
+
+    age_on(created_at || Time.current)&.<=(18)
+  end
+
+  FIRST_STUDENT_ROLES = %w[student_leader student_member].freeze
+
+  def first_robotics_student?
+    affiliations.any? { |a| a.is_first? && FIRST_STUDENT_ROLES.include?(a.role) }
   end
 
   def last_seen_at
@@ -753,6 +762,21 @@ class User < ApplicationRecord
 
   def update_draft_applications
     applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def should_sync_teenager_columns?
+    new_record? || will_save_change_to_birthday? || pending_affiliation_changes?
+  end
+
+  def pending_affiliation_changes?
+    return false unless association(:affiliations).loaded?
+
+    affiliations.any? { |a| a.new_record? || a.changed? || a.marked_for_destruction? }
+  end
+
+  def sync_teenager_columns
+    self.teenager = is_teenager?
+    self.joined_as_teenager = was_teenager_on_join?
   end
 
 end
