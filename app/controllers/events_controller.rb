@@ -746,6 +746,7 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html do
         @sub_organizations = filtered_sub_organizations
+        @all_events = [@event] + @event.descendants.order(:name).to_a
       end
 
       # CSV export intentionally does not consider filters
@@ -766,11 +767,6 @@ class EventsController < ApplicationController
       end
     end
 
-  end
-
-  def sub_organizations_graph
-    authorize @event
-    @all_events = [@event] + @event.descendants.order(:name).to_a
   end
 
   def create_sub_organization

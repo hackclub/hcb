@@ -943,7 +943,6 @@ Rails.application.routes.draw do
     get "reimbursements"
     get "employees"
     get "sub_organizations"
-    get "sub_organizations/graph", to: "events#sub_organizations_graph", as: :sub_organizations_graph
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow

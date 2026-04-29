@@ -12,10 +12,6 @@
     <%= pop_icon_to "download",
                     { format: :csv },
                     class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
-    <%= link_to event_sub_organizations_graph_path(@event), class: "btn" do %>
-      <%= inline_icon "share" %>
-      View graph
-    <% end %>
     <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
       <%= inline_icon "plus" %>
       Create a subsidiary
@@ -33,6 +29,14 @@
     </span>
   </div>
 </div>
+
+<% if @all_events.length > 1 %>
+  <div class="card my-3" style="overflow-x: auto;">
+    <div class="mermaid text-center">
+      <%= subevent_mermaid_graph(@event, @all_events) %>
+    </div>
+  </div>
+<% end %>
 
 <div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
