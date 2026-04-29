@@ -1,5 +1,6 @@
 import $ from 'jquery'
 import ReactRailsUJS from 'react_ujs'
+import mermaid from 'mermaid'
 
 // Initialize Intl polyfill globally before any components load
 // This prevents "IntlPolyfill is not defined" errors
@@ -58,6 +59,12 @@ Alpine.data('check', check_form)
 Alpine.data('application_project_info', application_project_info_form)
 
 Alpine.start()
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+})
 
 import LocalTime from 'local-time'
 LocalTime.start()

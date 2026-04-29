@@ -17,14 +17,8 @@
   <%= blankslate "No sub-organizations to display" %>
 <% else %>
   <div class="card p3" style="overflow-x: auto;">
-    <div class="mermaid">
+    <div class="mermaid text-center">
       <%= subevent_mermaid_graph(@event, @all_events) %>
     </div>
   </div>
 <% end %>
-
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-  // securityLevel: 'loose' is required for click handlers to navigate on node click
-  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
-</script>

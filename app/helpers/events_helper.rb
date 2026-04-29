@@ -389,7 +389,7 @@ module EventsHelper
         lines << "  e#{e.id}([\"#{safe_name}\"]):::root"
         lines << "  click e#{e.id} \"#{event_sub_organizations_path(root)}\" \"View sub-organizations\""
       else
-        lines << "  e#{e.id}[\"#{safe_name}\"]"
+        lines << "  e#{e.id}[\"#{safe_name}\"]:::default"
         lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{safe_name}\""
       end
     end
@@ -400,7 +400,8 @@ module EventsHelper
       lines << "  e#{e.parent_id} --> e#{e.id}"
     end
 
-    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b"
+    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b,font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,' Fira Sans', Oxygen, Ubuntu, 'Helvetica ', sans-serif"
+    lines << "  classDef default fill:#8492a6,color:#000,stroke:#8492a6,font-family:system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,' Fira Sans', Oxygen, Ubuntu, 'Helvetica ', sans-serif"
     lines.join("\n")
   end
 
