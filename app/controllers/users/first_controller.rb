@@ -18,7 +18,7 @@ module Users
       @advisor_email_body = <<~EMAIL
         At Worlds this year, I met a couple of engineers from a nonprofit, Hack Club. They run a service called HCB and they pitch it as "the ultimate booster club for FRC, FTC, and FLL teams."
 
-        The service includes non profit status, debit cards, and online donations. It also makes it easier to receive grants.
+        The service includes non-profit status, debit cards, and online donations. It also makes it easier to receive grants.
 
         Here's a website with more information: https://hackclub.com/fiscal-sponsorship/first/. Seems like it'd be good fit for our team!
       EMAIL

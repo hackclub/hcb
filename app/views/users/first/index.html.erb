@@ -231,7 +231,7 @@
     Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
     <br>
     <br>
-    Send an email by <%= mail_to "hcb-raffles@hackclub.com", "clicking here", subject: "Booster club for our robotics team", body: @advisor_email_body %> and then press the button below to sign up for our AirPods raffle!
+    Send an email by <%= mail_to nil, "clicking here", cc: "hcb-raffles@hackclub.com", subject: "Booster club for our robotics team", body: @advisor_email_body %> and then press the button below to sign up for our AirPods raffle!
   </p>
 
   <%= form_with(url: raffles_path, method: :post) do |form| %>
