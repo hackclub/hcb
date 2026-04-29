@@ -33,11 +33,7 @@ class LoginsController < ApplicationController
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
     current_session.referral_attributions.each do |attribution|
-      begin
-        attribution.update!(user: @user)
-      rescue ActiveRecord::RecordNotUnique
-        attribution.destroy!
-      end
+      attribution.update!(user: @user)
     end
 
     @login.user = @user
