@@ -45,7 +45,7 @@ class OrganizerPositionInvite
       state :denied
 
       event :approve do
-        transitions from: :pending, to: :approved
+        transitions from: :pending, to: :approved, guard: :requester_verified?
         after do
           if Event::Affiliation.first_affiliation_matches?(requester, link.event)
             Raffle.find_or_create_by!(user: requester, program: "first-worlds-2026-printer")
@@ -59,6 +59,10 @@ class OrganizerPositionInvite
           OrganizerPositionInvite::RequestsMailer.with(request: self).denied.deliver_later
         end
       end
+    end
+
+    def requester_verified?
+      requester&.verified?
     end
 
   end

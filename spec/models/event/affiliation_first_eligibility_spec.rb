@@ -100,9 +100,15 @@ RSpec.describe Event::Affiliation, type: :model do
     end
 
     it "is false when the user is already an organizer of the event" do
-      create(:organizer_position, user:, event:)
+      # OrganizerPosition requires a verified user (see
+      # spec/models/unverified_users_no_organizer_position_spec.rb), so use
+      # a verified user here. The eligibility predicate doesn't care about
+      # verification status — only membership.
+      member = create(:user, verified: true)
+      member.affiliations.create!(name: "first", league: "frc", team_number: "1234")
+      create(:organizer_position, user: member, event:)
 
-      expect(described_class.eligible_to_request_invite?(user, event)).to eq(false)
+      expect(described_class.eligible_to_request_invite?(member, event)).to eq(false)
     end
 
     it "is false when the affiliation does not match" do
