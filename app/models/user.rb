@@ -183,7 +183,7 @@ class User < ApplicationRecord
   validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
-  after_update :sign_out_unverified_sessions, if: -> { verified_changed? && verified? }
+  after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
