@@ -108,54 +108,31 @@ RSpec.describe "Users::FirstController", type: :request do
         teammate2.affiliations.create!(name: "first", metadata: affiliation_metadata)
       end
 
-      it "renders the new community card with teammate names and team label" do
+      it "renders teammate avatars inside the AirPods raffle card" do
         get "/first"
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Your teammates are on HCB")
+        expect(response.body).to include("Get a free AirPods Pro 3")
         expect(response.body).to include("Maya")
         expect(response.body).to include("Eli")
         expect(response.body).to include("FRC #9999")
-      end
-
-      it "shows the email-advisor CTA for student roles" do
-        get "/first"
-        expect(response.body).to include("Email your advisor about HCB")
-      end
-
-      context "when the user's role is head_coach" do
-        let(:user_role) { "head_coach" }
-
-        it "shows the start-organization CTA" do
-          get "/first"
-          expect(response.body).to include("Start your team&#39;s organization")
-          expect(response.body).not_to include("Email your advisor about HCB →")
-        end
-      end
-
-      context "when the user's role is mentor_advisor" do
-        let(:user_role) { "mentor_advisor" }
-
-        it "shows the start-organization CTA" do
-          get "/first"
-          expect(response.body).to include("Start your team&#39;s organization")
-        end
+        expect(response.body).to include("are already on HCB")
       end
     end
 
     context "when no teammates have signed up" do
-      it "does not render the community card" do
+      it "does not render the teammate sentence" do
         get "/first"
-        expect(response.body).not_to include("Your teammates are on HCB")
+        expect(response.body).not_to include("are already on HCB")
       end
     end
 
     context "when the user has no FIRST affiliation" do
       before { user.affiliations.destroy_all }
 
-      it "renders the page without a community card" do
+      it "renders the page without errors" do
         get "/first"
         expect(response).to have_http_status(:ok)
-        expect(response.body).not_to include("Your teammates are on HCB")
+        expect(response.body).not_to include("are already on HCB")
       end
     end
   end
