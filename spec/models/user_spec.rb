@@ -284,4 +284,30 @@ RSpec.describe User, type: :model do
       expect(results).to be_empty
     end
   end
+
+  describe "promoting an unverified user to verified" do
+    it "expires every unverified session attached to the user" do
+      user = create(:user, verified: false)
+      stale_unverified = create(
+        :user_session,
+        user:,
+        verified: false,
+        expiration_at: 1.week.from_now,
+        signed_out_at: nil,
+      )
+      original_expiration = stale_unverified.expiration_at
+
+      user.update!(verified: true)
+      stale_unverified.reload
+
+      aggregate_failures "stale unverified session is invalidated" do
+        expect(stale_unverified.expiration_at).to be <= Time.current,
+                                                  "expected expiration_at to be moved to <= now, got #{stale_unverified.expiration_at} (was #{original_expiration})"
+        expect(stale_unverified.signed_out_at).not_to be_nil,
+                                                      "expected signed_out_at to be set, got nil"
+        expect(User::Session.not_expired.find_by(session_token: stale_unverified.session_token)).to be_nil,
+                                                                                                    "session is still resolvable via session_token lookup, so the cookie remains valid"
+      end
+    end
+  end
 end
