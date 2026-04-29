@@ -1,0 +1,15 @@
+<%# locals: (raffle:, raffle_name:) %>
+
+<div class="my-4 flex rounded-lg bg-white dark:bg-black overflow-hidden border-2 border-dashed border-blue">
+  <div class="flex-1 p-5">
+    <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Confirmed</p>
+    <h2 class="heading mt-0 mb-1"><%= raffle_name %></h2>
+    <p class="muted text-sm mt-0 mb-3">FIRST Worlds 2026 · Must be a student to be eligible</p>
+    <p class="text-xs muted mb-0">Entered <%= raffle.created_at.strftime("%B %-d, %Y") %></p>
+  </div>
+  <div class="border-0 border-l-2 border-dashed self-stretch border-blue"></div>
+  <div class="w-32 p-5 flex flex-col items-center justify-center text-center gap-1 shrink-0">
+    <p class="text-xs uppercase tracking-widest muted mt-0 mb-1">Ticket No.</p>
+    <p class="font-mono font-bold text-2xl my-0"><%= raffle.ticket_number || "——" %></p>
+  </div>
+</div>

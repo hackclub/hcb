@@ -9,6 +9,10 @@ module Users
 
     def index
       return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
+
+      @macbook_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-macbook")
+      @printer_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer")
+      @airpods_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods")
     end
 
     def team
