@@ -125,6 +125,8 @@
 
         <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
 
+        <%= invisible_captcha :remember_me %>
+
         <div class="card card--sunken flex flex-row justify-between items-center mb-8">
           <em>See how HCB can make running a FIRST team easier</em>
           <%= form.submit "Sign up" %>

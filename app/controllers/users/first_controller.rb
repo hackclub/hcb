@@ -6,6 +6,7 @@ module Users
 
     skip_after_action :verify_authorized
     skip_before_action :signed_in_user
+    invisible_captcha only: [:create], honeypot: :remember_me
 
     def index
       return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)

@@ -77,16 +77,21 @@ class Rack::Attack
   # Another common method of attack is to use a swarm of computers with
   # different IPs to try brute-forcing a password for a specific account.
 
-  # Throttle POST requests to /login by IP address
+  # Paths that initiate a Login flow. /login is the canonical entry point;
+  # /first creates a Login on the existing-user branch of the FIRST signup
+  # form. Both should share the same per-IP and per-email throttles.
+  LOGIN_INITIATION_PATHS = ["/login", "/first"].freeze
+
+  # Throttle POST requests to login-initiation paths by IP address
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:logins/ip:#{req.ip}"
   throttle("logins/ip", limit: 5, period: 20.seconds) do |req|
-    if req.path == "/login" && req.post?
+    if LOGIN_INITIATION_PATHS.include?(req.path) && req.post?
       req.ip
     end
   end
 
-  # Throttle POST requests to /login by email param
+  # Throttle POST requests to login-initiation paths by email param
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:logins/email:#{normalized_email}"
   #
@@ -95,10 +100,29 @@ class Rack::Attack
   # denied, but that's not very common and shouldn't happen to you. (Knock
   # on wood!)
   throttle("logins/email", limit: 5, period: 20.seconds) do |req|
-    if req.path == "/login" && req.post?
-      # Normalize the email, using the same logic as your authentication process, to
-      # protect against rate limit bypasses. Return the normalized email if present, nil otherwise.
-      req.params["email"].to_s.downcase.gsub(/\s+/, "").presence
+    if LOGIN_INITIATION_PATHS.include?(req.path) && req.post?
+      # /login uses params[:email]; /first uses params[:user][:email].
+      raw = req.params["email"] || req.params.dig("user", "email")
+      raw.to_s.downcase.gsub(/\s+/, "").presence
+    end
+  end
+
+  # Throttle POSTs to per-Login factor-trigger endpoints (POST /logins/:id/email
+  # and POST /logins/:id/sms). These dispatch real emails / Twilio SMS, so a
+  # single Login row can become a bombing channel without rate limits. The
+  # first cap is per IP (cross-victim flood); the second is per Login hashid
+  # (sustained flood against one victim).
+  LOGIN_FACTOR_TRIGGER_PATH = %r{\A/logins/[^/]+/(?:email|sms)\z}
+
+  throttle("logins/factor-trigger/ip", limit: 5, period: 20.seconds) do |req|
+    if req.post? && LOGIN_FACTOR_TRIGGER_PATH.match?(req.path)
+      req.ip
+    end
+  end
+
+  throttle("logins/factor-trigger/login", limit: 3, period: 1.minute) do |req|
+    if req.post? && (m = req.path.match(%r{\A/logins/(?<hashid>[^/]+)/(?:email|sms)\z}))
+      m[:hashid]
     end
   end
 
