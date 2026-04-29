@@ -128,7 +128,7 @@
               <% if pending_request %>
                 <button type="button" class="btn" disabled>Request pending</button>
               <% else %>
-                <%= button_to "Request to join", request_org_invite_first_index_path, method: :post %>
+                <%= button_to "Request to join", request_org_invite_first_index_path, method: :post, class: "btn" %>
               <% end %>
             </div>
           </div>
