@@ -2,7 +2,7 @@
 
 class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
   def index?
-    user.auditor?
+    auditor?
   end
 
   def new?
@@ -15,19 +15,19 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
     target_is_in_event = record.event.organizer_positions.include?(record.organizer_position)
     target_has_no_pending_request = record.organizer_position.organizer_position_deletion_requests.under_review.none?
 
-    user.admin? || (target_is_in_event && target_has_no_pending_request && current_user_is_manager? || current_user_is_the_user?)
+    admin? || (target_is_in_event && target_has_no_pending_request && current_user_is_manager? || current_user_is_the_user?)
   end
 
   def show?
-    user.auditor?
+    auditor?
   end
 
   def close?
-    user.admin?
+    admin?
   end
 
   def open?
-    user.admin?
+    admin?
   end
 
   private

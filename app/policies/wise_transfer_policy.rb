@@ -10,7 +10,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def approve?
-    user&.admin?
+    admin?
   end
 
   def reject?
@@ -18,11 +18,11 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def update?
-    user&.admin?
+    admin?
   end
 
   def mark_sent?
-    user&.admin?
+    admin?
   end
 
   def mark_failed?
@@ -30,21 +30,22 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def generate_quote?
-    user&.auditor? || user.events.any?
+    auditor? || user.events.any?
   end
 
   private
 
-  def auditor_or_user?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
-  def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?
   end
+
+  def auditor_or_user?
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+  end
+
+  def admin_or_user?
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+  end
+
 
 end

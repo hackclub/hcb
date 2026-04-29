@@ -3,11 +3,11 @@
 class GSuite
   class RevocationPolicy < ApplicationPolicy
     def create?
-      user.admin?
+      admin?
     end
 
     def destroy?
-      user.admin?
+      admin?
     end
 
   end

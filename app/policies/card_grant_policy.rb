@@ -10,15 +10,15 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || cardholder? || user_in_event?
+    auditor? || cardholder? || user_in_event?
   end
 
   def transactions?
-    user&.auditor? || cardholder? || user_in_event?
+    auditor? || cardholder? || user_in_event?
   end
 
   def spending?
-    record.event.is_public? || user&.auditor? || user_in_event?
+    record.event.is_public? || auditor? || user_in_event?
   end
 
   def edit_actions?
@@ -54,7 +54,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
+    (admin? || (cardholder? && authorized_to_activate?)) && record.active?
   end
 
   def cancel?
@@ -96,15 +96,15 @@ class CardGrantPolicy < ApplicationPolicy
   private
 
   def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def auditor_or_manager?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def sender_admin_or_manager?

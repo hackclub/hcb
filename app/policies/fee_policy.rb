@@ -2,7 +2,7 @@
 
 class FeePolicy < ApplicationPolicy
   def create?
-    user&.admin?
+    admin?
   end
 
 end

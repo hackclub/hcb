@@ -14,7 +14,7 @@ class CanonicalTransactionPolicy < ApplicationPolicy
   end
 
   def set_category?
-    user&.admin?
+    admin?
   end
 
   def export?
@@ -22,25 +22,25 @@ class CanonicalTransactionPolicy < ApplicationPolicy
   end
 
   def waive_fee?
-    user&.admin?
+    admin?
   end
 
   def unwaive_fee?
-    user&.admin?
+    admin?
   end
 
   def mark_bank_fee?
-    user&.admin?
+    admin?
   end
 
   private
 
   def auditor_or_teammember
-    user&.auditor? || record&.event&.users&.include?(user)
+    auditor? || record&.event&.users&.include?(user)
   end
 
   def admin_or_teammember
-    user&.admin? || record&.event&.users&.include?(user)
+    admin? || record&.event&.users&.include?(user)
   end
 
 end

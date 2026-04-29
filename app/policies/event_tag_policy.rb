@@ -2,15 +2,15 @@
 
 class EventTagPolicy < ApplicationPolicy
   def create?
-    user.admin?
+    admin?
   end
 
   def destroy?
-    user.admin?
+    admin?
   end
 
   def toggle_event_tag?
-    user.admin?
+    admin?
   end
 
 end

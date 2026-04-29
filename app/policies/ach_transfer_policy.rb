@@ -2,7 +2,7 @@
 
 class AchTransferPolicy < ApplicationPolicy
   def index?
-    user&.auditor?
+    auditor?
   end
 
   def new?
@@ -31,19 +31,19 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def start_approval?
-    user&.admin?
+    admin?
   end
 
   def approve?
-    user&.admin?
+    admin?
   end
 
   def reject?
-    user&.admin?
+    admin?
   end
 
   def toggle_speed?
-    user&.admin?
+    admin?
   end
 
   private
@@ -53,15 +53,15 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def auditor_or_user?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def is_public?
