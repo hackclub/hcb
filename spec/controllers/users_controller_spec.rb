@@ -29,6 +29,23 @@ RSpec.describe UsersController do
       end
     end
 
+    it "allows admins to impersonate unverified accounts and mirrors the target's verification" do
+      admin_user = create(:user, :make_admin)
+      impersonated_user = create(:user, verified: false, creation_method: :first_robotics_form)
+
+      create_session(admin_user, verified: true)
+
+      post(:impersonate, params: { id: impersonated_user.id })
+      expect(response).to redirect_to(root_path)
+
+      new_session = current_session!
+      expect(new_session.user_id).to eq(impersonated_user.id)
+      expect(new_session.impersonated_by_id).to eq(admin_user.id)
+      # Mirror the target's view: the admin sees what an unverified user sees,
+      # i.e. an unverified session.
+      expect(new_session.verified).to be(false)
+    end
+
     it "allows admins to impersonate locked accounts" do
       admin_user = create(:user, :make_admin)
       impersonated_user = create(:user, full_name: "Impersonated User")
