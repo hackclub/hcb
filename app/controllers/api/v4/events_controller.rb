@@ -23,7 +23,7 @@ module Api
         authorize parent_event, :create_sub_organization?
 
         # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
-        poc_id = current_user.admin? ? current_user.id : User.system_user.id
+        poc_id = can_admin?(:write) ? current_user.id : User.system_user.id
 
         @event = ::EventService::Create.new(
           name: params[:name],

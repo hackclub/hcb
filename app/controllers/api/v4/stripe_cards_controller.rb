@@ -126,7 +126,7 @@ module Api
           @designs = StripeCard::PersonalizationDesign.common.available
         end
 
-        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
+        @designs += StripeCard::PersonalizationDesign.unlisted.available if can_admin?(:read)
       end
 
       def freeze

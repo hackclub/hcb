@@ -266,8 +266,11 @@ class User < ApplicationRecord
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def auditor?
-    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def auditor?(override_pretend: false)
+    has_auditor_role = ["auditor", "admin", "superadmin"].include?(self.access_level)
+    return has_auditor_role if override_pretend
+
+    has_auditor_role && !self.pretend_is_not_admin
   end
 
   # admin? by default, takes into account an admin user's preference
