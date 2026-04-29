@@ -59,72 +59,76 @@
 
 <%# this is how im checking age since they arent entering their birthday %>
 <% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
-  <div class="card flex flex-col bg-black !text-white gap-3">
     <% if !Event::Affiliation.where(affiliable_type: "Event", metadata: { league: affiliation&.league, team_number: affiliation&.team_number }).any? %>
       <% unless Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods").any? %>
-        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
-          <div class="flex-grow">
-            <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
+        <div class="card flex flex-col bg-black !text-white gap-3">
+          <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+            <div class="flex-grow">
+              <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
 
-            <h2 class="heading mt-0 mb-3 w-full">
-              Get a free AirPods Pro 3!
-            </h2>
-            <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our AirPods raffle! Get a chance to win a free AirPods Pro 3.</p>
-            <%= link_to "#", class: "btn bg-info gap-1 hidden sm:inline-flex mt-2", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
-              Email your advisor about HCB →
-            <% end %>
+              <h2 class="heading mt-0 mb-3 w-full">
+                Get a free AirPods Pro 3!
+              </h2>
+              <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our AirPods raffle! Get a chance to win a free AirPods Pro 3.</p>
+              <%= link_to "#", class: "btn bg-info gap-1 hidden sm:inline-flex mt-2", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
+                Email your advisor about HCB →
+              <% end %>
+            </div>
+
+            <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019dd4d6-4dbb-7157-9aa5-d9c778879ed9/airpods-pro-3-hero-3120577713.png')] bg-right bg-no-repeat bg-contain"></div>
           </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019dd4d6-4dbb-7157-9aa5-d9c778879ed9/airpods-pro-3-hero-3120577713.png')] bg-right bg-no-repeat bg-contain"></div>
+          <%= link_to "#", class: "btn bg-info gap-1  sm:hidden" do %>
+            Email your advisor about HCB →
+          <% end %>
         </div>
-
-        <%= link_to "#", class: "btn bg-info gap-1  sm:hidden" do %>
-          Email your advisor about HCB →
-        <% end %>
       <% end %>
     <% elsif !Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer").any? %>
       <% if current_user(allow_unverified: true).events.where(id: Event::Affiliation.where(affiliable_type: "Event", metadata: { league: affiliation&.league, team_number: affiliation&.team_number }).select(:affiliable_id)).any? %>
-        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
-          <div class="flex-grow">
-            <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
+        <div class="card flex flex-col bg-black !text-white gap-3">
+          <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+            <div class="flex-grow">
+              <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
 
-            <h2 class="heading mt-0 mb-3 w-full">
-              Get a free 3D printer!
-            </h2>
-            <p class="my-0 md:my-2">Good news! You're a member of a robotics team that runs on HCB. Click the button below and get a chance to win a free Bambu Lab A1.</p>
-            <div class="mb-6">
-              <%= form_with(url: raffles_path, method: :post) do |form| %>
-                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-                <%= form.submit "Enter raffle" %>
-              <% end %>
+              <h2 class="heading mt-0 mb-3 w-full">
+                Get a free 3D printer!
+              </h2>
+              <p class="my-0 md:my-2">Good news! You're a member of a robotics team that runs on HCB. Click the button below and get a chance to win a free Bambu Lab A1.</p>
+              <div class="mb-6">
+                <%= form_with(url: raffles_path, method: :post) do |form| %>
+                  <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+                  <%= form.submit "Enter raffle" %>
+                <% end %>
+              </div>
             </div>
-          </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+            <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          </div>
         </div>
       <% else %>
-        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
-          <div class="flex-grow">
-            <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
+        <div class="card flex flex-col bg-black !text-white gap-3">
+          <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+            <div class="flex-grow">
+              <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" class="sm:hidden max-w-[20%] min-w-[64px] pb-4">
 
-            <h2 class="heading mt-0 mb-3 w-full">
-              Get a free 3D printer!
-            </h2>
-            <p class="my-0 md:my-2">Request to join your team's organization on HCB, and when your request is approved, we'll automatically sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
-            <div class="mb-6">
-              <%= form_with(url: raffles_path, method: :post) do |form| %>
-                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
-                <%= form.submit "Enter raffle" %>
-              <% end %>
+              <h2 class="heading mt-0 mb-3 w-full">
+                Get a free 3D printer!
+              </h2>
+              <p class="my-0 md:my-2">Request to join your team's organization on HCB, and when your request is approved, we'll automatically sign you up for our 3D printer raffle! Get a chance to win a free Bambu Lab A1.</p>
+              <div class="mb-6">
+                <%= form_with(url: raffles_path, method: :post) do |form| %>
+                  <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+                  <%= form.submit "Enter raffle" %>
+                <% end %>
+              </div>
             </div>
-          </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+            <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          </div>
         </div>
       <% end %>
     <% end %>
     <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
-  </div>
 <% end %>
 
 <div class="flex gap-3 items-stretch justify-center flex-col md:flex-row my-4">
