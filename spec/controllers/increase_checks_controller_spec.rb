@@ -21,59 +21,59 @@ RSpec.describe IncreaseChecksController do
     }.merge(overrides)
   end
 
-  # describe "stop" do
-  #   it "stops a stoppable check" do
-  #     user = create(:user)
-  #     event = create(:event, :with_positive_balance)
-  #     create(:organizer_position, user:, event:)
-  #     check = event.increase_checks.create!(
-  #       build_check_attributes(column_id: "col_test123", column_status: "issued")
-  #     )
+  describe "stop" do
+    it "stops a stoppable check" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test123", column_status: "issued")
+      )
 
-  #     sign_in(user)
+      sign_in(user)
 
-  #     allow(ColumnService).to receive(:post)
-  #       .with("/transfers/checks/col_test123/stop-payment", idempotency_key: "stop_col_test123")
-  #       .and_return({ "status" => "stopped", "delivery_status" => "failed" })
+      allow(ColumnService).to receive(:post)
+        .with("/transfers/checks/col_test123/stop-payment", idempotency_key: "stop_col_test123")
+        .and_return({ "status" => "stopped", "delivery_status" => "failed" })
 
-  #     post(:stop, params: { id: check.id })
+      post(:stop, params: { id: check.id })
 
-  #     expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
-  #     expect(check.reload.column_status).to eq("stopped")
-  #   end
+      expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
+      expect(check.reload.column_status).to eq("stopped")
+    end
 
-  #   it "denies users without transfer permissions" do
-  #     user = create(:user)
-  #     event = create(:event, :with_positive_balance)
-  #     # no organizer position — user has no access to the event
-  #     check = event.increase_checks.create!(
-  #       build_check_attributes(column_id: "col_test456", column_status: "issued")
-  #     )
+    it "denies users without transfer permissions" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      # no organizer position — user has no access to the event
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test456", column_status: "issued")
+      )
 
-  #     sign_in(user)
+      sign_in(user)
 
-  #     post(:stop, params: { id: check.id })
+      post(:stop, params: { id: check.id })
 
-  #     expect(response).to redirect_to(root_path)
-  #     expect(flash[:error]).to be_present
-  #   end
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to be_present
+    end
 
-  #   it "denies stopping a check that is not in a stoppable state" do
-  #     user = create(:user)
-  #     event = create(:event, :with_positive_balance)
-  #     create(:organizer_position, user:, event:)
-  #     check = event.increase_checks.create!(
-  #       build_check_attributes(column_id: "col_test789", column_status: "pending_deposit")
-  #     )
+    it "denies stopping a check that is not in a stoppable state" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test789", column_status: "pending_deposit")
+      )
 
-  #     sign_in(user)
+      sign_in(user)
 
-  #     post(:stop, params: { id: check.id })
+      post(:stop, params: { id: check.id })
 
-  #     expect(response).to redirect_to(root_path)
-  #     expect(flash[:error]).to be_present
-  #   end
-  # end
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to be_present
+    end
+  end
 
   # describe "reissue" do
   #   it "copies all attributes to the reissued check" do
