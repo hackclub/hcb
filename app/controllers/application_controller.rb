@@ -145,7 +145,7 @@ class ApplicationController < ActionController::Base
     ip_address = request.remote_ip
     user_agent = request.user_agent
     referrer = request.referrer
-    unverified_user = Current.session.unverified?
+    unverified_user = Current.session&.unverified?
 
     Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
     Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
