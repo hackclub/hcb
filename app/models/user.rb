@@ -187,7 +187,7 @@ class User < ApplicationRecord
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
-  after_update :queue_sync_with_loops_job
+  after_update :queue_sync_with_loops_job, if: :verified?
 
   after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
