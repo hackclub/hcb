@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 class RafflesController < ApplicationController
+  skip_before_action :signed_in_user, only: [:new, :create]
+  before_action :signed_in_or_unverified_user, only: [:new, :create]
   skip_after_action :verify_authorized, only: [:new, :create]
 
   def new
   end
 
   def create
-    if Raffle.where(user: current_user, program: params[:program]).any?
+    if Raffle.where(user: current_user(allow_unverified: true), program: params[:program]).any?
       flash[:error] = "You are already entered in this raffle."
 
       respond_to do |format|
@@ -17,7 +19,7 @@ class RafflesController < ApplicationController
         end
       end
     else
-      raffle = Raffle.new(user: current_user, program: params[:program])
+      raffle = Raffle.new(user: current_user(allow_unverified: true), program: params[:program])
       if raffle.save
         flash[:success] = "Raffle joined!"
         respond_to do |format|
