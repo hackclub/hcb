@@ -11,6 +11,8 @@ module Users
     def index
       return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
 
+      load_team_community
+
       @macbook_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-macbook")
       @printer_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer")
       @airpods_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods")
@@ -119,6 +121,39 @@ module Users
 
     def user_params
       params.require(:user).permit(:email, :full_name, affiliations_attributes: [:league, :team_number, :name, :team_name, :role])
+    end
+
+    def load_team_community
+      user = current_user(allow_unverified: true)
+      affiliation = user&.affiliations&.find_by(name: "first")
+      return unless affiliation && affiliation.league.present? && affiliation.team_number.present?
+
+      @first_affiliation = affiliation
+      @team_event = Event::Affiliation.matching_first_event_for(user)
+
+      if @team_event
+        positions_scope = @team_event.organizer_positions.where(deleted_at: nil).where.not(user_id: user.id)
+        @team_org_members = positions_scope
+          .joins(:user)
+          .order(Arel.sql("users.verified DESC NULLS LAST, organizer_positions.role DESC, organizer_positions.created_at DESC"))
+          .limit(5)
+          .map(&:user)
+        @team_org_members_total = positions_scope.count
+      else
+        peer_user_ids = Event::Affiliation
+          .where(affiliable_type: "User", name: "first")
+          .where("metadata ->> 'league' = ?", affiliation.league)
+          .where("metadata ->> 'team_number' = ?", affiliation.team_number)
+          .where.not(affiliable_id: user.id)
+          .pluck(:affiliable_id)
+
+        @teammates = User
+          .where(id: peer_user_ids)
+          .order(Arel.sql("verified DESC NULLS LAST, created_at DESC"))
+          .limit(5)
+          .to_a
+        @teammates_total = peer_user_ids.size
+      end
     end
 
   end
