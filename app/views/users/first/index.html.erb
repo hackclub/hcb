@@ -20,6 +20,12 @@
   for FRC, FTC, and FLL teams
 </h2>
 
+<div class="card flex">
+  <h2 class="heading mt-0 mb-3 w-full">
+    You've entered the raffle!
+  </h2>
+</div>
+
 <%# this is how im checking age since they arent entering their birthday %>
 <% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
   <div class="card flex flex-col bg-black !text-white gap-3">

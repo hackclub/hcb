@@ -166,8 +166,10 @@ class LoginsController < ApplicationController
 
     if @login.complete? && @login.user_session.present?
       if @login.for_first?
+        raffle = @login.state["raffle"]
+        Raffle.find_or_create_by!(user: @login.user, program: raffle) if raffle.present?
         affiliations_attributes = @login.state.dig("user_params", "affiliations_attributes")
-        @login.user.update!(affiliations_attributes:) if affiliations_attributes
+        @login.user.update!(affiliations_attributes:) if affiliations_attributes.present?
         redirect_to first_index_path
       elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)
