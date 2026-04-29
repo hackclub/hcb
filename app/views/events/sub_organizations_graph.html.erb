@@ -18,40 +18,13 @@
 <% else %>
   <div class="card p3" style="overflow-x: auto;">
     <div class="mermaid">
-      <%=
-        lines = ["flowchart TD"]
-        all_ids = @all_events.map(&:id).to_set
-
-        @all_events.each do |e|
-          safe_name = e.name.gsub('"', "'")
-          if e.id == @root.id
-            lines << "  e#{e.id}([\"#{safe_name}\"]):::root"
-          else
-            lines << "  e#{e.id}[\"#{safe_name}\"]"
-          end
-        end
-
-        @all_events.each do |e|
-          next if e.id == @root.id
-          next unless all_ids.include?(e.parent_id)
-          lines << "  e#{e.parent_id} --> e#{e.id}"
-        end
-
-        lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b"
-        lines << "  click e#{@root.id} \"#{event_sub_organizations_path(@event)}\" \"View sub-organizations\""
-
-        @all_events.each do |e|
-          next if e.id == @root.id
-          lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{e.name.gsub('"', "'")}\""
-        end
-
-        lines.join("\n")
-      %>
+      <%= subevent_mermaid_graph(@event, @all_events) %>
     </div>
   </div>
 <% end %>
 
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  // securityLevel: 'loose' is required for click handlers to navigate on node click
   mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
 </script>
