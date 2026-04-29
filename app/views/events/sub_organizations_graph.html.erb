@@ -1,0 +1,57 @@
+<% title "#{@event.name} – Sub-organization Tree" %>
+<% page_md %>
+<%= render "events/nav", selected: :sub_organizations %>
+
+<div class="flex items-center gap-2 mb-4">
+  <%= link_to event_sub_organizations_path(@event), class: "btn" do %>
+    <%= inline_icon "view-back" %>
+    Back to sub-organizations
+  <% end %>
+</div>
+
+<h1 class="heading flex items-center gap-2 border-0 mb-4">
+  Sub-organization tree
+</h1>
+
+<% if @all_events.length <= 1 %>
+  <%= blankslate "No sub-organizations to display" %>
+<% else %>
+  <div class="card p3" style="overflow-x: auto;">
+    <div class="mermaid">
+      <%=
+        lines = ["flowchart TD"]
+        all_ids = @all_events.map(&:id).to_set
+
+        @all_events.each do |e|
+          safe_name = e.name.gsub('"', "'")
+          if e.id == @root.id
+            lines << "  e#{e.id}([\"#{safe_name}\"]):::root"
+          else
+            lines << "  e#{e.id}[\"#{safe_name}\"]"
+          end
+        end
+
+        @all_events.each do |e|
+          next if e.id == @root.id
+          next unless all_ids.include?(e.parent_id)
+          lines << "  e#{e.parent_id} --> e#{e.id}"
+        end
+
+        lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b"
+        lines << "  click e#{@root.id} \"#{event_sub_organizations_path(@event)}\" \"View sub-organizations\""
+
+        @all_events.each do |e|
+          next if e.id == @root.id
+          lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{e.name.gsub('"', "'")}\""
+        end
+
+        lines.join("\n")
+      %>
+    </div>
+  </div>
+<% end %>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>

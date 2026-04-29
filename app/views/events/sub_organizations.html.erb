@@ -12,6 +12,10 @@
     <%= pop_icon_to "download",
                     { format: :csv },
                     class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+    <%= link_to event_sub_organizations_graph_path(@event), class: "btn" do %>
+      <%= inline_icon "share" %>
+      View graph
+    <% end %>
     <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
       <%= inline_icon "plus" %>
       Create a subsidiary

@@ -768,6 +768,12 @@ class EventsController < ApplicationController
 
   end
 
+  def sub_organizations_graph
+    authorize @event
+    @root = @event
+    @all_events = [@event] + @event.descendants.order(:name).to_a
+  end
+
   def create_sub_organization
     authorize @event
 
