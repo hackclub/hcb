@@ -9,7 +9,7 @@ module Users
     invisible_captcha only: [:create], honeypot: :remember_me
 
     def index
-      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
+      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       load_team_community
 
@@ -31,7 +31,7 @@ module Users
       compose_params = { cc: @advisor_email_cc, subject: @advisor_email_subject, body: @advisor_email_body }
       @gmail_compose_url = "https://mail.google.com/mail/?#{URI.encode_www_form(view: "cm", fs: 1, cc: @advisor_email_cc, su: @advisor_email_subject, body: @advisor_email_body)}"
       @outlook_compose_url = "https://outlook.office.com/mail/deeplink/compose?#{URI.encode_www_form(compose_params)}"
-      @mailto_compose_url = "mailto:?#{URI.encode_www_form(compose_params)}"
+      @mailto_compose_url = "mailto:?#{compose_params.map { |k, v| "#{k}=#{v.gsub("\n", "%0A")}" }.join("&")}"
       @copy_email_text = "To: <your advisor>\nCC: #{@advisor_email_cc}\nSubject: #{@advisor_email_subject}\n\n#{@advisor_email_body}"
     end
 
@@ -82,7 +82,7 @@ module Users
     end
 
     def new
-      return redirect_to first_index_path if signed_in?(allow_unverified: true)
+      return redirect_to first_index_path if signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user_referral = params[:referred_by] if params[:referred_by].present?
