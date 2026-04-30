@@ -5,12 +5,12 @@
 
   <%= form_with(model: false, local: true, url: event_toggle_approved_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Mark as pending",
-      data: { confirm: "This event was previously approved. Are you sure you want to undo that and mark it as pending?" } %>
+      data: { turbo_confirm: "This event was previously approved. Are you sure you want to undo that and mark it as pending?" } %>
   <% end %>
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
-      data: { confirm: "Are you sure you want to reject this event? This can not be undone." } %>
+      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone." } %>
   <% end %>
 
 <% elsif !@event.rejected? %>
@@ -22,7 +22,7 @@
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
-      data: { confirm: "Are you sure you want to reject this event? This can not be undone." } %>
+      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone." } %>
   <% end %>
 
 <% else %>

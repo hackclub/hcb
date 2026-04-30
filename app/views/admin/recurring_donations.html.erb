@@ -47,7 +47,7 @@
         <td><%= donation.tax_deductible? %></td>
         <td><strong><%= render_money(donation.amount) %></strong>/month</td>
         <td><%= donation.stripe_status.humanize %></td>
-        <td><%= link_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), method: :post, data: { confirm: "Are you sure you'd like to cancel this donation to #{donation.event.name}?" } if !donation.canceled? %></td>
+        <td><%= link_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to cancel this donation to #{donation.event.name}?" } if !donation.canceled? %></td>
       </tr>
     <% end %>
   </tbody>

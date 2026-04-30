@@ -17,7 +17,7 @@
         <%= inline_icon "freeze", size: 20 %> Defrost
       <% end %>
     <% end %>
-    <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug), data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." }, method: :post do %>
+    <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug), data: { turbo_method: :post, turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." } do %>
       <%= inline_icon "reply", size: 20 %> Cancel grant
     <% end if card_grant.active? && policy(card_grant).cancel? %>
   </div>

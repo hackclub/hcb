@@ -1,0 +1,53 @@
+.swal-overlay {
+  .swal-modal {
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-modal);
+
+    font-family: inherit;
+
+    [data-dark='true'] & {
+      background-color: $darkless;
+      color: map-get($palette, smoke);
+
+      .swal-icon--success:after,
+      .swal-icon--error:after,
+      .swal-icon--success:before,
+      .swal-icon--error:before,
+      .swal-icon--error__hide-corners,
+      .swal-icon--success__hide-corners {
+        background-color: $darkless;
+      }
+    }
+  }
+
+  .swal-title {
+    color: inherit;
+    padding: 20px;
+    padding-top: 0px;
+    padding-bottom: 10px;
+    text-align: left;
+    margin-bottom: 0px;
+  }
+
+  .swal-text {
+    width: 100%;
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  .swal-footer {
+    background-color: transparent;
+  }
+
+  .swal-button {
+    @extend .btn;
+  }
+
+  .swal-button--confirm {
+    @extend .bg-blue;
+  }
+}
+
+.swal-overlay--show-modal .swal-modal {
+  animation: none;
+}
