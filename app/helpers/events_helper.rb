@@ -379,12 +379,20 @@ module EventsHelper
     end
   end
 
+  def escape_mermaid_string(str)
+    str.to_s
+       .gsub("\\", "")       # remove backslashes (no escape sequence in Mermaid labels)
+       .gsub(/[\r\n\t]/, " ") # normalize newlines/tabs to a space
+       .gsub('"', "'")        # replace double quotes (Mermaid delimiter) with single quotes
+       .strip
+  end
+
   def subevent_mermaid_graph(root, all_events)
     all_ids = all_events.map(&:id).to_set
     lines = ["flowchart TD"]
 
     all_events.each do |e|
-      safe_name = e.name.gsub('"', "'")
+      safe_name = escape_mermaid_string(e.name)
       if e.id == root.id
         lines << "  e#{e.id}([\"#{safe_name}\"]):::root"
         lines << "  click e#{e.id} \"#{event_sub_organizations_path(root)}\" \"View sub-organizations\""

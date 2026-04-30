@@ -66,6 +66,7 @@ mermaid.initialize({
     curve: 'rounded',
   },
   theme: 'default',
+  securityLevel: 'antiscript',
 })
 
 document.addEventListener('turbo:render', () => mermaid.run())
