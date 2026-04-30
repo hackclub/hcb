@@ -3,7 +3,15 @@
 <div class="my-4 flex rounded-lg bg-white dark:bg-black overflow-hidden border-2 border-dashed border-blue">
   <div class="flex-1 p-5">
     <% if raffle.confirmed? %>
-      <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Confirmed</p>
+      <% if raffle.program_allows_referrals? %>
+        <p class="text-xs uppercase muted mt-0 mb-3">
+          🎟 <span class="font-bold <%= "text-green" if raffle.tickets > 1 %>"><%= raffle.tickets %></span> <%= "raffle entry".pluralize(raffle.tickets) %> Confirmed
+        </p>
+      <% else %>
+        <p class="text-xs uppercase muted mt-0 mb-3">
+          🎟 Raffle Entry Confirmed
+        </p>
+      <% end %>
     <% else %>
       <p class="text-xs uppercase muted mt-0 mb-3">🎟 Raffle Entry Pending</p>
     <% end %>

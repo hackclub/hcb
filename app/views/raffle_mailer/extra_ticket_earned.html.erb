@@ -1,0 +1,15 @@
+<p>
+  Hey <%= @user.name %>,
+</p>
+
+<p>You just earned an extra ticket in the raffle for a MacBook Neo! You now have <%= @raffle.tickets %> entries in the raffle.</p>
+
+<p>
+  To get another extra entry, keep sharing your <%= link_to "your unique raffle link", @raffle.referral_link %> with your teammates and friends in FIRST robotics.
+  We'll be drawing the raffle Friday afternoon!
+</p>
+
+<p>
+  Best,<br>
+  The HCB Team
+</p>
