@@ -23,10 +23,7 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-      "card_grants.created_at DESC"
-    )
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(build_grants_sort_clause)
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
@@ -313,6 +310,27 @@ class CardGrantsController < ApplicationController
   end
 
   private
+
+  def build_grants_sort_clause
+    sort_column = params[:sort]
+    sort_dir = params[:direction] == "asc" ? :asc : :desc
+    case sort_column
+    when "status"
+      { state: sort_dir }
+    when "date"
+      { created_at: sort_dir }
+    when "to"
+      { user_id: sort_dir }
+    when "for"
+      { purpose: sort_dir }
+    when "amount"
+      { amount_cents: sort_dir }
+    when "balance"
+      { balance: sort_dir }
+    else
+      { created_at: :desc }
+    end
+  end
 
   def set_card_grant
     @card_grant = CardGrant.find_by_hashid!(params.require(:id))
