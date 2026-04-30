@@ -222,6 +222,56 @@ RSpec.describe HcbCode, type: :model do
       end
     end
 
+    describe "#shared_commentable" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns the Disbursement for outgoing disbursement codes" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(outgoing.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns the Disbursement for incoming disbursement codes" do
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns nil for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.shared_commentable).to be_nil
+      end
+    end
+
+    describe "#all_comments" do
+      let(:disbursement) { create(:disbursement) }
+      let(:user) { create(:user) }
+
+      it "includes comments on both the HcbCode and the Disbursement" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        hcb_code_comment = create(:comment, commentable: outgoing, user:)
+        disbursement_comment = create(:comment, commentable: disbursement, user:)
+
+        expect(outgoing.all_comments).to include(hcb_code_comment, disbursement_comment)
+      end
+
+      it "does not include comments from the paired HcbCode" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        incoming_comment = create(:comment, commentable: incoming, user:)
+
+        expect(outgoing.all_comments).not_to include(incoming_comment)
+      end
+
+      it "returns regular comments for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+        comment = create(:comment, commentable: hcb_code, user:)
+
+        expect(hcb_code.all_comments).to include(comment)
+      end
+    end
+
     describe "#humanized_type" do
       it "returns 'Transfer' for disbursements" do
         disbursement = create(:disbursement)

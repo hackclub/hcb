@@ -43,6 +43,23 @@ class Disbursement
     def local_hcb_code
       @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
     end
+
+    def self_label
+      format_party_label(subledger, event)
+    end
+
+    def counterparty_label
+      format_party_label(counterparty_subledger, counterparty_event)
+    end
+
+    private
+
+    # A card grant is a disbursement between the same event, so we want to use the grant recipient
+    # to differentiate transaction parties
+    def format_party_label(subledger, event)
+      card_grant = subledger&.card_grant
+      card_grant ? "Grant recipient #{card_grant.user.name}" : event.name
+    end
   end
 
 end

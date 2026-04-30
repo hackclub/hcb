@@ -53,6 +53,7 @@ class Disbursement < ApplicationRecord
   include AASM
 
   include Freezable
+  include Commentable
 
   validate on: :create do
     if source_event.financially_frozen?
@@ -250,6 +251,11 @@ class Disbursement < ApplicationRecord
       HcbCode.find_or_create_by(hcb_code: incoming_hcb_code)
       HcbCode.find_or_create_by(hcb_code: outgoing_hcb_code)
     end
+  end
+
+  # Override Commentable#all_comments to include comments from both sides of the disbursement
+  def all_comments
+    Comment.where(commentable: [self, outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code])
   end
 
   def canonical_transactions

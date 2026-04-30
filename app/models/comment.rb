@@ -96,6 +96,10 @@ class Comment < ApplicationRecord
     return "commented"
   end
 
+  def shared?
+    commentable_type == "Disbursement"
+  end
+
   # This regex was stolen from URI::MailTo::EMAIL_REGEXP
   USER_MENTION_REGEX = /@([a-zA-Z0-9.!\#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)/
 
