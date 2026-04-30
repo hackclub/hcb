@@ -105,26 +105,26 @@ module Users
       program = "first-worlds-2026-macbook" if ["student_leader", "student_member"].include?(user_params.dig(:affiliations_attributes, "0", "role"))
 
       unless User.where(email: user_params[:email]).exists?
-        user_referral = Raffle.find_by_hashid(user_ref_params[:user_referral]) if user_ref_params[:user_referral].present?
-        if user_referral.nil?
-          flash[:error] = "We couldn't find that referral link!"
+        user_referral = nil
+        if user_ref_params[:user_referral].present?
+          user_referral = Raffle.find_by_hashid(user_ref_params[:user_referral])
 
-          redirect_to welcome_first_index_path and return
-        end
-        # case that should never happen because users should not be able to get a link if program or user is not eligible for referral link
-        # however still adding here because it could eventually be possible that a user becomes ineligible or a program becomes ineligible
-        if !user_referral.program_allows_referrals? || !user_referral.user_allows_referrals?
-          flash[:error] = "We couldn't find that referral link!"
+          # the referral not being eligible should never happen because users should not be able to get a link if program or user is not eligible for referral link
+          # however still adding here because it could eventually be possible that a user becomes ineligible or a program becomes ineligible
+          if user_referral.nil? || !user_referral.program_allows_referrals? || !user_referral.user_allows_referrals?
+            flash[:error] = "We couldn't find that referral link!"
 
-          redirect_to welcome_first_index_path and return
+            redirect_to welcome_first_index_path and return
+          end
         end
+
         @user = User.new(user_params)
         @user.creation_method = :first_robotics_form
         @user.save!
 
         if program.present?
           raf = Raffle.find_or_create_by!(user: @user, program:)
-          raf.update!(referring_raffle: user_referral)
+          raf.update!(referring_raffle: user_referral) if user_referral.present?
         end
 
         create_session(user: @user, verified: false)
