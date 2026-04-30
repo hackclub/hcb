@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   constraints AdminConstraint do
     mount Sidekiq::Web => "/sidekiq"
+    mount MaintenanceTasks::Engine, at: "/maintenance_tasks"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
@@ -177,6 +178,18 @@ Rails.application.routes.draw do
         get "data"
       end
     end
+
+    resources "first", only: [:index, :create] do
+      collection do
+        get "welcome", to: "first#new"
+        get "team", to: "first#team"
+        post "verify_email", to: "first#verify_email"
+        post "request_org_invite", to: "first#request_org_invite"
+        delete "sign_out", to: "first#sign_out"
+      end
+    end
+
+
     resources :email_updates, only: [] do
       collection do
         get "verify"
@@ -227,6 +240,8 @@ Rails.application.routes.draw do
       get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
+      get "event_search", to: "admin#event_search"
+      get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
@@ -433,6 +448,8 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "stop"
+      post "reissue"
     end
   end
 
@@ -673,8 +690,6 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
-          resources :invoices, only: [:index]
-          resources :sponsors, only: [:index]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
@@ -686,10 +701,9 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-          resources :ach_transfers, only: [:create]
 
           resources :donations, path: "donations", only: [:create] do
-            collection do
+            member do
               post "payment_intent"
             end
           end
@@ -739,10 +753,11 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :invoices, only: [:show, :create]
+        resources :invoices, only: [:index, :show, :create]
         resources :checks, only: [:index, :create, :show]
-        resources :sponsors, only: [:show, :create]
+        resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :ach_transfers, only: [:create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -751,8 +766,6 @@ Rails.application.routes.draw do
     end
   end
 
-  post "api/v1/users/find", to: "api#user_find"
-  post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
   get "api/flags", to: "api#flags"
 

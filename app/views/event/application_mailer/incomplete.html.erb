@@ -6,7 +6,7 @@
   <% else %>
     Your HCB application hasn't been submitted yet.
   <% end %>
-  <% if @application.ready_to_submit? %>
+  <% if @application.may_mark_submitted? %>
     You've already filled out the required fields, but you still need to submit your application.
   <% else %>
     It only takes a few more minutes to complete your application.

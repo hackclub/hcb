@@ -16,25 +16,28 @@
 
 <h2>All Designs</h2>
 
-<%= form_with local: true, url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select an event", selected: @event_id }, { width: 384, style: "max-width: 384px" }) %>
-  <div class="flex gap-4">
+<%= form_with local: true, class: "card overflow-visible", url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full w-full" %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :pending, class: "mt2 mb2" do %>
-      <%= form.check_box :pending, checked: @pending %>
-      Awaiting Stripe Approval
+      <%= form.check_box :pending, checked: @pending %> Awaiting Stripe Approval
     <% end %>
     <%= form.label :unlisted, class: "mt2 mb2" do %>
-      <%= form.check_box :unlisted, checked: @unlisted %>
-      Unlisted designs
+      <%= form.check_box :unlisted, checked: @unlisted %> Unlisted designs
     <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
   </div>
-  <%= form.submit "Search" %>
 <% end %>
 
-<%= paginate @designs %>
-
-<%= page_entries_info @designs, entry_name: "event design" %>
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @designs, entry_name: "event design" %>
+  </div>
+  <%= paginate @designs %>
+</div>
 
 <table>
   <thead>

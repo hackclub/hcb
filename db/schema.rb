@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_29_010000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -222,6 +222,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.integer "expires_in"
     t.inet "ip_address"
     t.string "refresh_token"
+    t.text "refresh_token_bidx"
+    t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
     t.string "scopes"
     t.string "token_bidx"
@@ -230,6 +232,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.bigint "user_id", null: false
     t.index ["application_id"], name: "index_api_tokens_on_application_id"
     t.index ["ip_address"], name: "index_api_tokens_on_ip_address"
+    t.index ["refresh_token_bidx"], name: "index_api_tokens_on_refresh_token_bidx", unique: true
     t.index ["token_bidx"], name: "index_api_tokens_on_token_bidx", unique: true
     t.index ["user_id"], name: "index_api_tokens_on_user_id"
   end
@@ -675,7 +678,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "disbursements", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deposited_at", precision: nil
@@ -795,7 +798,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "donations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount"
     t.integer "amount_received"
     t.boolean "anonymous", default: false, null: false
@@ -941,7 +944,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "employee_payments", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents", default: 0, null: false
     t.datetime "approved_at"
     t.datetime "created_at", null: false
@@ -959,7 +962,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "employees", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.bigint "entity_id", null: false
@@ -1064,7 +1067,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "event_plans", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.datetime "inactive_at"
@@ -1109,7 +1112,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "events", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "activated_at"
     t.text "address"
     t.boolean "can_front_balance", default: true, null: false
@@ -1187,7 +1190,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "fee_revenues", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents"
     t.datetime "created_at", null: false
     t.date "end"
@@ -1261,7 +1264,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   end
 
   create_table "g_suite_revocations", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.bigint "g_suite_id", null: false
@@ -1451,6 +1454,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.string "recipient_name"
+    t.bigint "reissued_for_id"
     t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
@@ -1458,6 +1462,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
+    t.index ["reissued_for_id"], name: "index_increase_checks_on_reissued_for_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -1658,6 +1663,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.bigint "user_id", null: false
     t.index ["address"], name: "index_mailbox_addresses_on_address", unique: true
     t.index ["user_id"], name: "index_mailbox_addresses_on_user_id"
+  end
+
+  create_table "maintenance_tasks_runs", force: :cascade do |t|
+    t.text "arguments"
+    t.text "backtrace"
+    t.datetime "created_at", null: false
+    t.string "cursor"
+    t.datetime "ended_at"
+    t.string "error_class"
+    t.string "error_message"
+    t.string "job_id"
+    t.integer "lock_version", default: 0, null: false
+    t.text "metadata"
+    t.datetime "started_at"
+    t.string "status", default: "enqueued", null: false
+    t.string "task_name", null: false
+    t.bigint "tick_count", default: 0, null: false
+    t.bigint "tick_total"
+    t.float "time_running", default: 0.0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["task_name", "status", "created_at"], name: "index_maintenance_tasks_runs", order: { created_at: :desc }
   end
 
   create_table "metrics", force: :cascade do |t|
@@ -1871,9 +1897,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   create_table "raffles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "program", null: false
+    t.string "ticket_number"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
+    t.index ["ticket_number"], name: "index_raffles_on_ticket_number", unique: true
   end
 
   create_table "raw_column_transactions", force: :cascade do |t|
@@ -2104,11 +2132,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.bigint "referral_link_id", null: false
     t.bigint "referral_program_id", null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
+    t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_referral_attributions_on_referral_link_id"
     t.index ["referral_program_id"], name: "index_referral_attributions_on_referral_program_id"
-    t.index ["user_id", "referral_link_id"], name: "index_referral_attributions_on_user_id_and_referral_link_id", unique: true
     t.index ["user_id"], name: "index_referral_attributions_on_user_id"
+    t.index ["user_session_id"], name: "index_referral_attributions_on_user_session_id"
   end
 
   create_table "referral_links", force: :cascade do |t|
@@ -2601,7 +2630,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.datetime "signed_out_at"
     t.string "timezone"
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
+    t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
     t.index ["impersonated_by_id"], name: "index_user_sessions_on_impersonated_by_id"
     t.index ["session_token_bidx"], name: "index_user_sessions_on_session_token_bidx"
@@ -2633,6 +2663,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.string "full_name"
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
+    t.boolean "monthly_donation_summary", default: true
+    t.boolean "monthly_follower_summary", default: true
     t.bigint "payout_method_id"
     t.string "payout_method_type"
     t.text "phone_number"
@@ -2649,6 +2681,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false
+    t.boolean "verified", default: false, null: false
     t.string "webauthn_id"
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -2862,6 +2895,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
+  add_foreign_key "increase_checks", "increase_checks", column: "reissued_for_id"
   add_foreign_key "increase_checks", "users"
   add_foreign_key "invoices", "fee_reimbursements"
   add_foreign_key "invoices", "invoice_payouts", column: "payout_id"
@@ -2909,6 +2943,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_02_071558) do
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_links"
   add_foreign_key "referral_attributions", "referral_programs"
+  add_foreign_key "referral_attributions", "user_sessions"
   add_foreign_key "referral_attributions", "users"
   add_foreign_key "referral_links", "referral_programs", column: "program_id"
   add_foreign_key "referral_links", "users", column: "creator_id"

@@ -15,6 +15,8 @@
 #  full_name                     :string
 #  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
@@ -29,6 +31,7 @@
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
+#  verified                      :boolean          default(FALSE), not null
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
@@ -81,7 +84,8 @@ class User < ApplicationRecord
     organizer_position_invite: 2,
     card_grant: 3,
     grant: 4,
-    application_form: 5
+    application_form: 5,
+    first_robotics_form: 6
   }
 
   has_many :logins
@@ -101,6 +105,9 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
+  accepts_nested_attributes_for :affiliations
 
   has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
   has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
@@ -159,6 +166,7 @@ class User < ApplicationRecord
 
   belongs_to :payout_method, polymorphic: true, optional: true
   validate :valid_payout_method
+  validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
   has_encrypted :birthday, type: :date
@@ -167,18 +175,20 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
-  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
+  before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
-  after_update :queue_sync_with_loops_job
+  after_update :queue_sync_with_loops_job, if: :verified?
+
+  after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
   before_update :set_default_seasonal_theme
 
@@ -442,8 +452,9 @@ class User < ApplicationRecord
   end
 
   def is_teenager?
-    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
-    age&.<=(18)
+    return age <= 18 if birthday.present?
+
+    first_robotics_student?
   end
 
   def is_minor?
@@ -451,7 +462,15 @@ class User < ApplicationRecord
   end
 
   def was_teenager_on_join?
-    age_on(created_at)&.<=(18)
+    return age_on(created_at || Time.current) <= 18 if birthday.present?
+
+    first_robotics_student?
+  end
+
+  FIRST_STUDENT_ROLES = %w[student_leader student_member].freeze
+
+  def first_robotics_student?
+    affiliations.any? { |a| a.is_first? && FIRST_STUDENT_ROLES.include?(a.role) }
   end
 
   def last_seen_at
@@ -615,7 +634,33 @@ class User < ApplicationRecord
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
+  def show_first_dashboard?
+    affiliations.where(name: "first").exists?
+  end
+
+  def redirect_to_first_dashboard?
+    show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
+  end
+
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
+  end
+
+  def unverified?
+    !verified?
+  end
+
   private
+
+  def auditors_must_be_verified
+    if auditor? && !verified?
+      errors.add(:verified, "must be true for auditors")
+    end
+  end
+
+  def sign_out_unverified_sessions
+    user_sessions.not_expired.unverified.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
 
   def accessible_events(roles:)
     event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
@@ -712,6 +757,25 @@ class User < ApplicationRecord
 
   def send_onboarded_email
     UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def update_draft_applications
+    applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def should_sync_teenager_columns?
+    new_record? || will_save_change_to_birthday? || pending_affiliation_changes?
+  end
+
+  def pending_affiliation_changes?
+    return false unless association(:affiliations).loaded?
+
+    affiliations.any? { |a| a.new_record? || a.changed? || a.marked_for_destruction? }
+  end
+
+  def sync_teenager_columns
+    self.teenager = is_teenager?
+    self.joined_as_teenager = was_teenager_on_join?
   end
 
 end
