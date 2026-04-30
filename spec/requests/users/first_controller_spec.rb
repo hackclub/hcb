@@ -92,11 +92,6 @@ RSpec.describe "Users::FirstController", type: :request do
         expect(response.body).to include("Maya")
         expect(response.body).to include("on this team")
       end
-
-      it "does not list the current user in the avatar row when they're not in the org" do
-        get "/first"
-        expect(response.body).not_to include(">Riley<")
-      end
     end
 
     context "when the team org does not exist but teammates have signed up" do
@@ -117,6 +112,16 @@ RSpec.describe "Users::FirstController", type: :request do
           expect(response.body).to include("Eli")
           expect(response.body).to include("FRC #9999")
           expect(response.body).to include("are already interested in HCB")
+        end
+
+        it "excludes the current user from the teammate list" do
+          # The current user's name always appears in the affiliation card at the top of /first,
+          # so we have to scope the assertion to the teammate sentence to prove self-exclusion.
+          user.update!(full_name: "Zorblax Probely")
+          get "/first"
+          sentence = response.body[/\b[\w,\s]+(?:is|are) already interested in HCB/]
+          expect(sentence).not_to be_nil, "expected a teammate sentence in the rendered page"
+          expect(sentence).not_to include("Zorblax")
         end
 
         it "does not render the adults-only standalone card" do

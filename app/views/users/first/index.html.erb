@@ -56,18 +56,13 @@
       <h3 class="heading my-0">Your teammates are interested</h3>
     </div>
 
-    <% names = @teammates.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
-    <% leftover = @teammates_total - @teammates.size %>
-    <% team_label = "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}" %>
-    <% sentence = case @teammates.size
-                  when 1
-                    leftover.zero? ? "#{names[0]} from #{team_label} is already interested in HCB" : "#{names[0]} and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
-                  when 2
-                    leftover.zero? ? "#{names[0]} and #{names[1]} from #{team_label} are already interested in HCB" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
-                  else
-                    extras = leftover + (@teammates.size - 2)
-                    "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already interested in HCB"
-                  end %>
+    <% sentence = team_community_sentence(
+         users: @teammates,
+         total: @teammates_total,
+         team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+         singular_suffix: "is already interested in HCB",
+         plural_suffix: "are already interested in HCB"
+       ) %>
 
     <p class="my-2"><%= sentence %>. Get your team's organization set up to fundraise and spend together.</p>
 
@@ -111,18 +106,13 @@
                     <%= avatar_for teammate, size: 32 %>
                   <% end %>
                 </div>
-                <% names = @teammates.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
-                <% leftover = @teammates_total - @teammates.size %>
-                <% team_label = "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}" %>
-                <% sentence = case @teammates.size
-                              when 1
-                                leftover.zero? ? "#{names[0]} from #{team_label} is already interested in HCB" : "#{names[0]} and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
-                              when 2
-                                leftover.zero? ? "#{names[0]} and #{names[1]} from #{team_label} are already interested in HCB" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} from #{team_label} are already interested in HCB"
-                              else
-                                extras = leftover + (@teammates.size - 2)
-                                "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} from #{team_label} are already interested in HCB"
-                              end %>
+                <% sentence = team_community_sentence(
+                     users: @teammates,
+                     total: @teammates_total,
+                     team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+                     singular_suffix: "is already interested in HCB",
+                     plural_suffix: "are already interested in HCB"
+                   ) %>
                 <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
               </div>
             <% end %>
@@ -192,17 +182,12 @@
                     <%= avatar_for member, size: 32 %>
                   <% end %>
                 </div>
-                <% names = @team_org_members.map { |u| u.first_name.presence || u.full_name.to_s.split(" ").first || "Someone" } %>
-                <% leftover = @team_org_members_total - @team_org_members.size %>
-                <% sentence = case @team_org_members.size
-                              when 1
-                                leftover.zero? ? "#{names[0]} is on this team" : "#{names[0]} and #{pluralize(leftover, 'other')} are on this team"
-                              when 2
-                                leftover.zero? ? "#{names[0]} and #{names[1]} are on this team" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')} are on this team"
-                              else
-                                extras = leftover + (@team_org_members.size - 2)
-                                "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')} are on this team"
-                              end %>
+                <% sentence = team_community_sentence(
+                     users: @team_org_members,
+                     total: @team_org_members_total,
+                     singular_suffix: "is on this team",
+                     plural_suffix: "are on this team"
+                   ) %>
                 <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
               </div>
             <% end %>

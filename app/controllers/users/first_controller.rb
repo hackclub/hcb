@@ -142,11 +142,12 @@ module Users
 
       if @team_event
         positions_scope = @team_event.organizer_positions.where(deleted_at: nil).where.not(user_id: user.id)
-        @team_org_members = positions_scope
-                            .joins(:user)
+        @team_org_members = User
+                            .joins(:organizer_positions)
+                            .merge(positions_scope)
                             .order(Arel.sql("users.verified DESC NULLS LAST, organizer_positions.role DESC, organizer_positions.created_at DESC"))
                             .limit(5)
-                            .map(&:user)
+                            .to_a
         @team_org_members_total = positions_scope.count
       else
         peer_user_ids = Event::Affiliation
