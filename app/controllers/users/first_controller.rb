@@ -9,7 +9,7 @@ module Users
     invisible_captcha only: [:create], honeypot: :remember_me
 
     def index
-      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
+      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       load_team_community
 
@@ -82,7 +82,7 @@ module Users
     end
 
     def new
-      return redirect_to first_index_path if signed_in?(allow_unverified: true)
+      return redirect_to first_index_path if signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user = User.new(affiliations: [Event::Affiliation.new])
