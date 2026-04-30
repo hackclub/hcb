@@ -1,12 +1,6 @@
 <% title "Check Deposits" %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @check_deposits %>
-  </div>
-  <%= paginate @check_deposits %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -43,5 +37,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @check_deposits %>
+  </div>
+  <%= paginate @check_deposits %>
+</div>
+
+</div>
 
 <%= paginate @check_deposits %>

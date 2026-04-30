@@ -21,21 +21,15 @@
     <%= form.label :pending_deletion do %>
       <%= form.check_box :pending_deletion, checked: @pending_deletion %> Revoked, Ready for Deletion
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
 <%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
-  <%= form.submit "Attempt to verify all currently verifying domains", class: "mt-2" %>
+  <%= form.submit "Attempt to verify all currently verifying domains", class: "btn btn-default mt-2" %>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
-  </div>
-  <%= paginate @g_suites %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -74,5 +68,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
+  </div>
+  <%= paginate @g_suites %>
+</div>
+
+</div>
 
 <%= paginate @g_suites %>

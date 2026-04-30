@@ -3,14 +3,11 @@
 <%= form_with method: :get, class: "card" do |form| %>
   <div class="flex items-center gap-2">
     <%= form.text_field :q, value: @q, placeholder: "Search", class: "!max-w-full w-full" %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <%= page_entries_info @cards, entry_name: "cards" %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -39,5 +36,11 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <%= page_entries_info @cards, entry_name: "cards" %>
+</div>
+
+</div>
 
 <%= paginate @cards %>

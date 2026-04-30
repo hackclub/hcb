@@ -16,7 +16,7 @@
       <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
   <% end %>
   <div class="ml-auto">
-    <%= form.submit "Search" %>
+    <%= form.submit "Search", class: "btn bg-info" %>
     <%= link_to @params.merge(format: :csv) do %>
       <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
     <% end %>
@@ -24,13 +24,7 @@
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
-  </div>
-  <%= paginate @hcb_codes %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -98,4 +92,11 @@
   </tbody>
 </table>
 
-<%= paginate @hcb_codes %>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
+  </div>
+  <%= paginate @hcb_codes %>
+</div>
+</div>

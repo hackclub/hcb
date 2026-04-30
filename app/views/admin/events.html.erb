@@ -1,19 +1,28 @@
 <% title "Organizations" %>
 
+<% content_for(:admin_actions) do %>
+  <%= link_to event_new_admin_index_path, class: "btn" do %>
+    <%= inline_icon "plus" %>
+    New
+  <% end %>
+  <%= link_to event_new_from_airtable_admin_index_path, class: "btn" do %>
+    <%= inline_icon "plus" %>
+    New from Airtable
+  <% end %>
+
+  <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
+    <button type="button" class="btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
+  <% end %>
+<% end %>
+
 <%= form_with local: true, class: "card overflow-visible", url: events_admin_index_path, method: :get do |form| %>
   <%= render "events/filters/search", form: %>
   <div class="block mt-2">
-    <% export_button = capture do %>
-      <button class="mt-2 mr-1 btn bg-info">Search</button>
-      <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
-        <button type="button" class="mt-2 btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
-      <% end %>
-    <% end %>
-    <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button } %>
+    <%= render partial: "admin/events_filter", locals: { form: } %>
   </div>
 <% end %>
 
-<details class="mt2">
+<details class="card mt-2">
   <summary>Export all event balances</summary>
   <%= form_with(url: request_balance_export_admin_index_path, method: :post) do |form| %>
     <p class="bold mb0 mt0">
@@ -23,20 +32,12 @@
       <%= form.date_field :end_date, class: "border mb1", value: nil %>
     </p>
     <p>
-      <%= form.submit "Export balances (all events)" %>
+      <%= form.submit "Export balances (all events)", class: "btn bg-info" %>
     </p>
   <% end %>
 </details>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @events, entry_name: "organizations" %>.
-    <%= link_to "Create a new organization", event_new_admin_index_path %>.
-    <%= link_to "Create a new organization from Airtable", event_new_from_airtable_admin_index_path %>.
-  </div>
-  <%= paginate @events %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -107,4 +108,10 @@
   </tbody>
 </table>
 
-<%= paginate @events %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @events, entry_name: "organizations" %>.
+  </div>
+  <%= paginate @events %>
+</div>
+</div>

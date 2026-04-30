@@ -28,6 +28,7 @@
   <div>
     <h3>Transfer Details</h3>
 
+    <div class="table-container">
     <table class="table--autosize">
       <tbody>
         <tr>
@@ -116,11 +117,12 @@
         <% end %>
         <tr>
           <td colspan="2">
-            <%= button_to "✏️ Edit wire", edit_wire_path(@wire), method: :get %>
+            <%= button_to "✏️ Edit wire", edit_wire_path(@wire), method: :get, class: "btn btn-default" %>
           </td>
         </tr>
       </tbody>
     </table>
+    </div>
 
     <%= render partial: "receipts/receipt", collection: @wire.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
   </div>
@@ -146,10 +148,10 @@
             <%= form.check_box :charge_fee %>
             <%= form.label :charge_fee, "Charge #{@wire.event.name} $25 to cover transfer fee?", class: "bold ml-2" %>
           </div>
-          <%= form.submit "💸 Approve and automatically send transfer", data: { confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "mb-0" %>
+          <%= form.submit "💸 Approve and automatically send transfer", data: { confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "btn bg-success mb-0" %>
         <% end %>
         <hr>
-        <%= button_to "🔧 Approve and manually send transfer", approve_wire_path(@wire), method: :post, data: { confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
+        <%= button_to "🔧 Approve and manually send transfer", approve_wire_path(@wire), method: :post, class: "btn bg-warning", data: { confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
       </fieldset>
 
       <fieldset class="px-6 py-3">
@@ -161,13 +163,13 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." }, class: "btn btn--destroy" %>
         <% end %>
       </fieldset>
     <% else %>
       <p>This wire <%= @wire.failed? ? "" : "is " %><b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wire.failed? ? @wire.return_reason.present? ? " with the following failure reason: #{@wire.return_reason}" : " for an unknown reason" : "" %>.</p>
       <% unless @wire.failed? %>
-        <%= button_to "Reject as failed", reject_wire_path(@wire) %>
+        <%= button_to "Reject as failed", reject_wire_path(@wire), class: "btn btn--destroy" %>
       <% end %>
     <% end %>
   </div>

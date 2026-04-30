@@ -9,17 +9,11 @@
     <%= form.label :open do %>
       <%= form.check_box :open, checked: @open %> Open
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @sponsors, entry_name: "sponsors" %>
-  </div>
-  <%= paginate @sponsors %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -43,5 +37,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @sponsors, entry_name: "sponsors" %>
+  </div>
+  <%= paginate @sponsors %>
+</div>
+
+</div>
 
 <%= paginate @sponsors %>

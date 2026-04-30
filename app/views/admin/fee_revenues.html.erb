@@ -6,6 +6,7 @@
   <details>
     <summary>View breakdown by organization (<%= @uncharged_fees_events.count %> organizations)</summary>
 
+    <div class="table-container">
     <table class="mt2">
       <thead>
         <tr>
@@ -22,18 +23,13 @@
         <% end %>
       </tbody>
     </table>
+    </div>
   </details>
 </div>
 
 <hr class="mb3">
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @fee_revenues, entry_name: "fee revenues" %>
-  </div>
-  <%= paginate @fee_revenues %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -60,5 +56,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @fee_revenues, entry_name: "fee revenues" %>
+  </div>
+  <%= paginate @fee_revenues %>
+</div>
+
+</div>
 
 <%= paginate @fee_revenues %>

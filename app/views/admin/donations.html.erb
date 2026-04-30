@@ -23,17 +23,11 @@
     <%= form.label :missing_fee_reimbursement do %>
       <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement %> Missing FeeReimbursement
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @donations, entry_name: "donations" %>
-  </div>
-  <%= paginate @donations %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -80,5 +74,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @donations, entry_name: "donations" %>
+  </div>
+  <%= paginate @donations %>
+</div>
+
+</div>
 
 <%= paginate @donations %>

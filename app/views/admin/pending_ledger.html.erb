@@ -9,17 +9,11 @@
         <%= form.label :unsettled do %>
             <%= form.check_box :unsettled, checked: @unsettled %> Unsettled
         <% end %>
-        <%= form.submit "Search", class: "ml-auto" %>
+        <%= form.submit "Search", class: "btn bg-info ml-auto" %>
     </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
-  </div>
-  <%= paginate @canonical_pending_transactions %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -67,5 +61,15 @@
     <% end %>
   </tbody>
 </table>
+
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
+  </div>
+  <%= paginate @canonical_pending_transactions %>
+</div>
+
+</div>
 
 <%= paginate @canonical_pending_transactions %>

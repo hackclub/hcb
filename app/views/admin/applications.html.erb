@@ -11,17 +11,11 @@
         <% end %>
     </div>
 
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @applications, entry_name: "applications" %>
-  </div>
-  <%= paginate @applications %>
-</div>
-
+<div class="table-container">
 <table class="min-w-0">
   <thead>
     <tr>
@@ -50,4 +44,11 @@
   </tbody>
 </table>
 
-<%= paginate @applications %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @applications, entry_name: "applications" %>
+  </div>
+  <%= paginate @applications %>
+</div>
+
+</div>

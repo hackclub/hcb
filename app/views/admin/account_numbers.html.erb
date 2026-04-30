@@ -7,17 +7,11 @@
     <%= form.select :account_number_type, [["All", "0"], ["Deposit only", "1"], ["Spend + Deposit", "2"]], selected: @account_number_type %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
-  </div>
-  <%= paginate @account_numbers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -50,3 +44,12 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
+  </div>
+  <%= paginate @account_numbers %>
+</div>
+
+</div>

@@ -6,17 +6,11 @@
     <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @wires, entry_name: "transfers" %>
-  </div>
-  <%= paginate @wires %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -50,5 +44,13 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @wires, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wires %>
+</div>
+</div>
 
 <%= paginate @wires %>

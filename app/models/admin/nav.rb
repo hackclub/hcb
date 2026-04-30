@@ -37,12 +37,13 @@ module Admin
     class Item
       attr_reader(:name, :path)
 
-      def initialize(name:, path:, count:, count_type: :tasks, active: false)
+      def initialize(name:, path:, count:, count_type: :tasks, active: false, divider: false)
         @name = name
         @path = path
         @count_lambda = count
         @count_type = count_type
         @active = active
+        @divider = divider
 
         unless [:tasks, :records].include?(count_type)
           raise ArgumentError, "invalid count_type: #{count_type.inspect}"
@@ -59,6 +60,10 @@ module Admin
 
       def record_count?
         @count_type == :records
+      end
+
+      def divider?
+        @divider
       end
 
       def task_count?
@@ -111,6 +116,16 @@ module Admin
 
     def normalized_page_title
       @normalized_page_title ||= normalize_string(page_title)
+    end
+
+    def make_divider(name:)
+      Item.new(
+        active: true,
+        divider: true,
+        name:,
+        path: "#",
+        count: ->{ 0 },
+      )
     end
 
     def make_item(name:, **properties)
@@ -333,23 +348,38 @@ module Admin
       Section.new(
         name: "Misc",
         items: [
+          make_divider(name: "Cards"),
           make_item(
-            name: "Blazer",
-            path: blazer_path,
-            count: ->{ Blazer::Query.count },
+            name: "Stripe Cards",
+            path: stripe_cards_admin_index_path,
+            count: ->{ StripeCard.count },
             count_type: :records
           ),
           make_item(
-            name: "Flipper",
-            path: flipper_path,
-            count: ->{ Flipper.features.count },
+            name: "Card Designs",
+            path: stripe_card_personalization_designs_admin_index_path,
+            count: ->{ StripeCard::PersonalizationDesign.count },
             count_type: :records
           ),
+          make_divider(name: "Documents"),
           make_item(
             name: "Common Documents",
             path: common_documents_path,
             count: ->{ Document.common.count },
             count_type: :records
+          ),
+          make_item(
+            name: "Contracts",
+            path: contracts_admin_index_path,
+            count: ->{ Contract.count },
+            count_type: :records
+          ),
+          make_divider(name: "Events and Financials"),
+          make_item(
+            name: "Event Groups",
+            path: admin_event_groups_path,
+            count: ->{ Event::Group.count },
+            count_type: :records,
           ),
           make_item(
             name: "Bank Accounts",
@@ -375,22 +405,11 @@ module Admin
             count: ->{ Column::Statement.count },
             count_type: :records
           ),
+          make_divider(name: "User management"),
           make_item(
             name: "Users",
             path: users_admin_index_path,
             count: ->{ User.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Stripe Cards",
-            path: stripe_cards_admin_index_path,
-            count: ->{ StripeCard.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Card Designs",
-            path: stripe_card_personalization_designs_admin_index_path,
-            count: ->{ StripeCard::PersonalizationDesign.count },
             count_type: :records
           ),
           make_item(
@@ -405,26 +424,16 @@ module Admin
             count: ->{ Referral::Program.count },
             count_type: :records
           ),
+          make_divider(name: "Leaderboards"),
+
           make_item(
-            name: "Event Groups",
-            path: admin_event_groups_path,
-            count: ->{ Event::Group.count },
-            count_type: :records,
-          ),
-          make_item(
-            name: "Contracts",
-            path: contracts_admin_index_path,
-            count: ->{ Contract.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Active Teenagers Leaderboard",
+            name: "Active Teenagers",
             path: active_teenagers_leaderboard_admin_index_path,
             count: ->{ User.active_teenager.count },
             count_type: :records,
           ),
           make_item(
-            name: "New Teenagers Leaderboard",
+            name: "New Teenagers",
             path: new_teenagers_leaderboard_admin_index_path,
             count: ->{ 0 }, # I think this would be expensive to calculate
             count_type: :records,

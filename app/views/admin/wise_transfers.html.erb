@@ -7,17 +7,11 @@
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @wise_transfers, entry_name: "transfers" %>
-  </div>
-  <%= paginate @wise_transfers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -47,5 +41,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @wise_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wise_transfers %>
+</div>
+
+</div>
 
 <%= paginate @wise_transfers %>

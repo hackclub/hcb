@@ -5,6 +5,7 @@
 
 <h3>Invoice Details</h3>
 
+<div class="table-container">
 <table class="table--autosize">
   <tbody>
     <tr>
@@ -40,6 +41,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 <hr>
 
@@ -71,7 +73,7 @@
     </fieldset>
 
     <p>
-      <%= form.submit "Mark Paid", data: { confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
+      <%= form.submit "Mark Paid", data: { confirm: "Mark paid? YOU CANNOT UNDO THIS." }, class: "btn bg-success" %>
     </p>
   <% end %>
 <% else %>

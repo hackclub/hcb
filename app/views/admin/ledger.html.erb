@@ -32,18 +32,12 @@
         Mapped by Human
         <% end %>
     </fieldset>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
-  </div>
-  <%= paginate @canonical_transactions %>
-</div>
-
 <%= form_with local: true, url: set_event_multiple_transactions_path, method: :post do |form| %>
+  <div class="table-container">
   <table>
     <thead>
       <tr>
@@ -88,14 +82,21 @@
       <% end %>
     </tbody>
   </table>
-
   <% if @canonical_transactions.empty? %>
     <%= blankslate "No transactions match your search parameters" %>
   <% end %>
 
+  <div class="table-footer">
+    <div class="flex-grow">
+      <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
+    </div>
+    <%= paginate @canonical_transactions %>
+  </div>
+  </div>
+
   <div class="flex mt-2 gap-2 items-center justify-end">
       <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !w-56" %>
-      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
+      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?", class: "btn bg-success" %>
   </div>
 <% end %>
 

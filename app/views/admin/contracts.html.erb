@@ -8,17 +8,11 @@
     <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @contracts, entry_name: "contracts" %>
-  </div>
-  <%= paginate @contracts %>
-</div>
-
+<div class="table-container">
 <table class="min-w-0">
   <thead>
     <tr>
@@ -78,5 +72,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @contracts, entry_name: "contracts" %>
+  </div>
+  <%= paginate @contracts %>
+</div>
+
+</div>
 
 <%= paginate @contracts %>

@@ -28,17 +28,11 @@
     <%= form.label :unlisted, class: "mt2 mb2" do %>
       <%= form.check_box :unlisted, checked: @unlisted %> Unlisted designs
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @designs, entry_name: "event design" %>
-  </div>
-  <%= paginate @designs %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -88,5 +82,14 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @designs, entry_name: "event design" %>
+  </div>
+  <%= paginate @designs %>
+</div>
+
+</div>
 
 <%= paginate @designs %>
