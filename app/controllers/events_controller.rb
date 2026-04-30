@@ -697,8 +697,11 @@ class EventsController < ApplicationController
     authorize @event
     @total = @event.reimbursement_reports.to_calculate_total.where(currency: "USD").includes(:payout_holding).sum(&:amount_cents)
     @total += Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed.where.not(currency: "USD")).sum(&:amount_cents)
-    @total += Money.from_cents(@event.reimbursement_reports.pending.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
+    pending_reports = @event.reimbursement_reports.pending
+    @total += Money.from_cents(pending_reports.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
     @reimbursed = Reimbursement::PayoutHolding.where(reimbursement_reports_id: @event.reimbursement_reports.reimbursed).sum(&:amount_cents)
+    @unpaid = pending_reports.where(currency: "USD").sum(&:amount_cents)
+    @unpaid += Money.from_cents(pending_reports.where.not(currency: "USD").sum(&:cached_wise_transfer_quote_amount)).cents
     @pending = @total - @reimbursed
 
     @format_reports_with_currency = @event.reimbursement_reports.where.not(currency: "USD").exists?
