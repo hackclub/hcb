@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  skip_before_action :signed_in_user, only: [:webauthn_options]
+  # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
+  # and must remain reachable from impersonated sessions whose `verified` flag
+  # mirrors an unverified target — otherwise the admin is locked out.
+  skip_before_action :signed_in_user, only: [:webauthn_options, :unimpersonate]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
   skip_after_action :verify_authorized, only: [:show,
                                                :revoke_oauth_application,
@@ -47,7 +50,9 @@ class UsersController < ApplicationController
   def unimpersonate
     return redirect_to root_path unless current_session&.impersonated?
 
-    impersonated_user = current_user
+    # Resolve the target through `allow_unverified: true` so the flash message
+    # works for impersonations of unverified shadow accounts.
+    impersonated_user = current_user(allow_unverified: true)
 
     unimpersonate_user
 
@@ -199,7 +204,7 @@ class UsersController < ApplicationController
     if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
       @user.totp&.mark_expired!
       @totp.mark_verified!
-      redirect_back_or_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
+      redirect_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
     else
       @invalid = true
       render :generate_totp
@@ -209,7 +214,7 @@ class UsersController < ApplicationController
   def disable_totp
     authorize @user
     @user.totp&.mark_expired!
-    redirect_back_or_to security_user_path(@user)
+    redirect_to security_user_path(@user)
   end
 
   def generate_backup_codes
@@ -421,20 +426,26 @@ class UsersController < ApplicationController
 
   def user_params
     attributes = [
+      # account
       :full_name,
       :preferred_name,
       :phone_number,
+      :birthday,
       :profile_picture,
+      :seasonal_themes_enabled,
+      # admin
       :pretend_is_not_admin,
+      # security
       :sessions_reported,
       :session_validity_preference,
+      :use_sms_auth,
+      :use_two_factor_authentication,
+      # notifications
       :receipt_report_option,
-      :birthday,
-      :seasonal_themes_enabled,
       :comment_notifications,
       :charge_notifications,
-      :use_sms_auth,
-      :use_two_factor_authentication
+      :monthly_donation_summary,
+      :monthly_follower_summary
     ]
 
     if @user.stripe_cardholder

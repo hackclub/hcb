@@ -6,20 +6,22 @@
 <% end %>
 
 <% content_for(:nav) do %>
-  <div class="mt-3 mb-3">
-    <button
-      class="command-bar-trigger"
-      style="border-radius: 8px;box-shadow: none;"
-      data-behavior="command_bar_trigger">
-      <span class="flex-grow text-left font-medium opacity-75">Jump to...</span>
-      <span class="hidden sm:inline key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
-        <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
-      </span>
-      <span class="hidden sm:inline key opacity-75 w-6 rounded-md text-sm">
-        K
-      </span>
-    </button>
-  </div>
+  <% if signed_in? %>
+    <div class="mt-3 mb-3">
+      <button
+        class="command-bar-trigger"
+        style="border-radius: 8px;box-shadow: none;"
+        data-behavior="command_bar_trigger">
+        <span class="flex-grow text-left font-medium opacity-75">Jump to...</span>
+        <span class="hidden sm:inline key opacity-75 <%= request.user_agent.to_s.upcase.include?("MAC") ? "w-6" : "w-9" %> rounded-md mr-1 text-sm">
+          <%= request.user_agent.to_s.upcase.include?("MAC") ? "⌘" : "Ctrl" %>
+        </span>
+        <span class="hidden sm:inline key opacity-75 w-6 rounded-md text-sm">
+          K
+        </span>
+      </button>
+    </div>
+  <% end %>
 
   <nav class="dock font-medium mt1">
     <% users_nav(selected: local_assigns[:selected]).each do |item| %>
@@ -28,10 +30,13 @@
         tooltip: item[:tooltip],
         icon: item[:icon],
         async_badge: item[:async_badge],
-        selected: item[:selected] %>
+        selected: item[:selected],
+        **item.slice(:method) %>
     <% end %>
     <div>
-      <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
+      <% if signed_in? %>
+        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
+      <% end %>
     </div>
     <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
       <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
@@ -42,7 +47,7 @@
     <% end %>
   </nav>
 
-  <% if (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
+  <% if signed_in? && (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
     <div id="bank-wrapped-dialog" style="display: none;">
       <article role="alertdialog" class="flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" onclick="document.getElementById('bank-wrapped-link').click()" style="background-color: #ec3750; background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;">
         <span class="flex-auto flex justify-between items-center">
@@ -59,7 +64,7 @@
     </script>
   <% end %>
 
-  <% if (current_user.is_teenager? && current_user.only_card_grant_user?) %>
+  <% if (current_user&.is_teenager? && current_user&.only_card_grant_user?) %>
     <%= render partial: "users/card_grant_conversion_callout" %>
   <% end %>
 <% end %>

@@ -1,0 +1,197 @@
+<% title "FIRST on HCB" %>
+<% no_app_shell %>
+<% content_for(:container_class) { "!max-w-full w-full !px-0" } %>
+
+<div class="bg-smoke dark:bg-darkless px-6 md:px-7 py-8 md:py-12">
+  <div class="max-w-5xl mx-auto">
+    <div class="flex items-center gap-3 mb-4">
+      <%= image_tag "logo-production.svg", width: 45, height: 45, alt: "HCB logo", class: "dark:hidden" %>
+      <%= image_tag "logo-production-dark.svg", width: 45, height: 45, alt: "HCB logo", class: "hidden dark:block" %>
+      <h1 class="heading text-3xl m-0 p-0 leading-none no-underline !border-none"><strong>HCB</strong></h1>
+    </div>
+    <h2 class="heading text-4xl md:text-6xl inline mt-0">
+      The
+      <em>
+        <strong style="font-weight: 800;">ultimate booster club</strong>
+      </em>
+      for FRC, FTC, and FLL&nbsp;teams
+    </h2>
+    <div class="card flex flex-row bg-black !text-white !mb-0 mt-6 max-w-[48rem] !py-0 overflow-hidden">
+      <div class="flex-1 py-4 self-center">
+        <h2 class="heading mt-0 mb-3 w-full">
+          Win a MacBook Neo!
+        </h2>
+        <p class="my-0">Create an HCB account and we'll sign you up for our MacBook raffle! Get a chance to win a free MacBook Neo.</p>
+        <p class="muted mb-0">Must be 18 years of age or younger to be eligible.</p>
+      </div>
+      <img src="https://cdn.hackclub.com/019db803-aaeb-7557-bb8f-c07c1368d209/image_4__3_.png" class="self-end h-auto" style="width: 120px;" alt="">
+    </div>
+  </div>
+</div>
+
+<div class="px-6 md:px-7">
+  <div class="max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-16">
+    <div class="flex-1 min-w-0 max-w-xl">
+
+      <div class="mt-8">
+        <%= render "application/flash" unless @hide_flash %>
+      </div>
+
+      <%= form_with model: @user, url: first_index_path, class: "no-error-styling" do |form| %>
+        <div class="card mt-8 mb-4">
+          <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+            <%= inline_icon "person", size: 22 %>
+            About you
+          </h3>
+          <p class="muted h5 mt-1 mb-3">Tell us a little about yourself.</p>
+          <div class="field">
+            <%= form.label :full_name, "Full name" %>
+            <%= form.text_field :full_name, placeholder: "Fiona Hackworth" %>
+          </div>
+          <div class="field mb-0">
+            <%= form.label :email, "Email address" %>
+            <%= form.email_field :email, placeholder: "orpheus@hackclub.com" %>
+          </div>
+        </div>
+
+        <%= form.fields_for :affiliations do |affiliation| %>
+          <div class="card mb-4">
+            <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+              <%= inline_icon "flag", size: 22 %>
+              Your team
+            </h3>
+            <p class="muted h5 mt-1 mb-3">Which team are you part of?</p>
+            <div data-controller="first-team-lookup">
+              <div class="field">
+                <%= affiliation.label :team_number %>
+                <div class="flex gap-2">
+                  <%= affiliation.select :league, [["FRC", "frc"], ["FTC", "ftc"], ["FLL", "fll"]], {}, { class: "!w-[100px]", data: { first_team_lookup_target: "league", action: "change->first-team-lookup#lookup" } } %>
+                  <div class="input flex gap-2 items-center py-0 !w-full !min-w-0">
+                    <span class="bold muted">#</span>
+                    <%= affiliation.text_field :team_number, placeholder: "9101", class: "!p-0 !border-none !shadow-none min-h-auto !w-full", data: { first_team_lookup_target: "teamNumber", action: "input->first-team-lookup#lookup" } %>
+                  </div>
+                </div>
+              </div>
+              <div class="field mb-0">
+                <%= affiliation.label :team_name, "Team name" %>
+                <%= affiliation.text_field :team_name, placeholder: "Green Mountain Robotics", data: { first_team_lookup_target: "teamName" } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <h3 class="heading mt-0 mb-0 flex items-center gap-2">
+              <%= inline_icon "person-badge", size: 22 %>
+              Your role
+            </h3>
+            <p class="muted h5 mt-1 mb-3">What's your role on the team?</p>
+            <div class="field field--options max-w-none mb-0">
+              <%= affiliation.radio_button :role, "student_leader" %>
+              <%= affiliation.label :role, value: "student_leader" do %>
+                <%= inline_icon "leader", size: 28 %>
+                <strong>Student Leader</strong>
+              <% end %>
+              <%= affiliation.radio_button :role, "student_member" %>
+              <%= affiliation.label :role, value: "student_member" do %>
+                <%= inline_icon "person-badge", size: 28 %>
+                <strong>Student Member</strong>
+              <% end %>
+              <%= affiliation.radio_button :role, "parent_volunteer" %>
+              <%= affiliation.label :role, value: "parent_volunteer" do %>
+                <%= inline_icon "people-2", size: 28 %>
+                <strong>Parent/Volunteer</strong>
+              <% end %>
+              <%= affiliation.radio_button :role, "head_coach" %>
+              <%= affiliation.label :role, value: "head_coach" do %>
+                <%= inline_icon "leaders", size: 28 %>
+                <strong>Adult Coach</strong>
+              <% end %>
+              <%= affiliation.radio_button :role, "mentor_advisor" %>
+              <%= affiliation.label :role, value: "mentor_advisor" do %>
+                <%= inline_icon "admin", size: 28 %>
+                <strong>Adult Mentor</strong>
+              <% end %>
+              <%= affiliation.radio_button :role, "other" %>
+              <%= affiliation.label :role, value: "other" do %>
+                <%= inline_icon "profile", size: 28 %>
+                <strong>Other Adult</strong>
+              <% end %>
+            </div>
+          </div>
+
+          <%= affiliation.hidden_field :name, value: "first" %>
+        <% end %>
+        <%= form.fields_for :affiliations_attributes do %> <% end %>
+
+        <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
+
+        <%= invisible_captcha :remember_me %>
+
+        <div class="card card--sunken flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8">
+          <em>See how HCB can make running a FIRST team easier</em>
+          <%= form.submit "Sign up", class: "w-full sm:w-auto flex-shrink-0" %>
+        </div>
+      <% end %>
+    </div>
+
+    <aside class="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
+      <div class="sticky top-6 flex flex-col gap-4 pt-8">
+        <h3 class="heading mt-0 mb-0">Everything you'll need.</h3>
+        <p class="muted mt-0 mb-2">Built by <em>FIRST</em> alumni for <em>FIRST</em> teams.</p>
+
+        <div class="flex items-start gap-3">
+          <%= inline_icon "bank-account", size: 20, class: "mt-1 flex-shrink-0 muted" %>
+          <div>
+            <strong>501(c)(3) nonprofit status</strong>
+            <p class="muted text-sm mt-0.5 mb-0">Become part of Hack Club's legal entity and get the benefits of tax-exempt status.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <%= inline_icon "card", size: 20, class: "mt-1 flex-shrink-0 muted" %>
+          <div>
+            <strong>Debit cards</strong>
+            <p class="muted text-sm mt-0.5 mb-0">Issue physical debit cards to all your teammates.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <%= inline_icon "payment-transfer", size: 20, class: "mt-1 flex-shrink-0 muted" %>
+          <div>
+            <strong>Grants & donations</strong>
+            <p class="muted text-sm mt-0.5 mb-0">Easily receive and deposit money from grants and donations, with a customizable online donation form.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <%= inline_icon "analytics", size: 20, class: "mt-1 flex-shrink-0 muted" %>
+          <div>
+            <strong>Balance & history</strong>
+            <p class="muted text-sm mt-0.5 mb-0">Keep everyone on your team up to date with real-time balance and transaction history.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3">
+          <%= inline_icon "support", size: 20, class: "mt-1 flex-shrink-0 muted" %>
+          <div>
+            <strong>Support anytime</strong>
+            <p class="muted text-sm mt-0.5 mb-0">With 24-hour response time on weekdays, we'll never leave you hanging.</p>
+          </div>
+        </div>
+
+        <hr class="my-2">
+
+        <div class="card card--sunken">
+          <p class="text-sm italic mt-0 mb-2">"[HCB] has opened more opportunities for Poseidon, allowing us to undertake larger projects, both on the playing field and in our community."</p>
+          <p class="text-sm muted mb-0">
+            <strong>Ian Marwong</strong>, Team Lead
+            <br>
+            Poseidon Robotics · FTC #16898
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<% @hide_flash = true %>

@@ -9,11 +9,16 @@
   </div>
   <% content_for :footer do %>
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
-    <% if @application.archived? %>
-      <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
-    <% else %>
-      <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy" %>
-    <% end %>
+
+    <div class="w-full flex-grow flex items-center justify-end gap-4">
+      <% if @application.archived? %>
+        <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
+      <% else %>
+        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy" %>
+      <% end %>
+
+      <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
+    </div>
   <% end %>
 <% else %>
   <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
@@ -25,6 +30,12 @@
         Your application has been submitted!
       <% end %>
     </h2>
+
+    <% unless @application.approved? %>
+      <div class="w-full md:max-w-2xl">
+        <%= render "event/applications/review_delay_callout" %>
+      </div>
+    <% end %>
 
     <h3 class="m-0 muted">
       <% if !@application.approved? || @application.contract&.party(:signee)&.pending? || @application.contract&.party(:cosigner)&.pending? %>
@@ -51,7 +62,7 @@
               <% if step[:label] == "Sign agreement" && @application.contract.present? %>
                 <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">
                   <% if @application.contract.party(:signee).pending? %>
-                    <%= link_to "Sign the agreement", videos_application_path(@application), class: "btn" %>
+                    <%= link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
                   <% end %>
 
                   <% if @application.contract.party(:cosigner)&.pending? %>

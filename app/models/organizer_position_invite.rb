@@ -126,6 +126,11 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
+    if user.unverified?
+      self.errors.add(:user, "must verify their email before accepting this invite")
+      return false
+    end
+
     if pending_signature? && application_contract.nil?
       self.errors.add(:base, "requires a signed contract!")
       return false
@@ -229,7 +234,7 @@ class OrganizerPositionInvite < ApplicationRecord
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
-      update!(is_signee: true)
+      update!(is_signee: true) unless accepted?
       organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
     end
 
