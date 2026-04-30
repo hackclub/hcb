@@ -43,7 +43,7 @@ class SponsorPolicy < ApplicationPolicy
       :id
     ]
 
-    attrs << :event_id if user&.admin?
+    attrs << :event_id if admin?
 
     attrs
   end
@@ -51,11 +51,11 @@ class SponsorPolicy < ApplicationPolicy
   private
 
   def auditor_or_reader?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def admin_or_member?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record&.event, :member)
+    admin? || OrganizerPosition.role_at_least?(user, record&.event, :member)
   end
 
 end

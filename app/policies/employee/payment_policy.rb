@@ -3,30 +3,22 @@
 class Employee
   class PaymentPolicy < ApplicationPolicy
     def new?
-      employee || admin || manager
+      employee || admin? || manager
     end
 
     def create?
-      employee || admin || manager
+      employee || admin? || manager
     end
 
     def review?
-      admin || manager
+      admin? || manager
     end
 
     def stub?
-      employee || admin || manager || auditor
+      employee || admin? || manager || auditor?
     end
 
     private
-
-    def admin
-      user&.admin?
-    end
-
-    def auditor
-      user&.auditor?
-    end
 
     def manager
       OrganizerPosition.role_at_least?(user, record.employee.event, :manager)

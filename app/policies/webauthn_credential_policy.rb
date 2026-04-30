@@ -2,7 +2,7 @@
 
 class WebauthnCredentialPolicy < ApplicationPolicy
   def destroy?
-    user.admin? || record.user == user
+    admin? || record.user == user
   end
 
 end

@@ -2,7 +2,7 @@
 
 class GSuiteAccountPolicy < ApplicationPolicy
   def index?
-    user.auditor?
+    auditor?
   end
 
   def create?
@@ -10,7 +10,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def show?
-    user.auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.g_suite.revocation.present?)
+    auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.g_suite.revocation.present?)
   end
 
   def reset_password?
@@ -18,11 +18,11 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def edit?
-    user.admin?
+    admin?
   end
 
   def update?
-    user.admin?
+    admin?
   end
 
   def destroy?
@@ -30,7 +30,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   end
 
   def reject?
-    user.admin?
+    admin?
   end
 
   def toggle_suspension?
@@ -40,7 +40,7 @@ class GSuiteAccountPolicy < ApplicationPolicy
   private
 
   def admin_or_manager?
-    return true if user&.admin?
+    return true if admin?
 
     revocation = record.is_a?(GSuite) ? record.revocation : record&.g_suite&.revocation
     OrganizerPosition.role_at_least?(user, record.event, :manager) && !revocation&.revoked?

@@ -2,7 +2,7 @@
 
 class OrganizerPositionInvitePolicy < ApplicationPolicy
   def index?
-    user&.auditor? || record.event&.users&.include?(user)
+    auditor? || record.event&.users&.include?(user)
   end
 
   def new?
@@ -14,7 +14,7 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || record.user == user
+    auditor? || record.user == user
   end
 
   def accept?
@@ -42,13 +42,13 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def send_contract?
-    user&.admin?
+    admin?
   end
 
   private
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
 end

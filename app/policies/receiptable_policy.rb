@@ -2,7 +2,7 @@
 
 class ReceiptablePolicy < ApplicationPolicy
   def upload?
-    user&.admin? || present_in_events? || Pundit.policy(user, record).try(:receiptable_upload?)
+    admin? || present_in_events? || Pundit.policy(user, record).try(:receiptable_upload?)
   end
 
   def link?
@@ -10,7 +10,7 @@ class ReceiptablePolicy < ApplicationPolicy
   end
 
   def link_modal?
-    upload? || user&.auditor?
+    upload? || auditor?
   end
 
   def mark_no_or_lost?

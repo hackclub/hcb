@@ -3,23 +3,23 @@
 class CardGrant
   class PreAuthorizationPolicy < ApplicationPolicy
     def show?
-      user&.auditor? || record.user == user || user_in_event?
+      auditor? || record.user == user || user_in_event?
     end
 
     def update?
-      user&.admin? || record.user == user || user_in_event?
+      admin? || record.user == user || user_in_event?
     end
 
     def clear_screenshots?
-      user&.auditor? || record.user == user || user_in_event?
+      auditor? || record.user == user || user_in_event?
     end
 
     def organizer_approve?
-      user&.admin? || manager_in_event?
+      admin? || manager_in_event?
     end
 
     def organizer_reject?
-      user&.admin? || manager_in_event?
+      admin? || manager_in_event?
     end
 
     private

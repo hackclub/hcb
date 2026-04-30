@@ -2,15 +2,15 @@
 
 class ContractPolicy < ApplicationPolicy
   def create?
-    user&.admin?
+    admin?
   end
 
   def void?
-    user&.admin?
+    admin?
   end
 
   def reissue?
-    user&.admin?
+    admin?
   end
 
 end

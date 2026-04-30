@@ -7,38 +7,38 @@ class Event
     end
 
     def show?
-      record.user == user || user.auditor?
+      record.user == user || auditor?
     end
 
     def airtable?
-      user.auditor?
+      auditor?
     end
 
     def admin_approve?
-      user.admin?
+      admin?
     end
 
     def admin_reject?
-      user.admin?
+      admin?
     end
 
     def admin_activate?
-      user.admin?
+      admin?
     end
 
     def edit?
-      user.admin?
+      admin?
     end
 
     def update?
-      return true if user.admin?
+      return true if admin?
       return record.user == user if record.draft?
 
       false
     end
 
     def archive?
-      user.admin? || record.user == user
+      admin? || record.user == user
     end
 
     alias_method :unarchive?, :archive?
@@ -46,7 +46,7 @@ class Event
     def resend_to_cosigner?
       return false if record.contract&.party(:cosigner).nil?
 
-      record.contract.party(:cosigner).pending? && (record.user == user || user.admin?)
+      record.contract.party(:cosigner).pending? && (record.user == user || admin?)
     end
 
     alias_method :personal_info?, :show?
@@ -56,11 +56,11 @@ class Event
     alias_method :review?, :show?
 
     def mark_videos_watched?
-      user.admin? || record.user == user
+      admin? || record.user == user
     end
 
     def submission?
-      (record.user == user && !record.draft?) || user.auditor?
+      (record.user == user && !record.draft?) || auditor?
     end
 
     alias_method :submit?, :update?

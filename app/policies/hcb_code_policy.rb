@@ -2,11 +2,11 @@
 
 class HcbCodePolicy < ApplicationPolicy
   def show?
-    user&.auditor? || present_in_events? || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
+    auditor? || present_in_events? || (record.stripe_cardholder.present? && record.stripe_cardholder.user == user)
   end
 
   def memo_frame?
-    user&.admin?
+    admin?
   end
 
   def edit?
@@ -22,11 +22,11 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def attach_receipt?
-    user&.admin? || gte_member_in_events? || user_made_purchase?
+    admin? || gte_member_in_events? || user_made_purchase?
   end
 
   def send_receipt_sms?
-    user&.admin?
+    admin?
   end
 
   def dispute?
@@ -64,7 +64,7 @@ class HcbCodePolicy < ApplicationPolicy
   # if users have permissions greater than or equal to member in events
   def gte_member_in_events?
     return false if user.nil? # dont run checks if the user isnt signed in
-    return true if user&.admin?
+    return true if admin?
 
     record.events.any? do |e|
       OrganizerPosition.role_at_least?(user, e, :member)

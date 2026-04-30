@@ -23,10 +23,6 @@ class TagPolicy < ApplicationPolicy
 
   private
 
-  def auditor?
-    user&.auditor?
-  end
-
   def reader?
     OrganizerPosition.role_at_least?(user, record.event, :reader)
   end

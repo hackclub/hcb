@@ -7,7 +7,7 @@ class Ledger
         LedgerPolicy.new(user, record.primary_ledger).show?
       else
         # Item is unampped, only admins can see it
-        user&.admin?
+        admin?
       end
     end
 

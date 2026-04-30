@@ -54,4 +54,14 @@ class ApplicationPolicy
 
   end
 
+  private
+
+  def admin?
+    user&.admin?
+  end
+
+  def auditor?
+    user&.auditor?
+  end
+
 end

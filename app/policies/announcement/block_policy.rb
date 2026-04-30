@@ -28,10 +28,6 @@ class Announcement
       admin? || manager?
     end
 
-    def admin?
-      user&.admin?
-    end
-
     def manager?
       OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
