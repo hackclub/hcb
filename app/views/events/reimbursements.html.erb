@@ -48,15 +48,16 @@
       <table>
         <thead>
         <tr>
-          <th>Status</th>
-          <th>Report</th>
-          <th>From</th>
+          <% @table_columns.each do |column| %>
+            <th>
+              <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
+            </th>
+          <% end %>
           <th class="text-right">Amount</th>
-          <th class="text-right">Created</th>
         </tr>
         </thead>
         <tbody>
-          <% @reports.order(created_at: :desc).each do |report| %>
+          <% @reports.each do |report| %>
             <tr class="clickable">
               <td>
                 <% if report.status_description %>
@@ -75,10 +76,10 @@
                 <%= user_mention report.user %>
               </td>
               <td class="text-right">
-                <%= report.amount.format(with_currency: @format_reports_with_currency) %>
+                <%= format_date report.created_at %>
               </td>
               <td class="text-right">
-                <%= format_date report.created_at %>
+                <%= report.amount.format(with_currency: @format_reports_with_currency) %>
               </td>
             </tr>
           <% end %>
