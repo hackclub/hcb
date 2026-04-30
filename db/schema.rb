@@ -732,7 +732,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_29_010000) do
   end
 
   create_table "documents", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "archived_at"
     t.bigint "archived_by_id"
     t.integer "category", default: 0, null: false
