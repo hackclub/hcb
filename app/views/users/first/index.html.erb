@@ -315,7 +315,7 @@
   </div>
 </div>
 
-<section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
+<section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" data-controller="email-compose" role="dialog">
   <%= modal_header "Email your advisor" %>
 
   <p class="mt-0">
@@ -326,7 +326,7 @@
   <h3 class="heading text-base mt-4 mb-2">Step 1 &mdash; Send the email</h3>
 
   <div class="flex flex-col gap-2 mb-2">
-    <%= link_to @gmail_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center" do %>
+    <%= link_to @gmail_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
       <svg viewBox="0 0 256 193" xmlns="http://www.w3.org/2000/svg" width="20" height="16" aria-hidden="true">
         <path d="M58.182 192.05V93.14L27.507 65.077 0 49.504v125.091c0 9.658 7.825 17.455 17.455 17.455h40.727Z" fill="#4285F4" />
         <path d="M197.818 192.05h40.727c9.659 0 17.455-7.826 17.455-17.455V49.505l-31.156 17.837-27.026 25.798v98.91Z" fill="#34A853" />
@@ -336,17 +336,17 @@
       </svg>
       Open in Gmail
     <% end %>
-    <%= link_to @outlook_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center" do %>
+    <%= link_to @outlook_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
       <%= image_tag "microsoft-outlook.svg", alt: "", width: 20, height: 20, "aria-hidden": "true" %>
       Open in Outlook
     <% end %>
-    <%= link_to @mailto_compose_url, class: "btn bg-info gap-2 justify-center" do %>
+    <%= link_to @mailto_compose_url, class: "btn bg-info gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
       Use my default mail app
     <% end %>
   </div>
 
   <p class="text-sm text-center mb-4 mt-0">
-    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!") do %>
+    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!", data: { action: "click->email-compose#enableSubmit" }) do %>
       Or copy the email
     <% end %>
   </p>
@@ -360,8 +360,9 @@
 
   <%= form_with(url: raffles_path, method: :post) do |form| %>
     <%= form.hidden_field :program, value: "first-worlds-2026-airpods" %>
-    <%= form.submit "I sent the email" %>
+    <%= form.submit "I sent the email", disabled: true, data: { "email-compose-target": "submit" } %>
   <% end %>
+  <p class="text-xs muted mt-2 mb-0" data-email-compose-target="hint">Choose one of the options above to send the email first.</p>
 
   <br>
   <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
