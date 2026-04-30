@@ -17,7 +17,7 @@ RSpec.describe Admin::EventGroupsController do
       daydream = create(:event_group, user: barney, name: "Daydream")
       daydream.memberships.create!(event: create(:event, name: "Daydream Ottawa"))
 
-      sign_in(orpheus)
+      create_session(orpheus, verified: true)
 
       get(:index)
 
@@ -41,7 +41,7 @@ RSpec.describe Admin::EventGroupsController do
   describe "#create" do
     it "creates a new group owned by the current user" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(:create, params: { event_group: { name: "Scrapyard" } })
 
@@ -55,7 +55,7 @@ RSpec.describe Admin::EventGroupsController do
 
     it "reports an error if there are validation issues" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(:create, params: { event_group: { name: "" } })
 
@@ -67,7 +67,7 @@ RSpec.describe Admin::EventGroupsController do
   describe "#destroy" do
     it "deletes the group along with its memberships" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       event = create(:event)
       group = user.event_groups.create!(name: "Scrapyard")
@@ -91,7 +91,7 @@ RSpec.describe Admin::EventGroupsController do
       event = create(:event)
       daydream.memberships.create!(event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:event, params: { event_id: event.id })
 
@@ -115,7 +115,7 @@ RSpec.describe Admin::EventGroupsController do
   describe "#update_event" do
     it "clears out unselected groups" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       event = create(:event)
 
@@ -140,7 +140,7 @@ RSpec.describe Admin::EventGroupsController do
 
     it "adds selected groups and maintains existing ones" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       event = create(:event)
 
@@ -173,7 +173,7 @@ RSpec.describe Admin::EventGroupsController do
 
     it "adds a new group" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       event = create(:event)
 

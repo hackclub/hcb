@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# Parallel wrapper around erb_lint.
+#
+# erb_lint has no native parallel mode and its --cache flag is incompatible
+# with -a (autocorrect). Shard files across N workers to cut wall time.
+#
+# Each worker's output is buffered to a tempfile and printed in order after
+# all workers finish, so errors read as coherent blocks instead of interleaved.
+#
+# Usage:
+#   bin/erb_lint           # check only
+#   bin/erb_lint -a        # autocorrect
+#   ERB_JOBS=4 bin/erb_lint -a   # override auto-detected cpu count
+set -eo pipefail
+
+# Run from repo root so `find app/views` resolves regardless of cwd.
+cd "$(dirname "$0")/.."
+
+default_jobs() {
+  if command -v nproc >/dev/null 2>&1; then
+    nproc
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    sysctl -n hw.ncpu
+  else
+    echo 4
+  fi
+}
+ERB_JOBS=${ERB_JOBS:-$(default_jobs)}
+[[ "$ERB_JOBS" =~ ^[1-9][0-9]*$ ]] || {
+  echo "ERB_JOBS must be a positive integer (got: $ERB_JOBS)" >&2
+  exit 2
+}
+
+echo "erb_lint: running ${ERB_JOBS} workers" >&2
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+# NUL-safe read so paths with whitespace/newlines survive.
+files=()
+while IFS= read -r -d '' f; do
+  files+=("$f")
+done < <(find app/views -name "*.html*.erb" -print0)
+
+pids=()
+for ((i=0; i<ERB_JOBS; i++)); do
+  shard=()
+  for ((j=i; j<${#files[@]}; j+=ERB_JOBS)); do
+    shard+=("${files[$j]}")
+  done
+  # Skip empty shards — passing zero files to erb_lint makes it fall back to
+  # its default glob and re-scan everything, duplicating output and summaries.
+  if [[ ${#shard[@]} -eq 0 ]]; then
+    : >"$tmpdir/$i.out"
+    continue
+  fi
+  (bundle exec erb_lint "$@" "${shard[@]}") >"$tmpdir/$i.out" 2>&1 &
+  pids+=($!)
+done
+
+failed=0
+for pid in "${pids[@]}"; do
+  wait "$pid" && continue
+  rc=$?
+  # Preserve highest exit code (130 from SIGINT outranks 1 from lint errors).
+  if (( rc > failed )); then
+    failed=$rc
+  fi
+done
+
+# Per-worker: move the summary line ("N error(s) were found" / "No errors...")
+# back to the end. erb_lint emits it on stderr (unbuffered) while details go
+# on stdout (block-buffered when redirected), so without this the summary
+# leaks above its own error details.
+#
+# Then globally: collapse the recurring parser/ruby34 warning emitted by
+# every worker down to a single copy at the top.
+for ((i=0; i<ERB_JOBS; i++)); do
+  [[ -s "$tmpdir/$i.out" ]] || continue
+  awk '
+    /^[0-9]+ error\(s\) were found in ERB files$/ ||
+    /^No errors were found in ERB files$/ { summary=$0; next }
+    { print }
+    END { if (summary) print summary }
+  ' "$tmpdir/$i.out"
+done | awk '
+  /^warning: parser\/current is loading parser\/ruby34/ ||
+  /^Please see https:\/\/github.com\/whitequark\/parser/ {
+    if (!seen[$0]++) print
+    next
+  }
+  { print }
+'
+
+exit $failed

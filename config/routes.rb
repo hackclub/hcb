@@ -178,6 +178,18 @@ Rails.application.routes.draw do
         get "data"
       end
     end
+
+    resources "first", only: [:index, :create] do
+      collection do
+        get "welcome", to: "first#new"
+        get "team", to: "first#team"
+        post "verify_email", to: "first#verify_email"
+        post "request_org_invite", to: "first#request_org_invite"
+        delete "sign_out", to: "first#sign_out"
+      end
+    end
+
+
     resources :email_updates, only: [] do
       collection do
         get "verify"
@@ -691,7 +703,7 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
 
           resources :donations, path: "donations", only: [:create] do
-            collection do
+            member do
               post "payment_intent"
             end
           end
@@ -754,8 +766,6 @@ Rails.application.routes.draw do
     end
   end
 
-  post "api/v1/users/find", to: "api#user_find"
-  post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
   get "api/flags", to: "api#flags"
 

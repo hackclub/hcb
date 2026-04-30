@@ -15,7 +15,7 @@ RSpec.describe DisbursementsController do
       destination_event = create(:event)
       create(:organizer_position, user: sender, event: destination_event)
 
-      sign_in(sender)
+      create_session(sender, verified: true)
 
       expect do
         post(
@@ -49,7 +49,7 @@ RSpec.describe DisbursementsController do
 
       destination_event = create(:event)
 
-      sign_in(sender)
+      create_session(sender, verified: true)
 
       expect do
         post(
@@ -85,7 +85,7 @@ RSpec.describe DisbursementsController do
       admin = create(:user, :make_admin)
       disbursement = create(:disbursement)
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
@@ -114,7 +114,7 @@ RSpec.describe DisbursementsController do
         destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
       )
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
@@ -143,7 +143,7 @@ RSpec.describe DisbursementsController do
         destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
       )
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
