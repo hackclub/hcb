@@ -55,7 +55,9 @@ module Reimbursement
     scope :in_transit_or_pending, -> { where("aasm_state in (?)", ["pending", "in_transit"]) }
 
     after_create do
-      CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
+      cpt = CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
+
+      TransactionCategoryService.new(model: cpt).set!(slug: "wise-fees", assignment_strategy: "automatic") if expense.is_fee?
     end
 
     aasm do
