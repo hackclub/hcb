@@ -346,7 +346,7 @@
   </div>
 
   <p class="text-sm text-center mb-4 mt-0">
-    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!", data: { action: "click->email-compose#enableSubmit" }) do %>
+    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!", "data-action": "click->clipboard#copy click->email-compose#enableSubmit") do %>
       Or copy the email
     <% end %>
   </p>
