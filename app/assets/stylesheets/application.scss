@@ -708,3 +708,44 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 .scroll-fade.is-bottom-overflowing {
   --bottom-mask-size: 48px !important;
 }
+
+.mermaidTooltip {
+  background: rgba(50, 50, 55, 0.9) !important;
+  color: #fff !important;
+  border: none !important;
+
+  border-radius: 10px !important;
+  padding: 5px 10px !important;
+}
+
+.nodeLabel p {
+  color: #000 !important;
+
+  [data-dark='true'] & {
+    color: #fff !important;
+  }
+}
+
+.arrowMarkerPath {
+  fill: #aaa !important;
+  stroke: #aaa !important;
+}
+
+.flowchart-link {
+  stroke: rgba(200, 200, 200, 0.75) !important;
+  stroke-width: 2px !important;
+
+  [data-dark='true'] & {
+    stroke: rgba(255, 255, 255, 0.3) !important;
+  }
+}
+
+.child > rect {
+  fill: rgba(245, 245, 245, 0.75) !important;
+  stroke: rgba(200, 200, 200, 0.75) !important;
+
+  [data-dark='true'] & {
+    fill: rgba(50, 50, 55, 0.5) !important;
+    stroke: rgba(255, 255, 255, 0.3) !important;
+  }
+}

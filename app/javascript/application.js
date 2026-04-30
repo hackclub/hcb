@@ -62,7 +62,7 @@ Alpine.start()
 
 mermaid.initialize({
   startOnLoad: true,
-  theme: 'default',
+  theme: document.body.classList.contains('dark') ? 'dark' : 'default',
   securityLevel: 'loose',
 })
 

@@ -401,7 +401,6 @@ module EventsHelper
     end
 
     lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b,stroke-width:2px,font-family:system-ui"
-    lines << "  classDef default fill:#f5f7fa,color:#1f2d3d,stroke:#c0ccda,stroke-width:1.5px,font-family:system-ui"
     lines.join("\n")
   end
 
