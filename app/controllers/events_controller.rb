@@ -1055,7 +1055,7 @@ class EventsController < ApplicationController
   REIMBURSEMENT_COLUMNS = [
     { key: "aasm_state", display: "Status" },
     { key: "name", display: "Report" },
-    { key: "user_name", display: "From", column: "users.full_name" },
+    { key: "user_name", display: "From", column: "user" },
     { key: "created_at", default: true, display: "Created", right: true },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
