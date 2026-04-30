@@ -60,14 +60,15 @@ Alpine.data('application_project_info', application_project_info_form)
 
 Alpine.start()
 
+window.mermaid = mermaid
 mermaid.initialize({
-  startOnLoad: true,
-  securityLevel: 'loose',
   flowchart: {
     curve: 'rounded',
   },
   theme: 'default',
 })
+
+document.addEventListener('turbo:render', () => mermaid.run())
 
 import LocalTime from 'local-time'
 LocalTime.start()
