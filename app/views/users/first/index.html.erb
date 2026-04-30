@@ -133,7 +133,7 @@
     <% if matching_event.users.exists?(id: current_user(allow_unverified: true).id) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
-          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+          <img src="https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
         </div>
 
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
@@ -151,14 +151,14 @@
             </div>
           </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png')] bg-right bg-no-repeat bg-contain"></div>
         </div>
       </div>
     <% else %>
       <% pending_request = matching_event.organizer_position_invite_requests.pending.exists?(requester: current_user(allow_unverified: true)) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
-          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+          <img src="https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
         </div>
 
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
@@ -200,7 +200,7 @@
             </div>
           </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png')] bg-right bg-no-repeat bg-contain"></div>
         </div>
       </div>
     <% end %>
