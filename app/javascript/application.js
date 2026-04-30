@@ -59,6 +59,22 @@ Alpine.data('application_project_info', application_project_info_form)
 
 Alpine.start()
 
+async function initMermaid() {
+  if (!document.querySelector('.mermaid')) return
+  const { default: mermaid } = await import('mermaid')
+  mermaid.initialize({
+    flowchart: {
+      curve: 'rounded',
+    },
+    theme: 'default',
+    securityLevel: 'antiscript',
+  })
+  mermaid.run()
+}
+
+document.addEventListener('turbo:load', initMermaid)
+document.addEventListener('turbo:render', initMermaid)
+
 import LocalTime from 'local-time'
 LocalTime.start()
 
