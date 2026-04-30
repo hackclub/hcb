@@ -1,0 +1,354 @@
+<% title "Home" %>
+<% page_md %>
+
+<%= render "users/nav", selected: current_user&.redirect_to_first_dashboard? ? :home : :first %>
+
+<% affiliation = current_user(allow_unverified: true)&.affiliations&.find_by(name: "first") %>
+
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-start justify-start sm:justify-between text-left w-auto m-0 mt-10 sm:mt-3 gap-2">
+  <div>
+    <span class="<%= "warning" if fall? %>">
+      Welcome to <span class="primary">HCB</span>
+    </span>
+  </div>
+  <span class="badge ml-0 text-sm rounded-xl caps hidden md:inline <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+</h1>
+
+<h2 class="text-4xl sm:text-5xl md:text-6xl my-8 text-balance">
+  The <span class="italic" style="font-weight: 800;">ultimate booster club</span>
+
+  for FRC, FTC, and FLL teams
+</h2>
+
+<% if affiliation %>
+  <div class="card my-4 flex flex-row items-center gap-4">
+    <%= avatar_for current_user(allow_unverified: true), size: 48 %>
+    <div class="w-max flex-shrink-0">
+      <h3 class="heading my-0"><%= current_user(allow_unverified: true).full_name %></h3>
+      <% if affiliation.role.present? %>
+        <p class="my-0"><%= affiliation.role.titleize %></p>
+      <% end %>
+      <p class="my-0 muted">
+        <%= affiliation.league&.upcase %> #<%= affiliation.team_number %>
+        <% if affiliation.team_name.present? %>
+          · <%= affiliation.team_name %>
+        <% end %>
+      </p>
+    </div>
+
+    <div class="flex-grow w-full">
+    </div>
+
+    <% if affiliation.league&.downcase == "frc" %>
+      <img src="<%= "https://www.thebluealliance.com/avatar/2026/frc#{affiliation.team_number}.png" %>" alt="" class="h-[48px] rounded">
+    <% end %>
+  </div>
+<% end %>
+
+<% if ["head_coach", "mentor_advisor"].include?(affiliation&.role) && @team_event.nil? && @teammates.present? %>
+  <div class="card my-4">
+    <div class="flex flex-row items-center gap-3 mb-3">
+      <div class="avatar-row avatar-row--no-transform flex-shrink-0">
+        <% @teammates.each do |teammate| %>
+          <%= avatar_for teammate, size: 32 %>
+        <% end %>
+      </div>
+      <h3 class="heading my-0">Your teammates are interested</h3>
+    </div>
+
+    <% sentence = team_community_sentence(
+         users: @teammates,
+         total: @teammates_total,
+         team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+         singular_suffix: "is already interested in HCB",
+         plural_suffix: "are already interested in HCB"
+       ) %>
+
+    <p class="my-2"><%= sentence %>. Get your team's organization set up to fundraise and spend together.</p>
+
+    <%= link_to "Start your team's organization →", apply_path, class: "btn" %>
+  </div>
+<% end %>
+
+<% if @macbook_raffle.present? %>
+  <%= render "users/first/raffle", raffle: @macbook_raffle, raffle_name: "MacBook Neo" %>
+<% end %>
+
+<% if @printer_raffle.present? %>
+  <%= render "users/first/raffle", raffle: @printer_raffle, raffle_name: "Bambu Lab A1" %>
+<% end %>
+
+<% if @airpods_raffle.present? %>
+  <%= render "users/first/raffle", raffle: @airpods_raffle, raffle_name: "AirPods Pro 3" %>
+<% end %>
+
+<%# this is how im checking age since they arent entering their birthday %>
+<% if ["student_leader", "student_member"].include?(affiliation&.role) && Date.current < Date.new(2026, 5, 3) %>
+  <% matching_event = Event::Affiliation.matching_first_event_for(current_user(allow_unverified: true)) %>
+  <% if matching_event.nil? %>
+    <% unless Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods").any? %>
+      <div class="card flex flex-col bg-black !text-white gap-3">
+        <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
+          <img src="https://cdn.hackclub.com/019dd4d6-4dbb-7157-9aa5-d9c778879ed9/airpods-pro-3-hero-3120577713.png" alt="AirPods Pro 3" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+        </div>
+
+        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+          <div class="flex-grow">
+            <p class="text-xs uppercase tracking-widest text-white/60 mt-0 mb-2">🎟 FIRST Championships 2026 Raffle</p>
+            <h2 class="heading mt-0 mb-3 w-full">
+              Get a free AirPods Pro 3!
+            </h2>
+            <p class="my-0 md:my-2">Email your advisor with information about HCB, and we'll sign you up for our AirPods raffle! Get a chance to win a free AirPods Pro 3.</p>
+            <% if @teammates.present? %>
+              <div class="flex flex-row items-center gap-3 mt-4">
+                <div class="avatar-row avatar-row--no-transform flex-shrink-0">
+                  <% @teammates.each do |teammate| %>
+                    <%= avatar_for teammate, size: 32 %>
+                  <% end %>
+                </div>
+                <% sentence = team_community_sentence(
+                     users: @teammates,
+                     total: @teammates_total,
+                     team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+                     singular_suffix: "is already interested in HCB",
+                     plural_suffix: "are already interested in HCB"
+                   ) %>
+                <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
+              </div>
+            <% end %>
+            <%= link_to "#", class: "btn bg-info gap-1 hidden sm:inline-flex mt-2", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
+              Email your advisor about HCB →
+            <% end %>
+          </div>
+
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019dd4d6-4dbb-7157-9aa5-d9c778879ed9/airpods-pro-3-hero-3120577713.png')] bg-right bg-no-repeat bg-contain"></div>
+        </div>
+
+        <%= link_to "#", class: "btn bg-info gap-1 sm:hidden w-full justify-center", "data-behavior": "modal_trigger", "data-modal": "modal" do %>
+          Email your advisor about HCB →
+        <% end %>
+      </div>
+    <% end %>
+  <% elsif !Raffle.where(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer").any? %>
+    <% if matching_event.users.exists?(id: current_user(allow_unverified: true).id) %>
+      <div class="card flex flex-col bg-black !text-white gap-3">
+        <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
+          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+        </div>
+
+        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+          <div class="flex-grow">
+            <p class="text-xs uppercase tracking-widest text-white/60 mt-0 mb-2">🎟 FIRST Championships 2026 Raffle</p>
+            <h2 class="heading mt-0 mb-3 w-full">
+              Get a free 3D printer!
+            </h2>
+            <p class="my-0 md:my-2">Good news! You're a member of a robotics team that runs on HCB. Click the button below and get a chance to win a free Bambu Lab A1.</p>
+            <div class="mb-6">
+              <%= form_with(url: raffles_path, method: :post) do |form| %>
+                <%= form.hidden_field :program, value: "first-worlds-2026-printer" %>
+                <%= form.submit "Enter raffle" %>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+        </div>
+      </div>
+    <% else %>
+      <% pending_request = matching_event.organizer_position_invite_requests.pending.exists?(requester: current_user(allow_unverified: true)) %>
+      <div class="card flex flex-col bg-black !text-white gap-3">
+        <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
+          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+        </div>
+
+        <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+          <div class="flex-grow">
+            <p class="text-xs uppercase tracking-widest text-white/60 mt-0 mb-2">🎟 FIRST Championships 2026 Raffle</p>
+            <h2 class="heading mt-0 mb-3 w-full">
+              Get a free 3D printer!
+            </h2>
+            <p class="my-0 md:my-2">
+              Good news&mdash;<strong><%= affiliation.team_name.presence || "your team" %></strong> (<%= affiliation.league&.upcase %> #<%= affiliation.team_number %>) is already running on HCB!
+              <% if pending_request %>
+                Your request to join <strong><%= matching_event.name %></strong> is pending&mdash;One of your team members will review it soon. Once approved, we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+              <% else %>
+                Request to join their organization, and once you're approved we'll automatically sign you up for our 3D printer raffle for a chance to win a free Bambu Lab A1.
+              <% end %>
+            </p>
+            <% if @team_org_members.present? %>
+              <div class="flex flex-row items-center gap-3 mt-4">
+                <div class="avatar-row avatar-row--no-transform flex-shrink-0">
+                  <% @team_org_members.each do |member| %>
+                    <%= avatar_for member, size: 32 %>
+                  <% end %>
+                </div>
+                <% sentence = team_community_sentence(
+                     users: @team_org_members,
+                     total: @team_org_members_total,
+                     singular_suffix: "is on this team",
+                     plural_suffix: "are on this team"
+                   ) %>
+                <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
+              </div>
+            <% end %>
+            <div class="mb-6 mt-4">
+              <% if pending_request %>
+                <button type="button" class="btn" disabled>Request pending</button>
+              <% else %>
+                <%= button_to "Request to join", request_org_invite_first_index_path, method: :post, class: "btn" %>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+  <!--<img class="h-full" src="https://cdn.hackclub.com/019d4f15-3cb4-7a3d-88c0-296091c82d61/bambu-lab-a1-mini-1-pc-702055-en.png">-->
+<% end %>
+
+<div class="flex gap-3 items-stretch justify-center flex-col md:flex-row my-4">
+  <div class="card w-full">
+    <h2 class="heading mt-0 mb-3">
+      HCB in action
+    </h2>
+    <p class="my-3">
+      <strong>2854 EVHS The Prototypes</strong> saves hundreds of hours on bookkeeping and accounting by using HCB to raise and spend money
+      for their FRC team. HCB's online donation form makes grassroots crowdfunding easy, and HCB's cards and reimbursements makes spending
+      quick and simple.
+    </p>
+    <div class="flex flex-row my-4 pr-1 gap-2 justify-between">
+      <div class="flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "payment-docs" %>
+        $68k raised
+      </div>
+      <div class="flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "support-fill" %>
+        25 donations
+      </div>
+      <div class="hidden md:flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "event-star" %>
+        2 years
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to "/prototypes", class: "btn bg-success gap-1", target: :_blank do %>
+        2854 EVHS The Prototypes on HCB →
+      <% end %>
+    </div>
+  </div>
+  <div class="w-full card bg-[url('https://cdn.hackclub.com/019dd791-107c-7e7f-b5d4-fed1b310938a/Screenshot%20From%202026-04-28%2023-48-02.png')] bg-left-top bg-cover min-h-[200px]"></div>
+</div>
+
+<div class="card my-4">
+  <h2 class="heading mt-0 my-3">
+    Give your finances superpowers
+  </h2>
+  <p>
+    HCB provides hundreds of <em>FIRST</em> teams with a powerful financial toolkit for raising and spending money. An online donation form, effortless expense reimbursements, and free debit cards help your team worry less about finances.
+  </p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "bank-account", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">501(c)(3) nonprofit status</h2>
+    </div>
+    <p>Forget about filing paperwork and become part of Hack Club's legal entity to operate as a 501(c)(3) nonprofit.</p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "briefcase", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Corporate matching</h2>
+    </div>
+    <p>Instantly double your incoming donations with corporate matching platforms like Benevity.<p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "support", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Online donation form</h2>
+    </div>
+    <p>Fund your team through grassroots support with an online donation page. Accept credit card donations instantly with zero card processing fees.</p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "card", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Debit cards</h2>
+    </div>
+    <p>Spend your funds anywhere instantly with free physical and virtual debit cards. Plus, invite team members with built-in spending controls to develop financial literacy.</p>
+  </div>
+</div>
+
+<div class="card card--sunken flex flex-col items-center p-10 gap-5 mt-4">
+  <h2 class="text-4xl my-0 text-center w-full">
+    Ready to get started?
+  </h2>
+  <p class="my-0 text-center">Our team is standing by to help your robotics team succeed.</p>
+  <div class="flex flex-row flex-wrap items-center justify-center gap-4">
+    <%= link_to "https://forms.hackclub.com/first-hcb-call", target: "_blank", rel: "noopener", class: "btn whitespace-nowrap flex-shrink-0" do %>
+      <%= inline_icon "event-add" %>
+      Book a meeting
+    <% end %>
+
+    <div class="avatar-row" style="max-width: 300px;">
+      <% User.where(id: [2501, 1803, 8507, 16174, 2046]).find_each do |user| %>
+        <%= avatar_for user, size: 30 %>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<section id="modal" class="modal modal--scroll bg-snow" data-behavior="modal" data-controller="email-compose" role="dialog">
+  <%= modal_header "Email your advisor" %>
+
+  <p class="mt-0">
+    Send an email to your advisor to ask them about running your team on HCB.
+    Worry-free finances, effortless spending, and powerful fundraising tools are at your fingertips.
+  </p>
+
+  <h3 class="heading text-base mt-4 mb-2">Step 1 &mdash; Send the email</h3>
+
+  <div class="flex flex-col gap-2 mb-2">
+    <%= link_to @gmail_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
+      <svg viewBox="0 0 256 193" xmlns="http://www.w3.org/2000/svg" width="20" height="16" aria-hidden="true">
+        <path d="M58.182 192.05V93.14L27.507 65.077 0 49.504v125.091c0 9.658 7.825 17.455 17.455 17.455h40.727Z" fill="#4285F4" />
+        <path d="M197.818 192.05h40.727c9.659 0 17.455-7.826 17.455-17.455V49.505l-31.156 17.837-27.026 25.798v98.91Z" fill="#34A853" />
+        <path d="m58.182 93.14-4.174-38.647 4.174-36.989L128 69.868l69.818-52.364 4.669 33.95-4.669 41.685L128 145.504z" fill="#EA4335" />
+        <path d="M197.818 17.504V93.14L256 49.504V26.231c0-21.585-24.64-33.89-41.89-20.945l-16.292 12.218Z" fill="#FBBC04" />
+        <path d="M0 49.504l26.759 20.07L58.182 93.14V17.504L41.89 5.286C24.61-7.66 0 4.646 0 26.231v23.273Z" fill="#C5221F" />
+      </svg>
+      Open in Gmail
+    <% end %>
+    <%= link_to @outlook_compose_url, target: "_blank", rel: "noopener", class: "btn !bg-white !text-black border border-solid border-muted gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
+      <%= image_tag "microsoft-outlook.svg", alt: "", width: 20, height: 20, "aria-hidden": "true" %>
+      Open in Outlook
+    <% end %>
+    <%= link_to @mailto_compose_url, class: "btn bg-info gap-2 justify-center", data: { action: "click->email-compose#enableSubmit" } do %>
+      Use my default mail app
+    <% end %>
+  </div>
+
+  <p class="text-sm text-center mb-4 mt-0">
+    <%= copy_to_clipboard(@copy_email_text, class: "muted underline", "data-clipboard-confirm-text-value": "Copied!", "data-action": "click->clipboard#copy click->email-compose#enableSubmit") do %>
+      Or copy the email
+    <% end %>
+  </p>
+
+  <h3 class="heading text-base mt-4 mb-2">Step 2 &mdash; Confirm you sent it</h3>
+
+  <p>
+    <strong>We check every entry.</strong>
+    You must be 18 years of age or younger to be eligible. Make sure your email is sent and that <code><%= @advisor_email_cc %></code> is in the CC line. Entries without a verified email won't be eligible for the drawing. It may take a few hours for us to confirm receipt.
+  </p>
+
+  <%= form_with(url: raffles_path, method: :post) do |form| %>
+    <%= form.hidden_field :program, value: "first-worlds-2026-airpods" %>
+    <%= form.submit "I sent the email", disabled: true, data: { "email-compose-target": "submit" } %>
+  <% end %>
+  <p class="text-xs muted mt-2 mb-0" data-email-compose-target="hint">Choose one of the options above to send the email first.</p>
+
+  <br>
+  <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
+</section>

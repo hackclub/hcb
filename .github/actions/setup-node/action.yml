@@ -1,0 +1,24 @@
+name: Set up Node
+description: Sets up Node from package.json, caches the yarn download and node_modules, and installs JS packages.
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      id: setup-node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: package.json
+        # Handles the yarn download cache automatically, keyed on
+        # yarn.lock — no separate actions/cache step needed for it.
+        cache: yarn
+    - name: Cache node_modules
+      uses: actions/cache@v5
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ steps.setup-node.outputs.node-version }}-modules-${{ hashFiles('yarn.lock') }}
+    - name: Install JS packages
+      # With node_modules already on disk, `--frozen-lockfile` is a
+      # fast consistency check; on cache miss it installs the full
+      # tree. Either way we end up with a lockfile-matching tree.
+      shell: bash
+      run: yarn install --frozen-lockfile --prefer-offline

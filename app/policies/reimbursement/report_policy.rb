@@ -30,6 +30,23 @@ module Reimbursement
       admin || manager || (creator && open)
     end
 
+    # Authorization for placing a report on `record.event` — either changing
+    # the event of an existing report (ReportsController#update) or building
+    # a fresh report on a destination event as part of moving an expense
+    # (ExpensesController#update). Callers must ensure `record.event` has
+    # been set to the destination event before authorizing (ActiveRecord
+    # FK-cache reset on `event_id=` takes care of this for the reports
+    # path).
+    #
+    # TODO: currently requires manager because changing the event carries
+    # cascade side-effects (expenses reset to pending, stale approved_by_id
+    # on each expense, stale reviewer_id, etc.). The intended long-term
+    # behavior is to allow members to change the event provided approvals
+    # the destination event's managers wouldn't have granted are cleared.
+    def change_event?
+      admin || manager
+    end
+
     def submit?
       unlocked && (admin || manager || creator)
     end

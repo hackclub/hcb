@@ -591,7 +591,7 @@ class AdminController < Admin::BaseController
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
   rescue Faraday::Error => e
-    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
@@ -604,7 +604,7 @@ class AdminController < Admin::BaseController
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e
-    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
