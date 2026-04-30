@@ -145,7 +145,7 @@ module Users
     end
 
     def macbook_qr_code
-      raffle = current_user.raffles.find_by(program: "first-worlds-2026-macbook")
+      raffle = current_user(allow_unverified: true).raffles.find_by(program: "first-worlds-2026-macbook")
 
       if raffle.nil?
         head :not_found
