@@ -17,7 +17,11 @@ module ApplicationHelper
                  columns.find { |c| c[:key] == default_key.to_s } ||
                  columns.first
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
-    relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    if column_def[:sql]
+      relation.order(Arel.sql("#{column_def[:sql]} #{sort_direction}"))
+    else
+      relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    end
   end
 
   def render_money(amount, opts = {})
