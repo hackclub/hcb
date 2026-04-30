@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_29_153343) do
+ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1898,10 +1898,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_29_153343) do
     t.boolean "confirmed", default: true, null: false
     t.datetime "created_at", null: false
     t.string "program", null: false
+    t.bigint "referring_raffle_id"
     t.string "ticket_number"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["program", "user_id"], name: "index_raffles_on_program_and_user_id", unique: true
+    t.index ["referring_raffle_id"], name: "index_raffles_on_referring_raffle_id"
     t.index ["ticket_number"], name: "index_raffles_on_ticket_number", unique: true
   end
 
@@ -2937,6 +2939,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_29_153343) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
+  add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"

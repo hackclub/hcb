@@ -71,6 +71,36 @@
 <% end %>
 
 <% if @macbook_raffle.present? %>
+  <div class="card my-4 flex flex-col">
+    <h3 class="heading my-0">Earn additional tickets for the MacBook Neo raffle!</h3>
+
+    <p>
+      Share your <%= @macbook_raffle.referral_link.present? ? link_to("unique raffle link", @macbook_raffle.referral_link) : "unique raffle link" %> with your teammates and friends in FIRST robotics,
+      and you'll earn extra raffle tickets for the MacBook Neo!
+      You currently have <%= pluralize(@macbook_raffle.tickets, "ticket") %> for the MacBook Neo raffle.
+      <em>We may</em>
+    </p>
+
+    <% referrals_needed = @macbook_raffle.referrals_needed_for_next_ticket - @macbook_raffle.tier_progress %>
+    <p class="mb-0 text-center italic">Refer <%= referrals_needed %> more <%= "person".pluralize(referrals_needed) %> for your next ticket</p>
+    <div class="h-3 bg-gray-200 dark:bg-neutral-700 rounded mt-2 overflow-hidden">
+      <div class="h-full bg-primary rounded" style="width: <%= [1 + (@macbook_raffle.tier_progress.to_f / @macbook_raffle.referrals_needed_for_next_ticket) * 100, 100].min %>%;"></div>
+    </div>
+
+    <% if current_user(allow_unverified: true).verified? %>
+      <button class="btn mt-3" data-controller="clipboard" data-clipboard-text-value="<%= @macbook_raffle.referral_link %>" data-clipboard-confirm-text-value="Copied!" data-action="click->clipboard#copy">
+        Copy referral link to clipboard
+      </button>
+    <% else %>
+      <%= link_to verify_email_first_index_path, method: :post, class: "btn mt-3" do %>
+        <%= inline_icon "email-exclamation" %>
+        Verify your email to get your link
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @macbook_raffle.present? %>
   <%= render "users/first/raffle", raffle: @macbook_raffle, raffle_name: "MacBook Neo" %>
 <% end %>
 
