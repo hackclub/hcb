@@ -62,8 +62,11 @@ Alpine.start()
 
 mermaid.initialize({
   startOnLoad: true,
-  theme: document.body.classList.contains('dark') ? 'dark' : 'default',
   securityLevel: 'loose',
+  flowchart: {
+    curve: 'rounded',
+  },
+  theme: 'default',
 })
 
 import LocalTime from 'local-time'

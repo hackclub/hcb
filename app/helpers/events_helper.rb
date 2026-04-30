@@ -391,6 +391,7 @@ module EventsHelper
       else
         lines << "  e#{e.id}(\"#{safe_name}\"):::default"
         lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{safe_name}\""
+        lines << "  class e#{e.id} child"
       end
     end
 
@@ -400,8 +401,11 @@ module EventsHelper
       lines << "  e#{e.parent_id} --> e#{e.id}"
     end
 
-    lines << "  classDef root fill:#ec3750,color:#fff,stroke:#c0392b,stroke-width:2px,font-family:system-ui"
+    lines << "  classDef root fill:#ec3750,stroke:#c0392b,stroke-width:2px,font-family:system-ui"
+    lines << "  classDef default stroke-width:2px,font-family:system-ui"
+    lines << "  style e#{root.id} color:#fff"
     lines.join("\n")
+
   end
 
 end
