@@ -144,6 +144,30 @@ module Users
       render :new, status: :unprocessable_entity
     end
 
+    def macbook_qr_code
+      raffle = current_user.raffles.find_by(program: "first-worlds-2026-macbook")
+
+      if raffle.nil?
+        head :not_found
+        return
+      end
+
+      qrcode = RQRCode::QRCode.new(raffle.referral_link)
+
+      png = qrcode.as_png(
+        bit_depth: 1,
+        border_modules: 2,
+        color_mode: ChunkyPNG::COLOR_GRAYSCALE,
+        color: "black",
+        fill: "white",
+        module_px_size: 6,
+        size: 300
+      )
+
+      send_data png, filename: "MacBook Raffle Referral.png",
+        type: "image/png", disposition: "inline"
+    end
+
     private
 
     def user_params

@@ -88,9 +88,12 @@
     </div>
 
     <% if current_user(allow_unverified: true).verified? %>
-      <button class="btn mt-3" data-controller="clipboard" data-clipboard-text-value="<%= @macbook_raffle.referral_link %>" data-clipboard-confirm-text-value="Copied!" data-action="click->clipboard#copy">
-        Copy referral link to clipboard
-      </button>
+      <div class="grid grid-cols-1 md:grid-cols-2 mt-3 gap-2">
+        <button class="btn flex-grow" data-controller="clipboard" data-clipboard-text-value="<%= @macbook_raffle.referral_link %>" data-clipboard-confirm-text-value="Copied!" data-action="click->clipboard#copy">
+          Copy referral link to clipboard
+        </button>
+        <button class="btn flex-grow" data-behavior="modal_trigger" data-modal="qr_code">View QR Code</button>
+      </div>
     <% else %>
       <%= link_to verify_email_first_index_path, method: :post, class: "btn mt-3" do %>
         <%= inline_icon "email-exclamation" %>
@@ -381,4 +384,13 @@
 
   <br>
   <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
+</section>
+
+<section id="qr_code" class="modal modal--scroll bg-snow" data-behavior="modal" data-controller="email-compose" role="dialog">
+  <%= modal_header "MacBook Neo Raffle" %>
+
+  <div class="flex flex-col items-center justify-center gap-1">
+    <img src="<%= macbook_qr_code_first_index_url %>" alt="QR code" class="rounded-md" />
+    <%= link_to @macbook_raffle.referral_link, @macbook_raffle.referral_link, class: "text-center" %>
+  </div>
 </section>
