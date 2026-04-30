@@ -1,4 +1,5 @@
 import $ from 'jquery'
+import ReactOnRails from 'react-on-rails/client'
 import ReactRailsUJS from 'react_ujs'
 
 // Initialize Intl polyfill globally before any components load
@@ -9,6 +10,7 @@ import 'intl/locale-data/jsonp/en-US'
 // Explicitly import home components to ensure they're in the bundle
 // This prevents race conditions when loading via turbo frames
 import './components/home'
+import BookkeepingStripeChargeLookup from './components/bookkeeping/StripeChargeLookup'
 
 // Support component names relative to this directory:
 var componentRequireContext = require.context('./components', true)
@@ -19,6 +21,8 @@ ReactRailsUJS.handleEvent('turbo:before-render', ReactRailsUJS.handleUnmount)
 
 ReactRailsUJS.handleEvent('turbo:frame-load', ReactRailsUJS.handleMount)
 ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
+
+ReactOnRails.register({ BookkeepingStripeChargeLookup })
 
 // Remove modals triggered by <turbo-frames> when the frame is unloaded.
 // Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
