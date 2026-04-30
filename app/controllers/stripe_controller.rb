@@ -75,8 +75,10 @@ class StripeController < ActionController::Base
 
   def handle_issuing_transaction_created(event)
     tx = event[:data][:object]
-    amount = tx[:amount]
-    return unless amount < 0
+
+    if tx[:authorization].nil?
+      ::StripeAuthorization::CreateFromWebhookJob.perform_later(tx[:id])
+    end
 
     head :ok
   end
