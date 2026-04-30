@@ -1057,6 +1057,7 @@ class EventsController < ApplicationController
     { key: "name", display: "Report" },
     { key: "user_name", display: "From", column: "user" },
     { key: "created_at", default: true, display: "Created", right: true },
+    { key: "amount", display: "Amount", sql: "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')", right: true },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
 
