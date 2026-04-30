@@ -386,7 +386,7 @@
   <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
 </section>
 
-<% if @macbook_raffle.present? %>
+<% if @macbook_raffle&.referral_link.present? %>
   <section id="qr_code" class="modal modal--scroll bg-snow" data-behavior="modal" data-controller="email-compose" role="dialog">
     <%= modal_header "MacBook Neo Raffle" %>
 

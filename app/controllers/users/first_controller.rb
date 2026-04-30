@@ -145,14 +145,14 @@ module Users
     end
 
     def macbook_qr_code
-      raffle = current_user.raffles.find_by(program: "first-worlds-2026-macbook")
+      raffle_link = current_user(allow_unverified: true).raffles.find_by(program: "first-worlds-2026-macbook")&.referral_link
 
-      if raffle.nil?
+      if raffle_link.nil?
         head :not_found
         return
       end
 
-      qrcode = RQRCode::QRCode.new(raffle.referral_link)
+      qrcode = RQRCode::QRCode.new(raffle_link)
 
       png = qrcode.as_png(
         bit_depth: 1,
