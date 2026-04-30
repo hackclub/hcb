@@ -28,7 +28,7 @@ class Raffle < ApplicationRecord
   include Hashid::Rails
 
   TICKET_NUMBER_LENGTH = 6
-  REFERRAL_TICKET_TIERS = [1, 3, 8].freeze
+  REFERRAL_TICKET_TIERS = [1, 2, 5].freeze
 
   PROGRAMS_REQUIRING_CONFIRMATION = ["first-worlds-2026-airpods"].freeze
   PROGRAMS_ALLOWING_REFERRALS = ["first-worlds-2026-macbook"].freeze
@@ -78,9 +78,13 @@ class Raffle < ApplicationRecord
     referrals = referred_raffle_entries.count
     tickets = 0
     REFERRAL_TICKET_TIERS.each do |t|
-      tickets += 1 if (referrals >= t)
+      if referrals >= t
+        tickets += 1
+        referrals -= t
+      else
+        break
+      end
     end
-    referrals -= REFERRAL_TICKET_TIERS[tickets - 1]
     tickets += referrals.to_i / 10.to_i
     tickets
   end
@@ -92,12 +96,21 @@ class Raffle < ApplicationRecord
 
   def tier_progress
     referrals = referred_raffle_entries.count
-    tix = extra_tickets
-    if tix >= REFERRAL_TICKET_TIERS.length
-      referrals - REFERRAL_TICKET_TIERS.last - ((tix - REFERRAL_TICKET_TIERS.length) * 10)
-    else
-      referrals - REFERRAL_TICKET_TIERS[tix]
+    tickets = 0
+    REFERRAL_TICKET_TIERS.each do |t|
+      if referrals >= t
+        tickets += 1
+        referrals -= t
+      else
+        break
+      end
     end
+    if (referrals >= 10)
+      tens = referrals.to_i / 10.to_i
+      tickets += tens
+      referrals -= tens * 10
+    end
+    referrals
   end
 
   def referral_link

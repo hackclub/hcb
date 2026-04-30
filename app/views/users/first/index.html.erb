@@ -78,11 +78,11 @@
       Share your <%= @macbook_raffle.referral_link.present? ? link_to("unique raffle link", @macbook_raffle.referral_link) : "unique raffle link" %> with your teammates and friends in FIRST robotics,
       and you'll earn extra raffle tickets for the MacBook Neo!
       You currently have <%= pluralize(@macbook_raffle.tickets, "ticket") %> for the MacBook Neo raffle.
-      <em>We may</em>
+      <em>We may disqualify extra tickets if referrals are fraudulent.</em>
     </p>
 
     <% referrals_needed = @macbook_raffle.referrals_needed_for_next_ticket - @macbook_raffle.tier_progress %>
-    <p class="mb-0 text-center italic">Refer <%= referrals_needed %> more <%= "person".pluralize(referrals_needed) %> for your next ticket</p>
+    <p class="mb-0 text-center">Refer <%= referrals_needed %> more <%= "person".pluralize(referrals_needed) %> for your next ticket!</p>
     <div class="h-3 bg-gray-200 dark:bg-neutral-700 rounded mt-2 overflow-hidden">
       <div class="h-full bg-primary rounded" style="width: <%= [1 + (@macbook_raffle.tier_progress.to_f / @macbook_raffle.referrals_needed_for_next_ticket) * 100, 100].min %>%;"></div>
     </div>
