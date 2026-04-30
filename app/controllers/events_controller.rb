@@ -675,7 +675,23 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    combined = @increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers
+
+    sort_key, sort_direction = helpers.transfer_sort_params(TRANSFER_COLUMNS, params[:sort], params[:direction])
+    combined.sort_by! do |transfer|
+      case sort_key
+      when "amount"
+        transfer.try(:usd_amount_cents_or_quoted) || transfer.try(:usd_amount_cents) || transfer.try(:amount_cents) || transfer.try(:amount) || 0
+      when "name", "payment_for", "state_text"
+        transfer.try(sort_key.to_sym).to_s.downcase
+      else
+        transfer.created_at
+      end
+    end
+    combined.reverse! if sort_direction == "desc"
+
+    @table_columns = TRANSFER_COLUMNS
+    @transfers = Kaminari.paginate_array(combined).page(params[:page]).per(100)
   end
 
   def new_transfer
@@ -1045,6 +1061,15 @@ class EventsController < ApplicationController
   end
 
   private
+
+  TRANSFER_COLUMNS = [
+    { key: "state_text", display: "Status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "name", display: "To" },
+    { key: "payment_for", display: "For" },
+    { key: "amount", right: true, display: "Amount" },
+  ].freeze
+  private_constant :TRANSFER_COLUMNS
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
