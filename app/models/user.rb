@@ -194,6 +194,7 @@ class User < ApplicationRecord
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
+  validate :minimum_age_requirement, if: -> { birthday.present? && birthday_changed? }
 
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
@@ -776,6 +777,13 @@ class User < ApplicationRecord
   def sync_teenager_columns
     self.teenager = is_teenager?
     self.joined_as_teenager = was_teenager_on_join?
+  end
+
+  def minimum_age_requirement
+    age = age_on(Date.current)
+    if age.nil? || age < 13
+      errors.add(:birthday, "must indicate you are at least 13 years old.")
+    end
   end
 
 end
