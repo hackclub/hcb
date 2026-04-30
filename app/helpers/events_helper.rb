@@ -403,7 +403,7 @@ module EventsHelper
 
     lines << "  classDef root fill:#ec3750,stroke:#c0392b,stroke-width:2px,font-family:system-ui"
     lines << "  classDef default stroke-width:2px,font-family:system-ui"
-    lines << "  style e#{root.id} color:#fff"
+    lines << "  style e#{root.id} color:#fff!important"
     lines.join("\n")
 
   end
