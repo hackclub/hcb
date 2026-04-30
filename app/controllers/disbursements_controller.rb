@@ -5,6 +5,11 @@ class DisbursementsController < ApplicationController
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
+  EventSearchOption = Struct.new(:id, :label) do
+    def to_combobox_display = label
+  end
+  private_constant :EventSearchOption
+
   def show
     authorize @disbursement
 
@@ -47,28 +52,61 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-
-    @allowed_source_events = if admin_signed_in?
-                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                             else
-                               current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                             end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if admin_signed_in?
-                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                                  elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-                                    Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
-                                  else
-                                    current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                                  end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-
     authorize @disbursement
     render layout: "transfer"
   end
 
+  def event_search
+    skip_authorization
+    q = params[:q].presence
+    sending = params[:sending] == "true"
+    is_admin = admin_signed_in?
+
+    base = if is_admin
+             Event.order(Event::CUSTOM_SORT)
+           else
+             current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
+           end.then { |r| q.present? ? r.search_name(q) : r }
+
+    events = if sending && !is_admin
+               sendable_event_search_results(base)
+             else
+               base.limit(20).select(:id, :name).to_a
+             end
+
+    options = events.map do |e|
+      EventSearchOption.new(e.id, is_admin ? "#{e.name} (#{e.id})" : e.name)
+    end
+
+    render turbo_stream: helpers.async_combobox_options(options)
+  end
+
+  def sendable_event_search_results(base)
+    results = []
+    offset = 0
+    batch_size = 50
+    max_scanned = 300
+
+    while offset < max_scanned
+      batch = base.offset(offset).limit(batch_size).select(:id, :name, :can_front_balance).to_a
+      break if batch.empty?
+
+      batch.each do |event|
+        next unless event.balance_available > 0
+
+        results << event
+        return results if results.size >= 20
+      end
+
+      offset += batch_size
+    end
+
+    results
+  end
+
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
+    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id]) ||
+                    Event.find(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
@@ -121,12 +159,8 @@ class DisbursementsController < ApplicationController
       redirect_to event_transfers_path(@source_event)
     end
 
-  rescue ArgumentError, ActiveRecord::RecordInvalid => e
+  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound, ActiveRecord::StatementInvalid => e
     flash[:error] = e.message
-    redirect_to new_disbursement_path(source_event_id: @source_event)
-  rescue ActiveRecord::RecordNotFound => e
-    skip_authorization
-    flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
   end
 
