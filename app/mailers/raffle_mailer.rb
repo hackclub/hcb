@@ -7,4 +7,5 @@ class RaffleMailer < ApplicationMailer
 
     mail to: @user.email_address_with_name, subject: "You've earned an extra raffle ticket!"
   end
+
 end
