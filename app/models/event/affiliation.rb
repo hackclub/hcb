@@ -120,8 +120,8 @@ class Event
     TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
 
     def self.tba_lookup(league, team_number)
-      league = league.to_s.downcase
-      team_number = team_number.to_s
+      league = league.to_s.strip.downcase
+      team_number = team_number.to_s.strip
 
       conn = Faraday.new(url: TBA_BASE_URL) do |f|
         f.headers["X-TBA-Auth-Key"] = Credentials.fetch(:THE_BLUE_ALLIANCE, :API_KEY)
