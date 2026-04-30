@@ -11,7 +11,7 @@ module Api
 
     helpers do
       def orgs
-        @orgs ||= paginate(Event.indexable.order(created_at: :asc))
+        @orgs ||= paginate(Event.indexable.by_category(params[:category]).order(created_at: :asc))
       end
 
       def activities
@@ -325,6 +325,7 @@ module Api
     params do
       use :pagination, per_page: 50, max_per_page: 100
       use :expand
+      optional :category, type: String, desc: "Filter organizations by category", values: ["hack_club_hq", "robotics_team", "hackathon", "hack_club", "climate"]
     end
     get :organizations do
       present orgs, with: Api::Entities::Organization, **type_expansion(expand: %w[organization user])
