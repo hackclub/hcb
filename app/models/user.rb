@@ -252,7 +252,7 @@ class User < ApplicationRecord
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
     end
 
-    if phone_number_previously_changed? && phone_number.present?
+    if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
       User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
