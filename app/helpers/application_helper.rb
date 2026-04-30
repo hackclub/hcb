@@ -8,20 +8,7 @@ module ApplicationHelper
     params.merge(new_params)
   end
 
-  def transfer_sort_params(columns, sort_param, direction_param)
-    default_col = columns.find { |c| c[:default] } || columns.first
-    if organizer_signed_in? && sort_param.present?
-      sort_key = sort_param.to_s
-      sort_key = default_col[:key] unless columns.any? { |c| c[:key] == sort_key }
-      sort_direction = direction_param.to_s.in?(%w[asc desc]) ? direction_param : "desc"
-    else
-      sort_key = default_col[:key]
-      sort_direction = "desc"
-    end
-    [sort_key, sort_direction]
-  end
-
-  def sorted_relation(relation, columns, sort:, default:)
+  def resolve_sort_column(columns, sort:, default:)
     sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : default
     default_key, default_direction = default
 
@@ -29,6 +16,11 @@ module ApplicationHelper
     column_def = columns.find { |c| c[:key] == sort_key.to_s } ||
                  columns.find { |c| c[:key] == default_key.to_s } ||
                  columns.first
+    [column_def, sort_direction]
+  end
+
+  def sorted_relation(relation, columns, sort:, default:)
+    column_def, sort_direction = resolve_sort_column(columns, sort:, default:)
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
     relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
   end

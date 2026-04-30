@@ -677,13 +677,17 @@ class EventsController < ApplicationController
 
     combined = @increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers
 
-    sort_key, sort_direction = helpers.transfer_sort_params(TRANSFER_COLUMNS, params[:sort], params[:direction])
+    sort_column, sort_direction = helpers.resolve_sort_column(
+      TRANSFER_COLUMNS,
+      sort: [params[:sort], params[:direction]],
+      default: [:created_at, :desc]
+    )
     combined.sort_by! do |transfer|
-      case sort_key
+      case sort_column[:key]
       when "amount"
         transfer.try(:usd_amount_cents_or_quoted) || transfer.try(:usd_amount_cents) || transfer.try(:amount_cents) || transfer.try(:amount) || 0
       when "name", "payment_for", "state_text"
-        transfer.try(sort_key.to_sym).to_s.downcase
+        transfer.try(sort_column[:key].to_sym).to_s.downcase
       else
         transfer.created_at
       end
