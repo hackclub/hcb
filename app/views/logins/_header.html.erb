@@ -1,2 +1,2 @@
-<p class="eyebrow mb-0 mt-10 opacity-40 uppercase" style="font-weight: 700"><%= label %></p>
+<p class="eyebrow mb-0 mt-10 opacity-40 uppercase" style="font-weight: 700"><%= defined?(header_label) ? header_label : current_user(allow_unverified: true)&.email == @login&.user&.email ? "Verify your email" : "Sign in to HCB" %></p>
 <h1 class="border-0 mt-0 mb-0 text-primary"><%= yield %></h1>

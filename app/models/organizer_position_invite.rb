@@ -126,6 +126,11 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
+    if user.unverified?
+      self.errors.add(:user, "must verify their email before accepting this invite")
+      return false
+    end
+
     if pending_signature? && application_contract.nil?
       self.errors.add(:base, "requires a signed contract!")
       return false
