@@ -1074,6 +1074,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_29_153343) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_plans_on_event_id"
+    t.index ["event_id"], name: "index_event_plans_on_event_id_when_active", unique: true, where: "aasm_state = 'active'"
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
