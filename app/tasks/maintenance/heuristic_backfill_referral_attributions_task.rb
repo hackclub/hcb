@@ -34,11 +34,17 @@ module Maintenance
     # attribution that already has a user_id.
     WINDOW = 24.hours
 
+    # Returns an Array (not a Relation) so we can sort by anchor time.
+    # JobIteration's cursor iteration cannot support ORDER BY, but the
+    # greedy claim depends on processing earliest signups first.
     def collection
       User
         .where("EXISTS (SELECT 1 FROM event_affiliations ea WHERE ea.affiliable_type = 'User' AND ea.affiliable_id = users.id AND ea.name = 'first')")
         .where("NOT EXISTS (SELECT 1 FROM referral_attributions ra WHERE ra.user_id = users.id)")
-        .order(:created_at)
+        .map { |u| [u, anchor_for(u)] }
+        .reject { |_, anchor| anchor.nil? }
+        .sort_by { |_, anchor| anchor }
+        .map(&:first)
     end
 
     def process(user)
