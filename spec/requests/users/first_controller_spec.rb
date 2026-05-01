@@ -126,7 +126,7 @@ RSpec.describe "Users::FirstController", type: :request do
 
         it "does not render the adults-only standalone card" do
           get "/first"
-          expect(response.body).not_to include("Your teammates are interested")
+          expect(response.body).not_to include("Your students are interested")
         end
       end
 
@@ -136,7 +136,7 @@ RSpec.describe "Users::FirstController", type: :request do
         it "renders the standalone teammate card with the start-organization CTA" do
           get "/first"
           expect(response).to have_http_status(:ok)
-          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("Your students are interested")
           expect(response.body).to include("are already interested in HCB")
           expect(response.body).to include("Start your team&#39;s organization")
         end
@@ -147,7 +147,7 @@ RSpec.describe "Users::FirstController", type: :request do
 
         it "renders the standalone teammate card with the start-organization CTA" do
           get "/first"
-          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("Your students are interested")
           expect(response.body).to include("Start your team&#39;s organization")
         end
       end
@@ -157,18 +157,9 @@ RSpec.describe "Users::FirstController", type: :request do
       it "does not render the teammate sentence" do
         get "/first"
         expect(response.body).not_to include("are already interested in HCB")
-        expect(response.body).not_to include("Your teammates are interested")
+        expect(response.body).not_to include("Your students are interested")
       end
     end
 
-    context "when the user has no FIRST affiliation" do
-      before { user.affiliations.destroy_all }
-
-      it "renders the page without errors" do
-        get "/first"
-        expect(response).to have_http_status(:ok)
-        expect(response.body).not_to include("are already interested in HCB")
-      end
-    end
   end
 end

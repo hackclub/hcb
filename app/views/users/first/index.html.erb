@@ -53,7 +53,7 @@
           <%= avatar_for teammate, size: 32 %>
         <% end %>
       </div>
-      <h3 class="heading my-0">Your teammates are interested</h3>
+      <h3 class="heading my-0">Your students are interested</h3>
     </div>
 
     <% sentence = team_community_sentence(
@@ -67,6 +67,39 @@
     <p class="my-2"><%= sentence %>. Get your team's organization set up to fundraise and spend together.</p>
 
     <%= link_to "Start your team's organization →", apply_path, class: "btn" %>
+  </div>
+<% end %>
+
+<% if @macbook_raffle.present? %>
+  <div class="card my-4 flex flex-col">
+    <h3 class="heading my-0">Earn additional tickets for the MacBook Neo raffle!</h3>
+
+    <p>
+      Share your <%= @macbook_raffle.referral_link.present? ? link_to("unique raffle link", @macbook_raffle.referral_link) : "unique raffle link" %> with your teammates and friends in FIRST robotics,
+      and you'll earn extra raffle tickets for the MacBook Neo!
+      You currently have <%= pluralize(@macbook_raffle.tickets, "ticket") %> for the MacBook Neo raffle.
+      <em>We may disqualify extra tickets if referrals are fraudulent.</em>
+    </p>
+
+    <% referrals_needed = @macbook_raffle.referrals_needed_for_next_ticket - @macbook_raffle.tier_progress %>
+    <p class="mb-0 text-center">Refer <%= referrals_needed %> more <%= "person".pluralize(referrals_needed) %> for your next ticket!</p>
+    <div class="h-3 bg-gray-200 dark:bg-neutral-700 rounded mt-2 overflow-hidden">
+      <div class="h-full bg-primary rounded" style="width: <%= [1 + (@macbook_raffle.tier_progress.to_f / @macbook_raffle.referrals_needed_for_next_ticket) * 100, 100].min %>%;"></div>
+    </div>
+
+    <% if current_user(allow_unverified: true).verified? %>
+      <div class="grid grid-cols-1 md:grid-cols-2 mt-3 gap-2">
+        <button class="btn flex-grow" data-controller="clipboard" data-clipboard-text-value="<%= @macbook_raffle.referral_link %>" data-clipboard-confirm-text-value="Copied!" data-action="click->clipboard#copy">
+          Copy referral link to clipboard
+        </button>
+        <button class="btn flex-grow" data-behavior="modal_trigger" data-modal="qr_code">View QR Code</button>
+      </div>
+    <% else %>
+      <%= link_to verify_email_first_index_path, method: :post, class: "btn mt-3" do %>
+        <%= inline_icon "email-exclamation" %>
+        Verify your email to get your link
+      <% end %>
+    <% end %>
   </div>
 <% end %>
 
@@ -133,7 +166,7 @@
     <% if matching_event.users.exists?(id: current_user(allow_unverified: true).id) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
-          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+          <img src="https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
         </div>
 
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
@@ -151,14 +184,14 @@
             </div>
           </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png')] bg-right bg-no-repeat bg-contain"></div>
         </div>
       </div>
     <% else %>
       <% pending_request = matching_event.organizer_position_invite_requests.pending.exists?(requester: current_user(allow_unverified: true)) %>
       <div class="card flex flex-col bg-black !text-white gap-3">
         <div class="sm:hidden -mx-4 -mt-4 px-4 pt-10 pb-4 flex items-center justify-center bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.28)_0%,rgba(0,0,0,0)_65%)]">
-          <img src="https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
+          <img src="https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png" alt="Bambu Lab A1" class="h-32 drop-shadow-[0_18px_30px_rgba(96,165,250,0.45)]">
         </div>
 
         <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
@@ -200,7 +233,7 @@
             </div>
           </div>
 
-          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019d4f27-dd29-76ea-bee6-26f998a00f95/frame_2__42_.png')] bg-right bg-no-repeat bg-contain"></div>
+          <div class="hidden sm:block min-h-16 aspect-video bg-[url('https://cdn.hackclub.com/019ddc99-e1e0-70ff-bfc4-0feda3701400/bambu-a1.png')] bg-right bg-no-repeat bg-contain"></div>
         </div>
       </div>
     <% end %>
@@ -352,3 +385,14 @@
   <br>
   <i class="muted">Must be 18 years of age or younger and have CCd <%= mail_to @advisor_email_cc %> in your email to be eligible.</i>
 </section>
+
+<% if @macbook_raffle&.referral_link.present? %>
+  <section id="qr_code" class="modal modal--scroll bg-snow" data-behavior="modal" data-controller="email-compose" role="dialog">
+    <%= modal_header "MacBook Neo Raffle" %>
+
+    <div class="flex flex-col items-center justify-center gap-1">
+      <img src="<%= macbook_qr_code_first_index_url %>" alt="QR code" class="rounded-md">
+      <%= link_to @macbook_raffle.referral_link, @macbook_raffle.referral_link, class: "text-center" %>
+    </div>
+  </section>
+<% end %>
