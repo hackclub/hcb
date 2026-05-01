@@ -457,7 +457,6 @@ class EventsController < ApplicationController
     @has_filter = @status.present? || @type.present? || @user.present?
 
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
-                             .order("stripe_status asc, created_at desc")
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
 
@@ -483,14 +482,6 @@ class EventsController < ApplicationController
                          all_stripe_cards
                        end
 
-    if current_user.present?
-      @stripe_cards = all_stripe_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
-      @user_stripe_cards = all_stripe_cards.where(stripe_cardholder: current_user.stripe_cardholder)
-    else
-      @stripe_cards = all_stripe_cards
-      @user_stripe_cards = StripeCard.none
-    end
-
     @stripe_cardholders = StripeCardholder.where(user_id: @event.users.pluck(:id)).includes(:user).order("created_at desc")
     @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
 
@@ -499,14 +490,35 @@ class EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || 18).to_i
 
-    display_cards = [
-      @user_stripe_cards.active,
-      @stripe_cards.active,
-      @user_stripe_cards.deactivated,
-      @stripe_cards.deactivated
-    ].flatten
+    if @view == "list"
+      @table_columns = CARD_OVERVIEW_COLUMNS
+      @paginated_stripe_cards = helpers.sorted_relation(
+        all_stripe_cards,
+        CARD_OVERVIEW_COLUMNS,
+        sort: [params[:sort], params[:direction]],
+        default: [:created_at, :desc]
+      ).page(page).per(per_page)
+    else
+      ordered_cards = all_stripe_cards.order("stripe_status asc, created_at desc")
 
-    @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
+      if current_user.present?
+        @stripe_cards = ordered_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
+        @user_stripe_cards = ordered_cards.where(stripe_cardholder: current_user.stripe_cardholder)
+      else
+        @stripe_cards = ordered_cards
+        @user_stripe_cards = StripeCard.none
+      end
+
+      display_cards = [
+        @user_stripe_cards.active,
+        @stripe_cards.active,
+        @user_stripe_cards.deactivated,
+        @stripe_cards.deactivated
+      ].flatten
+
+      @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
+    end
+
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
   end
 
@@ -1045,6 +1057,15 @@ class EventsController < ApplicationController
   end
 
   private
+
+  CARD_OVERVIEW_COLUMNS = [
+    { key: "cardholder", display: "Cardholder", sql: "users.name" },
+    { key: "last4", display: "Number" },
+    { key: "card_type", display: "Type" },
+    { key: "stripe_status", display: "Status" },
+    { key: "created_at", display: "Issued on", default: true, right: true },
+  ].freeze
+  private_constant :CARD_OVERVIEW_COLUMNS
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
