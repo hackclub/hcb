@@ -54,6 +54,50 @@ RSpec.describe "Users::FirstController", type: :request do
                               "this discrepancy lets an attacker enumerate registered emails."
     end
 
+    context "when the visitor's session has Referral::Attribution rows from prior link clicks" do
+      let(:creator) { create(:user, verified: true) }
+      let(:program) do
+        Referral::Program.create!(
+          name: "FIRST referral test program",
+          redirect_to: "https://hcb.hackclub.com/first/welcome",
+          creator:
+        )
+      end
+      let(:link)       { program.links.create!(name: "Primary",   creator:) }
+      let(:other_link) { program.links.create!(name: "Secondary", creator:) }
+
+      it "associates a single click attribution with the new user" do
+        get "/referrals/#{link.slug}"
+        attribution = Referral::Attribution.find_by!(link:)
+        expect(attribution.user_id).to be_nil
+        expect(attribution.user_session_id).to be_present
+
+        post "/first", params: valid_form
+
+        new_user = User.find_by!(email: valid_form[:user][:email])
+        expect(attribution.reload.user_id).to eq(new_user.id)
+      end
+
+      it "associates every attribution accumulated on the session, across multiple links" do
+        get "/referrals/#{link.slug}"
+        get "/referrals/#{other_link.slug}"
+        expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(be_nil)
+
+        post "/first", params: valid_form
+
+        new_user = User.find_by!(email: valid_form[:user][:email])
+        expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(eq(new_user.id))
+      end
+    end
+
+    it "completes signup successfully when the visitor's session has no referral attributions" do
+      params = valid_form.deep_dup
+      params[:user][:email] = "no-referral-#{SecureRandom.hex(4)}@example.invalid"
+
+      expect { post "/first", params: params }.to change { User.count }.by(1)
+      expect(response.status).to eq(302)
+    end
+
   end
 
   describe "DELETE /first/sign_out" do

@@ -122,6 +122,10 @@ module Users
         @user.creation_method = :first_robotics_form
         @user.save!
 
+        current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+          attribution.update!(user: @user)
+        end
+
         if program.present?
           raf = Raffle.find_or_create_by!(user: @user, program:)
           raf.update!(referring_raffle: user_referral) if user_referral.present?
