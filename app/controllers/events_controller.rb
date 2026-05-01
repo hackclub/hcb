@@ -499,7 +499,7 @@ class EventsController < ApplicationController
         default: [:created_at, :desc]
       ).page(page).per(per_page)
     else
-      ordered_cards = all_stripe_cards.order("stripe_status asc, created_at desc")
+      ordered_cards = all_stripe_cards.order(stripe_status: :asc, created_at: :desc)
 
       if current_user.present?
         @stripe_cards = ordered_cards.where.not(stripe_cardholder: current_user.stripe_cardholder)
