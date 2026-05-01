@@ -20,13 +20,16 @@ export default class extends Controller {
     const url = new URL(this.urlValue, window.location.origin)
     url.searchParams.set('name', name)
 
-    const { duplicate, org_name, org_url } = await fetch(url, {
-      headers: { Accept: 'application/json' },
-    }).then(r => r.json())
+    let data
+    try {
+      data = await fetch(url, { headers: { Accept: 'application/json' } }).then(r => r.json())
+    } catch {
+      return
+    }
 
-    if (duplicate) {
-      this.linkTarget.textContent = org_name
-      this.linkTarget.href = org_url
+    if (data.duplicate) {
+      this.linkTarget.textContent = data.org_name
+      this.linkTarget.href = data.org_url
       this.warningTarget.hidden = false
     } else {
       this.warningTarget.hidden = true

@@ -15,9 +15,11 @@
     <%= form.label :name, "Project name", class: "bold" %>
     <%= form.text_field :name, placeholder: "#{possessive(event.name)} latest project", value: params[:name],
         data: { action: "input->sub-org-name-check#check" } %>
-    <div data-sub-org-name-check-target="warning" hidden class="card border b--warning mt1 mb0 p1">
-      <%= inline_icon "important", size: 16, class: "mr1" %>
-      A sub-organization named <strong><a data-sub-org-name-check-target="link" href="#"></a></strong> already exists under this organization.
+    <div data-sub-org-name-check-target="warning" hidden class="card border b--warning mt1">
+      <div class="flex items-center warning">
+        <%= inline_icon "important", size: 20, class: "mr1 flex-shrink-0" %>
+        <span>A sub-organization named <strong><a data-sub-org-name-check-target="link" href="#"></a></strong> already exists under this organization.</span>
+      </div>
     </div>
   </div>
 
