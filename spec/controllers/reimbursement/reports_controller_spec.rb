@@ -19,7 +19,7 @@ RSpec.describe Reimbursement::ReportsController do
         # report, this regression test would silently become vacuous.
         expect(report.aasm_state).to eq("draft")
 
-        sign_in(attacker)
+        create_session(attacker, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -41,7 +41,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user:, event: source_event)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -62,7 +62,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user:, event: source_event)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -82,7 +82,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user: admin, event: source_event)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -101,7 +101,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user:, event:)
         report = create(:reimbursement_report, user:, event:, name: "Old Name")
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -121,7 +121,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: manager, event:)
         report = create(:reimbursement_report, user: creator, event:)
 
-        sign_in(creator)
+        create_session(creator, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -139,7 +139,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: other_manager, event:)
         report = create(:reimbursement_report, user: manager, event:)
 
-        sign_in(manager)
+        create_session(manager, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -158,7 +158,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: other_manager, event:)
         report = create(:reimbursement_report, user: creator, event:)
 
-        sign_in(manager)
+        create_session(manager, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -175,7 +175,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: reviewer, event:)
         report = create(:reimbursement_report, user: admin, event:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: report.id,

@@ -158,6 +158,55 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "teenager status" do
+    let(:first_student_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "student_leader" }
+    end
+    let(:first_coach_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "head_coach" }
+    end
+
+    it "marks a user with no birthday but a FIRST student affiliation as a teenager" do
+      user = create(:user, affiliations_attributes: [first_student_attrs])
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "does not mark a FIRST head coach as a teenager" do
+      user = create(:user, affiliations_attributes: [first_coach_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).not_to be true
+    end
+
+    it "syncs the teenager column when a FIRST student affiliation is added later" do
+      user = create(:user)
+      expect(user.teenager).not_to be true
+
+      user.update!(affiliations_attributes: [first_student_attrs])
+
+      expect(user.reload.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "still respects the birthday-based check when there is no FIRST affiliation" do
+      user = create(:user, birthday: 16.years.ago)
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+    end
+
+    it "lets birthday take precedence over a FIRST student affiliation when both are present" do
+      user = create(:user, birthday: 30.years.ago, affiliations_attributes: [first_student_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).to be false
+      expect(user.joined_as_teenager).to be false
+    end
+  end
+
   describe "#locked?" do
     context "when locked" do
       it "returns" do
@@ -282,6 +331,32 @@ RSpec.describe User, type: :model do
       results = User.search_name("999999999")
 
       expect(results).to be_empty
+    end
+  end
+
+  describe "promoting an unverified user to verified" do
+    it "expires every unverified session attached to the user" do
+      user = create(:user, verified: false)
+      stale_unverified = create(
+        :user_session,
+        user:,
+        verified: false,
+        expiration_at: 1.week.from_now,
+        signed_out_at: nil,
+      )
+      original_expiration = stale_unverified.expiration_at
+
+      user.update!(verified: true)
+      stale_unverified.reload
+
+      aggregate_failures "stale unverified session is invalidated" do
+        expect(stale_unverified.expiration_at).to be <= Time.current,
+                                                  "expected expiration_at to be moved to <= now, got #{stale_unverified.expiration_at} (was #{original_expiration})"
+        expect(stale_unverified.signed_out_at).not_to be_nil,
+                                                      "expected signed_out_at to be set, got nil"
+        expect(User::Session.not_expired.find_by(session_token: stale_unverified.session_token)).to be_nil,
+                                                                                                    "session is still resolvable via session_token lookup, so the cookie remains valid"
+      end
     end
   end
 end
