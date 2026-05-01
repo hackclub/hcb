@@ -434,7 +434,7 @@ legend {
 
 .btn--form-option,
 .field--options label,
-.field_with_errors > label {
+form:not(.no-error-styling) .field_with_errors > label {
   display: flex;
   flex-direction: column;
   align-items: center;
