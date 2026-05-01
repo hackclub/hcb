@@ -88,6 +88,20 @@ RSpec.describe "Users::FirstController", type: :request do
         new_user = User.find_by!(email: valid_form[:user][:email])
         expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(eq(new_user.id))
       end
+
+      it "associates the click attribution with an existing user when the form is submitted with their email" do
+        existing = create(:user, verified: true)
+
+        get "/referrals/#{link.slug}"
+        attribution = Referral::Attribution.find_by!(link:)
+        expect(attribution.user_id).to be_nil
+
+        params = valid_form.deep_dup
+        params[:user][:email] = existing.email
+        post "/first", params: params
+
+        expect(attribution.reload.user_id).to eq(existing.id)
+      end
     end
 
     it "completes signup successfully when the visitor's session has no referral attributions" do

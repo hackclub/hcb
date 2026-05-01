@@ -137,6 +137,11 @@ module Users
       end
 
       @user = User.find_by!(email: user_params[:email])
+
+      current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+        attribution.update!(user: @user)
+      end
+
       @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params:, raffle: program }, user: @user)
 
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
