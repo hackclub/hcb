@@ -956,6 +956,7 @@ Rails.application.routes.draw do
     get "reimbursements"
     get "employees"
     get "sub_organizations"
+    get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
