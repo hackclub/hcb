@@ -22,7 +22,9 @@ export default class extends Controller {
 
     let data
     try {
-      data = await fetch(url, { headers: { Accept: 'application/json' } }).then(r => r.json())
+      data = await fetch(url, { headers: { Accept: 'application/json' } }).then(
+        r => r.json()
+      )
     } catch {
       return
     }
