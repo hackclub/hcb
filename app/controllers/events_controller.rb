@@ -1063,7 +1063,7 @@ class EventsController < ApplicationController
     { key: "last4", display: "Number" },
     { key: "card_type", display: "Type" },
     { key: "stripe_status", display: "Status" },
-    { key: "created_at", display: "Issued on", default: true, right: true },
+    { key: "created_at", display: "Issued on", default: true },
   ].freeze
   private_constant :CARD_OVERVIEW_COLUMNS
 
