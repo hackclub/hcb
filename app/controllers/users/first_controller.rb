@@ -127,6 +127,10 @@ module Users
           raf.update!(referring_raffle: user_referral) if user_referral.present?
         end
 
+        current_session.referral_attributions.each do |attribution|
+          attribution.update!(user: @user)
+        end
+
         create_session(user: @user, verified: false)
 
         redirect_to first_index_path and return
