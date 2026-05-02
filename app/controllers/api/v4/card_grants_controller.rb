@@ -28,7 +28,7 @@ module Api
 
           if found_user.nil?
             skip_authorization
-            return render json: { error: "invalid_user", messages: "User with email '#{params[:sent_by_email]}' not found" }, status: :bad_request
+            return render json: { error: "invalid_user", messages: ["User with email '#{params[:sent_by_email]}' not found"] }, status: :bad_request
           end
 
           sent_by = found_user
@@ -118,8 +118,7 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate(@hcb_codes, &:public_id)
       end
 
       private

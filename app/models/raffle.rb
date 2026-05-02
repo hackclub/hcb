@@ -40,8 +40,8 @@ class Raffle < ApplicationRecord
   validates :program, presence: true
   validates :ticket_number, uniqueness: true, allow_nil: true
 
-  after_create_commit do
-    if referring_raffle.present? && referring_raffle.tier_progress == 0
+  after_save_commit do
+    if referring_raffle_id_previously_changed? && referring_raffle.present? && referring_raffle.tier_progress == 0
       RaffleMailer.with(raffle: referring_raffle).extra_ticket_earned.deliver_later
     end
   end
