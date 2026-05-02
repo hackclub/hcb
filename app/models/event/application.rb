@@ -37,6 +37,7 @@
 #  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
+#  videos_watched               :boolean          default(FALSE)
 #  website_url                  :string
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -117,9 +118,10 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted
+        transitions from: :draft, to: :submitted, if: :ready_to_submit?
+
         after do
-          update!(teen_led: user.is_teenager?, archived_at: nil)
+          update!(archived_at: nil)
 
           if teen_led?
             send_contract
@@ -169,7 +171,7 @@ class Event
       generic = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -180,7 +182,7 @@ class Event
       adult = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -191,7 +193,7 @@ class Event
       mission = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -202,7 +204,7 @@ class Event
       country = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
 
         We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -272,20 +274,6 @@ class Event
       fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
 
       fs_contract
-    end
-
-    def ready_to_submit?
-      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
-
-      if user.is_minor?
-        required_fields.push("cosigner_email")
-      end
-
-      missing_fields = required_fields.any? do |field|
-        self[field].nil?
-      end
-
-      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
     end
 
     def response_time
@@ -408,6 +396,42 @@ class Event
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
         errors.add(:cosigner_email, "cannot change after the cosigner has signed")
       end
+    end
+
+    def ready_to_submit?
+      application_ready_to_submit? && user_ready_to_submit?
+    end
+
+    def application_ready_to_submit?
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
+
+      if user.is_minor?
+        required_fields.push("cosigner_email")
+      end
+
+      unless teen_led?
+        required_fields += ["planning_duration", "team_size", "annual_budget_cents", "committed_amount_cents"]
+
+        if committed_amount&.positive?
+          required_fields.push("funding_source")
+        end
+      end
+
+      missing_fields = required_fields.any? do |field|
+        self[field].nil? || self[field] == ""
+      end
+
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+    end
+
+    def user_ready_to_submit?
+      required_fields = ["full_name", "phone_number", "birthday"]
+
+      missing_fields = required_fields.any? do |field|
+        !user[field].present?
+      end
+
+      !missing_fields
     end
 
   end

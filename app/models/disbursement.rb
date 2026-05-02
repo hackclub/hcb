@@ -5,7 +5,7 @@
 # Table name: disbursements
 #
 #  id                                  :bigint           not null, primary key
-#  aasm_state                          :string
+#  aasm_state                          :string           not null
 #  amount                              :integer
 #  deposited_at                        :datetime
 #  errored_at                          :datetime
