@@ -118,7 +118,8 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @hcb_codes = paginate(@hcb_codes, &:public_id)
+        @total_count = @hcb_codes.size
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       private

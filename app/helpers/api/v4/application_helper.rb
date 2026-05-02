@@ -20,23 +20,21 @@ module Api
         json.has_more @has_more
       end
 
-      def paginate(list, &block)
+      def paginate_hcb_codes(hcb_codes)
         limit = params[:limit]&.to_i || 25
-        return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
+        return render json: { error: "invalid_operation", messages: "Limit is capped at 100. '#{params[:limit]}' is invalid." }, status: :bad_request if limit > 100
 
         start_index = if params[:after]
-                        index = list.index { |item| block.call(item) == params[:after] }
-                        return render json: { error: "invalid_operation", messages: ["After parameter '#{params[:after]}' not found"] }, status: :bad_request if index.nil?
+                        index = hcb_codes.index { |hcb_code| hcb_code.public_id == params[:after] }
+                        return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request if index.nil?
 
                         index + 1
                       else
                         0
                       end
+        @has_more = hcb_codes.length > start_index + limit
 
-        paged = Kaminari.paginate_array(list).page(1).per(limit).padding(start_index)
-        @total_count = paged.total_count
-        @has_more = paged.next_page.present?
-        paged.to_a
+        hcb_codes.slice(start_index, limit)
       end
 
       def transaction_amount(tx, event: nil)

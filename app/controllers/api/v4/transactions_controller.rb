@@ -27,8 +27,7 @@ module Api
         @pending_transactions = type_results[:pending_transactions]
 
         @total_count = @pending_transactions.count + @settled_transactions.count
-        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code if params[:after].present?
-        @transactions = paginate(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
+        @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
 
         if @transactions.any?
           page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
@@ -64,7 +63,8 @@ module Api
 
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
-        @hcb_codes = paginate(@hcb_codes, &:public_id)
+        @total_count = @hcb_codes.size
+        @hcb_codes = paginate_hcb_codes(@hcb_codes)
       end
 
       def update
@@ -92,6 +92,24 @@ module Api
       end
 
       private
+
+      def paginate_transactions(transactions)
+        limit = params[:limit]&.to_i || 25
+        start_index = if params[:after]
+                        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless cursor_hcb_code
+
+                        index = transactions.index { |tx| tx.hcb_code == cursor_hcb_code }
+                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless index
+
+                        index + 1
+                      else
+                        0
+                      end
+        @has_more = transactions.length > start_index + limit
+
+        transactions.slice(start_index, limit)
+      end
 
       def filters
         filter_params = params.fetch(:filters, {}).permit(
