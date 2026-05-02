@@ -82,7 +82,7 @@ module Api
 
         @stats = query.stats
         @total_count = all_transfers.length
-        @transfers = paginate_hcb_codes(all_transfers)
+        @transfers = paginate(all_transfers, &:public_id)
       end
 
       require_oauth2_scope "organizations:read", :transfers
