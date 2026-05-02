@@ -3,6 +3,8 @@
 module Api
   module V4
     class EventsController < ApplicationController
+      include ApplicationHelper
+
       before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
@@ -71,6 +73,19 @@ module Api
       end
 
       require_oauth2_scope "organizations:read", :balance_by_date
+
+      def transfers
+        authorize @event, :show_in_v4?
+
+        query = EventService::TransfersQuery.new(event: @event, filter: params[:filter], search: params[:q], stats: @expand.include?(:stats)).run
+        all_transfers = query.transfers
+
+        @stats = query.stats
+        @total_count = all_transfers.length
+        @transfers = paginate_hcb_codes(all_transfers)
+      end
+
+      require_oauth2_scope "organizations:read", :transfers
 
       private
 
