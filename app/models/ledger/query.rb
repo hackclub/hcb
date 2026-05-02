@@ -107,15 +107,16 @@ class Ledger
       raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
       if operand.is_a?(Numeric)
+        col = Ledger::Item.arel_table[key]
         case operator.to_s
         when "$gt"
-          return relation.where("#{key} > ?", operand)
+          return relation.where(col.gt(operand))
         when "$lt"
-          return relation.where("#{key} < ?", operand)
+          return relation.where(col.lt(operand))
         when "$gte"
-          return relation.where("#{key} >= ?", operand)
+          return relation.where(col.gteq(operand))
         when "$lte"
-          return relation.where("#{key} <= ?", operand)
+          return relation.where(col.lteq(operand))
         end
       elsif operand.is_a?(Array)
         case operator.to_s
