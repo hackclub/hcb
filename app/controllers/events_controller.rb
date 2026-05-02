@@ -27,7 +27,7 @@ class EventsController < ApplicationController
           @current_user
           .events
           .with_attached_logo
-          .preload(:config)
+          .preload(:config, :plan)
           .reorder("organizer_positions.sort_index ASC", "events.id ASC")
           .strict_loading
           .map { |event| serialize_event(event, member: true) }
@@ -37,7 +37,7 @@ class EventsController < ApplicationController
             Event
               .excluding(@current_user.events)
               .with_attached_logo
-              .preload(:config)
+              .preload(:config, :plan)
               .strict_loading
               .map { |event| serialize_event(event, member: false) }
           )
@@ -198,6 +198,11 @@ class EventsController < ApplicationController
     if (@minimum_amount || @maximum_amount) && !organizer_signed_in?
       @all_transactions.reject!(&:likely_account_verification_related?)
     end
+
+    TransactionGroupingEngine::Transaction::FilterTypePreloader.new(
+      settled_transactions: @all_transactions,
+      type: @type
+    ).run!
 
     type_results = self.class.filter_transaction_type(@type, settled_transactions: @all_transactions, pending_transactions: @pending_transactions)
     @all_transactions = type_results[:settled_transactions]
@@ -870,7 +875,7 @@ class EventsController < ApplicationController
       @event,
       start_date_param: params[:start],
       end_date_param: params[:end],
-      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants]),
+      include_descendants: ActiveRecord::Type::Boolean.new.cast(params[:include_descendants] || true),
     )
 
     respond_to do |format|
@@ -1311,7 +1316,8 @@ class EventsController < ApplicationController
       demo_mode: event.demo_mode,
       member:,
       features: {
-        subevents: event.subevents_enabled?
+        subevents: event.subevents_enabled?,
+        card_grants: event.plan.card_grants_enabled?
       }
     }
   end

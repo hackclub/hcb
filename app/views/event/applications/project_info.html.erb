@@ -127,7 +127,7 @@
       <%= form.label :previously_applied do %>
         Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], @application.previously_applied.to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], (@application.previously_applied.nil? ? @application.user.organizer_positions.with_deleted.joins(:organizer_position_invite).where(is_signee: true, organizer_position_invite: { initial: true }).exists? : @application.previously_applied).to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
   </div>
 

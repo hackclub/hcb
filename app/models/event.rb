@@ -5,14 +5,13 @@
 # Table name: events
 #
 #  id                                           :bigint           not null, primary key
-#  aasm_state                                   :string
+#  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -59,6 +58,8 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -466,7 +467,7 @@ class Event < ApplicationRecord
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
-  after_update if: :is_public_previously_changed? do
+  after_update_commit if: :is_public_previously_changed? do
     version = self.versions.where_object_changes(is_public:).last
     whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
 
@@ -896,8 +897,9 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false)
+  def organizer_contact_emails(only_managers: false, &block)
     included_users = only_managers ? managers : users
+    included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
@@ -931,6 +933,10 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def to_combobox_display
+    "#{name} (#{id})"
   end
 
   private

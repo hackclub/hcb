@@ -51,6 +51,7 @@ class OrganizerPosition < ApplicationRecord
   has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
+  validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
@@ -102,6 +103,14 @@ class OrganizerPosition < ApplicationRecord
 
   rescue ActiveRecord::RecordNotUnique
     # Do nothing. The user already follows this event.
+  end
+
+  private
+
+  def user_must_be_verified
+    if user&.unverified?
+      errors.add(:user, "must verify their email before becoming an organizer")
+    end
   end
 
 end
