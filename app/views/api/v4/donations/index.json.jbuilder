@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-json.summary do
-  json.total_cents @total_cents
-  json.monthly_cents @monthly_cents
+if expand?(:stats)
+  json.stats do
+    json.total_cents @total_cents
+    json.monthly_cents @monthly_cents
+  end
 end
 
 json.recurring_donations @recurring_donations do |rd|

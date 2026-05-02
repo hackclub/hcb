@@ -22,8 +22,10 @@ module Api
 
         @past_donations = paginate(all_past_donations, &:public_id)
 
-        @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
-        @monthly_cents = @event.recurring_donations.active.sum(:amount)
+        if expand?(:stats)
+          @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
+          @monthly_cents = @event.recurring_donations.active.sum(:amount)
+        end
       end
 
       def create
