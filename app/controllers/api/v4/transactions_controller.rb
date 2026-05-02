@@ -17,6 +17,11 @@ module Api
         @settled_transactions = TransactionGroupingEngine::Transaction::All.new(**filters).run
         @pending_transactions = PendingTransactionEngine::PendingTransaction::All.new(**filters).run
 
+        TransactionGroupingEngine::Transaction::FilterTypePreloader.new(
+          settled_transactions: @settled_transactions,
+          type: params[:type]
+        ).run!
+
         type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]

@@ -84,12 +84,23 @@ class PublicActivity::Activity
     trackable_type.constantize.in?([Reimbursement::Report, WebauthnCredential, Comment])
   end
 
+  # An activity can be associated with an event through two columns.
+  # `event_id` is typically the org where the action occurred; when the
+  # recipient is itself an Event, that's the event the action targeted
+  # (for disbursements, `event_id` is the source and `recipient` is the
+  # destination — the two differ).
+  #
+  # `#event` returns the latter when present. Callers that need to know
+  # *which id* will be used (e.g. Api::ActivityPolicy, which must
+  # authorize against the same event the entity serializes) should use
+  # `#serialized_event_id` rather than re-deriving the precedence.
+  def serialized_event_id
+    recipient_type == "Event" ? recipient_id : event_id
+  end
+
   def event
-    if recipient_type == "Event"
-      return Event.find(recipient_id)
-    elsif event_id
-      return Event.find(event_id)
-    end
+    id = serialized_event_id
+    Event.find(id) if id
   end
 
   def user
