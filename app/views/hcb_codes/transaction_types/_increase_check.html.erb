@@ -110,19 +110,36 @@
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
-  <% if @hcb_code.increase_check.may_mark_rejected? %>
+  <% if @hcb_code.increase_check.may_mark_rejected? || @hcb_code.increase_check.column_id.present? %>
     <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
-      <% cancel_button = button_to "Cancel check", reject_increase_check_path(@hcb_code.increase_check), class: "btn bg-error #{"disabled" unless policy(@hcb_code.increase_check).reject?}", data: { turbo_confirm: "Are you sure you want to cancel this check?" } %>
-      <% if policy(@hcb_code.increase_check).reject? %>
-        <%= cancel_button %>
-      <% else %>
-        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel checks!">
+      <% if @hcb_code.increase_check.may_mark_rejected? %>
+        <% cancel_button = button_to "Cancel check", reject_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", data: { turbo_confirm: "Are you sure you want to cancel this check?" }, disabled: !policy(@hcb_code.increase_check).reject? %>
+        <% if policy(@hcb_code.increase_check).reject? %>
           <%= cancel_button %>
-        </div>
+        <% else %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel checks!">
+            <%= cancel_button %>
+          </div>
+        <% end %>
+
+        <% admin_tool do %>
+          <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+        <% end %>
       <% end %>
 
-      <% admin_tool do %>
-        <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+      <% if @hcb_code.increase_check.column_id.present? %>
+        <% stop_button = button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", data: { turbo_confirm: "This action will stop the check and is irreversible." }, disabled: !policy(@hcb_code.increase_check).stop? %>
+        <% if policy(@hcb_code.increase_check).stop? %>
+          <%= stop_button %>
+        <% elsif @hcb_code.increase_check.can_stop? %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can stop checks!">
+            <%= stop_button %>
+          </div>
+        <% end %>
+
+        <% admin_tool("flex gap-3") do %>
+          <%= button_to "Reissue", reissue_increase_check_path(@hcb_code.increase_check), class: "btn bg-muted", target: "_blank", data: { turbo_confirm: "This action will stop the current check and issue a new one for the same amount." }, disabled: !policy(@hcb_code.increase_check).reissue? %>
+        <% end %>
       <% end %>
     </div>
   <% end %>

@@ -31,6 +31,12 @@
       <% end %>
     </h2>
 
+    <% unless @application.approved? %>
+      <div class="w-full md:max-w-2xl">
+        <%= render "event/applications/review_delay_callout" %>
+      </div>
+    <% end %>
+
     <h3 class="m-0 muted">
       <% if !@application.approved? || @application.contract&.party(:signee)&.pending? || @application.contract&.party(:cosigner)&.pending? %>
         Here's what's next for <%= @application.name %>
