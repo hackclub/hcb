@@ -20,8 +20,7 @@ module Api
                                    .order(created_at: :desc)
                                    .to_a
 
-        @total_count = all_past_donations.length
-        @past_donations = paginate_donations(all_past_donations)
+        @past_donations = paginate(all_past_donations, &:public_id)
 
         @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
         @monthly_cents = @event.recurring_donations.active.sum(:amount)
@@ -52,31 +51,6 @@ module Api
 
         render "show", status: :created
       end
-
-      private
-
-      def paginate_donations(donations)
-        limit = params[:limit]&.to_i || 25
-        if limit > 100
-          return render json: { error: "invalid_operation", messages: "Limit is capped at 100. '#{params[:limit]}' is invalid." }, status: :bad_request
-        end
-
-        start_index = if params[:after]
-                        index = donations.index { |d| d.public_id == params[:after] }
-                        if index.nil?
-                          return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request
-                        end
-
-                        index + 1
-                      else
-                        0
-                      end
-
-        @has_more = donations.length > start_index + limit
-        donations.slice(start_index, limit)
-      end
-
-      public
 
       def payment_intent
         amount = @donation.amount

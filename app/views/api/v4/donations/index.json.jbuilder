@@ -17,13 +17,6 @@ end
 
 pagination_metadata(json)
 
-json.past_donagio @past_donations do |donation|
-  json.id donation.public_id
-  json.status donation.aasm_state
-  json.date donation.donated_at
-  json.name donation.name
-  json.email donation.email
-  json.amount_cents donation.amount
-  json.recurring donation.recurring?
-  json.recurring_donor_id donation.recurring_donation&.hashid
+json.data @past_donations do |donation|
+  json.partial! "api/v4/transactions/donation", donation: donation
 end
