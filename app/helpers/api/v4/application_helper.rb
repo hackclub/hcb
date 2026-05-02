@@ -20,7 +20,7 @@ module Api
         json.has_more @has_more
       end
 
-      def paginate(list, &block)
+      def paginate_cursor(list, &block)
         limit = params[:limit]&.to_i || 25
         return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
 
