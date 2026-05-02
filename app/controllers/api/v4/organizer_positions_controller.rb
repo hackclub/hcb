@@ -4,13 +4,28 @@ module Api
   module V4
     class OrganizerPositionsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
       before_action :set_api_event, only: [:index]
       before_action :set_organizer_position, only: [:removal_request]
 
       def index
         authorize @event, :show_in_v4?
-        @organizer_positions = @event.organizer_positions.includes(:user).order(created_at: :desc)
+        positions = @event.organizer_positions.includes(:user).order(created_at: :desc).to_a
+        @total_count = positions.size
+        limit = [params[:limit]&.to_i || 25, 100].min
+
+        start_index = if params[:after]
+                        idx = positions.index { |op| op.public_id == params[:after] }
+                        return render json: { error: "invalid_operation", messages: ["After parameter '#{params[:after]}' not found"] }, status: :bad_request if idx.nil?
+
+                        idx + 1
+                      else
+                        0
+                      end
+
+        @has_more = positions.size > start_index + limit
+        @organizer_positions = positions.slice(start_index, limit)
       end
 
       def removal_request
