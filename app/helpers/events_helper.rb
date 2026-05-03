@@ -381,7 +381,7 @@ module EventsHelper
 
   def escape_mermaid_string(str)
     str.to_s
-       .gsub("\\", "")       # remove backslashes (no escape sequence in Mermaid labels)
+       .gsub("\\", "") # remove backslashes (no escape sequence in Mermaid labels)
        .gsub(/[\r\n\t]/, " ") # normalize newlines/tabs to a space
        .gsub('"', "'")        # replace double quotes (Mermaid delimiter) with single quotes
        .strip
@@ -401,11 +401,10 @@ module EventsHelper
         lines << "  click e#{e.id} \"#{event_path(e)}\" \"#{safe_name}\""
         lines << "  class e#{e.id} child"
       end
-    end
 
-    all_events.each do |e|
       next if e.id == root.id
       next unless all_ids.include?(e.parent_id)
+
       lines << "  e#{e.parent_id} --> e#{e.id}"
     end
 
