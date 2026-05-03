@@ -1059,7 +1059,13 @@ class EventsController < ApplicationController
   private
 
   CARD_OVERVIEW_COLUMNS = [
-    { key: "cardholder", display: "Cardholder", sql: "users.name" },
+    {
+      key: "cardholder",
+      display: "Cardholder",
+      order: ->(relation, direction) do
+        relation.order(direction == :asc ? User.arel_table[:name].asc : User.arel_table[:name].desc)
+      end
+    },
     { key: "last4", display: "Number" },
     { key: "card_type", display: "Type" },
     { key: "stripe_status", display: "Status" },
