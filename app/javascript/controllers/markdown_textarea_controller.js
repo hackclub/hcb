@@ -7,8 +7,15 @@ export default class extends Controller {
 
     if (selectionStart === selectionEnd) return
 
-    const pastedText = (e.clipboardData || window.clipboardData).getData('text')
+    const clipboardData = e.clipboardData || window.clipboardData
+    if (!clipboardData) return
 
+    const isLegacyClipboardData = clipboardData === window.clipboardData
+    const pastedText = isLegacyClipboardData
+      ? clipboardData.getData('URL') || clipboardData.getData('Text')
+      : clipboardData.getData('text/uri-list') || clipboardData.getData('text/plain')
+
+    if (!pastedText) return
     let url
     try {
       url = new URL(pastedText.trim())
