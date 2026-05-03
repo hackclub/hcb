@@ -23,7 +23,7 @@ RSpec.describe EventsController do
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
       event2.logo.attach(io: File.open(logo_path), filename: "logo.png", content_type: "image/png")
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:index, format: :json)
 
@@ -61,7 +61,7 @@ RSpec.describe EventsController do
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
       event2.logo.attach(io: File.open(logo_path), filename: "logo.png", content_type: "image/png")
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:index, format: :json)
 
