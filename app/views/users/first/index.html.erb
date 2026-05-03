@@ -88,12 +88,12 @@
                 <% end %>
               </div>
               <% sentence = team_community_sentence(
-                    users: @teammates,
-                    total: @teammates_total,
-                    team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
-                    singular_suffix: "is already interested in HCB",
-                    plural_suffix: "are already interested in HCB"
-                  ) %>
+                   users: @teammates,
+                   total: @teammates_total,
+                   team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+                   singular_suffix: "is already interested in HCB",
+                   plural_suffix: "are already interested in HCB"
+                 ) %>
               <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
             </div>
           <% end %>
