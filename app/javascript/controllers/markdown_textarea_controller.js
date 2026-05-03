@@ -13,7 +13,8 @@ export default class extends Controller {
     const isLegacyClipboardData = clipboardData === window.clipboardData
     const pastedText = isLegacyClipboardData
       ? clipboardData.getData('URL') || clipboardData.getData('Text')
-      : clipboardData.getData('text/uri-list') || clipboardData.getData('text/plain')
+      : clipboardData.getData('text/uri-list') ||
+        clipboardData.getData('text/plain')
 
     if (!pastedText) return
     let url
