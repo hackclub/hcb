@@ -19,7 +19,7 @@ module Api
         end
 
         @total_count = @invitations.count
-        @invitations = paginate(@invitations)
+        @invitations = paginate_cursor(@invitations)
       end
 
       def show
