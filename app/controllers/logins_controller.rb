@@ -21,7 +21,7 @@ class LoginsController < ApplicationController
     referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
     @login = Login.new(state: { return_to: url_from(params[:return_to]), purpose: params[:purpose] }, referral_link_id:)
 
-    @prefill_email = params[:email] if params[:email].present?
+    @prefill_email = params[:email].presence || current_user(allow_unverified: true)&.email.presence
     @signup = params[:signup] == "true"
   end
 
@@ -31,6 +31,10 @@ class LoginsController < ApplicationController
     @login = Login.new(**login_params, referral_link:)
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
+
+    current_session.referral_attributions.each do |attribution|
+      attribution.update!(user: @user)
+    end
 
     @login.user = @user
     @login.save!
@@ -150,12 +154,20 @@ class LoginsController < ApplicationController
     # has not created a user session before
     @login.with_lock do
       if @login.complete? && @login.user_session.nil?
-        @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+        @login.user.update(verified: true) unless @login.user.verified?
+        sign_out
+        @login.update(user_session: create_session(user: @login.user, verified: true, fingerprint_info:))
       end
     end
 
     if @login.complete? && @login.user_session.present?
-      if @referral_link.present?
+      if @login.for_first?
+        raffle = @login.state["raffle"]
+        affiliations_attributes = @login.state.dig("user_params", "affiliations_attributes")
+        Raffle.find_or_create_by!(user: @login.user, program: raffle) if raffle.present?
+        @login.user.update!(affiliations_attributes:) if affiliations_attributes.present?
+        redirect_to first_index_path
+      elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application?
         redirect_to edit_user_path(@user.slug, return_to: @login.return_to)
