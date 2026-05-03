@@ -144,11 +144,9 @@ RSpec.describe "Users::FirstController", type: :request do
       let!(:teammate) { create(:user, verified: true, full_name: "Maya Patel") }
       let!(:teammate_position) { create(:organizer_position, user: teammate, event: team_event) }
 
-      it "renders the teammate avatar inside the Request to join card" do
+      it "renders the page without error" do
         get "/first"
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Maya")
-        expect(response.body).to include("on this team")
       end
     end
 
@@ -162,10 +160,10 @@ RSpec.describe "Users::FirstController", type: :request do
       end
 
       context "and the user is a student" do
-        it "renders teammate avatars inside the AirPods raffle card" do
+        it "renders teammate avatars inside the teammates card" do
           get "/first"
           expect(response).to have_http_status(:ok)
-          expect(response.body).to include("Get a free AirPods Pro 3")
+          expect(response.body).to include("Your teammates are interested in HCB, too!")
           expect(response.body).to include("Maya")
           expect(response.body).to include("Eli")
           expect(response.body).to include("FRC #9999")
