@@ -28,7 +28,7 @@ module Api
 
           if found_user.nil?
             skip_authorization
-            return render json: { error: "invalid_user", messages: "User with email '#{params[:sent_by_email]}' not found" }, status: :bad_request
+            return render json: { error: "invalid_user", messages: ["User with email '#{params[:sent_by_email]}' not found"] }, status: :bad_request
           end
 
           sent_by = found_user
