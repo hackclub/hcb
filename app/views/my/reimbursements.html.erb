@@ -2,132 +2,164 @@
 <% page_md %>
 <%= render "users/nav", selected: :reimbursements %>
 
-<h1 class="heading flex-col sm:flex-row border-0 mb-0">
-  <span>
-    Reimbursements
-  </span>
+<% if current_user(allow_unverified: true).verified? %>
+  <h1 class="heading flex-col sm:flex-row border-0 mb-0">
+    <span>
+      Reimbursements
+    </span>
 
-  <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
-    <% if @payout_method.present? %>
-      <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
-        <%= inline_icon @payout_method.icon %>
-        Payout settings
-      <% end %>
-    <% else %>
-      <%= link_to settings_payouts_path, class: "!ml-0 btn" do %>
-        <%= inline_icon "bank-account" %>
-        Configure payouts
-      <% end %>
-    <% end %>
-
-    <% if current_user.events.not_demo_mode.any? %>
-      <%= link_to "#", class: "!ml-0 btn bg-success", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
-        <%= inline_icon "plus" %>
-        Start report
-      <% end %>
-    <% end %>
-  </div>
-</h1>
-
-<%= render partial: "reimbursement/reports/create_form" %>
-
-<% if current_user.events.not_demo_mode.any? %>
-  <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
-    <div>
-      <label for="sms_number">Start a report via SMS</label>
-      <p class="h5 muted mt0 mb1">
-        Message photos from your phone.
-      </p>
-      <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
-        <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
-        <button
-          type="button"
-          class="pointer pop tooltipped tooltipped--n"
-          aria-label="Copy number"
-          data-action="clipboard#copy:prevent">
-          <%= inline_icon "copy", size: 28 %>
-        </button>
-      </div>
-    </div>
-
-    <div>
-      <label for="email_address">Start a report via email</label>
-      <p class="h5 muted mt0 mb1">
-        Send or forward from your email address.
-      </p>
-      <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
-        <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit font-mono">
-        <button
-          type="button"
-          class="pointer pop tooltipped tooltipped--n"
-          aria-label="Copy email address"
-          data-action="clipboard#copy:prevent">
-          <%= inline_icon "copy", size: 28 %>
-        </button>
-      </div>
-    </div>
-  </section>
-<% end %>
-
-<h3 class="mb0">Reports</h3>
-
-<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb2 mt1">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/filters/search", form: %>
-  <% end %>
-  <div class="filterbar" role="tablist" aria-label="Reimbursement report filters">
-    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
-    <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
-    <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
-  </div>
-</div>
-
-<% if @reports.blank? %>
-  <%= blankslate "No reports found!" %>
-<% else %>
-  <article class="table-container">
-    <table>
-      <thead>
-      <tr>
-        <th></th>
-        <th>Status</th>
-        <th>Report</th>
-        <th>Organization</th>
-        <th>Amount</th>
-        <th>Created</th>
-      </tr>
-      </thead>
-      <tbody>
-        <% @reports.order(created_at: :desc).each do |report| %>
-          <tr class="clickable">
-            <td class="flex items-center justify-center" style="margin-top: 1px;">
-              <%= avatar_for report.user, size: 24 %>
-            </td>
-            <td>
-              <% if report.status_description %>
-                <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
-                  <%= report.status_text %>
-                </span>
-              <% else %>
-                <span class="ml0 badge bg-<%= report.status_color %>"><%= report.status_text %></span>
-              <% end %>
-            </td>
-            <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-              <%= link_to "", report, class: "stretched-link" %>
-              <span><%= report.name %></span>
-            </td>
-            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-               <%= report.event&.name || "None" %>
-            </td>
-            <td>
-               <%= report.amount.format %>
-            </td>
-            <td>
-               <%= format_date report.created_at %>
-            </td>
-          </tr>
+    <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
+      <% if @payout_method.present? %>
+        <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
+          <%= inline_icon @payout_method.icon %>
+          Payout settings
         <% end %>
-      </tbody>
-    </table>
-  </article>
+      <% else %>
+        <%= link_to settings_payouts_path, class: "!ml-0 btn" do %>
+          <%= inline_icon "bank-account" %>
+          Configure payouts
+        <% end %>
+      <% end %>
+
+      <% if current_user.events.not_demo_mode.any? %>
+        <%= link_to "#", class: "!ml-0 btn bg-success", data: { behavior: "modal_trigger", modal: "create_reimbursement_report" } do %>
+          <%= inline_icon "plus" %>
+          Start report
+        <% end %>
+      <% end %>
+    </div>
+  </h1>
+
+  <%= render partial: "reimbursement/reports/create_form" %>
+
+  <% if current_user.events.not_demo_mode.any? %>
+    <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+      <div>
+        <label for="sms_number">Start a report via SMS</label>
+        <p class="h5 muted mt0 mb1">
+          Message photos from your phone.
+        </p>
+        <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+          <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit">
+          <button
+            type="button"
+            class="pointer pop tooltipped tooltipped--n"
+            aria-label="Copy number"
+            data-action="clipboard#copy:prevent">
+            <%= inline_icon "copy", size: 28 %>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label for="email_address">Start a report via email</label>
+        <p class="h5 muted mt0 mb1">
+          Send or forward from your email address.
+        </p>
+        <div class="flex gap-2" data-controller="clipboard" data-clipboard-text-value="reimburse@hcb.gg">
+          <input id="email_address" type="email" value="reimburse@hcb.gg" readonly style="cursor: text;" class="fit font-mono">
+          <button
+            type="button"
+            class="pointer pop tooltipped tooltipped--n"
+            aria-label="Copy email address"
+            data-action="clipboard#copy:prevent">
+            <%= inline_icon "copy", size: 28 %>
+          </button>
+        </div>
+      </div>
+    </section>
+  <% end %>
+
+  <h3 class="mb0">Reports</h3>
+
+  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb2 mt1">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/filters/search", form: %>
+    <% end %>
+    <div class="filterbar" role="tablist" aria-label="Reimbursement report filters">
+      <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
+      <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
+      <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
+    </div>
+  </div>
+
+  <% if @reports.blank? %>
+    <%= blankslate "No reports found!" %>
+  <% else %>
+    <article class="table-container">
+      <table>
+        <thead>
+        <tr>
+          <th></th>
+          <th>Status</th>
+          <th>Report</th>
+          <th>Organization</th>
+          <th>Amount</th>
+          <th>Created</th>
+        </tr>
+        </thead>
+        <tbody>
+          <% @reports.order(created_at: :desc).each do |report| %>
+            <tr class="clickable">
+              <td class="flex items-center justify-center" style="margin-top: 1px;">
+                <%= avatar_for report.user, size: 24 %>
+              </td>
+              <td>
+                <% if report.status_description %>
+                  <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
+                    <%= report.status_text %>
+                  </span>
+                <% else %>
+                  <span class="ml0 badge bg-<%= report.status_color %>"><%= report.status_text %></span>
+                <% end %>
+              </td>
+              <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
+                <%= link_to "", report, class: "stretched-link" %>
+                <span><%= report.name %></span>
+              </td>
+              <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                <%= report.event&.name || "None" %>
+              </td>
+              <td>
+                <%= report.amount.format %>
+              </td>
+              <td>
+                <%= format_date report.created_at %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% end %>
+<% else %>
+ <%= render "events/one_pager",
+      title: "Reimbursements",
+      support_article: "https://help.hcb.hackclub.com/en/articles/13370866-how-do-i-request-reimbursements",
+      screenshots: {
+        light: "https://user-cdn.hackclub-assets.com/019c3c7a-827e-779a-80bd-505c00c0f793/hcb.hackclub.com_hq_reimbursements.png",
+        dark: "https://user-cdn.hackclub-assets.com/019c3c7a-6f5b-7e30-aada-7f7ee823679e/hcb.hackclub.com_hq_reimbursements%20(1).png"
+      },
+      hints: [
+        {
+          icon: "send",
+          title: "Manage out-of-pocket expenses",
+          description: "Easily track and reimburse expenses incurred by your team members during events."
+        },
+        {
+          icon: "payment",
+          title: "Four different methods",
+          description: "Reimburse via ACH, mailed checks, Wise, or Wire transfers to suit your team's needs."
+        },
+        {
+          icon: "copy",
+          title: "Upload receipts",
+          description: "Organize and store expense receipts to track each expense easily."
+        }
+      ] do %>
+      <%= link_to auth_users_path(return_to: my_reimbursements_path), class: "btn" do %>
+        <%= inline_icon "email" %>
+        Verify your email first
+      <% end %>
+  <% end %>
 <% end %>
