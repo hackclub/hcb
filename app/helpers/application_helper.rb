@@ -17,8 +17,8 @@ module ApplicationHelper
                  columns.find { |c| c[:key] == default_key.to_s } ||
                  columns.first
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
-    if column_def[:sql]
-      relation.order(Arel.sql("#{column_def[:sql]} #{sort_direction}"))
+    if column_def[:order]
+      column_def[:order].call(relation, sort_direction.to_sym)
     else
       relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
     end

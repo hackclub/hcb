@@ -1052,12 +1052,22 @@ class EventsController < ApplicationController
 
   private
 
+  REIMBURSEMENT_AMOUNT_SORT_SQL = "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')"
+  REIMBURSEMENT_AMOUNT_ASC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} ASC".freeze
+  REIMBURSEMENT_AMOUNT_DESC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} DESC".freeze
   REIMBURSEMENT_COLUMNS = [
     { key: "aasm_state", display: "Status" },
     { key: "name", display: "Report" },
     { key: "user_name", display: "From", column: "user" },
     { key: "created_at", default: true, display: "Created", right: true },
-    { key: "amount", display: "Amount", sql: "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')", right: true },
+    {
+      key: "amount",
+      display: "Amount",
+      order: ->(relation, direction) do
+        relation.order(Arel.sql(direction == :asc ? REIMBURSEMENT_AMOUNT_ASC_ORDER : REIMBURSEMENT_AMOUNT_DESC_ORDER))
+      end,
+      right: true
+    },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
 
