@@ -20,6 +20,20 @@ module Api
         json.has_more @has_more
       end
 
+      def paginate(collection)
+        limit = params[:limit]&.to_i || 25
+        return render json: { error: "invalid_operation", messages: "Limit is capped at 100. '#{params[:limit]}' is invalid." }, status: :bad_request if limit > 100
+
+        if params[:after]
+          cursor = collection.find_by(public_id: params[:after])
+          return render json: { error: "invalid_operation", messages: "After parameter '#{params[:after]}' not found" }, status: :bad_request if cursor.nil?
+          collection = collection.where("#{collection.klass.table_name}.id > ?", cursor.id)
+        end
+
+        @has_more = collection.count > limit
+        collection.limit(limit)
+      end
+
       def paginate_hcb_codes(hcb_codes)
         limit = params[:limit]&.to_i || 25
         return render json: { error: "invalid_operation", messages: "Limit is capped at 100. '#{params[:limit]}' is invalid." }, status: :bad_request if limit > 100

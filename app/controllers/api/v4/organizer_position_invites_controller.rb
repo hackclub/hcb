@@ -5,18 +5,21 @@ module Api
     class OrganizerPositionInvitesController < ApplicationController
       include SetEvent
 
-      skip_after_action :verify_authorized, only: [:index]
-      before_action :set_invitation, only: [:show, :destroy, :accept, :reject]
       before_action :set_api_event, only: [:create]
+      before_action :set_invitation, only: [:show, :destroy, :accept, :reject]
 
       def index
-        if params[:organization_id]
+        if params[:organization_id].present?
           set_api_event
           authorize @event, :index_in_v4?
-          @invitations = @event.organizer_position_invites.pending
+          @invitations = @event.organizer_position_invites.pending.order(:id)
         else
-          @invitations = current_user.organizer_position_invites.pending
+          skip_authorization
+          @invitations = current_user.organizer_position_invites.pending.order(:id)
         end
+
+        @total_count = @invitations.count
+        @invitations = paginate(@invitations)
       end
 
       def show
@@ -36,6 +39,8 @@ module Api
       end
 
       def accept
+        authorize @invitation
+
         unless @invitation.accept(show_onboarding: false)
           raise ActiveRecord::RecordInvalid.new(@invitation)
         end
@@ -44,6 +49,8 @@ module Api
       end
 
       def reject
+        authorize @invitation
+
         unless @invitation.reject
           raise ActiveRecord::RecordInvalid.new(@invitation)
         end
@@ -64,11 +71,8 @@ module Api
       private
 
       def set_invitation
-        @invitation = OrganizerPositionInvite.find_by_public_id(params[:id]) || OrganizerPositionInvite.friendly.find(params[:id])
-        authorize @invitation
-        if @invitation.cancelled? || @invitation.rejected?
-          raise ActiveRecord::RecordNotFound
-        end
+        @invitation = OrganizerPositionInvite.find_by_public_id!(params[:id])
+        raise ActiveRecord::RecordNotFound if @invitation.cancelled? || @invitation.rejected?
       end
 
     end
