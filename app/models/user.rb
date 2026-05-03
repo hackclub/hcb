@@ -112,6 +112,8 @@ class User < ApplicationRecord
   has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
   has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
 
+  has_many :raffles
+
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
   has_many :events, through: :organizer_positions
@@ -252,7 +254,7 @@ class User < ApplicationRecord
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
     end
 
-    if phone_number_previously_changed? && phone_number.present?
+    if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
       User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end

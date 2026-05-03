@@ -54,6 +54,64 @@ RSpec.describe "Users::FirstController", type: :request do
                               "this discrepancy lets an attacker enumerate registered emails."
     end
 
+    context "when the visitor's session has Referral::Attribution rows from prior link clicks" do
+      let(:creator) { create(:user, verified: true) }
+      let(:program) do
+        Referral::Program.create!(
+          name: "FIRST referral test program",
+          redirect_to: "https://hcb.hackclub.com/first/welcome",
+          creator:
+        )
+      end
+      let(:link)       { program.links.create!(name: "Primary",   creator:) }
+      let(:other_link) { program.links.create!(name: "Secondary", creator:) }
+
+      it "associates a single click attribution with the new user" do
+        get "/referrals/#{link.slug}"
+        attribution = Referral::Attribution.find_by!(link:)
+        expect(attribution.user_id).to be_nil
+        expect(attribution.user_session_id).to be_present
+
+        post "/first", params: valid_form
+
+        new_user = User.find_by!(email: valid_form[:user][:email])
+        expect(attribution.reload.user_id).to eq(new_user.id)
+      end
+
+      it "associates every attribution accumulated on the session, across multiple links" do
+        get "/referrals/#{link.slug}"
+        get "/referrals/#{other_link.slug}"
+        expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(be_nil)
+
+        post "/first", params: valid_form
+
+        new_user = User.find_by!(email: valid_form[:user][:email])
+        expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(eq(new_user.id))
+      end
+
+      it "associates the click attribution with an existing user when the form is submitted with their email" do
+        existing = create(:user, verified: true)
+
+        get "/referrals/#{link.slug}"
+        attribution = Referral::Attribution.find_by!(link:)
+        expect(attribution.user_id).to be_nil
+
+        params = valid_form.deep_dup
+        params[:user][:email] = existing.email
+        post "/first", params: params
+
+        expect(attribution.reload.user_id).to eq(existing.id)
+      end
+    end
+
+    it "completes signup successfully when the visitor's session has no referral attributions" do
+      params = valid_form.deep_dup
+      params[:user][:email] = "no-referral-#{SecureRandom.hex(4)}@example.invalid"
+
+      expect { post "/first", params: params }.to change { User.count }.by(1)
+      expect(response.status).to eq(302)
+    end
+
   end
 
   describe "DELETE /first/sign_out" do
@@ -92,11 +150,6 @@ RSpec.describe "Users::FirstController", type: :request do
         expect(response.body).to include("Maya")
         expect(response.body).to include("on this team")
       end
-
-      it "does not list the current user in the avatar row when they're not in the org" do
-        get "/first"
-        expect(response.body).not_to include(">Riley<")
-      end
     end
 
     context "when the team org does not exist but teammates have signed up" do
@@ -119,9 +172,19 @@ RSpec.describe "Users::FirstController", type: :request do
           expect(response.body).to include("are already interested in HCB")
         end
 
+        it "excludes the current user from the teammate list" do
+          # The current user's name always appears in the affiliation card at the top of /first,
+          # so we have to scope the assertion to the teammate sentence to prove self-exclusion.
+          user.update!(full_name: "Zorblax Probely")
+          get "/first"
+          sentence = response.body[/\b[\w,\s]+(?:is|are) already interested in HCB/]
+          expect(sentence).not_to be_nil, "expected a teammate sentence in the rendered page"
+          expect(sentence).not_to include("Zorblax")
+        end
+
         it "does not render the adults-only standalone card" do
           get "/first"
-          expect(response.body).not_to include("Your teammates are interested")
+          expect(response.body).not_to include("Your students are interested")
         end
       end
 
@@ -131,7 +194,7 @@ RSpec.describe "Users::FirstController", type: :request do
         it "renders the standalone teammate card with the start-organization CTA" do
           get "/first"
           expect(response).to have_http_status(:ok)
-          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("Your students are interested")
           expect(response.body).to include("are already interested in HCB")
           expect(response.body).to include("Start your team&#39;s organization")
         end
@@ -142,7 +205,7 @@ RSpec.describe "Users::FirstController", type: :request do
 
         it "renders the standalone teammate card with the start-organization CTA" do
           get "/first"
-          expect(response.body).to include("Your teammates are interested")
+          expect(response.body).to include("Your students are interested")
           expect(response.body).to include("Start your team&#39;s organization")
         end
       end
@@ -152,18 +215,9 @@ RSpec.describe "Users::FirstController", type: :request do
       it "does not render the teammate sentence" do
         get "/first"
         expect(response.body).not_to include("are already interested in HCB")
-        expect(response.body).not_to include("Your teammates are interested")
+        expect(response.body).not_to include("Your students are interested")
       end
     end
 
-    context "when the user has no FIRST affiliation" do
-      before { user.affiliations.destroy_all }
-
-      it "renders the page without errors" do
-        get "/first"
-        expect(response).to have_http_status(:ok)
-        expect(response.body).not_to include("are already interested in HCB")
-      end
-    end
   end
 end

@@ -335,6 +335,25 @@ module UsersHelper
     ]
   end
 
+  # Renders a social-proof sentence about a list of teammates.
+  # Example: "Maya, Eli, and 3 others are on this team"
+  # When team_label is given, inserts "from <team_label>" before the verb.
+  def team_community_sentence(users:, total:, singular_suffix:, plural_suffix:, team_label: nil)
+    names = users.map(&:first_name)
+    leftover = total - users.size
+    list = case names.size
+           when 1
+             leftover.zero? ? names[0] : "#{names[0]} and #{pluralize(leftover, 'other')}"
+           when 2
+             leftover.zero? ? "#{names[0]} and #{names[1]}" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')}"
+           else
+             extras = leftover + (names.size - 2)
+             "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')}"
+           end
+    prefix = team_label ? "#{list} from #{team_label}" : list
+    "#{prefix} #{total > 1 ? plural_suffix : singular_suffix}"
+  end
+
   private
 
   def get_user_color(id)
