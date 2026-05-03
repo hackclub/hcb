@@ -8,7 +8,7 @@ RSpec.describe Api::V4::DonationsController do
   describe "#create" do
     it "creates a donation" do
       user  = create(:user)
-      event = create(:event)
+      event = create(:event, plan_type: Event::Plan::Standard)
       create(:organizer_position, user:, event:)
 
       token = create(:api_token, user:)
