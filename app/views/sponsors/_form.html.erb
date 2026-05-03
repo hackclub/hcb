@@ -4,7 +4,7 @@
   <% admin_tool do %>
     <div class="field">
       <%= form.label :event_id %>
-      <%= form.collection_select(:event_id, Event.all, :id, :name, prompt: "Select event…") %>
+      <%= combobox_tag :event_id, event_search_admin_index_path, form:, placeholder: "Select event…", class: "!max-w-full" %>
     </div>
   <% end %>
   <%= form.hidden_field :event_id, value: params[:event_id] unless admin_signed_in? %>

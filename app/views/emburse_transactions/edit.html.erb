@@ -11,7 +11,7 @@
 
   <div class="field">
     <%= form.label :event %>
-    <%= form.collection_select(:event_id, Event.reorder(:name), :id, :name, include_blank: "Select one…") %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, form:, placeholder: "Select one…", class: "!max-w-full" %>
   </div>
 
   <div class="field">
