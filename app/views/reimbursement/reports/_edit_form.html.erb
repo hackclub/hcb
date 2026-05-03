@@ -20,7 +20,7 @@
       <% else %>
         <%= form.select(:event_id,
             ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
-            { prompt: "Select an event…", required: true }) %>
+            { prompt: "Select an organization…", required: true }) %>
       <% end %>
       <% unless admin_signed_in? %>
         <span class="muted">You can transfer a report to any organization you're a part of.</span>
