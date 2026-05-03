@@ -11,7 +11,7 @@ RSpec.describe LoginsController do
   describe "#new" do
     it "shows the current user when logged in" do
       user = create(:user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:new)
       expect(response).to have_http_status(:ok)
@@ -450,7 +450,7 @@ RSpec.describe LoginsController do
     it "checks for sudo mode and redirects" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 
