@@ -27,6 +27,10 @@ class Event
         0.00
       end
 
+      def hcb_card_donations_enabled?
+        false
+      end
+
     end
 
   end

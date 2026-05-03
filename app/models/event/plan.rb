@@ -55,6 +55,10 @@ class Event
       type == Event::Plan::Standard.name
     end
 
+    def hcb_card_donations_enabled?
+      true
+    end
+
     def default_values
       {}
     end

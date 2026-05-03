@@ -10,6 +10,10 @@ module Api
       before_action :require_trusted_oauth_app!, only: [:payment_intent]
 
       def create
+        unless @event.plan.hcb_card_donations_enabled?
+          return render json: { error: "This organization's plan does not allow accepting donations from HCB cards." }, status: :forbidden
+        end
+
         amount = params[:amount_cents]
         if params[:fee_covered] && @event.config.cover_donation_fees
           amount /= (1 - @event.revenue_fee).ceil
