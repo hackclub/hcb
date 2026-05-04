@@ -186,6 +186,7 @@ Rails.application.routes.draw do
         post "verify_email", to: "first#verify_email"
         post "request_org_invite", to: "first#request_org_invite"
         delete "sign_out", to: "first#sign_out"
+        get "macbook_qr_code"
       end
     end
 
