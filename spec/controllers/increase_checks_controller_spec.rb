@@ -157,7 +157,7 @@ RSpec.describe IncreaseChecksController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -189,7 +189,7 @@ RSpec.describe IncreaseChecksController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

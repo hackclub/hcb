@@ -27,9 +27,13 @@ class OrganizerPositionInvite
       @invite = service.model
 
       if service.run
+        # Auto-accept when the requester is already verified (existing
+        # behavior). Unverified requesters get the OPI delivered via the
+        # OPI's `after_create_commit` so they can verify + accept on their
+        # own — that's the verification gate enforced at OPI#accept.
         ActiveRecord::Base.transaction do
           @request.approve!
-          @invite.accept
+          @invite.accept if @invite.user.verified?
         end
       else
         flash[:error] = service.model.errors.full_messages.to_sentence
