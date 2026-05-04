@@ -1,7 +1,8 @@
-<%# locals: (form:, field_name:, label:, disabled:, default_event:, sending: false) %>
+<%# locals: (form:, field_name:, label:, disabled:, source_event: nil, sending: false) %>
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <% display_value = default_event&.then { |e| admin_signed_in? ? "#{e.name} (#{e.id})" : e.name } %>
-  <%= combobox_tag "disbursement[#{field_name}]", event_search_disbursements_path(sending: sending), placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
+  <% async_params = { sending: sending } %>
+  <% async_params[:source_event_id] = source_event&.id if field_name == "event_id" && source_event.present? %>
+  <%= form.combobox field_name, event_search_disbursements_path(async_params), placeholder: "Select one...", disabled: disabled, class: "!max-w-full" %>
 </div>

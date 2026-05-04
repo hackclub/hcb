@@ -42,8 +42,8 @@ class DisbursementsController < ApplicationController
   end
 
   def new
-    @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
-    @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
+    @destination_event = find_event!(params[:event_id]) if params[:event_id]
+    @source_event = find_event!(params[:source_event_id]) if params[:source_event_id]
     @event = @source_event # this is to render the navigation bar for the correct event.
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
@@ -64,6 +64,8 @@ class DisbursementsController < ApplicationController
 
     base = if is_admin
              Event.order(Event::CUSTOM_SORT)
+           elsif !sending && unrestricted_source_event_for_search&.plan&.unrestricted_disbursements_enabled?
+             current_user.manageable_events.not_hidden.filter_demo_mode(false).or(Event.indexable).order(Event::CUSTOM_SORT)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
            end.then { |r| q.present? ? r.search_name(q) : r }
@@ -105,9 +107,8 @@ class DisbursementsController < ApplicationController
   end
 
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id]) ||
-                    Event.find(disbursement_params[:source_event_id])
-    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
+    @source_event = find_event!(disbursement_params[:source_event_id])
+    @destination_event = find_event!(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
@@ -278,6 +279,22 @@ class DisbursementsController < ApplicationController
   def set_disbursement
     @disbursement = Disbursement.find(params[:id] || params[:disbursement_id])
     @event = @disbursement.event
+  end
+
+  def unrestricted_source_event_for_search
+    current_user.manageable_events.not_hidden.filter_demo_mode(false).find_by(id: params[:source_event_id])
+  end
+
+  def find_event!(identifier)
+    Event.find_by_public_id(identifier) || Event.friendly.find(identifier)
+  rescue ActiveRecord::RecordNotFound
+    raise unless integer_identifier?(identifier)
+
+    Event.find(identifier)
+  end
+
+  def integer_identifier?(identifier)
+    identifier.to_s.match?(/\A\d+\z/)
   end
 
 end
