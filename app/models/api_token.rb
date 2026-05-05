@@ -7,7 +7,6 @@
 #  id                       :bigint           not null, primary key
 #  expires_in               :integer
 #  ip_address               :inet
-#  refresh_token            :string
 #  refresh_token_bidx       :text
 #  refresh_token_ciphertext :text
 #  revoked_at               :datetime
