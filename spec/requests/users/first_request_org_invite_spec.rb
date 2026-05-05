@@ -31,6 +31,54 @@ RSpec.describe Users::FirstController, type: :controller do
   end
 
   describe "POST #request_org_invite" do
+    # The endpoint is gated by `Date.current >= Date.new(2026, 5, 3)` in the
+    # controller. Freeze time to inside the FIRST Worlds 2026 window so the
+    # endpoint still serves its happy path.
+    before { travel_to(Date.new(2026, 4, 30)) }
+    after  { travel_back }
+
+    it "creates a pending OrganizerPositionInvite::Request for the matching event" do
+      give_user_first_affiliation
+      event = event_with_first_affiliation
+      create_session(user, verified: true)
+
+      expect {
+        post(:request_org_invite)
+      }.to change { OrganizerPositionInvite::Request.where(requester: user).count }.by(1)
+
+      request_record = OrganizerPositionInvite::Request.where(requester: user).last
+      expect(request_record.aasm_state).to eq("pending")
+      expect(request_record.link.event).to eq(event)
+    end
+
+    it "creates an OrganizerPositionInvite::Link that is expired immediately" do
+      give_user_first_affiliation
+      event_with_first_affiliation
+      create_session(user, verified: true)
+
+      post(:request_org_invite)
+      # Time is frozen for the contest-window date gate, so the 0-second link
+      # is right at its expiry boundary. Nudge past it to read as expired.
+      travel(1.second)
+
+      link = OrganizerPositionInvite::Request.where(requester: user).last.link
+      expect(link.active?).to eq(false),
+                              "Spec requires the helper Link to be expired immediately so it can't be reused. " \
+                              "It is currently active."
+      expect(link.creator).to eq(user)
+    end
+
+    it "redirects back to /first with a success flash on the happy path" do
+      give_user_first_affiliation
+      event_with_first_affiliation
+      create_session(user, verified: true)
+
+      post(:request_org_invite)
+
+      expect(response).to redirect_to(first_index_path)
+      expect(flash[:success]).to be_present
+    end
+
     it "rejects with a redirect when the user has no FIRST affiliation" do
       event_with_first_affiliation
       create_session(user, verified: true)
