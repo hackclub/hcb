@@ -22,10 +22,22 @@ export default class extends Controller {
 
     let data
     try {
-      data = await fetch(url, { headers: { Accept: 'application/json' } }).then(
-        r => r.json()
-      )
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+      })
+
+      if (!response.ok) {
+        this.warningTarget.hidden = true
+        this.linkTarget.textContent = ''
+        this.linkTarget.href = ''
+        return
+      }
+
+      data = await response.json()
     } catch {
+      this.warningTarget.hidden = true
+      this.linkTarget.textContent = ''
+      this.linkTarget.href = ''
       return
     }
 
