@@ -19,7 +19,7 @@ export default class extends Controller {
     const name = e.target.value.trim()
 
     if (!name) {
-      this.warningTarget.hidden = true
+      this.hideWarning()
       return
     }
 
@@ -39,9 +39,7 @@ export default class extends Controller {
 
       data = await response.json()
     } catch {
-      this.warningTarget.hidden = true
-      this.linkTarget.textContent = ''
-      this.linkTarget.href = ''
+      this.hideWarning()
       return
     }
 
@@ -50,7 +48,7 @@ export default class extends Controller {
       this.linkTarget.href = data.org_url
       this.warningTarget.hidden = false
     } else {
-      this.warningTarget.hidden = true
+      this.hideWarning()
     }
   }
 }
