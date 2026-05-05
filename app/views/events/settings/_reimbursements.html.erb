@@ -8,17 +8,22 @@
     <% unless event.unapproved? %>
       <% if event.users.size > 1 %>
         <div class="field field--checkbox">
-          <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>
-          <%= form.label :reimbursements_require_organizer_peer_review, "Require a peer review for reports submitted by managers." %>
+          <span>Require a peer review for reports submitted by managers.</span>
+          <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
+            <%= form.label :reimbursements_require_organizer_peer_review do %>
+              <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
         </div>
       <% end %>
       <div class="field field--checkbox mb-2">
-        <%= form.label :public_reimbursement_page_enabled, "Enable public reimbursement page", class: "flex-1", style: "font-weight: 700" %>
+        <span class="flex-1" style="font-weight: 700">Enable public reimbursement page</span>
         <div class="field--checkbox--switch" style="flex-shrink:0">
-          <%= form.check_box :public_reimbursement_page_enabled,
-            disabled:,
-            switch: true %>
-          <span class="slider"></span>
+          <%= form.label :public_reimbursement_page_enabled do %>
+            <%= form.check_box :public_reimbursement_page_enabled, disabled:, switch: true %>
+            <span class="slider"></span>
+          <% end %>
         </div>
       </div>
 
