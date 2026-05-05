@@ -129,6 +129,12 @@ RSpec.describe "Users::FirstController", type: :request do
     let(:affiliation_metadata) { { "league" => "frc", "team_number" => "9999" } }
     let(:user_role) { "student_member" }
 
+    # The contest-window cards (AirPods raffle, Request to join, etc.) are
+    # gated by `Date.current < Date.new(2026, 5, 3)` in the view. Freeze time
+    # to inside the FIRST Worlds 2026 window so those cards still render.
+    before { travel_to(Date.new(2026, 4, 30)) }
+    after  { travel_back }
+
     before do
       user.affiliations.create!(name: "first", metadata: affiliation_metadata.merge("role" => user_role))
 
