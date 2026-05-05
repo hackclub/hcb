@@ -10,7 +10,7 @@ class PaypalTransferPolicy < ApplicationPolicy
   end
 
   def approve?
-    user&.admin?
+    admin?
   end
 
   def reject?
@@ -18,7 +18,7 @@ class PaypalTransferPolicy < ApplicationPolicy
   end
 
   def mark_failed?
-    user&.admin?
+    admin?
   end
 
   private

@@ -2,7 +2,7 @@
 
 class LedgerPolicy < ApplicationPolicy
   def show?
-    user&.auditor?
+    auditor?
   end
 
 end

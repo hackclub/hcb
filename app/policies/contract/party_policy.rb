@@ -4,7 +4,7 @@ class Contract
   class PartyPolicy < ApplicationPolicy
     def show?
       if record.user.present?
-        return true if record.role == "hcb" && user&.admin?
+        return true if record.role == "hcb" && admin?
 
         return record.user == user
       end
@@ -13,7 +13,7 @@ class Contract
     end
 
     def resend?
-      user&.admin?
+      admin?
     end
 
     alias_method :completed?, :show?

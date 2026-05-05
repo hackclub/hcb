@@ -2,27 +2,27 @@
 
 class BankAccountPolicy < ApplicationPolicy
   def index?
-    user.auditor?
+    auditor?
   end
 
   def new?
-    user.admin?
+    admin?
   end
 
   def update?
-    user.admin?
+    admin?
   end
 
   def create?
-    user.admin?
+    admin?
   end
 
   def show?
-    user.auditor?
+    auditor?
   end
 
   def reauthenticate?
-    user.admin?
+    admin?
   end
 
 end

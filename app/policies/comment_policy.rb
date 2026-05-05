@@ -3,7 +3,7 @@
 class CommentPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.auditor?
+      if auditor?
         scope.all
       else
         scope.not_admin_only
@@ -13,21 +13,21 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def new?
-    user.auditor? || users.include?(user)
+    auditor? || users.include?(user)
   end
 
   def create?
-    return false if record.admin_only && !user.auditor?
+    return false if record.admin_only && !auditor?
 
-    user.auditor? || users.include?(user)
+    auditor? || users.include?(user)
   end
 
   def edit?
-    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
+    admin? || (users.include?(user) && record.user == user) || (auditor? && record.user == user)
   end
 
   def update?
-    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
+    admin? || (users.include?(user) && record.user == user) || (auditor? && record.user == user)
   end
 
   def react?
@@ -35,11 +35,11 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || (users.include?(user) && !record.admin_only)
+    auditor? || (users.include?(user) && !record.admin_only)
   end
 
   def destroy?
-    user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
+    admin? || (users.include?(user) && record.user == user) || (auditor? && record.user == user)
   end
 
 

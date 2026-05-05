@@ -21,7 +21,7 @@ class Event
     private
 
     def admin_or_manager?
-      user&.admin? || OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
+      admin? || OrganizerPosition.role_at_least?(user, record.parent_event, :manager)
     end
 
   end

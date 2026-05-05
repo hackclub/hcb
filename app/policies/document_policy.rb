@@ -2,52 +2,52 @@
 
 class DocumentPolicy < ApplicationPolicy
   def common_index?
-    user.auditor?
+    auditor?
   end
 
   def index?
     # `record` in this context is an Event
-    user.auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def new?
-    user.admin?
+    admin?
   end
 
   def create?
-    user.admin?
+    admin?
   end
 
   def show?
-    user.auditor?
+    auditor?
   end
 
   def edit?
-    user.admin?
+    admin?
   end
 
   def update?
-    user.admin?
+    admin?
   end
 
   def destroy?
-    user.admin?
+    admin?
   end
 
   def download?
-    user.auditor? || record.event.nil? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    auditor? || record.event.nil? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def fiscal_sponsorship_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || user.auditor?)
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || auditor?)
   end
 
   def verification_letter?
-    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || user.auditor?) && record.account_number.present?
+    !(record&.unapproved? || record&.pending?) && !record.demo_mode? && (OrganizerPosition.role_at_least?(user, record, :reader) || auditor?) && record.account_number.present?
   end
 
   def toggle_archive?
-    user.admin?
+    admin?
   end
 
 end

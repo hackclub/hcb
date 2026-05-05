@@ -35,15 +35,15 @@ class EventPolicy < ApplicationPolicy
   alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
-    user&.admin?
+    admin?
   end
 
   def new?
-    user&.admin?
+    admin?
   end
 
   def create?
-    user&.admin?
+    admin?
   end
 
   def balance_by_date?
@@ -84,7 +84,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user&.admin? && record.demo_mode?
+    admin? && record.demo_mode?
   end
 
   def team?
@@ -220,7 +220,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def toggle_event_tag?
-    user.admin?
+    admin?
   end
 
   def receive_grant?
@@ -228,11 +228,11 @@ class EventPolicy < ApplicationPolicy
   end
 
   def audit_log?
-    user.auditor?
+    auditor?
   end
 
   def termination?
-    user&.auditor?
+    auditor?
   end
 
   def can_invite_user?
@@ -240,15 +240,15 @@ class EventPolicy < ApplicationPolicy
   end
 
   def claim_point_of_contact?
-    user&.admin?
+    admin?
   end
 
   def activation_flow?
-    user&.admin? && record.demo_mode?
+    admin? && record.demo_mode?
   end
 
   def activate?
-    user&.admin? && record.demo_mode?
+    admin? && record.demo_mode?
   end
 
   def toggle_scoped_tag?
@@ -267,14 +267,6 @@ class EventPolicy < ApplicationPolicy
 
   def auditor_or_member?
     auditor? || member?
-  end
-
-  def admin?
-    user&.admin?
-  end
-
-  def auditor?
-    user&.auditor?
   end
 
   def reader?

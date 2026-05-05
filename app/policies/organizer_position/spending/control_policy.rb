@@ -4,13 +4,13 @@ class OrganizerPosition
   module Spending
     class ControlPolicy < ApplicationPolicy
       def index?
-        user.auditor? || (
+        auditor? || (
           current_user_manager? || own_control?
         )
       end
 
       def create?
-        user.admin? || (
+        admin? || (
            current_user_manager? &&
            !record.organizer_position.manager?
            # Don't have to make sure you're not setting the control on yourself as
@@ -20,7 +20,7 @@ class OrganizerPosition
       end
 
       def destroy?
-        user.admin? || current_user_manager?
+        admin? || current_user_manager?
       end
 
       private

@@ -2,38 +2,30 @@
 
 class EmployeePolicy < ApplicationPolicy
   def new?
-    admin || team_member
+    admin? || team_member
   end
 
   def create?
-    !record.event.demo_mode && (admin || manager)
+    !record.event.demo_mode && (admin? || manager)
   end
 
   def show?
-    team_member || admin || employee || auditor
+    team_member || admin? || employee || auditor?
   end
 
   def onboard?
-    admin
+    admin?
   end
 
   def terminate?
-    admin || manager
+    admin? || manager
   end
 
   def destroy?
-    (manager || admin) && record.onboarding?
+    (manager || admin?) && record.onboarding?
   end
 
   private
-
-  def admin
-    user&.admin?
-  end
-
-  def auditor
-    user&.auditor?
-  end
 
   def manager
     OrganizerPosition.role_at_least?(user, record.event, :manager)

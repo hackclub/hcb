@@ -12,7 +12,7 @@ class GSuiteAliasPolicy < ApplicationPolicy
   private
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.g_suite.event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, record.g_suite.event, :manager)
   end
 
 end

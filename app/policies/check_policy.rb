@@ -8,7 +8,7 @@ class CheckPolicy < ApplicationPolicy
   private
 
   def auditor_or_user
-    user&.auditor? || record.lob_address.event.users.include?(user)
+    auditor? || record.lob_address.event.users.include?(user)
   end
 
   def is_public

@@ -2,11 +2,11 @@
 
 class StripeCardPolicy < ApplicationPolicy
   def index?
-    user&.auditor?
+    auditor?
   end
 
   def shipping?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def freeze?
@@ -25,11 +25,11 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || member_and_cardholder?) && !record.canceled? && !record.event&.financially_frozen?
+    (admin? || member_and_cardholder?) && !record.canceled? && !record.event&.financially_frozen?
   end
 
   def show?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || grantee?
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || grantee?
   end
 
   def edit?
@@ -41,7 +41,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def transactions?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || cardholder?
+    auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader) || cardholder?
   end
 
   def ephemeral_keys?
@@ -51,7 +51,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def enable_cash_withdrawal?
-    user&.admin?
+    admin?
   end
 
   private
@@ -69,7 +69,7 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
   def grantee?

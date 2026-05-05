@@ -16,10 +16,6 @@ class OrganizerPositionInvite
 
     private
 
-    def admin?
-      user&.admin?
-    end
-
     def manager?
       OrganizerPosition.role_at_least?(user, record.link.event, :manager)
     end

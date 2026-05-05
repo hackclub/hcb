@@ -2,7 +2,7 @@
 
 class InvoicePolicy < ApplicationPolicy
   def index?
-    return true if user&.auditor?
+    return true if auditor?
 
     event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
     same_event = event_ids.uniq.size == 1 # same_event is a sanity check that all the records are from the same event
@@ -49,7 +49,7 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def refund?
-    user&.admin?
+    admin?
   end
 
   def show_in_v4?
@@ -57,11 +57,11 @@ class InvoicePolicy < ApplicationPolicy
   end
 
   def auditor_or_reader?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, event, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, event, :manager)
+    admin? || OrganizerPosition.role_at_least?(user, event, :manager)
   end
 
   private

@@ -33,14 +33,6 @@ class AnnouncementPolicy < ApplicationPolicy
 
   private
 
-  def admin?
-    user&.admin?
-  end
-
-  def auditor?
-    user&.auditor?
-  end
-
   def manager?
     OrganizerPosition.role_at_least?(user, record.event, :manager)
   end

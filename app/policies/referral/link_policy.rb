@@ -7,7 +7,7 @@ module Referral
     end
 
     def create?
-      user.auditor?
+      auditor?
     end
 
   end

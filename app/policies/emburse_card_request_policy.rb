@@ -2,15 +2,15 @@
 
 class EmburseCardRequestPolicy < ApplicationPolicy
   def index?
-    user&.auditor?
+    auditor?
   end
 
   def show?
-    user&.auditor?
+    auditor?
   end
 
   def export?
-    user&.auditor?
+    auditor?
   end
 
 end

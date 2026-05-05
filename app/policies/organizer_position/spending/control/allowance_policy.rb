@@ -9,7 +9,7 @@ class OrganizerPosition
         end
 
         def create?
-          user.admin? ||
+          admin? ||
             OrganizerPosition.role_at_least?(user, record.event, :manager)
         end
 

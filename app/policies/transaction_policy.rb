@@ -2,11 +2,11 @@
 
 class TransactionPolicy < ApplicationPolicy
   def index?
-    user&.auditor?
+    auditor?
   end
 
   def export?
-    user&.auditor? ||
+    auditor? ||
       record.all? { |r| r.event.users.include? user }
   end
 
@@ -27,7 +27,7 @@ class TransactionPolicy < ApplicationPolicy
   private
 
   def auditor_or_teammember
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
+    auditor? || OrganizerPosition.role_at_least?(user, record&.event, :reader)
   end
 
   def admin_or_teammember
