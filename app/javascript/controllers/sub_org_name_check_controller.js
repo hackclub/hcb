@@ -9,6 +9,12 @@ export default class extends Controller {
     this.check = debounce(this._check, 400)
   }
 
+  hideWarning() {
+    this.warningTarget.hidden = true
+    this.linkTarget.textContent = ''
+    this.linkTarget.href = ''
+  }
+
   async _check(e) {
     const name = e.target.value.trim()
 
@@ -27,9 +33,7 @@ export default class extends Controller {
       })
 
       if (!response.ok) {
-        this.warningTarget.hidden = true
-        this.linkTarget.textContent = ''
-        this.linkTarget.href = ''
+        this.hideWarning()
         return
       }
 
