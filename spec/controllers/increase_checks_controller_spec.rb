@@ -30,7 +30,7 @@ RSpec.describe IncreaseChecksController do
         build_check_attributes(column_id: "col_test123", column_status: "issued")
       )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       allow(ColumnService).to receive(:post)
         .with("/transfers/checks/col_test123/stop-payment", idempotency_key: "stop_col_test123")
@@ -50,7 +50,7 @@ RSpec.describe IncreaseChecksController do
         build_check_attributes(column_id: "col_test456", column_status: "issued")
       )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(:stop, params: { id: check.id })
 
@@ -66,7 +66,7 @@ RSpec.describe IncreaseChecksController do
         build_check_attributes(column_id: "col_test789", column_status: "pending_deposit")
       )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(:stop, params: { id: check.id })
 
@@ -83,7 +83,7 @@ RSpec.describe IncreaseChecksController do
   #       build_check_attributes(column_id: "col_original", column_status: "issued")
   #     )
 
-  #     sign_in(user)
+  #     create_session(user, verified: true)
 
   #     allow(ColumnService).to receive(:post)
   #       .with("/transfers/checks/col_original/stop-payment", idempotency_key: "stop_col_original")
@@ -126,7 +126,7 @@ RSpec.describe IncreaseChecksController do
   #       build_check_attributes(column_id: "col_test_deny", column_status: "issued")
   #     )
 
-  #     sign_in(user)
+  #     create_session(user, verified: true)
 
   #     post(:reissue, params: { id: check.id })
 
