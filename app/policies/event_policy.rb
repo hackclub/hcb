@@ -212,7 +212,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def invoices?
-    show? && record.approved? && record.plan.invoices_enabled?
+    show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
   def account_number?
