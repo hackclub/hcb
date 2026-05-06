@@ -59,7 +59,7 @@
         </section>
       <% end %>
 
-      <% if @event.plan.account_number_enabled? %>
+      <% if policy(@event).account_number? %>
         <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_number" } do %>
           <%= inline_icon "bank-account", size: 20 %>
           Account numbers
