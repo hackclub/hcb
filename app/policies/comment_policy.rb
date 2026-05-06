@@ -47,7 +47,6 @@ class CommentPolicy < ApplicationPolicy
     user_list = []
 
     if record.commentable.respond_to?(:events)
-      user_list = record.commentable.events.collect(&:users).flatten
       user_list = record.commentable.events.collect(&:self_and_ancestor_users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
       user_list = [record.commentable.user]
