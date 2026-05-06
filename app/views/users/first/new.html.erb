@@ -16,16 +16,6 @@
       </em>
       for FRC, FTC, and FLL&nbsp;teams
     </h2>
-    <div class="card flex flex-row bg-black !text-white !mb-0 mt-6 max-w-[48rem] !py-0 overflow-hidden">
-      <div class="flex-1 py-4 self-center">
-        <h2 class="heading mt-0 mb-3 w-full">
-          Win a MacBook Neo!
-        </h2>
-        <p class="my-0">Create an HCB account and we'll sign you up for our MacBook raffle! Get a chance to win a free MacBook Neo.</p>
-        <p class="muted mb-0">Must be 18 years of age or younger to be eligible.</p>
-      </div>
-      <img src="https://cdn.hackclub.com/019db803-aaeb-7557-bb8f-c07c1368d209/image_4__3_.png" class="self-end h-auto" style="width: 120px;" alt="">
-    </div>
   </div>
 </div>
 
@@ -124,6 +114,8 @@
         <%= form.fields_for :affiliations_attributes do %> <% end %>
 
         <%= hidden_field_tag :referral_link_slug, @referral_link_slug %>
+
+        <%= hidden_field_tag :user_referral, @user_referral %>
 
         <%= invisible_captcha :remember_me %>
 
