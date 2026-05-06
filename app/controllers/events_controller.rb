@@ -798,6 +798,28 @@ class EventsController < ApplicationController
     redirect_to subevent
   end
 
+  def check_sub_organization_name
+    authorize @event, :create_sub_organization?
+
+    name = params[:name].to_s.strip
+
+    if name.blank?
+      return render json: { duplicate: false }
+    end
+
+    duplicate = @event.descendants.find_by("lower(name) = ?", name.downcase)
+
+    if duplicate
+      render json: {
+        duplicate: true,
+        org_name: duplicate.name,
+        org_url: event_path(duplicate)
+      }
+    else
+      render json: { duplicate: false }
+    end
+  end
+
   def toggle_hidden
     authorize @event
 
