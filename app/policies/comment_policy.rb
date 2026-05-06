@@ -48,13 +48,13 @@ class CommentPolicy < ApplicationPolicy
 
     if record.commentable.respond_to?(:events)
       user_list = record.commentable.events.collect(&:users).flatten
-      user_list = record.commentable.events.collect(&:ancestor_users).flatten
+      user_list = record.commentable.events.collect(&:self_and_ancestor_users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
       user_list = [record.commentable.user]
 
       unless record.commentable.event&.users&.empty?
         user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
-        user_list += record.commentable.event&.ancestor_users || []
+        user_list += record.commentable.event&.self_and_ancestor_users || []
       end
     elsif record.commentable.is_a?(Disbursement)
       # TODO: possibly replace this by adding #events to Disbursement?
