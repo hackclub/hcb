@@ -16,7 +16,7 @@
     <div class="field event-select-target">
       <%= form.label :event_id, "Organization", class: "mt2" %>
       <% if admin_signed_in? %>
-        <%= combobox_tag :event_id, event_search_admin_index_path(demo_mode: false), form:, placeholder: "Select an event…", required: true, class: "!max-w-full" %>
+        <%= combobox_tag :event_id, event_search_admin_index_path(demo_mode: false), form:, placeholder: "Select an organization…", required: true, class: "!max-w-full", value: @report.event&.to_combobox_display %>
       <% else %>
         <%= form.select(:event_id,
             ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },

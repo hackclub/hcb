@@ -11,7 +11,7 @@
 
   <div class="field">
     <%= form.label :event %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, form:, placeholder: "Select one…", class: "!max-w-full" %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, form:, placeholder: "Select one…", class: "!max-w-full", value: @emburse_transaction.event&.to_combobox_display %>
   </div>
 
   <div class="field">
