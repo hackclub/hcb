@@ -144,8 +144,9 @@ class IncreaseCheck < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
-  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+  after_update if: -> { column_status_previously_changed?(to: "stopped") || column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -329,8 +330,6 @@ class IncreaseCheck < ApplicationRecord
     raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
     column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
-
-    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
 
     update!(
       column_object: column_check,
