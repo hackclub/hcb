@@ -39,33 +39,42 @@
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
+      <%= render "events/transfers/modal" %>
+      <%= render "card_grants/create_modal" if @event.plan.card_grants_enabled? %>
+
       <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
-      <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
-        <%= inline_icon "cheque", size: 20 %>
-        Deposit a check
+      <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
+
+      <% if policy(@event.check_deposits.build).create? %>
+        <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
+          <%= inline_icon "cheque", size: 20 %>
+          Deposit a check
+        <% end %>
+        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
+          <%= modal_header "Deposit a check" %>
+          <%= render "check_deposits/new", event: @event %>
+        </section>
       <% end %>
-      <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_numbers" } do %>
-        <%= inline_icon "bank-account", size: 20 %>
-        Account numbers
+
+      <% if policy(@event).account_number? %>
+        <%= link_to account_number_event_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "account_number" } do %>
+          <%= inline_icon "bank-account", size: 20 %>
+          Account numbers
+        <% end %>
+        <%= render "events/account_number_modal" %>
       <% end %>
-      <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
-        <%= inline_icon "briefcase", size: 20 %>
-        Send an invoice
+
+      <% if InvoicePolicy.new(current_user, @event).create? %>
+        <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
+          <%= inline_icon "briefcase", size: 20 %>
+          Send an invoice
+        <% end %>
+        <%= render "invoices/modal" %>
       <% end %>
     </div>
-    <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
-    <%= render "events/transfer_modal" %>
-    <%= render "card_grants/create_modal" %>
-    <%= render "invoices/modal" %>
-
-    <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="deposit_check">
-      <%= modal_header "Deposit a check" %>
-      <%= render "check_deposits/new", event: @event %>
-    </section>
-    <%= render "account_numbers", event: @event %>
   <% end %>
 
   <%= render "events/public_message" %>
@@ -74,19 +83,19 @@
     <div class="card p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]">
       <%= render partial: "application/loading_container" %>
     </div>
-    <div class="card card--breakdown p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]" style="flex: 1">
+    <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]" style="flex: 1">
       <%= render partial: "application/loading_container" %>
     </div>
   <% end %>
 
   <div class="flex gap-4 flex-col sm:flex-row mb-4" style="max-width:100%">
     <%= turbo_frame_tag "recent_activity", src: event_recent_activity_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", loading: "lazy", target: "_top" do %>
-      <div class="card card--breakdown p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height: 305px">
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1;min-height: 305px">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>
     <%= turbo_frame_tag "team_stats", src: event_team_stats_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 flex-col sm:max-w-[50%]", style: "min-height: 305px", loading: "lazy", target: "_top" do %>
-      <div class="card card--breakdown p-0 flex-1 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
       <div class="card p-0 text-center flex-1 flex flex-col items-center justify-center">

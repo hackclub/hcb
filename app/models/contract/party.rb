@@ -5,7 +5,7 @@
 # Table name: contract_parties
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  deleted_at     :datetime
 #  external_email :string
 #  role           :string           not null
@@ -25,7 +25,6 @@ class Contract
   class Party < ApplicationRecord
     include AASM
     include Hashid::Rails
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     acts_as_paranoid
     has_paper_trail
@@ -101,12 +100,24 @@ class Contract
       "There was an issue in the agreement you signed for #{contract.event_name} on HCB 📝"
     end
 
+    def reminder_email_subject
+      "[Action Needed] Sign the fiscal sponsorship agremeent for #{contract.event_name} on HCB 📝"
+    end
+
     # We may miss a webhook or load a page before we've received the webhook,
     # so we can manually sync the party with this method!
     def sync_with_docuseal
-      if pending? && docuseal_submission&.[]("status") == "completed"
-        mark_signed!
+      self.with_lock do
+        if pending? && docuseal_submission&.[]("status") == "completed"
+          mark_signed!
+        end
       end
+    end
+
+    def schedule_reminders
+      Contract::Party::ReminderJob.set(wait: 3.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 7.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 14.days).perform_later(self)
     end
 
     private

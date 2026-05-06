@@ -2,7 +2,7 @@
 
 data_sources:
   main:
-    url: <%= ENV["DATABASE_URL"] %>
+    url: <%= ENV["BLAZER_DATABASE_URL"].presence || ENV["DATABASE_URL"] %>
 
     # statement timeout, in seconds
     # none by default

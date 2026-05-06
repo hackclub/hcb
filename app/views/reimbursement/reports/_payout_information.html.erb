@@ -3,7 +3,7 @@
 <% user = report.user %>
 <% payout_method = user.payout_method %>
 
-<h3 class="mt-0">Payout Information</h3>
+<h3 class="mt-0">Payout information</h3>
 
 <% if payout_method.nil? %>
   <p class="muted">No payout method configured</p>
@@ -17,6 +17,10 @@
       <tr>
         <td>Recipient:</td>
         <td><%= user.name %></td>
+      </tr>
+      <tr>
+        <td>Name on account:</td>
+        <td><%= payout_method.try(:account_holder).presence || user.full_name %></td>
       </tr>
       <tr>
         <td>Email:</td>
@@ -114,12 +118,6 @@
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>
         </tr>
-        <% if payout_method.recipient_information["account_holder"].present? %>
-          <tr>
-            <td>Name on account:</td>
-            <td><%= payout_method.recipient_information["account_holder"] %></td>
-          </tr>
-        <% end %>
         <% if payout_method.bank_name.present? %>
           <tr>
             <td>Bank name:</td>

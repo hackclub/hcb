@@ -48,20 +48,19 @@ class DisbursementsController < ApplicationController
     )
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-    user_accesible_events = Event.where(id: current_user.events.pluck(:id) + current_user.events.collect(&:descendant_ids).flatten)
 
     @allowed_source_events = if admin_signed_in?
                                Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                              else
-                               user_accesible_events.not_hidden.filter_demo_mode(false)
+                               current_user.manageable_events.not_hidden.filter_demo_mode(false)
                              end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
     @allowed_destination_events = if admin_signed_in?
                                     Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
                                   elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = user_accesible_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+                                    allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
                                     Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
                                   else
-                                    user_accesible_events.not_hidden.filter_demo_mode(false)
+                                    current_user.manageable_events.not_hidden.filter_demo_mode(false)
                                   end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
 
     authorize @disbursement
@@ -81,6 +80,16 @@ class DisbursementsController < ApplicationController
                               disbursement_params["scheduled_on(3i)"].to_i)
     end
 
+    if disbursement_params[:source_transaction_category_slug].present? || disbursement_params[:destination_transaction_category_slug].present?
+      source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
+      destination_transaction_category_slug = disbursement_params[:destination_transaction_category_slug].presence
+      category_assignment_strategy = "manual"
+    else
+      source_transaction_category_slug = "internal-transfer"
+      destination_transaction_category_slug = "internal-transfer"
+      category_assignment_strategy = "automatic"
+    end
+
     disbursement = DisbursementService::Create.new(
       name: disbursement_params[:name],
       destination_event_id: @destination_event.id,
@@ -90,8 +99,9 @@ class DisbursementsController < ApplicationController
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
       fronted: @source_event.plan.front_disbursements_enabled?,
-      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
-      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
+      source_transaction_category_slug:,
+      destination_transaction_category_slug:,
+      category_assignment_strategy:
     ).run
 
     if disbursement_params[:file]

@@ -288,7 +288,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   def disbursement
-    Rails.error.unexpected "CanonicalPendingTransaction#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "CanonicalPendingTransaction#disbursement accessed"
     return nil unless raw_pending_outgoing_disbursement_transaction || raw_pending_incoming_disbursement_transaction
 
     (outgoing_disbursement || incoming_disbursement)&.disbursement
@@ -338,6 +338,18 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def raw_stripe_transaction
     nil # used by canonical_transaction. necessary to implement as nil given hcb code generation
+  end
+
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transaction
+
+    raw_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
   end
 
   def remote_stripe_iauth_id

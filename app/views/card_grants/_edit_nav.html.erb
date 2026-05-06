@@ -28,15 +28,18 @@
 </section>
 <ul class="tab-container">
   <%= settings_tab active: active == "overview" do %>
-      <%= link_to "Overview", edit_overview_event_card_grant_path(@card_grant), data: { turbo: true } %>
+    <%= link_to "Overview", edit_overview_event_card_grant_path(@card_grant), data: { turbo: true } %>
   <% end %>
   <%= settings_tab active: active == "purpose" do %>
-      <%= link_to "Purpose and instructions", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
+    <%= link_to "Purpose and instructions", edit_purpose_event_card_grant_path(@card_grant), data: { turbo: true } %>
   <% end %>
   <%= settings_tab active: active == "usage" do %>
-      <%= link_to "Usage restrictions", edit_usage_restrictions_event_card_grant_path(@card_grant), data: { turbo: true } %>
+    <%= link_to "Usage restrictions", edit_usage_restrictions_event_card_grant_path(@card_grant), data: { turbo: true } %>
+  <% end %>
+  <%= settings_tab active: active == "expiration" do %>
+    <%= link_to "Expiration date", edit_expiration_event_card_grant_path(@card_grant), data: { turbo: true } %>
   <% end %>
   <%= settings_tab active: active == "actions" do %>
-      <%= link_to "Other actions", edit_actions_event_card_grant_path(@card_grant), data: { turbo: true } %>
+    <%= link_to "Other actions", edit_actions_event_card_grant_path(@card_grant), data: { turbo: true } %>
   <% end %>
 </ul>

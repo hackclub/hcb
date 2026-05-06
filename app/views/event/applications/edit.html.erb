@@ -4,10 +4,10 @@
   <div class="md:max-w-[600px] w-full my-3 space-y-8 pb-5">
     <%= form_with model: @application, url: application_path(@application, return_to: submission_application_path(@application), confirm: true), method: :patch, id: "edit_application_#{@application.id}", class: "space-y-8" do |form| %>
 
-      <div class="card card--outline">
+      <div class="card card--outline" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>' }">
         <h3 class="text-2xl my-0 mb-6">Project Information</h3>
 
-        <div class="field" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>' }">
+        <div class="field">
           <%= form.label :name do %>
             Project name <span class="text-primary">*</span>
           <% end %>
@@ -237,6 +237,19 @@
         </div>
       </div>
 
+    <% end %>
+
+    <%= turbo_frame_tag :affiliations_settings do %>
+      <h3 class="mb2">Affiliations</h3>
+
+      <div class="card mb3">
+        <% affiliation = Event::Affiliation.new(affiliable: @application) %>
+        <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: '', disabled: #{!policy(affiliation).update?} }" }) do |form| %>
+          <%= render "events/settings/affiliation_form", affiliation:, form: %>
+        <% end %>
+      </div>
+
+      <%= render partial: "events/settings/affiliation", collection: @application.affiliations.nonempty %>
     <% end %>
   </div>
 </div>

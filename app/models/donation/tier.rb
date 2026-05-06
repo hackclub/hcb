@@ -25,6 +25,9 @@
 #
 class Donation
   class Tier < ApplicationRecord
+    include Hashid::Rails
+    hashid_config salt: ""
+
     belongs_to :event
 
     validates :name, :amount_cents, presence: true
