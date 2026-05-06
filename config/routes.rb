@@ -1058,6 +1058,7 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end
