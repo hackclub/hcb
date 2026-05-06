@@ -48,7 +48,7 @@
       <% end %>
       <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
 
-      <% if @event.plan.check_deposits_enabled? %>
+      <% if policy(@event.check_deposits.build).create? %>
         <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>
           <%= inline_icon "cheque", size: 20 %>
           Deposit a check
