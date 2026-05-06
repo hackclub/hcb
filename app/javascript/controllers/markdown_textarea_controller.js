@@ -31,7 +31,10 @@ export default class extends Controller {
     const selectedText = value.slice(selectionStart, selectionEnd)
     const markdownLink = `[${selectedText}](${url.href})`
 
-    textarea.setRangeText(markdownLink, selectionStart, selectionEnd, 'end')
+    // execCommand integrates with the browser's native undo stack, unlike setRangeText
+    textarea.focus()
+    textarea.setSelectionRange(selectionStart, selectionEnd)
+    document.execCommand('insertText', false, markdownLink)
     textarea.dispatchEvent(new Event('input', { bubbles: true }))
   }
 }
