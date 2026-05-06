@@ -47,7 +47,9 @@
             <p>
               <strong>Contract status</strong>
               <span>
-                <% if @application.contract.parties.not_hcb.all?(&:signed?) %>
+                <% if @application.contract.signed? %>
+                  Signed by all parties
+                <% elsif @application.contract.parties.not_hcb.all?(&:signed?) %>
                   Ready for HCB signature
                 <% else %>
                   Waiting on <%= @application.contract.parties.not_hcb.pending.map(&:role).to_sentence %>

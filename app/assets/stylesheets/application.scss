@@ -131,7 +131,8 @@ table {
   width: 100%;
 }
 
-tr {
+tr,
+.visual-table-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.0625);
   border-bottom-width: 0.5px;
 

@@ -158,6 +158,55 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "teenager status" do
+    let(:first_student_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "student_leader" }
+    end
+    let(:first_coach_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "head_coach" }
+    end
+
+    it "marks a user with no birthday but a FIRST student affiliation as a teenager" do
+      user = create(:user, affiliations_attributes: [first_student_attrs])
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "does not mark a FIRST head coach as a teenager" do
+      user = create(:user, affiliations_attributes: [first_coach_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).not_to be true
+    end
+
+    it "syncs the teenager column when a FIRST student affiliation is added later" do
+      user = create(:user)
+      expect(user.teenager).not_to be true
+
+      user.update!(affiliations_attributes: [first_student_attrs])
+
+      expect(user.reload.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "still respects the birthday-based check when there is no FIRST affiliation" do
+      user = create(:user, birthday: 16.years.ago)
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+    end
+
+    it "lets birthday take precedence over a FIRST student affiliation when both are present" do
+      user = create(:user, birthday: 30.years.ago, affiliations_attributes: [first_student_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).to be false
+      expect(user.joined_as_teenager).to be false
+    end
+  end
+
   describe "#locked?" do
     context "when locked" do
       it "returns" do
@@ -267,6 +316,101 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "security configuration change emails" do
+    describe "phone_number changes" do
+      it "does not send an email when phone_number changes from nil to a value (signup)" do
+        user = create(:user, phone_number: nil)
+
+        expect {
+          user.update!(phone_number: "+18556254225")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when phone_number changes from one value to another" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: "+14155550123")
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number changes from a value to nil" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: nil)
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number is not changed" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_sms_auth changes" do
+      it "sends an email when SMS authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+        expect {
+          user.update!(use_sms_auth: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when SMS authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_sms_auth: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when use_sms_auth is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_two_factor_authentication changes" do
+      it "sends an email when two-factor authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when two-factor authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when use_two_factor_authentication is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
@@ -282,6 +426,32 @@ RSpec.describe User, type: :model do
       results = User.search_name("999999999")
 
       expect(results).to be_empty
+    end
+  end
+
+  describe "promoting an unverified user to verified" do
+    it "expires every unverified session attached to the user" do
+      user = create(:user, verified: false)
+      stale_unverified = create(
+        :user_session,
+        user:,
+        verified: false,
+        expiration_at: 1.week.from_now,
+        signed_out_at: nil,
+      )
+      original_expiration = stale_unverified.expiration_at
+
+      user.update!(verified: true)
+      stale_unverified.reload
+
+      aggregate_failures "stale unverified session is invalidated" do
+        expect(stale_unverified.expiration_at).to be <= Time.current,
+                                                  "expected expiration_at to be moved to <= now, got #{stale_unverified.expiration_at} (was #{original_expiration})"
+        expect(stale_unverified.signed_out_at).not_to be_nil,
+                                                      "expected signed_out_at to be set, got nil"
+        expect(User::Session.not_expired.find_by(session_token: stale_unverified.session_token)).to be_nil,
+                                                                                                    "session is still resolvable via session_token lookup, so the cookie remains valid"
+      end
     end
   end
 end
