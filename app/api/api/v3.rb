@@ -15,7 +15,22 @@ module Api
       end
 
       def activities
-        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :desc))
+        # SQL mirror of `PublicActivity::Activity#serialized_event_id`:
+        # when `recipient_type='Event'`, filter on `recipient_id`;
+        # otherwise (including NULL recipient_type) fall back to
+        # `event_id`. Must stay in sync with that method and with
+        # `Api::ActivityPolicy#show?` — they all gate the same data.
+        indexable_event_ids = Event.indexable.select(:id)
+        @activities ||= paginate(
+          PublicActivity::Activity
+            .where(recipient_type: "Event", recipient_id: indexable_event_ids)
+            .or(
+              PublicActivity::Activity
+                .where("recipient_type IS DISTINCT FROM 'Event'")
+                .where(event_id: indexable_event_ids)
+            )
+            .order(created_at: :desc)
+        )
       end
 
       def org
@@ -965,6 +980,7 @@ module Api
       end
       route_param :activity_id do
         get do
+          Pundit.authorize(nil, [:api, activity], :show?, policy_class: Api::ActivityPolicy)
           present activity, with: Api::Entities::Activity, **type_expansion(expand: %w[organization transaction])
         end
       end

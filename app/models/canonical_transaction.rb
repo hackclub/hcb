@@ -429,7 +429,7 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def disbursement
-    Rails.error.unexpected "CanonicalTransaction#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "CanonicalTransaction#disbursement accessed"
     (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 

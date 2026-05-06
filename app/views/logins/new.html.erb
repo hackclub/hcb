@@ -8,7 +8,7 @@
 
 <div class="flex flex-col flex-1 justify-center w-full <%= @login.for_application? ? "card" : "max-w-md" %>">
   <div class="my-auto">
-    <%= render "logins/header", label: @login.for_application? ? "Apply for HCB" : "Hack Club" do %>
+    <%= render "logins/header", header_label: @login.for_application? ? "Apply for HCB" : "Hack Club" do %>
       <%= title_text %>
     <% end %>
 
