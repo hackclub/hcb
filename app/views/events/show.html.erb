@@ -65,7 +65,7 @@
       <% end %>
       <%= render "events/account_number_modal" %>
 
-      <% if policy(@event).invoices? %>
+      <% if InvoicePolicy.new(current_user, @event).create? %>
         <%= link_to new_event_invoice_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "new_invoice" } do %>
           <%= inline_icon "briefcase", size: 20 %>
           Send an invoice
