@@ -68,7 +68,7 @@
       <% end %>
     <% else %>
       <% control_enable_button = link_to event_organizer_position_spending_controls_path(@event, @organizer_position), class: "btn btn-small bg-info tooltipped tooltipped--e", disabled: !policy(@provisional_control).new?, method: :post do %>
-          Enable controls for <%= @organizer_position.user.first_name %>
+        Enable controls for <%= @organizer_position.user.first_name %>
       <% end %>
 
       <% if policy(@provisional_control).new? %>
