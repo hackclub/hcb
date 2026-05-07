@@ -201,7 +201,7 @@ module Admin
       statement = Blazer::Statement.new(sql, data_source)
       result = Blazer::RunStatement.new.perform(statement, {})
       result.error
-    rescue StandardError => e
+    rescue => e
       e.message
     end
 
@@ -243,7 +243,7 @@ module Admin
       response = conn.post("/v1/chat/completions", payload)
 
       response.body.dig("choices", 0, "message", "content").to_s.strip.presence || @prompt.truncate(60)
-    rescue StandardError
+    rescue
       @prompt.truncate(60)
     end
   end
