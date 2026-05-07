@@ -60,7 +60,9 @@ class Event
     has_paper_trail
 
     include PgSearch::Model
-    pg_search_scope :search_name, against: :name
+    pg_search_scope :search_name_or_email, against: :name, associated_against: {
+      user: :email
+    }
 
     include AASM
     include Contractable
