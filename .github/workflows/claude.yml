@@ -10,6 +10,10 @@ on:
   pull_request_review:
     types: [submitted]
 
+# Default to no permissions at the workflow level. The job below grants
+# itself exactly what the Claude Code action needs.
+permissions: {}
+
 jobs:
   claude:
     if: |

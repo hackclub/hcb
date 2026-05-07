@@ -65,9 +65,16 @@ class Login < ApplicationRecord
   end
 
   validate do
-    if user_session.present? && user_session.user != user
-      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
-      errors.add(:base, "A login with a session present has a session.user / user mismatch.")
+    if user_session.present? && user_session.user_id != user_id
+      Rails.error.unexpected "A login with a session present has a user_session.user_id (#{user_session.user_id}) / user_id (#{user_id}) mismatch."
+      errors.add(:base, "A login with a session present has a user_session.user / user mismatch.")
+    end
+  end
+
+  validate do
+    if user_session.present? && user_session.unverified?
+      # Unverified sessions by definition do not have auth (aka, no Login)
+      errors.add(:user_session, "must be verified")
     end
   end
 
@@ -92,6 +99,10 @@ class Login < ApplicationRecord
 
   def for_application?
     purpose == "application"
+  end
+
+  def for_first?
+    purpose == "first"
   end
 
   def authentication_factors_count

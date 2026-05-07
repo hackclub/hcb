@@ -5,93 +5,72 @@ on:
   push:
     branches:
       - main
+# Default to least-privilege for the GITHUB_TOKEN. Individual jobs that
+# need to write back to the repo (e.g. posting PR review suggestions)
+# widen their own permissions block below.
+permissions:
+  contents: read
 jobs:
   rubocop:
     name: Rubocop
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run Rubocop
         run: bundle exec rubocop
   suggest_lint_changes:
     name: 'Suggest lint changes'
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
+    # parkerbxyz/suggest-changes posts review comments with suggested
+    # edits, which requires write access to the PR.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-      - name: Install Yarn
-        run: yarn install
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
       - name: Run Lint
         run: bin/lint -c
       - name: Comment suggested changes
-        uses: parkerbxyz/suggest-changes@v3.0.3
+        uses: parkerbxyz/suggest-changes@v3.0.4
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run erb_lint
-        run: bundle exec erb_lint app/views/
+        run: bin/erb_lint
   eslint:
     name: ESLint
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-      - run: yarn install
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-node
       - name: Run ESLint
         run: yarn lint
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-      - run: yarn install
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-node
       - name: Run Prettier
         run: yarn format:check
   rspec:
-    name: RSpec
+    name: RSpec (shard ${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel remaining shards when one fails — we want to see all
+      # failures in a single run rather than a slow loop of retries.
+      fail-fast: false
+      matrix:
+        # Bumping this number adds more parallel runners. Keep it in sync
+        # with SHARD_TOTAL below.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     services:
       postgres:
         image: postgres:15
@@ -116,40 +95,10 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-      - name: Find yarn cache location
-        id: yarn-cache
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - name: JS package cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - name: Install JS packages
-        run: |
-          yarn install --pure-lockfile
-      - name: Install postgres client
-        run: sudo apt-get install libpq-dev
-      - name: Build App
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
-          RAILS_ENV: test
-        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/setup-db
       - name: Build Assets
         run: yarn build && yarn build:css
       - name: Run RSpec
@@ -159,11 +108,26 @@ jobs:
           REDIS_URL: redis://localhost:6379
           RAILS_ENV: test
           CC_TEST_REPORTER_ID: '1' # Force SimpleCov to generate a JSON report
-        run: bundle exec rspec --tag ~skip
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: 8
+        # Deterministic round-robin split of spec files across shards. We
+        # sort the file list first so each runner computes the same ordering,
+        # then `awk` keeps only the files whose 1-based index mod SHARD_TOTAL
+        # maps to this shard. With 143 spec files over 8 shards, each shard
+        # runs ~18 files. This is simple and doesn't require extra gems;
+        # upgrade to a balancer (ci-queue, knapsack_pro) later if shards
+        # drift apart in wall time.
+        run: |
+          specs=$(find spec -name '*_spec.rb' | sort | awk -v i="$SHARD_INDEX" -v n="$SHARD_TOTAL" 'NR % n == (i - 1) % n { print }')
+          echo "Running $(echo "$specs" | wc -l) spec files on shard $SHARD_INDEX/$SHARD_TOTAL"
+          bundle exec rspec --tag ~skip $specs
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
-          name: simplecov-report
+          # Each shard generates its own coverage file; name them uniquely
+          # so the upload action doesn't clash. Merging into a single report
+          # can be done in a downstream job if needed.
+          name: simplecov-report-shard-${{ matrix.shard }}
           path: coverage/coverage.json
   annotate:
     name: Annotate
@@ -182,59 +146,21 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Install postgres client
-        run: sudo apt-get install libpq-dev
-      - name: Build App
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
-          RAILS_ENV: test
-        run: bundler exec rails db:create db:schema:load RAILS_ENV=test
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-db
       - name: Run annotaterb
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/bank_test
           RAILS_ENV: test
-        run: bundle exec annotaterb --frozen
+        run: bundle exec annotaterb models --frozen
   zeitwerk:
     name: Zeitwerk
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: package.json
-      - name: Find yarn cache location
-        id: yarn-cache
-        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
-      - name: JS package cache
-        uses: actions/cache@v5
-        with:
-          path: ${{ steps.yarn-cache.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-      - name: Install JS packages
-        run: |
-          yarn install --pure-lockfile
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
+      - uses: ./.github/actions/setup-node
       - name: Run zeitwerk:check
         env:
           RAILS_ENV: test
@@ -257,18 +183,10 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: ./.github/actions/setup-ruby
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
       - name: Get new migration versions
@@ -332,15 +250,7 @@ jobs:
     name: Brakeman
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-      - name: Install Poppler
-        run: |
-          sudo apt-get update
-          sudo apt -y install libpoppler-glib-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup-ruby
       - name: Run Brakeman
         run: bundle exec brakeman -q
