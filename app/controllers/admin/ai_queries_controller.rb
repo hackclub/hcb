@@ -2,13 +2,10 @@
 
 module Admin
   class AiQueriesController < BaseController
-    before_action :set_query, only: [:show, :destroy]
+    before_action :set_ai_query, only: [:show, :destroy]
 
     def index
-      @queries =
-        Blazer::Query
-        .where("name LIKE ?", "#{Admin::GenerateAiQuery::AI_QUERY_PREFIX}%")
-        .order(created_at: :desc)
+      @ai_queries = AiQuery.order(created_at: :desc).includes(:blazer_query, :creator)
     end
 
     def new
@@ -23,34 +20,25 @@ module Admin
         return render :new, status: :unprocessable_entity
       end
 
-      result = Admin::GenerateAiQuery.new(prompt:, user: current_user).run
+      @ai_query = AiQuery.create!(prompt:, creator: current_user)
+      AiQueryGenerationJob.perform_later(@ai_query.id)
 
-      if result.success?
-        redirect_to admin_ai_query_path(result.query), notice: "Query generated successfully!"
-      else
-        flash.now[:error] = result.error
-        @prompt = prompt
-        render :new, status: :unprocessable_entity
-      end
+      redirect_to admin_ai_query_path(@ai_query)
     end
 
     def show
     end
 
     def destroy
-      @query.destroy
+      @ai_query.blazer_query&.destroy
+      @ai_query.destroy
       redirect_to admin_ai_queries_path, notice: "Query deleted."
     end
 
     private
 
-    def set_query
-      @query =
-        Blazer::Query
-        .where("name LIKE ?", "#{Admin::GenerateAiQuery::AI_QUERY_PREFIX}%")
-        .find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      redirect_to admin_ai_queries_path, alert: "Query not found."
+    def set_ai_query
+      @ai_query = AiQuery.find(params[:id])
     end
   end
 end

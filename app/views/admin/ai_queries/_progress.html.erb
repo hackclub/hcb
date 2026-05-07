@@ -1,0 +1,278 @@
+<%# locals: (ai_query:) %>
+
+<style>
+  .ai-progress-spinner {
+    display: inline-block;
+    animation: ai-spin 1.2s linear infinite;
+  }
+  @keyframes ai-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .ai-attempt-item {
+    border: 1px solid var(--hcb-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-attempt-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    background: var(--hcb-bg-0, #f6f6f7);
+  }
+
+  .ai-attempt-header:hover { background: var(--hcb-bg-1); }
+
+  .ai-attempt-body {
+    display: none;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--hcb-border);
+  }
+
+  .ai-attempt-body.open { display: block; }
+
+  .ai-attempt-sql {
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--hcb-tx-1);
+    background: var(--hcb-bg-0);
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-attempt-error {
+    font-size: 0.8rem;
+    color: #b91c1c;
+    background: #fff1f2;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .ai-blazer-wrapper {
+    border: 1px solid var(--hcb-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+  }
+
+  .ai-blazer-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--hcb-bg-0, #f6f6f7);
+    border-bottom: 1px solid var(--hcb-border);
+    gap: 0.5rem;
+  }
+
+  .ai-blazer-dots { display: flex; gap: 5px; }
+  .ai-blazer-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .ai-blazer-url {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--hcb-tx-3);
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ai-blazer-iframe {
+    width: 100%;
+    min-height: 560px;
+    border: none;
+    display: block;
+  }
+</style>
+
+<% if ai_query.pending? || ai_query.generating? %>
+  <div class="card flex flex-col items-center justify-center gap-4 py-12 text-center"
+       style="border: 1px solid var(--hcb-border);">
+    <span class="ai-progress-spinner" style="font-size: 2rem; color: var(--hcb-accent);">
+      ✦
+    </span>
+    <div>
+      <p class="font-semibold text-lg" style="color: var(--hcb-tx-1);">
+        <%= ai_query.pending? ? "Queued for generation…" : "Generating SQL…" %>
+      </p>
+      <% if ai_query.attempts.any? %>
+        <p class="text-sm mt-1" style="color: var(--hcb-tx-2);">
+          Attempt <%= ai_query.attempts.length %> of <%= AiQuery::MAX_GENERATION_ATTEMPTS %>
+        </p>
+      <% else %>
+        <p class="text-sm mt-1" style="color: var(--hcb-tx-2);">
+          This may take up to 30 seconds.
+        </p>
+      <% end %>
+    </div>
+
+    <% if ai_query.attempts.any? %>
+      <div style="width: 100%; max-width: 480px; margin-top: 0.5rem;">
+        <% ai_query.attempts.each do |attempt| %>
+          <div class="ai-attempt-item">
+            <div class="ai-attempt-header"
+                 onclick="this.nextElementSibling.classList.toggle('open')">
+              <% if attempt["error"].present? %>
+                <span style="color: #b91c1c; font-size: 0.9em;">✕</span>
+              <% else %>
+                <span style="color: #16a34a; font-size: 0.9em;">✓</span>
+              <% end %>
+              <span class="text-sm font-medium" style="color: var(--hcb-tx-1);">
+                Attempt <%= attempt["attempt"] %>
+              </span>
+              <span class="text-xs ml-auto" style="color: var(--hcb-tx-3);">
+                <%= attempt["error"].present? ? attempt["error"].truncate(40) : "No error" %>
+              </span>
+            </div>
+            <div class="ai-attempt-body">
+              <pre class="ai-attempt-sql"><%= attempt["sql"] %></pre>
+              <% if attempt["error"].present? %>
+                <div class="ai-attempt-error"><%= attempt["error"] %></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+<% elsif ai_query.success? && ai_query.blazer_query %>
+  <%# --- Success state --- %>
+  <% blazer_q = ai_query.blazer_query %>
+  <div class="flex items-center gap-2 mb-4">
+    <span style="color: #16a34a; font-size: 1.1rem;">✓</span>
+    <span class="font-semibold" style="color: var(--hcb-tx-1);">
+      Generated after
+      <%= pluralize ai_query.attempts.length, "attempt" %> &mdash;
+      synced to Blazer
+    </span>
+    <%= link_to "Open in Blazer →",
+                blazer.query_path(blazer_q),
+                target: "_blank",
+                rel: "noopener",
+                class: "ml-auto text-sm hover:underline shrink-0",
+                style: "color: var(--hcb-accent)" %>
+  </div>
+
+  <%# Collapsible attempt history %>
+  <% if ai_query.attempts.length > 1 %>
+    <details class="mb-4" style="border: 1px solid var(--hcb-border); border-radius: 10px;">
+      <summary class="px-4 py-2 cursor-pointer text-sm font-medium"
+               style="color: var(--hcb-tx-2);">
+        Show <%= pluralize ai_query.attempts.length, "generation attempt" %>
+      </summary>
+      <div class="p-3 pt-0">
+        <% ai_query.attempts.each do |attempt| %>
+          <div class="ai-attempt-item">
+            <div class="ai-attempt-header"
+                 onclick="this.nextElementSibling.classList.toggle('open')">
+              <% if attempt["error"].present? %>
+                <span style="color: #b91c1c; font-size: 0.9em;">✕</span>
+              <% else %>
+                <span style="color: #16a34a; font-size: 0.9em;">✓</span>
+              <% end %>
+              <span class="text-sm font-medium" style="color: var(--hcb-tx-1);">
+                Attempt <%= attempt["attempt"] %>
+              </span>
+              <span class="text-xs ml-auto" style="color: var(--hcb-tx-3);">
+                <%= attempt["error"].present? ? attempt["error"].truncate(40) : "Success" %>
+              </span>
+            </div>
+            <div class="ai-attempt-body">
+              <pre class="ai-attempt-sql"><%= attempt["sql"] %></pre>
+              <% if attempt["error"].present? %>
+                <div class="ai-attempt-error"><%= attempt["error"] %></div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+
+  <%# SQL block — collapsible %>
+  <details class="mb-4" style="border: 1px solid var(--hcb-border); border-radius: 10px;">
+    <summary class="px-4 py-2 cursor-pointer text-sm font-medium"
+             style="color: var(--hcb-tx-2);">
+      View SQL
+    </summary>
+    <pre style="padding: 1rem; font-family: 'SF Mono', 'Fira Code', monospace;
+                font-size: 0.82rem; line-height: 1.55; margin: 0; white-space: pre-wrap;
+                word-break: break-word; color: var(--hcb-tx-1);
+                border-top: 1px solid var(--hcb-border);"><%= blazer_q.statement %></pre>
+  </details>
+
+  <%# Blazer iframe — browser-chrome wrapper %>
+  <div style="font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+              text-transform: uppercase; color: var(--hcb-tx-2); margin-bottom: 0.5rem;">
+    Query Results
+  </div>
+  <div class="ai-blazer-wrapper">
+    <div class="ai-blazer-bar">
+      <div class="ai-blazer-dots">
+        <div class="ai-blazer-dot" style="background: #ff5f57;"></div>
+        <div class="ai-blazer-dot" style="background: #ffbd2e;"></div>
+        <div class="ai-blazer-dot" style="background: #28c840;"></div>
+      </div>
+      <div class="ai-blazer-url">
+        /blazer/queries/<%= blazer_q.to_param %>
+      </div>
+      <%= link_to blazer.query_path(blazer_q),
+                  target: "_blank",
+                  rel: "noopener",
+                  class: "shrink-0",
+                  style: "color: var(--hcb-accent)" do %>
+        <%= inline_icon "external", size: 14 %>
+      <% end %>
+    </div>
+    <iframe src="<%= blazer.query_path(blazer_q) %>"
+            class="ai-blazer-iframe"
+            title="Blazer query: <%= ai_query.display_name %>"
+            loading="lazy">
+    </iframe>
+  </div>
+
+  <%# Edit link %>
+  <div class="mt-2">
+    <%= link_to "Edit in Blazer →",
+                blazer.edit_query_path(blazer_q),
+                target: "_blank",
+                rel: "noopener",
+                class: "text-sm hover:underline",
+                style: "color: var(--hcb-tx-2)" %>
+  </div>
+
+<% elsif ai_query.failed? %>
+  <div class="card flex flex-col items-center gap-3 py-10 text-center"
+       style="border: 1px solid #fca5a5; background: #fff1f2;">
+    <p class="font-semibold text-lg" style="color: #b91c1c;">Generation failed</p>
+    <p class="text-sm" style="color: #b91c1c; opacity: 0.8;">
+      Tried <%= pluralize ai_query.attempts.length, "time" %> without producing
+      valid SQL.
+    </p>
+    <% if ai_query.latest_error.present? %>
+      <p class="text-xs font-mono px-4"
+         style="color: #b91c1c; opacity: 0.7; max-width: 500px;">
+        Last error: <%= ai_query.latest_error %>
+      </p>
+    <% end %>
+    <div class="flex gap-2 mt-2">
+      <%= link_to new_admin_ai_query_path(prompt: ai_query.prompt),
+                  class: "btn" do %>
+        ✦ Try Again
+      <% end %>
+    </div>
+  </div>
+<% end %>

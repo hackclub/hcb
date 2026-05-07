@@ -15,11 +15,6 @@
     max-width: 680px;
   }
 
-  .ai-query-hero {
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-
   .ai-query-sparkle {
     font-size: 2.5rem;
     margin-bottom: 0.75rem;
@@ -75,9 +70,7 @@
     box-shadow: 0 0 0 3px var(--hcb-accent-shadow, rgba(236, 55, 80, 0.12));
   }
 
-  .ai-query-textarea::placeholder {
-    color: var(--hcb-tx-3);
-  }
+  .ai-query-textarea::placeholder { color: var(--hcb-tx-3); }
 
   .ai-query-submit-btn {
     width: 100%;
@@ -97,18 +90,9 @@
     margin-top: 1rem;
   }
 
-  .ai-query-submit-btn:hover {
-    opacity: 0.88;
-  }
-
-  .ai-query-submit-btn:active {
-    transform: scale(0.98);
-  }
-
-  .ai-query-submit-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .ai-query-submit-btn:hover { opacity: 0.88; }
+  .ai-query-submit-btn:active { transform: scale(0.98); }
+  .ai-query-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .ai-query-examples {
     display: flex;
@@ -135,45 +119,6 @@
     background: var(--hcb-accent-bg);
   }
 
-  .ai-generating-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(4px);
-    z-index: 9999;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1.25rem;
-  }
-
-  .ai-generating-overlay.active {
-    display: flex;
-  }
-
-  .ai-generating-card {
-    background: var(--hcb-bg-1, #fff);
-    border-radius: 16px;
-    padding: 2.5rem 3rem;
-    text-align: center;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
-    max-width: 360px;
-  }
-
-  .ai-generating-spinner {
-    font-size: 2.5rem;
-    animation: spin-pulse 1.4s linear infinite;
-    display: block;
-    margin: 0 auto 1rem;
-  }
-
-  @keyframes spin-pulse {
-    0% { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(0.85); }
-    100% { transform: rotate(360deg) scale(1); }
-  }
-
   .ai-error-box {
     background: #fff1f2;
     border: 1px solid #fca5a5;
@@ -185,72 +130,86 @@
   }
 </style>
 
-<div id="ai-generating-overlay" class="ai-generating-overlay">
-  <div class="ai-generating-card">
-    <span class="ai-generating-spinner">✦</span>
-    <p class="font-bold text-lg" style="color: var(--hcb-tx-1)">Generating your query…</p>
-    <p class="text-sm mt-1" style="color: var(--hcb-tx-2)">Running and validating SQL against the database. This may take up to 30 seconds.</p>
-  </div>
-</div>
-
 <div class="ai-query-prompt-container">
   <div class="ai-query-prompt-box">
-    <div class="ai-query-hero">
+    <div class="text-center mb-10">
       <span class="ai-query-sparkle">✦</span>
       <h1 class="ai-query-headline">Ask your data anything</h1>
-      <p class="ai-query-subhead">Describe what you want to know and AI will write the SQL for you.</p>
+      <p class="ai-query-subhead">
+        Describe what you want to know and AI will write the SQL for you.
+      </p>
     </div>
 
     <div class="ai-query-form-card">
       <% if flash[:error].present? %>
         <div class="ai-error-box">
-          <strong>Generation failed:</strong> <%= flash[:error] %>
+          <strong>Error:</strong> <%= flash[:error] %>
         </div>
       <% end %>
 
-      <%= form_with url: admin_ai_queries_path, method: :post, local: true, id: "ai-query-form" do |f| %>
-        <label for="prompt" class="block text-sm font-semibold mb-2" style="color: var(--hcb-tx-1)">
+      <%= form_with url: admin_ai_queries_path, method: :post, local: true,
+                    id: "ai-query-form" do |f| %>
+        <label class="block text-sm font-semibold mb-2" for="prompt"
+               style="color: var(--hcb-tx-1)">
           What would you like to know?
         </label>
 
         <%= f.text_area :prompt,
-          id: "prompt",
-          class: "ai-query-textarea",
-          placeholder: "e.g. Show me the top 10 organizations by total donation revenue in the last 90 days",
-          value: @prompt,
-          autofocus: true,
-          rows: 5 %>
+                        id: "prompt",
+                        class: "ai-query-textarea",
+                        placeholder: "e.g. Show me the top 10 organizations by " \
+                                     "total donation revenue in the last 90 days",
+                        value: @prompt,
+                        autofocus: true,
+                        rows: 5 %>
 
         <div class="ai-query-examples">
-          <span class="text-xs font-medium" style="color: var(--hcb-tx-3); line-height: 2.1;">Try:</span>
-          <span class="ai-query-example-chip" data-prompt="Monthly donation totals for the past 12 months">Monthly donation totals</span>
-          <span class="ai-query-example-chip" data-prompt="Top 20 organizations by total spending in the last 30 days">Top orgs by spending</span>
-          <span class="ai-query-example-chip" data-prompt="Number of new organizations created per month this year">New orgs per month</span>
-          <span class="ai-query-example-chip" data-prompt="Organizations with the most active organizers">Most active orgs</span>
-          <span class="ai-query-example-chip" data-prompt="Average donation amount by month for the past year">Avg donation by month</span>
+          <span class="text-xs font-medium" style="color: var(--hcb-tx-3); line-height: 2.1;">
+            Try:
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Monthly donation totals for the past 12 months">
+            Monthly donation totals
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Top 20 organizations by total spending in the last 30 days">
+            Top orgs by spending
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Number of new organizations created per month this year">
+            New orgs per month
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Organizations with the most active organizers">
+            Most active orgs
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Average donation amount by month for the past year">
+            Avg donation by month
+          </span>
         </div>
 
         <button type="submit" class="ai-query-submit-btn" id="ai-submit-btn">
-          <span>✦</span>
-          Generate Query
+          <span>✦</span> Generate Query
         </button>
       <% end %>
     </div>
 
     <p class="text-center text-xs mt-4" style="color: var(--hcb-tx-3)">
-      AI queries are saved to Blazer with your original prompt.
-      <%= link_to "View all AI queries →", admin_ai_queries_path, class: "hover:underline", style: "color: var(--hcb-accent)" %>
+      Generation runs in the background — you'll see live progress on the next page.
+      <%= link_to "View all AI queries →",
+                  admin_ai_queries_path,
+                  class: "hover:underline",
+                  style: "color: var(--hcb-accent)" %>
     </p>
   </div>
 </div>
 
 <script>
   const form = document.getElementById("ai-query-form");
-  const overlay = document.getElementById("ai-generating-overlay");
   const submitBtn = document.getElementById("ai-submit-btn");
   const promptEl = document.getElementById("prompt");
 
-  // Example chips
   document.querySelectorAll(".ai-query-example-chip").forEach(chip => {
     chip.addEventListener("click", () => {
       promptEl.value = chip.dataset.prompt;
@@ -258,11 +217,9 @@
     });
   });
 
-  // Show loading overlay on submit
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", () => {
     if (promptEl.value.trim() === "") return;
-    overlay.classList.add("active");
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>✦</span> Generating…';
+    submitBtn.innerHTML = "<span>✦</span> Starting…";
   });
 </script>
