@@ -114,7 +114,10 @@ module Admin
     end
 
     def validate_sql(sql)
-      ActiveRecord::Base.connection.exec_query("EXPLAIN #{sql}")
+      ActiveRecord::Base.transaction do
+        ActiveRecord::Base.connection.exec_query(sql)
+        raise ActiveRecord::Rollback
+      end
       nil
     rescue ActiveRecord::StatementInvalid => e
       e.message
