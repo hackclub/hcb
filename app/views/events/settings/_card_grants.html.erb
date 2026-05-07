@@ -132,7 +132,8 @@
 
             <div class="field">
               <%= card_grant_setting_fields.label :merchant_lock, "Approved merchant IDs" %>
-              <%= card_grant_setting_fields.select :merchant_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { include_blank: "Select a merchant" }, { class: "w-100 fit", disabled:, multiple: true } %>              <p class="h5 muted mt-1 mb-2">
+              <%= card_grant_setting_fields.select :merchant_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { include_blank: "Select a merchant" }, { class: "w-100 fit", disabled:, multiple: true } %>              
+              <p class="h5 muted mt-1 mb-2">
                 Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
               </p>
             </div>
