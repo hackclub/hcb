@@ -1,0 +1,296 @@
+<% friendly_name = @query.name.delete_prefix(Admin::GenerateAiQuery::AI_QUERY_PREFIX) %>
+<% title friendly_name %>
+
+<style>
+  .ai-show-header {
+    margin-bottom: 1.75rem;
+  }
+
+  .ai-show-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--hcb-accent-bg);
+    color: var(--hcb-accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .ai-show-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--hcb-tx-1);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+  }
+
+  .ai-show-meta {
+    font-size: 0.85rem;
+    color: var(--hcb-tx-2);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .ai-show-meta-sep {
+    opacity: 0.4;
+  }
+
+  .ai-prompt-card {
+    background: var(--hcb-accent-bg, #fff5f6);
+    border: 1px solid var(--hcb-accent, rgba(236,55,80,0.3));
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .ai-prompt-icon {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    flex-shrink: 0;
+    color: var(--hcb-accent);
+  }
+
+  .ai-prompt-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hcb-accent);
+    margin-bottom: 0.2rem;
+  }
+
+  .ai-prompt-text {
+    font-size: 0.95rem;
+    color: var(--hcb-tx-1);
+    line-height: 1.5;
+  }
+
+  .ai-sql-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .ai-sql-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-sql-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hcb-tx-2);
+  }
+
+  .ai-sql-toggle {
+    font-size: 0.8rem;
+    color: var(--hcb-accent);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  .ai-sql-toggle:hover { text-decoration: underline; }
+
+  .ai-sql-block {
+    background: var(--hcb-bg-0, #f6f6f7);
+    border: 1px solid var(--hcb-border);
+    border-radius: 10px;
+    overflow: auto;
+    display: none;
+  }
+
+  .ai-sql-block.open {
+    display: block;
+  }
+
+  .ai-sql-block pre {
+    padding: 1rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--hcb-tx-1);
+    font-family: "SF Mono", "Fira Code", "Fira Mono", monospace;
+  }
+
+  .ai-blazer-frame-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .ai-blazer-frame-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hcb-tx-2);
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-blazer-frame-wrapper {
+    border: 1px solid var(--hcb-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .ai-blazer-frame-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--hcb-bg-0, #f6f6f7);
+    border-bottom: 1px solid var(--hcb-border);
+  }
+
+  .ai-blazer-frame-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .ai-blazer-frame-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--hcb-border);
+  }
+
+  .ai-blazer-frame-url {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--hcb-tx-3);
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0 0.75rem;
+  }
+
+  .ai-blazer-iframe {
+    width: 100%;
+    min-height: 580px;
+    border: none;
+    display: block;
+  }
+
+  .ai-show-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--hcb-border);
+  }
+</style>
+
+<%# Breadcrumb %>
+<div class="flex items-center gap-2 text-sm mb-4" style="color: var(--hcb-tx-3)">
+  <%= link_to "AI Queries", admin_ai_queries_path, class: "hover:underline", style: "color: var(--hcb-tx-2)" %>
+  <span>/</span>
+  <span style="color: var(--hcb-tx-1)"><%= friendly_name %></span>
+</div>
+
+<div class="ai-show-header">
+  <div class="ai-show-badge">
+    <span>✦</span>
+    AI Generated
+  </div>
+  <h1 class="ai-show-title"><%= friendly_name %></h1>
+  <div class="ai-show-meta">
+    <span>Created <%= @query.created_at.strftime("%B %-d, %Y at %-I:%M %p") %></span>
+    <% if @query.creator.present? %>
+      <span class="ai-show-meta-sep">&middot;</span>
+      <span>by <%= @query.creator.try(:full_name) || @query.creator.try(:email) %></span>
+    <% end %>
+    <span class="ai-show-meta-sep">&middot;</span>
+    <%= link_to "Open in Blazer →", blazer.query_path(@query), target: "_blank", rel: "noopener", class: "hover:underline", style: "color: var(--hcb-accent)" %>
+  </div>
+</div>
+
+<% if @query.description.present? %>
+  <div class="ai-prompt-card">
+    <span class="ai-prompt-icon">✦</span>
+    <div>
+      <div class="ai-prompt-label">Original Prompt</div>
+      <div class="ai-prompt-text"><%= @query.description %></div>
+    </div>
+  </div>
+<% end %>
+
+<%# SQL Block — collapsible %>
+<div class="ai-sql-section">
+  <div class="ai-sql-header">
+    <span class="ai-sql-label">SQL Statement</span>
+    <button class="ai-sql-toggle" id="sql-toggle" onclick="toggleSql()">Show SQL</button>
+  </div>
+  <div class="ai-sql-block" id="sql-block">
+    <pre><%= @query.statement %></pre>
+  </div>
+</div>
+
+<%# Blazer iframe %>
+<div class="ai-blazer-frame-section">
+  <div class="ai-blazer-frame-label">Query Results (via Blazer)</div>
+  <div class="ai-blazer-frame-wrapper">
+    <div class="ai-blazer-frame-bar">
+      <div class="ai-blazer-frame-dots">
+        <div class="ai-blazer-frame-dot" style="background: #ff5f57;"></div>
+        <div class="ai-blazer-frame-dot" style="background: #ffbd2e;"></div>
+        <div class="ai-blazer-frame-dot" style="background: #28c840;"></div>
+      </div>
+      <div class="ai-blazer-frame-url">
+        /blazer/queries/<%= @query.to_param %>
+      </div>
+      <%= link_to blazer.query_path(@query), target: "_blank", rel: "noopener", class: "text-xs hover:underline shrink-0", style: "color: var(--hcb-accent)" do %>
+        <%= inline_icon "external-link", size: 14 %>
+      <% end %>
+    </div>
+    <iframe
+      src="<%= blazer.query_path(@query) %>"
+      class="ai-blazer-iframe"
+      id="blazer-iframe"
+      title="Blazer Query: <%= friendly_name %>"
+      loading="lazy">
+    </iframe>
+  </div>
+</div>
+
+<div class="ai-show-actions">
+  <%= link_to new_admin_ai_query_path, class: "btn" do %>
+    <span>✦</span> Generate New Query
+  <% end %>
+  <%= link_to blazer.edit_query_path(@query), target: "_blank", rel: "noopener", class: "btn" do %>
+    Edit in Blazer
+  <% end %>
+  <%= button_to admin_ai_query_path(@query), method: :delete,
+    class: "btn",
+    style: "color: #b91c1c; border-color: #fca5a5; background: #fff1f2;",
+    data: { turbo_confirm: "Delete this AI query? This cannot be undone." } do %>
+    Delete
+  <% end %>
+</div>
+
+<script>
+  function toggleSql() {
+    const block = document.getElementById("sql-block");
+    const btn = document.getElementById("sql-toggle");
+    block.classList.toggle("open");
+    btn.textContent = block.classList.contains("open") ? "Hide SQL" : "Show SQL";
+  }
+</script>
