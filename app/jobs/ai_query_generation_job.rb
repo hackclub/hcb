@@ -17,6 +17,12 @@ class AiQueryGenerationJob < ApplicationJob
       if sql.blank?
         ai_query.record_attempt!(sql: "", error: "AI returned no SQL")
         ai_query.broadcast_generation_update
+        history = ai_query.conversation_history + [
+          { "role"    => "user",
+            "content" => "You returned an empty response. Please return only a valid PostgreSQL SELECT query with no explanation."
+          }
+        ]
+        ai_query.update!(conversation_history: history)
         next
       end
 

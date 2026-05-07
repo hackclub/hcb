@@ -114,10 +114,10 @@ module Admin
     end
 
     def validate_sql(sql)
-      data_source = Blazer.data_sources[AiQuery::BLAZER_DATA_SOURCE]
-      statement = Blazer::Statement.new(sql, data_source)
-      result = Blazer::RunStatement.new.perform(statement, {})
-      result.error
+      ActiveRecord::Base.connection.exec_query("EXPLAIN #{sql}")
+      nil
+    rescue ActiveRecord::StatementInvalid => e
+      e.message
     rescue => e
       e.message
     end
