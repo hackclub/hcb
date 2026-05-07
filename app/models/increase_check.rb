@@ -30,7 +30,6 @@
 #  event_id                :bigint           not null
 #  increase_id             :string
 #  payment_recipient_id    :bigint
-#  reissued_for_id         :bigint
 #  user_id                 :bigint
 #
 # Indexes
