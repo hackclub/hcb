@@ -190,6 +190,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
   end
 
+  create_table "ai_queries", force: :cascade do |t|
+    t.text "prompt", null: false
+    t.string "status", default: "pending", null: false
+    t.jsonb "attempts", default: [], null: false
+    t.jsonb "conversation_history", default: [], null: false
+    t.string "generated_name"
+    t.bigint "creator_id"
+    t.bigint "blazer_query_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["blazer_query_id"], name: "index_ai_queries_on_blazer_query_id"
+    t.index ["creator_id"], name: "index_ai_queries_on_creator_id"
+    t.index ["status"], name: "index_ai_queries_on_status"
+  end
+
   create_table "announcement_blocks", force: :cascade do |t|
     t.bigint "announcement_id", null: false
     t.datetime "created_at", null: false

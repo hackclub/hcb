@@ -20,9 +20,9 @@ class AiQuery < ApplicationRecord
   # Append a new attempt entry to the JSONB array and persist.
   def record_attempt!(sql:, error:)
     new_attempt = {
-      "attempt" => (attempts.length + 1),
-      "sql" => sql,
-      "error" => error,
+      "attempt"      => (attempts.length + 1),
+      "sql"          => sql,
+      "error"        => error,
       "generated_at" => Time.current.iso8601
     }
     update!(attempts: attempts + [new_attempt])
@@ -75,4 +75,5 @@ class AiQuery < ApplicationRecord
       locals: { ai_query: self }
     )
   end
+
 end

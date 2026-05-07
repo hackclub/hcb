@@ -34,8 +34,9 @@ class AiQueryGenerationJob < ApplicationJob
       else
         history = ai_query.conversation_history + [
           { "role" => "assistant", "content" => "```sql\n#{sql}\n```" },
-          { "role" => "user",
-            "content" => "That query failed with: #{error}\n\nPlease fix it and return only the corrected SQL." }
+          { "role"    => "user",
+            "content" => "That query failed with: #{error}\n\nPlease fix it and return only the corrected SQL."
+          }
         ]
         ai_query.update!(conversation_history: history)
       end
@@ -54,4 +55,5 @@ class AiQueryGenerationJob < ApplicationJob
     ]
     ai_query.update!(conversation_history: history)
   end
+
 end

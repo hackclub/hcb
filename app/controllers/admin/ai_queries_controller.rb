@@ -40,5 +40,6 @@ module Admin
     def set_ai_query
       @ai_query = AiQuery.find(params[:id])
     end
+
   end
 end

@@ -133,9 +133,10 @@ module Admin
       payload = {
         model: "gpt-4o-mini",
         messages: [
-          { "role" => "system",
+          { "role"    => "system",
             "content" => "Write a short title (5-8 words) for a SQL query described below. " \
-                         "Return only the title, no punctuation at the end." },
+                         "Return only the title, no punctuation at the end."
+          },
           { "role" => "user", "content" => prompt }
         ],
         temperature: 0.3,
@@ -157,5 +158,6 @@ module Admin
       after_open = after_open[0...close_idx] if close_idx
       after_open.strip
     end
+
   end
 end
