@@ -576,7 +576,7 @@ class User < ApplicationRecord
 
   def can_update_payout_method?
     return true if payout_method.nil?
-    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return false if cannot_switch_from_or_to_wise_payout?
     return false if reimbursement_reports.reimbursement_requested.any?
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 
@@ -717,6 +717,10 @@ class User < ApplicationRecord
     end
   end
 
+  def cannot_switch_from_or_to_wise_payout?
+    payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any? || reimbursement_reports.joins(:payout_holding).where.not(payout_holding: { aasm_state: :settled }).any?
+  end
+
   def valid_payout_method
     if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
       # I'm using `try` here in the slim chance that `payout_method` is some
@@ -729,7 +733,7 @@ class User < ApplicationRecord
       end
     end
 
-    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any? || reimbursement_reports.joins(:payout_holding).where.not(payout_holding: { aasm_state: :settled }).any?
+    if payout_method_type_changed? && cannot_switch_from_or_to_wise_payout?
       errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
