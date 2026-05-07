@@ -360,5 +360,4 @@ class CardGrantSetting < ApplicationRecord
     wrecking_and_salvage_yards
   ].freeze
 
-
 end
