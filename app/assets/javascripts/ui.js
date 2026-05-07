@@ -57,6 +57,7 @@ const loadModals = element => {
       e.preventDefault()
       e.stopPropagation()
     }
+    document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
       populateSharedPopover(this)
     }

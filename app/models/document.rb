@@ -5,7 +5,7 @@
 # Table name: documents
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  archived_at    :datetime
 #  category       :integer          default("general"), not null
 #  deleted_at     :datetime
