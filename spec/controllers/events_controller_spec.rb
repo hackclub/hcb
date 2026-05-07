@@ -23,7 +23,7 @@ RSpec.describe EventsController do
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
       event2.logo.attach(io: File.open(logo_path), filename: "logo.png", content_type: "image/png")
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:index, format: :json)
 
@@ -36,7 +36,7 @@ RSpec.describe EventsController do
             "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
             "demo_mode" => true,
             "member"    => true,
-            "features"  => { "subevents" => true },
+            "features"  => { "card_grants" => false, "subevents" => true },
           },
           {
             "name"      => "Event 1",
@@ -44,7 +44,7 @@ RSpec.describe EventsController do
             "logo"      => "none",
             "demo_mode" => false,
             "member"    => true,
-            "features"  => { "subevents" => false },
+            "features"  => { "card_grants" => false, "subevents" => false },
           }
         ]
       )
@@ -61,7 +61,7 @@ RSpec.describe EventsController do
       logo_path = Rails.root.join("app/assets/images/logo-production.png")
       event2.logo.attach(io: File.open(logo_path), filename: "logo.png", content_type: "image/png")
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:index, format: :json)
 
@@ -74,7 +74,7 @@ RSpec.describe EventsController do
             "logo"      => "none",
             "demo_mode" => false,
             "member"    => true,
-            "features"  => { "subevents" => false },
+            "features"  => { "card_grants" => false, "subevents" => false },
           },
           {
             "name"      => "Event 2",
@@ -82,7 +82,7 @@ RSpec.describe EventsController do
             "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
             "demo_mode" => true,
             "member"    => false,
-            "features"  => { "subevents" => true },
+            "features"  => { "card_grants" => false, "subevents" => true },
           },
         ]
       )

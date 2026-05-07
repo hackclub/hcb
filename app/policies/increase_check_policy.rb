@@ -13,6 +13,14 @@ class IncreaseCheckPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def stop?
+    user_who_can_transfer? && record.can_stop?
+  end
+
+  def reissue?
+    user&.admin?
+  end
+
   def reject?
     user_who_can_transfer?
   end

@@ -36,6 +36,76 @@ RSpec.describe HcbCode, type: :model do
       end
     end
 
+    describe "#outgoing_disbursement" do
+      it "returns nil for non-disbursement codes" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-100-1")
+        expect(hcb_code.outgoing_disbursement).to be_nil
+      end
+
+      it "memoizes the result so repeated calls do not query" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        hcb_code.outgoing_disbursement # populate
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.outgoing_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "memoizes nil results too (so a missing disbursement doesn't re-query)" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-500-0")
+        expect(hcb_code.outgoing_disbursement).to be_nil
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.outgoing_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "honors the writer (used by FilterTypePreloader)" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        sentinel = Object.new
+        hcb_code.outgoing_disbursement = sentinel
+        expect(hcb_code.outgoing_disbursement).to equal(sentinel)
+      end
+    end
+
+    describe "#incoming_disbursement" do
+      it "returns nil for non-disbursement codes" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-100-1")
+        expect(hcb_code.incoming_disbursement).to be_nil
+      end
+
+      it "memoizes the result so repeated calls do not query" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        hcb_code.incoming_disbursement # populate
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.incoming_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "memoizes nil results too" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-550-0")
+        expect(hcb_code.incoming_disbursement).to be_nil
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.incoming_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "honors the writer (used by FilterTypePreloader)" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        sentinel = Object.new
+        hcb_code.incoming_disbursement = sentinel
+        expect(hcb_code.incoming_disbursement).to equal(sentinel)
+      end
+    end
+
     # The goal is to deprecate this method entirely with the disbursement splitting work
     describe "#events" do
       context "with a disbursement that has canonical pending transactions" do

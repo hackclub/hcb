@@ -73,7 +73,7 @@
             <% end %>
             <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, onclick: "this.style.display='none'", disabled: do %>
               <%= inline_icon "plus", size: home_action_size %>
-              <%= @user.totp.present? ? "Reset secret" : "Setup" %>
+              <%= @user.totp.present? ? "Reset secret" : "Set up" %>
             <% end %>
           </div>
         </div>

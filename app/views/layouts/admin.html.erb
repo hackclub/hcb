@@ -5,7 +5,7 @@
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>
-  <body class="bg-snow">
+  <body class="overflow-x-hidden min-h-screen flex flex-col max-w-[100vw]">
     <a class="skip-to-main" href="#main">Skip to main content</a>
     <% title = yield(:title) if content_for?(:title) %>
     <% nav = Admin::Nav.new(page_title: title) %>
@@ -63,7 +63,7 @@
 
     <%= render(partial: "admin/flash") %>
 
-    <div id="main" class="overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
+    <div id="main" class="flex-1 w-[100vw] overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
       <%= yield %>
     </div>
 

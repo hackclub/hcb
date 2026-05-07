@@ -2,7 +2,8 @@
 
 class MyController < ApplicationController
   skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
-
+  skip_before_action :signed_in_user, only: [:cards, :reimbursements]
+  before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
 
   def activities
@@ -20,6 +21,11 @@ class MyController < ApplicationController
   end
 
   def cards
+    unless signed_in?
+      @stripe_cards = []
+      return
+    end
+
     @stripe_cards = current_user.stripe_cards.includes(:event)
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
@@ -125,6 +131,8 @@ class MyController < ApplicationController
   end
 
   def reimbursements
+    return unless signed_in?
+
     case params[:filter]
     when "mine"
       @reports = @my_reports
@@ -159,6 +167,8 @@ class MyController < ApplicationController
   private
 
   def set_reimbursement_reports
+    return unless signed_in?
+
     @my_reports = current_user.reimbursement_reports
     manager_events = current_user.events
                                  .joins(:organizer_positions)
