@@ -4,16 +4,16 @@
 #
 # Table name: ai_queries
 #
-#  id                    :bigint           not null, primary key
-#  attempts              :jsonb            not null
-#  conversation_history  :jsonb            not null
-#  generated_name        :string
-#  prompt                :text             not null
-#  status                :string           default("pending"), not null
-#  created_at            :datetime         not null
-#  updated_at            :datetime         not null
-#  blazer_query_id       :bigint
-#  creator_id            :bigint
+#  id                   :bigint           not null, primary key
+#  attempts             :jsonb            not null
+#  conversation_history :jsonb            not null
+#  generated_name       :string
+#  prompt               :text             not null
+#  status               :string           default("pending"), not null
+#  created_at           :datetime         not null
+#  updated_at           :datetime         not null
+#  blazer_query_id      :bigint
+#  creator_id           :bigint
 #
 # Indexes
 #
@@ -21,7 +21,6 @@
 #  index_ai_queries_on_creator_id       (creator_id)
 #  index_ai_queries_on_status           (status)
 #
-
 class AiQuery < ApplicationRecord
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :blazer_query, class_name: "Blazer::Query", optional: true
