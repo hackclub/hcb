@@ -1084,7 +1084,7 @@ class EventsController < ApplicationController
     EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
     @event.config.update!(hide_onboarding_message: true)
 
-    flash[:success] = "A member of our team will respond to schedule a call soon!"
+    flash[:success] = "A member of our team will reach out to schedule a call soon!"
     redirect_to event_path(@event)
   end
 
