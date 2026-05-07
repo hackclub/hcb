@@ -4,6 +4,8 @@ class Disbursement
   class Incoming
     include Base
 
+    delegate :amount, to: :disbursement
+
     def hcb_code
       disbursement.incoming_hcb_code
     end
@@ -12,10 +14,20 @@ class Disbursement
       disbursement.destination_event
     end
 
-    delegate :amount, to: :disbursement
+    def counterparty_event
+      disbursement.source_event
+    end
 
     def subledger
       disbursement.destination_subledger
+    end
+
+    def counterparty_subledger
+      disbursement.source_subledger
+    end
+
+    def counterparty
+      disbursement.outgoing_disbursement
     end
 
     def transaction_category

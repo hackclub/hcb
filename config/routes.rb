@@ -178,6 +178,19 @@ Rails.application.routes.draw do
         get "data"
       end
     end
+
+    resources "first", only: [:index, :create] do
+      collection do
+        get "welcome", to: "first#new"
+        get "team", to: "first#team"
+        post "verify_email", to: "first#verify_email"
+        post "request_org_invite", to: "first#request_org_invite"
+        delete "sign_out", to: "first#sign_out"
+        get "macbook_qr_code"
+      end
+    end
+
+
     resources :email_updates, only: [] do
       collection do
         get "verify"
@@ -481,7 +494,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update] do
+  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
@@ -691,7 +704,7 @@ Rails.application.routes.draw do
           resources :disbursements, path: "transfers", only: [:create]
 
           resources :donations, path: "donations", only: [:create] do
-            collection do
+            member do
               post "payment_intent"
             end
           end
@@ -1042,6 +1055,7 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end
