@@ -62,14 +62,14 @@ module Api
       def expand_association(json, key, record, partial:, as:)
         if expand?(key)
           if record.present?
-            json.public_send(key) do
+            json.set!(key) do
               json.partial! partial, locals: { as => record }
             end
           else
-            json.public_send(key, nil)
+            json.set!(key, nil)
           end
         else
-          json.public_send(:"#{key}_id", record&.public_id)
+          json.set!(:"#{key}_id", record&.public_id)
         end
       end
 
