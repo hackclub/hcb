@@ -6,7 +6,7 @@
   You no longer need to sign this agreement.
 
   <% unless @contracts.empty? %>
-    However, you have <%= @contracts.size %> other <%= "agreement".pluralize(@contracts.size) %> to sign:
+    However, you have <%= pluralize(@contracts.size, "other agreements") %> to sign:
   <% end %>
 </p>
 
