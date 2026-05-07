@@ -49,6 +49,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
+  self.ignored_columns += ["reissued_for_id"]
   # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
   # On January 2024, we switched check printing & mailing services from
   # Increase to Column. This model, although still named `IncreaseCheck`, now
