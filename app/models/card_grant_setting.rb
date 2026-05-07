@@ -360,8 +360,5 @@ class CardGrantSetting < ApplicationRecord
     wrecking_and_salvage_yards
   ].freeze
 
-  def get_stripe_merchant_categories
-    return STRIPE_MERCHANT_CATEGORIES
-  end
 
 end
