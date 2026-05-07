@@ -129,8 +129,6 @@ class IncreaseCheck < ApplicationRecord
 
   belongs_to :event
   belongs_to :user, optional: true
-  belongs_to :reissued_for, class_name: "IncreaseCheck", optional: true
-  has_one :reissued_as, class_name: "IncreaseCheck", foreign_key: :reissued_for_id, inverse_of: :reissued_for
 
   def payment_recipient_attributes
     %i[address_line1 address_line2 address_city address_state address_zip]
@@ -338,35 +336,6 @@ class IncreaseCheck < ApplicationRecord
     #   column_status: column_check["status"],
     #   column_delivery_status: column_check["delivery_status"],
     # )
-  end
-
-  def reissue!
-    raise ArgumentError, "Reissuing checks is not yet supported"
-
-    # stop! unless column_stopped? || column_pending_stop?
-
-    # reissued_check = event.increase_checks.build(
-    #   user_id:,
-    #   memo:,
-    #   amount:,
-    #   payment_for:,
-    #   recipient_name:,
-    #   address_line1:,
-    #   address_line2:,
-    #   address_city:,
-    #   address_state:,
-    #   recipient_email:,
-    #   send_email_notification:,
-    #   address_zip:,
-    #   payment_recipient_id:,
-    #   reissued_for_id: id,
-    # )
-
-    # reissued_check.save!
-
-    # Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
-
-    # reissued_check.send_check!
   end
 
   private

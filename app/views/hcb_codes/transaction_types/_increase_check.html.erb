@@ -136,10 +136,6 @@
             <%= stop_button %>
           </div>
         <% end %>
-
-        <% admin_tool("flex gap-3") do %>
-          <%= button_to "Reissue", reissue_increase_check_path(@hcb_code.increase_check), class: "btn bg-muted", target: "_blank", data: { turbo_confirm: "This action will stop the current check and issue a new one for the same amount." }, disabled: !policy(@hcb_code.increase_check).reissue? %>
-        <% end %>
       <% end %>
     </div>
   <% end %>
