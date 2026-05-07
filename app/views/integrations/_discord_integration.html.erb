@@ -27,7 +27,6 @@
   <p>
     Install the HCB Discord bot to check your balance, view recent transactions, open reimbursement reports, and more from your team's Discord server!
   </p>
-  
   <% if user&.has_discord_account? %>
     <p>Your HCB account is currently linked to <span class="muted">@<%= user.discord_account.username %></span>.</p>
   <% end %>
