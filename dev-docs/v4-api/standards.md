@@ -322,6 +322,7 @@ expand_association(json, :sender, ach_transfer.creator,
 - When `:organization` is **not** in `expand`, renders `"organization_id": "org_h1izp"`.
 - When `:organization` **is** in `expand`, renders the full object under `"organization": { ... }`.
 - If the record is `nil`, renders `null` in both cases.
+- Associations must have a `public_id` method.
 
 For non-association expansions — computed fields, structured data, or arrays — use `expand?` directly since there is no `_id` fallback:
 
