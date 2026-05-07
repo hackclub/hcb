@@ -1,7 +1,7 @@
 <p>Hi there! 👋</p>
 
 <p>
-  <%= link_to "#{@user.name}", edit_user_url(@user) %> (<%= @user.email %>)
+  <%= link_to @user.name.to_s, edit_user_url(@user) %> (<%= @user.email %>)
   has requested an onboarding call for <%= link_to @event.name, @event %><%= " with #{@event.point_of_contact.name}" if @event.point_of_contact.present? %>.
 </p>
 
