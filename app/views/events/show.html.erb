@@ -78,7 +78,7 @@
   <% end %>
 
   <% if policy(@event).request_call? %>
-    <%= render "events/request_call_modal", auto_open: @requesting_call %>
+    <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
 
     <% unless @event.config.hide_onboarding_message || @event.hcb_codes.exists? %>
       <div class="card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
