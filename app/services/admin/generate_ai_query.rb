@@ -174,11 +174,8 @@ module Admin
         f.response :json
       end
 
-      response = conn.post("/v1/chat/completions", {
-        model: "gpt-4o",
-        messages:,
-        temperature: 0.2
-      })
+      payload = { model: "gpt-4o", messages:, temperature: 0.2 }
+      response = conn.post("/v1/chat/completions", payload)
 
       content = response.body.dig("choices", 0, "message", "content").to_s.strip
       extract_sql(content)
@@ -188,12 +185,15 @@ module Admin
     end
 
     def extract_sql(content)
-      # Strip markdown code fences if present
-      if content =~ /```(?:sql)?\s*(.*?)```/im
-        $1.strip
-      else
-        content.strip
-      end
+      stripped = content.strip
+      return stripped unless stripped.start_with?("```")
+
+      # Remove opening fence line (```sql or ```)
+      after_open = stripped.sub(/\A```(?:sql)?\r?\n?/i, "")
+      # Remove closing fence
+      close_idx = after_open.rindex("\n```")
+      after_open = after_open[0...close_idx] if close_idx
+      after_open.strip
     end
 
     def run_sql_validation(sql)
@@ -201,7 +201,7 @@ module Admin
       statement = Blazer::Statement.new(sql, data_source)
       result = Blazer::RunStatement.new.perform(statement, {})
       result.error
-    rescue => e
+    rescue StandardError => e
       e.message
     end
 
@@ -221,7 +221,6 @@ module Admin
     def build_query_name
       return @query_name if @query_name.present?
 
-      # Ask OpenAI for a concise title
       conn = Faraday.new(url: "https://api.openai.com") do |f|
         f.request :json
         f.request :authorization, "Bearer", -> { Credentials.fetch(:OPENAI, :BI_DASHBOARD) }
@@ -229,7 +228,7 @@ module Admin
         f.response :json
       end
 
-      response = conn.post("/v1/chat/completions", {
+      payload = {
         model: "gpt-4o-mini",
         messages: [
           {
@@ -240,10 +239,11 @@ module Admin
         ],
         temperature: 0.3,
         max_tokens: 20
-      })
+      }
+      response = conn.post("/v1/chat/completions", payload)
 
       response.body.dig("choices", 0, "message", "content").to_s.strip.presence || @prompt.truncate(60)
-    rescue
+    rescue StandardError
       @prompt.truncate(60)
     end
   end

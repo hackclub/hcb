@@ -278,10 +278,11 @@
   <%= link_to blazer.edit_query_path(@query), target: "_blank", rel: "noopener", class: "btn" do %>
     Edit in Blazer
   <% end %>
-  <%= button_to admin_ai_query_path(@query), method: :delete,
-    class: "btn",
-    style: "color: #b91c1c; border-color: #fca5a5; background: #fff1f2;",
-    data: { turbo_confirm: "Delete this AI query? This cannot be undone." } do %>
+  <%= button_to admin_ai_query_path(@query),
+                method: :delete,
+                class: "btn",
+                style: "color: #b91c1c; border-color: #fca5a5; background: #fff1f2;",
+                data: { turbo_confirm: "Delete this AI query? This cannot be undone." } do %>
     Delete
   <% end %>
 </div>

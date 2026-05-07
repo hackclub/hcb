@@ -5,7 +5,8 @@ module Admin
     before_action :set_query, only: [:show, :destroy]
 
     def index
-      @queries = Blazer::Query
+      @queries =
+        Blazer::Query
         .where("name LIKE ?", "#{Admin::GenerateAiQuery::AI_QUERY_PREFIX}%")
         .order(created_at: :desc)
     end
@@ -44,7 +45,8 @@ module Admin
     private
 
     def set_query
-      @query = Blazer::Query
+      @query =
+        Blazer::Query
         .where("name LIKE ?", "#{Admin::GenerateAiQuery::AI_QUERY_PREFIX}%")
         .find(params[:id])
     rescue ActiveRecord::RecordNotFound
