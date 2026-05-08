@@ -56,9 +56,6 @@ class CommentPolicy < ApplicationPolicy
         user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
         user_list += record.commentable.event&.ancestor_users || []
       end
-    elsif record.commentable.is_a?(Disbursement)
-      # TODO: possibly replace this by adding #events to Disbursement?
-      user_list = record.commentable.source_event.users + record.commentable.destination_event.users
     elsif record.commentable.is_a?(Event)
       user_list = []
     else
