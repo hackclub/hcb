@@ -161,6 +161,10 @@ class Event
           end
         end
       end
+
+      event :mark_draft do
+        transitions from: [:submitted, :under_review], to: :draft
+      end
     end
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
@@ -353,12 +357,13 @@ class Event
 
     def archive!
       contract&.mark_voided! if contract&.may_mark_voided?
+      mark_draft! if may_mark_draft?
 
       update!(archived_at: Time.current)
     end
 
     def unarchive!
-      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+      send_contract if contract.nil? && approved?
 
       update!(archived_at: nil)
     end
