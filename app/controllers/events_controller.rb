@@ -349,8 +349,12 @@ class EventsController < ApplicationController
     authorize @event
 
     if @event.card_grant_setting.present?
-      event_params[:card_grant_setting_attributes][:category_lock] = event_params[:card_grant_setting_attributes][:category_lock].join(",")
-      event_params[:card_grant_setting_attributes][:banned_categories] = event_params[:card_grant_setting_attributes][:banned_categories].join(",")
+      if event_params[:card_grant_setting_attributes][:category_lock].present?
+        event_params[:card_grant_setting_attributes][:category_lock] = event_params[:card_grant_setting_attributes][:category_lock].join(",")
+      end
+      if event_params[:card_grant_setting_attributes][:banned_categories].present?
+        event_params[:card_grant_setting_attributes][:banned_categories] = event_params[:card_grant_setting_attributes][:banned_categories].join(",")
+      end
     end
 
     # have to use `fixed_event_params` because `event_params` seems to be a constant
@@ -1140,11 +1144,11 @@ class EventsController < ApplicationController
       {
         card_grant_setting_attributes: [
           :merchant_lock,
-          :category_lock,
+          { category_lock: [] },
           :keyword_lock,
           :invite_message,
           :banned_merchants,
-          :banned_categories,
+          { banned_categories: [] },
           :expiration_preference,
           :reimbursement_conversions_enabled,
           :pre_authorization_required,
@@ -1203,11 +1207,11 @@ class EventsController < ApplicationController
       :stripe_card_logo,
       card_grant_setting_attributes: [
         :merchant_lock,
-        :category_lock,
+        { category_lock: [] },
         :keyword_lock,
         :invite_message,
         :banned_merchants,
-        :banned_categories,
+        { banned_categories: [] },
         :expiration_preference,
         :reimbursement_conversions_enabled,
         :pre_authorization_required,

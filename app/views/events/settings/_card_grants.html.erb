@@ -132,7 +132,7 @@
 
             <div class="field">
               <%= card_grant_setting_fields.label :merchant_lock, "Approved merchant IDs" %>
-              <%= card_grant_setting_fields.select :merchant_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { include_blank: "Select a merchant" }, { class: "w-100 fit", disabled:, multiple: true } %>              
+              <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "fast_food_restaurants", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
               <p class="h5 muted mt-1 mb-2">
                 Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
               </p>
@@ -140,7 +140,8 @@
 
             <div class="field">
               <%= card_grant_setting_fields.label :category_lock, "Approved merchant categories" %>
-              <%= card_grant_setting_fields.text_field :category_lock, placeholder: "fast_food_restaurants", value: event.card_grant_setting.category_lock.join(", "), disabled: %>
+              <%= card_grant_setting_fields.select :category_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { include_blank: "Select a merchant" }, { class: "w-100 fit", disabled:, multiple: true } %>
+              <p class="h5 muted mt-1 mb-0"> allowed categories: <%= event.card_grant_setting.category_lock %>
               <p class="h5 muted mt-0 mb-2">Provide a comma-separated list of <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to lock all card grants issued from this event to.</p>
             </div>
 
