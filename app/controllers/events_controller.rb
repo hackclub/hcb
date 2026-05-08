@@ -348,15 +348,6 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
-    if @event.card_grant_setting.present?
-      if event_params[:card_grant_setting_attributes][:category_lock].present?
-        event_params[:card_grant_setting_attributes][:category_lock] = Array(event_params[:card_grant_setting_attributes][:category_lock]).reject(&:blank?).join(",")
-      end
-      if event_params[:card_grant_setting_attributes][:banned_categories].present?
-        event_params[:card_grant_setting_attributes][:banned_categories] = Array(event_params[:card_grant_setting_attributes][:banned_categories]).reject(&:blank?).join(",")
-      end
-    end
-
     # have to use `fixed_event_params` because `event_params` seems to be a constant
     fixed_event_params = event_params
     fixed_user_event_params = user_event_params
