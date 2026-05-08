@@ -350,10 +350,10 @@ class EventsController < ApplicationController
 
     if @event.card_grant_setting.present?
       if event_params[:card_grant_setting_attributes][:category_lock].present?
-        event_params[:card_grant_setting_attributes][:category_lock] = event_params[:card_grant_setting_attributes][:category_lock].join(",")
+        event_params[:card_grant_setting_attributes][:category_lock] = Array(event_params[:card_grant_setting_attributes][:category_lock]).reject(&:blank?).join(",")
       end
       if event_params[:card_grant_setting_attributes][:banned_categories].present?
-        event_params[:card_grant_setting_attributes][:banned_categories] = event_params[:card_grant_setting_attributes][:banned_categories].join(",")
+        event_params[:card_grant_setting_attributes][:banned_categories] = Array(event_params[:card_grant_setting_attributes][:banned_categories]).reject(&:blank?).join(",")
       end
     end
 
