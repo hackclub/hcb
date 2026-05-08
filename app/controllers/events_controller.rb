@@ -58,6 +58,7 @@ class EventsController < ApplicationController
     end
 
     render_tour @organizer_position, :welcome
+    @requesting_call = params[:request_call] == "true" && policy(@event).request_call?
   end
 
   def transaction_heatmap
@@ -797,6 +798,28 @@ class EventsController < ApplicationController
     redirect_to subevent
   end
 
+  def check_sub_organization_name
+    authorize @event, :create_sub_organization?
+
+    name = params[:name].to_s.strip
+
+    if name.blank?
+      return render json: { duplicate: false }
+    end
+
+    duplicate = @event.descendants.find_by("lower(name) = ?", name.downcase)
+
+    if duplicate
+      render json: {
+        duplicate: true,
+        org_name: duplicate.name,
+        org_url: event_path(duplicate)
+      }
+    else
+      render json: { duplicate: false }
+    end
+  end
+
   def toggle_hidden
     authorize @event
 
@@ -1042,6 +1065,27 @@ class EventsController < ApplicationController
     end
 
     @merchants = merchants_hash.map { |id, merchant| { id:, name: merchant[:name], count: merchant[:count] } }.sort_by { |merchant| merchant[:count] }.reverse!.first(30)
+  end
+
+  def request_call
+    authorize @event
+
+    if @event.point_of_contact.present?
+      onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
+
+      if onboarder_record.present?
+        @event.config.update!(hide_onboarding_message: true)
+
+        redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
+        return
+      end
+    end
+
+    EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
+    @event.config.update!(hide_onboarding_message: true)
+
+    flash[:success] = "A member of our team will reach out to schedule a call soon!"
+    redirect_to event_path(@event)
   end
 
   private
