@@ -60,7 +60,9 @@ class Event
     has_paper_trail
 
     include PgSearch::Model
-    pg_search_scope :search_name, against: :name
+    pg_search_scope :search_name_or_email, against: :name, associated_against: {
+      user: :email
+    }
 
     include AASM
     include Contractable
@@ -160,6 +162,10 @@ class Event
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
         end
+      end
+
+      event :mark_draft do
+        transitions from: [:submitted, :under_review], to: :draft
       end
     end
 
@@ -353,12 +359,13 @@ class Event
 
     def archive!
       contract&.mark_voided! if contract&.may_mark_voided?
+      mark_draft! if may_mark_draft?
 
       update!(archived_at: Time.current)
     end
 
     def unarchive!
-      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+      send_contract if contract.nil? && approved?
 
       update!(archived_at: nil)
     end
