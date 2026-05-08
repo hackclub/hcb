@@ -1034,6 +1034,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.boolean "generate_monthly_announcement", default: false, null: false
+    t.boolean "hide_onboarding_message", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
