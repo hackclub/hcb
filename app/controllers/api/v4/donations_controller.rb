@@ -13,8 +13,6 @@ module Api
       def index
         authorize @event, :show_in_v4?
 
-        @recurring_donations = @event.recurring_donations.order(created_at: :asc)
-
         all_past_donations = @event.donations
                                    .where(aasm_state: params[:status] || [:in_transit, :deposited, :refunded])
                                    .order(created_at: :desc)
