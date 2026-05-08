@@ -141,6 +141,9 @@
             <div class="field">
               <%= card_grant_setting_fields.label :category_lock, "Approved merchant categories" %>
               <%= card_grant_setting_fields.select :category_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.category_lock }, { class: "w-100 fit", disabled:, multiple: true } %>
+              <p class="h5 muted mt-0 mb-2">
+                Select one or more <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to allow across all grants issued from this event.
+              </p>
             </div>
 
             <div class="field mb-0">
@@ -172,6 +175,9 @@
             <div class="field">
               <%= card_grant_setting_fields.label :banned_categories, "Blocked merchant categories" %>
               <%= card_grant_setting_fields.select :banned_categories, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.banned_categories }, { class: "w-100 fit", disabled:, multiple: true } %>
+              <p class="h5 muted mt-0 mb-2">
+                Select one or more <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to block across all grants issued from this event.
+              </p>
             </div>
 
           </div>
