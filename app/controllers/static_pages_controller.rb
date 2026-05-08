@@ -27,8 +27,6 @@ class StaticPagesController < ApplicationController
 
     @events = @service.events
 
-    @events = @service.events
-
     @organizer_positions = @service.organizer_positions.not_hidden
     @invites = @service.invites
     @invite_requests = @service.invite_requests
