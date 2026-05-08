@@ -20,7 +20,7 @@ module Api
                                    .order(created_at: :desc)
                                    .to_a
 
-        @past_donations = paginate(all_past_donations, &:public_id)
+        @past_donations = paginate_cursor(all_past_donations, &:public_id)
 
         if expand?(:stats)
           @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
