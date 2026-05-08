@@ -132,7 +132,7 @@
 
             <div class="field">
               <%= card_grant_setting_fields.label :merchant_lock, "Approved merchant IDs" %>
-              <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: ""123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
+              <%= card_grant_setting_fields.text_field :merchant_lock, placeholder: "123456789", class: "w-100 fit", value: event.card_grant_setting.merchant_lock.join(", "), disabled: %>
               <p class="h5 muted mt-0 mb-2">
                 Provide a comma-separated list of merchant network IDs to lock all card grants issued from this event to.
               </p>
