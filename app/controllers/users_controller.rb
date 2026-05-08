@@ -445,7 +445,13 @@ class UsersController < ApplicationController
       :comment_notifications,
       :charge_notifications,
       :monthly_donation_summary,
-      :monthly_follower_summary
+      :monthly_follower_summary,
+      :donation_notifications,
+      :invoice_notifications,
+      :transfer_notifications,
+      :reimbursement_notifications,
+      :team_notifications,
+      :card_grant_notifications
     ]
 
     if @user.stripe_cardholder

@@ -11,6 +11,8 @@ class AchTransferMailer < ApplicationMailer
     @ach_transfer = params[:ach_transfer]
     @reason = params[:reason]
 
+    return unless @ach_transfer.creator.transfer_notifications?
+
     mail subject: "[HCB] ACH transfer to #{@ach_transfer.recipient_name} failed to send", to: @ach_transfer.creator.email
   end
 

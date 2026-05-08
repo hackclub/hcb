@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_08_200000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2657,14 +2657,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   create_table "users", force: :cascade do |t|
     t.integer "access_level", default: 0, null: false
     t.text "birthday_ciphertext"
+    t.boolean "card_grant_notifications", default: true, null: false
     t.boolean "cards_locked", default: false, null: false
     t.integer "charge_notifications", default: 0, null: false
     t.integer "comment_notifications", default: 0, null: false
     t.datetime "created_at", precision: nil, null: false
     t.integer "creation_method"
     t.string "discord_id"
+    t.boolean "donation_notifications", default: true, null: false
     t.text "email", null: false
     t.string "full_name"
+    t.boolean "invoice_notifications", default: true, null: false
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
     t.boolean "monthly_donation_summary", default: true
@@ -2676,12 +2679,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.string "preferred_name"
     t.boolean "pretend_is_not_admin", default: false, null: false
     t.integer "receipt_report_option", default: 0, null: false
+    t.boolean "reimbursement_notifications", default: true, null: false
     t.boolean "running_balance_enabled", default: false, null: false
     t.boolean "seasonal_themes_enabled", default: true, null: false
     t.integer "session_validity_preference", default: 259200, null: false
     t.boolean "sessions_reported", default: false, null: false
     t.string "slug"
+    t.boolean "team_notifications", default: true, null: false
     t.boolean "teenager"
+    t.boolean "transfer_notifications", default: true, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
     t.boolean "use_two_factor_authentication", default: false

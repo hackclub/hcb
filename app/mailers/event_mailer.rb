@@ -41,6 +41,9 @@ class EventMailer < ApplicationMailer
       author: User.system_user
     ).create
 
+    @emails = @event.organizer_contact_emails { |users| users.where(donation_notifications: true) }
+    return if @emails.empty?
+
     mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
   end
 
