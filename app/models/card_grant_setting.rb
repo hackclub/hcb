@@ -62,6 +62,7 @@ class CardGrantSetting < ApplicationRecord
     support_url&.start_with?("mailto:")
   end
 
+  # https://stripe.com/docs/issuing/categories
   STRIPE_MERCHANT_CATEGORIES = %w[
     ac_refrigeration_repair
     accounting_bookkeeping_services
