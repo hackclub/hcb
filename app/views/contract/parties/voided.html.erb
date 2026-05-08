@@ -1,0 +1,19 @@
+<% title "Voided agreement" %>
+
+<h1>This agreement has been voided</h1>
+
+<p>
+  You no longer need to sign this agreement.
+
+  <% unless @contracts.empty? %>
+    However, you have <%= pluralize(@contracts.size, "other agreements") %> to sign:
+  <% end %>
+</p>
+
+<% unless @contracts.empty? %>
+  <div class="flex flex-col mt-2 gap-4">
+    <%= render partial: "contracts/contract", collection: @contracts, as: :contract %>
+  </div>
+<% else %>
+  <%= link_to "Return to homepage", root_path, class: "btn mt-2" %>
+<% end %>

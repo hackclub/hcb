@@ -790,7 +790,7 @@ class AdminController < Admin::BaseController
 
     @applications = Event::Application.all.includes(:user)
     @applications = @applications.not_archived unless @include_archived
-    @applications = @applications.search_name(@q) if @q
+    @applications = @applications.search_name_or_email(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'submitted' DESC"),
