@@ -16,7 +16,11 @@
             <div data-id="<%= event.id %>" data-slug="<%= event.slug %>" data-name="<%= event.name %>" data-organization-select-target="organization" style="<%= i > 50 ? "display: none" : "" %>" data-index="<%= i %>">
               <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150" type="button">
                 <div class="text-left"><%= event.name %></div>
-                <div></div>
+                <% if admin_signed_in? %>
+                  <div class="muted"><%= event.id %><%= " (DEMO)" if event.demo_mode? %></div>
+                <% else %>
+                  <div></div>
+                <% end %>
               </button>
               <hr class="my-0">
             </div>
