@@ -118,7 +118,8 @@ export default class extends Controller {
           backgroundColor: 'var(--info)',
           color: 'white',
         })
-        if (button.children[1]) button.children[1].style.color = 'white'
+        if (button.children[1])
+          button.children[1].style.color = 'white'
 
         const fieldValue = this.dropdownTarget.children[1]
         fieldValue.innerText = button.children[0].innerText

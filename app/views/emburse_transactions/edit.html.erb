@@ -14,7 +14,7 @@
     <%= render "event_combobox",
           name: form.field_name(:event_id),
           id: form.field_id(:event_id),
-          events: Event.reorder(:name).select(:id, :name, :slug, :demo_mode),
+          events: Event.for_combobox,
           selected_event: @emburse_transaction.event,
           placeholder: "Select one…" %>
   </div>

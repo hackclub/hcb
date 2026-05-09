@@ -218,6 +218,7 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
+  scope :for_combobox, -> { reorder(:name).select(:id, :name, :slug, :demo_mode) }
 
   before_validation :enforce_transparency_eligibility
 
