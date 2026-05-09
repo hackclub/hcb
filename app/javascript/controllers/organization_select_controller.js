@@ -110,7 +110,8 @@ export default class extends Controller {
             backgroundColor: 'unset',
             color: 'unset',
           })
-          if (previouslySelected.button.children[1]) previouslySelected.button.children[1].style.color = ''
+          if (previouslySelected.button.children[1])
+            previouslySelected.button.children[1].style.color = ''
         }
 
         Object.assign(button.style, {
