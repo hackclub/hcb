@@ -9,7 +9,7 @@
             id: form.field_id(:event_id),
             events: Event.reorder(:name).select(:id, :name, :slug, :demo_mode),
             selected_event: sponsor.event,
-            placeholder: "Select event..." %>
+            placeholder: "Select event…" %>
     </div>
   <% end %>
   <%= form.hidden_field :event_id, value: params[:event_id] unless admin_signed_in? %>

@@ -1,4 +1,4 @@
-<%# locals: (name:, id:, events:, selected_event: nil, placeholder: "Select one...") %>
+<%# locals: (name:, id:, events:, selected_event: nil, placeholder: "Select one…") %>
 
 <div data-controller="organization-select">
   <select name="<%= name %>" id="<%= id %>" class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer" data-organization-select-target="dropdown">
@@ -18,8 +18,6 @@
                 <div class="text-left"><%= event.name %></div>
                 <% if admin_signed_in? %>
                   <div class="muted"><%= event.id %><%= " (DEMO)" if event.demo_mode? %></div>
-                <% else %>
-                  <div></div>
                 <% end %>
               </button>
               <hr class="my-0">
