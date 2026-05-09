@@ -9,6 +9,8 @@ export default class extends Controller {
 
   update() {
     const allChecked = this.termTargets.every(cb => cb.checked)
-    this.submitButtonTargets.forEach(btn => { btn.disabled = !allChecked })
+    this.submitButtonTargets.forEach(btn => {
+      btn.disabled = !allChecked
+    })
   }
 }
