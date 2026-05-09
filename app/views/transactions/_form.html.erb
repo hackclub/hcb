@@ -63,12 +63,7 @@
 
       <div class="field event-select-target">
         <%= fr_form.label :event %>
-        <%= render "event_combobox",
-              name: fr_form.field_name(:event_id),
-              id: fr_form.field_id(:event_id),
-              events: Event.for_combobox,
-              selected_event: transaction.fee_relationship&.event,
-              placeholder: "Select one…" %>
+        <%= combobox_tag fr_form.field_name(:event_id), event_search_admin_index_path, value: transaction.fee_relationship&.event&.to_combobox_display, placeholder: "Select one…" %>
       </div>
 
       <%= form.label :is_event_related, class: "field field--checkbox mb1" do %>

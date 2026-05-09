@@ -11,12 +11,7 @@
 
   <div class="field">
     <%= form.label :event %>
-    <%= render "event_combobox",
-          name: form.field_name(:event_id),
-          id: form.field_id(:event_id),
-          events: Event.for_combobox,
-          selected_event: @emburse_transaction.event,
-          placeholder: "Select one…" %>
+    <%= combobox_tag form.field_name(:event_id), event_search_admin_index_path, value: @emburse_transaction.event&.to_combobox_display, placeholder: "Select one…" %>
   </div>
 
   <div class="field">
