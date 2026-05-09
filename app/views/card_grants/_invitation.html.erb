@@ -107,7 +107,7 @@
       <div class="card border b--info">
         <h2 class="mt-0">Open a reimbursement report</h2>
         <p>
-          If you can't use a grant card and have a bank account in a <%= link_to "supported country", "https://stripe.com/docs/connect/payouts", target: :_blank %>, reimburse yourself up to <%= render_money card_grant.amount %>.
+          If you can't use a grant card and have a bank account in a supported country, reimburse yourself up to <%= render_money card_grant.amount %>.
           Make your purchases and submit receipts to get reimbursed.
         </p>
         <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>
