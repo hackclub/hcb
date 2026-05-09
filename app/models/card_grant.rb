@@ -4,29 +4,31 @@
 #
 # Table name: card_grants
 #
-#  id                         :bigint           not null, primary key
-#  amount_cents               :integer
-#  banned_categories          :string
-#  banned_merchants           :string
-#  category_lock              :string
-#  email                      :string           not null
-#  expiration_at              :date             not null
-#  instructions               :text
-#  invite_message             :string
-#  keyword_lock               :string
-#  merchant_lock              :string
-#  one_time_use               :boolean
-#  pre_authorization_required :boolean          default(FALSE), not null
-#  purpose                    :string
-#  status                     :integer          default("active"), not null
-#  created_at                 :datetime         not null
-#  updated_at                 :datetime         not null
-#  disbursement_id            :bigint
-#  event_id                   :bigint           not null
-#  sent_by_id                 :bigint           not null
-#  stripe_card_id             :bigint
-#  subledger_id               :bigint
-#  user_id                    :bigint           not null
+#  id                          :bigint           not null, primary key
+#  allow_reimbursement_report  :boolean          default(FALSE), not null
+#  allow_stripe_card           :boolean          default(TRUE), not null
+#  amount_cents                :integer
+#  banned_categories           :string
+#  banned_merchants            :string
+#  category_lock               :string
+#  email                       :string           not null
+#  expiration_at               :date             not null
+#  instructions                :text
+#  invite_message              :string
+#  keyword_lock                :string
+#  merchant_lock               :string
+#  one_time_use                :boolean
+#  pre_authorization_required  :boolean          default(FALSE), not null
+#  purpose                     :string
+#  status                      :integer          default("active"), not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  disbursement_id             :bigint
+#  event_id                    :bigint           not null
+#  sent_by_id                  :bigint           not null
+#  stripe_card_id              :bigint
+#  subledger_id                :bigint
+#  user_id                     :bigint           not null
 #
 # Indexes
 #
@@ -103,6 +105,13 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
+  validate :at_least_one_acceptance_method
+
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
+  end
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
@@ -161,7 +170,7 @@ class CardGrant < ApplicationRecord
   end
 
   def pending_invite?
-    stripe_card.nil?
+    stripe_card.nil? && reimbursement_report.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)
@@ -373,6 +382,9 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
+
+    self.allow_stripe_card = setting.allow_stripe_card if self.allow_stripe_card.nil?
+    self.allow_reimbursement_report = setting.allow_reimbursement_report if self.allow_reimbursement_report.nil?
   end
 
 end

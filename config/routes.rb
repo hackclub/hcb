@@ -810,6 +810,7 @@ Rails.application.routes.draw do
   resources :card_grants, only: [:show, :edit, :update], path: "grants", concerns: :commentable do
     member do
       post "activate"
+      post "accept_as_reimbursement"
       get "spending"
       post "clear_purpose"
     end

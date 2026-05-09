@@ -1,9 +1,67 @@
 <%# locals: (card_grant:) %>
 
 <% if card_grant.pending_invite? %>
-  <%# Prompt user to create a Stripe Card %>
-  <div class="flex flex-col w-100">
-    <div class="w-full">
+  <div class="w-full">
+
+    <% if card_grant.allow_stripe_card? && card_grant.allow_reimbursement_report? %>
+      <%# Both options available — show two side-by-side option cards %>
+      <div class="card border b--info">
+        <h2 class="mt-0"><%= card_grant.event.name %> has granted you <%= render_money card_grant.amount %></h2>
+        <p class="muted mt-0 mb4">
+          Choose how you would like to redeem your grant<% if card_grant.purpose.present? %> for "<strong><%= card_grant.purpose %></strong>"<% end %>
+        </p>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <%# Virtual card option %>
+          <div class="card card--sunken flex-1 flex flex-col">
+            <p class="mt-0">Get a virtual debit card to spend money online or in-person with digital wallets.</p>
+
+            <% if card_grant.instructions.present? %>
+              <div class="card card--sunken py-0 mb2">
+                <%= MarkdownService.instance.render(card_grant.instructions) %>
+              </div>
+            <% end %>
+
+            <%= form_with url: activate_card_grant_path(card_grant), class: "flex flex-col flex-1" do |form| %>
+              <div class="field field--checkbox mb2">
+                <%= form.check_box :purpose, required: true %>
+                <%= form.label :purpose do %>
+                  I will only use this card for its intended purpose and adhere to the instructions provided by <%= card_grant.event.name %>
+                <% end %>
+              </div>
+              <div class="field field--checkbox mb2">
+                <%= form.check_box :policy, required: true %>
+                <%= form.label :policy do %>
+                  I agree to the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %>
+                <% end %>
+              </div>
+              <div class="field field--checkbox mb3">
+                <%= form.check_box :terms, required: true %>
+                <%= form.label :terms do %>
+                  I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
+                <% end %>
+              </div>
+              <div class="mt-auto">
+                <%= form.submit "Get a virtual card", class: "btn btn--primary w-full" %>
+              </div>
+            <% end %>
+          </div>
+
+          <%# Reimbursement option %>
+          <div class="card card--sunken flex-1 flex flex-col">
+            <p class="mt-0">
+              If you can't use a grant card and have a bank account in a <%= link_to "supported country", "https://stripe.com/docs/connect/payouts", target: :_blank %>, reimburse yourself up to <%= render_money card_grant.amount %>
+            </p>
+
+            <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant), class: "mt-auto" do |form| %>
+              <%= form.submit "Open a reimbursement", class: "btn btn--primary w-full" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+    <% elsif card_grant.allow_stripe_card? %>
+      <%# Only virtual card allowed — original activation flow %>
       <div class="card border b--info">
         <h2 class="mt-0">Activate your grant card</h2>
         <p>
@@ -43,6 +101,22 @@
           </div>
         <% end %>
       </div>
-    </div>
+
+    <% elsif card_grant.allow_reimbursement_report? %>
+      <%# Only reimbursement allowed %>
+      <div class="card border b--info">
+        <h2 class="mt-0">Open a reimbursement report</h2>
+        <p>
+          If you can't use a grant card and have a bank account in a <%= link_to "supported country", "https://stripe.com/docs/connect/payouts", target: :_blank %>, reimburse yourself up to <%= render_money card_grant.amount %>.
+          Make your purchases and submit receipts to get reimbursed.
+        </p>
+        <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>
+          <div class="actions">
+            <%= form.submit "Open a reimbursement" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
   </div>
 <% end %>
