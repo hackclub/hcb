@@ -1,0 +1,28 @@
+<%# locals: (name:, id:, events:, selected_event: nil, placeholder: "Select one...") %>
+
+<div data-controller="organization-select">
+  <select name="<%= name %>" id="<%= id %>" class="bg-[transparent] dark:bg-darkless input input--select flex items-center select-none cursor-pointer" data-organization-select-target="dropdown">
+    <option value><%= placeholder %></option>
+    <option value="<%= selected_event&.id %>"><%= selected_event&.name %></option>
+  </select>
+
+  <div data-organization-select-target="wrapper" style="max-width: 384px;">
+    <input data-organization-select-target="search" style="display: none; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;" type="text" placeholder="Search">
+
+    <div data-organization-select-target="menu" style="display: none; border-width: 1px; border-style: solid; border-top: none; max-width: 384px; border-top-left-radius: 0px; border-top-right-radius: 0px;" class="border-smoke rounded-md dark:border-black overflow-hidden h-40">
+      <div class="w-full h-full rounded-md overflow-y-scroll" style="border-top-left-radius: 0px; border-top-right-radius: 0px; content-visibility: auto;">
+        <div>
+          <% events.each_with_index do |event, i| %>
+            <div data-id="<%= event.id %>" data-slug="<%= event.slug %>" data-name="<%= event.name %>" data-organization-select-target="organization" style="<%= i > 50 ? "display: none" : "" %>" data-index="<%= i %>">
+              <button class="text-[length:inherit] border-none bg-[transparent] w-full flex justify-between p-2 cursor-pointer hover:bg-smoke hover:dark:bg-darkless transition-colors duration-150" type="button">
+                <div class="text-left"><%= event.name %></div>
+                <div></div>
+              </button>
+              <hr class="my-0">
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

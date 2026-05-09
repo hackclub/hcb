@@ -63,7 +63,12 @@
 
       <div class="field event-select-target">
         <%= fr_form.label :event %>
-        <%= fr_form.collection_select(:event_id, Event.reorder(:name), :id, :admin_dropdown_description, include_blank: "Select one…") %>
+        <%= render "event_combobox",
+              name: fr_form.field_name(:event_id),
+              id: fr_form.field_id(:event_id),
+              events: Event.order(:name).select(:id, :name, :slug),
+              selected_event: transaction.fee_relationship&.event,
+              placeholder: "Select one..." %>
       </div>
 
       <%= form.label :is_event_related, class: "field field--checkbox mb1" do %>

@@ -4,7 +4,11 @@
   <% else %>
     <fieldset>
       <legend class="heading h2 pt2 pb2">Which organization?</legend>
-      <%= form.select :event_id, current_user.events.not_demo_mode.where.not(id: current_user.reader_events).pluck(:name, :id) %>
+      <%= render "event_combobox",
+            name: form.field_name(:event_id),
+            id: form.field_id(:event_id),
+            events: current_user.events.not_demo_mode.where.not(id: current_user.reader_events).select(:id, :name, :slug),
+            placeholder: "Select organization..." %>
     </fieldset>
   <% end %>
   <fieldset>

@@ -110,14 +110,14 @@ export default class extends Controller {
             backgroundColor: 'unset',
             color: 'unset',
           })
-          previouslySelected.button.children[1].style.color = ''
+          if (previouslySelected.button.children[1]) previouslySelected.button.children[1].style.color = ''
         }
 
         Object.assign(button.style, {
           backgroundColor: 'var(--info)',
           color: 'white',
         })
-        button.children[1].style.color = 'white'
+        if (button.children[1]) button.children[1].style.color = 'white'
 
         const fieldValue = this.dropdownTarget.children[1]
         fieldValue.innerText = button.children[0].innerText

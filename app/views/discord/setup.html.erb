@@ -23,11 +23,7 @@
 
 <div class="flex items-center justify-center g1">
   <%= form_with url: discord_create_server_link_path, method: :post, class: "flex items-center justify-center g1" do |f| %>
-    <select name="event_id" class="form-select">
-      <% current_user.events.each do |event| %>
-        <option value="<%= event.id %>"><%= event.name %></option>
-      <% end %>
-    </select>
+    <%= render "event_combobox", name: "event_id", id: "event_id", events: current_user.events, placeholder: "Select organization..." %>
     <%= f.hidden_field :signed_guild_id, value: @signed_guild_id %>
     <%= f.hidden_field :signed_channel_id, value: @signed_channel_id %>
     <%= f.submit "Connect", class: "btn bg-success h2" %>
