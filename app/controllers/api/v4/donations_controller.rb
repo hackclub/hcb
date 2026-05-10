@@ -36,6 +36,8 @@ module Api
       end
 
       def payment_intent
+        authorize @donation
+
         amount = @donation.amount
         if @donation.fee_covered
           amount /= (1 - @donation.event.revenue_fee).ceil
