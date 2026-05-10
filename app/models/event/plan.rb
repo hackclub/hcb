@@ -14,8 +14,7 @@
 #
 # Indexes
 #
-#  index_event_plans_on_event_id              (event_id)
-#  index_event_plans_on_event_id_when_active  (event_id) UNIQUE WHERE aasm_state = 'active'
+#  index_event_plans_on_event_id  (event_id)
 #
 # Foreign Keys
 #
