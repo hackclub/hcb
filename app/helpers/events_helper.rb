@@ -475,11 +475,9 @@ module EventsHelper
         cy2 = y_tops[child.id] + node_h / 2
         svg << %(<line class="edge" x1="#{ex}" y1="#{ey}" x2="#{cx2}" y2="#{cy2}" stroke-width="1.5" marker-end="url(#arr)"/>)
       end
-    end
 
-    # Nodes
-    all_events.each do |event|
-      x       = padding + depths[event.id] * (node_w + h_gap)
+      # Nodes
+      x = padding + depths[event.id] * (node_w + h_gap)
       y       = y_tops[event.id]
       cx      = x + node_w / 2
       cy      = y + node_h / 2
