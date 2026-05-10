@@ -717,7 +717,7 @@ class EventsController < ApplicationController
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
-      { key: "created_*", label: "Date created", type: "date_range" }
+      { key_base: "created", label: "Date created", type: "date_range" }
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
   end
