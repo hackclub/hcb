@@ -95,9 +95,9 @@ RSpec.describe EventsController do
       parent_event = create(:event, name: "Parent Event")
       create(:organizer_position, user:, event: parent_event)
 
-      create(:event, parent: parent_event, name: "Sub Organization 1")
-      create(:event, parent: parent_event, name: "Sub Organization 2")
-      create(:event, parent: parent_event, name: "Sub Organization 3")
+      create(:event, parent: parent_event, name: "Sub Organization 1", created_at: 3.days.ago)
+      create(:event, parent: parent_event, name: "Sub Organization 2", created_at: 2.days.ago)
+      create(:event, parent: parent_event, name: "Sub Organization 3", created_at: 1.day.ago)
 
       create_session(user, verified: true)
 
