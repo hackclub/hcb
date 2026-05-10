@@ -16,9 +16,10 @@ class AddAllowColumnsToCardGrants < ActiveRecord::Migration[7.2]
       execute <<~SQL
         UPDATE card_grants SET allow_reimbursement_report = false WHERE allow_reimbursement_report IS NULL
       SQL
+
+      change_column_null :card_grants, :allow_reimbursement_report, false
     end
 
-    change_column_null :card_grants, :allow_reimbursement_report, false
     change_column_default :card_grants, :allow_reimbursement_report, false
   end
 
