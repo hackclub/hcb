@@ -450,14 +450,14 @@ module EventsHelper
         a:focus .root-rect  { stroke: #ff8896; }
         a:active .node-rect { fill: #e0e0e0; stroke: #ec3750; }
         a:active .root-rect { fill: #b02030; }
-        [data-dark='true'] .node-rect          { fill: #2a2a2f; stroke: #444; }
-        [data-dark='true'] .node-text          { fill: #fff; }
-        [data-dark='true'] .edge               { stroke: #555; }
-        [data-dark='true'] .arrow-head         { fill: #555; }
-        [data-dark='true'] a:hover .node-rect  { fill: #3a3a40; stroke: #666; }
-        [data-dark='true'] a:hover .root-rect  { fill: #d42f47; }
-        [data-dark='true'] a:focus .node-rect  { fill: #3a3a40; stroke: #ec3750; }
-        [data-dark='true'] a:focus .root-rect  { stroke: #ff8896; }
+        [data-dark='true'] .node-rect { fill: #2a2a2f; stroke: #444; }
+        [data-dark='true'] .node-text { fill: #fff; }
+        [data-dark='true'] .edge { stroke: #555; }
+        [data-dark='true'] .arrow-head { fill: #555; }
+        [data-dark='true'] a:hover .node-rect { fill: #3a3a40; stroke: #666; }
+        [data-dark='true'] a:hover .root-rect { fill: #d42f47; }
+        [data-dark='true'] a:focus .node-rect { fill: #3a3a40; stroke: #ec3750; }
+        [data-dark='true'] a:focus .root-rect { stroke: #ff8896; }
         [data-dark='true'] a:active .node-rect { fill: #1a1a1f; stroke: #ec3750; }
         [data-dark='true'] a:active .root-rect { fill: #b02030; }
       </style>
