@@ -86,9 +86,16 @@
           <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
           <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform.</p>
         </div>
-        <%= button_to request_call_event_path(@event), class: "btn" do %>
-          <%= inline_icon "people-2", size: 16, class: "mr-1" %>
-          Schedule
+        <% if (link = @event.onboarding_scheduling_link).present? %>
+          <%= link_to link, class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
+        <% else %>
+          <%= button_to request_call_event_path(@event), class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
         <% end %>
       </div>
     <% end %>

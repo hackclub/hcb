@@ -1070,18 +1070,8 @@ class EventsController < ApplicationController
   def request_call
     authorize @event
 
-    if @event.point_of_contact.present?
-      onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
-
-      if onboarder_record.present?
-        @event.config.update!(hide_onboarding_message: true)
-
-        redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
-        return
-      end
-    end
-
-    EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
+    EventMailer.with(event: @event, user: current_user).ops_call_requested.deliver_now
+    EventMailer.with(event: @event, user: current_user).user_call_requested.deliver_now
     @event.config.update!(hide_onboarding_message: true)
 
     flash[:success] = "A member of our team will reach out to schedule a call soon!"
