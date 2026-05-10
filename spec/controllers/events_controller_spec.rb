@@ -88,4 +88,29 @@ RSpec.describe EventsController do
       )
     end
   end
+
+  describe "#sub_organizations" do
+    it "paginates sub-organizations" do
+      user = create(:user)
+      parent_event = create(:event, name: "Parent Event")
+      create(:organizer_position, user:, event: parent_event)
+
+      create_list(:event, 26, parent: parent_event) do |subevent, index|
+        subevent.update!(name: "Sub Organization #{index + 1}")
+      end
+
+      create_session(user, verified: true)
+
+      get(:sub_organizations, params: { event_id: parent_event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("page=2")
+      expect(response.body).not_to include("Sub Organization 1")
+
+      get(:sub_organizations, params: { event_id: parent_event.slug, page: 2 })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Sub Organization 1")
+    end
+  end
 end
