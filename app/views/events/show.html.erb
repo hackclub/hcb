@@ -80,7 +80,7 @@
   <% if policy(@event).request_call? %>
     <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
 
-    <% unless @event.config.hide_onboarding_message || @event.hcb_codes.exists? %>
+    <% unless @event.config.hide_onboarding_message %>
       <div class="card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
         <div class="flex-1">
           <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>

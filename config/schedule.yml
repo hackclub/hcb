@@ -248,3 +248,7 @@ notify_events_with_negative_balance_job:
 refresh_disposable_domains:
   cron: "0 11 * * *" # run at 6am est every day
   class: "DisposableEmailDomainListUpdateJob"
+
+hide_onboarding_messages:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::HideOnboardingMessagesJob"
