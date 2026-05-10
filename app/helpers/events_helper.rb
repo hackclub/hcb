@@ -464,20 +464,6 @@ module EventsHelper
       </style>
     DEFS
 
-    # Edges: right-center of parent -> left-center of child
-    all_events.each do |event|
-      next if children_of[event.id].empty?
-
-      ex = padding + depths[event.id] * (node_w + h_gap) + node_w
-      ey = y_tops[event.id] + node_h / 2
-      children_of[event.id].each do |child|
-        cx2 = padding + depths[child.id] * (node_w + h_gap)
-        cy2 = y_tops[child.id] + node_h / 2
-        svg << %(<line class="edge" x1="#{ex}" y1="#{ey}" x2="#{cx2}" y2="#{cy2}" stroke-width="1.5" marker-end="url(#arr)"/>)
-      end
-    end
-
-    # Nodes
     all_events.each do |event|
       x = padding + depths[event.id] * (node_w + h_gap)
       y = y_tops[event.id]
@@ -495,6 +481,16 @@ module EventsHelper
       svg << %(<rect#{rect_attrs} x="#{x}" y="#{y}" width="#{node_w}" height="#{node_h}" rx="#{rx}" stroke-width="2"/>)
       svg << %(<text class="#{text_class}" x="#{cx}" y="#{cy}" text-anchor="middle" dominant-baseline="central">#{h(label)}</text>)
       svg << %(</a>)
+
+      next if children_of[event.id].empty?
+
+      ex = padding + depths[event.id] * (node_w + h_gap) + node_w
+      ey = y_tops[event.id] + node_h / 2
+      children_of[event.id].each do |child|
+        cx2 = padding + depths[child.id] * (node_w + h_gap)
+        cy2 = y_tops[child.id] + node_h / 2
+        svg << %(<line class="edge" x1="#{ex}" y1="#{ey}" x2="#{cx2}" y2="#{cy2}" stroke-width="1.5" marker-end="url(#arr)"/>)
+      end
     end
 
     svg << %(</svg>)
