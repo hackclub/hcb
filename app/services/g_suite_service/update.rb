@@ -2,12 +2,13 @@
 
 module GSuiteService
   class Update
-    def initialize(g_suite_id:, domain:, verification_key:, dkim_key: nil)
+    def initialize(g_suite_id:, domain:, verification_key:, dkim_key: nil, max_accounts: nil)
       @g_suite_id = g_suite_id
 
       @domain = domain
       @verification_key = verification_key.nil? ? g_suite.verification_key : verification_key
       @dkim_key = dkim_key.nil? ? g_suite.dkim_key : dkim_key
+      @max_accounts = max_accounts.nil? ? g_suite.max_accounts : max_accounts
     end
 
     def run
@@ -18,6 +19,7 @@ module GSuiteService
         g_suite.domain = @domain
         g_suite.verification_key = smart_verification_key
         g_suite.dkim_key = @dkim_key
+        g_suite.max_accounts = @max_accounts
         g_suite.save!
 
         if domain_changing?

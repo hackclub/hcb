@@ -7,6 +7,7 @@
 #  id                                     :bigint           not null, primary key
 #  accepted_at                            :datetime
 #  cancelled_at                           :datetime
+#  deleted_at                             :datetime
 #  initial                                :boolean          default(FALSE)
 #  initial_control_allowance_amount_cents :integer
 #  is_signee                              :boolean          default(FALSE)
@@ -22,6 +23,7 @@
 #
 # Indexes
 #
+#  index_organizer_position_invites_on_deleted_at             (deleted_at)
 #  index_organizer_position_invites_on_event_id               (event_id)
 #  index_organizer_position_invites_on_organizer_position_id  (organizer_position_id)
 #  index_organizer_position_invites_on_sender_id              (sender_id)
@@ -55,7 +57,11 @@
 #     creation.
 #
 class OrganizerPositionInvite < ApplicationRecord
+  acts_as_paranoid
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ivt
@@ -120,6 +126,11 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
+    if user.unverified?
+      self.errors.add(:user, "must verify their email before accepting this invite")
+      return false
+    end
+
     if pending_signature? && application_contract.nil?
       self.errors.add(:base, "requires a signed contract!")
       return false
@@ -173,6 +184,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.rejected_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -193,6 +206,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     self.cancelled_at = Time.current
 
+    contract&.mark_voided! if contract&.may_mark_voided?
+
     self.save
   end
 
@@ -211,7 +226,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -219,13 +234,13 @@ class OrganizerPositionInvite < ApplicationRecord
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
-      update!(is_signee: true)
-      organizer_position&.update(is_signee: true)
-
-      event.set_airtable_status("Documents sent")
+      update!(is_signee: true) unless accepted?
+      organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
     end
 
-    fs_contract.send!
+    fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+
+    fs_contract
   end
 
   def on_contract_signed(contract)

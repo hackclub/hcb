@@ -56,7 +56,7 @@
       <strong style="font-weight: 600;">
         Message from <%= payment.reviewed_by.name %>
       </strong>
-      <%== MarkdownService.instance.renderer.render payment.review_message %>
+      <%= MarkdownService.instance.render payment.review_message %>
     </div>
   <% end %>
   <div class="flex-grow"></div>

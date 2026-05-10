@@ -56,3 +56,6 @@ yarn-debug.log*
 
 # Code coverage report
 /coverage
+
+# AI
+.claude/

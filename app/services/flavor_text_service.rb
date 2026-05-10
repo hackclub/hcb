@@ -169,7 +169,6 @@ class FlavorTextService
       "Filmed on location",
       "From the makers of HCB",
       "Soon to be a major cryptocurrency!",
-      "As seen on the internet",
       "👏 KEEP 👏 YOUR 👏 RECEIPTS 👏",
       "Money: collect it all!",
       "Help, I'm trapped in the internet!",

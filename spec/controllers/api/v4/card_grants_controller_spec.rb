@@ -33,7 +33,7 @@ RSpec.describe Api::V4::CardGrantsController do
       # response value unpredictable.
       allow_any_instance_of(UsersHelper).to receive(:gravatar_url).and_return("https://gravatar.com/avatar/stubbed")
 
-      post(:create, params: { event_id: event.friendly_id, **card_grant_params, expand: "disbursements" }, as: :json)
+      post(:create, params: { event_id: event.friendly_id, **card_grant_params, expand: "disbursements,user,organization" }, as: :json)
 
       expect(response).to have_http_status(:created)
       card_grant = event.card_grants.sole
@@ -42,24 +42,26 @@ RSpec.describe Api::V4::CardGrantsController do
 
       serialized_event = {
         "id"                                => event.public_id,
+        "object"                            => "organization",
         "parent_id"                         => nil,
         "name"                              => "Test Event",
         "slug"                              => "test-event",
         "background_image"                  => nil,
         "country"                           => nil,
-        "created_at"                        => event.created_at.iso8601(3),
         "fee_percentage"                    => 0.0,
         "financially_frozen"                => false,
         "icon"                              => nil,
         "donation_page_available"           => true,
         "playground_mode"                   => false,
-        "playground_mode_meeting_requested" => false,
-        "transparent"                       => true
+        "playground_mode_meeting_requested" => nil,
+        "transparent"                       => true,
+        "created_at"                        => event.created_at.iso8601(3)
       }
 
       expect(response.parsed_body).to eq(
         {
           "id"                         => card_grant.public_id,
+          "object"                     => "card_grant",
           "amount_cents"               => 123_45,
           "card_id"                    => nil,
           "one_time_use"               => true,
@@ -72,10 +74,11 @@ RSpec.describe Api::V4::CardGrantsController do
           "purpose"                    => "Raffle prize",
           "keyword_lock"               => "some keywords",
           "email"                      => "recipient@example.com",
-          "expires_on"                 => card_grant.expires_on.iso8601(3),
+          "expires_on"                 => card_grant.expiration_at.iso8601,
           "disbursements"              => [
             {
               "id"                      => disbursement.public_id,
+              "object"                  => "disbursement",
               "memo"                    => "Grant to recipient",
               "status"                  => "completed",
               "transaction_id"          => disbursement.local_hcb_code.public_id,
@@ -87,6 +90,7 @@ RSpec.describe Api::V4::CardGrantsController do
               "to"                      => serialized_event,
               "sender"                  => {
                 "id"       => user.public_id,
+                "object"   => "user",
                 "name"     => "Orpheus D",
                 "email"    => "orpheus@hackclub.com",
                 "admin"    => false,
@@ -94,16 +98,19 @@ RSpec.describe Api::V4::CardGrantsController do
                 "avatar"   => "https://gravatar.com/avatar/stubbed",
                 "birthday" => nil,
               },
+              "created_at"              => disbursement.created_at.iso8601(3)
             }
           ],
           "organization"               => serialized_event,
           "user"                       => {
             "id"      => recipient.public_id,
+            "object"  => "user",
             "name"    => "recipient",
             "admin"   => false,
             "auditor" => false,
             "avatar"  => "https://gravatar.com/avatar/stubbed",
           },
+          "created_at"                 => card_grant.created_at.iso8601(3)
         }
       )
     end

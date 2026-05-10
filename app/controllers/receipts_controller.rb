@@ -58,8 +58,8 @@ class ReceiptsController < ApplicationController
           flash[:popover] = params[:popover].gsub("HcbCode:", "")
         end
 
-        if params[:redirect_url]
-          redirect_to params[:redirect_url]
+        if (safe_redirect = url_from(params[:redirect_url]))
+          redirect_to safe_redirect
         else
           redirect_back fallback_location: @receiptable.try(:hcb_code) || @receiptable
         end
@@ -187,8 +187,8 @@ class ReceiptsController < ApplicationController
       format.turbo_stream { render turbo_stream: streams }
       format.html         {
         flash[flash_type] = flash_message if flash_message && flash_type
-        if params[:redirect_url]
-          redirect_to params[:redirect_url]
+        if (safe_redirect = url_from(params[:redirect_url]))
+          redirect_to safe_redirect
         elsif @receiptable.is_a?(HcbCode) && @receiptable.stripe_card&.card_grant.present?
           redirect_to @receiptable.stripe_card.card_grant
         else

@@ -32,7 +32,7 @@
 
 <div class="flex items-center gap-6 sm:gap-4 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/search", form: %>
+    <%= render "events/filters/search", form: %>
   <% end %>
   <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
 </div>
@@ -43,6 +43,7 @@
   <ul class="grid grid--medium-narrow text-left w-100 mt0">
     <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
   </ul>
+  <%= paginate @sub_organizations %>
 <% else %>
   <%= blankslate "No sub-organizations yet" %>
 <% end %>

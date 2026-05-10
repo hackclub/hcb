@@ -16,9 +16,13 @@
 
   <p class="footer-extras text-xs flex justify-center gap-1">
     <% if Build.commit_hash.present? %>
-      <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %>">
-        <%= Build.age.present? ? "Last built #{Build.age} ago" : "Build info" %>
-      </span>
+      <% build_info = capture do %>
+        <span class="tooltipped tooltipped--n tooltipped--xl underline" aria-label="Build <%= Build.commit_name %>">
+          <%= Build.age.present? ? "Last built #{Build.age} ago" : "Build info" %>
+        </span>
+      <% end %>
+      <%# Only link to GitHub if the build is not dirty. Otherwise, just show build info with no link. %>
+      <%= link_to_if !Build.commit_dirty?, build_info, "#{Rails.configuration.constants.github_url}/commit/#{Build.commit_hash}", target: "_blank" %>
       •
     <% end %>
     <%= link_to "Security", security_path %>

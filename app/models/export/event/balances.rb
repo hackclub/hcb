@@ -32,7 +32,11 @@ class Export
       end
 
       def filename
-        "hcb_balances_#{Time.now.strftime("%Y%m%d%H%M")}.csv"
+        [
+          "hcb_balances",
+          end_date.present? ? "ending_#{end_date}" : nil,
+          "exported_#{Time.now.strftime("%Y-%m-%d_%H-%M")}.csv"
+        ].compact.join("_")
       end
 
       def mime_type

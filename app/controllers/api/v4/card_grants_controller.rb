@@ -28,13 +28,15 @@ module Api
 
           if found_user.nil?
             skip_authorization
-            return render json: { error: "invalid_user", messages: "User with email '#{params[:sent_by_email]}' not found" }, status: :bad_request
+            return render json: { error: "invalid_user", messages: ["User with email '#{params[:sent_by_email]}' not found"] }, status: :bad_request
           end
 
           sent_by = found_user
         end
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
+        expiration_at = params["expiration_at"]&.to_date
+
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:, expiration_at:))
 
         authorize @card_grant
 
@@ -90,7 +92,9 @@ module Api
       def update
         authorize @card_grant
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions))
+        expiration_at = params["expiration_at"]&.to_date
+
+        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions).merge(expiration_at:))
 
         render :show
       end
@@ -114,8 +118,7 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       private

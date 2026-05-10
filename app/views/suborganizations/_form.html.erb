@@ -9,13 +9,25 @@
     </p>
   </div>
 
-  <div class="field">
+  <div class="field"
+    data-controller="sub-org-name-check"
+    data-sub-org-name-check-url-value="<%= check_sub_organization_name_event_path(event) %>">
     <%= form.label :name, "Project name", class: "bold" %>
-    <%= form.text_field :name, placeholder: "#{possessive(event.name)} latest project", value: params[:name] %>
+    <%= form.text_field :name, placeholder: "#{possessive(event.name)} latest project", value: params[:name],
+        data: { action: "input->sub-org-name-check#check" } %>
+    <div data-sub-org-name-check-target="warning" hidden class="card border b--warning mt1">
+      <div class="flex items-center warning">
+        <%= inline_icon "important", size: 20, class: "mr1 flex-shrink-0" %>
+        <span>A sub-organization named <strong><a data-sub-org-name-check-target="link" href="#"></a></strong> already exists under this organization.</span>
+      </div>
+    </div>
   </div>
 
   <div class="field">
     <%= form.label :email, "Organizer email", class: "bold" %>
+    <% if event.config.subevent_plan.in?([Event::Plan::HackClubAffiliate.name, Event::Plan::HackClubHQ.name]) %>
+      <p class="h5 muted mt0 mb1">This should be the full time HQ point of contact for this project. This is likely a gap year.</p>
+    <% end %>
     <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
   </div>
 
@@ -25,7 +37,7 @@
   </div>
 
   <div id="add_scoped_tag_field" class="field" data-controller="menu text-filter" data-menu-update-on-resize-value="true" data-menu-content-id-value="scoped_tag_menu" data-menu-append-to-value="#add_scoped_tag_field">
-    <%= form.label "scoped_tags[]", "Tags", class: "bold mb-1" %>
+    <%= form.label "scoped_tags[]", "Tags", class: "bold" %>
 
     <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
       <%= form.hidden_field "scoped_tags[]", "x-bind:value": "scoped_tag.id" %>
@@ -77,8 +89,11 @@
     </div>
   </div>
 
-  <small class="muted mt-0 mb-4">This project will be created on the
-    <strong><%= event.plan.label %></strong> plan</small>
+  <small class="muted mt-0 mb-4">
+    This project will be created on the
+    <strong><%= event.config.subevent_plan.constantize.new.label %></strong>
+    plan.
+  </small>
 
   <div class="inline-block">
     <%= form.submit "Create sub-organization", class: "mt1", disabled: event&.demo_mode? %>
