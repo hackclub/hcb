@@ -86,8 +86,8 @@
           <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
           <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform, or <%= link_to "hide this message", hide_onboarding_message_event_path(@event), method: :post %>.</p>
         </div>
-        <% if (link = @event.onboarding_scheduling_link).present? %>
-          <%= link_to link, class: "btn" do %>
+        <% if (scheduling_link = @event.onboarding_scheduling_link).present? %>
+          <%= link_to scheduling_link, class: "btn" do %>
             <%= inline_icon "people-2", size: 16, class: "mr-1" %>
             Schedule
           <% end %>
