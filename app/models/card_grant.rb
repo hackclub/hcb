@@ -4,31 +4,31 @@
 #
 # Table name: card_grants
 #
-#  id                          :bigint           not null, primary key
-#  allow_reimbursement_report  :boolean          default(FALSE), not null
-#  allow_stripe_card           :boolean          default(TRUE), not null
-#  amount_cents                :integer
-#  banned_categories           :string
-#  banned_merchants            :string
-#  category_lock               :string
-#  email                       :string           not null
-#  expiration_at               :date             not null
-#  instructions                :text
-#  invite_message              :string
-#  keyword_lock                :string
-#  merchant_lock               :string
-#  one_time_use                :boolean
-#  pre_authorization_required  :boolean          default(FALSE), not null
-#  purpose                     :string
-#  status                      :integer          default("active"), not null
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  disbursement_id             :bigint
-#  event_id                    :bigint           not null
-#  sent_by_id                  :bigint           not null
-#  stripe_card_id              :bigint
-#  subledger_id                :bigint
-#  user_id                     :bigint           not null
+#  id                         :bigint           not null, primary key
+#  allow_reimbursement_report :boolean          default(FALSE), not null
+#  allow_stripe_card          :boolean          default(TRUE), not null
+#  amount_cents               :integer
+#  banned_categories          :string
+#  banned_merchants           :string
+#  category_lock              :string
+#  email                      :string           not null
+#  expiration_at              :date             not null
+#  instructions               :text
+#  invite_message             :string
+#  keyword_lock               :string
+#  merchant_lock              :string
+#  one_time_use               :boolean
+#  pre_authorization_required :boolean          default(FALSE), not null
+#  purpose                    :string
+#  status                     :integer          default("active"), not null
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  disbursement_id            :bigint
+#  event_id                   :bigint           not null
+#  sent_by_id                 :bigint           not null
+#  stripe_card_id             :bigint
+#  subledger_id               :bigint
+#  user_id                    :bigint           not null
 #
 # Indexes
 #
