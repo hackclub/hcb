@@ -8,7 +8,9 @@ runs:
       # ubuntu-latest ships with recent enough apt indexes to resolve
       # libpoppler-glib-dev without a fresh `apt-get update` (~30 s).
       # Re-add one here if a future runner image breaks that.
-      run: sudo apt-get install -y libpoppler-glib-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --fix-missing libpoppler-glib-dev
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:

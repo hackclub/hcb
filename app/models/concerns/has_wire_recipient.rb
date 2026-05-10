@@ -197,7 +197,7 @@ module HasWireRecipient
       when "TW"
         fields << { type: :text_field, key: "phone", label: "Phone number associated with account" }
       when "UA"
-        fields << { type: :text_field, key: "legal_type", label: "Type of entity" }
+        fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "10-digit tax ID for individuals, or 8-digit tax ID for corporations/NGO/organizations" }
       when "UG"
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "13-digit PRN tax ID" }
