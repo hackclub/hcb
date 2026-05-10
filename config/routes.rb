@@ -450,7 +450,6 @@ Rails.application.routes.draw do
       post "approve"
       post "reject"
       post "stop"
-      post "reissue"
     end
   end
 
