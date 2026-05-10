@@ -391,6 +391,7 @@ module EventsHelper
     children_of = Hash.new { |h, k| h[k] = [] }
     all_events.each do |e|
       next if e.id == root.id
+
       children_of[e.parent_id] << e if all_ids.include?(e.parent_id)
     end
     children_of.each_value { |arr| arr.sort_by!(&:name) }
@@ -466,6 +467,7 @@ module EventsHelper
     # Edges: right-center of parent -> left-center of child
     all_events.each do |event|
       next if children_of[event.id].empty?
+
       ex = padding + depths[event.id] * (node_w + h_gap) + node_w
       ey = y_tops[event.id] + node_h / 2
       children_of[event.id].each do |child|
