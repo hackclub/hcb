@@ -438,16 +438,16 @@ module EventsHelper
         </marker>
       </defs>
       <style>
-        .node-rect  { fill: #fff; stroke: #ddd; transition: fill 0.15s, stroke 0.15s; }
-        .node-text  { fill: #000; font-size: 15px; font-family: system-ui, -apple-system, sans-serif; }
-        .root-text  { fill: #fff; font-size: 15px; font-family: system-ui, -apple-system, sans-serif; }
-        .edge       { stroke: #aaa; }
+        .node-rect { fill: #fff; stroke: #ddd; transition: fill 0.15s, stroke 0.15s; }
+        .node-text { fill: #000; font-size: 15px; font-family: system-ui, -apple-system, sans-serif; }
+        .root-text { fill: #fff; font-size: 15px; font-family: system-ui, -apple-system, sans-serif; }
+        .edge { stroke: #aaa; }
         .arrow-head { fill: #aaa; }
         a { outline: none; }
-        a:hover .node-rect  { fill: #f0f0f0; stroke: #bbb; }
-        a:hover .root-rect  { fill: #d42f47; }
-        a:focus .node-rect  { fill: #f0f0f0; stroke: #ec3750; }
-        a:focus .root-rect  { stroke: #ff8896; }
+        a:hover .node-rect { fill: #f0f0f0; stroke: #bbb; }
+        a:hover .root-rect { fill: #d42f47; }
+        a:focus .node-rect { fill: #f0f0f0; stroke: #ec3750; }
+        a:focus .root-rect { stroke: #ff8896; }
         a:active .node-rect { fill: #e0e0e0; stroke: #ec3750; }
         a:active .root-rect { fill: #b02030; }
         [data-dark='true'] .node-rect { fill: #2a2a2f; stroke: #444; }
