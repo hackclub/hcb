@@ -391,6 +391,7 @@ module EventsHelper
     children_of = Hash.new { |h, k| h[k] = [] }
     all_events.each do |e|
       next if e.id == root.id
+
       children_of[e.parent_id] << e if all_ids.include?(e.parent_id)
     end
     children_of.each_value { |arr| arr.sort_by!(&:name) }
@@ -466,6 +467,7 @@ module EventsHelper
     # Edges: right-center of parent -> left-center of child
     all_events.each do |event|
       next if children_of[event.id].empty?
+
       ex = padding + depths[event.id] * (node_w + h_gap) + node_w
       ey = y_tops[event.id] + node_h / 2
       children_of[event.id].each do |child|
@@ -477,17 +479,17 @@ module EventsHelper
 
     # Nodes
     all_events.each do |event|
-      x       = padding + depths[event.id] * (node_w + h_gap)
-      y       = y_tops[event.id]
-      cx      = x + node_w / 2
-      cy      = y + node_h / 2
+      x = padding + depths[event.id] * (node_w + h_gap)
+      y = y_tops[event.id]
+      cx = x + node_w / 2
+      cy = y + node_h / 2
       is_root = event.id == root.id
 
       rect_attrs = is_root ? %( class="root-rect" fill="#ec3750" stroke="#c0392b") : %( class="node-rect")
       text_class = is_root ? "root-text" : "node-text"
-      rx         = is_root ? "18" : "6"
-      href       = is_root ? event_sub_organizations_path(root) : event_path(event)
-      label      = event.name.length > 21 ? "#{event.name.first(20)}…" : event.name
+      rx = is_root ? "18" : "6"
+      href = is_root ? event_sub_organizations_path(root) : event_path(event)
+      label = event.name.length > 21 ? "#{event.name.first(20)}…" : event.name
 
       svg << %(<a href="#{h(href)}" title="#{h(event.name)}">)
       svg << %(<rect#{rect_attrs} x="#{x}" y="#{y}" width="#{node_w}" height="#{node_h}" rx="#{rx}" stroke-width="2"/>)
