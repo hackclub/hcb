@@ -370,9 +370,9 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    Rails.error.unexpected "HcbCode#disbursement? accessed"
+    Rails.application.deprecators[:hcb].warn("HcbCode#disbursement? accessed")
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    outgoing_disbursement? || incoming_disbursement?
   end
 
   def outgoing_disbursement?
@@ -437,7 +437,8 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
-    Rails.error.unexpected "HcbCode#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "HcbCode#disbursement accessed"
+
     return nil unless disbursement?
 
     @disbursement ||= begin
@@ -452,16 +453,30 @@ class HcbCode < ApplicationRecord
     end
   end
 
+  attr_writer :incoming_disbursement, :outgoing_disbursement
+
   def incoming_disbursement
     return nil unless incoming_disbursement?
+    return @incoming_disbursement if defined?(@incoming_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
+    @incoming_disbursement = Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
   end
 
   def outgoing_disbursement
     return nil unless outgoing_disbursement?
+    return @outgoing_disbursement if defined?(@outgoing_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+    @outgoing_disbursement = Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+  end
+
+  # Overrides shared_commentable? in Commentable concern to avoid
+  # unnecessary database read
+  def shared_commentable?
+    outgoing_disbursement? || incoming_disbursement?
+  end
+
+  def shared_commentable
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
   def card_grant
@@ -586,7 +601,6 @@ class HcbCode < ApplicationRecord
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-601%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
