@@ -18,7 +18,7 @@ describe AchTransfersController do
   describe "validate_routing_number" do
     before do
       user = create(:user)
-      sign_in(user)
+      create_session(user, verified: true)
     end
 
     it "doesn't perform a lookup when routing number is invalid" do
@@ -75,7 +75,7 @@ describe AchTransfersController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -107,7 +107,7 @@ describe AchTransfersController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

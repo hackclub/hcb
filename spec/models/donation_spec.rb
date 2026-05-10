@@ -48,7 +48,7 @@ RSpec.describe Donation, type: :model do
 
       donation.status = "succeeded"
       donation.save
-    end.to change(enqueued_jobs, :size).by(1)
+    end.to have_enqueued_mail(DonationMailer, :first_donation_notification).once
   end
 
   it "does not send email notifications for non-succeeded donations" do
@@ -56,7 +56,7 @@ RSpec.describe Donation, type: :model do
 
     expect do
       donation = create(:donation, event:, name: "John Appleseed", email: "john@hackclub.com")
-    end.to change(enqueued_jobs, :size).by(0)
+    end.not_to have_enqueued_mail(DonationMailer, :first_donation_notification)
   end
 
 end

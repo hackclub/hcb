@@ -84,7 +84,7 @@
       <td>
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
-            <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.event.try(:id) }, { style: "width: 300px;" }) %>
+            <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @canonical_transaction.event&.to_combobox_display %>
             <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
           <% end %>
         </div>

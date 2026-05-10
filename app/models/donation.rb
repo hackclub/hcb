@@ -5,7 +5,7 @@
 # Table name: donations
 #
 #  id                                   :bigint           not null, primary key
-#  aasm_state                           :string
+#  aasm_state                           :string           not null
 #  amount                               :integer
 #  amount_received                      :integer
 #  anonymous                            :boolean          default(FALSE), not null
@@ -92,7 +92,7 @@ class Donation < ApplicationRecord
   after_commit :send_notification
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
-  validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }

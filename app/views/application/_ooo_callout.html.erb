@@ -6,3 +6,24 @@
     Transfers will be reviewed on the <span class="tooltipped" aria-label="<%= Time.first_business_day(Date.today).strftime("%b %e, %Y") %>">next business day</span>.
   <% end %>
 <% end %>
+
+<% if Date.today <= Date.new(2026, 5, 4) %>
+  <% championship = Date.new(2026, 4, 28)..Date.new(2026, 5, 2) %>
+  <% at_championship = championship.cover?(Date.today) %>
+  <% upcoming = Date.today < championship.first %>
+  <% is_first_org = @event.respond_to?(:affiliations) && @event.affiliations.any?(&:is_first?) %>
+  <%= render "application/callout", type: "warning", title: upcoming ? "Upcoming delays in transfer processing" : "Delayed transfer processing", class: "mt-2 mb-0" do %>
+    <% if is_first_org && at_championship %>
+      Our team is at the FIRST Championship in Houston through May 2 — come say hi in the Expo hall!
+      Transfer approvals may take 2–3 business days through May 4.
+    <% elsif is_first_org && upcoming %>
+      Our team will be at the FIRST Championship in Houston April 28–May 2 — come say hi in the Expo hall!
+      Transfer approvals may take 2–3 business days through May 4.
+    <% elsif upcoming %>
+      From April 28 to May 4, our team will have limited availability.
+      Transfers submitted during that window may take 2–3 business days to approve.
+    <% else %>
+      Our team has limited availability through May 4. Transfer approvals may take 2–3 business days.
+    <% end %>
+  <% end %>
+<% end %>

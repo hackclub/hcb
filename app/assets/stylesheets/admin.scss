@@ -26,6 +26,8 @@ $mono:
 
 @import 'components/buttons';
 @import 'components/steps';
+@import 'components/combobox';
+@import 'components/forms';
 
 .card {
   --card-bg: #ffffff;
@@ -464,13 +466,6 @@ hr {
   margin: 1rem auto;
 }
 
-fieldset {
-  margin-top: 1rem;
-  padding: 2rem;
-  border: 1px solid var(--hcb-bg-3);
-  border-radius: 4px;
-}
-
 legend {
   padding: auto 0.5rem;
 }
@@ -541,7 +536,6 @@ textarea,
 select,
 input {
   padding: 6px 12px;
-  margin-bottom: 0.5rem;
   font-size: inherit;
   font-family: inherit;
   background: var(--hcb-bg-3);
@@ -855,6 +849,8 @@ summary {
 .events-filter-select {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 .events-filter-select > label {
