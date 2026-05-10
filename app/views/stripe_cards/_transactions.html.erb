@@ -34,9 +34,9 @@
         <% end %>
       </tbody>
     </table>
-
-    <%= paginate hcb_codes %>
   </div>
+
+  <%= paginate hcb_codes %>
 
 <% elsif stripe_card.initially_activated? %>
   <%= blankslate "No purchases yet." %>
