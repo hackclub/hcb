@@ -1078,6 +1078,14 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
+  def hide_onboarding_message
+    authorize @event
+
+    @event.config.update!(hide_onboarding_message: true)
+
+    redirect_to event_path(@event)
+  end
+
   private
 
   def process_hidden_param!(params_hash)
