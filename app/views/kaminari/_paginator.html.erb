@@ -4,5 +4,13 @@
     <%= prev_page_tag unless current_page.first? %>
     <%= next_page_tag unless current_page.last? %>
     <%= last_page_tag unless current_page.last? %>
+    <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
+    <select onchange="window.location=this.value" class="btn" aria-label="Items per page">
+      <% per_options.each do |n| %>
+        <option value="<%= url_for(params.permit!.merge(per: n, page: 1)) %>"<%= " selected" if n == per_page %>>
+          <%= n %> per page
+        </option>
+      <% end %>
+    </select>
   </nav>
 <% end -%>
