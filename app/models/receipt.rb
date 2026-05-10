@@ -97,7 +97,7 @@ class Receipt < ApplicationRecord
   end
 
   after_commit do
-    User::UpdateCardLockingJob.perform_later(user:)
+    User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
   end
 
   validate :has_owner

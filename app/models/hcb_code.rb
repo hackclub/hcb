@@ -637,6 +637,52 @@ class HcbCode < ApplicationRecord
     receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
   end
 
+  def card_locking_settled_at
+    return unless stripe_card? || stripe_force_capture?
+
+    @card_locking_settled_at ||= begin
+      if association(:canonical_transactions).loaded?
+        canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
+      else
+        canonical_transactions.where("amount_cents < 0").minimum(:created_at)
+      end
+    end
+  end
+
+  def card_locking_first_receipt_uploaded_at
+    @card_locking_first_receipt_uploaded_at ||= if association(:receipts).loaded?
+                                                  receipts.map(&:created_at).compact.min
+                                                else
+                                                  receipts.minimum(:created_at)
+                                                end
+  end
+
+  def card_locking_receipt_age(now: Time.current)
+    settled_at = card_locking_settled_at
+    return 0.seconds unless settled_at.present?
+
+    now - settled_at
+  end
+
+  def card_locking_missing_receipt?
+    missing_receipt? && card_locking_settled_at.present?
+  end
+
+  def card_locking_missing_receipt_violation?(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+    card_locking_missing_receipt? && card_locking_receipt_age(now:) >= grace_period
+  end
+
+  def card_locking_receipt_upload_time(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+    settled_at = card_locking_settled_at
+    return unless settled_at.present?
+
+    uploaded_at = card_locking_first_receipt_uploaded_at
+    return [uploaded_at - settled_at, 0].max if uploaded_at.present?
+    return unless card_locking_missing_receipt_violation?(now:, grace_period:)
+
+    now - settled_at
+  end
+
   def receipts
     return reimbursement_expense_payout.expense.receipts if reimbursement_expense_payout? && reimbursement_expense_payout.present?
 

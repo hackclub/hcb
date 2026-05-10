@@ -88,6 +88,15 @@ class User < ApplicationRecord
     first_robotics_form: 6
   }
 
+  CARD_LOCKING_RECEIPT_GRACE_PERIOD = 72.hours
+  CARD_LOCKING_HARD_MAX_RECEIPT_AGE = 1.week
+  CARD_LOCKING_AVERAGE_LOOKBACK = 6.months
+  CARD_LOCKING_WARNING_THRESHOLDS = [48.hours, 71.hours].freeze
+  CARD_LOCKING_NOTIFICATION_WINDOW = 10.minutes
+  CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD = 10
+  CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD = 75
+  CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS = 5
+
   has_many :logins
   has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
@@ -400,6 +409,24 @@ class User < ApplicationRecord
     User::ReceiptBin.new(self)
   end
 
+  def self.card_locking_candidates
+    candidate_user_ids = HcbCode
+                         .joins(:canonical_transactions)
+                         .joins("INNER JOIN raw_stripe_transactions ON canonical_transactions.transaction_source_type = 'RawStripeTransaction' AND raw_stripe_transactions.id = canonical_transactions.transaction_source_id")
+                         .joins("INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id")
+                         .joins("INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id")
+                         .joins("INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id")
+                         .joins("INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'")
+                         .left_outer_joins(:receipts)
+                         .where(receipts: { id: nil })
+                         .where("canonical_transactions.amount_cents < 0")
+                         .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
+                         .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
+                         .select("DISTINCT stripe_cardholders.user_id")
+
+    where(cards_locked: true).or(where(id: candidate_user_ids)).distinct
+  end
+
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
       user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
@@ -418,6 +445,103 @@ class User < ApplicationRecord
 
   memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
     transactions_missing_receipt(from:, to:).size
+  end
+
+  memo_wise def card_locking_relevant_hcb_codes
+    return [] unless stripe_cardholder.present?
+
+    HcbCode
+      .joins(:canonical_transactions)
+      .joins("INNER JOIN raw_stripe_transactions ON canonical_transactions.transaction_source_type = 'RawStripeTransaction' AND raw_stripe_transactions.id = canonical_transactions.transaction_source_id")
+      .joins("INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id")
+      .joins("INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id")
+      .joins("INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'")
+      .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
+      .where("canonical_transactions.amount_cents < 0")
+      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
+      .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
+      .includes(:receipts, :canonical_transactions)
+      .distinct
+      .to_a
+      .select { |hcb_code| hcb_code.card_locking_settled_at.present? }
+  end
+
+  def card_locking_window_start(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago)
+    [since, Receipt::CARD_LOCKING_START_DATE.beginning_of_day].max
+  end
+
+  def card_locking_history_hcb_codes(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago)
+    window_start = card_locking_window_start(since:)
+
+    card_locking_relevant_hcb_codes.select do |hcb_code|
+      hcb_code.card_locking_settled_at >= window_start
+    end
+  end
+
+  def card_locking_missing_receipts
+    card_locking_relevant_hcb_codes.select(&:card_locking_missing_receipt?)
+  end
+
+  def card_locking_missing_receipt_violations(now: Time.current)
+    card_locking_missing_receipts.select do |hcb_code|
+      hcb_code.card_locking_missing_receipt_violation?(now:)
+    end
+  end
+
+  def card_locking_missing_receipt_violations_count(now: Time.current)
+    card_locking_missing_receipt_violations(now:).count
+  end
+
+  def card_locking_missing_receipts_within_grace_period(now: Time.current)
+    card_locking_missing_receipts.reject do |hcb_code|
+      hcb_code.card_locking_missing_receipt_violation?(now:)
+    end
+  end
+
+  def card_locking_receipts_reaching_warning_threshold(threshold:, now: Time.current)
+    card_locking_missing_receipts.select do |hcb_code|
+      settled_at = hcb_code.card_locking_settled_at
+      next false if settled_at.blank?
+
+      age = now - settled_at
+      age >= threshold && age < threshold + CARD_LOCKING_NOTIFICATION_WINDOW
+    end
+  end
+
+  def timely_receipt_upload_count(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago, now: Time.current)
+    card_locking_history_hcb_codes(since:).count do |hcb_code|
+      upload_time = hcb_code.card_locking_receipt_upload_time(now:)
+      next false if upload_time.blank?
+
+      hcb_code.card_locking_first_receipt_uploaded_at.present? &&
+        upload_time <= CARD_LOCKING_RECEIPT_GRACE_PERIOD
+    end
+  end
+
+  def average_receipt_upload_time(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago, now: Time.current)
+    durations = card_locking_history_hcb_codes(since:).filter_map do |hcb_code|
+      hcb_code.card_locking_receipt_upload_time(now:)
+    end
+
+    return 0.seconds if durations.empty?
+
+    (durations.sum / durations.size).seconds
+  end
+
+  def has_missing_receipt_violations?(now: Time.current)
+    card_locking_missing_receipt_violations(now:).any?
+  end
+
+  def cards_should_lock?(now: Time.current)
+    violations = card_locking_missing_receipt_violations(now:)
+    return false if violations.empty?
+
+    return true if violations.any? { |hcb_code| hcb_code.card_locking_receipt_age(now:) >= CARD_LOCKING_HARD_MAX_RECEIPT_AGE }
+    return true if violations.count >= CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD
+    return true if card_locking_missing_receipts.count >= CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD
+    return true if timely_receipt_upload_count(now:) < CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS
+
+    average_receipt_upload_time(now:) > CARD_LOCKING_RECEIPT_GRACE_PERIOD
   end
 
   def build_payout_method(params)
