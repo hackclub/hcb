@@ -105,12 +105,16 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("page=2")
+      expect(response.body).to include("Sub Organization 3")
+      expect(response.body).to include("Sub Organization 2")
       expect(response.body).not_to include("Sub Organization 1")
 
       get(:sub_organizations, params: { event_id: parent_event.slug, page: 2, per: 2 })
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Sub Organization 1")
+      expect(response.body).not_to include("Sub Organization 3")
+      expect(response.body).not_to include("Sub Organization 2")
     end
   end
 end
