@@ -8,7 +8,7 @@ class Event
       events = Event.joins(:config).where(config: { hide_onboarding_message: false })
 
       events.find_each do |event|
-        event.config.update!(hide_onboarding_message: event.hcb_codes.size >= 5)
+        event.config.update!(hide_onboarding_message: event.parent.present? || event.hcb_codes.size >= 5)
       end
     end
 
