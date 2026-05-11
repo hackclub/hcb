@@ -1,13 +1,19 @@
 <%= paginator.render do -%>
   <nav role="navigation" aria-label="Pagination" class="flex items-center justify-center list-reset my-4 gap-2">
     <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
-    <select onchange="window.location=this.value" class="btn !w-[150px] pr-8 mr-auto" aria-label="Items per page">
-      <% per_options.each do |n| %>
-        <option value="<%= url_for(params.permit!.merge(per: n, page: 1)) %>"<%= " selected" if n == per_page %>>
-          <%= n %> per page
-        </option>
+    <form method="get" action="" class="mr-auto">
+      <% params.permit!.to_h.except("per", "page").each do |key, value| %>
+        <input type="hidden" name="<%= key %>" value="<%= value %>">
       <% end %>
-    </select>
+      <input type="hidden" name="page" value="1">
+      <select name="per" onchange="this.form.submit()" class="btn !w-[150px] pr-8" aria-label="Items per page">
+        <% per_options.each do |n| %>
+          <option value="<%= n %>"<%= " selected" if n == per_page %>>
+            <%= n %> per page
+          </option>
+        <% end %>
+      </select>
+    </form>
     <%= first_page_tag unless current_page.first? %>
     <%= prev_page_tag unless current_page.first? %>
     <%= next_page_tag unless current_page.last? %>
