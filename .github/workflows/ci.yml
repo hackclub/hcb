@@ -120,7 +120,12 @@ jobs:
         run: |
           specs=$(find spec -name '*_spec.rb' | sort | awk -v i="$SHARD_INDEX" -v n="$SHARD_TOTAL" 'NR % n == (i - 1) % n { print }')
           echo "Running $(echo "$specs" | wc -l) spec files on shard $SHARD_INDEX/$SHARD_TOTAL"
-          bundle exec rspec --tag ~skip $specs
+          seed=$RANDOM
+          cmd="bundle exec rspec --seed $seed --tag '~skip' $(echo $specs | tr '\n' ' ')"
+          echo "To reproduce locally, run:"
+          echo "  RAILS_ENV=test bundle exec rails db:drop db:create db:schema:load && \\"
+          echo "  $cmd"
+          eval "$cmd"
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
         with:
