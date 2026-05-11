@@ -424,8 +424,5 @@
     "stripe_merchant_categories": [
       "trailer_parks_campgrounds"
     ]
-  },
-  "wise-fees": {
-    "label": "Wise fees"
   }
 }
