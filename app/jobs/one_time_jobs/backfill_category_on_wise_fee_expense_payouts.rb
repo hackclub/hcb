@@ -20,7 +20,7 @@ module OneTimeJobs
           )
       end
 
-      CanonicalPendingTransaction.where(hcb_code: hcb_codes).find_each(batch_size: 100) do |cpt|
+      CanonicalPendingTransaction.where(hcb_code: hcb_codes.pluck(:hcb_code)).find_each(batch_size: 100) do |cpt|
         next unless cpt.category.nil?
 
         TransactionCategoryService
