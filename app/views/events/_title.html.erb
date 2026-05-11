@@ -12,7 +12,7 @@
       <span class="muted font-medium h5 pl-2 p-1 m0">Parent <%= "organization".pluralize(parent_events.count) %></span>
       <% parent_events.each do |ancestor| %>
         <%= link_to_if organizer_signed_in?(ancestor, as: :reader), ancestor.name, ancestor do %>
-          <%= button_to ancestor.name, ancestor, method: :get, class: "menu__action opacity-70 bg-transparent border-none cursor-pointer text-inherit hover:text-primary" %>         
+          <%= link_to ancestor.name, ancestor, class: "menu__action opacity-70 bg-transparent border-none cursor-pointer text-inherit hover:text-primary" %>
         <% end %>
       <% end %>
     </div>
