@@ -6,12 +6,13 @@ module Api
       class ExpensesController < ApplicationController
         before_action :set_expense, only: [:show, :update, :destroy]
 
+        include ApplicationHelper
+
         def index
           @report = ::Reimbursement::Report.find_by_public_id!(params[:report_id])
           authorize @report, :show?
           expenses = @report.expenses.order(:expense_number)
-          @total_count = expenses.count
-          @expenses = paginate_expenses(expenses)
+          @expenses = paginate_cursor(expenses.to_a, &:public_id)
         end
 
         def show
@@ -70,21 +71,6 @@ module Api
 
         def expense_attrs
           params.require(:reimbursement_expense).permit(:memo, :description, :category, :value)
-        end
-
-        def paginate_expenses(expenses)
-          limit = [params[:limit]&.to_i || 25, 100].min
-
-          if params[:after]
-            cursor = ::Reimbursement::Expense.find_by_public_id(params[:after])
-            return render json: { error: "bad_request", messages: ["Invalid cursor"] }, status: :bad_request unless cursor
-
-            expenses = expenses.where("expense_number > ?", cursor.expense_number)
-          end
-
-          page = expenses.limit(limit + 1).to_a
-          @has_more = page.length > limit
-          page.first(limit)
         end
 
       end
