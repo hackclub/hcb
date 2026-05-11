@@ -256,10 +256,12 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
 
     report = @card_grant.with_lock do
-      ReimbursementReport.find_by(card_grant_id: @card_grant.id) || @card_grant.convert_to_reimbursement_report!
+      Reimbursement::Report.find_by(card_grant_id: @card_grant.id) || @card_grant.convert_to_reimbursement_report!
     end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
+  rescue ArgumentError => e
+    redirect_to @card_grant, flash: { error: e.message }
   end
 
   def cancel
