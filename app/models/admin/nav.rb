@@ -179,7 +179,7 @@ module Admin
             name: "Ledger",
             path: ledger_admin_index_path,
             count: ->{ CanonicalTransaction.not_stripe_top_up.unmapped.count },
-            count_type: :records
+            count_type: :tasks
           ),
           make_item(
             name: "Pending Ledger",
