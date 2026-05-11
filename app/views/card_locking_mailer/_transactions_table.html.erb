@@ -10,7 +10,7 @@
     </tr>
   </thead>
   <tbody>
-    <% hcb_codes.order(created_at: :desc).each do |hcb| %>
+    <% hcb_codes.sort_by(&:created_at).reverse.each do |hcb| %>
       <tr>
         <td><%= link_to render_money(hcb.amount_cents.abs.to_s), hcb_code_url(hcb) %></td>
         <td><%= hcb.stripe_merchant["name"] %></td>
