@@ -9,8 +9,8 @@
 </h1>
 
 <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted"), footer: :questions do %>
-    <p>
+  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted") do %>
+    <p class="my-0">
       Every receipt must be uploaded within 72 hours of the charge settling. If any settled card charges are still missing receipts after 72 hours, your cards risk being locked. Pending charges do not count. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
     </p>
   <% end %>
