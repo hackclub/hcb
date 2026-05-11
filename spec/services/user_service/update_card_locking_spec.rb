@@ -41,7 +41,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
       expect {
         service.run
-      }.not_to change { user.reload.cards_locked? }
+      }.not_to(change { user.reload.cards_locked? })
     end
 
     it "is a no-op when the flag is disabled for the user" do
@@ -50,7 +50,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
       expect {
         service.run
-      }.not_to change { user.reload.cards_locked? }
+      }.not_to(change { user.reload.cards_locked? })
     end
   end
 end

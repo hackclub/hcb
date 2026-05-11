@@ -63,7 +63,7 @@ RSpec.describe User, type: :model do
 
       reloaded_user = described_class.find(user.id)
 
-      expect(reloaded_user.average_receipt_upload_time).to be_within(1.second).of((5.days / 3.0))
+      expect(reloaded_user.average_receipt_upload_time).to be_within(1.second).of(5.days / 3.0)
     end
 
     it "ignores pending charges" do
@@ -75,10 +75,10 @@ RSpec.describe User, type: :model do
         created_at: 8.days.ago,
         updated_at: 8.days.ago,
         stripe_transaction: {
-          "id" => "iauth_pending",
-          "card" => { "id" => stripe_card.stripe_id },
+          "id"                   => "iauth_pending",
+          "card"                 => { "id" => stripe_card.stripe_id },
           "authorization_method" => "online",
-          "merchant_data" => { "name" => "Pending Merchant", "category" => "bakeries" }
+          "merchant_data"        => { "name" => "Pending Merchant", "category" => "bakeries" }
         }
       )
       canonical_pending_transaction = create(

@@ -49,5 +49,6 @@ module UserService
         "You have receipts approaching HCB's 72-hour upload deadline. Please upload them ASAP to reduce the risk of your cards being locked. Manage receipts at #{base_url}."
       end
     end
+
   end
 end

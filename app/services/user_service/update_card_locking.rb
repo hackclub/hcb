@@ -44,5 +44,6 @@ module UserService
 
       TwilioMessageService::Send.new(@user, message).run!
     end
+
   end
 end
