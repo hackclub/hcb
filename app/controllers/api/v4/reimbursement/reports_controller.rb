@@ -4,7 +4,7 @@ module Api
   module V4
     module Reimbursement
       class ReportsController < ApplicationController
-        before_action :set_report, only: [:show, :update, :destroy, :submit, :timeline]
+        before_action :set_report, only: [:show, :update, :destroy, :submit]
 
         def index
           if params[:organization_id]
@@ -78,23 +78,6 @@ module Api
           render json: { message: "Reimbursement report successfully deleted" }, status: :ok
         end
 
-        def timeline
-          authorize @report, :show?
-
-          versions = @report.versions.to_a.select do |v|
-            v.changeset.any? { |field, changes| changes.any?(&:present?) }
-          end
-
-          comments = policy_scope(@report.comments).includes(:user).to_a
-
-          all_items = (versions + comments).sort_by(&:created_at)
-          @total_count = all_items.size
-          @timeline_items = paginate_timeline(all_items)
-
-          whodunnit_ids = @timeline_items.grep(PaperTrail::Version).map(&:whodunnit).compact.map(&:to_i)
-          @timeline_actors = User.where(id: whodunnit_ids).index_by(&:id)
-        end
-
         def submit
           authorize @report, :submit?
 
@@ -108,26 +91,6 @@ module Api
         end
 
         private
-
-        def paginate_timeline(items)
-          limit = [params[:limit]&.to_i || 25, 100].min
-
-          start_index = if params[:after]
-                          idx = items.index { |i| timeline_item_id(i) == params[:after] }
-                          return render json: { error: "bad_request", messages: ["Invalid cursor"] }, status: :bad_request if idx.nil?
-
-                          idx + 1
-                        else
-                          0
-                        end
-
-          @has_more = items.size > start_index + limit
-          items.slice(start_index, limit)
-        end
-
-        def timeline_item_id(item)
-          item.is_a?(Comment) ? item.public_id : "ver_#{item.id}"
-        end
 
         def submit_validation_messages(report)
           messages = []

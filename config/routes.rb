@@ -761,7 +761,6 @@ Rails.application.routes.draw do
         resources :reimbursement_reports, controller: "reimbursement/reports", only: [:index, :show, :create, :update, :destroy] do
           member do
             post :submit
-            get :timeline
           end
         end
         resources :reimbursement_expenses, controller: "reimbursement/expenses", only: [:index, :show, :create, :update, :destroy]
