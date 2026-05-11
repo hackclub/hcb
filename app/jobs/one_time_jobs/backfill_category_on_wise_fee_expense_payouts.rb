@@ -9,7 +9,7 @@ module OneTimeJobs
 
       hcb_codes = HcbCode.where(hcb_code: expense_payouts.select(:hcb_code))
 
-      CanonicalTransaction.where(hcb_code: hcb_codes).find_each(batch_size: 100) do |ct|
+      CanonicalTransaction.where(hcb_code: hcb_codes.pluck(:hcb_code)).find_each(batch_size: 100) do |ct|
         next unless ct.category.nil?
 
         TransactionCategoryService
