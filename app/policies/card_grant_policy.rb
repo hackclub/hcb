@@ -54,7 +54,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def activate?
-    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active? && record.allow_stripe_card?
   end
 
   def cancel?
@@ -63,6 +63,10 @@ class CardGrantPolicy < ApplicationPolicy
 
   def convert_to_reimbursement_report?
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def accept_as_reimbursement?
+    (admin_or_manager? || cardholder?) && record.active? && record.allow_reimbursement_report?
   end
 
   def edit?
