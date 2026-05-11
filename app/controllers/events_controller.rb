@@ -746,7 +746,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations
+        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
         @all_events = [@event] + @event.descendants.order(:name).to_a
       end
 
