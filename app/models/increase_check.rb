@@ -30,7 +30,6 @@
 #  event_id                :bigint           not null
 #  increase_id             :string
 #  payment_recipient_id    :bigint
-#  reissued_for_id         :bigint
 #  user_id                 :bigint
 #
 # Indexes
@@ -49,6 +48,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
+  self.ignored_columns += ["reissued_for_id"]
   # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
   # On January 2024, we switched check printing & mailing services from
   # Increase to Column. This model, although still named `IncreaseCheck`, now
@@ -129,8 +129,6 @@ class IncreaseCheck < ApplicationRecord
 
   belongs_to :event
   belongs_to :user, optional: true
-  belongs_to :reissued_for, class_name: "IncreaseCheck", optional: true
-  has_one :reissued_as, class_name: "IncreaseCheck", foreign_key: :reissued_for_id, inverse_of: :reissued_for
 
   def payment_recipient_attributes
     %i[address_line1 address_line2 address_city address_state address_zip]
@@ -144,8 +142,9 @@ class IncreaseCheck < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
-  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+  after_update if: -> { column_status_previously_changed?(to: "stopped") || column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -325,48 +324,16 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def stop!
-    raise ArgumentError, "Stopping checks is not yet supported"
-    # raise ArgumentError, "Check must have a column id" if column_id.nil?
-    # raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
-    # column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
-    # reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
-
-    # update!(
-    #   column_object: column_check,
-    #   column_status: column_check["status"],
-    #   column_delivery_status: column_check["delivery_status"],
-    # )
-  end
-
-  def reissue!
-    raise ArgumentError, "Reissuing checks is not yet supported"
-
-    # stop! unless column_stopped? || column_pending_stop?
-
-    # reissued_check = event.increase_checks.build(
-    #   user_id:,
-    #   memo:,
-    #   amount:,
-    #   payment_for:,
-    #   recipient_name:,
-    #   address_line1:,
-    #   address_line2:,
-    #   address_city:,
-    #   address_state:,
-    #   recipient_email:,
-    #   send_email_notification:,
-    #   address_zip:,
-    #   payment_recipient_id:,
-    #   reissued_for_id: id,
-    # )
-
-    # reissued_check.save!
-
-    # Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
-
-    # reissued_check.send_check!
+    update!(
+      column_object: column_check,
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
+    )
   end
 
   private

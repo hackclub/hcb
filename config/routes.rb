@@ -450,7 +450,6 @@ Rails.application.routes.draw do
       post "approve"
       post "reject"
       post "stop"
-      post "reissue"
     end
   end
 
@@ -494,7 +493,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update] do
+  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
@@ -1057,6 +1056,7 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      post "request_call"
       get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit
