@@ -8,6 +8,8 @@ class Event
       @application = application
       airrecord = @application.airtable_record
 
+      # If there's already an Airtable record, we want to make sure it stays up to date
+      # This can happen when an application is submitted and then archived, which marks it as a draft again
       return if @application.draft? && airrecord.nil?
 
       # If Airtable record already exists, update it and move on! (no concerns for race conditions)
