@@ -57,7 +57,7 @@ module Reimbursement
     after_create do
       cpt = CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
 
-      TransactionCategoryService.new(model: cpt).set!(slug: "wise-fees", assignment_strategy: "automatic") if expense.is_fee?
+      TransactionCategoryService.new(model: cpt).set!(slug: "bank-fees", assignment_strategy: "automatic") if expense.is_fee?
     end
 
     aasm do
