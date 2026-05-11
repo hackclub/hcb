@@ -16,9 +16,5 @@ object_shape(json, expense) do
     json.partial! "api/v4/receipts/receipt", receipt:
   end
 
-  if expand?(:report)
-    json.report expense.report, partial: "api/v4/reimbursement/reports/report", as: :report
-  else
-    json.report_id expense.report.public_id
-  end
+  expand_association(json, :report, expense.report, partial: "api/v4/reimbursement/reports/report", as: :report)
 end

@@ -15,31 +15,7 @@ object_shape(json, report) do
   json.reimbursed_at report.reimbursed_at
   json.rejected_at report.rejected_at
 
-  if expand?(:user)
-    json.user report.user, partial: "api/v4/users/user", as: :user
-  else
-    json.user_id report.user.public_id
-  end
-
-  if report.event.present?
-    if expand?(:organization)
-      json.organization report.event, partial: "api/v4/events/event", as: :event
-    else
-      json.organization_id report.event.public_id
-    end
-  else
-    json.organization_id nil
-  end
-
-  if expand?(:reviewer)
-    json.reviewer do
-      if report.reviewer.present?
-        json.partial! "api/v4/users/user", user: report.reviewer
-      else
-        json.nil!
-      end
-    end
-  else
-    json.reviewer_id report.reviewer&.public_id
-  end
+  expand_association(json, :user, report.user, partial: "api/v4/users/user", as: :user)
+  expand_association(json, :organization, report.event, partial: "api/v4/events/event", as: :event)
+  expand_association(json, :reviewer, report.reviewer, partial: "api/v4/users/user", as: :user)
 end
