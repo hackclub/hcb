@@ -717,7 +717,7 @@ class EventsController < ApplicationController
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
-      { key: "created_*", label: "Date created", type: "date_range" }
+      { key_base: "created", label: "Date created", type: "date_range" }
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
   end
@@ -746,7 +746,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations
+        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
       end
 
       # CSV export intentionally does not consider filters
