@@ -2,6 +2,7 @@
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <% display_value = default_event&.then { |e| admin_signed_in? ? "#{e.name} (#{e.id})" : e.name } %>
-  <%= combobox_tag "disbursement[#{field_name}]", event_search_disbursements_path(sending: sending), placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
+  <% display_value = admin_signed_in? ? default_event&.to_combobox_display : default_event&.name %>
+  <% search_path = sending ? event_search_disbursements_path(sending: true) : event_search_disbursements_path %>
+  <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
 </div>
