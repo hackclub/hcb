@@ -5,7 +5,6 @@
 <%= form_with(model: event.card_grant_setting, local: true, class: "mb3") do |form| %>
   <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
   <div class="card">
-
     <%= form.hidden_field :id, value: event.card_grant_setting.id %>
 
     <div class="field">
