@@ -382,9 +382,6 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
-
-    self.allow_stripe_card = setting.allow_stripe_card if self.allow_stripe_card.nil?
-    self.allow_reimbursement_report = setting.allow_reimbursement_report if self.allow_reimbursement_report.nil?
   end
 
 end

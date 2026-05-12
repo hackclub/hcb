@@ -27,9 +27,10 @@
             </label>
           </div>
           <div class="field field--checkbox mb-2">
-            <input type="checkbox" id="grant_terms_cb" data-grant-terms-target="term" data-action="change->grant-terms#update">
-            <label for="grant_terms_cb">
+            <input type="checkbox" id="grant_card_terms" data-grant-terms-target="cardTerm" data-action="change->grant-terms#update">
+            <label for="grant_card_terms">
               I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
+              <span class="muted">(required for virtual card only)</span>
             </label>
           </div>
         </div>
@@ -42,7 +43,7 @@
           <div class="card card--sunken flex-1 flex flex-col">
             <p class="mt-0">Get a virtual debit card to spend money online or in-person with digital wallets.</p>
             <%= form_with url: activate_card_grant_path(card_grant), class: "mt-auto" do |form| %>
-              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full", disabled: true, data: { grant_terms_target: "submitButton" } %>
+              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full", disabled: true, data: { grant_terms_target: "cardSubmitButton" } %>
             <% end %>
           </div>
           <div class="card card--sunken flex-1 flex flex-col">
@@ -100,15 +101,36 @@
 
     <% elsif card_grant.allow_reimbursement_report? %>
       <%# Only reimbursement allowed %>
-      <div class="card border b--info">
+      <div class="card border b--info" data-controller="grant-terms">
         <h2 class="mt-0">Open a reimbursement report</h2>
         <p>
           If you can't use a grant card and have a bank account in a supported country, reimburse yourself up to <%= render_money card_grant.amount %>.
           Make your purchases and submit receipts to get reimbursed.
         </p>
         <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>
+          <div class="field field--checkbox mb2">
+            <input type="checkbox" id="grant_reimb_purpose" data-grant-terms-target="term" data-action="change->grant-terms#update">
+            <label for="grant_reimb_purpose">
+              I will only use this for its intended purpose
+              <% if card_grant.purpose.present? %>
+                (<strong><%= card_grant.purpose %></strong>)
+              <% end %>
+              and adhere to the instructions provided by <%= card_grant.event.name %>
+            </label>
+          </div>
+          <% if card_grant.instructions.present? %>
+            <div class="card card--sunken py-0 mb2">
+              <%= MarkdownService.instance.render(card_grant.instructions) %>
+            </div>
+          <% end %>
+          <div class="field field--checkbox mb2">
+            <input type="checkbox" id="grant_reimb_policy" data-grant-terms-target="term" data-action="change->grant-terms#update">
+            <label for="grant_reimb_policy">
+              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %>
+            </label>
+          </div>
           <div class="actions">
-            <%= form.submit "Open a reimbursement" %>
+            <%= form.submit "Open a reimbursement", disabled: true, data: { grant_terms_target: "submitButton" } %>
           </div>
         <% end %>
       </div>

@@ -66,7 +66,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def accept_as_reimbursement?
-    (admin_or_manager? || cardholder?) && record.active? && record.allow_reimbursement_report?
+    (admin_or_manager? || cardholder?) && record.active? && record.allow_reimbursement_report? && record.pending_invite?
   end
 
   def edit?

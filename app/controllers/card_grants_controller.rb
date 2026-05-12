@@ -260,7 +260,7 @@ class CardGrantsController < ApplicationController
     end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
-  rescue ArgumentError => e
+  rescue ArgumentError, ActiveRecord::RecordInvalid => e
     redirect_to @card_grant, flash: { error: e.message }
   end
 

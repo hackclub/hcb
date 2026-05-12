@@ -45,6 +45,14 @@ class CardGrantSetting < ApplicationRecord
   alias_attribute :disallowed_merchants, :banned_merchants
   has_many :card_grants, through: :event
 
+  validate :at_least_one_acceptance_method
+
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
+  end
+
   enum :expiration_preference, {
     "90 days": 90,
     "6 months": 183,
