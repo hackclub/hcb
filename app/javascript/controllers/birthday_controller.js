@@ -4,7 +4,6 @@ export default class extends Controller {
   connect() {
     this.updateAge()
     this.element.classList.add('birthday-inline')
-    document.getElementById('user_submit')?.removeAttribute('disabled')
   }
 
   disconnect() {
