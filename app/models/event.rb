@@ -940,10 +940,8 @@ class Event < ApplicationRecord
   end
 
   def onboarding_scheduling_link
-    if point_of_contact.present?
-      onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first
-      return onboarder_record&.[]("Scheduling Link")
-    end
+  return unless point_of_contact.present?
+  OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
   end
 
   private
