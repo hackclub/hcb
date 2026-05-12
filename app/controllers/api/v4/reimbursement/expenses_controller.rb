@@ -56,7 +56,6 @@ module Api
           render :show, status: :ok
         end
 
-
         def destroy
           authorize @expense
           @expense.destroy!

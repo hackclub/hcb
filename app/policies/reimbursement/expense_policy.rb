@@ -3,7 +3,7 @@
 module Reimbursement
   class ExpensePolicy < ApplicationPolicy
     def show?
-      auditor? || creator || reader?
+      admin || auditor || creator || reader
     end
 
     def create?
@@ -42,7 +42,7 @@ module Reimbursement
       user&.admin?
     end
 
-    def auditor?
+    def auditor
       user&.auditor?
     end
 
@@ -50,7 +50,7 @@ module Reimbursement
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
-    def reader?
+    def reader
       record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
