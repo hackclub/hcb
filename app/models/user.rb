@@ -376,7 +376,7 @@ class User < ApplicationRecord
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
-    user_sessions.destroy_all
+    user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
     # Invalidate all API tokens
     api_tokens.accessible.update_all(revoked_at: Time.current)
   end
