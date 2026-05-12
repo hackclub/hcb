@@ -211,7 +211,7 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
-  validate :birthday_must_be_at_least_13, if: -> { birthday.present? }
+  validate :birthday_must_be_at_least_13, if: -> { birthday.present? && (new_record? || will_save_change_to_birthday?) }
 
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
