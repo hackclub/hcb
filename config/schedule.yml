@@ -198,7 +198,7 @@ user_update_card_locking_recurring:
   class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:
-  cron: "0 0 * * MON" # run first day of each week
+  cron: "0 0 * * *" # run every 1 day
   class: "Column::SweepJob"
 
 column_operating_balance_job:
@@ -220,10 +220,6 @@ events_apply_fee_waiver_job:
 monthly_donation_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyDonationSummaryJob"
-
-weekly_ysws_event_summary_job:
-  cron: "0 13 * * 5" # run 9am est friday
-  class: "WeeklyYswsEventSummaryJob"
 
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month

@@ -37,6 +37,7 @@
 #  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
+#  videos_watched               :boolean          default(FALSE)
 #  website_url                  :string
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -59,14 +60,17 @@ class Event
     has_paper_trail
 
     include PgSearch::Model
-    pg_search_scope :search_name, against: :name
+    pg_search_scope :search_name_or_email, against: :name, associated_against: {
+      user: :email
+    }
 
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
@@ -116,9 +120,10 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted
+        transitions from: :draft, to: :submitted, if: :ready_to_submit?
+
         after do
-          update!(teen_led: user.is_teenager?, archived_at: nil)
+          update!(archived_at: nil)
 
           if teen_led?
             send_contract
@@ -158,6 +163,10 @@ class Event
           end
         end
       end
+
+      event :mark_draft do
+        transitions from: [:submitted, :under_review], to: :draft
+      end
     end
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
@@ -168,7 +177,7 @@ class Event
       generic = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -179,9 +188,15 @@ class Event
       adult = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+        Thank you so much for considering us to be your fiscal sponsor for [#{name}](#{Rails.application.routes.url_helpers.application_url(self)})!
 
-        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+        Although your nonprofit's mission sounds incredible, we are refocusing our fiscal sponsorship platform to solely work with teen-led (high school specifically) initiatives within our Hack Club community. Our parent nonprofit, Hack Club, was founded to create a technical community for high schoolers, and HCB is migrating toward a similar mission in order to realign with our parent organization.
+
+        While we tried to be a lifeline for groups outside of our normal mission, doing so caused us to drift away from our core focus of supporting teen-run orgs and to take on additional risk in areas we were less familiar with (teen-led STEM orgs are very different in nature from many others). Because of this, we've pulled back the reins and are working to refocus.
+
+        Unfortunately, this means that unless a group is run by teens and is part of our Hack Club community, we don't have the capacity to take them on. If it would be helpful for us to send over some other fiscal sponsors, we'd be more than happy to do so, but at this time we are unable to sponsor your organization.
+
+        Sorry again for the bad news, and please let us know if there is anything else we can do to help. You can reach us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or simply reply to this email.
 
         Best,
         The HCB Team
@@ -190,7 +205,7 @@ class Event
       mission = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -201,7 +216,7 @@ class Event
       country = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
 
         We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -273,20 +288,6 @@ class Event
       fs_contract
     end
 
-    def ready_to_submit?
-      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
-
-      if user.is_minor?
-        required_fields.push("cosigner_email")
-      end
-
-      missing_fields = required_fields.any? do |field|
-        self[field].nil?
-      end
-
-      !missing_fields && !user.onboarding? && !address_country.in?(DISALLOWED_COUNTRIES)
-    end
-
     def response_time
       teen_led? ? "2 business days" : "2 weeks"
     end
@@ -323,7 +324,7 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def activate_event!(risk_level:, tags: [])
+    def activate_event!(risk_level:, tags: [], point_of_contact: nil)
       contract.party(:hcb).sync_with_docuseal
       contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
@@ -331,18 +332,18 @@ class Event
       self.with_lock do
         raise ArgumentError.new("Event was already created") if event.present?
 
-        poc = contract.party(:hcb).user
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
           country: address_country,
-          point_of_contact_id: poc.id,
+          point_of_contact_id: poc_user.id,
           application: self,
           event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
           risk_level:
         )
         contract.create_document!
 
-        service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
         invite = service.model
         service.run!
 
@@ -364,12 +365,13 @@ class Event
 
     def archive!
       contract&.mark_voided! if contract&.may_mark_voided?
+      mark_draft! if may_mark_draft?
 
       update!(archived_at: Time.current)
     end
 
     def unarchive!
-      send_contract if contract.nil? && ((teen_led && !draft? && !rejected?) || (!teen_led && approved?))
+      send_contract if contract.nil? && approved?
 
       update!(archived_at: nil)
     end
@@ -407,6 +409,42 @@ class Event
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
         errors.add(:cosigner_email, "cannot change after the cosigner has signed")
       end
+    end
+
+    def ready_to_submit?
+      application_ready_to_submit? && user_ready_to_submit?
+    end
+
+    def application_ready_to_submit?
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
+
+      if user.is_minor?
+        required_fields.push("cosigner_email")
+      end
+
+      unless teen_led?
+        required_fields += ["planning_duration", "team_size", "annual_budget_cents", "committed_amount_cents"]
+
+        if committed_amount&.positive?
+          required_fields.push("funding_source")
+        end
+      end
+
+      missing_fields = required_fields.any? do |field|
+        self[field].nil? || self[field] == ""
+      end
+
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+    end
+
+    def user_ready_to_submit?
+      required_fields = ["full_name", "phone_number", "birthday"]
+
+      missing_fields = required_fields.any? do |field|
+        !user[field].present?
+      end
+
+      !missing_fields
     end
 
   end

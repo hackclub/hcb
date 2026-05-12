@@ -114,6 +114,8 @@ module Column
     end
 
     def verify_signature
+      return head :bad_request if request.headers["Column-Signature"].blank?
+
       signature_valid = ActiveSupport::SecurityUtils.secure_compare(
         OpenSSL::HMAC.hexdigest(
           "SHA256",

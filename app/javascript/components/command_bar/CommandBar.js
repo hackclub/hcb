@@ -21,12 +21,15 @@ export default function CommandBar({
   admin = false,
   admin_override_pretend = false,
   adminUrls = {},
+  has_followed_events = false,
 }) {
   return (
     <div style={{ position: 'relative', zIndex: '100000000' }}>
       <KBarProvider
         actions={[
-          ...initalActions,
+          ...initalActions.filter(
+            a => a.id !== 'my-feed' || has_followed_events
+          ),
           ...(admin || admin_override_pretend
             ? adminActions(adminUrls, !admin && admin_override_pretend)
             : []),

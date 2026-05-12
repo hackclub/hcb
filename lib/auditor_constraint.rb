@@ -5,12 +5,11 @@ class AuditorConstraint
   include Rails.application.routes.url_helpers
 
   def self.matches?(request)
-    cookies = ActionDispatch::Cookies::CookieJar.build(request, request.cookies)
-    session_token = cookies.encrypted[:session_token]
+    session_token = request.cookie_jar.encrypted[:session_token]
 
     return false unless session_token.present?
 
-    potential_session = User::Session.find_by(session_token:)
+    potential_session = User::Session.not_expired.find_by(session_token:)
     if potential_session
       return potential_session.user&.auditor?
     end

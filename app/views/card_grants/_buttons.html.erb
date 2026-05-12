@@ -2,7 +2,7 @@
   <%= render "card_grants/create_modal" %>
   <div class="flex gap-2 items-center">
     <% if policy(@event).bulk_upload_card_grants? %>
-      <%= link_to event_card_grants_bulk_upload_path(@event), class: "w-full btn btn--primary" do %>
+      <%= link_to event_card_grants_bulk_upload_path(@event), class: "w-full btn btn--primary whitespace-nowrap" do %>
         <%= inline_icon "share" %>
         Upload a CSV
       <% end %>

@@ -27,8 +27,7 @@ class SuggestedPairingsController < ApplicationController
 
     if params[:memo] == "true"
       custom_memo = @receipt.suggested_memo
-      @receiptable.canonical_transactions.each { |ct| ct.update!(custom_memo:) }
-      @receiptable.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo:) }
+      @receiptable.update_custom_memo!(custom_memo)
     end
 
     respond_to do |format|

@@ -55,7 +55,7 @@ module HasWiseRecipient
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
       elsif currency == "CAD"
-        fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "Interac": "interac" } }
+        fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "Interac e-Transfer": "interac" } }
         fields << { type: :text_field, key: "institution_number", placeholder: "123", label: "Institution number", conditional: "account_type != 'interac'" }
         fields << { type: :text_field, key: "branch_number", placeholder: "45678", label: "Branch number", conditional: "account_type != 'interac'" }
         fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number", conditional: "account_type != 'interac'" }
