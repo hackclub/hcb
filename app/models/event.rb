@@ -943,7 +943,11 @@ class Event < ApplicationRecord
     return unless point_of_contact.present?
 
     Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
-      OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      begin
+        return OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      rescue
+        return nil
+      end
     end
   end
 
