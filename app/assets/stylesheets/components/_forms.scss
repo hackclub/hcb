@@ -231,14 +231,33 @@ input[type='search']::-webkit-search-decoration {
   display: none;
 }
 
+.field_with_errors:has(> select) {
+  display: contents;
+}
+
 .field_with_errors {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: top;
+  margin-bottom: 0.5rem;
+
   label {
     font-weight: 500;
     color: map-get($palette, error);
   }
 
-  input {
+  input,
+  select,
+  textarea {
     border-color: map-get($palette, error);
+    box-sizing: border-box;
+  }
+
+  > input,
+  > select,
+  > textarea {
+    width: auto;
+    min-width: 0;
   }
 }
 
