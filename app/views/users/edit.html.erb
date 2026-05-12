@@ -69,13 +69,16 @@
               <div class="gap-2 onboarding" data-controller="birthday" style="display: flex; flex-direction: column;">
                 <span style="display: flex; gap: 0.5rem;">
                 <%= form.date_select :birthday,
-                                     { start_year: Date.today.year,
+                                     {
+                                       start_year: Date.today.year,
                                        end_year: Date.today.year - 100,
                                        order: [:month, :day, :year],
                                        prompt: @user.birthday.nil?
-                                     }, { required: true,
-                                        data: { action: "change->birthday#updateAge" }
-                                      } %>
+                                     },
+                                     {
+                                       required: true,
+                                       data: { action: "change->birthday#updateAge" }
+                                     } %>
                 </span>
                 <span id="birthday_deterence" class="h5 muted"></span>
               </div>
