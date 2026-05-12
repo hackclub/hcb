@@ -73,10 +73,9 @@
                                        end_year: Date.today.year - 100,
                                        order: [:month, :day, :year],
                                        prompt: @user.birthday.nil?
-                                     },
-                                     { required: true,
-                                       data: { action: "change->birthday#updateAge" } 
-                                     } %>
+                                     }, { required: true,
+                                        data: { action: "change->birthday#updateAge" }
+                                      } %>
                 </span>
                 <span id="birthday_deterence" class="h5 muted"></span>
               </div>
