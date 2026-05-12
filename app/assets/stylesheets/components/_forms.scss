@@ -256,7 +256,7 @@ input[type='search']::-webkit-search-decoration {
   > input,
   > select,
   > textarea {
-    width: auto;
+    width: 100%;
     min-width: 0;
   }
 }
