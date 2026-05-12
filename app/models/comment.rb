@@ -24,6 +24,8 @@
 #
 class Comment < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
 
   set_public_id_prefix :cmt
@@ -92,6 +94,11 @@ class Comment < ApplicationRecord
     return "rejected this transfer and commented" if rejected_transfer?
 
     return "commented"
+  end
+
+  def shared?
+    # currently the only situation where we share comments at the moment. If we expand this, do something smarter
+    commentable_type == "Disbursement"
   end
 
   # This regex was stolen from URI::MailTo::EMAIL_REGEXP

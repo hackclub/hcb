@@ -5,7 +5,7 @@
 # Table name: employees
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  deleted_at  :datetime
 #  entity_type :string           not null
 #  created_at  :datetime         not null
@@ -24,7 +24,9 @@
 #
 class Employee < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
 
   has_paper_trail
   acts_as_paranoid

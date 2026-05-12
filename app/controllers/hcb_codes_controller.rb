@@ -90,7 +90,7 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
@@ -130,11 +130,10 @@ class HcbCodesController < ApplicationController
     hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
-    @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
-    @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
+    @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
     if @hcb_code.card_grant?
