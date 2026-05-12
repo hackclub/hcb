@@ -211,6 +211,8 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
+  validate :birthday_must_be_at_least_13, if: -> { birthday.present? }
+
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
@@ -374,7 +376,7 @@ class User < ApplicationRecord
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
-    user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+    user_sessions.destroy_all
     # Invalidate all API tokens
     api_tokens.accessible.update_all(revoked_at: Time.current)
   end
@@ -451,6 +453,14 @@ class User < ApplicationRecord
 
   def age
     age_on(Date.current)
+  end
+
+  def birthday_must_be_at_least_13
+    return unless birthday.present?
+
+    if age.nil? || age < 13
+      errors.add(:birthday, "must be at least 13 years old")
+    end
   end
 
   def is_teenager?
