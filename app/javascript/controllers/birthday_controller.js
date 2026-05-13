@@ -53,9 +53,9 @@ export default class extends Controller {
       document
         .getElementById('user_submit')
         ?.setAttribute('disabled', 'disabled')
-    } else if (age >= 13 && age <= 17) {
+    } else if (age >= 13 && age <= 18) {
       element.textContent = `You should join Hack Club`
-    } else if (age > 100) {
+    } else if (125 > age && age > 100) {
       element.textContent = `Nice to see you found us!`
     } else if (age > 125) {
       element.textContent = `Congrats!`
