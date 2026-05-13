@@ -36,6 +36,8 @@ module Api
       end
 
       def payment_intent
+        authorize @donation
+
         amount = @donation.amount
         if @donation.fee_covered
           amount /= (1 - @donation.event.revenue_fee).ceil
@@ -57,7 +59,7 @@ module Api
       private
 
       def set_donation
-        @donation = Donation.find(params[:id])
+        @donation = Donation.find_by_public_id!(params[:id])
       end
 
     end

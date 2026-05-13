@@ -136,6 +136,6 @@
       } %>
 
   <h2>Comments</h2>
-  <%= render "comments/list", comments: @hcb_code.comments %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/list", comments: @disbursement.all_comments, viewing_commentable: @disbursement %>
+  <%= render "comments/form", commentable: @disbursement, submit_text: "Add comment (visible to both organizations)" %>
 <% end %>
