@@ -60,6 +60,10 @@ module Reimbursement
       end
     end
 
+    validate(if: -> { will_save_change_to_aasm_state?(to: "submitted") }) do
+      submission_requirements.each { |msg| errors.add :base, msg }
+    end
+
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
 
@@ -115,13 +119,7 @@ module Reimbursement
       state :reversed
 
       event :mark_submitted do
-        transitions from: [:draft, :reimbursement_requested], to: :submitted do
-          guard do
-            user.payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
-              expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
-              !mismatched_currency? && payout_method_allowed?
-          end
-        end
+        transitions from: [:draft, :reimbursement_requested], to: :submitted
         after do
           if team_review_required?
             ReimbursementMailer.with(report: self).review_requested.deliver_later
@@ -420,6 +418,26 @@ module Reimbursement
 
         wise_transfer
       end
+    end
+
+    def may_mark_submitted?
+      submission_requirements.empty?
+    end
+
+    def submission_requirements
+      messages = []
+      messages << "Your account is not fully set up" if user.onboarding?
+      messages << "Report must belong to an organization" unless event.present?
+      messages << "Report has no expenses" unless expenses.any?
+      messages << "One or more expenses are missing receipts" if missing_receipts?
+      messages << "One or more expenses have a zero amount" if expenses.any? { |e| e.amount.zero? }
+      messages << "Report amount exceeds the maximum allowed" if exceeds_maximum_amount?
+      messages << "Report amount is below the minimum required" if below_minimum_amount?
+      messages << "Currency does not match your payout method" if mismatched_currency?
+      messages << "Your payout method is not set up" unless user.payout_method.present?
+      messages << "Your payout method is not supported" if user.payout_method.present? && user.payout_method.unsupported?
+      messages << "Organization finances are currently frozen" if event&.financially_frozen?
+      messages
     end
 
     private
