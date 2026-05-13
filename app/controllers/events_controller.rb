@@ -544,10 +544,6 @@ class EventsController < ApplicationController
     authorize @event
   end
 
-  def prior_account_number_transactions
-    CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).available_prior_filtering?.exists?
-  end
-
   def g_suite_overview
     authorize @event
 
