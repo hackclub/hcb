@@ -5,17 +5,17 @@ module Api
     class ReceiptsController < ApplicationController
       def index
         @receipts = if params[:transaction_id].present?
-          @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
-          authorize @hcb_code, :show?
-          @hcb_code.receipts.includes(:user)
-        elsif params[:expense_id].present?
-          @expense = ::Reimbursement::Expense.find_by_public_id!(params[:expense_id])
-          authorize @expense, :show?
-          @expense.receipts.includes(:user)
-        else
-          skip_authorization
-          Receipt.in_receipt_bin.includes(:user).where(user: current_user)
-        end
+                      @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
+                      authorize @hcb_code, :show?
+                      @hcb_code.receipts.includes(:user)
+                    elsif params[:expense_id].present?
+                      @expense = ::Reimbursement::Expense.find_by_public_id!(params[:expense_id])
+                      authorize @expense, :show?
+                      @expense.receipts.includes(:user)
+                    else
+                      skip_authorization
+                      Receipt.in_receipt_bin.includes(:user).where(user: current_user)
+                    end
       end
 
       def create
