@@ -24,7 +24,7 @@ module UserService
         send_sms(locked_message(now:))
       else
         CardLockingMailer.cards_unlocked(user: @user).deliver_later
-        send_sms("Your HCB cards have been unlocked. Please keep uploading every receipt within 72 hours of the charge settling. Manage receipts at #{Rails.application.routes.url_helpers.my_inbox_url}.")
+        send_sms(unlocked_message)
       end
     end
 
@@ -33,7 +33,15 @@ module UserService
     def locked_message(now:)
       count = @user.card_locking_missing_receipt_violations(now:).count
       receipt_text = "settled charge".pluralize(count)
-      "Urgent: Your HCB cards have been locked because #{count} #{receipt_text} #{count == 1 ? 'is' : 'are'} still missing receipts more than 72 hours later. Upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+      "Urgent: Your HCB cards have been locked because #{count} #{receipt_text} #{count == 1 ? 'is' : 'are'} still missing receipts more than 72 hours later. Upload your receipts at #{inbox_url}."
+    end
+
+    def unlocked_message
+      "Your HCB cards have been unlocked. Please keep uploading every receipt within 72 hours of the charge settling. Manage receipts at #{inbox_url}."
+    end
+
+    def inbox_url
+      Rails.application.routes.url_helpers.my_inbox_url
     end
 
     def send_sms(message)

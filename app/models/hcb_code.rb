@@ -58,8 +58,29 @@ class HcbCode < ApplicationRecord
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
+  CARD_LOCKING_STRIPE_CARD_JOIN = "INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id"
+  CARD_LOCKING_STRIPE_CARDHOLDER_JOIN = "INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id"
+  CARD_LOCKING_EVENT_MAPPING_JOIN = "INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id"
+  CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'"
+
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
+  scope :card_locking_relevant, -> {
+    joins(:canonical_transactions)
+      .merge(CanonicalTransaction.stripe_transaction)
+      .joins(CARD_LOCKING_STRIPE_CARD_JOIN)
+      .joins(CARD_LOCKING_EVENT_MAPPING_JOIN)
+      .joins(CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN)
+      .where("canonical_transactions.amount_cents < 0")
+      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
+      .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
+  }
+  scope :card_locking_candidates, -> {
+    card_locking_relevant
+      .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
+      .left_outer_joins(:receipts)
+      .where(receipts: { id: nil })
+  }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -644,7 +665,7 @@ class HcbCode < ApplicationRecord
       if association(:canonical_transactions).loaded?
         canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
       else
-        canonical_transactions.where("amount_cents < 0").minimum(:created_at)
+        canonical_transactions.expense.minimum(:created_at)
       end
     end
   end

@@ -410,19 +410,7 @@ class User < ApplicationRecord
   end
 
   def self.card_locking_candidates
-    candidate_user_ids = HcbCode
-                         .joins(:canonical_transactions)
-                         .joins("INNER JOIN raw_stripe_transactions ON canonical_transactions.transaction_source_type = 'RawStripeTransaction' AND raw_stripe_transactions.id = canonical_transactions.transaction_source_id")
-                         .joins("INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id")
-                         .joins("INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id")
-                         .joins("INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id")
-                         .joins("INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'")
-                         .left_outer_joins(:receipts)
-                         .where(receipts: { id: nil })
-                         .where("canonical_transactions.amount_cents < 0")
-                         .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
-                         .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
-                         .select("DISTINCT stripe_cardholders.user_id")
+    candidate_user_ids = HcbCode.card_locking_candidates.select("DISTINCT stripe_cardholders.user_id")
 
     where(cards_locked: true).or(where(id: candidate_user_ids)).distinct
   end
@@ -451,15 +439,8 @@ class User < ApplicationRecord
     return [] unless stripe_cardholder.present?
 
     HcbCode
-      .joins(:canonical_transactions)
-      .joins("INNER JOIN raw_stripe_transactions ON canonical_transactions.transaction_source_type = 'RawStripeTransaction' AND raw_stripe_transactions.id = canonical_transactions.transaction_source_id")
-      .joins("INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id")
-      .joins("INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id")
-      .joins("INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'")
+      .card_locking_relevant
       .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
-      .where("canonical_transactions.amount_cents < 0")
-      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
-      .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
       .includes(:receipts, :canonical_transactions)
       .distinct
       .to_a

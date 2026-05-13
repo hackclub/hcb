@@ -13,13 +13,13 @@ module UserService
 
       now = Time.current
       send_warning = warning_due?(now:)
-      send_digest = violation_digest_due?(now:)
+      send_violation_digest = violation_digest_due?(now:)
 
-      return unless send_warning || send_digest
+      return unless send_warning || send_violation_digest
 
       CardLockingMailer.warning(user: @user).deliver_later
 
-      return unless @user.phone_number.present? && @user.phone_number_verified?
+      return unless sms_eligible?
 
       TwilioMessageService::Send.new(@user, sms_message(now:)).run!
     end
@@ -40,14 +40,22 @@ module UserService
       Rails.cache.write("card_locking_violation_digest:#{@user.id}", true, expires_in: 25.hours, unless_exist: true)
     end
 
-    def sms_message(now:)
-      base_url = Rails.application.routes.url_helpers.my_inbox_url
+    def sms_eligible?
+      @user.phone_number.present? && @user.phone_number_verified?
+    end
 
-      if @user.has_missing_receipt_violations?(now:)
-        "You have receipts that are past HCB's 72-hour upload deadline. Please upload them ASAP to reduce the risk of your cards being locked. Manage receipts at #{base_url}."
-      else
-        "You have receipts approaching HCB's 72-hour upload deadline. Please upload them ASAP to reduce the risk of your cards being locked. Manage receipts at #{base_url}."
-      end
+    def sms_message(now:)
+      deadline_status = if @user.has_missing_receipt_violations?(now:)
+                          "that are past"
+                        else
+                          "approaching"
+                        end
+
+      "You have receipts #{deadline_status} HCB's 72-hour upload deadline. Please upload them ASAP to reduce the risk of your cards being locked. Manage receipts at #{inbox_url}."
+    end
+
+    def inbox_url
+      Rails.application.routes.url_helpers.my_inbox_url
     end
 
   end
