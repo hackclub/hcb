@@ -10,13 +10,10 @@ module UserService
     def run
       return unless @user.present?
       return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
+      return if @unlock_only && !@user.cards_locked?
 
       now = Time.current
-      cards_should_lock = if @unlock_only
-                            @user.cards_locked? && @user.has_missing_receipt_violations?(now:)
-                          else
-                            @user.cards_should_lock?(now:)
-                          end
+      cards_should_lock = @user.cards_should_lock?(now:)
 
       return if cards_should_lock == @user.cards_locked?
 
@@ -34,7 +31,7 @@ module UserService
     private
 
     def locked_message(now:)
-      count = @user.card_locking_missing_receipt_violations_count(now:)
+      count = @user.card_locking_missing_receipt_violations(now:).count
       receipt_text = "settled charge".pluralize(count)
       "Urgent: Your HCB cards have been locked because #{count} #{receipt_text} #{count == 1 ? 'is' : 'are'} still missing receipts more than 72 hours later. Upload your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
     end

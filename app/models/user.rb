@@ -482,20 +482,18 @@ class User < ApplicationRecord
     card_locking_relevant_hcb_codes.select(&:card_locking_missing_receipt?)
   end
 
-  def card_locking_missing_receipt_violations(now: Time.current)
-    card_locking_missing_receipts.select do |hcb_code|
+  def card_locking_missing_receipts_partitioned(now: Time.current)
+    card_locking_missing_receipts.partition do |hcb_code|
       hcb_code.card_locking_missing_receipt_violation?(now:)
     end
   end
 
-  def card_locking_missing_receipt_violations_count(now: Time.current)
-    card_locking_missing_receipt_violations(now:).count
+  def card_locking_missing_receipt_violations(now: Time.current)
+    card_locking_missing_receipts_partitioned(now:).first
   end
 
   def card_locking_missing_receipts_within_grace_period(now: Time.current)
-    card_locking_missing_receipts.reject do |hcb_code|
-      hcb_code.card_locking_missing_receipt_violation?(now:)
-    end
+    card_locking_missing_receipts_partitioned(now:).last
   end
 
   def card_locking_receipts_reaching_warning_threshold(threshold:, now: Time.current)
@@ -511,10 +509,7 @@ class User < ApplicationRecord
   def timely_receipt_upload_count(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago, now: Time.current)
     card_locking_history_hcb_codes(since:).count do |hcb_code|
       upload_time = hcb_code.card_locking_receipt_upload_time(now:)
-      next false if upload_time.blank?
-
-      hcb_code.card_locking_first_receipt_uploaded_at.present? &&
-        upload_time <= CARD_LOCKING_RECEIPT_GRACE_PERIOD
+      upload_time.present? && upload_time <= CARD_LOCKING_RECEIPT_GRACE_PERIOD
     end
   end
 
