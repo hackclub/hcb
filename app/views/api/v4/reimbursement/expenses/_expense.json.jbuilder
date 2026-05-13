@@ -16,9 +16,5 @@ object_shape(json, expense) do
   json.status expense.aasm_state
   json.approved_at expense.approved_at
 
-  json.receipts expense.receipts do |receipt|
-    json.partial! "api/v4/receipts/receipt", receipt:
-  end
-
   expand_association(json, :report, expense.report, partial: "api/v4/reimbursement/reports/report", as: :report)
 end
