@@ -8,11 +8,8 @@
     <span class="flex items-center flex-grow">
       Account & routing number
     </span>
-    <h4 class="mt2 mb1 muted medium center">
+    <h4 class="mt2 mb1 muted medium">
       Connect your HCB account to GoFundMe, Shopify, Venmo, and more.
-      <span>
-        <%= inline_icon "info", size: 24, class: "muted tooltipped tooltipped--n p-0 justify-center", "aria-label" => "Only external transactions show up on this page now!" %>
-      </span>
     </h4>
   </div>
   <% unless @event.demo_mode? %>
@@ -22,6 +19,12 @@
     </a>
   <% end %>
 </h1>
+
+<%= render "application/callout", type: "info", title: "Only external transactions will be displayed from May 12th 2026, you can still view other transactions made prior", class: "mt-2 mb-3" if @event.prior_account_number_transactions? do %>
+  <a class="mt-0 mb-0" href="<%= event_transfers_path(@event) %>">
+    you can view all internal transactions in the transfers tab!
+  </a>
+<% end %>
 
 <% if @event.demo_mode? %>
   <%= blankslate "Unavailable in Playground Mode" %>
