@@ -132,17 +132,23 @@
         <span class="error">There are no funds to transfer.</span>
       <% end %>
 
-      <template x-if="!payment_recipient || editing">
+      <template x-if="(!payment_recipient || editing) && country !== 'US'">
         <div class="flex flex-col gap-3">
           <%= render partial: "wires/account_details", locals: { form: form, disabled: disabled, required: true } %>
           <%= render partial: "wires/country_specific_details", locals: { form: form, disabled: disabled, required: true } %>
         </div>
       </template>
 
+      <div x-show="country === 'US'" style="display:none">
+        <%= render "application/callout", type: "info", title: "Use ACH for domestic US transfers" do %>
+          <p class="mt0 mb0">Use ACH transfers to send money within the US. They're the standard way to move money and arrive the same day!</p>
+        <% end %>
+      </div>
+
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="country === 'US'">
       Send wire
       <%= inline_icon "send" %>
     </button>
