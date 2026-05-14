@@ -147,6 +147,10 @@ class IncreaseCheck < ApplicationRecord
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
+  after_update if: -> { amount_previously_changed? } do
+    canonical_pending_transaction.update!(amount_cents: -amount)
+  end
+
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
