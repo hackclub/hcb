@@ -17,6 +17,7 @@ module HasGrantConflictRestrictions
 
   def no_conflicting_category_lists
     conflicts = category_lock & banned_categories
-    errors.add(:base, "Category(ies) #{conflicts.join(', ')} cannot be both allowed and blocked") if conflicts.any?
+    category_label = conflicts.one? ? "Category" : "Categories"
+    errors.add(:base, "#{category_label} #{conflicts.join(', ')} cannot be both allowed and blocked") if conflicts.any?
   end
 end
