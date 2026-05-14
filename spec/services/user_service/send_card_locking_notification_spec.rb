@@ -55,6 +55,13 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
 
+    it "deduplicates every receipt that crosses a threshold in the same run" do
+      stub_warning_state(warning_ids: { 48.hours => [1, 2] })
+
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
+    end
+
     it "sends a daily digest while violations exist" do
       stub_warning_state(has_violations: true)
 

@@ -27,11 +27,16 @@ module UserService
     private
 
     def warning_due?(now:)
-      User::CARD_LOCKING_WARNING_THRESHOLDS.any? do |threshold|
-        @user.card_locking_receipts_reaching_warning_threshold(threshold:, now:).any? do |hcb_code|
-          Rails.cache.write("card_locking_warning:#{@user.id}:#{hcb_code.id}:#{threshold.to_i}", true, expires_in: 30.days, unless_exist: true)
+      warning_written = false
+
+      User::CARD_LOCKING_WARNING_THRESHOLDS.each do |threshold|
+        @user.card_locking_receipts_reaching_warning_threshold(threshold:, now:).each do |hcb_code|
+          cache_written = Rails.cache.write("card_locking_warning:#{@user.id}:#{hcb_code.id}:#{threshold.to_i}", true, expires_in: 30.days, unless_exist: true)
+          warning_written = true if cache_written
         end
       end
+
+      warning_written
     end
 
     def violation_digest_due?(now:)

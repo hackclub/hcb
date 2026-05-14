@@ -3,7 +3,7 @@
 class User
   class SendCardLockingNotificationJob < ApplicationJob
     queue_as :low
-    def perform(user:)
+    def perform(user:, event: nil)
       ::UserService::SendCardLockingNotification.new(user:).run
     end
 

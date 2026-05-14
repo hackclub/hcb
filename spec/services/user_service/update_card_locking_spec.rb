@@ -25,7 +25,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
       service = described_class.new(user:, unlock_only: true)
 
-      allow(user).to receive(:has_missing_receipt_violations?).and_return(false)
+      allow(user).to receive(:cards_should_lock?).and_return(false)
 
       expect {
         service.run
