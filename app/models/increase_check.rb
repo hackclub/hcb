@@ -202,7 +202,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validate do
-    if (address_line1.length + address_line2.length) > 50
+    if (address_line1.to_s.length + address_line2.to_s.length) > 50
       errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end
