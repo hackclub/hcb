@@ -75,6 +75,163 @@ RSpec.describe IncreaseChecksController do
     end
   end
 
+  describe "edit" do
+    it "allows admins to access the edit form for a pending check" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(admin, verified: true)
+
+      get(:edit, params: { id: check.id })
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "denies non-admin users from editing a pending check" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(user, verified: true)
+
+      expect { get(:edit, params: { id: check.id }) }
+        .to raise_error(Pundit::NotAuthorizedError)
+    end
+
+    it "denies admins from editing a non-pending check" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_status: "issued")
+      )
+      check.mark_rejected!
+
+      create_session(admin, verified: true)
+
+      expect { get(:edit, params: { id: check.id }) }
+        .to raise_error(Pundit::NotAuthorizedError)
+    end
+  end
+
+  describe "update" do
+    it "updates a pending check and redirects to the admin process page" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(admin, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: check.id,
+          increase_check: {
+            amount: "200.00",
+            memo: "Updated memo",
+            payment_for: "Updated payment",
+            recipient_name: "New Recipient",
+            address_line1: "100 Main St.",
+            address_line2: "",
+            address_city: "Burlington",
+            address_state: "VT",
+            address_zip: "05401",
+          }
+        }
+      )
+
+      check.reload
+      expect(response).to redirect_to(increase_check_process_admin_path(check))
+      expect(flash[:success]).to be_present
+      expect(check.amount).to eq(200_00)
+      expect(check.memo).to eq("Updated memo")
+      expect(check.payment_for).to eq("Updated payment")
+      expect(check.recipient_name).to eq("New Recipient")
+      expect(check.address_city).to eq("Burlington")
+    end
+
+    it "parses dollar amounts correctly (converts to cents)" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(admin, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: check.id,
+          increase_check: build_check_attributes.merge(amount: "123.45")
+        }
+      )
+
+      expect(check.reload.amount).to eq(123_45)
+    end
+
+    it "redirects to the edit page with an error flash on validation failure" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(admin, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: check.id,
+          increase_check: build_check_attributes.merge(memo: "x" * 41)
+        }
+      )
+
+      expect(response).to redirect_to(edit_increase_check_path(check))
+      expect(flash[:error]).to be_present
+      expect(check.reload.memo).to eq("Test memo")
+    end
+
+    it "denies non-admin users from updating a pending check" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(build_check_attributes)
+
+      create_session(user, verified: true)
+
+      expect {
+        patch(
+          :update,
+          params: {
+            id: check.id,
+            increase_check: build_check_attributes.merge(memo: "Hacked")
+          }
+        )
+      }.to raise_error(Pundit::NotAuthorizedError)
+
+      expect(check.reload.memo).to eq("Test memo")
+    end
+
+    it "denies admins from updating a non-pending check" do
+      admin = create(:user, :make_admin)
+      event = create(:event, :with_positive_balance)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_status: "issued")
+      )
+      check.mark_rejected!
+
+      create_session(admin, verified: true)
+
+      expect {
+        patch(
+          :update,
+          params: {
+            id: check.id,
+            increase_check: build_check_attributes.merge(memo: "Hacked")
+          }
+        )
+      }.to raise_error(Pundit::NotAuthorizedError)
+    end
+  end
+
   describe "create" do
     def increase_check_params
       {
