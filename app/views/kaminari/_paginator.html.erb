@@ -22,7 +22,7 @@
         data-menu-target="content">
         <% per_options.each do |n| %>
           <%= link_to "#{n} per page",
-                      url_for((request.query_parameters || {}).merge("per" => n, "page" => 1)),
+                      url_for((request.query_parameters || {}).merge("per" => n, "page" => 1, only_path: true)),
                       class: "menu__action #{'menu__action--active' if n == per_page}",
                       aria: { current: n == per_page ? "true" : nil } %>
         <% end %>
