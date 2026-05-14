@@ -139,13 +139,13 @@
         </div>
       </template>
 
-      <div x-show="country === 'US'" style="display:none">
-        <%= render "application/callout", type: "info", title: "Use ACH for domestic US transfers" do %>
-          <p class="mt0 mb0">Use ACH transfers to send money within the US. They're the standard way to move money and arrive the same day!</p>
-        <% end %>
-      </div>
-
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    </div>
+
+    <div x-show="country === 'US'" style="display:none">
+      <%= render "application/callout", type: "error", class: "my-2", title: "Use ACH for domestic US transfers" do %>
+        <p class="mt0 mb0">Use ACH transfers to send money within the US. They're the standard way to move money and arrive the same day!</p>
+      <% end %>
     </div>
 
     <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="country === 'US'">
