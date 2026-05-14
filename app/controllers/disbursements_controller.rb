@@ -64,6 +64,9 @@ class DisbursementsController < ApplicationController
 
     base = if is_admin
              Event.order(Event::CUSTOM_SORT)
+           elsif !sending && unrestricted_destination_search?
+             manageable = current_user.manageable_events.not_hidden.filter_demo_mode(false)
+             Event.where(id: manageable.select(:id)).or(Event.where(id: Event.indexable.select(:id))).order(Event::CUSTOM_SORT)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
            end.then { |r| q.present? ? r.search_name(q) : r }
@@ -233,6 +236,13 @@ class DisbursementsController < ApplicationController
   end
 
   private
+
+  def unrestricted_destination_search?
+    source_event_id = params[:source_event_id].presence
+    return false unless source_event_id
+
+    Event.find_by(id: source_event_id)&.plan&.unrestricted_disbursements_enabled?
+  end
 
   def sendable_event_search_results(base)
     results = []
