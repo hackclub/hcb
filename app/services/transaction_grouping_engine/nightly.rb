@@ -30,7 +30,10 @@ module TransactionGroupingEngine
     private
 
     def canonical_transactions
-      CanonicalTransaction.missing_or_unknown_hcb_code.where("date >= ?", @start_date)
+      CanonicalTransaction.missing_or_unknown_hcb_code
+                          .left_outer_joins(:canonical_event_mapping)
+                          .where("canonical_event_mappings.user_id IS NULL")
+                          .where("date >= ?", @start_date)
     end
 
   end
