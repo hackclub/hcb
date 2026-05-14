@@ -17,11 +17,12 @@
     </a>
   <% end %>
 </h1>
-
-<%= render "application/callout", type: "info", title: "Only external transactions will be displayed from May 12th 2026, you can still view other transactions made prior", class: "mt-2 mb-3" if @event.prior_account_number_transactions? do %>
-  <a class="mt-0 mb-0" href="<%= event_transfers_path(@event) %>">
-    you can view all internal transactions in the transfers tab!
-  </a>
+<% if @event.show_transfer_callout %>
+  <%= render "application/callout", type: "info", title: "Only external transactions will be displayed from May 12th 2026, you can still view other transactions made prior", class: "mt-2 mb-3" do %>
+    <a class="mt-0 mb-0" href="<%= event_transfers_path(@event) %>">
+      you can view all internal transactions in the transfers tab!
+    </a>
+  <% end %>
 <% end %>
 
 <% if @event.demo_mode? %>
