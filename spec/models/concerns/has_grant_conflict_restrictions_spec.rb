@@ -82,11 +82,10 @@ RSpec.describe HasGrantConflictRestrictions do
   describe "included in CardGrant" do
     subject do
       build_stubbed(:card_grant,
-        merchant_lock: [],
-        banned_merchants: [],
-        category_lock: [],
-        banned_categories: []
-      )
+                    merchant_lock: [],
+                    banned_merchants: [],
+                    category_lock: [],
+                    banned_categories: [])
     end
 
     it_behaves_like "has grant conflict restrictions"
