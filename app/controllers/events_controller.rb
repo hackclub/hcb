@@ -532,18 +532,20 @@ class EventsController < ApplicationController
   end
 
   def account_number
-    @transactions = if @event.column_account_number.present?
-                      CanonicalTransaction.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+    if @event.column_account_number.present?
+      @transactions = CanonicalTransaction.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                           .where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id))
                                           .order(created_at: :desc)
-                    else
-                      CanonicalTransaction.none
-                    end
-    page = (params[:page] || 1).to_i
-    @show_transfer_callout = CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id'   =  '#{@event.column_account_number.column_id}'").pluck(:id))
-                                                 .where("created_at  < ?", Date.new(2026, 1, 1))
-                                                 .where.not("hcb_code  ilike  'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'").any?
-    @transactions = @transactions.page(page).per(params[:per] || 25)
+      page = (params[:page] || 1).to_i
+      @transactions = @transactions.page(page).per(params[:per] || 25)
+
+      @show_transfer_callout = CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id))
+                                                   .where("created_at  < ?", Date.new(2026, 5, 14))
+                                                   .where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'").any?
+    else
+      @transactions = CanonicalTransaction.none
+    end
+
     authorize @event
   end
 

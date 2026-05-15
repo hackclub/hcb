@@ -17,13 +17,6 @@
     </a>
   <% end %>
 </h1>
-<% if @event.show_transfer_callout %>
-  <%= render "application/callout", type: "info", title: "Only external transactions will be displayed from May 12th 2026, you can still view other transactions made prior", class: "mt-2 mb-3" do %>
-    <a class="mt-0 mb-0" href="<%= event_transfers_path(@event) %>">
-      you can view all internal transactions in the transfers tab!
-    </a>
-  <% end %>
-<% end %>
 
 <% if @event.demo_mode? %>
   <%= blankslate "Unavailable in Playground Mode" %>
@@ -57,6 +50,12 @@
       </span>
     </span>
   </div>
+
+  <% if @show_transfer_callout %>
+    <%= render "application/callout", type: "info", title: "Starting May 14th, 2026, this page only shows direct #{@event.column_account_number.deposit_only ? "credits" : "debits and credits"}.", class: "mt-2 mb-3" do %>
+      Your previous transfers can still be viewed <%= link_to event_transfers_path(@event), "here" %>.
+    <% end %>
+  <% end %>
 
   <% if !(@transactions.nil? || @transactions.length == 0) %>
     <div class="table-container">
