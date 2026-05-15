@@ -5,7 +5,7 @@
 # Table name: reimbursement_reports
 #
 #  id                         :bigint           not null, primary key
-#  aasm_state                 :string
+#  aasm_state                 :string           not null
 #  conversion_rate            :float            default(1.0), not null
 #  currency                   :string           default("USD"), not null
 #  deleted_at                 :datetime
