@@ -18,6 +18,14 @@ RSpec.shared_examples "has grant conflict restrictions" do
       expect(subject.errors[:base]).to include(match(/merchant_b.*cannot be both allowed and blocked/i))
     end
 
+    it "lists all conflicting merchants in the error message" do
+      subject.merchant_lock = ["merchant_a", "merchant_b"]
+      subject.banned_merchants = ["merchant_a", "merchant_b"]
+      subject.valid?
+      error = subject.errors[:base].join
+      expect(error).to include("merchant_a").and include("merchant_b")
+    end
+
     it "is valid when both merchant lists are empty" do
       subject.merchant_lock = []
       subject.banned_merchants = []
@@ -55,12 +63,25 @@ RSpec.shared_examples "has grant conflict restrictions" do
       expect(subject.errors[:base].join).to start_with("Categories ")
     end
   end
+
+  describe "combined conflicts" do
+    it "reports both merchant and category errors when both lists conflict" do
+      subject.merchant_lock = ["merchant_a"]
+      subject.banned_merchants = ["merchant_a"]
+      subject.category_lock = ["food"]
+      subject.banned_categories = ["food"]
+      subject.valid?
+      errors = subject.errors[:base]
+      expect(errors.any? { |e| e.match?(/merchant_a/i) }).to be true
+      expect(errors.any? { |e| e.match?(/food/i) }).to be true
+    end
+  end
 end
 
 RSpec.describe HasGrantConflictRestrictions do
   describe "included in CardGrant" do
     subject do
-      CardGrant.new(
+      build_stubbed(:card_grant,
         merchant_lock: [],
         banned_merchants: [],
         category_lock: [],
