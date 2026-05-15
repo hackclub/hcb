@@ -80,6 +80,7 @@ class HcbCode < ApplicationRecord
       .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
       .left_outer_joins(:receipts)
       .where(receipts: { id: nil })
+      .where(marked_no_or_lost_receipt_at: nil)
   }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
