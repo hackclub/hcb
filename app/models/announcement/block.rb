@@ -25,6 +25,7 @@ class Announcement
   class Block < ApplicationRecord
     self.ignored_columns += ["rendered_html", "rendered_email_html"]
 
+    has_paper_trail
     acts_as_paranoid
 
     belongs_to :announcement
