@@ -754,7 +754,7 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations
+        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
       end
 
       # CSV export intentionally does not consider filters
