@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_15_213303) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1432,7 +1432,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   end
 
   create_table "increase_checks", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "address_city"
     t.string "address_line1"
     t.string "address_line2"
