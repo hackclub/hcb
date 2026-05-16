@@ -100,6 +100,9 @@ class Invoice < ApplicationRecord
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :inv
 

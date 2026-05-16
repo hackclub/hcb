@@ -9,7 +9,7 @@ module WebAuthnSupport
     end
 
     base.class_eval do
-      let(:webauthn_client) { WebAuthn::FakeClient.new(WebAuthn.configuration.origin) }
+      let(:webauthn_client) { WebAuthn::FakeClient.new(WebAuthn.configuration.allowed_origins.first) }
     end
   end
 

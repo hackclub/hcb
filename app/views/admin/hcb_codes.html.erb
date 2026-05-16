@@ -1,26 +1,26 @@
 <% title "HCB Codes" %>
 
-<%= form_with local: true, url: hcb_codes_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "mr1" %>
+<%= form_with local: true, class: "card overflow-visible items-center gap-2", url: hcb_codes_admin_index_path, method: :get do |form| %>
+  <%= render "events/filters/search", form: %>
+  <div class="flex flex-col sm:flex-row items-center gap-2 mt-2">
   <%= form.label :has_receipt do %>
     <b class="mr1">Receipt status:</b>
     <%= form.select :has_receipt, [["All", "all"], ["Has receipt", "yes"], ["Missing receipt", "no"], ["Lost receipt", "lost"]], selected: @has_receipt %>
   <% end %>
-  <div>
-    <%= form.label :start_date do %>
+  <%= form.label :start_date do %>
       <b>Start date:</b>
       <%= form.text_field :start_date, value: @start_date, placeholder: "YYYY-MM-DD" %>
-    <% end %>
-    <%= form.label :end_date do %>
+  <% end %>
+  <%= form.label :end_date do %>
       <b class="ml1">End date:</b>
       <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
-    <% end %>
-  </div>
-  <div>
+  <% end %>
+  <div class="ml-auto">
     <%= form.submit "Search" %>
     <%= link_to @params.merge(format: :csv) do %>
-      <button type="button" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
+      <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
     <% end %>
+  </div>
   </div>
 <% end %>
 

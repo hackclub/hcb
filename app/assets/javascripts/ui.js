@@ -57,6 +57,7 @@ const loadModals = element => {
       e.preventDefault()
       e.stopPropagation()
     }
+    document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
       populateSharedPopover(this)
     }
@@ -859,3 +860,28 @@ if (navigator.setAppBadge) {
     }
   })
 }
+
+function updateScrollFadeClasses(el) {
+  if (el.scrollHeight > el.clientHeight) {
+    const isScrolledToBottom =
+      el.scrollHeight < el.clientHeight + el.scrollTop + 1
+    const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
+    el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
+    el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+  }
+}
+
+function attachScrollFadeListeners() {
+  document.querySelectorAll('.scroll-fade').forEach(scrollable => {
+    scrollable.addEventListener('scroll', e => {
+      const el = e.currentTarget
+      updateScrollFadeClasses(el)
+    })
+
+    updateScrollFadeClasses(scrollable)
+  })
+}
+
+$(document).on('turbo:load', attachScrollFadeListeners)
+$(document).on('turbo:frame-load', attachScrollFadeListeners)
+$(document).on('turbo:after-stream-render', attachScrollFadeListeners)

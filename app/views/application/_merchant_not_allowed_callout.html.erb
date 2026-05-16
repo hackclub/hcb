@@ -1,0 +1,13 @@
+<%# locals: (hcb_codes:) %>
+<% hcb_code = hcb_codes.first %>
+
+<%= error_boundary fallback: -> {} do %>
+  <% if hcb_code&.canonical_pending_transactions&.any? { |pt| pt.hcb_decline_reason == :merchant_not_allowed } %>
+    <% event_name = hcb_code.event.name %>
+    <%= render "application/callout", type: "warning", title: "Transaction declined by #{event_name}" do %>
+      Your transaction at <%= hcb_code.memo %> was declined by <%= event_name %>
+      because the merchant isn't enabled for this card. Please reach out to the
+      <%= event_name %> team if you need support.
+    <% end %>
+  <% end %>
+<% end %>

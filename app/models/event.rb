@@ -5,14 +5,13 @@
 # Table name: events
 #
 #  id                                           :bigint           not null, primary key
-#  aasm_state                                   :string
+#  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -59,9 +58,13 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   include PublicIdentifiable
@@ -463,6 +466,17 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+
+  after_update_commit if: :is_public_previously_changed? do
+    version = self.versions.where_object_changes(is_public:).last
+    whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
+
+    if is_public
+      EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
+    else
+      EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
+    end
+  end
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -883,8 +897,9 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false)
+  def organizer_contact_emails(only_managers: false, &block)
     included_users = only_managers ? managers : users
+    included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
@@ -918,6 +933,10 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def to_combobox_display
+    "#{name} (#{id})"
   end
 
   private

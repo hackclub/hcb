@@ -44,6 +44,9 @@ module Reimbursement
   class Report < ApplicationRecord
     include ::Shared::AmpleBalance
 
+    include Hashid::Rails
+    hashid_config salt: ""
+
     include PublicIdentifiable
     set_public_id_prefix :rmr
 
@@ -65,12 +68,13 @@ module Reimbursement
     belongs_to :card_grant, optional: true
 
     has_paper_trail ignore: :expense_number
+    include HasPaperTrailHelpers
 
     monetize :maximum_amount_cents, allow_nil: true
     monetize :amount_to_reimburse_cents, allow_nil: true, with_model_currency: :currency
     monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
-    has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :delete_all
+    has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
     has_one :payout_holding, inverse_of: :report
     alias_attribute :report_name, :name
     attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
@@ -83,7 +87,6 @@ module Reimbursement
 
     include AASM
     include Commentable
-    include Hashid::Rails
 
     include PublicActivity::Model
     tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.user }, event_id: proc { |controller, record| record.event&.id }, only: [:create]
@@ -420,12 +423,6 @@ module Reimbursement
     end
 
     private
-
-    def last_user_change_to(...)
-      user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-      user_id && User.find(user_id)
-    end
 
     def reimburse!
       ActiveRecord::Base.transaction do

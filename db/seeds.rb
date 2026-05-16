@@ -6,7 +6,7 @@ email = Rails.env.staging? ? "staging@bank.engineering" : "admin@bank.engineerin
 
 if user.nil?
   puts "Woah there, there aren't any users! Creating an user (#{email})."
-  user = User.create!(email:, full_name: "Stagey McStageface", phone_number: "+19064225632")
+  user = User.create!(email:, full_name: "Stagey McStageface", phone_number: "+19064225632", verified: true)
 end
 
 puts "Continuing with #{user.email}..."
@@ -15,7 +15,7 @@ user.make_admin! unless user.admin?
 
 Governance::Admin::Transfer::Limit.create(user_id: user.id, amount_cents: 1000000000)
 
-system_user = User.create_with(email: User::SYSTEM_USER_EMAIL).create_or_find_by!(id: User::SYSTEM_USER_ID)
+system_user = User.create_with(email: User::SYSTEM_USER_EMAIL, verified: true).create_or_find_by!(id: User::SYSTEM_USER_ID)
 system_user.make_admin! unless system_user.admin?
 
 # DEMO
@@ -152,6 +152,22 @@ winter_hardware_wonderland_grant_fund_event.plan.update(type: Event::Plan::HackC
 
 OrganizerPositionInvite.create_or_find_by!(
   event: winter_hardware_wonderland_grant_fund_event,
+  user:,
+  sender: user,
+)
+
+# GENE_HAAS_GRANT_FUND
+gene_haas_grant_fund_event = Event.create_with(
+  name: "Gene Haas",
+  slug: "gene-haas",
+  can_front_balance: true,
+  point_of_contact: user,
+  created_at: 14.days.ago,
+  is_public: true
+).create_or_find_by!(id: EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND)
+
+OrganizerPositionInvite.create_or_find_by!(
+  event: gene_haas_grant_fund_event,
   user:,
   sender: user,
 )

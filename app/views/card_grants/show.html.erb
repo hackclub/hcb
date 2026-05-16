@@ -1,8 +1,8 @@
 <% title "Grant to #{@card_grant.user.name}" %>
 <% if organizer_signed_in? %>
-  <%= render "events/nav", selected: :transfers %>
+  <%= render "events/nav", selected: :card_grants %>
 <% else %>
-  <%= render "users/nav", selected: :home %>
+  <%= render "users/nav", selected: :cards %>
 <% end %>
 
 <% footer = nil %>
@@ -74,6 +74,6 @@
 
 <% if policy(@card_grant.comments.build).create? %>
   <h2>Comments</h2>
-  <%= render "comments/list", comments: @card_grant.comments %>
+  <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>

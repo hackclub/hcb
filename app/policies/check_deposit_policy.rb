@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 class CheckDepositPolicy < ApplicationPolicy
+  def show?
+    auditor_or_user?
+  end
+
   def index?
     auditor_or_user? && check_deposits_enabled?
   end
 
   def create?
-    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode?
+    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode? && check_deposits_enabled?
   end
 
   def view_image?

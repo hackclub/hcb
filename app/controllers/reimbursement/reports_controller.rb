@@ -22,8 +22,12 @@ module Reimbursement
 
       if @report.save
         if report_params[:receipt_id]
+          receipt = Receipt.find(report_params[:receipt_id])
+
+          authorize receipt, :link?
+
           @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
-          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+          receipt.update!(receiptable: @expense)
         end
         if current_user && user == current_user
           redirect_to @report
@@ -148,7 +152,11 @@ module Reimbursement
     def update
       authorize @report
 
-      if @report.update(update_reimbursement_report_params)
+      @report.assign_attributes(update_reimbursement_report_params)
+
+      authorize @report, :change_event? if @report.event_id_changed?
+
+      if @report.save
         flash[:success] = "Report successfully updated."
         if @report.event_id_previously_changed?
           PaperTrail.request(whodunnit: nil) do
@@ -445,6 +453,7 @@ module Reimbursement
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
       reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || @event&.users&.include?(current_user)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
+      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params
     end
 
