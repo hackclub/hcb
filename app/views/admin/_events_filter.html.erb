@@ -42,7 +42,7 @@
 
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
-    <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @point_of_contact_id, include_blank: "all" %>
+    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", value: @point_of_contact&.to_combobox_display %>
   <% end %>
 
   <%= form.label :activity_since do %>
@@ -72,7 +72,7 @@
 
 </div>
 
-<fieldset style='display: flex; flex-wrap: wrap; gap: 4px 16px; border: 1px lightgray solid; border-radius: 0.2rem; padding: 0.6rem; padding-top: 0.3rem; margin-right: 0.5rem; margin-top: 8px;'>
+<fieldset style="display: flex; flex-wrap: wrap; gap: 4px 16px; border: 1px lightgray solid; border-radius: 0.2rem; padding: 0.6rem; padding-top: 0.3rem; margin-right: 0.5rem; margin-top: 8px;">
   <legend style="padding: 0px 8px">State:</legend>
   <%= form.label :pending do %>
     <%= form.check_box :pending, checked: @pending %>

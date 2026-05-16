@@ -1,0 +1,196 @@
+<% title "Home" %>
+<% page_md %>
+
+<%= render "users/nav", selected: current_user&.redirect_to_first_dashboard? ? :home : :first %>
+
+<% affiliation = current_user(allow_unverified: true)&.affiliations&.find_by(name: "first") %>
+
+<h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-start justify-start sm:justify-between text-left w-auto m-0 mt-10 sm:mt-3 gap-2">
+  <div>
+    <span class="<%= "warning" if fall? %>">
+      Welcome to <span class="primary">HCB</span>
+    </span>
+  </div>
+  <span class="badge ml-0 text-sm rounded-xl caps hidden md:inline <%= Rails.env.development? ? "bg-success" : by_season("bg-muted", fall: "bg-warning") %>" id="flavor-text" data-turbo-permanent><%= flavor_text %></span>
+</h1>
+
+<h2 class="text-4xl sm:text-5xl md:text-6xl my-8 text-balance">
+  The <span class="italic" style="font-weight: 800;">ultimate booster club</span>
+
+  for FRC, FTC, and FLL teams
+</h2>
+
+<% if affiliation %>
+  <div class="card my-4 flex flex-row items-center gap-4">
+    <%= avatar_for current_user(allow_unverified: true), size: 48 %>
+    <div class="w-max flex-shrink-0">
+      <h3 class="heading my-0"><%= current_user(allow_unverified: true).full_name %></h3>
+      <% if affiliation.role.present? %>
+        <p class="my-0"><%= affiliation.role.titleize %></p>
+      <% end %>
+      <p class="my-0 muted">
+        <%= affiliation.league&.upcase %> #<%= affiliation.team_number %>
+        <% if affiliation.team_name.present? %>
+          · <%= affiliation.team_name %>
+        <% end %>
+      </p>
+    </div>
+
+    <div class="flex-grow w-full">
+    </div>
+
+    <% if affiliation.league&.downcase == "frc" %>
+      <img src="<%= "https://www.thebluealliance.com/avatar/2026/frc#{affiliation.team_number}.png" %>" alt="" class="h-[48px] rounded">
+    <% end %>
+  </div>
+<% end %>
+
+<% if ["head_coach", "mentor_advisor"].include?(affiliation&.role) && @team_event.nil? && @teammates.present? %>
+  <div class="card my-4">
+    <div class="flex flex-row items-center gap-3 mb-3">
+      <div class="avatar-row avatar-row--no-transform flex-shrink-0">
+        <% @teammates.each do |teammate| %>
+          <%= avatar_for teammate, size: 32 %>
+        <% end %>
+      </div>
+      <h3 class="heading my-0">Your students are interested</h3>
+    </div>
+
+    <% sentence = team_community_sentence(
+         users: @teammates,
+         total: @teammates_total,
+         team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+         singular_suffix: "is already interested in HCB",
+         plural_suffix: "are already interested in HCB"
+       ) %>
+
+    <p class="my-2"><%= sentence %>. Get your team's organization set up to fundraise and spend together.</p>
+
+    <%= link_to "Start your team's organization →", apply_path, class: "btn" %>
+  </div>
+<% end %>
+
+<% if ["student_leader", "student_member"].include?(affiliation&.role) && @teammates.present? %>
+  <% matching_event = Event::Affiliation.matching_first_event_for(current_user(allow_unverified: true)) %>
+  <% if matching_event.nil? %>
+    <div class="card flex flex-col bg-black !text-white gap-3">
+      <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">
+        <div class="flex-grow">
+          <h2 class="heading mt-0 mb-3 w-full">
+            Your teammates are interested in HCB, too!
+          </h2>
+          <p class="my-0 md:my-2">HCB can help your team move faster and double your fundraising goals. Tell your advisor about HCB so they can learn more.</p>
+          <% if @teammates.present? %>
+            <div class="flex flex-row items-center gap-3 my-4">
+              <div class="avatar-row avatar-row--no-transform flex-shrink-0">
+                <% @teammates.each do |teammate| %>
+                  <%= avatar_for teammate, size: 32 %>
+                <% end %>
+              </div>
+              <% sentence = team_community_sentence(
+                   users: @teammates,
+                   total: @teammates_total,
+                   team_label: "#{@first_affiliation.league&.upcase} ##{@first_affiliation.team_number}",
+                   singular_suffix: "is already interested in HCB",
+                   plural_suffix: "are already interested in HCB"
+                 ) %>
+              <p class="my-0 text-sm text-white/80 leading-snug"><%= sentence %></p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<div class="flex gap-3 items-stretch justify-center flex-col md:flex-row my-4">
+  <div class="card w-full">
+    <h2 class="heading mt-0 mb-3">
+      HCB in action
+    </h2>
+    <p class="my-3">
+      <strong>2854 EVHS The Prototypes</strong> saves hundreds of hours on bookkeeping and accounting by using HCB to raise and spend money
+      for their FRC team. HCB's online donation form makes grassroots crowdfunding easy, and HCB's cards and reimbursements makes spending
+      quick and simple.
+    </p>
+    <div class="flex flex-row my-4 pr-1 gap-2 justify-between">
+      <div class="flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "payment-docs" %>
+        $68k raised
+      </div>
+      <div class="flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "support-fill" %>
+        25 donations
+      </div>
+      <div class="hidden md:flex flex-row items-center justify-start gap-1 flex-grow">
+        <%= inline_icon "event-star" %>
+        2 years
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <%= link_to "/prototypes", class: "btn bg-success gap-1", target: :_blank do %>
+        2854 EVHS The Prototypes on HCB →
+      <% end %>
+    </div>
+  </div>
+  <div class="w-full card bg-[url('https://cdn.hackclub.com/019dd791-107c-7e7f-b5d4-fed1b310938a/Screenshot%20From%202026-04-28%2023-48-02.png')] bg-left-top bg-cover min-h-[200px]"></div>
+</div>
+
+<div class="card my-4">
+  <h2 class="heading mt-0 my-3">
+    Give your finances superpowers
+  </h2>
+  <p>
+    HCB provides hundreds of <em>FIRST</em> teams with a powerful financial toolkit for raising and spending money. An online donation form, effortless expense reimbursements, and free debit cards help your team worry less about finances.
+  </p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "bank-account", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">501(c)(3) nonprofit status</h2>
+    </div>
+    <p>Forget about filing paperwork and become part of Hack Club's legal entity to operate as a 501(c)(3) nonprofit.</p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "briefcase", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Corporate matching</h2>
+    </div>
+    <p>Instantly double your incoming donations with corporate matching platforms like Benevity.<p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "support", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Online donation form</h2>
+    </div>
+    <p>Fund your team through grassroots support with an online donation page. Accept credit card donations instantly with zero card processing fees.</p>
+  </div>
+  <div class="card !mb-0">
+    <div class="flex flex-row items-center gap-2">
+      <%= inline_icon "card", class: "flex-shrink-0" %>
+      <h2 class="heading my-0">Debit cards</h2>
+    </div>
+    <p>Spend your funds anywhere instantly with free physical and virtual debit cards. Plus, invite team members with built-in spending controls to develop financial literacy.</p>
+  </div>
+</div>
+
+<div class="card card--sunken flex flex-col items-center p-10 gap-5 mt-4">
+  <h2 class="text-4xl my-0 text-center w-full">
+    Ready to get started?
+  </h2>
+  <p class="my-0 text-center">Our team is standing by to help your robotics team succeed.</p>
+  <div class="flex flex-row flex-wrap items-center justify-center gap-4">
+    <%= link_to "https://forms.hackclub.com/first-hcb-call", target: "_blank", rel: "noopener", class: "btn whitespace-nowrap flex-shrink-0" do %>
+      <%= inline_icon "event-add" %>
+      Book a meeting
+    <% end %>
+
+    <div class="avatar-row" style="max-width: 300px;">
+      <% User.where(id: [2501, 1803, 8507, 16174, 2046]).find_each do |user| %>
+        <%= avatar_for user, size: 30 %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -34,27 +34,40 @@
 
         <%= render "application/native_changelog" if @latest_changelog_post %>
 
-        <aside class="sidebar select-none">
-          <div class="sidebar--scroll-container">
-            <%= yield(:header) %>
-            <div class="hidden lg:block">
-              <%= render "application/flash", klass: "mt2 mb1" %>
-            </div>
-            <div class="hidden lg:block flex-1">
+        <div data-controller="sidebar">
+          <button
+            class="fixed top-4 pop left-4 z-10 lg:hidden backdrop-blur-xl"
+            data-action="click->sidebar#open"
+            aria-label="Open navigation"
+            aria-controls="sidebar"
+            aria-expanded="false"
+            data-sidebar-target="toggle">
+            <%= inline_icon "menu" %>
+          </button>
+          <div
+            data-sidebar-target="overlay"
+            class="sidebar--overlay lg:hidden overlay--hidden"
+            data-action="click->sidebar#close">
+          </div>
+          <aside class="sidebar select-none" id="sidebar" data-sidebar-target="sidebar">
+            <div class="sidebar--scroll-container">
+              <%= yield(:header) %>
+              <div class="hidden lg:block">
+                <%= render "application/flash", klass: "mt-2" unless @hide_flash %>
+              </div>
               <%= yield(:nav) %>
             </div>
-          </div>
-          <% if content_for?(:nav_footer) %>
-            <div class="mt-auto max-h-[30%] overflow-visible hidden lg:flex">
-              <%= yield(:nav_footer) %>
-            </div>
-          <% else %>
-            <div class="hidden lg:flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
-          <% end %>
-          <%= render "application/user_menu" %>
-        </aside>
+            <% if content_for?(:nav_footer) %>
+              <div class="mt-auto max-h-[30%] overflow-visible flex">
+                <%= yield(:nav_footer) %>
+              </div>
+            <% else %>
+              <div class="flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
+            <% end %>
+            <%= render "application/user_menu" %>
+          </aside>
+        </div>
 
-        <%= yield(:mobile_nav) %>
         <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0">
           <%= render "application/banner_container" %>
           <div class="container p-4 md:p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">

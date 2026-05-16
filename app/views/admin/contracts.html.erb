@@ -1,11 +1,15 @@
 <% title "Contracts" %>
 
-<%= form_with local: true, url: contracts_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search parties" %>
-  <%= form.select :type, Contract.subclasses.map { |subclass| [subclass.name.demodulize.underscore.humanize, subclass.name] }, { include_blank: "All contract types", selected: @type } %>
-  <%= form.select :status, Contract.aasm.states_for_select, { include_blank: "All statuses", selected: @status } %>
-  <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
-  <%= form.submit "Search" %>
+<%= form_with local: true, class: "card", url: contracts_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.select :type, Contract.subclasses.map { |subclass| [subclass.name.demodulize.underscore.humanize, subclass.name] }, { include_blank: "All contract types", selected: @type } %>
+    <%= form.select :status, Contract.aasm.states_for_select, { include_blank: "All statuses", selected: @status } %>
+    <%= form.select :service, Contract.external_services.keys.map { |name| [name.humanize, name] }, { include_blank: "All services", selected: @service } %>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

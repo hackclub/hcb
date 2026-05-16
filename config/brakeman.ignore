@@ -25,7 +25,7 @@
         {
           "type": "template",
           "name": "announcements/show",
-          "line": 59,
+          "line": 71,
           "file": "app/views/announcements/show.html.erb",
           "rendered": {
             "name": "announcements/_announcement_body",
@@ -208,7 +208,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "contracts",
-          "line": 1468,
+          "line": 1475,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/contracts",
@@ -226,70 +226,6 @@
         79
       ],
       "note": "Constructed using the DocuSeal-provided ID"
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 2,
-      "fingerprint": "7c9ae4f5245c156ca383daec57b3c0a7cf88681a787ff39a54a4026486f3d929",
-      "check_name": "CrossSiteScripting",
-      "message": "Unescaped model attribute",
-      "file": "app/views/application/_admin_viewer.html.erb",
-      "line": 9,
-      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
-      "code": "ap(admin_inspectable_attributes(Admin::LedgerAudit::Task.find(params[:id]).hcb_code.donation))",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "Admin::LedgerAudits::TasksController",
-          "method": "show",
-          "line": 13,
-          "file": "app/controllers/admin/ledger_audits/tasks_controller.rb",
-          "rendered": {
-            "name": "admin/ledger_audits/tasks/show",
-            "file": "app/views/admin/ledger_audits/tasks/show.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "admin/ledger_audits/tasks/show",
-          "line": 29,
-          "file": "app/views/admin/ledger_audits/tasks/show.html.erb",
-          "rendered": {
-            "name": "hcb_codes/_rich_metadata",
-            "file": "app/views/hcb_codes/_rich_metadata.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "hcb_codes/_rich_metadata",
-          "line": 3,
-          "file": "app/views/hcb_codes/_rich_metadata.html.erb",
-          "rendered": {
-            "name": "hcb_codes/_donation",
-            "file": "app/views/hcb_codes/_donation.html.erb"
-          }
-        },
-        {
-          "type": "template",
-          "name": "hcb_codes/_donation",
-          "line": 5,
-          "file": "app/views/hcb_codes/_donation.html.erb",
-          "rendered": {
-            "name": "application/_admin_viewer",
-            "file": "app/views/application/_admin_viewer.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "application/_admin_viewer"
-      },
-      "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -366,7 +302,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/google_workspace_process.html.erb",
-      "line": 89,
+      "line": 93,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"DNS Check\", GSuite.find(params[:id]).dns_check_url, :target => \"_blank\")",
       "render_path": [
@@ -374,7 +310,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1045,
+          "line": 1047,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -442,7 +378,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 973,
+          "line": 975,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -460,6 +396,70 @@
         79
       ],
       "note": "These urls are being set by stripe calls to point to the real stripe invoice urls."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "b6cd6d311c7315e162f5ea02227650137030c6eb44ac30d73e9294c5641f523c",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped model attribute",
+      "file": "app/views/application/_admin_viewer.html.erb",
+      "line": 9,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "ap(admin_inspectable_attributes(Admin::LedgerAudit::Task.find(params[:id]).hcb_code.donation))",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "Admin::LedgerAudits::TasksController",
+          "method": "show",
+          "line": 13,
+          "file": "app/controllers/admin/ledger_audits/tasks_controller.rb",
+          "rendered": {
+            "name": "admin/ledger_audits/tasks/show",
+            "file": "app/views/admin/ledger_audits/tasks/show.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "admin/ledger_audits/tasks/show",
+          "line": 29,
+          "file": "app/views/admin/ledger_audits/tasks/show.html.erb",
+          "rendered": {
+            "name": "hcb_codes/_rich_metadata",
+            "file": "app/views/hcb_codes/_rich_metadata.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/_rich_metadata",
+          "line": 3,
+          "file": "app/views/hcb_codes/_rich_metadata.html.erb",
+          "rendered": {
+            "name": "hcb_codes/transaction_types/_donation",
+            "file": "app/views/hcb_codes/transaction_types/_donation.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "hcb_codes/transaction_types/_donation",
+          "line": 5,
+          "file": "app/views/hcb_codes/transaction_types/_donation.html.erb",
+          "rendered": {
+            "name": "application/_admin_viewer",
+            "file": "app/views/application/_admin_viewer.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "application/_admin_viewer"
+      },
+      "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -510,7 +510,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 973,
+          "line": 975,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -570,7 +570,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/google_workspace_process.html.erb",
-      "line": 50,
+      "line": 54,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(GSuite.find(params[:id]).domain, GSuite.find(params[:id]).dns_check_url, :target => :_blank)",
       "render_path": [
@@ -578,7 +578,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1045,
+          "line": 1047,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -621,6 +621,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-02-20 21:51:21 -0500",
+  "updated": "2026-03-21 00:38:52 -0700",
   "brakeman_version": "6.2.2"
 }

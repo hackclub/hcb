@@ -45,6 +45,10 @@
                   class: "btn bg-success mb2",
                   disabled: disabled if event.persisted? %>
 
+      <div>
+        <p class="mt-0">Ledger: <%= link_to event.ledger.id, ledger_path(event.ledger) %></p>
+      </div>
+
       <div class="field" id="admin_settings">
         <%= form.label :name %>
         <%= form.text_field :name, disabled: %>

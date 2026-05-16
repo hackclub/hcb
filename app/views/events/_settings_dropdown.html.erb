@@ -1,23 +1,29 @@
 <% if organizer_signed_in? %>
   <details class="dock" <%= "open" if @settings_tab.present? || local_assigns[:selected] == :settings %>>
-    <summary class="dock__item bg-none tooltipped tooltipped--e" aria-label="Edit organization settings">
-      <%= inline_icon "switches-mixed", size: 35, class: "ml-1 -mr-1" %>
-      <span class="-ml-1">Settings</span>
+    <summary class="dock__item tooltipped tooltipped--e" aria-label="Edit organization settings">
+      <%= inline_icon "settings", size: 32, style: "padding: 0" %>
+      <span class="flex-grow">
+        Settings
+      </span>
       <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
     </summary>
     <%= dock_item "Organization",
                   edit_event_path(@event, tab: "details"),
                   selected: @settings_tab == "details" || (@settings_tab.nil? && local_assigns[:selected] == :settings),
                   data: { turbo: true, turbo_action: "advance" } %>
-    <% unless @event.unapproved? %>
-      <%= dock_item "Donations",
-                    edit_event_path(@event, tab: "donations"),
-                    selected: @settings_tab == "donations",
-                    data: { turbo: true, turbo_action: "advance" } %>
-      <%= dock_item "Reimbursements",
-                    edit_event_path(@event, tab: "reimbursements"),
-                    selected: @settings_tab == "reimbursements",
-                    data: { turbo: true, turbo_action: "advance" } %>
+    <% if @event.approved? %>
+      <% if @event.plan.donations_enabled? %>
+        <%= dock_item "Donations",
+                      edit_event_path(@event, tab: "donations"),
+                      selected: @settings_tab == "donations",
+                      data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
+      <% if @event.plan.reimbursements_enabled? %>
+        <%= dock_item "Reimbursements",
+                      edit_event_path(@event, tab: "reimbursements"),
+                      selected: @settings_tab == "reimbursements",
+                      data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
       <% if @event.plan.card_grants_enabled? %>
         <%= dock_item "Card grants",
                       edit_event_path(@event, tab: "card_grants"),
