@@ -893,6 +893,8 @@ Rails.application.routes.draw do
   end
   resources :affiliations, only: [:create, :update, :destroy], module: :event
 
+  resources :card_grant_settings, only: [:update]
+
   get "/events" => "events#index"
   resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
