@@ -4,7 +4,11 @@ class CardGrantSettingsController < ApplicationController
   def update
     card_grant_setting = CardGrantSetting.find(params[:id])
     authorize card_grant_setting
-    card_grant_setting.update!(card_grant_setting_params)
+    if card_grant_setting.update(card_grant_setting_params)
+      flash[:success] = "Card grant settings updated."
+    else
+      flash[:error] = card_grant_setting.errors.full_messages.to_sentence
+    end
     redirect_back_or_to edit_event_path(card_grant_setting.event.slug, tab: "card_grants")
   end
 

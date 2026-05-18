@@ -2,10 +2,10 @@
 
 <% disabled = !policy(event).update? %>
 
+<% if event.card_grant_setting.present? %>
 <%= form_with(model: event.card_grant_setting, local: true, class: "mb3") do |form| %>
-  <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
+  <h3 class="mb1" id="card_grant_settings_heading">Grant settings</h3>
   <div class="card">
-    <%= form.hidden_field :id, value: event.card_grant_setting.id %>
 
     <div class="field">
       <%= form.label :invite_message, "Invitation message" %>
@@ -84,7 +84,7 @@
 
   </div>
 
-  <h3 class="mb1" id="transparency_mode_heading">Support</h3>
+  <h3 class="mb1" id="card_grant_support_heading">Support</h3>
   <div class="card">
     <div class="field">
       <%= form.label :support_message, "Support message" %>
@@ -112,7 +112,7 @@
     <%= form.submit "Update", disabled:, class: "mt-4" %>
   </div>
 
-  <h3 class="mb1" id="transparency_mode_heading">Spending restrictions</h3>
+  <h3 class="mb1" id="card_grant_spending_heading">Spending restrictions</h3>
   <div class="card mb-4">
     <div class="flex flex-col md:flex-row gap-4">
       <div class="w-full flex-grow">
@@ -191,4 +191,5 @@
     <%= form.submit "Update", disabled: %>
 
   </div>
+<% end %>
 <% end %>
