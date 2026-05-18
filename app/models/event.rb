@@ -126,10 +126,11 @@ class Event < ApplicationRecord
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
 
   CATEGORY_TAGS = {
-    "climate"       => EventTag::Tags::CLIMATE,
     "hack_club"     => EventTag::Tags::HACK_CLUB,
+    "climate"       => EventTag::Tags::CLIMATE,
     "hackathon"     => EventTag::Tags::HACKATHON,
-    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM
+    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM,
+    "nonprofit"     => nil # default category
   }.freeze
 
   # filter organizations by category
