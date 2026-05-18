@@ -5,6 +5,14 @@
 
     font-family: inherit;
 
+    .swal-icon {
+      margin: 0px !important;
+      transform: scale(0.5);
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+
     [data-dark='true'] & {
       background-color: $darkless;
       color: map-get($palette, smoke);
@@ -22,11 +30,11 @@
 
   .swal-title {
     color: inherit;
-    padding: 20px;
-    padding-top: 0px;
-    padding-bottom: 10px;
+    padding: 20px !important;
+    padding-bottom: 10px !important;
     text-align: left;
     margin-bottom: 0px;
+    margin: 0 !important;
   }
 
   .swal-text {
