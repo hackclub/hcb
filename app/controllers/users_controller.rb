@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  skip_before_action :signed_in_user, only: [:webauthn_options]
+  # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
+  # and must remain reachable from impersonated sessions whose `verified` flag
+  # mirrors an unverified target — otherwise the admin is locked out.
+  skip_before_action :signed_in_user, only: [:webauthn_options, :unimpersonate]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
   skip_after_action :verify_authorized, only: [:show,
                                                :revoke_oauth_application,
@@ -47,7 +50,9 @@ class UsersController < ApplicationController
   def unimpersonate
     return redirect_to root_path unless current_session&.impersonated?
 
-    impersonated_user = current_user
+    # Resolve the target through `allow_unverified: true` so the flash message
+    # works for impersonations of unverified shadow accounts.
+    impersonated_user = current_user(allow_unverified: true)
 
     unimpersonate_user
 
@@ -124,7 +129,7 @@ class UsersController < ApplicationController
   end
 
   def receipt_report
-    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
@@ -436,7 +441,6 @@ class UsersController < ApplicationController
       :use_sms_auth,
       :use_two_factor_authentication,
       # notifications
-      :receipt_report_option,
       :comment_notifications,
       :charge_notifications,
       :monthly_donation_summary,

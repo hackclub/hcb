@@ -11,9 +11,11 @@
 
   <div class="flex-grow"></div>
 
-  <%= link_to("https://dashboard.column.com/app/transfers/edit/ach/#{@ach_transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
-    <%= inline_icon "column" %>
-    <%= @ach_transfer.column_id.present? ? "Open Column (#{@ach_transfer.column_id})" : "Open Column" %>
+  <% if @ach_transfer.column_id.present? %>
+    <%= link_to("https://dashboard.column.com/app/transfers/edit/ach/#{@ach_transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
+      <%= inline_icon "column" %>
+      Open Column (<%= @ach_transfer.column_id %>)
+    <% end %>
   <% end %>
 </div>
 
