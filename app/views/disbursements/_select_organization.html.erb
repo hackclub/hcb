@@ -1,12 +1,10 @@
 <%# locals: (form:, field_name:, label:, disabled:, default_event:, sending: false, source_event: nil) %>
 
 <% sending_as_non_admin = sending && !admin_signed_in? %>
-<% if sending_as_non_admin %>
+<% if sending_as_non_admin && default_event %>
   <% initial_message = nil %>
-  <% if default_event %>
-    <% initial_message = "Insufficient balance" if default_event.balance_available <= 0 %>
-    <% initial_message = "HCB transfers disabled" unless policy(default_event).create_transfer? %>
-  <% end %>
+  <% initial_message = "Insufficient balance" if default_event.balance_available <= 0 %>
+  <% initial_message = "HCB transfers disabled" unless policy(default_event).create_transfer? %>
 <% end %>
 
 <% display_value = admin_signed_in? ? default_event&.to_combobox_display : default_event&.name %>
@@ -17,8 +15,9 @@
                  else
                    event_search_disbursements_path
                  end %>
-<% wrapper_attrs = sending_as_non_admin ? { data: { controller: "event-transfer-message", event_transfer_message_url_value: source_event_message_disbursements_path, action: "hw-combobox:selection->event-transfer-message#update" } } : {} %>
-<%= content_tag :div, class: "field flex-1", **wrapper_attrs do %>
+<% message_attrs = sending_as_non_admin ? { data: { controller: "event-transfer-message", action: "hw-combobox:selection->event-transfer-message#clear" } } : {} %>
+
+<%= content_tag :div, class: "field flex-1", **message_attrs do %>
   <%= form.label field_name, label %>
   <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
   <%= content_tag(:p, initial_message, class: "muted h5 mt1 mb0", data: { event_transfer_message_target: "message" }) if sending_as_non_admin %>

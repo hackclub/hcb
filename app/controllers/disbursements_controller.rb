@@ -84,17 +84,6 @@ class DisbursementsController < ApplicationController
     render turbo_stream: helpers.async_combobox_options(options)
   end
 
-  def source_event_message
-    skip_authorization
-    event = Event.find_by(id: params[:event_id])
-    message = nil
-    if event && !admin_signed_in?
-      message = "Insufficient balance" if event.balance_available <= 0
-      message = "HCB transfers disabled" unless policy(event).create_transfer?
-    end
-    render json: { message: }
-  end
-
   def create
     @source_event = Event.find_by_public_id(disbursement_params[:source_event_id]) ||
                     Event.find(disbursement_params[:source_event_id])
