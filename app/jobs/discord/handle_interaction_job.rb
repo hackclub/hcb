@@ -13,7 +13,7 @@ module Discord
       @user_id = @interaction.dig(:member, :user, :id) || @interaction.dig(:user, :id)
       @guild_id = @interaction.dig(:guild, :id)
       @channel_id = @interaction.dig(:channel, :id)
-      @permissions = @interaction.dig(:member, :permissions)&.to_i
+      @permissions = Discordrb::Permissions.new(@interaction.dig(:member, :permissions)&.to_i)
 
       @user = User.find_by(discord_id: @user_id) if @user_id
       @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
@@ -298,7 +298,7 @@ module Discord
       server_name = Discord::Bot.bot.server(@guild_id)&.name if @guild_id.present?
       user_name = Discord::Bot.bot.user(@user_id)&.username if @user_id.present?
 
-      guild_setup_cta = can_manage_guild? ? link_to("Set up here", generate_discord_setup_url) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
+      guild_setup_cta = @permissions.manage_server ? link_to("Set up here", generate_discord_setup_url) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
 
       [
         {
@@ -343,10 +343,6 @@ module Discord
         #{e.message}
         \tresponse_body: #{e.response_body.inspect}
       MSG
-    end
-
-    def can_manage_guild?
-      @permissions & 0x0000000000000020 == 0x0000000000000020
     end
 
   end
