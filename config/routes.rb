@@ -496,6 +496,7 @@ Rails.application.routes.draw do
   resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     collection do
       get :event_search
+      get :source_event_message
     end
     post "mark_fulfilled"
     post "reject"
