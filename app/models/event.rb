@@ -944,9 +944,9 @@ class Event < ApplicationRecord
 
     Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
       begin
-        return OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+        OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
       rescue
-        return nil
+        nil
       end
     end
   end
