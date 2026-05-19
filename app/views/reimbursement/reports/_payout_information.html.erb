@@ -5,7 +5,7 @@
 
 <div class="inline-flex items-center justify-between w-full">
   <h3 class="mt-0">Payout information</h3>
-  <% if auditor_signed_in? && !report.closed? %>
+  <% if auditor_signed_in? && !report.closed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
     <%= pop_icon_to "settings",
                     "#",
                     data: { behavior: "modal_trigger", modal: "edit_wise_info" },
