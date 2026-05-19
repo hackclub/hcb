@@ -11,4 +11,10 @@
                      event_search_disbursements_path
                    end %>
   <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
+  <% if sending && default_event && !admin_signed_in? %>
+    <% disabled_message = nil %>
+    <% disabled_message = "Insufficient balance" if default_event.balance_available <= 0 %>
+    <% disabled_message = "HCB transfers disabled" unless policy(default_event).create_transfer? %>
+    <%= content_tag(:p, disabled_message, class: "muted h5 mt1 mb0") if disabled_message %>
+  <% end %>
 </div>
