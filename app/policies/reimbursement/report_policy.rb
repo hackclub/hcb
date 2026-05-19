@@ -87,6 +87,10 @@ module Reimbursement
       admin
     end
 
+    def update_wise_transfer_draft?
+      admin
+    end
+
     def reverse?
       admin
     end

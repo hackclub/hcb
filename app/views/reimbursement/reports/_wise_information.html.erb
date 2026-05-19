@@ -1,5 +1,7 @@
 <%# locals: (report:) %>
 
+<% wise_details = report.wise_transfer_draft || report.user.payout_method %>
+
 <table class="w-full table-fixed my-6">
   <tbody>
     <tr>
@@ -24,53 +26,53 @@
     <tr>
       <td>Name on account:</td>
       <td>
-        <%= report.user.payout_method.account_holder %>
+        <%= wise_details.try(:account_holder).presence || wise_details.try(:recipient_name).presence || report.user.full_name %>
       </td>
     </tr>
     <tr>
       <td>Bank name:</td>
       <td>
-        <%= report.user.payout_method.bank_name %>
+        <%= wise_details.bank_name %>
       </td>
     </tr>
     <tr>
       <td>Email:</td>
-      <td><%= report.user.email %></td>
+      <td><%= wise_details.try(:recipient_email).presence || report.user.email %></td>
     </tr>
     <tr>
       <td>Address (Line 1):</td>
-      <td><%= report.user.payout_method.address_line1 %></td>
+      <td><%= wise_details.address_line1 %></td>
     </tr>
     <tr>
       <td>Address (Line 2):</td>
-      <td><%= report.user.payout_method.address_line2 %></td>
+      <td><%= wise_details.address_line2 %></td>
     </tr>
     <tr>
       <td>City:</td>
-      <td><%= report.user.payout_method.address_city %></td>
+      <td><%= wise_details.address_city %></td>
     </tr>
     <tr>
       <td>State:</td>
-      <td><%= report.user.payout_method.address_state %></td>
+      <td><%= wise_details.address_state %></td>
     </tr>
     <tr>
       <td>Postal code:</td>
-      <td><%= report.user.payout_method.address_postal_code %></td>
+      <td><%= wise_details.address_postal_code %></td>
     </tr>
     <tr>
       <td>Recipient country:</td>
-      <td><%= report.user.payout_method.recipient_country %></td>
+      <td><%= wise_details.recipient_country %></td>
     </tr>
     <% WiseTransfer.recipient_information_accessors.each do |key| %>
-      <% if report.user.payout_method.recipient_information[key].presence != nil %>
+      <% if wise_details.recipient_information[key].presence != nil %>
         <tr>
           <td><%= key.humanize %></td>
-          <td><%= report.user.payout_method.recipient_information[key] %></td>
+          <td><%= wise_details.recipient_information[key] %></td>
         </tr>
-      <% elsif report.user.payout_method.read_attribute(key.to_sym).present? %>
+      <% elsif wise_details.read_attribute(key.to_sym).present? %>
         <tr>
           <td><%= key.humanize %></td>
-          <td><%= report.user.payout_method.read_attribute(key.to_sym) %></td>
+          <td><%= wise_details.read_attribute(key.to_sym) %></td>
         </tr>
       <% end %>
     <% end %>

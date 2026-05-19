@@ -1,0 +1,46 @@
+<%# locals: (report:) %>
+
+<% wise_transfer_draft = report.wise_transfer_draft || report.build_wise_transfer_draft(currency: report.currency) %>
+
+<div class="mt-4">
+  <%= form_with model: wise_transfer_draft, url: reimbursement_report_update_wise_transfer_draft_path(report), method: :post, local: true do |form| %>
+    <div class="field">
+      <%= form.label :recipient_name, "Recipient name" %>
+      <%= form.text_field :recipient_name, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :recipient_email, "Recipient email" %>
+      <%= form.email_field :recipient_email, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :recipient_phone_number, "Recipient phone number" %>
+      <%= form.telephone_field :recipient_phone_number %>
+    </div>
+
+    <div class="field">
+      <%= form.label :account_holder, "Account holder" %>
+      <%= form.text_field :account_holder %>
+    </div>
+
+    <div class="field">
+      <%= form.label :bank_name, "Bank name" %>
+      <%= form.text_field :bank_name %>
+    </div>
+
+    <div class="field">
+      <%= form.label :currency, "Currency" %>
+      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { selected: wise_transfer_draft.currency || report.currency, disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+    </div>
+
+    <div x-data="{ currency: '<%= wise_transfer_draft.currency || report.currency %>', account_type: '<%= wise_transfer_draft.account_type %>' }">
+      <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: true } %>
+      <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: Reimbursement::WiseTransferDraft } %>
+    </div>
+
+    <div class="actions inline-block mt1">
+      <%= form.submit "Update draft" %>
+    </div>
+  <% end %>
+</div>

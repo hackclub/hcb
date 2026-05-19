@@ -76,6 +76,7 @@ module Reimbursement
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
     has_one :payout_holding, inverse_of: :report
+    has_one :wise_transfer_draft, class_name: "Reimbursement::WiseTransferDraft", inverse_of: :report, dependent: :destroy
     alias_attribute :report_name, :name
     attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
 
@@ -123,6 +124,7 @@ module Reimbursement
           end
         end
         after do
+          ensure_wise_transfer_draft!
           if team_review_required?
             ReimbursementMailer.with(report: self).review_requested.deliver_later
             create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: reviewer.presence || event, event_id: event.id)
@@ -420,6 +422,31 @@ module Reimbursement
 
         wise_transfer
       end
+    end
+
+    def ensure_wise_transfer_draft!
+      return unless user.payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+      return if wise_transfer_draft.present?
+
+      account_holder = user.payout_method.try(:account_holder)
+      wise_recipient_id = user.payout_method.try(:wise_recipient_id)
+      draft = build_wise_transfer_draft(
+        currency:,
+        recipient_name: account_holder.presence || user.full_name,
+        recipient_email: user.email,
+        recipient_phone_number: user.phone_number,
+        wise_recipient_id:,
+        address_line1: user.payout_method.address_line1,
+        address_line2: user.payout_method.address_line2,
+        address_city: user.payout_method.address_city,
+        address_state: user.payout_method.address_state,
+        address_postal_code: user.payout_method.address_postal_code,
+        recipient_country: user.payout_method.recipient_country,
+        bank_name: user.payout_method.bank_name,
+        recipient_information: user.payout_method.recipient_information&.deep_dup
+      )
+      draft.account_holder = account_holder if account_holder.present?
+      draft.save!
     end
 
     private

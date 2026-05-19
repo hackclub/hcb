@@ -3,11 +3,24 @@
 <% user = report.user %>
 <% payout_method = user.payout_method %>
 
-<h3 class="mt-0">Payout information</h3>
+<div class="inline-flex items-center justify-between w-full">
+  <h3 class="mt-0">Payout information</h3>
+  <% if auditor_signed_in? && !report.closed? %>
+    <%= pop_icon_to "settings",
+                    "#",
+                    data: { behavior: "modal_trigger", modal: "edit_wise_info" },
+                    icon_size: 28,
+                    class: "tooltipped tooltipped--w",
+                    style: "height: 32px; width: 32px;",
+                    'aria-label': "Edit Wise Info",
+                    disabled: !policy(@report).edit? %>
+  <% end %>
+</div>
 
 <% if payout_method.nil? %>
   <p class="muted">No payout method configured</p>
 <% else %>
+  <% wise_display = payout_method.is_a?(User::PayoutMethod::WiseTransfer) ? (report.payout_holding&.wise_transfer || report.wise_transfer_draft || payout_method) : nil %>
   <table class="table--autosize">
     <tbody>
       <tr>
@@ -16,15 +29,15 @@
       </tr>
       <tr>
         <td>Recipient:</td>
-        <td><%= user.name %></td>
+        <td><%= wise_display&.recipient_name.presence || user.name %></td>
       </tr>
       <tr>
         <td>Name on account:</td>
-        <td><%= payout_method.try(:account_holder).presence || user.full_name %></td>
+        <td><%= wise_display&.account_holder.presence || payout_method.try(:account_holder).presence || user.full_name %></td>
       </tr>
       <tr>
         <td>Email:</td>
-        <td><%= user.email %></td>
+        <td><%= wise_display&.recipient_email.presence || user.email %></td>
       </tr>
 
       <% if payout_method.is_a?(User::PayoutMethod::AchTransfer) %>
@@ -114,57 +127,66 @@
         <% end %>
 
       <% elsif payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
-        <tr>
-          <td>Currency:</td>
-          <td><%= payout_method.currency %></td>
-        </tr>
-        <% if payout_method.bank_name.present? %>
+        <% wise_transfer = report.payout_holding&.wise_transfer || report.wise_transfer_draft || payout_method %>
+
+        <% if wise_transfer.nil? %>
           <tr>
-            <td>Bank name:</td>
-            <td><%= payout_method.bank_name %></td>
+            <td colspan="2" class="muted">Wise transfer details not available</td>
           </tr>
-        <% end %>
-        <tr>
-          <td>Address (Line 1):</td>
-          <td><%= payout_method.address_line1 %></td>
-        </tr>
-        <% if payout_method.address_line2.present? %>
+        <% else %>
           <tr>
-            <td>Address (Line 2):</td>
-            <td><%= payout_method.address_line2 %></td>
+            <td>Currency:</td>
+            <td><%= wise_transfer.currency %></td>
           </tr>
-        <% end %>
-        <tr>
-          <td>City:</td>
-          <td><%= payout_method.address_city %></td>
-        </tr>
-        <tr>
-          <td>State:</td>
-          <td><%= payout_method.address_state %></td>
-        </tr>
-        <tr>
-          <td>Postal code:</td>
-          <td><%= payout_method.address_postal_code %></td>
-        </tr>
-        <tr>
-          <td>Recipient country:</td>
-          <td><%= payout_method.recipient_country %></td>
-        </tr>
-        <% WiseTransfer.recipient_information_accessors&.each do |key| %>
-          <% next if key == "account_holder" %>
-          <% if payout_method.recipient_information[key].presence != nil %>
+          <% if wise_transfer.bank_name.present? %>
             <tr>
-              <td><%= key.humanize %>:</td>
-              <td><%= payout_method.recipient_information[key] %></td>
+              <td>Bank name:</td>
+              <td><%= wise_transfer.bank_name %></td>
             </tr>
-          <% elsif payout_method.read_attribute(key.to_sym).present? %>
+          <% end %>
+          <tr>
+            <td>Address (Line 1):</td>
+            <td><%= wise_transfer.address_line1 %></td>
+          </tr>
+          <% if wise_transfer.address_line2.present? %>
             <tr>
-              <td><%= key.humanize %>:</td>
-              <td><%= payout_method.read_attribute(key.to_sym) %></td>
+              <td>Address (Line 2):</td>
+              <td><%= wise_transfer.address_line2 %></td>
             </tr>
+          <% end %>
+          <tr>
+            <td>City:</td>
+            <td><%= wise_transfer.address_city %></td>
+          </tr>
+          <tr>
+            <td>State:</td>
+            <td><%= wise_transfer.address_state %></td>
+          </tr>
+          <tr>
+            <td>Postal code:</td>
+            <td><%= wise_transfer.address_postal_code %></td>
+          </tr>
+          <tr>
+            <td>Recipient country:</td>
+            <td><%= wise_transfer.recipient_country %></td>
+          </tr>
+          <% WiseTransfer.recipient_information_accessors&.each do |key| %>
+            <% next if key == "account_holder" %>
+            <% if wise_transfer.recipient_information[key].presence != nil %>
+              <tr>
+                <td><%= key.humanize %>:</td>
+                <td><%= wise_transfer.recipient_information[key] %></td>
+              </tr>
+            <% elsif wise_transfer.read_attribute(key.to_sym).present? %>
+              <tr>
+                <td><%= key.humanize %>:</td>
+                <td><%= wise_transfer.read_attribute(key.to_sym) %></td>
+              </tr>
+            <% end %>
           <% end %>
         <% end %>
       <% end %>
     </tbody>
   </table>
 <% end %>
+

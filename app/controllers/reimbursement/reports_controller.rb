@@ -72,6 +72,9 @@ module Reimbursement
         return redirect_to auth_users_path(url_queries), flash: { info: "To continue, please sign in with the email which received the invite." }
       end
       authorize @report
+      if @report.user.payout_method.is_a?(User::PayoutMethod::WiseTransfer) && @report.wise_transfer_draft.nil?
+        @report.ensure_wise_transfer_draft!
+      end
       @commentable = @report
       @comments = @commentable.comments
       @use_user_nav = @event.nil? || current_user == @user && !@event.users.include?(@user) && !auditor_signed_in?
@@ -294,6 +297,10 @@ module Reimbursement
       authorize @report
 
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      wise_details = @report.wise_transfer_draft
+      recipient_name = wise_details&.account_holder.presence || wise_details&.recipient_name.presence || @report.user.full_name
+      recipient_email = wise_details&.recipient_email.presence || @report.user.email
+      recipient_phone_number = wise_details&.recipient_phone_number.presence || @report.user.phone_number
       payout_holding = @report.payout_holding
       payout_holding.with_lock do
         unless payout_holding.settled?
@@ -307,16 +314,16 @@ module Reimbursement
         @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",
-          address_line1: @report.user.payout_method.address_line1,
-          address_line2: @report.user.payout_method.address_line2,
-          address_city: @report.user.payout_method.address_city,
-          address_state: @report.user.payout_method.address_state,
-          address_postal_code: @report.user.payout_method.address_postal_code,
-          recipient_country: @report.user.payout_method.recipient_country,
-          recipient_email: @report.user.email,
-          recipient_name: @report.user.full_name,
-          bank_name: @report.user.payout_method.bank_name,
-          recipient_information: @report.user.payout_method.recipient_information,
+          address_line1: wise_details&.address_line1 || @report.user.payout_method.address_line1,
+          address_line2: wise_details&.address_line2 || @report.user.payout_method.address_line2,
+          address_city: wise_details&.address_city || @report.user.payout_method.address_city,
+          address_state: wise_details&.address_state || @report.user.payout_method.address_state,
+          address_postal_code: wise_details&.address_postal_code || @report.user.payout_method.address_postal_code,
+          recipient_country: wise_details&.recipient_country || @report.user.payout_method.recipient_country,
+          recipient_email: recipient_email,
+          recipient_name: recipient_name,
+          bank_name: wise_details&.bank_name || @report.user.payout_method.bank_name,
+          recipient_information: wise_details&.recipient_information || @report.user.payout_method.recipient_information,
           currency: @report.currency,
           user: User.system_user,
           usd_amount_cents: payout_holding.amount_cents,
@@ -325,7 +332,7 @@ module Reimbursement
           wise_id: params[:wise_id],
           wise_recipient_id: params[:wise_recipient_id],
           sent_at: Time.now,
-          recipient_phone_number: @report.user.phone_number,
+          recipient_phone_number: recipient_phone_number,
         )
         wise_transfer.mark_approved!
         wise_transfer.mark_sent!
@@ -353,6 +360,22 @@ module Reimbursement
       end
 
       # Reimbursement::NightlyJob.perform_later
+
+      redirect_to @report
+    end
+
+    def update_wise_transfer_draft
+      authorize @report, :update_wise_transfer_draft?
+
+      @wise_transfer_draft = @report.wise_transfer_draft || @report.build_wise_transfer_draft(currency: @report.currency)
+      @wise_transfer_draft.assign_attributes(wise_transfer_draft_params)
+      @wise_transfer_draft.currency ||= @report.currency
+
+      if @wise_transfer_draft.save
+        flash[:success] = "Wise transfer draft updated."
+      else
+        flash[:error] = @wise_transfer_draft.errors.full_messages.to_sentence
+      end
 
       redirect_to @report
     end
@@ -455,6 +478,25 @@ module Reimbursement
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params
+    end
+
+    def wise_transfer_draft_params
+      permitted_keys = Reimbursement::WiseTransferDraft.recipient_information_accessors + ["account_holder"]
+      params.require(:reimbursement_wise_transfer_draft).permit(
+        :wise_recipient_id,
+        :recipient_name,
+        :recipient_email,
+        :recipient_phone_number,
+        :bank_name,
+        :address_line1,
+        :address_line2,
+        :address_city,
+        :address_state,
+        :address_postal_code,
+        :recipient_country,
+        :currency,
+        *permitted_keys
+      )
     end
 
   end

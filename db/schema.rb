@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_19_000100) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2250,6 +2250,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
+  create_table "reimbursement_wise_transfer_drafts", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.string "bank_name"
+    t.datetime "created_at", null: false
+    t.string "currency", null: false
+    t.integer "recipient_country"
+    t.string "recipient_email", null: false
+    t.text "recipient_information_ciphertext"
+    t.string "recipient_name", null: false
+    t.string "recipient_phone_number"
+    t.bigint "reimbursement_report_id", null: false
+    t.datetime "updated_at", null: false
+    t.text "wise_recipient_id"
+    t.index ["reimbursement_report_id"], name: "idx_r_wise_transfer_drafts_on_report_id", unique: true
+  end
+
   create_table "sponsors", force: :cascade do |t|
     t.text "address_city"
     t.text "address_country", default: "US"
@@ -2959,6 +2979,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   add_foreign_key "reimbursement_reports", "events"
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "reimbursement_wise_transfer_drafts", "reimbursement_reports"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

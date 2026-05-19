@@ -287,8 +287,8 @@
                     </strong>
                   </div>
 
-                  <% if report.user.payout_method.wise_recipient_id.present? %>
-                    <%= link_to "https://wise.com/send#?contact=#{report.user.payout_method.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
+                  <% if report.wise_transfer_draft.wise_recipient_id.present? %>
+                    <%= link_to "https://wise.com/send#?contact=#{report.wise_transfer_draft.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
                       <%= inline_icon "wise" %>
                       Open <%= report.user.full_name %> on Wise
                     <% end %>

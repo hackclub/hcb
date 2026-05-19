@@ -53,11 +53,19 @@ class WiseTransfersController < ApplicationController
   end
 
   def edit
+    unless @wise_transfer.editable?
+      redirect_to @wise_transfer, alert: "This transfer can no longer be edited." and return
+    end
+
     authorize @wise_transfer
     @event = @wise_transfer.event
   end
 
   def update
+    unless @wise_transfer.editable?
+      redirect_to @wise_transfer, alert: "This transfer can no longer be edited." and return
+    end
+
     authorize @wise_transfer
     @event = @wise_transfer.event
 

@@ -1,0 +1,6 @@
+<%# locals: (report:) %>
+
+<section data-behavior="modal" role="dialog" id="edit_wise_info" class="modal modal--scroll bg-snow">
+  <%= modal_header "Edit Wise Info" %>
+  <%= render partial: "reimbursement/reports/wise_transfer_draft_form", locals: { report: } %>
+</section>
