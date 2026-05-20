@@ -29,7 +29,7 @@ class CanonicalPendingEventMapping < ApplicationRecord
   belongs_to :event
   belongs_to :subledger, optional: true
 
-  scope :on_main_ledger, -> { where(subledger_id: nil) }
+  include HasSubledger
 
   after_commit do
     canonical_pending_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)

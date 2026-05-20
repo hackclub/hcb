@@ -79,7 +79,7 @@ class StripeCard < ApplicationRecord
   scope :inactive, -> { where(stripe_status: "inactive", initially_activated: false) }
   scope :platinum, -> { where(is_platinum_april_fools_2023: true) }
 
-  scope :on_main_ledger, -> { where(subledger_id: nil) }
+  include HasSubledger
 
   belongs_to :event
   belongs_to :subledger, optional: true

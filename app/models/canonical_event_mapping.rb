@@ -33,10 +33,10 @@ class CanonicalEventMapping < ApplicationRecord
   belongs_to :subledger, optional: true
   belongs_to :user, optional: true
 
+  include HasSubledger
+
   has_one :fee, dependent: :destroy
   validates_associated :fee
-
-  scope :on_main_ledger, -> { where(subledger_id: nil) }
 
   after_create do
     canonical_transaction.write_hcb_code
