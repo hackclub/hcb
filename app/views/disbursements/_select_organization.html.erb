@@ -15,7 +15,7 @@
                  else
                    event_search_disbursements_path
                  end %>
-<% message_attrs = sending_as_non_admin ? { data: { controller: "event-transfer-message", action: "hw-combobox:selection->event-transfer-message#clear" } } : {} %>
+<% message_attrs = sending_as_non_admin ? { data: { controller: "event-transfer-message", action: "hw-combobox:selection@window->event-transfer-message#clear" } } : {} %>
 
 <%= content_tag :div, class: "field flex-1", **message_attrs do %>
   <%= form.label field_name, label %>
