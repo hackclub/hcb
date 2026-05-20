@@ -428,10 +428,10 @@ module Reimbursement
       messages << "One or more expenses are missing receipts" if missing_receipts?
       messages << "One or more expenses have a zero amount" if expenses.any? { |e| e.amount.zero? }
       messages << "Report amount exceeds the maximum allowed" if exceeds_maximum_amount?
-      messages << "Report amount is below the minimum required" if below_minimum_amount?
+      messages << "Report amount is below the minimum required" if event.present? && below_minimum_amount?
       messages << "Currency does not match your payout method" if mismatched_currency?
       messages << "Your payout method is not set up" unless user.payout_method.present?
-      messages << "Your payout method is not supported" if user.payout_method_allowed?
+      messages << "Your payout method is not supported" if payout_method_allowed?
       messages << "Organization finances are currently frozen" if event&.financially_frozen?
       messages
     end
