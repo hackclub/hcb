@@ -152,6 +152,11 @@
 .hw-combobox__option--navigated,
 .hw-combobox__option--selected {
   @apply bg-gray-100 dark:bg-neutral-700;
+  filter: brightness(95%);
+}
+
+.hw-combobox__option:active {
+  filter: brightness(90%);
 }
 
 .hw-combobox__dialog__wrapper {
