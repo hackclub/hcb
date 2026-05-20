@@ -32,7 +32,7 @@
     <% if @invite.contract && !@invite.contract.signed? && !@invite.contract.party(:signee)&.signed? %>
       <% if @invite.contract.party(:signee).present? %>
         <%= link_to "View pending contract", contract_party_path(@invite.contract.party(:signee)), class: "btn bg-accent" %>
-      <% else %>
+      <% elsif @invite.contract.sent_with_docuseal? %>
         <%= link_to "View pending contract", @invite.contract.signee_docuseal_url, class: "btn bg-accent" %>
       <% end %>
     <% else %>
