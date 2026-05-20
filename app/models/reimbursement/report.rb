@@ -431,7 +431,7 @@ module Reimbursement
       messages << "Report amount is below the minimum required" if event.present? && below_minimum_amount?
       messages << "Currency does not match your payout method" if mismatched_currency?
       messages << "Your payout method is not set up" unless user.payout_method.present?
-      messages << "Your payout method is not supported" if payout_method_allowed?
+      messages << "Your payout method is not supported" if !payout_method_allowed?
       messages << "Organization finances are currently frozen" if event&.financially_frozen?
       messages
     end
