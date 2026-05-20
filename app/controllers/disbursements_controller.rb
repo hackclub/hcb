@@ -83,7 +83,7 @@ class DisbursementsController < ApplicationController
       end
 
       if disabled_message
-        content = helpers.content_tag(:div, class: "flex flex-col opacity-50 justify-between w-full", data: { disabled_option: "" }, onclick: "javascript:event.stopPropagation()") do
+        content = helpers.content_tag(:div, class: "flex flex-col opacity-50 justify-between w-full", data: { disabled_option: "" }) do
           helpers.content_tag(:span, label) + helpers.content_tag(:span, disabled_message, class: "muted text-xs")
         end
         { value: e.id, display: label, content: content }

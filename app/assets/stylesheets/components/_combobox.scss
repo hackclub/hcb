@@ -145,6 +145,7 @@
 
 .hw-combobox__option:has([data-disabled-option]) {
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .hw-combobox__option:hover,
