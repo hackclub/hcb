@@ -60,10 +60,6 @@ module Reimbursement
       end
     end
 
-    validate(if: -> { will_save_change_to_aasm_state?(to: "submitted") }) do
-      submission_requirements.each { |msg| errors.add :base, msg }
-    end
-
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
 
@@ -119,7 +115,7 @@ module Reimbursement
       state :reversed
 
       event :mark_submitted do
-        transitions from: [:draft, :reimbursement_requested], to: :submitted
+        transitions from: [:draft, :reimbursement_requested], to: :submitted, guard: :may_mark_submitted?
         after do
           if team_review_required?
             ReimbursementMailer.with(report: self).review_requested.deliver_later
