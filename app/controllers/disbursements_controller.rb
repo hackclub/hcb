@@ -71,7 +71,7 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
            end.then { |r| q.present? ? r.search_name(q) : r }
 
-    events = base.limit(20).select(:id, :name, :can_front_balance).to_a
+    events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode).to_a
 
     options = events.map do |e|
       label = is_admin ? "#{e.name} (#{e.id})" : e.name
