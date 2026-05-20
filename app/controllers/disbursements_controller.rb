@@ -71,14 +71,25 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
            end.then { |r| q.present? ? r.search_name(q) : r }
 
-    events = if sending && !is_admin
-               sendable_event_search_results(base)
-             else
-               base.limit(20).select(:id, :name).to_a
-             end
+    events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode).to_a
 
     options = events.map do |e|
-      EventSearchOption.new(e.id, is_admin ? "#{e.name} (#{e.id})" : e.name)
+      label = is_admin ? "#{e.name} (#{e.id})" : e.name
+
+      disabled_message = nil
+      if sending && !is_admin
+        disabled_message = "Insufficient balance" if e.balance_available <= 0
+        disabled_message = "HCB transfers disabled" unless policy(e).create_transfer?
+      end
+
+      if disabled_message
+        content = helpers.content_tag(:div, class: "flex flex-col opacity-50 justify-between w-full", data: { disabled_option: "" }, onclick: "javascript:event.stopPropagation()") do
+          helpers.content_tag(:span, label) + helpers.content_tag(:span, disabled_message, class: "muted text-xs")
+        end
+        { value: e.id, display: label, content: content }
+      else
+        EventSearchOption.new(e.id, label)
+      end
     end
 
     render turbo_stream: helpers.async_combobox_options(options)
@@ -242,29 +253,6 @@ class DisbursementsController < ApplicationController
     return false unless source_event_id
 
     Event.find_by(id: source_event_id)&.plan&.unrestricted_disbursements_enabled?
-  end
-
-  def sendable_event_search_results(base)
-    results = []
-    offset = 0
-    batch_size = 50
-    max_scanned = 300
-
-    while offset < max_scanned
-      batch = base.offset(offset).limit(batch_size).select(:id, :name, :can_front_balance).to_a
-      break if batch.empty?
-
-      batch.each do |event|
-        next unless event.balance_available > 0
-
-        results << event
-        return results if results.size >= 20
-      end
-
-      offset += batch_size
-    end
-
-    results
   end
 
   # Only allow a trusted parameter "white list" through.
