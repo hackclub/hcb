@@ -82,14 +82,12 @@ class DisbursementsController < ApplicationController
         disabled_message = "HCB transfers disabled" unless policy(e).create_transfer?
       end
 
-      if disabled_message
-        content = helpers.content_tag(:div, class: "flex justify-between w-full", data: { disabled_option: "" }) do
-          helpers.content_tag(:span, label) + helpers.content_tag(:span, disabled_message, class: "muted")
-        end
-        { value: e.id, display: label, content: content }
-      else
-        EventSearchOption.new(e.id, label)
+      right = disabled_message || helpers.render_money_short(e.balance_available)
+      attrs = disabled_message ? { data: { disabled_option: "" } } : {}
+      content = helpers.content_tag(:div, class: "flex justify-between w-full", **attrs) do
+        helpers.content_tag(:span, label) + helpers.content_tag(:span, right, class: "muted")
       end
+      { value: e.id, display: label, content: content }
     end
 
     render turbo_stream: helpers.async_combobox_options(options)
