@@ -693,7 +693,7 @@ Rails.application.routes.draw do
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
-            resources :comments, only: [:index, :create]
+            resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
 
             member do
               get "memo_suggestions"
@@ -758,6 +758,8 @@ Rails.application.routes.draw do
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
+
+        resources :comments, only: [:index, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
