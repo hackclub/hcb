@@ -143,6 +143,12 @@
   border-bottom: var(--hw-border-width--slim) solid var(--hw-border-color);
 }
 
+.hw-combobox__option:has([data-disabled-option]) {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: default;
+}
+
 .hw-combobox__option:hover,
 .hw-combobox__option--navigated,
 .hw-combobox__option--selected {
