@@ -74,7 +74,7 @@
 
   <p class="mb-0">
     <% if hcb_decline_reason == :merchant_not_allowed_globally %>
-      This merchant is not allowed to prevent fraud. If you are trying to make a payment, please use a transfer method supported by HCB.
+      This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a different transfer method.
     <% elsif hcb_decline_reason == :merchant_not_allowed %>
       If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
