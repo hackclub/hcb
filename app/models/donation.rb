@@ -347,6 +347,15 @@ class Donation < ApplicationRecord
     gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
   end
 
+  def create_stripe_payment_intent
+    customer = StripeService::Customer.create(email:, name:)
+    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
+
+    self.stripe_payment_intent_id = payment_intent.id
+
+    self.set_fields_from_stripe_payment_intent(payment_intent)
+  end
+
   private
 
   def raw_pending_donation_transaction
@@ -394,17 +403,8 @@ class Donation < ApplicationRecord
       currency: "usd",
       statement_descriptor: "HCB",
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
-      metadata: { 'donation': true, 'event_id': event.id }
+      metadata: { 'donation': true, 'donation_id': id, 'event_id': event.id }
     }
-  end
-
-  def create_stripe_payment_intent
-    customer = StripeService::Customer.create(email:, name:)
-    payment_intent = StripeService::PaymentIntent.create(create_payment_intent_attrs(customer))
-
-    self.stripe_payment_intent_id = payment_intent.id
-
-    self.set_fields_from_stripe_payment_intent(payment_intent)
   end
 
   def assign_unique_hash
