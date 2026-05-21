@@ -144,7 +144,8 @@ class AdminController < Admin::BaseController
   end
 
   def event_raised
-    render_event_metric(:raised) { @event.total_raised.to_i }
+    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
+    render :event_raised, layout: false
   end
 
   def event_toggle_approved
