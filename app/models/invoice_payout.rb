@@ -39,8 +39,8 @@ class InvoicePayout < ApplicationRecord
   scope :lacking_transaction, -> { includes(:t_transaction).where(transactions: { invoice_payout_id: nil }) }
   scope :invoice_hcb_code, -> { where("statement_descriptor ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
 
-  # although it normally doesn't make sense for a paynot not to be linked to an invoice,
-  # Stripe's schema makes this possible, and when that happens, requiring invoice<>payout breaks bank
+  # Although it normally doesn't make sense for a payout not to be linked to an invoice,
+  # Stripe's schema makes this possible. When that happens, requiring an invoice/payout link breaks bank processing.
   stripe_payoutable :invoice
   has_one :invoice, inverse_of: :payout, foreign_key: :payout_id
   has_one :event, through: :invoice

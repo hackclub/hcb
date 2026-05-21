@@ -4,7 +4,7 @@ module StripePayoutable
   extend ActiveSupport::Concern
 
   included do
-    # Stripe provides a field called type, which is reserved in rails for STI.
+    # Stripe provides a field called type, which is reserved in Rails for STI.
     # This removes the Rails reservation on 'type' for this class.
     self.inheritance_column = nil
 
