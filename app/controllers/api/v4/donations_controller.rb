@@ -38,9 +38,6 @@ module Api
       def payment_intent
         authorize @donation
 
-        @donation.create_stripe_payment_intent
-        @donation.save!
-
         render json: { payment_intent_id: @donation.stripe_payment_intent_id, client_secret: @donation.stripe_client_secret }, status: :created
       end
 
