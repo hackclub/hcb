@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
