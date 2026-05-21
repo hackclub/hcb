@@ -7,7 +7,7 @@ module Api
 
       before_action :set_api_event, only: [:create]
       before_action :set_donation, only: [:payment_intent]
-      before_action :require_trusted_oauth_app!, only: [:payment_intent]
+      before_action :require_trusted_oauth_app!, only: [:create, :payment_intent]
 
       def create
         amount = params[:amount_cents]
