@@ -44,7 +44,7 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
     @event = @cpt.event
     @user = @card.user
 
-    return if !@user.email_charge_notifications_enabled? && !Rails.env.development?
+    return unless @user.email_charge_notifications_enabled?
     return if @card.canceled? && @card.canceled_at < 1.month.ago
 
     @merchant = @cpt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]
