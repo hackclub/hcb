@@ -1512,15 +1512,11 @@ class AdminController < Admin::BaseController
 
   private
 
-  def render_event_metric(metric_name, &block)
+  def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])
-    instance_variable_set(
-      :"@#{metric_name}",
-      Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
-        block.call
-      end
-    )
-    render :"event_#{metric_name}", layout: false
+    Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
+      block.call
+    end
   end
 
   def stream_data(content_type, filename, data, download = true)
