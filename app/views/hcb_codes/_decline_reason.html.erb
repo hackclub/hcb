@@ -16,11 +16,11 @@
     <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
       <span><%= this_transaction %> was declined
       <%= {
-          merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
-          merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
-          cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
-          user_cards_locked: "by HCB because you have too many missing receipts"
-        }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
+            merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
+            merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
+            cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
+            user_cards_locked: "by HCB because you have too many missing receipts"
+          }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
     <% else %>
       <span>
       <%= ("#{this_transaction} was declined by our card issuer " + ({
