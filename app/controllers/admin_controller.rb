@@ -139,7 +139,8 @@ class AdminController < Admin::BaseController
   end
 
   def event_balance
-    render_event_metric(:balance) { @event.balance.to_i }
+    @balance = cache_event_metric(:balance) { @event.balance.to_i }
+    render :event_balance, layout: false
   end
 
   def event_raised
