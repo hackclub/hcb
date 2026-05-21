@@ -41,8 +41,8 @@ class InvoicePayout < ApplicationRecord
 
   # Although it normally doesn't make sense for a payout not to be linked to an invoice,
   # Stripe's schema makes this possible. When that happens, requiring an invoice/payout link breaks bank processing.
-  stripe_payoutable :invoice
   has_one :invoice, inverse_of: :payout, foreign_key: :payout_id
+  stripe_payoutable :invoice
   has_one :event, through: :invoice
   has_one :t_transaction, class_name: "Transaction"
 
