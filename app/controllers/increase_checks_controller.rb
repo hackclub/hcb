@@ -60,6 +60,7 @@ class IncreaseChecksController < ApplicationController
     authorize @check
 
     @check.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
+
     @check.mark_rejected!
 
     redirect_back_or_to increase_check_process_admin_path(@check), flash: { success: "Check has been canceled." }
