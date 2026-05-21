@@ -139,19 +139,11 @@ class AdminController < Admin::BaseController
   end
 
   def event_balance
-    @event = Event.friendly.find(params[:id])
-    @balance = Rails.cache.fetch("admin_event_balance_#{@event.id}", expires_in: 5.minutes) do
-      @event.balance.to_i
-    end
-    render :event_balance, layout: false
+    render_event_metric(:balance) { @event.balance.to_i }
   end
 
   def event_raised
-    @event = Event.friendly.find(params[:id])
-    @raised = Rails.cache.fetch("admin_event_raised_#{@event.id}", expires_in: 5.minutes) do
-      @event.total_raised.to_i
-    end
-    render :event_raised, layout: false
+    render_event_metric(:raised) { @event.total_raised.to_i }
   end
 
   def event_toggle_approved
@@ -1517,6 +1509,17 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def render_event_metric(metric_name, &block)
+    @event = Event.friendly.find(params[:id])
+    instance_variable_set(
+      :"@#{metric_name}",
+      Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
+        block.call
+      end
+    )
+    render :"event_#{metric_name}", layout: false
+  end
 
   def stream_data(content_type, filename, data, download = true)
     headers["Content-Type"] = content_type
