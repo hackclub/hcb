@@ -16,6 +16,7 @@
     <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
       <span><%= this_transaction %> was declined
       <%= {
+          merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
           merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
           cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
           user_cards_locked: "by HCB because you have too many missing receipts"
@@ -39,6 +40,7 @@
   <span>
     <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
       <%= {
+          merchant_not_allowed_globally: "Merchant not allowed",
           merchant_not_allowed: "Merchant not allowed",
           cash_withdrawals_not_allowed: "Cash withdrawals disabled",
           user_cards_locked: "Card locked due to missing receipts",
@@ -71,7 +73,9 @@
   <% end %>
 
   <p class="mb-0">
-    <% if hcb_decline_reason == :merchant_not_allowed %>
+    <% if hcb_decline_reason == :merchant_not_allowed_globally %>
+      This merchant is not allowed to prevent fraud. If you are trying to make a payment, please use a transfer method supported by HCB.
+    <% elsif hcb_decline_reason == :merchant_not_allowed %>
       If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
       Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
