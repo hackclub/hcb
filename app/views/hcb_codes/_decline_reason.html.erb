@@ -16,48 +16,48 @@
     <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
       <span><%= this_transaction %> was declined
       <%= {
-          merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
-          merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
-          cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
-          user_cards_locked: "by HCB because you have too many missing receipts"
-        }[hcb_decline_reason] || "due to insufficient funds" %>.</span>``
+            merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
+            merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
+            cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
+            user_cards_locked: "by HCB because you have too many missing receipts"
+          }[hcb_decline_reason] || "due to insufficient funds" %>.</span>``
     <% else %>
       <span>
       <%= ("#{this_transaction} was declined by our card issuer " + ({
-          card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "because this card is frozen",
-          card_canceled: "because this card is canceled",
-          card_expired: "because this card is expired",
-          verification_failed: "because the card verification failed",
-          suspected_fraud: "because of suspected fraud",
-          reversed_by_merchant: "because the merchant reversed the transaction",
-          cardholder_verification_required: "because cardholder verification is required",
-          insufficient_funds: "because of an integration issue",
-          insecure_authorization_method: "because the authorization method is insecure",
-          webhook_timeout: "because of a network issue",
-        }[stripe_decline_reason] || "")).strip %>.</span>
+            card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "because this card is frozen",
+            card_canceled: "because this card is canceled",
+            card_expired: "because this card is expired",
+            verification_failed: "because the card verification failed",
+            suspected_fraud: "because of suspected fraud",
+            reversed_by_merchant: "because the merchant reversed the transaction",
+            cardholder_verification_required: "because cardholder verification is required",
+            insufficient_funds: "because of an integration issue",
+            insecure_authorization_method: "because the authorization method is insecure",
+            webhook_timeout: "because of a network issue",
+          }[stripe_decline_reason] || "")).strip %>.</span>
     <% end %>
   <% else %>
   <span>
     <% if hcb_decline_reason.present? || stripe_decline_reason == "webhook_declined" %>
       <%= {
-          merchant_not_allowed_globally: "Merchant not allowed",
-          merchant_not_allowed: "Merchant not allowed",
-          cash_withdrawals_not_allowed: "Cash withdrawals disabled",
-          user_cards_locked: "Card locked due to missing receipts",
-        }[hcb_decline_reason] || "Insufficient funds" %>
+            merchant_not_allowed_globally: "Merchant not allowed",
+            merchant_not_allowed: "Merchant not allowed",
+            cash_withdrawals_not_allowed: "Cash withdrawals disabled",
+            user_cards_locked: "Card locked due to missing receipts",
+          }[hcb_decline_reason] || "Insufficient funds" %>
     <% else %>
       <%= {
-          card_inactive: !hcb_code.stripe_card.initially_activated? ? "Card not activated" : "Card frozen",
-          card_canceled: "Card canceled",
-          card_expired: "Card expired",
-          verification_failed: "Card verification failed",
-          suspected_fraud: "Suspected fraud",
-          reversed_by_merchant: "Reversed by merchant",
-          cardholder_verification_required: "Cardholder verification required",
-          insufficient_funds: "Integration issue",
-          insecure_authorization_method: "Insecure authorization method",
-          webhook_timeout: "Network error",
-        }[stripe_decline_reason] || "Unknown error" %>
+            card_inactive: !hcb_code.stripe_card.initially_activated? ? "Card not activated" : "Card frozen",
+            card_canceled: "Card canceled",
+            card_expired: "Card expired",
+            verification_failed: "Card verification failed",
+            suspected_fraud: "Suspected fraud",
+            reversed_by_merchant: "Reversed by merchant",
+            cardholder_verification_required: "Cardholder verification required",
+            insufficient_funds: "Integration issue",
+            insecure_authorization_method: "Insecure authorization method",
+            webhook_timeout: "Network error",
+          }[stripe_decline_reason] || "Unknown error" %>
     <% end %>
     </span>
   <% end %>
