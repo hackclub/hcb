@@ -722,8 +722,14 @@ class EventsController < ApplicationController
     @reports = @reports.search(params[:q]) if params[:q].present?
     @reports = @reports.where("reimbursement_reports.created_at <= ?", params[:created_before]) if params[:created_before].present?
     @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:created_after]) if params[:created_after].present?
-    @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
+    @reports = helpers.sorted_relation(
+      @reports,
+      REIMBURSEMENT_COLUMNS,
+      sort: [params[:sort], params[:direction]],
+      default: [:created_at, :desc]
+    ).page(params[:page] || 1).per(params[:per] || 25)
 
+    @table_columns = REIMBURSEMENT_COLUMNS
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
       { key_base: "created", label: "Date created", type: "date_range" }
@@ -1098,6 +1104,25 @@ class EventsController < ApplicationController
   end
 
   private
+
+  REIMBURSEMENT_AMOUNT_SORT_SQL = "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')"
+  REIMBURSEMENT_AMOUNT_ASC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} ASC".freeze
+  REIMBURSEMENT_AMOUNT_DESC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} DESC".freeze
+  REIMBURSEMENT_COLUMNS = [
+    { key: "aasm_state", display: "Status" },
+    { key: "name", display: "Report" },
+    { key: "user_name", display: "From", column: "user" },
+    { key: "created_at", default: true, display: "Created", right: true },
+    {
+      key: "amount",
+      display: "Amount",
+      order: ->(relation, direction) do
+        relation.order(Arel.sql(direction == :asc ? REIMBURSEMENT_AMOUNT_ASC_ORDER : REIMBURSEMENT_AMOUNT_DESC_ORDER))
+      end,
+      right: true
+    },
+  ].freeze
+  private_constant :REIMBURSEMENT_COLUMNS
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
