@@ -42,7 +42,7 @@ class DonationPayout < ApplicationRecord
   scope :paid, -> { where(status: "paid") }
   scope :donation_hcb_code, -> { where("statement_descriptor ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
 
-  # although it normally doesn't make sense for a payout not to be linked to a donation,
+  # Although it normally doesn't make sense for a payout not to be linked to a donation,
   # Stripe's schema makes this possible, and when that happens, requiring donation<>payout breaks bank
   has_one :donation, inverse_of: :payout, foreign_key: :payout_id
   stripe_payoutable :donation
