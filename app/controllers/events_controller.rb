@@ -542,8 +542,9 @@ class EventsController < ApplicationController
       page = (params[:page] || 1).to_i
       @transactions = @transactions.page(page).per(params[:per] || 25)
 
+      # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                                  .where("created_at < ?", Date.new(2026, 5, 14))
+                                                  .where("created_at < ?", Date.new(2026, 5, 21))
                                                   .any?
     end
 
