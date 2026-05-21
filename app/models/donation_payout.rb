@@ -44,8 +44,8 @@ class DonationPayout < ApplicationRecord
 
   # although it normally doesn't make sense for a payout not to be linked to a donation,
   # Stripe's schema makes this possible, and when that happens, requiring donation<>payout breaks bank
-  stripe_payoutable :donation
   has_one :donation, inverse_of: :payout, foreign_key: :payout_id
+  stripe_payoutable :donation
   has_one :event, through: :donation
   has_one :t_transaction, class_name: "Transaction"
 
