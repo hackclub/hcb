@@ -53,7 +53,7 @@
 
   <% if @show_transfer_callout %>
     <%= render "application/callout", type: "info", title: "Starting May 14th, 2026, this page only shows direct #{@event.column_account_number.deposit_only? ? "credits" : "debits and credits"}.", class: "mt-2 mb-3" do %>
-      Your previous transfers can still be viewed <%= link_to "here", event_transfers_path(@event) %>.
+      Your previous transfers can still be viewed on the <%= link_to "Transfers", event_transfers_path(@event) %> page.
     <% end %>
   <% end %>
 

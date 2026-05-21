@@ -535,7 +535,7 @@ class EventsController < ApplicationController
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
         transaction_source_type: "RawColumnTransaction",
-        transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)
+        transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
       @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                          .order(created_at: :desc)
