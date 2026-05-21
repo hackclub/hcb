@@ -385,6 +385,7 @@ module EventsHelper
     h_gap   = 60
     v_gap   = 16
     padding = 24
+    min_width = 800  # Minimum width to prevent squishing
 
     all_ids = all_events.map(&:id).to_set
 
@@ -427,11 +428,15 @@ module EventsHelper
 
     num_leaves = leaf_count[root.id]
     max_depth = depths.values.max || 0
-    svg_width = (max_depth + 1) * (node_w + h_gap) - h_gap + 2 * padding
+    calculated_width = (max_depth + 1) * (node_w + h_gap) - h_gap + 2 * padding
+    svg_width = [calculated_width, min_width].max
     svg_height = num_leaves * (node_h + v_gap) - v_gap + 2 * padding
 
+    # Adjust horizontal spacing to fill available width
+    actual_h_gap = max_depth > 0 ? (svg_width - 2 * padding - (max_depth + 1) * node_w) / max_depth : h_gap
+
     svg = []
-    svg << %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 #{svg_width} #{svg_height}" style="display:block;width:100%;max-width:#{svg_width}px">)
+    svg << %(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 #{svg_width} #{svg_height}" style="display:block;width:100%;height:auto">)
     svg << <<~DEFS
       <defs>
         <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
@@ -465,7 +470,7 @@ module EventsHelper
     DEFS
 
     all_events.each do |event|
-      x = padding + depths[event.id] * (node_w + h_gap)
+      x = padding + depths[event.id] * (node_w + actual_h_gap)
       y = y_tops[event.id]
       cx = x + node_w / 2
       cy = y + node_h / 2
@@ -484,10 +489,10 @@ module EventsHelper
 
       next if children_of[event.id].empty?
 
-      ex = padding + depths[event.id] * (node_w + h_gap) + node_w
+      ex = padding + depths[event.id] * (node_w + actual_h_gap) + node_w
       ey = y_tops[event.id] + node_h / 2
       children_of[event.id].each do |child|
-        cx2 = padding + depths[child.id] * (node_w + h_gap)
+        cx2 = padding + depths[child.id] * (node_w + actual_h_gap)
         cy2 = y_tops[child.id] + node_h / 2
         svg << %(<line class="edge" x1="#{ex}" y1="#{ey}" x2="#{cx2}" y2="#{cy2}" stroke-width="1.5" marker-end="url(#arr)"/>)
       end
