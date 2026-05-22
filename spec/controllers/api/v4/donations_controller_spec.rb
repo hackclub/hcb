@@ -11,7 +11,8 @@ RSpec.describe Api::V4::DonationsController do
       event = create(:event)
       create(:organizer_position, user:, event:)
 
-      token = create(:api_token, user:)
+      trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "", trusted: true)
+      token = create(:api_token, user:, application: trusted_app)
       request.headers["Authorization"] = "Bearer #{token.token}"
 
       message = "Thanks for the great work — keep it up!"
