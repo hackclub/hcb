@@ -2,6 +2,7 @@
 
 module ApplicationHelper
   include ActionView::Helpers
+  include LocalTimeHelper
 
   include DonationsHelper
   include EmburseCardsHelper
