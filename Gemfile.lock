@@ -661,7 +661,7 @@ GEM
       rack (>= 1.2.0)
     rack-protection (3.0.6)
       rack
-    rack-proxy (0.7.7)
+    rack-proxy (0.8.2)
       rack
     rack-session (2.1.2)
       base64 (>= 0.1.0)
@@ -717,7 +717,7 @@ GEM
       execjs
       railties (>= 3.2)
       tilt
-    react_on_rails (16.6.0)
+    react_on_rails (16.7.0.rc.0)
       addressable
       connection_pool
       execjs (~> 2.5)
@@ -811,7 +811,7 @@ GEM
       nokogiri (>= 1.12.0)
     securerandom (0.4.1)
     semantic_range (3.1.1)
-    shakapacker (10.0.0)
+    shakapacker (10.1.0.rc.1)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
@@ -1064,7 +1064,7 @@ DEPENDENCIES
   rack-timeout
   rails (~> 8.0)
   react-rails
-  react_on_rails
+  react_on_rails (= 16.7.0.rc.0)
   redcarpet
   redis (~> 5.4)
   relaxed-rubocop
@@ -1080,6 +1080,7 @@ DEPENDENCIES
   ruby-limiter
   rubyzip (>= 2.3.0, < 3.0)
   safely_block
+  shakapacker (= 10.1.0.rc.1)
   sidekiq (~> 7.3.8)
   sidekiq-cron (~> 2.3)
   simplecov
