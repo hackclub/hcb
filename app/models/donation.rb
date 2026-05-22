@@ -388,7 +388,7 @@ class Donation < ApplicationRecord
   end
 
   def create_payment_intent_attrs(customer)
-    {
+    attrs = {
       amount:,
       customer: customer.id,
       currency: "usd",
@@ -396,6 +396,13 @@ class Donation < ApplicationRecord
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent
