@@ -1,0 +1,125 @@
+<% title @ai_query.display_name %>
+
+<style>
+  .ai-show-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: var(--hcb-accent-bg);
+    color: var(--hcb-accent);
+    margin-bottom: 0.6rem;
+  }
+
+  .ai-show-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--hcb-tx-1);
+    margin: 0 0 0.5rem;
+    line-height: 1.2;
+  }
+
+  .ai-show-meta {
+    font-size: 0.85rem;
+    color: var(--hcb-tx-2);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .ai-prompt-card {
+    background: var(--hcb-accent-bg, #fff5f6);
+    border: 1px solid rgba(236,55,80,0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .ai-prompt-icon {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    flex-shrink: 0;
+    color: var(--hcb-accent);
+  }
+
+  .ai-prompt-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--hcb-accent);
+    margin-bottom: 0.2rem;
+  }
+
+  .ai-show-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--hcb-border);
+    margin-top: 1.5rem;
+  }
+</style>
+
+<div class="flex items-center gap-2 text-sm mb-4" style="color: var(--hcb-tx-3)">
+  <%= link_to "AI Queries",
+              admin_ai_queries_path,
+              class: "hover:underline",
+              style: "color: var(--hcb-tx-2)" %>
+  <span>/</span>
+  <span style="color: var(--hcb-tx-1)"><%= @ai_query.display_name %></span>
+</div>
+
+<div class="mb-6">
+  <div class="ai-show-badge"><span>✦</span> AI Generated</div>
+  <h1 class="ai-show-title"><%= @ai_query.display_name %></h1>
+  <div class="ai-show-meta">
+    <span>Created <%= @ai_query.created_at.strftime("%B %-d, %Y") %></span>
+    <% if @ai_query.creator.present? %>
+      <span style="opacity: 0.4;">&middot;</span>
+      <span>
+        by <%= @ai_query.creator.full_name.presence || @ai_query.creator.email %>
+      </span>
+    <% end %>
+  </div>
+</div>
+
+<div class="ai-prompt-card">
+  <span class="ai-prompt-icon">✦</span>
+  <div>
+    <div class="ai-prompt-label">Prompt</div>
+    <div style="font-size: 0.95rem; color: var(--hcb-tx-1); line-height: 1.5;">
+      <%= @ai_query.prompt %>
+    </div>
+  </div>
+</div>
+
+<%# Turbo stream subscription — job broadcasts to [ai_query, :generation] %>
+<%= turbo_stream_from @ai_query, :generation %>
+
+<div id="ai-query-<%= @ai_query.id %>-progress">
+  <%= render "admin/ai_queries/progress", ai_query: @ai_query %>
+</div>
+
+<div class="ai-show-actions">
+  <%= link_to new_admin_ai_query_path, class: "btn" do %>
+    <span>✦</span> New Query
+  <% end %>
+  <%= button_to admin_ai_query_path(@ai_query),
+                method: :delete,
+                class: "btn",
+                style: "color: #b91c1c; border-color: #fca5a5; background: #fff1f2;",
+                data: { turbo_confirm: "Delete this AI query? This cannot be undone." } do %>
+    Delete
+  <% end %>
+</div>

@@ -334,6 +334,12 @@ module Admin
         name: "Misc",
         items: [
           make_item(
+            name: "AI Queries",
+            path: admin_ai_queries_path,
+            count: ->{ AiQuery.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Blazer",
             path: blazer_path,
             count: ->{ Blazer::Query.count },

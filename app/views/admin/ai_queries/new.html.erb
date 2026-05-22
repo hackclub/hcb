@@ -1,0 +1,225 @@
+<% title "New AI Query" %>
+
+<style>
+  .ai-query-prompt-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .ai-query-prompt-box {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .ai-query-sparkle {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    animation: sparkle-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes sparkle-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.92); }
+  }
+
+  .ai-query-headline {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 0.4rem;
+    color: var(--hcb-tx-1);
+  }
+
+  .ai-query-subhead {
+    font-size: 1rem;
+    color: var(--hcb-tx-2);
+    margin: 0;
+  }
+
+  .ai-query-form-card {
+    background: var(--hcb-bg-1, #fff);
+    border: 1px solid var(--hcb-border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  }
+
+  .ai-query-textarea {
+    width: 100%;
+    min-height: 160px;
+    resize: vertical;
+    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    border: 1.5px solid var(--hcb-border);
+    border-radius: 10px;
+    background: var(--hcb-bg-0, #f9f9f9);
+    color: var(--hcb-tx-1);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .ai-query-textarea:focus {
+    border-color: var(--hcb-accent);
+    box-shadow: 0 0 0 3px var(--hcb-accent-shadow, rgba(236, 55, 80, 0.12));
+  }
+
+  .ai-query-textarea::placeholder { color: var(--hcb-tx-3); }
+
+  .ai-query-submit-btn {
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 10px;
+    background: var(--hcb-accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .ai-query-submit-btn:hover { opacity: 0.88; }
+  .ai-query-submit-btn:active { transform: scale(0.98); }
+  .ai-query-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .ai-query-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .ai-query-example-chip {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--hcb-border);
+    background: var(--hcb-bg-0);
+    color: var(--hcb-tx-2);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+  }
+
+  .ai-query-example-chip:hover {
+    border-color: var(--hcb-accent);
+    color: var(--hcb-accent);
+    background: var(--hcb-accent-bg);
+  }
+
+  .ai-error-box {
+    background: #fff1f2;
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 0.875rem 1rem;
+    margin-bottom: 1rem;
+    color: #b91c1c;
+    font-size: 0.9rem;
+  }
+</style>
+
+<div class="ai-query-prompt-container">
+  <div class="ai-query-prompt-box">
+    <div class="text-center mb-10">
+      <span class="ai-query-sparkle">✦</span>
+      <h1 class="ai-query-headline">Ask your data anything</h1>
+      <p class="ai-query-subhead">
+        Describe what you want to know and AI will write the SQL for you.
+      </p>
+    </div>
+
+    <div class="ai-query-form-card">
+      <% if flash[:error].present? %>
+        <div class="ai-error-box">
+          <strong>Error:</strong> <%= flash[:error] %>
+        </div>
+      <% end %>
+
+      <%= form_with url: admin_ai_queries_path, method: :post, local: true,
+                    id: "ai-query-form" do |f| %>
+        <label class="block text-sm font-semibold mb-2" for="prompt"
+               style="color: var(--hcb-tx-1)">
+          What would you like to know?
+        </label>
+
+        <%= f.text_area :prompt,
+                        id: "prompt",
+                        class: "ai-query-textarea",
+                        placeholder: "e.g. Show me the top 10 organizations by " \
+                                     "total donation revenue in the last 90 days",
+                        value: @prompt,
+                        autofocus: true,
+                        rows: 5 %>
+
+        <div class="ai-query-examples">
+          <span class="text-xs font-medium" style="color: var(--hcb-tx-3); line-height: 2.1;">
+            Try:
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Monthly donation totals for the past 12 months">
+            Monthly donation totals
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Top 20 organizations by total spending in the last 30 days">
+            Top orgs by spending
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Number of new organizations created per month this year">
+            New orgs per month
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Organizations with the most active organizers">
+            Most active orgs
+          </span>
+          <span class="ai-query-example-chip"
+                data-prompt="Average donation amount by month for the past year">
+            Avg donation by month
+          </span>
+        </div>
+
+        <button type="submit" class="ai-query-submit-btn" id="ai-submit-btn">
+          <span>✦</span> Generate Query
+        </button>
+      <% end %>
+    </div>
+
+    <p class="text-center text-xs mt-4" style="color: var(--hcb-tx-3)">
+      Generation runs in the background — you'll see live progress on the next page.
+      <%= link_to "View all AI queries →",
+                  admin_ai_queries_path,
+                  class: "hover:underline",
+                  style: "color: var(--hcb-accent)" %>
+    </p>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById("ai-query-form");
+  const submitBtn = document.getElementById("ai-submit-btn");
+  const promptEl = document.getElementById("prompt");
+
+  document.querySelectorAll(".ai-query-example-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      promptEl.value = chip.dataset.prompt;
+      promptEl.focus();
+    });
+  });
+
+  form.addEventListener("submit", () => {
+    if (promptEl.value.trim() === "") return;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = "<span>✦</span> Starting…";
+  });
+</script>

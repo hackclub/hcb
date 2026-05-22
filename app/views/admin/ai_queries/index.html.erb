@@ -1,0 +1,98 @@
+<% title "AI Queries" %>
+
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-bold flex items-center gap-2">
+      <span style="font-size: 1.4em; line-height: 1;">✦</span>
+      AI-Generated Queries
+    </h1>
+    <p class="text-sm mt-1" style="color: var(--hcb-tx-2)">
+      SQL queries built from natural language prompts.
+      <%= pluralize @ai_queries.count, "query" %> total.
+    </p>
+  </div>
+
+  <%= link_to new_admin_ai_query_path, class: "btn flex items-center gap-2" do %>
+    <span>✦</span> New AI Query
+  <% end %>
+</div>
+
+<% if @ai_queries.empty? %>
+  <div class="card text-center py-16 flex flex-col items-center gap-4"
+       style="border: 1px dashed var(--hcb-border)">
+    <div style="font-size: 3em; opacity: 0.3;">✦</div>
+    <div>
+      <p class="font-semibold text-lg" style="color: var(--hcb-tx-1)">No AI queries yet</p>
+      <p class="text-sm mt-1" style="color: var(--hcb-tx-2)">
+        Generate your first query by describing what you want to know.
+      </p>
+    </div>
+    <%= link_to new_admin_ai_query_path, class: "btn mt-2" do %>
+      Generate your first query
+    <% end %>
+  </div>
+<% else %>
+  <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));">
+    <% @ai_queries.each do |ai_query| %>
+      <div class="card flex flex-col gap-3 hover:shadow-md transition-shadow"
+           style="border: 1px solid var(--hcb-border);">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-1">
+              <% if ai_query.success? %>
+                <span class="text-xs font-semibold px-1.5 py-0.5 rounded"
+                      style="background: var(--hcb-accent-bg); color: var(--hcb-accent);
+                             font-size: 0.65em; letter-spacing: 0.05em; text-transform: uppercase;">
+                  AI
+                </span>
+              <% elsif ai_query.generating? || ai_query.pending? %>
+                <span class="text-xs font-semibold px-1.5 py-0.5 rounded"
+                      style="background: #fef3c7; color: #92400e;
+                             font-size: 0.65em; letter-spacing: 0.05em; text-transform: uppercase;">
+                  Generating…
+                </span>
+              <% elsif ai_query.failed? %>
+                <span class="text-xs font-semibold px-1.5 py-0.5 rounded"
+                      style="background: #fee2e2; color: #b91c1c;
+                             font-size: 0.65em; letter-spacing: 0.05em; text-transform: uppercase;">
+                  Failed
+                </span>
+              <% end %>
+            </div>
+            <%= link_to admin_ai_query_path(ai_query),
+                        class: "font-semibold hover:underline block truncate" do %>
+              <%= ai_query.display_name %>
+            <% end %>
+          </div>
+          <% if ai_query.success? && ai_query.blazer_query %>
+            <%= link_to blazer.query_path(ai_query.blazer_query),
+                        target: "_blank",
+                        rel: "noopener",
+                        class: "tooltipped tooltipped--w text-xs shrink-0",
+                        "aria-label": "Open in Blazer" do %>
+              <%= inline_icon "external", size: 16 %>
+            <% end %>
+          <% end %>
+        </div>
+
+        <p class="text-sm line-clamp-2" style="color: var(--hcb-tx-2)">
+          "<%= ai_query.prompt %>"
+        </p>
+
+        <div class="flex items-center justify-between pt-1 border-t"
+             style="border-color: var(--hcb-border);">
+          <span class="text-xs" style="color: var(--hcb-tx-3)">
+            <%= time_ago_in_words(ai_query.created_at) %> ago
+            <% if ai_query.creator.present? %>
+              &middot; <%= ai_query.creator.full_name.presence || ai_query.creator.email %>
+            <% end %>
+          </span>
+          <%= link_to "View →",
+                      admin_ai_query_path(ai_query),
+                      class: "text-xs font-medium hover:underline",
+                      style: "color: var(--hcb-accent)" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
