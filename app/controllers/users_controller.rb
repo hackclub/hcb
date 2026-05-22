@@ -129,7 +129,7 @@ class UsersController < ApplicationController
   end
 
   def receipt_report
-    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
@@ -441,7 +441,6 @@ class UsersController < ApplicationController
       :use_sms_auth,
       :use_two_factor_authentication,
       # notifications
-      :receipt_report_option,
       :comment_notifications,
       :charge_notifications,
       :monthly_donation_summary,
