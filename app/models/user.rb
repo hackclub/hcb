@@ -7,12 +7,15 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  card_grant_notifications      :boolean          default(TRUE), not null
 #  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
 #  creation_method               :integer
+#  donation_notifications        :boolean          default(TRUE), not null
 #  email                         :text             not null
 #  full_name                     :string
+#  invoice_notifications         :boolean          default(TRUE), not null
 #  joined_as_teenager            :boolean
 #  locked_at                     :datetime
 #  monthly_donation_summary      :boolean          default(TRUE)
@@ -23,12 +26,15 @@
 #  preferred_name                :string
 #  pretend_is_not_admin          :boolean          default(FALSE), not null
 #  receipt_report_option         :integer          default("weekly"), not null
+#  reimbursement_notifications   :boolean          default(TRUE), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
 #  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  team_notifications            :boolean          default(TRUE), not null
 #  teenager                      :boolean
+#  transfer_notifications        :boolean          default(TRUE), not null
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  verified                      :boolean          default(FALSE), not null

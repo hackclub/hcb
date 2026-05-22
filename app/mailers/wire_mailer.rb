@@ -13,6 +13,8 @@ class WireMailer < ApplicationMailer
     @wire = params[:wire]
     @reason = params[:reason]
 
+    return unless @wire.user.transfer_notifications?
+
     mail subject: "[HCB] Wire to #{@wire.recipient_name} failed to send", to: @wire.user.email
   end
 

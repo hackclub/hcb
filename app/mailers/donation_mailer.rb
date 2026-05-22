@@ -33,7 +33,7 @@ class DonationMailer < ApplicationMailer
   end
 
   def set_emails
-    @emails = @donation.event.organizer_contact_emails
+    @emails = @donation.event.organizer_contact_emails { |users| users.where(donation_notifications: true) }
   end
 
 end
