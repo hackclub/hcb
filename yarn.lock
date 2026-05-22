@@ -5862,10 +5862,10 @@ react-is@^18.3.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.3.1.tgz#e83557dc12eae63a99e003a46388b1dcbb44db7e"
   integrity sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==
 
-react-on-rails@16.6.0:
-  version "16.6.0"
-  resolved "https://registry.npmjs.org/react-on-rails/-/react-on-rails-16.6.0.tgz#da7f117fec14f420f7f6ffe6bdb34b7fc2e01b3a"
-  integrity sha512-LqLi7A0n0Tv5c3yMYlwS9s6rE82gvXNMj3sscmK2LOgIJ+mLQlOX65n0Jq5ZJ4Nsl9SRgxEOOQmcrfvDeB9F1g==
+react-on-rails@16.7.0-rc.0:
+  version "16.7.0-rc.0"
+  resolved "https://registry.npmjs.org/react-on-rails/-/react-on-rails-16.7.0-rc.0.tgz#4fb47203ab9f65528605233c3b6cddba69536107"
+  integrity sha512-81Lu9ToSlunduiPQm+R+C+DJ9irdPDFEN3Jvq8dyI6r5uKc9kgfsTiJkyeULjk613RBAT0apkr08GOyhaSe94A==
 
 react-simple-maps@^3.0.0:
   version "3.0.0"
