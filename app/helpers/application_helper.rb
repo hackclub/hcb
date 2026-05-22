@@ -3,6 +3,27 @@
 module ApplicationHelper
   include ActionView::Helpers
 
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuiteAccountsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PopoverHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
+
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
