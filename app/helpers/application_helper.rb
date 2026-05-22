@@ -3,21 +3,46 @@
 module ApplicationHelper
   include ActionView::Helpers
 
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuiteAccountsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PopoverHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
+
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
   end
 
-  def sorted_relation(relation, columns, sort:, default:)
-    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : default
-    default_key, default_direction = default
+  def sorted_relation(relation, columns, sort:, default_direction: :desc)
+    default_column = columns.find { |c| c[:default] } || columns.first
+
+    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : [default_column[:key], default_direction]
 
     sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
-    column_def = columns.find { |c| c[:key] == sort_key.to_s } ||
-                 columns.find { |c| c[:key] == default_key.to_s } ||
-                 columns.first
+    column_def = columns.find { |c| c[:key] == sort_key.to_s } || default_column
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
-    relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+
+    if column_def[:order]
+      column_def[:order].call(relation, sort_direction.to_sym)
+    else
+      relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    end
   end
 
   def render_money(amount, opts = {})
