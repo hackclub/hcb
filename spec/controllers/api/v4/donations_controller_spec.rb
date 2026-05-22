@@ -3,9 +3,16 @@
 require "rails_helper"
 
 RSpec.describe Api::V4::DonationsController do
+  include DonationSupport
+
   render_views
 
   describe "#create" do
+    before do
+      stub_donation_payment_intent_creation
+      allow(StripeService::PaymentIntent).to receive(:retrieve).and_return(Stripe::PaymentIntent.construct_from(id: "pi_stub", payment_method: nil))
+    end
+
     it "creates a donation" do
       user  = create(:user)
       event = create(:event)
