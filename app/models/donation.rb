@@ -154,7 +154,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
