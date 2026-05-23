@@ -227,6 +227,10 @@ class Contract < ApplicationRecord
     reissue_of_id.present?
   end
 
+  def reissued?
+    reissued_contract.present?
+  end
+
   private
 
   def docuseal_client
