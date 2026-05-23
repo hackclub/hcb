@@ -56,7 +56,9 @@ class RecurringDonation < ApplicationRecord
   before_update :update_amount, if: -> { amount_changed? }
   after_update :notify_amount_changed!, if: -> { amount_previously_changed? }
 
-  validates :name, :email, presence: true
+  validates :name, presence: true
+  validates :email, presence: true
+  validates_email_format_of :email, if: :email_changed?
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
   validates_uniqueness_of :stripe_subscription_id
   validates_uniqueness_of :email,

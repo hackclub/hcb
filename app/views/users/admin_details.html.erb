@@ -298,5 +298,15 @@
       <% end %>
     <% end %>
 
+    <% if @user.applications.not_archived.any? %>
+      <% admin_tool "p-3" do %>
+        <h3 class="mb2 mt1">Applications</h3>
+        <ul>
+          <% @user.applications.not_archived.each do |application| %>
+            <li><%= link_to "#{application.name} (#{application.aasm_state.humanize})", submission_application_path(application), data: { turbo_frame: "_top" } %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
   </div>
 <% end %>

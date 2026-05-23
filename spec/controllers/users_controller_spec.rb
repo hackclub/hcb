@@ -12,7 +12,7 @@ RSpec.describe UsersController do
         admin_user = create(:user, :make_admin, full_name: "Admin User")
         impersonated_user = create(:user, full_name: "Impersonated User")
 
-        initial_session = sign_in(admin_user)
+        initial_session = create_session(admin_user, verified: true)
 
         # This is a normal session which should last for the user's session_validity_preference
         expect(initial_session.expiration_at).to eq(admin_user.session_validity_preference.seconds.from_now)
@@ -29,12 +29,29 @@ RSpec.describe UsersController do
       end
     end
 
+    it "allows admins to impersonate unverified accounts and mirrors the target's verification" do
+      admin_user = create(:user, :make_admin)
+      impersonated_user = create(:user, verified: false, creation_method: :first_robotics_form)
+
+      create_session(admin_user, verified: true)
+
+      post(:impersonate, params: { id: impersonated_user.id })
+      expect(response).to redirect_to(root_path)
+
+      new_session = current_session!
+      expect(new_session.user_id).to eq(impersonated_user.id)
+      expect(new_session.impersonated_by_id).to eq(admin_user.id)
+      # Mirror the target's view: the admin sees what an unverified user sees,
+      # i.e. an unverified session.
+      expect(new_session.verified).to be(false)
+    end
+
     it "allows admins to impersonate locked accounts" do
       admin_user = create(:user, :make_admin)
       impersonated_user = create(:user, full_name: "Impersonated User")
       impersonated_user.lock!
 
-      initial_session = sign_in(admin_user)
+      create_session(admin_user, verified: true)
 
       post(:impersonate, params: { id: impersonated_user.id })
       expect(response).to redirect_to(root_path)
@@ -56,7 +73,7 @@ RSpec.describe UsersController do
       user.update!(use_two_factor_authentication: true)
       Flipper.enable(:sudo_mode_2015_07_21, user)
       stub_twilio_sms_verification(phone_number: user.phone_number, code: "123456")
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel_to(3.hours.from_now)
 
@@ -95,7 +112,7 @@ RSpec.describe UsersController do
       user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
       Flipper.disable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel_to(3.hours.from_now)
 
@@ -124,7 +141,7 @@ RSpec.describe UsersController do
       )
 
       user = create(:user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       patch(
         :update,
@@ -142,6 +159,45 @@ RSpec.describe UsersController do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(flash.to_h).to eq("error" => "#{reason} Please choose another method.")
       expect(user.reload.payout_method_type).to eq(nil)
+    end
+  end
+
+  describe "settings access for unverified users" do
+    def sign_in_unverified
+      user = create(:user, verified: false)
+      user_session = User::Session.create!(
+        user:,
+        verified: false,
+        session_token: SecureRandom.urlsafe_base64,
+        expiration_at: 7.days.from_now,
+      )
+      cookies.encrypted[:session_token] = {
+        value: user_session.session_token,
+        expires: User::Session::MAX_SESSION_DURATION.from_now,
+        httponly: true,
+      }
+      user_session
+    end
+
+    settings_actions = %i[
+      edit
+      edit_address
+      edit_payout
+      edit_featurepreviews
+      edit_security
+      edit_notifications
+      edit_integrations
+      edit_admin
+    ]
+
+    settings_actions.each do |action|
+      it "redirects ##{action} to the auth page" do
+        sign_in_unverified
+
+        get(action)
+
+        expect(response).to redirect_to(/\/users\/auth/)
+      end
     end
   end
 end

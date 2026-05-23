@@ -9,6 +9,7 @@
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
 #  is_reauthentication      :boolean          default(FALSE), not null
+#  state                    :jsonb
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
 #  referral_link_id         :bigint
@@ -38,7 +39,10 @@ class Login < ApplicationRecord
   has_encrypted :browser_token
   before_validation :ensure_browser_token
 
-  store_accessor :authentication_factors, :sms, :email, :webauthn, :totp, :backup_code, prefix: :authenticated_with
+  AUTHENTICATION_FACTORS = %i[webauthn email sms totp backup_code].freeze
+  store_accessor :authentication_factors, *AUTHENTICATION_FACTORS, prefix: :authenticated_with
+
+  store_accessor :state, :return_to, :purpose
 
   EXPIRATION = 15.minutes
 
@@ -55,9 +59,22 @@ class Login < ApplicationRecord
   end
 
   validate do
-    if user_session.present? && user_session.user != user
-      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
-      errors.add(:base, "A login with a session present has a session.user / user mismatch.")
+    if state.to_json.bytesize > 10.kilobytes
+      errors.add(:base, "Login state exceeds 10KB.")
+    end
+  end
+
+  validate do
+    if user_session.present? && user_session.user_id != user_id
+      Rails.error.unexpected "A login with a session present has a user_session.user_id (#{user_session.user_id}) / user_id (#{user_id}) mismatch."
+      errors.add(:base, "A login with a session present has a user_session.user / user mismatch.")
+    end
+  end
+
+  validate do
+    if user_session.present? && user_session.unverified?
+      # Unverified sessions by definition do not have auth (aka, no Login)
+      errors.add(:user_session, "must be verified")
     end
   end
 
@@ -79,6 +96,14 @@ class Login < ApplicationRecord
   end
 
   before_create(:sync_is_reauthentication)
+
+  def for_application?
+    purpose == "application"
+  end
+
+  def for_first?
+    purpose == "first"
+  end
 
   def authentication_factors_count
     return 0 if authentication_factors.nil?

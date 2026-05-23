@@ -5,7 +5,7 @@
 # Table name: donations
 #
 #  id                                   :bigint           not null, primary key
-#  aasm_state                           :string
+#  aasm_state                           :string           not null
 #  amount                               :integer
 #  amount_received                      :integer
 #  anonymous                            :boolean          default(FALSE), not null
@@ -86,13 +86,13 @@ class Donation < ApplicationRecord
 
   before_save :trim_utm_referrer_fields
 
-  before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
+  before_create :create_stripe_payment_intent, unless: -> { recurring? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
-  validates :email, on: :create, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
@@ -154,7 +154,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
@@ -388,7 +388,7 @@ class Donation < ApplicationRecord
   end
 
   def create_payment_intent_attrs(customer)
-    {
+    attrs = {
       amount:,
       customer: customer.id,
       currency: "usd",
@@ -396,6 +396,13 @@ class Donation < ApplicationRecord
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent

@@ -18,7 +18,7 @@
 
       <div class="field">
         <%= form.label :expiration_at, "Expires on" %>
-        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at %>
+        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled: %>
       </div>
 
       <div class="field">
