@@ -13,12 +13,16 @@ module Api
       def index
         authorize @event, :show_in_v4?
 
-        all_past_donations = @event.donations
-                                   .where(aasm_state: params[:status] || [:in_transit, :deposited, :refunded])
-                                   .order(created_at: :desc)
-                                   .to_a
+        donations = @event.donations.order(created_at: :desc)
 
-        @past_donations = paginate_cursor(all_past_donations, &:public_id)
+        if params[:status].present?
+          valid_statuses = Donation.aasm.states.map { |s| s.name.to_s }
+          return render json: { error: "invalid_operation", messages: ["'#{params[:status]}' is not a valid status."] }, status: :bad_request unless valid_statuses.include?(params[:status])
+
+          donations = donations.where(aasm_state: params[:status])
+        end
+
+        @past_donations = paginate_cursor(donations.to_a, &:public_id)
 
         if expand?(:stats)
           @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
