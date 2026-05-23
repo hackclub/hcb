@@ -128,9 +128,9 @@ class User
       last_authenticated_at >= SUDO_MODE_TTL.ago
     end
 
-    def clear_metadata!
+    def clear_ip_metadata!
       update!(
-        device_info: nil,
+        ip: nil,
         latitude: nil,
         longitude: nil,
       )
