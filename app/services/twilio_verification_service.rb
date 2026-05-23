@@ -25,6 +25,7 @@ class TwilioVerificationService
     if UNSUPPORTED_COUNTRY_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
       raise CountryNotSupported
     end
+
     unless ::TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
       Rails.error.report(e)
       raise

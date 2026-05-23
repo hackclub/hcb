@@ -299,7 +299,7 @@ RSpec.describe User, type: :model do
 
     it "does nothing when stripe cardholder has no stripe_id" do
       user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
-      cardholder = create(:stripe_cardholder, user:, stripe_id: nil, stripe_email: "test@example.com")
+      create(:stripe_cardholder, user:, stripe_id: nil, stripe_email: "test@example.com")
 
       expect(StripeService::Issuing::Cardholder).not_to receive(:update)
 

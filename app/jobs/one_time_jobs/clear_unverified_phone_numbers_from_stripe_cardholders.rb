@@ -19,5 +19,6 @@ module OneTimeJobs
           Rails.error.report(e)
         end
     end
+
   end
 end
