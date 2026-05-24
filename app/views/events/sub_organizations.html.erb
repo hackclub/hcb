@@ -37,6 +37,18 @@
       data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id } }.to_json %>"
     ></div>
   </div>
+
+  <a id="sub-org-graph-more-trigger" data-behavior="modal_trigger" data-modal="sub-org-graph-modal" style="display:none"></a>
+  <section data-behavior="modal" role="dialog" id="sub-org-graph-modal" class="modal modal--scroll bg-snow">
+    <%= modal_header "All sub-organizations" %>
+    <ul style="list-style:none; margin:0; padding: 0 0 8px;">
+      <% @all_events.drop(1).each do |event| %>
+        <li>
+          <%= link_to event.name, event_path(event), class: "block px-5 py-2 no-underline hover:bg-smoke" %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
 <% end %>
 
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">

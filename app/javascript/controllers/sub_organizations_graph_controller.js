@@ -15,10 +15,6 @@ export default class extends Controller {
     this.render()
   }
 
-  disconnect() {
-    document.querySelector('.suborg-graph-dialog')?.remove()
-  }
-
   render() {
     const nodes = this.nodesValue
     if (!nodes.length) return
@@ -86,7 +82,7 @@ export default class extends Controller {
     const g = svg
       .append('g')
       .style('cursor', 'pointer')
-      .on('click', () => this.openModal(allChildren))
+      .on('click', () => this.openModal())
     g.append('rect')
       .attr('class', 'more-rect')
       .attr('x', childX)
@@ -104,31 +100,8 @@ export default class extends Controller {
       .text(`+${hiddenCount} more`)
   }
 
-  openModal(children) {
-    document.querySelector('.suborg-graph-dialog')?.remove()
-
-    const dialog = document.createElement('dialog')
-    dialog.className = 'suborg-graph-dialog'
-    dialog.innerHTML = `
-      <div class="suborg-graph-dialog__header">
-        <strong>All sub-organizations</strong>
-        <button class="suborg-graph-dialog__close" aria-label="Close">&times;</button>
-      </div>
-      <ul class="suborg-graph-dialog__list">
-        ${children.map((c) => `<li><a class="suborg-graph-dialog__item" href="${this.escapeHtml(c.href)}">${this.escapeHtml(c.name)}</a></li>`).join('')}
-      </ul>
-    `
-
-    document.body.appendChild(dialog)
-    dialog.showModal()
-
-    dialog
-      .querySelector('.suborg-graph-dialog__close')
-      .addEventListener('click', () => dialog.close())
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) dialog.close()
-    })
-    dialog.addEventListener('close', () => dialog.remove())
+  openModal() {
+    document.getElementById('sub-org-graph-more-trigger')?.click()
   }
 
   // Tree layout for all other cases
@@ -252,11 +225,5 @@ export default class extends Controller {
       .text(label)
   }
 
-  escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-  }
+
 }
