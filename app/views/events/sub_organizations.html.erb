@@ -30,6 +30,20 @@
   </div>
 </div>
 
+<% if @all_events.length > 1 %>
+  <div class="card my-3 p-0"
+       style="overflow: hidden;"
+       data-controller="org-graph"
+       data-org-graph-root-value="<%= @event.id %>"
+       data-org-graph-nodes-value="<%= @all_events.map { |e|
+         { id: e.id,
+           parent_id: e.id == @event.id ? nil : e.parent_id,
+           name: e.name,
+           href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e) }
+       }.to_json %>">
+  </div>
+<% end %>
+
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/filters/search", form: %>
