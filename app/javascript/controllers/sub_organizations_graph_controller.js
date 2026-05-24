@@ -47,8 +47,6 @@ export default class extends Controller {
 
     if (isFlat && !this.expanded && directChildren.length > MAX_INITIAL) {
       this.renderCollapsed(root, directChildren, containerWidth, markerId)
-    } else if (isFlat && directChildren.length > 15) {
-      this.renderGrid(root, directChildren, containerWidth, markerId)
     } else {
       this.renderTree(nodes, root, childrenOf, containerWidth, markerId)
     }
@@ -172,53 +170,7 @@ export default class extends Controller {
       .text(`+${hiddenCount} more`)
   }
 
-  // Grid layout for flat trees: children fill columns across the full width
-  renderGrid(root, children, containerWidth, markerId) {
-    const numCols = Math.max(
-      1,
-      Math.floor(
-        (containerWidth - 2 * PADDING - NODE_W) / (NODE_W + MIN_H_GAP),
-      ),
-    )
-    const rowsPerCol = Math.ceil(children.length / numCols)
-    const svgWidth = containerWidth
-    const svgHeight = rowsPerCol * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
-    const hGap = (svgWidth - 2 * PADDING - (numCols + 1) * NODE_W) / numCols
-
-    const svg = this.createSvg(svgWidth, svgHeight, markerId)
-
-    const rootX = PADDING
-    const rootY = (svgHeight - NODE_H) / 2
-
-    const childPositions = children.map((child, i) => {
-      const col = Math.floor(i / rowsPerCol)
-      const row = i % rowsPerCol
-      return {
-        node: child,
-        x: PADDING + NODE_W + hGap + col * (NODE_W + hGap),
-        y: PADDING + row * (NODE_H + V_GAP),
-      }
-    })
-
-    childPositions.forEach(({ x, y }) => {
-      svg
-        .append('line')
-        .attr('class', 'edge')
-        .attr('x1', rootX + NODE_W)
-        .attr('y1', rootY + NODE_H / 2)
-        .attr('x2', x)
-        .attr('y2', y + NODE_H / 2)
-        .attr('stroke-width', 1.5)
-        .attr('marker-end', `url(#${markerId})`)
-    })
-
-    this.drawNode(svg, root, rootX, rootY, true)
-    childPositions.forEach(({ node, x, y }) =>
-      this.drawNode(svg, node, x, y, false),
-    )
-  }
-
-  // Tree layout for nested hierarchies
+  // Tree layout for nested hierarchies (and flat lists)
   renderTree(nodes, root, childrenOf, containerWidth, markerId) {
     const leafCount = {}
     const countLeaves = (node) => {
