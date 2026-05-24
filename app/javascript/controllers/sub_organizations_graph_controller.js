@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import { select } from 'd3-selection'
 
 const NODE_W = 210
-const NODE_H = 72
+const NODE_H = 60
 const ROOT_H = 36
 const MIN_H_GAP = 60
 const V_GAP = 8
@@ -110,31 +110,17 @@ export default class extends Controller {
       .attr('dominant-baseline', 'middle')
       .text(label)
 
-    const tags = node.tags || []
-    if (tags.length > 0) {
-      const tagLabel = tags
-        .slice(0, 3)
-        .map(t => (t.length > 14 ? t.slice(0, 13) + '…' : t))
-        .join(' · ')
-      a.append('text')
-        .attr('class', 'node-tags')
-        .attr('x', x + 12)
-        .attr('y', y + 34)
-        .attr('dominant-baseline', 'middle')
-        .text(tagLabel)
-    }
-
     a.append('text')
       .attr('class', 'node-meta')
       .attr('x', x + 12)
-      .attr('y', y + 55)
+      .attr('y', y + 44)
       .attr('dominant-baseline', 'middle')
       .text(this.formatBalance(node.balanceCents))
 
     a.append('text')
       .attr('class', 'node-meta')
       .attr('x', x + NODE_W - 12)
-      .attr('y', y + 55)
+      .attr('y', y + 44)
       .attr('text-anchor', 'end')
       .attr('dominant-baseline', 'middle')
       .text(`💳 ${node.cardCount ?? 0}`)
