@@ -30,9 +30,12 @@
   </div>
 </div>
 
-<% if @all_events.length > 1 %>
+<% if @all_events&.length.to_i > 1 %>
   <div class="card my-3 p-0" style="overflow-x: auto;">
-    <%= subevent_svg_graph(@event, @all_events) %>
+    <div
+      data-controller="sub-organizations-graph"
+      data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id } }.to_json %>"
+    ></div>
   </div>
 <% end %>
 
