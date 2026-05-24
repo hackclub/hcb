@@ -7,7 +7,7 @@ const ROOT_H = 36
 const MIN_H_GAP = 60
 const V_GAP = 8
 const PADDING = 24
-const MAX_INITIAL = 2
+const MAX_INITIAL = 5
 
 export default class extends Controller {
   static values = {
@@ -81,7 +81,9 @@ export default class extends Controller {
     const h = isRoot ? ROOT_H : NODE_H
     const maxChars = 28
     const label =
-      node.name.length > maxChars ? node.name.slice(0, maxChars - 1) + '…' : node.name
+      node.name.length > maxChars
+        ? node.name.slice(0, maxChars - 1) + '…'
+        : node.name
     const a = svg.append('a').attr('href', node.href).attr('title', node.name)
     a.append('rect')
       .attr('class', isRoot ? 'root-rect' : 'node-rect')
