@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -732,7 +732,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   end
 
   create_table "documents", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "archived_at"
     t.bigint "archived_by_id"
     t.integer "category", default: 0, null: false
@@ -1034,6 +1034,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.boolean "generate_monthly_announcement", default: false, null: false
+    t.boolean "hide_onboarding_message", default: false, null: false
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
@@ -1120,7 +1121,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
     t.boolean "demo_mode", default: false, null: false
-    t.datetime "demo_mode_request_meeting_at", precision: nil
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"
