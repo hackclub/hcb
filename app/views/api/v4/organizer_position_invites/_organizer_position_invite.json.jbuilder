@@ -6,8 +6,8 @@ object_shape(json, invitation) do
   can_see_email = policy(invitation).index?
 
   json.accepted invitation.accepted?
-  json.sender { json.partial! "api/v4/users/user", user: invitation.sender, show_email: can_see_email }
-  json.invitee { json.partial! "api/v4/users/user", user: invitation.user, show_email: can_see_email || invitation.user == current_user }
-  json.organization { json.partial! "api/v4/events/event", event: invitation.event }
+  expand_association(json, :sender,       invitation.sender, partial: "api/v4/users/user",   as: :user,  locals: { show_email: can_see_email })
+  expand_association(json, :invitee,      invitation.user,   partial: "api/v4/users/user",   as: :user,  locals: { show_email: can_see_email || invitation.user == current_user })
+  expand_association(json, :organization, invitation.event,  partial: "api/v4/events/event", as: :event)
   json.role invitation.role
 end
