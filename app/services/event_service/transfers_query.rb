@@ -78,6 +78,7 @@ module EventService
       @disbursements   = @disbursements.search_name(@search)
       @wires           = @wires.search_recipient(@search)
       @wise_transfers  = @wise_transfers.search_recipient(@search)
+      @paypal_transfers = @paypal_transfers.search_recipient(@search)
     end
 
     def combine_and_sort
