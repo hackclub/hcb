@@ -1,10 +1,11 @@
 import { Controller } from '@hotwired/stimulus'
 import { select } from 'd3-selection'
 
-const NODE_W = 160
-const NODE_H = 36
+const NODE_W = 210
+const NODE_H = 50
+const ROOT_H = 36
 const MIN_H_GAP = 60
-const V_GAP = 4
+const V_GAP = 8
 const PADDING = 24
 const MAX_INITIAL = 2
 
@@ -77,24 +78,62 @@ export default class extends Controller {
   }
 
   drawNode(svg, node, x, y, isRoot) {
+    const h = isRoot ? ROOT_H : NODE_H
+    const maxChars = 28
     const label =
-      node.name.length > 21 ? node.name.slice(0, 20) + '…' : node.name
+      node.name.length > maxChars ? node.name.slice(0, maxChars - 1) + '…' : node.name
     const a = svg.append('a').attr('href', node.href).attr('title', node.name)
     a.append('rect')
       .attr('class', isRoot ? 'root-rect' : 'node-rect')
       .attr('x', x)
       .attr('y', y)
       .attr('width', NODE_W)
-      .attr('height', NODE_H)
-      .attr('rx', isRoot ? 18 : 6)
+      .attr('height', h)
+      .attr('rx', isRoot ? ROOT_H / 2 : 6)
       .attr('stroke-width', 2)
+
+    if (isRoot) {
+      a.append('text')
+        .attr('class', 'root-text')
+        .attr('x', x + NODE_W / 2)
+        .attr('y', y + ROOT_H / 2)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'central')
+        .text(label)
+      return
+    }
+
     a.append('text')
-      .attr('class', isRoot ? 'root-text' : 'node-text')
-      .attr('x', x + NODE_W / 2)
-      .attr('y', y + NODE_H / 2)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'central')
+      .attr('class', 'node-text')
+      .attr('x', x + 12)
+      .attr('y', y + 14)
+      .attr('dominant-baseline', 'middle')
       .text(label)
+
+    a.append('text')
+      .attr('class', 'node-meta')
+      .attr('x', x + 12)
+      .attr('y', y + 35)
+      .attr('dominant-baseline', 'middle')
+      .text(this.formatBalance(node.balanceCents))
+
+    a.append('text')
+      .attr('class', 'node-meta')
+      .attr('x', x + NODE_W - 12)
+      .attr('y', y + 35)
+      .attr('text-anchor', 'end')
+      .attr('dominant-baseline', 'middle')
+      .text(`💳 ${node.cardCount ?? 0}`)
+  }
+
+  formatBalance(cents) {
+    const dollars = (cents || 0) / 100
+    const abs = Math.abs(dollars)
+    const formatted = abs.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    return (dollars < 0 ? '-$' : '$') + formatted
   }
 
   // Single column with truncated list + "+N more" expand button
@@ -120,7 +159,7 @@ export default class extends Controller {
         .append('line')
         .attr('class', 'edge')
         .attr('x1', rootX + NODE_W)
-        .attr('y1', rootY + NODE_H / 2)
+        .attr('y1', rootY + ROOT_H / 2)
         .attr('x2', childX)
         .attr('y2', childY(i) + NODE_H / 2)
         .attr('stroke-width', 1.5)
@@ -131,7 +170,7 @@ export default class extends Controller {
       .append('line')
       .attr('class', 'edge')
       .attr('x1', rootX + NODE_W)
-      .attr('y1', rootY + NODE_H / 2)
+      .attr('y1', rootY + ROOT_H / 2)
       .attr('x2', childX)
       .attr('y2', childY(MAX_INITIAL) + NODE_H / 2)
       .attr('stroke-width', 1.5)
@@ -221,7 +260,7 @@ export default class extends Controller {
       const children = childrenOf[node.id]
       if (!children.length) return
       const ex = PADDING + depths[node.id] * (NODE_W + hGap) + NODE_W
-      const ey = yTops[node.id] + NODE_H / 2
+      const ey = yTops[node.id] + (node.isRoot ? ROOT_H : NODE_H) / 2
       children.forEach(child => {
         svg
           .append('line')
