@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import { select } from 'd3-selection'
 
 const NODE_W = 210
-const NODE_H = 60
+const NODE_H = 50
 const ROOT_H = 36
 const MIN_H_GAP = 60
 const V_GAP = 8
@@ -106,21 +106,21 @@ export default class extends Controller {
     a.append('text')
       .attr('class', 'node-text')
       .attr('x', x + 12)
-      .attr('y', y + 16)
+      .attr('y', y + 14)
       .attr('dominant-baseline', 'middle')
       .text(label)
 
     a.append('text')
       .attr('class', 'node-meta')
       .attr('x', x + 12)
-      .attr('y', y + 44)
+      .attr('y', y + 35)
       .attr('dominant-baseline', 'middle')
       .text(this.formatBalance(node.balanceCents))
 
     a.append('text')
       .attr('class', 'node-meta')
       .attr('x', x + NODE_W - 12)
-      .attr('y', y + 44)
+      .attr('y', y + 35)
       .attr('text-anchor', 'end')
       .attr('dominant-baseline', 'middle')
       .text(`💳 ${node.cardCount ?? 0}`)
