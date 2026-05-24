@@ -1055,6 +1055,7 @@ Rails.application.routes.draw do
       get "termination"
       post "permit_merchant"
       post "request_call"
+      post "hide_onboarding_message"
       get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit

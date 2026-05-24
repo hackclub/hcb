@@ -31,6 +31,8 @@ class CanonicalPendingTransaction
                            "at #{@merchant} due to suspected fraud"
                          when "webhook_declined"
                            case @webhook_declined_reason
+                           when "merchant_not_allowed_globally"
+                             "because this merchant is blocked on all HCB cards"
                            when "merchant_not_allowed"
                              "because this card isn't allowed to make purchases at #{@merchant}"
                            when "cash_withdrawals_not_allowed"
