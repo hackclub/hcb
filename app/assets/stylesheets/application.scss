@@ -724,7 +724,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
   .node-text {
     fill: #000;
-    font-size: 15px;
+    font-size: 13px;
+    font-weight: 600;
     font-family:
       system-ui,
       -apple-system,
@@ -732,7 +733,24 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
   .root-text {
     fill: #fff;
-    font-size: 15px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .node-tags {
+    fill: #888;
+    font-size: 11px;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .node-meta {
+    fill: #555;
+    font-size: 11px;
     font-family:
       system-ui,
       -apple-system,
@@ -800,6 +818,12 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     }
     .node-text {
       fill: #fff;
+    }
+    .node-tags {
+      fill: #777;
+    }
+    .node-meta {
+      fill: #999;
     }
     .edge {
       stroke: #555;
