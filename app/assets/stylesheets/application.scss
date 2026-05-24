@@ -708,3 +708,56 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 .scroll-fade.is-bottom-overflowing {
   --bottom-mask-size: 48px !important;
 }
+
+.hcb-suborg-graph {
+  .node-rect {
+    fill: #fff;
+    stroke: #ddd;
+    transition: fill 0.15s, stroke 0.15s;
+  }
+  .root-rect {
+    fill: #ec3750;
+    stroke: #c0392b;
+    transition: fill 0.15s;
+  }
+  .node-text {
+    fill: #000;
+    font-size: 15px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .root-text {
+    fill: #fff;
+    font-size: 15px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .edge {
+    stroke: #aaa;
+  }
+  .arrow-head {
+    fill: #aaa;
+  }
+  a {
+    outline: none;
+    &:hover .node-rect { fill: #f0f0f0; stroke: #bbb; }
+    &:hover .root-rect { fill: #d42f47; }
+    &:focus .node-rect { fill: #f0f0f0; stroke: #ec3750; }
+    &:focus .root-rect { stroke: #ff8896; }
+    &:active .node-rect { fill: #e0e0e0; stroke: #ec3750; }
+    &:active .root-rect { fill: #b02030; }
+  }
+
+  [data-dark='true'] & {
+    .node-rect { fill: #2a2a2f; stroke: #444; }
+    .node-text { fill: #fff; }
+    .edge { stroke: #555; }
+    .arrow-head { fill: #555; }
+    a {
+      &:hover .node-rect { fill: #3a3a40; stroke: #666; }
+      &:hover .root-rect { fill: #d42f47; }
+      &:focus .node-rect { fill: #3a3a40; stroke: #ec3750; }
+      &:focus .root-rect { stroke: #ff8896; }
+      &:active .node-rect { fill: #1a1a1f; stroke: #ec3750; }
+      &:active .root-rect { fill: #b02030; }
+    }
+  }
+}
