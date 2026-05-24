@@ -746,11 +746,29 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     &:active .root-rect { fill: #b02030; }
   }
 
+  .more-rect {
+    fill: transparent;
+    stroke: #ccc;
+    stroke-dasharray: 5 3;
+    transition: fill 0.15s, stroke 0.15s;
+  }
+  .more-text {
+    fill: #999;
+    font-size: 15px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .more-node:hover .more-rect { fill: #f5f5f5; stroke: #aaa; }
+  .more-node:hover .more-text { fill: #555; }
+
   [data-dark='true'] & {
     .node-rect { fill: #2a2a2f; stroke: #444; }
     .node-text { fill: #fff; }
     .edge { stroke: #555; }
     .arrow-head { fill: #555; }
+    .more-rect { stroke: #555; }
+    .more-text { fill: #777; }
+    .more-node:hover .more-rect { fill: #333; stroke: #777; }
+    .more-node:hover .more-text { fill: #bbb; }
     a {
       &:hover .node-rect { fill: #3a3a40; stroke: #666; }
       &:hover .root-rect { fill: #d42f47; }

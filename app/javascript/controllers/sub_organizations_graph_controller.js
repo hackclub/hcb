@@ -1,11 +1,12 @@
 import { Controller } from '@hotwired/stimulus'
-import { select } from 'd3'
+import { select } from 'd3-selection'
 
 const NODE_W = 160
 const NODE_H = 36
 const MIN_H_GAP = 60
 const V_GAP = 16
 const PADDING = 24
+const MAX_INITIAL = 14
 
 export default class extends Controller {
   static values = {
@@ -13,6 +14,7 @@ export default class extends Controller {
   }
 
   connect() {
+    this.expanded = false
     this.render()
   }
 
@@ -43,14 +45,16 @@ export default class extends Controller {
       nodes.length > 1 &&
       directChildren.every((c) => childrenOf[c.id].length === 0)
 
-    if (isFlat && directChildren.length > 15) {
-      this.#renderGrid(root, directChildren, containerWidth, markerId)
+    if (isFlat && !this.expanded && directChildren.length > MAX_INITIAL) {
+      this.renderCollapsed(root, directChildren, containerWidth, markerId)
+    } else if (isFlat && directChildren.length > 15) {
+      this.renderGrid(root, directChildren, containerWidth, markerId)
     } else {
-      this.#renderTree(nodes, root, childrenOf, containerWidth, markerId)
+      this.renderTree(nodes, root, childrenOf, containerWidth, markerId)
     }
   }
 
-  #createSvg(width, height, markerId) {
+  createSvg(width, height, markerId) {
     const svg = select(this.element)
       .append('svg')
       .attr('class', 'hcb-suborg-graph')
@@ -74,7 +78,7 @@ export default class extends Controller {
     return svg
   }
 
-  #drawNode(svg, node, x, y, isRoot) {
+  drawNode(svg, node, x, y, isRoot) {
     const label =
       node.name.length > 21 ? node.name.slice(0, 20) + '…' : node.name
     const a = svg.append('a').attr('href', node.href).attr('title', node.name)
@@ -95,20 +99,93 @@ export default class extends Controller {
       .text(label)
   }
 
+  // Single column with truncated list + "+N more" expand button
+  renderCollapsed(root, allChildren, containerWidth, markerId) {
+    const visible = allChildren.slice(0, MAX_INITIAL)
+    const hiddenCount = allChildren.length - visible.length
+    const numRows = MAX_INITIAL + 1 // visible nodes + more node
+
+    const svgWidth = containerWidth
+    const svgHeight = numRows * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
+    const hGap = svgWidth - 2 * PADDING - 2 * NODE_W
+
+    const svg = this.createSvg(svgWidth, svgHeight, markerId)
+
+    const rootX = PADDING
+    const rootY = PADDING
+    const childX = PADDING + NODE_W + hGap
+    const childY = (i) => PADDING + i * (NODE_H + V_GAP)
+
+    // Edges to visible children
+    visible.forEach((_, i) => {
+      svg
+        .append('line')
+        .attr('class', 'edge')
+        .attr('x1', rootX + NODE_W)
+        .attr('y1', rootY + NODE_H / 2)
+        .attr('x2', childX)
+        .attr('y2', childY(i) + NODE_H / 2)
+        .attr('stroke-width', 1.5)
+        .attr('marker-end', `url(#${markerId})`)
+    })
+    // Edge to "more" node
+    svg
+      .append('line')
+      .attr('class', 'edge')
+      .attr('x1', rootX + NODE_W)
+      .attr('y1', rootY + NODE_H / 2)
+      .attr('x2', childX)
+      .attr('y2', childY(MAX_INITIAL) + NODE_H / 2)
+      .attr('stroke-width', 1.5)
+      .attr('marker-end', `url(#${markerId})`)
+
+    this.drawNode(svg, root, rootX, rootY, true)
+    visible.forEach((child, i) => this.drawNode(svg, child, childX, childY(i), false))
+
+    // "+N more" expand node
+    const moreX = childX
+    const moreY = childY(MAX_INITIAL)
+    const moreG = svg
+      .append('g')
+      .attr('class', 'more-node')
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        this.expanded = true
+        this.render()
+      })
+    moreG
+      .append('rect')
+      .attr('class', 'more-rect')
+      .attr('x', moreX)
+      .attr('y', moreY)
+      .attr('width', NODE_W)
+      .attr('height', NODE_H)
+      .attr('rx', 6)
+      .attr('stroke-width', 2)
+    moreG
+      .append('text')
+      .attr('class', 'more-text')
+      .attr('x', moreX + NODE_W / 2)
+      .attr('y', moreY + NODE_H / 2)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .text(`+${hiddenCount} more`)
+  }
+
   // Grid layout for flat trees: children fill columns across the full width
-  #renderGrid(root, children, containerWidth, markerId) {
+  renderGrid(root, children, containerWidth, markerId) {
     const numCols = Math.max(
       1,
-      Math.floor((containerWidth - 2 * PADDING - NODE_W) / (NODE_W + MIN_H_GAP)),
+      Math.floor(
+        (containerWidth - 2 * PADDING - NODE_W) / (NODE_W + MIN_H_GAP),
+      ),
     )
     const rowsPerCol = Math.ceil(children.length / numCols)
     const svgWidth = containerWidth
     const svgHeight = rowsPerCol * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
-
-    // Distribute columns to fill the full width
     const hGap = (svgWidth - 2 * PADDING - (numCols + 1) * NODE_W) / numCols
 
-    const svg = this.#createSvg(svgWidth, svgHeight, markerId)
+    const svg = this.createSvg(svgWidth, svgHeight, markerId)
 
     const rootX = PADDING
     const rootY = (svgHeight - NODE_H) / 2
@@ -123,7 +200,6 @@ export default class extends Controller {
       }
     })
 
-    // Edges first (behind nodes)
     childPositions.forEach(({ x, y }) => {
       svg
         .append('line')
@@ -136,14 +212,14 @@ export default class extends Controller {
         .attr('marker-end', `url(#${markerId})`)
     })
 
-    this.#drawNode(svg, root, rootX, rootY, true)
+    this.drawNode(svg, root, rootX, rootY, true)
     childPositions.forEach(({ node, x, y }) =>
-      this.#drawNode(svg, node, x, y, false),
+      this.drawNode(svg, node, x, y, false),
     )
   }
 
   // Tree layout for nested hierarchies
-  #renderTree(nodes, root, childrenOf, containerWidth, markerId) {
+  renderTree(nodes, root, childrenOf, containerWidth, markerId) {
     const leafCount = {}
     const countLeaves = (node) => {
       const children = childrenOf[node.id]
@@ -173,8 +249,12 @@ export default class extends Controller {
     }
     assignDepth(root, 0)
 
-    const maxDepth = depths[root.id] != null ? Math.max(...Object.values(depths)) : 0
-    const minWidth = (maxDepth + 1) * (NODE_W + MIN_H_GAP) - MIN_H_GAP + 2 * PADDING
+    const maxDepth =
+      Object.values(depths).length > 0
+        ? Math.max(...Object.values(depths))
+        : 0
+    const minWidth =
+      (maxDepth + 1) * (NODE_W + MIN_H_GAP) - MIN_H_GAP + 2 * PADDING
     const svgWidth = Math.max(minWidth, containerWidth)
     const svgHeight =
       leafCount[root.id] * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
@@ -183,7 +263,7 @@ export default class extends Controller {
         ? (svgWidth - 2 * PADDING - (maxDepth + 1) * NODE_W) / maxDepth
         : MIN_H_GAP
 
-    const svg = this.#createSvg(svgWidth, svgHeight, markerId)
+    const svg = this.createSvg(svgWidth, svgHeight, markerId)
 
     nodes.forEach((node) => {
       const children = childrenOf[node.id]
@@ -204,7 +284,7 @@ export default class extends Controller {
     })
 
     nodes.forEach((node) =>
-      this.#drawNode(
+      this.drawNode(
         svg,
         node,
         PADDING + depths[node.id] * (NODE_W + hGap),
