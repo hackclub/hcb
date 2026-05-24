@@ -1,0 +1,25 @@
+<p>
+  Hi <%= @check.recipient_name %>,
+</p>
+
+<p>
+  <%= @check.event.name %> has just stopped a
+  <%= render_money(@check.amount) %> check sent to you for
+  <i>"<%= @check.payment_for %>"</i>.
+</p>
+
+<p>
+  Check #<%= @check.check_number %> is no longer valid and can be disposed of safely.
+</p>
+
+<p>
+  If you have any questions about why this check was stopped, please contact <%= @check.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @check.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>
