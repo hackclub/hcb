@@ -713,7 +713,9 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   .node-rect {
     fill: #fff;
     stroke: #ddd;
-    transition: fill 0.15s, stroke 0.15s;
+    transition:
+      fill 0.15s,
+      stroke 0.15s;
   }
   .root-rect {
     fill: #ec3750;
@@ -723,12 +725,18 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   .node-text {
     fill: #000;
     font-size: 15px;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
   .root-text {
     fill: #fff;
     font-size: 15px;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
   .edge {
     stroke: #aaa;
@@ -738,44 +746,102 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
   a {
     outline: none;
-    &:hover .node-rect { fill: #f0f0f0; stroke: #bbb; }
-    &:hover .root-rect { fill: #d42f47; }
-    &:focus .node-rect { fill: #f0f0f0; stroke: #ec3750; }
-    &:focus .root-rect { stroke: #ff8896; }
-    &:active .node-rect { fill: #e0e0e0; stroke: #ec3750; }
-    &:active .root-rect { fill: #b02030; }
+    &:hover .node-rect {
+      fill: #f0f0f0;
+      stroke: #bbb;
+    }
+    &:hover .root-rect {
+      fill: #d42f47;
+    }
+    &:focus .node-rect {
+      fill: #f0f0f0;
+      stroke: #ec3750;
+    }
+    &:focus .root-rect {
+      stroke: #ff8896;
+    }
+    &:active .node-rect {
+      fill: #e0e0e0;
+      stroke: #ec3750;
+    }
+    &:active .root-rect {
+      fill: #b02030;
+    }
   }
 
   .more-rect {
     fill: transparent;
     stroke: #ccc;
     stroke-dasharray: 5 3;
-    transition: fill 0.15s, stroke 0.15s;
+    transition:
+      fill 0.15s,
+      stroke 0.15s;
   }
   .more-text {
     fill: #999;
     font-size: 15px;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
-  .more-node:hover .more-rect { fill: #f5f5f5; stroke: #aaa; }
-  .more-node:hover .more-text { fill: #555; }
+  .more-node:hover .more-rect {
+    fill: #f5f5f5;
+    stroke: #aaa;
+  }
+  .more-node:hover .more-text {
+    fill: #555;
+  }
 
   [data-dark='true'] & {
-    .node-rect { fill: #2a2a2f; stroke: #444; }
-    .node-text { fill: #fff; }
-    .edge { stroke: #555; }
-    .arrow-head { fill: #555; }
-    .more-rect { stroke: #555; }
-    .more-text { fill: #777; }
-    .more-node:hover .more-rect { fill: #333; stroke: #777; }
-    .more-node:hover .more-text { fill: #bbb; }
+    .node-rect {
+      fill: #2a2a2f;
+      stroke: #444;
+    }
+    .node-text {
+      fill: #fff;
+    }
+    .edge {
+      stroke: #555;
+    }
+    .arrow-head {
+      fill: #555;
+    }
+    .more-rect {
+      stroke: #555;
+    }
+    .more-text {
+      fill: #777;
+    }
+    .more-node:hover .more-rect {
+      fill: #333;
+      stroke: #777;
+    }
+    .more-node:hover .more-text {
+      fill: #bbb;
+    }
     a {
-      &:hover .node-rect { fill: #3a3a40; stroke: #666; }
-      &:hover .root-rect { fill: #d42f47; }
-      &:focus .node-rect { fill: #3a3a40; stroke: #ec3750; }
-      &:focus .root-rect { stroke: #ff8896; }
-      &:active .node-rect { fill: #1a1a1f; stroke: #ec3750; }
-      &:active .root-rect { fill: #b02030; }
+      &:hover .node-rect {
+        fill: #3a3a40;
+        stroke: #666;
+      }
+      &:hover .root-rect {
+        fill: #d42f47;
+      }
+      &:focus .node-rect {
+        fill: #3a3a40;
+        stroke: #ec3750;
+      }
+      &:focus .root-rect {
+        stroke: #ff8896;
+      }
+      &:active .node-rect {
+        fill: #1a1a1f;
+        stroke: #ec3750;
+      }
+      &:active .root-rect {
+        fill: #b02030;
+      }
     }
   }
 }

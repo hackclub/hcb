@@ -385,7 +385,7 @@ module EventsHelper
     h_gap   = 60
     v_gap   = 16
     padding = 24
-    min_width = 800  # Minimum width to prevent squishing
+    min_width = 800 # Minimum width to prevent squishing
 
     all_ids = all_events.map(&:id).to_set
 

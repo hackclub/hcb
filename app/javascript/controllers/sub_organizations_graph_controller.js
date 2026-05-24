@@ -22,18 +22,18 @@ export default class extends Controller {
     const nodes = this.nodesValue
     if (!nodes.length) return
 
-    const allIds = new Set(nodes.map((n) => n.id))
-    const childrenOf = Object.fromEntries(nodes.map((n) => [n.id, []]))
-    nodes.forEach((n) => {
+    const allIds = new Set(nodes.map(n => n.id))
+    const childrenOf = Object.fromEntries(nodes.map(n => [n.id, []]))
+    nodes.forEach(n => {
       if (n.parentId !== null && allIds.has(n.parentId)) {
         childrenOf[n.parentId].push(n)
       }
     })
-    Object.values(childrenOf).forEach((arr) =>
-      arr.sort((a, b) => a.name.localeCompare(b.name)),
+    Object.values(childrenOf).forEach(arr =>
+      arr.sort((a, b) => a.name.localeCompare(b.name))
     )
 
-    const root = nodes.find((n) => n.isRoot)
+    const root = nodes.find(n => n.isRoot)
     if (!root) return
 
     const containerWidth = Math.max(this.element.clientWidth || 800, 600)
@@ -43,7 +43,7 @@ export default class extends Controller {
     const directChildren = childrenOf[root.id]
     const isFlat =
       nodes.length > 1 &&
-      directChildren.every((c) => childrenOf[c.id].length === 0)
+      directChildren.every(c => childrenOf[c.id].length === 0)
 
     if (isFlat && !this.expanded && directChildren.length > MAX_INITIAL) {
       this.renderCollapsed(root, directChildren, containerWidth, markerId)
@@ -112,7 +112,7 @@ export default class extends Controller {
     const rootX = PADDING
     const rootY = PADDING
     const childX = PADDING + NODE_W + hGap
-    const childY = (i) => PADDING + i * (NODE_H + V_GAP)
+    const childY = i => PADDING + i * (NODE_H + V_GAP)
 
     // Edges to visible children
     visible.forEach((_, i) => {
@@ -138,7 +138,9 @@ export default class extends Controller {
       .attr('marker-end', `url(#${markerId})`)
 
     this.drawNode(svg, root, rootX, rootY, true)
-    visible.forEach((child, i) => this.drawNode(svg, child, childX, childY(i), false))
+    visible.forEach((child, i) =>
+      this.drawNode(svg, child, childX, childY(i), false)
+    )
 
     // "+N more" expand node
     const moreX = childX
@@ -173,7 +175,7 @@ export default class extends Controller {
   // Tree layout for nested hierarchies (and flat lists)
   renderTree(nodes, root, childrenOf, containerWidth, markerId) {
     const leafCount = {}
-    const countLeaves = (node) => {
+    const countLeaves = node => {
       const children = childrenOf[node.id]
       leafCount[node.id] =
         children.length === 0
@@ -187,7 +189,7 @@ export default class extends Controller {
     const assignY = (node, top) => {
       yTops[node.id] = top
       let cursor = top
-      childrenOf[node.id].forEach((child) => {
+      childrenOf[node.id].forEach(child => {
         assignY(child, cursor)
         cursor += leafCount[child.id] * (NODE_H + V_GAP)
       })
@@ -197,14 +199,12 @@ export default class extends Controller {
     const depths = {}
     const assignDepth = (node, depth) => {
       depths[node.id] = depth
-      childrenOf[node.id].forEach((c) => assignDepth(c, depth + 1))
+      childrenOf[node.id].forEach(c => assignDepth(c, depth + 1))
     }
     assignDepth(root, 0)
 
     const maxDepth =
-      Object.values(depths).length > 0
-        ? Math.max(...Object.values(depths))
-        : 0
+      Object.values(depths).length > 0 ? Math.max(...Object.values(depths)) : 0
     const minWidth =
       (maxDepth + 1) * (NODE_W + MIN_H_GAP) - MIN_H_GAP + 2 * PADDING
     const svgWidth = Math.max(minWidth, containerWidth)
@@ -217,12 +217,12 @@ export default class extends Controller {
 
     const svg = this.createSvg(svgWidth, svgHeight, markerId)
 
-    nodes.forEach((node) => {
+    nodes.forEach(node => {
       const children = childrenOf[node.id]
       if (!children.length) return
       const ex = PADDING + depths[node.id] * (NODE_W + hGap) + NODE_W
       const ey = yTops[node.id] + NODE_H / 2
-      children.forEach((child) => {
+      children.forEach(child => {
         svg
           .append('line')
           .attr('class', 'edge')
@@ -235,14 +235,14 @@ export default class extends Controller {
       })
     })
 
-    nodes.forEach((node) =>
+    nodes.forEach(node =>
       this.drawNode(
         svg,
         node,
         PADDING + depths[node.id] * (NODE_W + hGap),
         yTops[node.id],
-        node.isRoot,
-      ),
+        node.isRoot
+      )
     )
   }
 }
