@@ -4,9 +4,9 @@ import { select } from 'd3-selection'
 const NODE_W = 160
 const NODE_H = 36
 const MIN_H_GAP = 60
-const V_GAP = 16
+const V_GAP = 4
 const PADDING = 24
-const MAX_INITIAL = 14
+const MAX_INITIAL = 2
 
 export default class extends Controller {
   static values = {
