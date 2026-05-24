@@ -124,7 +124,5 @@ module Bank
 
     config.active_support.deprecation = :notify
 
-    config.action_controller.include_all_helpers = false
-
   end
 end
