@@ -35,4 +35,12 @@ class WebauthnCredential < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.user }, recipient: proc { |controller, record| record.user }, only: [:create, :destroy]
 
+  after_create_commit do
+    User::SecurityMailer.security_configuration_changed(user:, change: "Security key \"#{name}\" was added").deliver_later
+  end
+
+  after_destroy_commit do
+    User::SecurityMailer.security_configuration_changed(user:, change: "Security key \"#{name}\" was removed").deliver_later
+  end
+
 end

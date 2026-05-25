@@ -11,7 +11,7 @@ module Users
         render plain: "HCB Wrapped coming soon! I heard #{current_user&.first_name.presence&.concat("'s") || "you're"} on the naughty list 🎅" and return
       end
 
-      ahoy.track "Wrapped 2024 viewed", user_id: current_user.id if current_user == @user
+      ahoy.track "Wrapped #{Metric.year} viewed", user_id: current_user.id if current_user == @user
 
       render layout: "bare"
     end
@@ -50,6 +50,8 @@ module Users
           cardGrantAmount: Metric::User::CardGrantAmount.from(@user).metric,
           reimbursementCount: Metric::User::ReimbursementCount.from(@user).metric,
           reimbursementAmount: Metric::User::ReimbursementAmount.from(@user).metric,
+          wiseTransferCount: Metric::User::WiseTransferCount.from(@user).metric,
+          wiseTransferAmount: Metric::User::WiseTransferAmount.from(@user).metric,
           bestFriend: Metric::User::MostInteractedWith.from(@user).metric
         },
         organizations: @user.events.to_h do |event|

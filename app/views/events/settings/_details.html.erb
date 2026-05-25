@@ -5,29 +5,36 @@
 <%= form_with(model: event, local: true, class: "mb3") do |form| %>
   <%= form_errors event, "organization" %>
 
-  <div class="card flex flex-col items-start gap-2 p0">
+  <div class="card flex flex-col items-start gap-2 p0 pb2 mb3">
     <div class="event_settings__banner">
       <% if event.background_image.persisted? %>
         <%= image_tag event.background_image, height: 200, class: "banner__image" %>
       <% end %>
 
       <% if policy(event).update? %>
-       <button
-          type="button"
-          data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
-          class="pop menu__toggle z1 event_settings__banner--edit">
-          <%= inline_icon "photo", size: 24 %>
-          <div class="menu__content h5" data-behavior="menu_content">
-            <div class="field--fileupload">
-              <%= form.label :background_image, "Choose file", class: "field--fileupload__label" %>
-              <%= form.file_field :background_image, accept: "image/png,image/jpeg", class: "field--fileupload__field" %>
+        <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
+        <%= form.file_field :background_image, id: "event_background_image", class: "!hidden" %>
+        <div data-controller="menu" class="z-[1] event_settings__banner--edit rounded-md">
+          <button
+            type="button"
+            data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+            data-menu-target="toggle"
+            class="pop menu__toggle">
+            <%= inline_icon "photo", size: 24 %>
+          </button>
+
+          <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
+            <div data-controller="file-upload" class="justify-center">
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input" }, oninput: "document.getElementById('event_background_image').files = this.files" %>
+              <button data-file-upload-target="preview" type="button"></button>
+              <div data-file-upload-target="clear"></div>
             </div>
             <% if event.background_image.attached? %>
               <div class="menu__divider"></div>
               <%= link_to "Remove background image", event_remove_background_image_path(event), method: :post, style: "padding: 0.25rem 0.5rem" %>
             <% end %>
           </div>
-        </button>
+        </div>
       <% end %>
 
       <div class="event_settings__banner--logo">
@@ -38,28 +45,34 @@
         <% end %>
 
         <% if policy(event).update? %>
-          <button
-            type="button"
-            data-behavior="menu_toggle" aria-expanded="false" tabindex="0"
-            class="pop menu__toggle z1 event_settings__logo--edit">
-            <%= inline_icon "photo", size: 24 %>
-            <div class="menu__content menu__content--left h5" data-behavior="menu_content">
-              <div class="field--fileupload">
-                <%= form.label :logo, "Choose file", class: "field--fileupload__label" %>
-                <%= form.file_field :logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", disabled: %>
+          <%# This is intentionally outside of the menu component because Stimulus destroys components from the DOM when menus are closed %>
+          <%= form.file_field :logo, disabled:, id: "event_logo", class: "!hidden" %>
+          <div data-controller="menu" class="event_settings__logo--edit z-[1] rounded-md">
+            <button
+              type="button"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+              data-menu-target="toggle"
+              class="pop menu__toggle">
+              <%= inline_icon "photo", size: 24 %>
+            </button>
+            <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
+              <div data-controller="file-upload" class="justify-center">
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input" }, oninput: "document.getElementById('event_logo').files = this.files" %>
+                <button data-file-upload-target="preview" type="button"></button>
+                <div data-file-upload-target="clear"></div>
               </div>
               <% if event.logo.attached? %>
                 <div class="menu__divider"></div>
                 <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
             </div>
-          </button>
+          </div>
         <% end %>
       </div>
     </div>
     <div class="event_settings__content">
       <h2><%= event.name %></h2>
-      <div class="w-full">
+      <div class="w-full mt-4">
         <% if event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
           <div class="field flex-1">
             <%= form.label :short_name, "Nickname" %>
@@ -78,8 +91,8 @@
           <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: %>
         </div>
       </div>
-      <div class="md:flex items-center">
-        <div class="float-left flex gap-3 items-center flex-1 max-w-2xl mr-auto">
+      <div class="md:flex items-end">
+        <div class="float-left flex gap-3 items-start flex-1 max-w-xl mr-auto">
           <%= inline_icon "info", size: 24, class: "muted" %>
           <p class="h5 muted m0">
             Your logo is displayed on the
@@ -109,7 +122,7 @@
         <% end %>
       </div>
     </div>
-    <ul class="mt0 pl2 mb2">
+    <ul class="mt0 pl4 mb2">
       <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your account.</li>
       <li>None of HCB’s pages will change for signed in team members.</li>
       <li>We’ll do our best to redact contact info, but we can’t guarantee it doesn't show up in these
@@ -155,9 +168,10 @@
       <% if event.stripe_card_logo.persisted? %>
         <%= image_tag event.stripe_card_logo, width: 48 %>
       <% end %>
-      <div class="field--fileupload mt2">
-        <%= form.label :stripe_card_logo, "Choose file", class: "field--fileupload__label" %>
-        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled: %>
+      <div data-controller="file-upload">
+        <%= form.file_field :stripe_card_logo, accept: "image/png,image/jpeg", class: "field--fileupload__field", direct_upload: true, disabled:, data: { "file-upload-target": "input" } %>
+        <button data-file-upload-target="preview" type="button"></button>
+        <div data-file-upload-target="clear"></div>
       </div>
     </div>
     <%= form.submit "Update", disabled: %>
@@ -166,7 +180,15 @@
   <h3 class="mb1" id="announcements_heading">Announcements</h3>
   <div class="card mb3">
     <div class="field field--checkbox">
-      <span style="font-weight: 700">Generate monthly announcements</span>
+      <div>
+        <span style="font-weight: 700">Generate monthly announcements</span>
+        <p class="h5 muted mt0 mb1 pr-4">
+          Use this to enable auto-scheduled monthly announcements.
+          <% if event.config.generate_monthly_announcement %>
+            If disabled, the current monthly announcement draft will be discarded.
+          <% end %>
+        </p>
+      </div>
       <div class="field--checkbox--switch ml-auto">
         <%= form.fields_for :config do |config| %>
           <%= config.label :generate_monthly_announcement do %>
@@ -176,12 +198,6 @@
         <% end %>
       </div>
     </div>
-    <p class="h5 muted mt0 mb1">
-      Use this to enable auto-scheduled monthly announcements.
-      <% if event.config.generate_monthly_announcement %>
-        If disabled, the current monthly announcement draft will be discarded.
-      <% end %>
-    </p>
     <%= form.submit "Update", disabled: %>
   </div>
 
@@ -189,9 +205,9 @@
   <div class="card mb3">
     <div class="field">
       <%= form.fields_for :config do |config| %>
-        <%= config.label :contact_email, "Your team's contact email" %>
+        <%= config.label :contact_email, "Organization contact email" %>
         <p class="h5 muted mt0 mb1">
-          If you'd prefer for the HCB operations team to reach out to a shared email, configure that here.
+          If you’d prefer for the HCB operations team to reach out to a shared email, configure that here.
         </p>
         <%= config.email_field :contact_email, placeholder: "team@lioncityhacks.com", disabled: %>
       <% end %>
@@ -228,7 +244,7 @@
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
     </div>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">

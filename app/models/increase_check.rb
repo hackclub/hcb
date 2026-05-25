@@ -37,15 +37,18 @@
 #  index_increase_checks_on_column_id             (column_id) UNIQUE
 #  index_increase_checks_on_event_id              (event_id)
 #  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
+#  index_increase_checks_on_reissued_for_id       (reissued_for_id)
 #  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
 #  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (reissued_for_id => increase_checks.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
+  self.ignored_columns += ["reissued_for_id"]
   # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
   # On January 2024, we switched check printing & mailing services from
   # Increase to Column. This model, although still named `IncreaseCheck`, now
@@ -63,6 +66,67 @@ class IncreaseCheck < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
+  include PublicIdentifiable
+  set_public_id_prefix :ick
+
+  VALID_DURATION = 180.days
+  US_STATES = {
+    "Alabama"          => "AL",
+    "Alaska"           => "AK",
+    "Arizona"          => "AZ",
+    "Arkansas"         => "AR",
+    "California"       => "CA",
+    "Colorado"         => "CO",
+    "Connecticut"      => "CT",
+    "Delaware"         => "DE",
+    "Washington, D.C." => "DC",
+    "Florida"          => "FL",
+    "Georgia"          => "GA",
+    "Hawaii"           => "HI",
+    "Idaho"            => "ID",
+    "Illinois"         => "IL",
+    "Indiana"          => "IN",
+    "Iowa"             => "IA",
+    "Kansas"           => "KS",
+    "Kentucky"         => "KY",
+    "Louisiana"        => "LA",
+    "Maine"            => "ME",
+    "Maryland"         => "MD",
+    "Massachusetts"    => "MA",
+    "Michigan"         => "MI",
+    "Minnesota"        => "MN",
+    "Mississippi"      => "MS",
+    "Missouri"         => "MO",
+    "Montana"          => "MT",
+    "Nebraska"         => "NE",
+    "Nevada"           => "NV",
+    "New Hampshire"    => "NH",
+    "New Jersey"       => "NJ",
+    "New Mexico"       => "NM",
+    "New York"         => "NY",
+    "North Carolina"   => "NC",
+    "North Dakota"     => "ND",
+    "Ohio"             => "OH",
+    "Oklahoma"         => "OK",
+    "Oregon"           => "OR",
+    "Pennsylvania"     => "PA",
+    "Rhode Island"     => "RI",
+    "South Carolina"   => "SC",
+    "South Dakota"     => "SD",
+    "Tennessee"        => "TN",
+    "Texas"            => "TX",
+    "Utah"             => "UT",
+    "Vermont"          => "VT",
+    "Virginia"         => "VA",
+    "Washington"       => "WA",
+    "West Virginia"    => "WV",
+    "Wisconsin"        => "WI",
+    "Wyoming"          => "WY"
+  }.freeze
+
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -78,8 +142,9 @@ class IncreaseCheck < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
-  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+  after_update if: -> { column_status_previously_changed?(to: "stopped") || column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -99,7 +164,7 @@ class IncreaseCheck < ApplicationRecord
       transitions from: :pending, to: :approved
 
       after_commit do
-        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later
+        IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
       end
     end
@@ -119,10 +184,10 @@ class IncreaseCheck < ApplicationRecord
   validates :recipient_name, length: { in: 1..250 }
   validates_presence_of :memo, :payment_for, :recipient_name, :address_line1, :address_city, :address_zip
   validates_presence_of :address_state, message: "Please select a state!"
-  validates :address_state, inclusion: { in: ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"], message: "This isn't a valid US state!", allow_blank: true }
+  validates :address_state, inclusion: { in: US_STATES.values, message: "This isn't a valid US state!", allow_blank: true }
   validates :address_zip, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   validates_presence_of :recipient_email, on: :create
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
@@ -138,8 +203,9 @@ class IncreaseCheck < ApplicationRecord
     end
   end
 
-  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]) }
-  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)) }
+  scope :deposited, -> { where(increase_status: :deposited).or(where(column_status: :settled)) }
+  scope :in_transit, -> { where(increase_status: [:pending_submission, :submitting, :submitted, :pending_mailing, :mailed]).or(where(column_status: [:initiated, :issued, :pending_deposit, :pending_first_return, :first_return, :pending_reclear, :pending_second_return, :second_return, :user_initiated_return_submitted, :user_initiated_returned, :user_initiated_return_dishonored, :manual_review])) }
+  scope :canceled, -> { where(increase_status: [:rejected, :canceled, :stopped, :returned, :rejected]).or(where(aasm_state: :rejected)).or(where(column_status: [:pending_stop, :stopped, :rejected])) }
 
   enum :increase_status, {
     pending_approval: "pending_approval",
@@ -156,10 +222,38 @@ class IncreaseCheck < ApplicationRecord
     requires_attention: "requires_attention"
   }, prefix: :increase
 
-  enum :column_status, %w(initiated issued manual_review rejected pending_deposit pending_stop deposited stopped pending_first_return pending_second_return first_return pending_reclear recleared second_return settled returned pending_user_initiated_return user_initiated_return_submitted user_initiated_returned pending_user_initiated_return_dishonored).index_with(&:itself), prefix: :column
-  enum :column_delivery_status, %w(created mailed rendered_pdf in_transit in_local_area processed_for_delivery delivered failed rerouted returned_to_sender).index_with(&:itself), prefix: :column_delivery
+  # https://column.com/docs/checks/notifications-and-states#states-and-events
+  enum :column_status, %w[
+    initiated
+    issued
+    pending_deposit
+    settled
+    pending_first_return
+    first_return
+    pending_reclear
+    pending_second_return
+    second_return
+    user_initiated_return_submitted
+    user_initiated_returned
+    user_initiated_return_dishonored
+    pending_stop
+    stopped
+    manual_review
+    rejected
+  ].index_with(&:itself), prefix: :column
 
-  VALID_DURATION = 180.days
+  enum :column_delivery_status, %w[
+    created
+    rendered_pdf
+    mailed
+    in_transit
+    in_local_area
+    processed_for_delivery
+    delivered
+    rerouted
+    returned_to_sender
+    failed
+  ].index_with(&:itself), prefix: :column_delivery
 
   def column?
     column_id.present?
@@ -170,13 +264,11 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def state
-    if column?
-      :info
-    elsif pending?
+    if pending?
       :muted
-    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected?
+    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
-    elsif increase_deposited?
+    elsif increase_deposited? || column_settled?
       :success
     else
       :info
@@ -207,13 +299,8 @@ class IncreaseCheck < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INCREASE_CHECK_CODE
 
   def sent?
     approved?
@@ -231,22 +318,22 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
-  def reissue!
-    return unless column_id.present? && (column_issued? || column_stopped?)
+  # https://column.com/docs/api/#check-transfer/stop
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
 
-    stopped_id = column_id
+  def stop!
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
     update!(
-      column_id: nil,
-      column_object: nil,
-      check_number: nil,
-      column_status: nil,
-      column_delivery_status: nil,
+      column_object: column_check,
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
     )
-
-    send_column!("reissue_#{stopped_id}")
   end
 
   private

@@ -43,7 +43,7 @@ module Reimbursement
       end
 
       def payout_holding
-        @payout_holding ||= Reimbursement::PayoutHolding.pending.find(@payout_holding_id)
+        @payout_holding ||= Reimbursement::PayoutHolding.find(@payout_holding_id)
       end
 
     end

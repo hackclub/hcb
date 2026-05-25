@@ -1,0 +1,29 @@
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
+
+  <section class="hcb-code--details">
+    <div>
+      <strong>Date</strong>
+      <%= format_date @hcb_code.date %>
+    </div>
+    <div>
+      <strong>Type</strong>
+      Fee
+    </div>
+  </section>
+
+  <section class="hcb-code--info">
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
+
+  <section class="card__banner secondary border-top">
+    <p class="my0 italic">
+      <% if @hcb_code.amount.negative? %>
+        HCB is charging <strong><%= number_to_percentage(@hcb_code.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></strong> of revenue.
+      <% else %>
+        This is a credit for fees previously charged by HCB.
+      <% end %>
+    </p>
+  </section>
+
+</article>

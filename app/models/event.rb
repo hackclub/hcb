@@ -5,14 +5,13 @@
 # Table name: events
 #
 #  id                                           :bigint           not null, primary key
-#  aasm_state                                   :string
+#  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -61,9 +60,13 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   include PublicIdentifiable
@@ -216,6 +219,7 @@ class Event < ApplicationRecord
   scope :demo_mode, -> { where(demo_mode: true) }
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
+  scope :financially_frozen, -> { where(financially_frozen: true) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -294,7 +298,11 @@ class Event < ApplicationRecord
     OrganizerPosition.where(event_id: ancestor_ids)
   end
 
-  has_many :organizer_position_contracts, through: :organizer_position_invites, class_name: "OrganizerPosition::Contract"
+  def ancestor_users
+    User.where(id: ancestor_organizer_positions.select(:user_id))
+  end
+
+  has_many :contracts, through: :organizer_position_invites
   has_many :organizer_position_deletion_requests, through: :organizer_positions, dependent: :destroy
   has_many :users, through: :organizer_positions
   has_many :signees, -> { where(organizer_positions: { is_signee: true }) }, through: :organizer_positions, source: :user
@@ -309,7 +317,7 @@ class Event < ApplicationRecord
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
-  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :event
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
@@ -379,6 +387,9 @@ class Event < ApplicationRecord
   has_many :subevent_scoped_tags, class_name: "Event::ScopedTag", foreign_key: :parent_event_id, dependent: :destroy
   accepts_nested_attributes_for :event_scoped_tags_events
 
+  has_one :ledger, -> { where(primary: true) }, inverse_of: :event
+  after_create :create_ledger
+  has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
 
   has_many :check_deposits
@@ -393,6 +404,8 @@ class Event < ApplicationRecord
 
   has_one :column_account_number, class_name: "Column::AccountNumber"
   delegate :account_number, :routing_number, :bic_code, to: :column_account_number, allow_nil: true
+
+  has_one :application
 
   has_many :grants
 
@@ -441,6 +454,8 @@ class Event < ApplicationRecord
 
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
+  after_create :apply_plan_default_values
+
   before_update if: -> { demo_mode_changed?(to: false) } do
     self.activated_at = Time.now
   end
@@ -453,7 +468,17 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
-  before_save :enable_monthly_announcements
+
+  after_update_commit if: :is_public_previously_changed? do
+    version = self.versions.where_object_changes(is_public:).last
+    whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
+
+    if is_public
+      EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
+    else
+      EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
+    end
+  end
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -649,7 +674,7 @@ class Event < ApplicationRecord
 
     feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * revenue_fee)).ceil
+    (fees.sum(:amount_cents_as_decimal) - total_fee_payments_v2_cents + (feed_fronted_balance * BigDecimal(revenue_fee))).ceil
   end
 
   # This intentionally does not include fees on fronted transactions to make sure they aren't actually charged
@@ -704,9 +729,9 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
-  def reload
+  def reload(**args)
     @total_fee_payments_v2_cents = nil
-    super
+    super(**args)
   end
 
   def total_fee_payments_v2_cents
@@ -867,15 +892,16 @@ class Event < ApplicationRecord
   end
 
   def active_teenagers
-    organizer_positions.joins(:user).count { |op| op.user.teenager? && op.user.active? }
+    users.active_teenager.count
   end
 
   def subevents_enabled?
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false)
+  def organizer_contact_emails(only_managers: false, &block)
     included_users = only_managers ? managers : users
+    included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
@@ -911,6 +937,22 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
+  def to_combobox_display
+    "#{name} (#{id})"
+  end
+
+  def onboarding_scheduling_link
+    return unless point_of_contact.present?
+
+    Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
+      begin
+        OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      rescue
+        nil
+      end
+    end
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -934,7 +976,7 @@ class Event < ApplicationRecord
   end
 
   def contract_signed
-    return if organizer_position_contracts.signed.any? || organizer_position_contracts.none? || !plan.contract_required? || Rails.env.development?
+    return if contracts.signed.any? || contracts.none? || !plan.contract_required? || Rails.env.development?
 
     errors.add(:base, "Missing a contract signee, non-demo mode organizations must have a contract signee.")
   end
@@ -971,11 +1013,10 @@ class Event < ApplicationRecord
     end
   end
 
-  def enable_monthly_announcements
-    # We'll enable monthly announcements when transparency mode is turned on
-    if is_public_changed?(to: true)
-      config.update(generate_monthly_announcement: true)
-    end
+  def apply_plan_default_values
+    return if plan&.default_values.blank?
+
+    update!(plan.default_values)
   end
 
   def stripe_transaction_merchant(transaction)

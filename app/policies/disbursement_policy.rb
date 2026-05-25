@@ -23,7 +23,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def new?
-    can_send?(role: :reader) && can_receive?(role: :reader)
+    user&.auditor? || can_send?(role: :reader) && can_receive?(role: :reader)
   end
 
   def create?
@@ -65,7 +65,7 @@ class DisbursementPolicy < ApplicationPolicy
   private
 
   def auditor_or_user?
-    user&.auditor? || record.event.users.include?(user)
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
 end

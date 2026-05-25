@@ -5,7 +5,7 @@ module StaticPagesHelper
 
   def card_to(name, path, **options)
     badge = if options[:badge].present?
-              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit-content" : "bg-accent h-fit-content")
+              badge_for(options[:badge], class: options[:subtle_badge].present? || options[:badge] == 0 ? "bg-muted h-fit" : "bg-accent h-fit")
             elsif options[:async_badge].present?
               turbo_frame_tag options[:async_badge], src: admin_task_size_path(task_name: options[:async_badge]) do
                 badge_for "⏳", class: "bg-muted"
@@ -17,7 +17,7 @@ module StaticPagesHelper
     content_tag(:div, id: "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
                           [
-                            content_tag(:strong, name, class: "card-name"),
+                            content_tag(:strong, sanitize(name), class: "card-name"),
                             pin,
                             content_tag(:span, "", style: "flex-grow: 1"),
                             badge,
@@ -122,11 +122,6 @@ module StaticPagesHelper
         destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
-  end
-
-  def apply_form_url(user = current_user, **query_params)
-    query_params = { userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web" }.merge(query_params) # allow method arguments to override default.
-    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form(query_params.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

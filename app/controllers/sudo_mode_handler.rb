@@ -246,7 +246,7 @@ class SudoModeHandler
         break_out_of_turbo_frame:,
         **form_locals,
       },
-      status: :unprocessable_entity
+      status: :unauthorized
     )
   end
 

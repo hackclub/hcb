@@ -10,4 +10,4 @@
 <strong>Original transaction name</strong>
 <pre class="bg-smoke mt0"><%= organizer_signed_in? ? @transaction.name : "REDACTED– SIGN IN TO REVEAL" %></pre>
 
-<%= render "form", transaction: @transaction %>
+<%= render "transactions/form", transaction: @transaction %>

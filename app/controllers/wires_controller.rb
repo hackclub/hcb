@@ -2,6 +2,7 @@
 
 class WiresController < ApplicationController
   include SetEvent
+  include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[approve reject send_wire edit update]
@@ -10,9 +11,8 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
-    if Flipper.enabled?(:payment_recipients_2025_08_08, current_user)
-      return render :new_v2
-    end
+
+    render layout: "transfer"
   end
 
   def create
@@ -41,8 +41,9 @@ class WiresController < ApplicationController
 
   def approve
     authorize @wire
-    Governance::Admin.ensure_may_approve_transfer!(current_user, @wire.usd_amount_cents)
+    return unless enforce_sudo_mode
 
+    ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.mark_approved!
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
@@ -70,7 +71,7 @@ class WiresController < ApplicationController
   def send_wire
     authorize @wire
 
-    Governance::Admin.ensure_may_approve_transfer!(current_user, @wire.usd_amount_cents)
+    ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.send_wire!
 
     if params[:charge_fee] == "1"
@@ -89,7 +90,7 @@ class WiresController < ApplicationController
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
 
   rescue Faraday::Error => e
-    redirect_to wire_process_admin_path(@wire), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to wire_process_admin_path(@wire), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to wire_process_admin_path(@wire), flash: { error: e.message }
   end
@@ -123,6 +124,7 @@ class WiresController < ApplicationController
        :address_postal_code,
        :address_state,
        :payment_recipient_id,
+       :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
   end

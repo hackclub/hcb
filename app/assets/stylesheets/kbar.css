@@ -4,7 +4,7 @@
   --kbar-overlay: rgba(0 0 0 / 0.05);
   --kbar-admin-overlay: rgba(241, 196, 15, 0.125);
   --kbar-border: rgba(0, 0, 0, 0.1);
-  --kbar-dim: rgba(255, 255, 255, 0.3);
+  --kbar-dim: rgba(0, 0, 0, 0.3);
   --command-bar-organization: #fc9fab;
   --command-bar-transaction: #f7c6a1;
   --command-bar-user: #f797f1;
@@ -26,13 +26,19 @@ html[data-dark='true'] {
   --command-bar-reimbursement: #33d6a6;
 }
 
-[role='combobox'] {
+[aria-controls='kbar-listbox'] {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* Internet Explorer 10+ */
+  border-radius: 0;
+  box-shadow: none !important;
+  min-height: 0;
 }
 
 [role='combobox']::-webkit-scrollbar {
   /* WebKit */
   width: 0;
   height: 0;
+}
+[role='listbox'] * {
+  font-family: inherit !important;
 }

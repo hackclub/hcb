@@ -13,7 +13,7 @@
 
 <article class="check--form flex align-start justify-center mt2">
   <section class="center mt0 mx-auto" style="width: 400px; max-width: 100%;">
-    <%= render @emburse_card %>
+    <%= render "emburse_cards/emburse_card", emburse_card: @emburse_card %>
     <%= link_to @emburse_card.emburse_path, target: "_blank", class: "btn bg-info mt2 md-mt3" do %>
       <%= inline_icon "external" %>
       View on Emburse
@@ -24,7 +24,7 @@
 West Hollywood, CA 90069</pre>
   </section>
 
-  <article class="card max-width-2 mx-auto mt3">
+  <article class="card max-w-lg mx-auto mt3">
     <section class="mb2">
       <h2 class="mt0 heading">
         <span class="flex-auto">Card for <%= @emburse_card.full_name %></span>

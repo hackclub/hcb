@@ -22,6 +22,8 @@ class Subledger < ApplicationRecord
 
   has_one :card_grant
 
+  has_many :hcb_codes
+
   has_many :canonical_event_mappings
   has_many :canonical_transactions, through: :canonical_event_mappings
 

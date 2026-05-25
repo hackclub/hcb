@@ -1,11 +1,11 @@
 <% if @event && OrganizerPosition.role_at_least?(current_user, @event, :member) %>
   <% if button %>
-    <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
+    <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", action: "menu#close", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
       <%= inline_icon "plus", size: 15 %>
         Create tag
     <% end %>
   <% else %>
-    <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="create_tag">
+    <section class="modal modal--scroll max-w-md bg-snow overflow-visible" data-behavior="modal" role="dialog" id="create_tag">
       <%= modal_header("Create tag") %>
       <%= form_with url: event_tags_path(@event), id: "create_tag_form", data: { turbo: true } do |form| %>
         <%= form.hidden_field :hcb_code_id, value: "", id: "create_tag_hcb_code_id" %>

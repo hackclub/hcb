@@ -1,0 +1,11 @@
+<p>Hi <%= @application.user.name %>,</p>
+
+<p>Congrats! We've approved your application for <%= @application.name %>.</p>
+
+<p>Before we can activate your organization, you'll need to sign the HCB Fiscal Sponsorship Agreement.</p>
+<p>Go to your <%= link_to "application status page", application_url(@application) %> to sign the agreement.</p>
+
+<p>
+  Warmly,<br>
+  The HCB team
+</p>

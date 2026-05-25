@@ -50,7 +50,14 @@ class OrganizerPositionInvite
       authorize @link
 
       if @link.save
-        redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully created." }
+        @invite_links = @event.organizer_position_invite_links.active
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { success: "Invite link successfully created." } }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+          }
+        end
       else
         render :new, status: :unprocessable_entity
       end
@@ -59,10 +66,25 @@ class OrganizerPositionInvite
     def deactivate
       authorize @link
 
+      @event = @link.event
+      @invite_links = @event.organizer_position_invite_links.active
       if @link.deactivate(user: current_user)
-        redirect_to event_team_path(event_id: @link.event.id), flash: { success: "Invite link successfully deactivated." }
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { success: "Invite link successfully deactivated." } }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+          }
+        end
       else
-        redirect_to event_team_path(event_id: @link.event.id), flash: { error: "Failed to deactivate invite link." }
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { error: "Failed to deactivate invite link." } }
+          format.turbo_stream {
+            flash.now[:error] = "Failed to deactivate invite link."
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }), status: :unprocessable_entity
+          }
+        end
       end
     end
 

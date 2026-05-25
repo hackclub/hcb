@@ -11,6 +11,7 @@ class ApplicationMailer < ActionMailer::Base
 
   # allow usage of application helper
   helper :application
+  helper :logo
 
   def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt
@@ -20,6 +21,35 @@ class ApplicationMailer < ActionMailer::Base
     return if mail.recipients.compact.empty?
 
     super(mail)
+  end
+
+  EARMUFFED_USER_IDS = [
+    "usr_b9YtZb", # Zach
+    "usr_b6mtLG", # Christina
+    "usr_N4tk5d", # Rachel A (personal)
+    "usr_ZBt5g5", # Rachel A (Hack Club)
+  ].freeze
+
+  def self.earmuffed_recipients
+    @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
+      User.find_by_public_id(id)&.email
+    end
+  end
+
+  def mail(...)
+    super(...).tap do |msg|
+      new_to = (msg.to || []) - self.class.earmuffed_recipients
+      new_cc = (msg.cc || []) - self.class.earmuffed_recipients
+      new_bcc = (msg.bcc || []) - self.class.earmuffed_recipients
+
+      all_recipients = new_to + new_cc + new_bcc
+
+      unless all_recipients.empty? || Rails.env.development?
+        msg.to = new_to
+        msg.cc = new_cc
+        msg.bcc = new_bcc
+      end
+    end
   end
 
   protected

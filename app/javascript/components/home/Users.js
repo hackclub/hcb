@@ -19,12 +19,20 @@ export default function Users({ data }) {
     <ResponsiveContainer
       width="100%"
       height={420}
-      padding={{ top: 32, left: 32 }}
+      padding={{ top: 32, left: 40 }}
     >
-      <BarChart data={data} layout="vertical">
+      <BarChart data={data} layout="vertical" margin={{ left: 15 }}>
         <XAxis
           type="number"
-          tickFormatter={n => USDollarNoCents.format(n)}
+          tickFormatter={n => {
+            if (n >= 1000000) {
+              return `$${(n / 1000000).toFixed(0)}M`
+            }
+            if (n >= 1000) {
+              return `$${(n / 1000).toFixed(0)}K`
+            }
+            return USDollarNoCents.format(n)
+          }}
           width={
             USDollarNoCents.format(Math.max(data.map(d => d['value']))).length *
             18
@@ -37,11 +45,16 @@ export default function Users({ data }) {
           verticalAnchor="start"
           interval={0}
           height={80}
+          tickFormatter={v => ` ${v}`}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
           {data.map((c, i) => (
-            <Cell key={c.name} fill={generateColor(i, data.length, isDark)} />
+            <Cell
+              key={c.name}
+              style={{ outline: 'none' }}
+              fill={generateColor(i, data.length, isDark)}
+            />
           ))}
         </Bar>
       </BarChart>

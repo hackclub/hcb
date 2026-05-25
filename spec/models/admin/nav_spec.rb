@@ -35,9 +35,9 @@ RSpec.describe Admin::Nav do
         instance = described_class.new(
           name: "Dinosaurs",
           items: [
-            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: 11, count_type: :tasks),
-            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: 22, count_type: :tasks),
-            Admin::Nav::Item.new(name: "Barney", path: "/", count: 44, count_type: :records)
+            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: ->{ 11 }, count_type: :tasks),
+            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: ->{ 22 }, count_type: :tasks),
+            Admin::Nav::Item.new(name: "Barney", path: "/", count: ->{ 44 }, count_type: :records)
           ]
         )
 
@@ -50,9 +50,9 @@ RSpec.describe Admin::Nav do
         instance = described_class.new(
           name: "Dinosaurs",
           items: [
-            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: 11, count_type: :records),
-            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: 22, count_type: :records),
-            Admin::Nav::Item.new(name: "Barney", path: "/", count: 44, count_type: :tasks)
+            Admin::Nav::Item.new(name: "Orpheus", path: "/", count: -> { 11 }, count_type: :records),
+            Admin::Nav::Item.new(name: "Littlefoot", path: "/", count: -> { 22 }, count_type: :records),
+            Admin::Nav::Item.new(name: "Barney", path: "/", count: -> { 44 }, count_type: :tasks)
           ]
         )
 

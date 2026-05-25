@@ -6,6 +6,7 @@ module Api
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
       include PublicActivity::StoreController
+      include ErrorHandling
 
       attr_reader :current_user
 
@@ -14,18 +15,6 @@ module Api
       before_action :authenticate!
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
-
-      rescue_from Pundit::NotAuthorizedError do |e|
-        render json: { error: "not_authorized" }, status: :forbidden
-      end
-
-      rescue_from ActiveRecord::RecordNotFound do |e|
-        render json: { error: "resource_not_found", message: ("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model) }.compact_blank, status: :not_found
-      end
-
-      rescue_from ActiveRecord::RecordInvalid do |e|
-        render json: { error: "invalid_operation", messages: e.record.errors.full_messages }, status: :bad_request
-      end
 
       def not_found
         skip_authorization

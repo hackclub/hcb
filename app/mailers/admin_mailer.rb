@@ -2,7 +2,12 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  default to: -> { Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL) }
+  default to: -> do
+    [
+      Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
+      User.find_by_public_id("usr_MVtap3")&.email_address_with_name # Lucy
+    ].compact
+  end
 
   def cash_withdrawal_notification
     @hcb_code = params[:hcb_code]
@@ -59,7 +64,7 @@ class AdminMailer < ApplicationMailer
 
     Disbursement.reviewing.find_each do |disbursement|
       if disbursement.created_at < 24.hours.ago
-        next if disbursement.comments.any? { |c| c.user.admin? } || disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
 
         @tasks << {
           url: disbursement_process_admin_url(disbursement),

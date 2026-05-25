@@ -3,9 +3,17 @@
 <div class="card mb3" id="stickerninja">
   <div class="card__banner card__banner--top flex justify-between items-center promo-stickerninja">
     <%= link_to image_tag("stickerninja.png", width: 120), "https://stickerninja.com/", target: :_blank %>
-    <div class="actions tooltipped tooltipped--w inline-block mt0" aria-label="You are not eligible to access this perk.">
-      <span class="btn disabled">Expired</span>
-    </div>
+    <% if !perks_available %>
+      <div class="actions tooltipped tooltipped--w inline-block mt0" aria-label="You are not eligible to access this perk.">
+        <span class="btn disabled">Ineligible</span>
+      </div>
+    <% else %>
+      <div class="actions inline-block mt0 items-center">
+        <%= copy_to_clipboard("hackclub15", class: "badge p2 h5", style: "border: 2px dashed #888; background-color: #17171d;") do %>
+          hackclub15
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <p class="mb0">

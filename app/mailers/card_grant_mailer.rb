@@ -3,7 +3,7 @@
 class CardGrantMailer < ApplicationMailer
   def card_grant_notification
     @card_grant = params[:card_grant]
-    @custom_invite_message = @card_grant.setting.invite_message
+    @custom_invite_message = @card_grant.invite_message
     purpose_text = " for #{@card_grant.purpose}"
 
     mail to: @card_grant.user.email_address_with_name, subject: "[#{@card_grant.event.name}] You've received a #{@card_grant.amount.format} grant#{purpose_text if @card_grant.purpose.present?}!"

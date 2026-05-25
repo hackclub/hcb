@@ -16,6 +16,7 @@ default: &defaults
     - ActionDispatch::Http::Parameters::ParseError
     - ActiveRecord::RecordNotFound
     - RTesseract::Error
+    - UserService::EnrollSmsAuth::SMSEnrollmentError
 
 production:
   <<: *defaults

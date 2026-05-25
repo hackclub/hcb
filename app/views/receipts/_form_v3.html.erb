@@ -21,7 +21,7 @@
           "
         } do |form| %>
 
-      <div class="card <%= "mt2" if defined?(include_spacing) %> flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
+      <div class="card flex flex-col<%= " pt0" if defined?(show_banner) && defined?(receiptable) && (receiptable.receipts.any? || receiptable.no_or_lost_receipt?) %>" id="link_receipt_<%= instance %>_form">
         <% if defined?(show_banner) %>
           <% if defined?(receiptable) && receiptable.receipts.any? %>
             <p class="card__banner bg-success white bold flex items-center mt0 mb2">
@@ -62,13 +62,13 @@
                                 "file-drop-target" => "fileInput",
                                 "action"           => "change->form#submit"
                               } %>
-          <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
+          <span class="flex items-center justify-center flex-row flex-wrap gap-2">
             <% additional_classes = [].tap do |array|
                  array << "bg-success" if local_assigns[:success]
                  array << "bg-error" if local_assigns[:error]
                  array << "disabled" if defined?(receiptable) && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
                end.join(", ") %>
-            <%= form.label @ledger_instance.present? ? "file_#{@ledger_instance}" : "file", class: "btn m1 #{additional_classes}", id: "upload-receipt-button" do %>
+            <%= form.label @ledger_instance.present? ? "file_#{@ledger_instance}" : "file", class: "btn #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
                 <span id="upload-receipt-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
@@ -86,7 +86,7 @@
               <% end %>
             <% end %>
             <% if defined?(enable_linking) %>
-              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1 #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
+              <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary #{"disabled" if defined?(receiptable) && !ReceiptablePolicy.new(current_user, receiptable).link_modal?}", data: defined?(inline_linking) ? nil : { behavior: "modal_trigger", modal: "link_receipt_#{instance}" }, onclick: defined?(inline_linking) ? "event.preventDefault(); $('#link_receipt_#{instance}_select').show(); $('#link_receipt_#{instance}_form').hide();" : "" do %>
                 <%= inline_icon "payment-docs" %>
                 <span>Select from Receipt Bin</span>
               <% end %>

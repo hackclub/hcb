@@ -3,12 +3,9 @@
 module ReceiptReport
   class SendJob < ApplicationJob
     queue_as :low
-    def perform(user_id, force_send: false)
+    def perform(user_id)
       @user = User.includes(:stripe_cards).find user_id
 
-      return unless force_send ||
-                    @user.receipt_report_weekly? ||
-                    @user.receipt_report_monthly?
       return unless hcb_ids.any?
 
       mailer = ReceiptableMailer.with(user_id:,
@@ -19,9 +16,7 @@ module ReceiptReport
 
     def hcb_ids
       @hcb_ids ||= begin
-        @user.stripe_cards.flat_map do |card|
-          card.hcb_codes.missing_receipt.receipt_required.pluck(:id)
-        end
+        @user.hcb_code_ids_missing_receipt
       end
     end
 

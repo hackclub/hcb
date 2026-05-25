@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -85,6 +85,10 @@ class Event
 
       def contract_docuseal_template_id
         487784
+      end
+
+      def contract_skip_prefills
+        {}
       end
 
     end

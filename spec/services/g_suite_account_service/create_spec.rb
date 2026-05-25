@@ -98,6 +98,33 @@ RSpec.describe GSuiteAccountService::Create, type: :model do
     end
   end
 
+  context "when g suite account quota is reached" do
+    before do
+      g_suite.update!(max_accounts: 1)
+      GSuiteAccount.create!(
+        g_suite:,
+        creator: current_user,
+        backup_email: "a@example.com",
+        address: "asl@event.example.com",
+        first_name: "Test",
+        last_name: "User",
+        accepted_at: DateTime.now
+      )
+    end
+
+    it "does not create an account" do
+      expect do
+        service.run rescue nil
+      end.not_to change(GSuiteAccount, :count)
+    end
+
+    it "raises an error" do
+      expect do
+        service.run
+      end.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
   describe "private" do
     describe "#full_email_address" do
       it "builds" do

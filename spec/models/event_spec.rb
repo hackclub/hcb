@@ -116,4 +116,21 @@ RSpec.describe Event, type: :model do
       expect(child.plan).to be_instance_of(Event::Plan::Standard)
     end
   end
+
+  describe "ledger association" do
+    it "automatically creates a primary ledger after creation" do
+      event = create(:event)
+
+      expect(event.ledger).to be_present
+      expect(event.ledger.primary?).to be true
+      expect(event.ledger.event).to eq(event)
+    end
+
+    it "has a primary ledger association" do
+      event = create(:event)
+
+      expect(event).to respond_to(:ledger)
+      expect(event.ledger).to be_a(Ledger)
+    end
+  end
 end

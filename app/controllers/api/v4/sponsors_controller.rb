@@ -8,7 +8,8 @@ module Api
       before_action :set_api_event, only: [:index, :create]
 
       def index
-        @sponsors = authorize(@event.sponsors.order(created_at: :desc))
+        authorize @event, :index_in_v4?
+        @sponsors = @event.sponsors.order(created_at: :desc)
       end
 
       def show
@@ -22,11 +23,8 @@ module Api
         @sponsor = @event.sponsors.new(sponsor_params)
         authorize @sponsor
 
-        if @sponsor.save
-          render :show, status: :created, location: api_v4_sponsor_path(@sponsor)
-        else
-          return render json: { error: @sponsor.errors.full_messages.to_sentence }, status: :unprocessable_entity
-        end
+        @sponsor.save!
+        render :show, status: :created, location: api_v4_sponsor_path(@sponsor)
       end
 
       private

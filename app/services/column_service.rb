@@ -111,8 +111,20 @@ class ColumnService
     get("/transfers/ach/#{id}")
   end
 
+  def self.international_wire(id)
+    get("/transfers/international-wire/#{id}")
+  end
+
   def self.return_ach(id, with:)
     post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
+  end
+
+  # This should only be shown to admins since it may contain sensitive information.
+  # https://column.com/docs/workingwithapi/errors
+  def self.error_to_admin_message(faraday_error)
+    message = faraday_error.response_body["message"]
+    details = faraday_error.response_body["details"]&.map { |k, v| "#{k}: #{v}" }&.to_sentence
+    [message, details].compact.join(" ")
   end
 
 end

@@ -4,8 +4,8 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:branding, :roles, :security]
-  skip_before_action :redirect_to_onboarding, only: [:branding, :roles, :security]
+  skip_before_action :signed_in_user, only: [:index, :mobile, :branding, :roles, :security]
+  skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
 
   after_action only: [:index, :branding, :security] do
     # Allow indexing home and branding pages
@@ -13,36 +13,39 @@ class StaticPagesController < ApplicationController
   end
 
   def index
-    if signed_in?
-      @service = StaticPageService::Index.new(current_user:)
+    return redirect_to first_index_path if current_user(allow_unverified: true)&.redirect_to_first_dashboard?
 
-      @events = @service.events
+    return redirect_to auth_users_path(require_reload: true, signup: params[:signup]) unless signed_in?
 
-      featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
+    @service = StaticPageService::Index.new(current_user:)
 
-      @featured_events = featured_event_ids.map do |id|
-        Event.find_by_public_id(id)
-      end.select do |event|
-        event&.is_public? && event.is_indexable?
-      end.sample(6)
+    @events = @service.events
 
-      @latest_hcb_announcement = Event.find(EventMappingEngine::EventIds::HACK_CLUB_BANK).announcements.published.order(published_at: :desc).first
+    featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
-      @organizer_positions = @service.organizer_positions.not_hidden
-      @invites = @service.invites
-      @invite_requests = @service.invite_requests
+    @featured_events = featured_event_ids.map do |id|
+      Event.find_by_public_id(id)
+    end.select do |event|
+      event&.is_public? && event.is_indexable?
+    end.sample(6)
 
-      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-        @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
-      else
-        @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
-      end
+    @organizer_positions = @service.organizer_positions.not_hidden
+    @invites = @service.invites
+    @invite_requests = @service.invite_requests
+    @applications = @service.applications
 
-      @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
-
-      @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
-
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    else
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
     end
+
+    @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+
+    @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
+  end
+
+  def first
   end
 
   def admin_tools
@@ -52,6 +55,16 @@ class StaticPagesController < ApplicationController
     end
 
     @transaction_volume = CanonicalTransaction.included_in_stats.sum("abs(amount_cents)")
+  end
+
+  def mobile
+    if request.user_agent&.match("iPhone")
+      redirect_to "https://apps.apple.com/us/app/hcb-by-hack-club/id6465424810", allow_other_host: true
+    elsif request.user_agent&.match("Android")
+      redirect_to "https://play.google.com/store/apps/details?id=com.hackclub.hcb", allow_other_host: true
+    else
+      redirect_to "https://hackclub.com/hcb", allow_other_host: true
+    end
   end
 
   def branding
@@ -174,7 +187,7 @@ class StaticPagesController < ApplicationController
       end
     end
 
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
 
@@ -182,7 +195,7 @@ class StaticPagesController < ApplicationController
     Rails.error.report(e)
 
     flash[:error] = e.message
-    return redirect_to params[:redirect_url] if params[:redirect_url]
+    return redirect_to url_from(params[:redirect_url]) || root_path if params[:redirect_url]
 
     redirect_back
   end
