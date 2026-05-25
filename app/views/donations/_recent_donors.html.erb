@@ -1,12 +1,14 @@
 <% unless @recent_donors.empty? %>
-  <h2>Recent donors</h2>
+  <div class="card">
+    <h2 class="mt-0">Recent donors</h2>
 
-  <div class="flex gap-2 flex-col sm:flex-row">
     <% @recent_donors.each do |donor| %>
-      <div class="card mt-3 flex flex-col flex-1 gap-1">
-        <p class="my-0 homepage-eyebrow"><%= time_ago_in_words(donor.updated_at) %> ago</p>
-        <h4 class="my-0"><%= donor.name %></h4>
-        <p class="my-0"><%= number_to_currency(donor.amount) %></p>
+      <div class="card shadow-none bg-gray-100 dark:!bg-neutral-800 mt-2 flex items-center gap-3 py-2">
+        <div>
+          <span class="text-sm font-medium truncate"><%= donor.name %></span>
+          <span class="text-xs text-gray-400 block mb-1"><%= time_ago_in_words(donor.donated_at) %> ago</span>
+        </div>
+        <span class="text-sm ml-auto shrink-0"><%= number_to_currency(donor.amount) %></span>
       </div>
     <% end %>
   </div>

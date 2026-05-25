@@ -51,17 +51,16 @@ class DonationsController < ApplicationController
     return unless build_donation_page!(event: @event, params:, request:)
 
     if @event.show_top_donors
-      @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(5)
-      @top_donors = [*@top_donors, *@top_donors, *@top_donors, *@top_donors, *@top_donors, *@top_donors]
+      @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(10)
 
-      if @top_donors.size < 5
+      if @top_donors.size < 3
         @top_donors = []
       end
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(5)
-      if @recent_donors.size < 5
+      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8)
+      if @recent_donors.size < 8
         @recent_donors = []
       end
     end

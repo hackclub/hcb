@@ -75,40 +75,31 @@
         var(--bg-image) !important;
     }
   }
+}
 
-  &.topDonorCard {
-    border: 2px solid transparent;
+.podium-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem 1rem var(--radius-lg) var(--radius-lg);
+  font-weight: 700;
+  color: white;
+  font-size: 1.25rem;
 
-    &.firstPlace {
-      border-color: #d5882b !important;
-      & .number {
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        border-color: #d79c32 !important;
-        background: #d79c32;
-        color: #fefb88;
-      }
-    }
-    &.secondPlace {
-      border-color: #897678 !important;
-      & .number {
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        border-color: #757575 !important;
-        background: #757575;
-        color: #fefefe;
-      }
-    }
-    &.thirdPlace {
-      border-color: #964523 !important;
-      & .number {
-        font-weight: 700 !important;
-        font-size: 15px !important;
-        border-color: #bb581c !important;
-        background: #bb581c;
-        color: #fee38a;
-      }
-    }
+  &--first {
+    height: 13.5rem;
+    background: #d79c32;
+    font-size: 1.5rem;
+  }
+  &--second {
+    height: 9.75rem;
+    background: #757575;
+  }
+  &--third {
+    height: 7.5rem;
+    background: #bb581c;
   }
 }
 
