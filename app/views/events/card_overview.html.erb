@@ -19,8 +19,7 @@
       </span>
 
       <div class="flex items-center gap-2">
-        <%= pop_icon_to @view == "list" ? "grid" : "list",
-                        "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+        <%= pop_icon_to(@view == "list" ? "grid" : "list", upsert_query_params(view: @view == "list" ? "grid" : "list")) %>
         <% if organizer_signed_in?(as: :member) %>
           <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
             <%= inline_icon "card-add" %>
