@@ -26,12 +26,13 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(:event)
+    @stripe_cards = current_user.stripe_cards.includes(event: { logo_attachment: :blob })
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
+    @q = params[:q].presence
     @status = params[:status].presence_in(%w[active inactive frozen canceled])
     @type = params[:type].presence_in(%w[virtual physical])
-    @filter_applied = @status || @type
+    @filter_applied = @status || @type || @q
 
     @stripe_cards = case @status
                     when "active"
@@ -55,10 +56,19 @@ class MyController < ApplicationController
                       @stripe_cards
                     end
 
+    if @q
+      @stripe_cards = @stripe_cards.left_joins(:card_grant).where(
+        "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q",
+        q: "%#{@q}%"
+      )
+    end
+
     @stripe_cards = @stripe_cards.order(
       Arel.sql("stripe_status = 'active' DESC"),
       Arel.sql("stripe_status = 'inactive' DESC")
     )
+
+    @cards_by_event = @stripe_cards.group_by(&:event).reject { |event, _| event.nil? }.sort_by { |event, _| event.name }.to_h
   end
 
   def tasks
