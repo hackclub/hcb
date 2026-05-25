@@ -4,7 +4,7 @@ module Api
   module V4
     module Reimbursement
       class ReportsController < ApplicationController
-        before_action :set_report, only: [:show, :update, :destroy, :submit]
+        before_action :set_report, only: [:show, :update, :destroy, :submit, :draft]
 
         include ApplicationHelper
 
@@ -12,7 +12,9 @@ module Api
           if params[:organization_id]
             @event = Event.find_by_public_id!(params[:organization_id])
             authorize @event, :show_in_v4?
-            reports = @event.reimbursement_reports.order(created_at: :desc)
+            reports = @event.reimbursement_reports
+            reports = reports.visible unless params[:show_hidden_reports]
+            reports = reports.order(created_at: :desc)
           else
             skip_authorization
             reports = current_user.reimbursement_reports.order(created_at: :desc)
@@ -37,7 +39,7 @@ module Api
           @report = @event.reimbursement_reports.build(
             report_params.merge(
               user: current_user,
-              inviter: current_user,
+              inviter: nil,
               currency: current_user.payout_method&.currency || "USD"
             )
           )
@@ -65,12 +67,17 @@ module Api
           end
 
           if update_params[:reviewer_id]
+            authorize @report, :set_reviewer?
             @report.reviewer = User.find_by_public_id!(update_params.delete(:reviewer_id))
+          end
+
+          if update_params.key?(:maximum_amount_cents)
+            authorize @report, :set_maximum_amount?
           end
 
           @report.update!(update_params)
 
-          render :show, status: :ok
+          render :show
         end
 
         def destroy
@@ -80,10 +87,17 @@ module Api
         end
 
         def submit
-          authorize @report, :submit?
+          authorize @report
 
           @report.mark_submitted!
-          render :show, status: :ok
+          render :show
+        end
+
+        def draft
+          authorize @report
+
+          @report.mark_draft!
+          render :show
         end
 
         private

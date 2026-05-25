@@ -70,7 +70,7 @@ module Api
         end
 
         def expense_attrs
-          params.require(:reimbursement_expense).permit(:memo, :description, :category, :value)
+          params.require(:reimbursement_expense).permit(:memo, :description, :category, :type, :value)
         end
 
       end
