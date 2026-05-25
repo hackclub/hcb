@@ -32,7 +32,7 @@ class MyController < ApplicationController
     @q = params[:q].presence
     @status = params[:status].presence_in(%w[active inactive frozen canceled])
     @type = params[:type].presence_in(%w[virtual physical])
-    @filter_applied = @status || @type || @q
+    @filter_applied = @status || @type
 
     @stripe_cards = case @status
                     when "active"
