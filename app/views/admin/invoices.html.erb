@@ -62,7 +62,7 @@
         <td><%= invoice.status.upcase %></td>
         <td><%= invoice.fee_reimbursement_id %></td>
         <td>
-          <%= link_to "Process", invoice_process_admin_path(invoice.id) %>
+          <%= link_to "Process", invoice_process_admin_path(invoice.id), class: "btn" %>
         </td>
       </tr>
     <% end %>

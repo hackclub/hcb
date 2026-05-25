@@ -57,11 +57,11 @@
           <% if g_suite.needs_ops_review? %>
             <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
           <% elsif g_suite.revocation.present? && g_suite.revocation.revoked? %>
-            <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
+            <%= link_to("Process", google_workspace_process_admin_path(g_suite), class: "btn") %>
           <% elsif g_suite.dkim_key.nil? %>
-            <%= link_to("DKIM", google_workspace_process_admin_path(g_suite)) %>
+            <%= link_to("DKIM", google_workspace_process_admin_path(g_suite), class: "btn") %>
           <% else %>
-            <%= link_to("View", google_workspace_process_admin_path(g_suite)) %>
+            <%= pop_icon_to "external", google_workspace_process_admin_path(g_suite) %>
           <% end %>
         </td>
       </tr>

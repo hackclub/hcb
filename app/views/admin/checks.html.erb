@@ -50,7 +50,7 @@
         <td><%= render_money_amount(check.amount) %></td>
         <td><%= check.aasm_state.upcase %></td>
         <td>
-          <%= link_to "View", check_path(check) %>
+          <%= pop_icon_to "external", check_path(check) %>
         </td>
       </tr>
     <% end %>

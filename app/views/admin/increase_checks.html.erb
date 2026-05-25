@@ -22,9 +22,9 @@
         <td><%= check.recipient_name %></td>
         <td><%= render_money(check.amount) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
-        <td>
-          <%= link_to "View", hcb_code_path(check.hcb_code) %>
-          <%= link_to "Process", increase_check_process_admin_path(check) %>
+        <td class="flex items-center gap-2">
+          <%= link_to "Process", increase_check_process_admin_path(check), class: "btn" %>
+          <%= pop_icon_to "external", hcb_code_path(check.hcb_code) %>
         </td>
       </tr>
     <% end %>

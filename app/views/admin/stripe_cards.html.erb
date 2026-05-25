@@ -31,7 +31,7 @@
         <td><%= card.name %></td>
         <td><%= card.status_text %></td>
         <td><%= card.physical? ? "💳 Physical" : "🔢 Virtual" %></td>
-        <td><%= link_to "View", card %></td>
+        <td><%= pop_icon_to "external", card %></td>
       </tr>
     <% end %>
   </tbody>

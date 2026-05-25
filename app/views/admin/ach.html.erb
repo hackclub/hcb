@@ -45,8 +45,8 @@
         </td>
         <td><%= ach.confirmation_number %></td>
         <td>
-          <%= link_to "Process", ach_start_approval_admin_path(ach) if ach.pending? %>
-          <%= link_to "View", ach_start_approval_admin_path(ach) unless ach.pending? %>
+          <%= link_to "Process", ach_start_approval_admin_path(ach), class: "btn" if ach.pending? %>
+          <%= pop_icon_to "external", ach_start_approval_admin_path(ach) unless ach.pending? %>
         </td>
       </tr>
     <% end %>

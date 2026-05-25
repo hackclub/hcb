@@ -28,9 +28,9 @@
         </td>
         <td>
           <% if check_deposit.manual_submission_required? %>
-            <%= link_to "Process", [:admin, check_deposit] %>
+            <%= link_to "Process", [:admin, check_deposit], class: "btn" %>
           <% else %>
-            <%= link_to "View", url_for(check_deposit.local_hcb_code) %>
+            <%= pop_icon_to "external", url_for(check_deposit.local_hcb_code) %>
           <% end %>
         </td>
       </tr>

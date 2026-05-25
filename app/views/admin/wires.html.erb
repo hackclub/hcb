@@ -36,9 +36,9 @@
         <td><%= wire.column_id.present? ? "TRUE" : "FALSE" %></td>
         <td><%= Money.from_cents(wire.amount_cents, wire.currency).format %></td>
         <td><%= wire.aasm.human_state %></td>
-        <td>
-          <%= link_to "View", hcb_code_path(wire.hcb_code) %>
-          <%= link_to "Process", wire_process_admin_path(wire) %>
+        <td class="flex items-center gap-2">
+          <%= pop_icon_to "external", hcb_code_path(wire.hcb_code) %>
+          <%= link_to "Process", wire_process_admin_path(wire), class: "btn" %>
         </td>
       </tr>
     <% end %>
