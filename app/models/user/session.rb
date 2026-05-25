@@ -38,7 +38,7 @@
 #
 class User
   class Session < ApplicationRecord
-    has_paper_trail skip: [:session_token] # ciphertext columns will still be tracked
+    has_paper_trail skip: [:session_token, :ip, :longitude, :latitude] # session_token ciphertext columns will still be tracked
     has_encrypted :session_token
     blind_index :session_token
 
