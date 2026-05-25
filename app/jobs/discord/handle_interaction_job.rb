@@ -291,7 +291,7 @@ module Discord
     def require_linked_user
       return respond content: "This command requires you to link this Discord account to HCB", components: button_to("Set up HCB", "setup") if @responded
 
-      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: EPHEMERAL_MESSAGE_FLAGflag
+      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: EPHEMERAL_MESSAGE_FLAG
     end
 
     def linking_embed
