@@ -521,10 +521,10 @@ class EventsController < ApplicationController
 
     unless @user || @q
       @cards_by_user = display_cards
-                         .group_by(&:user)
-                         .reject { |user, _| user.nil? }
-                         .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
-                         .to_h
+                       .group_by(&:user)
+                       .reject { |user, _| user.nil? }
+                       .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
+                       .to_h
     end
   end
 
