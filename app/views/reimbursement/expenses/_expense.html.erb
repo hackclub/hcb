@@ -5,7 +5,7 @@
     data-controller="expense-form"
     data-expense-form-enabled-value="<%= new %>"
     data-expense-form-memo-value="<%= expense.card_label.presence || "Untitled Expense" %>"
-    data-expense-form-locked-value="<%= expense.report.locked? || read_only %>">
+    data-expense-form-locked-value="<%= !expense.report.draft? || read_only %>">
     <article
       id="<%= expense.expense_number %>"
       class="
@@ -50,7 +50,7 @@
   <% end %>
   <% unless expense.report.reimbursed? || expense.is_fee? %>
     <button class="edit-or-save pop pointer tooltipped tooltipped--w" data-expense-form-target="button" aria-label="<%= "This expense is read-only. #{"Mark it as a draft to edit." unless expense.report.closed? || read_only}" %>">
-      <% if expense.report.locked? || read_only %>
+      <% if !expense.report.draft? || read_only %>
         <%= inline_icon "private" %>
       <% else %>
         <%= inline_icon "checkmark", style: new ? nil : "display: none;" %>

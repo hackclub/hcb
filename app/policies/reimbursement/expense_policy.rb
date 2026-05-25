@@ -3,19 +3,19 @@
 module Reimbursement
   class ExpensePolicy < ApplicationPolicy
     def create?
-      unlocked && (admin || manager || creator)
+      draft && (admin || manager || creator)
     end
 
     def edit?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      draft && (admin || manager || creator) && !record.is_fee?
     end
 
     def update?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      draft && (admin || manager || creator) && !record.is_fee?
     end
 
     def destroy?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      draft && (admin || manager || creator) && !record.is_fee?
     end
 
     def approve?
@@ -50,8 +50,8 @@ module Reimbursement
       record.report.user == user
     end
 
-    def unlocked
-      !record.report.locked?
+    def draft
+      record.report.draft?
     end
 
   end
