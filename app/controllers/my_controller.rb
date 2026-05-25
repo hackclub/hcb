@@ -58,7 +58,7 @@ class MyController < ApplicationController
 
     if @q
       @stripe_cards = @stripe_cards.left_joins(:card_grant).where(
-        "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q",
+        "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q OR stripe_cards.last4 ILIKE :q",
         q: "%#{@q}%"
       )
     end
