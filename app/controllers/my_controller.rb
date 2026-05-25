@@ -26,7 +26,7 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(event: { logo_attachment: :blob })
+    @stripe_cards = current_user.stripe_cards.includes(:card_grant, event: { logo_attachment: :blob })
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
     @q = params[:q].presence
