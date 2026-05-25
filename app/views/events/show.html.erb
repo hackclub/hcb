@@ -77,10 +77,34 @@
     </div>
   <% end %>
 
+  <% if policy(@event).request_call? %>
+    <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
+
+    <% unless @event.config.hide_onboarding_message %>
+      <div class="relative card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">
+        <div class="flex-1">
+          <p class="my-0 text-lg font-[700]">Schedule an onboarding call</p>
+          <p class="my-0 text-md max-w-2xl">If you would like, you can schedule a call with a member of the HCB team to learn more about the platform, or <%= link_to "hide this message", hide_onboarding_message_event_path(@event), method: :post %>.</p>
+        </div>
+        <% if (scheduling_link = @event.onboarding_scheduling_link).present? %>
+          <%= link_to scheduling_link, class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
+        <% else %>
+          <%= button_to request_call_event_path(@event), class: "btn" do %>
+            <%= inline_icon "people-2", size: 16, class: "mr-1" %>
+            Schedule
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
   <%= render "events/public_message" %>
 
   <%= turbo_frame_tag "balance_transactions", src: event_balance_transactions_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 mb-4", loading: "lazy", target: "_top" do %>
-    <div class="card p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]">
+    <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]">
       <%= render partial: "application/loading_container" %>
     </div>
     <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]" style="flex: 1">
@@ -98,7 +122,7 @@
       <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center" style="flex: 1">
         <%= render partial: "application/loading_container" %>
       </div>
-      <div class="card p-0 text-center flex-1 flex flex-col items-center justify-center">
+      <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center">
         <%= render partial: "application/loading_container" %>
       </div>
     <% end %>

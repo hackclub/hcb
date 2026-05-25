@@ -307,9 +307,39 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
   }
   ``` 
 
+### Implementation
+
+Use `expand_association` in jbuilder partials for any field that references a related object by ID. It handles both cases automatically:
+
+```ruby
+expand_association(json, :organization, ach_transfer.event,
+                   partial: "api/v4/events/event", as: :event)
+
+expand_association(json, :sender, ach_transfer.creator,
+                   partial: "api/v4/users/user", as: :user)
+```
+
+- When `:organization` is **not** in `expand`, renders `"organization_id": "org_h1izp"`.
+- When `:organization` **is** in `expand`, renders the full object under `"organization": { ... }`.
+- If the record is `nil`, renders `null` in both cases.
+- Associations must have a `public_id` method.
+
+For non-association expansions — computed fields, structured data, or arrays — use `expand?` directly since there is no `_id` fallback:
+
+```ruby
+json.balance_cents event.balance_available if expand?(:balance_cents)
+
+if expand?(:shipping_address)
+  json.shipping_address do
+    # ...
+  end
+end
+```
+
 ### Guidelines
 
-- Use the `expand?(:symbol)` helper in jbuilder views to conditionally render expanded objects.
+- Use `expand_association` for any field that is a reference to another API object.
+- Use `expand?(:symbol)` directly for computed fields, structured data, or arrays that have no `_id` equivalent.
 - Certain contexts auto-expand relevant objects for convenience (e.g. listing cards under an organization auto-expands `user`). Document these per-endpoint.
 - Avoid deep expansion chains (e.g. `expand=organization.users.cards`). One level is sufficient.
 - Each endpoint should document which fields are expandable.
@@ -481,6 +511,8 @@ Before opening a PR that adds or modifies a V4 API endpoint, verify:
 - [ ] Routing is shallow (max one level of nesting)
 - [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
 - [ ] No arrays of API objects are embedded in a response (use a scoped index endpoint instead)
+- [ ] Association fields use `expand_association` (never a bare `if expand?` with a manual `_id` fallback)
+- [ ] Non-association expansions (computed fields, arrays) use `expand?` directly
 - [ ] Related objects use `expand` and are not auto-included without reason
 - [ ] The model's canonical partial is used (not inlined fields)
 - [ ] Every partial declares strict locals (`# locals: (<resource>:)`)

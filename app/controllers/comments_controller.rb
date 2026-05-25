@@ -17,7 +17,9 @@ class CommentsController < ApplicationController
 
     if @comment.save
       flash[:success] = "Comment created."
-      redirect_to @commentable.is_a?(Event) ? edit_event_path(@commentable, tab: :admin) : @commentable
+      # Use return_to param if provided, otherwise fall back to the commentable
+      # url_from validates the URL is internal to prevent open redirect vulnerabilities
+      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
       render :new, status: :unprocessable_entity
     end
@@ -73,7 +75,7 @@ class CommentsController < ApplicationController
     params.require(:comment).permit(:content, :file, :admin_only)
   end
 
-  COMMENTABLE_TYPE_MAP = [AchTransfer, EmburseCardRequest, EmburseTransaction,
+  COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
                           EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
                           OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
                           Ledger::Item].index_by(&:to_s).freeze
