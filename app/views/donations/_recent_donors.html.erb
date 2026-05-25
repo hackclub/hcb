@@ -8,7 +8,7 @@
           <span class="text-sm font-medium truncate"><%= donor.name %></span>
           <span class="text-xs text-gray-400 block mb-1"><%= time_ago_in_words(donor.donated_at) %> ago</span>
         </div>
-        <span class="text-sm ml-auto shrink-0"><%= number_to_currency(donor.amount) %></span>
+        <span class="text-sm ml-auto shrink-0"><%= render_money(donor.amount) %></span>
       </div>
     <% end %>
   </div>
