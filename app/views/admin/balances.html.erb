@@ -3,7 +3,6 @@
 <%= form_with local: true, action: :balances, method: :get, data: { "turbo": "false" } do |form| %>
   <div class="inline-block">
     <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
-    <%= button_tag("Search", class: "btn bg-info") %>
     <%= render partial: "admin/events_filter", locals: { form:, submit_disable_with_false: true, show_new: false } %>
     <br><br>
 
