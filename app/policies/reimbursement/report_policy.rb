@@ -92,7 +92,7 @@ module Reimbursement
     end
 
     def destroy?
-      ((manager || creator) && record.draft?) || (admin && !record.reimbursed?)
+      (admin || manager || creator) && record.draft?
     end
 
     private
