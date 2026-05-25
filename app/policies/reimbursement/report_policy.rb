@@ -23,7 +23,7 @@ module Reimbursement
     end
 
     def edit?
-      admin || manager || (creator && unlocked)
+      admin || manager || (creator && record.draft?)
     end
 
     def update?
@@ -48,7 +48,7 @@ module Reimbursement
     end
 
     def submit?
-      unlocked && (admin || manager || creator)
+      (admin || manager || creator) && record.draft?
     end
 
     def draft?
@@ -119,10 +119,6 @@ module Reimbursement
 
     def open
       !record.closed?
-    end
-
-    def unlocked
-      !record.locked?
     end
 
   end
