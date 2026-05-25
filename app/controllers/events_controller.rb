@@ -521,10 +521,10 @@ class EventsController < ApplicationController
 
     unless @user || @q
       user_groups = display_cards
-                      .group_by(&:user)
-                      .reject { |user, _| user.nil? }
-                      .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
-                      .to_a
+                    .group_by(&:user)
+                    .reject { |user, _| user.nil? }
+                    .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
+                    .to_a
 
       @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
       @cards_by_user = @paginated_user_groups.to_h
