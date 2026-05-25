@@ -520,11 +520,14 @@ class EventsController < ApplicationController
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
 
     unless @user || @q
-      @cards_by_user = display_cards
-                       .group_by(&:user)
-                       .reject { |user, _| user.nil? }
-                       .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
-                       .to_h
+      user_groups = display_cards
+                      .group_by(&:user)
+                      .reject { |user, _| user.nil? }
+                      .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
+                      .to_a
+
+      @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
+      @cards_by_user = @paginated_user_groups.to_h
     end
   end
 

@@ -116,6 +116,7 @@
             <% end %>
           </section>
         <% end %>
+        <%= paginate @paginated_user_groups %>
       <% else %>
         <% if organizer_signed_in? %>
           <%= blankslate "You don’t have any #{@status} cards yet" %>
