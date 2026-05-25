@@ -135,7 +135,7 @@
 
         <div class="field">
           <%= form.label :category_lock, "Approved merchant categories" %>
-          <%= form.select :category_lock, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.category_lock }, { class: "w-100 fit", disabled:, multiple: true } %>
+          <%= form.select :category_lock, StripeCard::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.category_lock }, { class: "w-100 fit", disabled:, multiple: true } %>
           <p class="h5 muted mt-0 mb-2">
             Select one or more <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to allow across all grants issued from this event.
           </p>
@@ -169,7 +169,7 @@
 
         <div class="field">
           <%= form.label :banned_categories, "Blocked merchant categories" %>
-          <%= form.select :banned_categories, CardGrantSetting::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.banned_categories }, { class: "w-100 fit", disabled:, multiple: true } %>
+          <%= form.select :banned_categories, StripeCard::STRIPE_MERCHANT_CATEGORIES, { selected: event.card_grant_setting.banned_categories }, { class: "w-100 fit", disabled:, multiple: true } %>
           <p class="h5 muted mt-0 mb-2">
             Select one or more <a href="https://stripe.com/docs/issuing/categories">merchant categories</a> to block across all grants issued from this event.
           </p>

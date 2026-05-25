@@ -396,7 +396,6 @@ class Event < ApplicationRecord
 
   has_many :card_grants
   has_one :card_grant_setting
-  accepts_nested_attributes_for :card_grant_setting, update_only: true
 
   has_one :increase_account_number
 
