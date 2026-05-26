@@ -509,12 +509,13 @@ class User < ApplicationRecord
   end
 
   def cards_should_lock?(now: Time.current)
+    return true if card_locking_missing_receipts.count >= CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD
+
     violations = card_locking_missing_receipt_violations(now:)
     return false if violations.empty?
 
     return true if violations.any? { |hcb_code| hcb_code.card_locking_receipt_age(now:) >= CARD_LOCKING_HARD_MAX_RECEIPT_AGE }
     return true if violations.count >= CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD
-    return true if card_locking_missing_receipts.count >= CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD
     return true if timely_receipt_upload_count(now:) < CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS
 
     average_receipt_upload_time(now:) > CARD_LOCKING_RECEIPT_GRACE_PERIOD

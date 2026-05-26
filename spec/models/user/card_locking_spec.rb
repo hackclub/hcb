@@ -22,9 +22,9 @@ RSpec.describe User, type: :model do
     receipt.save!
   end
 
-  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00)
+  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil)
     stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
-    stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, event:)
+    stripe_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder:, event:)
     raw_stripe_transaction = create(
       :raw_stripe_transaction,
       stripe_card:,
@@ -129,6 +129,34 @@ RSpec.describe User, type: :model do
       end
 
       create_settled_card_charge(user:, settled_at: 8.days.ago)
+
+      expect(described_class.find(user.id)).to be_cards_should_lock
+    end
+
+    it "locks when missing receipt violations reach the hard threshold" do
+      5.times do |index|
+        settled_at = (30 + index).days.ago
+        create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.day)
+      end
+
+      User::CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD.times do |index|
+        create_settled_card_charge(user:, settled_at: (4.days + index.minutes).ago)
+      end
+
+      expect(described_class.find(user.id)).to be_cards_should_lock
+    end
+
+    it "locks when total missing receipts reach the hard threshold even without any violations" do
+      5.times do |index|
+        settled_at = (30 + index).days.ago
+        create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.day)
+      end
+
+      stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: user.stripe_cardholder, event:)
+
+      User::CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD.times do |index|
+        create_settled_card_charge(user:, settled_at: (1.hour + index.minutes).ago, stripe_card:)
+      end
 
       expect(described_class.find(user.id)).to be_cards_should_lock
     end
