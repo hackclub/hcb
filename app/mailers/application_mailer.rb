@@ -38,7 +38,7 @@ class ApplicationMailer < ActionMailer::Base
     # to `User#id == 1`, and any test user that happens to land at that id
     # ends up memoized into this list, silently dropping that user's email
     # out of every subsequent mailer's recipients for the rest of the
-    # process (the flake fixed by the same PR that introduced this guard).
+    # process.
     return [] unless Rails.env.production?
 
     @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
