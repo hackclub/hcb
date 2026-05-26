@@ -5,16 +5,6 @@ require "rails_helper"
 RSpec.describe GSuiteMailer, type: :mailer do
   let(:g_suite) { create(:g_suite) }
 
-  # `ApplicationMailer#mail` subtracts `ApplicationMailer.earmuffed_recipients`
-  # from the message's `to`. That list is built by looking up users by the
-  # production public_ids in `EARMUFFED_USER_IDS` — and `usr_b9YtZb`
-  # (Zach) decodes to `User#id == 1`. In a fresh CI shard's DB the first
-  # user created lands at id 1, so if that happens to be one of this
-  # spec's managers, the production filter silently strips their email
-  # out of `mailer.to`. Stub it here so the test is unaffected by who
-  # happens to hold id 1.
-  before { allow(ApplicationMailer).to receive(:earmuffed_recipients).and_return([]) }
-
   describe "#notify_of_configuring" do
     let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_configuring }
 
