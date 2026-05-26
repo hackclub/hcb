@@ -33,6 +33,9 @@
                         Resend to the <%= party.role %>
                       <% end %>
                     <% end %>
+                    <% if organizer_position_invite.contract.parties.not_hcb.all?(&:signed?) %>
+                      <%= link_to "Sign as HCB", contract_party_path(organizer_position_invite.contract.party(:hcb)) %>
+                    <% end %>
                   </div>
                 </div>
               </div>
