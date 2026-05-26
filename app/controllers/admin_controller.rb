@@ -139,18 +139,12 @@ class AdminController < Admin::BaseController
   end
 
   def event_balance
-    @event = Event.friendly.find(params[:id])
-    @balance = Rails.cache.fetch("admin_event_balance_#{@event.id}", expires_in: 5.minutes) do
-      @event.balance.to_i
-    end
+    @balance = cache_event_metric(:balance) { @event.balance.to_i }
     render :event_balance, layout: false
   end
 
   def event_raised
-    @event = Event.friendly.find(params[:id])
-    @raised = Rails.cache.fetch("admin_event_raised_#{@event.id}", expires_in: 5.minutes) do
-      @event.total_raised.to_i
-    end
+    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
     render :event_raised, layout: false
   end
 
@@ -790,7 +784,7 @@ class AdminController < Admin::BaseController
 
     @applications = Event::Application.all.includes(:user)
     @applications = @applications.not_archived unless @include_archived
-    @applications = @applications.search_name(@q) if @q
+    @applications = @applications.search_name_or_email(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'submitted' DESC"),
@@ -1517,6 +1511,13 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def cache_event_metric(metric_name, &block)
+    @event = Event.friendly.find(params[:id])
+    Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
+      block.call
+    end
+  end
 
   def stream_data(content_type, filename, data, download = true)
     headers["Content-Type"] = content_type
