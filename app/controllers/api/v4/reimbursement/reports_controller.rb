@@ -13,7 +13,7 @@ module Api
             @event = Event.find_by_public_id!(params[:organization_id])
             authorize @event, :show_in_v4?
             reports = @event.reimbursement_reports
-            reports = reports.visible unless params[:show_hidden_reports]
+            reports = reports.visible unless params[:show_hidden_reports] == "true"
             reports = reports.order(created_at: :desc)
           else
             skip_authorization
@@ -39,7 +39,7 @@ module Api
           @report = @event.reimbursement_reports.build(
             report_params.merge(
               user: current_user,
-              inviter: nil,
+              inviter: current_user,
               currency: current_user.payout_method&.currency || "USD"
             )
           )
@@ -91,6 +91,8 @@ module Api
 
           @report.mark_submitted!
           render :show
+        rescue AASM::InvalidTransition => e
+          render json: { error: e.message }, status: :unprocessable_entity
         end
 
         def draft
@@ -98,6 +100,8 @@ module Api
 
           @report.mark_draft!
           render :show
+        rescue AASM::InvalidTransition => e
+          render json: { error: e.message }, status: :unprocessable_entity
         end
 
         private
