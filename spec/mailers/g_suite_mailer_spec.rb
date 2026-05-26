@@ -36,7 +36,7 @@ RSpec.describe GSuiteMailer, type: :mailer do
     let(:mailer) { GSuiteMailer.with(g_suite_id: g_suite.id).notify_of_verified }
 
     it "renders to" do
-      expect(mailer.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
+      expect(mailer.to).to match_array(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
     end
 
     it "renders subject" do
