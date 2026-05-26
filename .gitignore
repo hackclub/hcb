@@ -59,4 +59,3 @@ yarn-debug.log*
 
 # AI
 .claude/
-graphify-out/
