@@ -8,7 +8,7 @@
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--second">
           <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[1].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= number_to_currency(@top_donors[1].amount) %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[1].amount) %></p>
         </div>
       </div>
     <% end %>
@@ -17,7 +17,7 @@
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--first">
           <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[0].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= number_to_currency(@top_donors[0].amount) %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[0].amount) %></p>
         </div>
       </div>
     <% end %>
@@ -26,7 +26,7 @@
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--third">
           <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[2].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= number_to_currency(@top_donors[2].amount) %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[2].amount) %></p>
         </div>
       </div>
     <% end %>
@@ -37,7 +37,7 @@
     <div class="card shadow-none bg-gray-100 mt-2 flex items-center gap-3 py-2">
       <span class="text-xs text-gray-400 font-bold w-5 text-center shrink-0">#<%= i + 4 %></span>
       <span class="text-sm font-medium truncate"><%= donor.name %></span>
-      <span class="text-sm ml-auto shrink-0"><%= number_to_currency(donor.amount) %></span>
+      <span class="text-sm ml-auto shrink-0"><%= render_money(donor.amount) %></span>
     </div>
   <% end %>
   </div>

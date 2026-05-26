@@ -1,4 +1,5 @@
-<% if @frame %>
+<%# locals: (event:, frame:, disabled:) %>
+<% if frame %>
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
 <div class="field field--checkbox mb0 card mt-4">
@@ -9,7 +10,7 @@
         <%= form.check_box :show_top_donors,
           data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
           disabled:,
-          checked: @event.show_top_donors,
+          checked: event.show_top_donors,
           onchange: "this.closest('form').requestSubmit();",
           switch: true %>
         <span class="slider"></span>
@@ -26,7 +27,7 @@
         <%= form.check_box :show_recent_donors,
           data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
           disabled:,
-          checked: @event.show_recent_donors,
+          checked: event.show_recent_donors,
           onchange: "this.closest('form').requestSubmit();",
           switch: true %>
         <span class="slider"></span>
