@@ -21,11 +21,13 @@
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
+#  reissue_of_id        :bigint
 #
 # Indexes
 #
-#  index_contracts_on_contractable  (contractable_type,contractable_id)
-#  index_contracts_on_document_id   (document_id)
+#  index_contracts_on_contractable   (contractable_type,contractable_id)
+#  index_contracts_on_document_id    (document_id)
+#  index_contracts_on_reissue_of_id  (reissue_of_id)
 #
 # Foreign Keys
 #
@@ -49,6 +51,9 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
+  belongs_to :reissue_of, optional: true, class_name: "Contract"
+  has_one :reissued_contract, foreign_key: :reissue_of_id, inverse_of: :reissue_of, class_name: "Contract"
+
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
   has_many :parties, dependent: :destroy
 
@@ -57,6 +62,8 @@ class Contract < ApplicationRecord
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
   validates :cosigner_email, nondisposable: true, on: :create
+
+  validate :reissue_of_is_voided
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
@@ -216,6 +223,14 @@ class Contract < ApplicationRecord
     update!(document:)
   end
 
+  def is_reissue?
+    reissue_of_id.present?
+  end
+
+  def reissued?
+    reissued_contract.present?
+  end
+
   private
 
   def docuseal_client
@@ -263,6 +278,12 @@ class Contract < ApplicationRecord
   # Overrideen in inherited classes
   def document_name
     "Contract with #{party(:signee).user.full_name}"
+  end
+
+  def reissue_of_is_voided
+    if reissue_of.present? && !reissue_of.voided?
+      errors.add(:reissue_of, "must be voided")
+    end
   end
 
 end

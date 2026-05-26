@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_23_200946) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -669,12 +669,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
     t.string "external_template_id"
     t.boolean "include_videos"
     t.jsonb "prefills"
+    t.bigint "reissue_of_id"
     t.datetime "signed_at"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.datetime "void_at"
     t.index ["contractable_type", "contractable_id"], name: "index_contracts_on_contractable"
     t.index ["document_id"], name: "index_contracts_on_document_id"
+    t.index ["reissue_of_id"], name: "index_contracts_on_reissue_of_id"
   end
 
   create_table "disbursements", force: :cascade do |t|
