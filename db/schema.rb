@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1121,7 +1121,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
     t.boolean "demo_mode", default: false, null: false
-    t.datetime "demo_mode_request_meeting_at", precision: nil
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"
