@@ -21,7 +21,7 @@ class Contract
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?
-        @contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? }
+        @contracts = signed_in? ? current_user.contracts.sent.select { |contract| contract.party(:signee).present? } : []
         render "contract/parties/voided"
         return
       elsif @contract.pending?

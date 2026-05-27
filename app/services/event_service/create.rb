@@ -52,6 +52,10 @@ module EventService
             event.event_tags << ::EventTag.find_or_create_by!(name: tag)
           end
 
+        # Subevents shouldn't see an onboarding message
+        if event.parent.present?
+          event.config.update!(hide_onboarding_message: true)
+        end
 
         # Event aasm_state is already approved by default.
         # event.mark_approved! if @approved
