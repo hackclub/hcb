@@ -1,0 +1,21 @@
+<%= turbo_frame_tag :admin_details_disbursements do %>
+  <h3 class="mb2 mt1">Disbursements</h3>
+  <% if @disbursements.present? %>
+    <table>
+      <tr>
+        <th>Name</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr>
+      <% @disbursements.each do |disbursement| %>
+        <tr>
+          <td><%= link_to disbursement.name, hcb_code_path(disbursement.hcb_code), data: { turbo_frame: "_top" } %></td>
+          <td><%= render_money disbursement.amount %></td>
+          <td><%= disbursement.state_text %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% else %>
+    <%= blankslate "No disbursements" %>
+  <% end %>
+<% end %>

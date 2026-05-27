@@ -29,7 +29,10 @@ class UsersController < ApplicationController
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details, :admin_details_stripe_transactions
+    :edit_admin, :admin_details, :admin_details_ach_transfers,
+    :admin_details_check_deposits, :admin_details_disbursements, :admin_details_increase_checks,
+    :admin_details_invoices, :admin_details_lob_checks, :admin_details_reimbursement_reports,
+    :admin_details_stripe_transactions
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -236,25 +239,71 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
+    @applications = @user.applications.not_archived
   end
 
   def admin_details
-    # User Information
+    authorize @user
+
     @invoices = Invoice.where(creator: @user)
     @check_deposits = CheckDeposit.where(created_by: @user)
     @increase_checks = IncreaseCheck.where(user: @user)
     @lob_checks = Check.where(creator: @user)
     @ach_transfers = AchTransfer.where(creator: @user)
-    @disbursements = Disbursement.where(requested_by: @user)
-    @permissions_overview = User::PermissionsOverview.new(user: @user)
+    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event])
+    @reimbursement_reports = @user.reimbursement_reports.includes([:event, :payout_holding])
+  end
 
+  def admin_details_ach_transfers
     authorize @user
+
+    @ach_transfers = AchTransfer.where(creator: @user)
+  end
+
+  def admin_details_check_deposits
+    authorize @user
+
+    @check_deposits = CheckDeposit.where(created_by: @user)
+  end
+
+  def admin_details_disbursements
+    authorize @user
+
+    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event])
+  end
+
+  def admin_details_increase_checks
+    authorize @user
+
+    @increase_checks = IncreaseCheck.where(user: @user)
+  end
+
+  def admin_details_invoices
+    authorize @user
+
+    @invoices = Invoice.where(creator: @user)
+  end
+
+  def admin_details_lob_checks
+    authorize @user
+
+    @lob_checks = Check.where(creator: @user)
+  end
+
+  def admin_details_reimbursement_reports
+    authorize @user
+
+    @reimbursement_reports = @user.reimbursement_reports.includes([:event, :payout_holding])
   end
 
   def admin_details_stripe_transactions
     authorize @user
 
-    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) }).order(created_at: :desc)
+    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
+                                  .order(created_at: :desc)
+                                  .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
   end
 
   def update

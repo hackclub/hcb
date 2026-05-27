@@ -1,0 +1,23 @@
+<%= turbo_frame_tag :admin_details_check_deposits do %>
+  <h3 class="mb2 mt1">Deposited checks</h3>
+  <% if @checks_deposits.present? %>
+    <table>
+      <tr>
+        <th>Status</th>
+        <th>Rejection reason</th>
+        <th>Amount</th>
+        <th>Date</th>
+      </tr>
+      <% @checks_deposits.each do |check| %>
+        <tr>
+          <td><%= check.increase_status %></td>
+          <td><%= check.rejection_reason %></td>
+          <td><%= render_money check.amount_cents %></td>
+          <td><%= check.created_at %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% else %>
+    <%= blankslate "No check deposits" %>
+  <% end %>
+<% end %>

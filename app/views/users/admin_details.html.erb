@@ -108,204 +108,45 @@
       <% end %>
     <% end %>
 
-    <% if @invoices.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Invoices</h3>
-        <table>
-          <tr>
-            <th>ID</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-          <% @invoices.each do |invoice| %>
-            <tr>
-              <td><%= invoice.id %></td>
-              <td><%= render_money invoice.total %></td>
-              <td><%= invoice.state_text %></td>
-              <td><%= link_to "View", hcb_code_path(invoice.hcb_code), data: { turbo_frame: "_top" } %></td>
-            </tr>
-          <% end %>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_invoices, src: admin_details_invoices_user_path(@user), loading: :lazy do %>
+        <p>Loading user's invoices</p>
       <% end %>
     <% end %>
 
-    <% if @user.reimbursement_reports.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Reimbursement reports</h3>
-        <table>
-          <thead>
-          <tr>
-            <th>Status</th>
-            <th>Report</th>
-            <th>Event</th>
-            <th>Amount</th>
-            <th>Created</th>
-          </tr>
-          </thead>
-          <tbody>
-            <% @user.reimbursement_reports.order(created_at: :desc).each do |report| %>
-              <tr>
-                <td>
-                   <%= report.status_text %>
-                </td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
-                  <%= link_to report.name, report, data: { turbo_frame: "_top" } %>
-                </td>
-                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-                   <%= report.event&.name || "No event" %>
-                </td>
-                <td>
-                   <%= render_money report.amount_cents %>
-                </td>
-                <td>
-                   <%= format_date report.created_at %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_reimbursement_reports, src: admin_details_reimbursement_reports_user_path(@user), loading: :lazy do %>
+        <p>Loading user's reimbursement reports</p>
       <% end %>
     <% end %>
 
-    <% if @checks_deposits.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Deposited checks</h3>
-        <table>
-          <tr>
-            <th>Status</th>
-            <th>Rejection reason</th>
-            <th>Amount</th>
-            <th>Date</th>
-          </tr>
-          <% @checks_deposits.each do |check| %>
-            <tr>
-              <td><%= check.increase_status %></td>
-              <td><%= check.rejection_reason %></td>
-              <td><%= render_money check.amount_cents %></td>
-              <td><%= check.created_at %></td>
-            </tr>
-          <% end %>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_check_deposits, src: admin_details_check_deposits_user_path(@user), loading: :lazy do %>
+        <p>Loading user's check deposits</p>
       <% end %>
     <% end %>
 
-    <% if @increase_checks.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Increase checks</h3>
-        <table>
-          <tr>
-            <th>Payment for</th>
-            <th>Memo</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Approved at</th>
-            <th></th>
-          </tr>
-          <% @increase_checks.each do |check| %>
-            <tr>
-              <td><%= check.payment_for %></td>
-              <td><%= check.memo %></td>
-              <td><%= render_money check.amount %></td>
-              <td><%= check.aasm_state %></td>
-              <td><%= check.approved_at %></td>
-              <td><%= link_to "View", hcb_code_path(check.hcb_code), data: { turbo_frame: "_top" } %></td>
-            </tr>
-          <% end %>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_increase_checks, src: admin_details_increase_checks_user_path(@user), loading: :lazy do %>
+        <p>Loading user's increase checks</p>
       <% end %>
     <% end %>
 
-    <% if @lob_checks.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Lob checks</h3>
-        <table>
-          <tr>
-            <th>Payment for</th>
-            <th>Memo</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Approved at</th>
-            <th></th>
-          </tr>
-          <% @lob_checks.each do |check| %>
-            <tr>
-              <td><%= check.payment_for %></td>
-              <td><%= check.memo %></td>
-              <td><%= render_money check.amount %></td>
-              <td><%= check.aasm_state %></td>
-              <td><%= check.approved_at %></td>
-              <td><%= link_to "View", hcb_code_path(check.hcb_code), data: { turbo_frame: "_top" } %></td>
-            </tr>
-          <% end %>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_lob_checks, src: admin_details_lob_checks_user_path(@user), loading: :lazy do %>
+        <p>Loading user's lob checks</p>
       <% end %>
     <% end %>
 
-    <% if @ach_transfers.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">ACH transfers</h3>
-        <table>
-          <tr>
-            <th>Recipient name</th>
-            <th>Amount</th>
-            <th>Payment for</th>
-            <th>Scheduled on</th>
-            <th></th>
-          </tr>
-          <% @ach_transfers.each do |ach| %>
-            <tr>
-              <td><%= ach.recipient_name %></td>
-              <td><%= render_money ach.amount %></td>
-              <td><%= ach.payment_for %></td>
-              <td><%= ach.scheduled_on %></td>
-              <td><%= link_to "View", hcb_code_path(ach.hcb_code), data: { turbo_frame: "_top" } %></td>
-            </tr>
-          <% end %>
-        </table>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_ach_transfers, src: admin_details_ach_transfers_user_path(@user), loading: :lazy do %>
+        <p>Loading user's ACH transfers</p>
       <% end %>
     <% end %>
 
-    <% if @disbursements.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Disbursements</h3>
-        <table>
-          <tr>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-          <% @disbursements.each do |disbursement| %>
-            <tr>
-              <td><%= link_to disbursement.name, hcb_code_path(disbursement.hcb_code), data: { turbo_frame: "_top" } %></td>
-              <td><%= render_money disbursement.amount %></td>
-              <td><%= disbursement.state_text %></td>
-            </tr>
-          <% end %>
-        </table>
-      <% end %>
-    <% end %>
-
-    <% if @permissions_overview.event_graph.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Permissions</h3>
-
-        <ul>
-          <% @permissions_overview.event_graph.each do |node| %>
-            <%= render(partial: "event_permissions", locals: { node: }) %>
-          <% end %>
-        </ul>
-      <% end %>
-    <% end %>
-
-    <% if @user.applications.not_archived.any? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Applications</h3>
-        <ul>
-          <% @user.applications.not_archived.each do |application| %>
-            <li><%= link_to "#{application.name} (#{application.aasm_state.humanize})", submission_application_path(application), data: { turbo_frame: "_top" } %></li>
-          <% end %>
-        </ul>
+    <% admin_tool "p-3" do %>
+      <%= turbo_frame_tag :admin_details_disbursements, src: admin_details_disbursements_user_path(@user), loading: :lazy do %>
+        <p>Loading user's disbursements</p>
       <% end %>
     <% end %>
   </div>

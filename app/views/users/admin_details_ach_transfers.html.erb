@@ -1,0 +1,25 @@
+<%= turbo_frame_tag :admin_details_ach_transfers do %>
+  <h3 class="mb2 mt1">ACH transfers</h3>
+  <% if @ach_transfers.present? %>
+    <table>
+      <tr>
+        <th>Recipient name</th>
+        <th>Amount</th>
+        <th>Payment for</th>
+        <th>Scheduled on</th>
+        <th></th>
+      </tr>
+      <% @ach_transfers.each do |ach| %>
+        <tr>
+          <td><%= ach.recipient_name %></td>
+          <td><%= render_money ach.amount %></td>
+          <td><%= ach.payment_for %></td>
+          <td><%= ach.scheduled_on %></td>
+          <td><%= link_to "View", hcb_code_path(ach.hcb_code), data: { turbo_frame: "_top" } %></td>
+        </tr>
+      <% end %>
+    </table>
+  <% else %>
+    <%= blankslate "No ACH transfers" %>
+  <% end %>
+<% end %>
