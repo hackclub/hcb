@@ -246,14 +246,6 @@ class UsersController < ApplicationController
 
   def admin_details
     authorize @user
-
-    @invoices = Invoice.where(creator: @user)
-    @check_deposits = CheckDeposit.where(created_by: @user)
-    @increase_checks = IncreaseCheck.where(user: @user)
-    @lob_checks = Check.where(creator: @user)
-    @ach_transfers = AchTransfer.where(creator: @user)
-    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event])
-    @reimbursement_reports = @user.reimbursement_reports.includes([:event, :payout_holding])
   end
 
   def admin_details_ach_transfers
