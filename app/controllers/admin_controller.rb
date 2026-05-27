@@ -447,8 +447,6 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
-    @start_date = params[:start_date].presence
-    @end_date = params[:end_date].presence
     @exclude_reimbursements = params[:exclude_reimbursements] == "1"
 
     @event_id = params[:event_id].presence
@@ -480,13 +478,7 @@ class AdminController < Admin::BaseController
 
     relation = relation.pending if @pending
     relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
-
-    begin
-      relation = relation.where(created_at: Date.parse(@start_date).beginning_of_day..) if @start_date
-      relation = relation.where(created_at: ..Date.parse(@end_date).end_of_day) if @end_date
-    rescue Date::Error
-      flash.now[:error] = "Invalid date."
-    end
+    relation = apply_date_range_filter(relation)
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
@@ -659,9 +651,6 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
-    @start_date = params[:start_date].presence
-    @end_date = params[:end_date].presence
-
     @event_id = params[:event_id].presence
 
     if @event_id
@@ -690,13 +679,7 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.in_transit if @in_transit
-
-    begin
-      relation = relation.where(created_at: Date.parse(@start_date).beginning_of_day..) if @start_date
-      relation = relation.where(created_at: ..Date.parse(@end_date).end_of_day) if @end_date
-    rescue Date::Error
-      flash.now[:error] = "Invalid date."
-    end
+    relation = apply_date_range_filter(relation)
 
     @count = relation.count
     @checks = relation.page(@page).per(@per).order(
@@ -749,8 +732,6 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-    @start_date = params[:start_date].presence
-    @end_date = params[:end_date].presence
     @exclude_reimbursements = params[:exclude_reimbursements] == "1"
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
@@ -760,13 +741,7 @@ class AdminController < Admin::BaseController
     relation = relation.search_recipient(@q) if @q
     relation = relation.where(event_id: @event.id) if @event
     relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
-
-    begin
-      relation = relation.where(created_at: Date.parse(@start_date).beginning_of_day..) if @start_date
-      relation = relation.where(created_at: ..Date.parse(@end_date).end_of_day) if @end_date
-    rescue Date::Error
-      flash.now[:error] = "Invalid date."
-    end
+    relation = apply_date_range_filter(relation)
 
     @wires = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -781,8 +756,6 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
-    @start_date = params[:start_date].presence
-    @end_date = params[:end_date].presence
     @exclude_reimbursements = params[:exclude_reimbursements] == "1"
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
@@ -793,13 +766,7 @@ class AdminController < Admin::BaseController
     relation = relation.where(event_id: @event_id) if @event_id
     relation = relation.where(aasm_state: @status) if @status
     relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
-
-    begin
-      relation = relation.where(created_at: Date.parse(@start_date).beginning_of_day..) if @start_date
-      relation = relation.where(created_at: ..Date.parse(@end_date).end_of_day) if @end_date
-    rescue Date::Error
-      flash.now[:error] = "Invalid date."
-    end
+    relation = apply_date_range_filter(relation)
 
     @wise_transfers = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -923,9 +890,6 @@ class AdminController < Admin::BaseController
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
     @processing = params[:processing] == "1" ? true : nil
-    @start_date = params[:start_date].presence
-    @end_date = params[:end_date].presence
-
     @event_id = params[:event_id].presence
 
     if @event_id
@@ -949,13 +913,7 @@ class AdminController < Admin::BaseController
     relation = relation.pending if @pending
     relation = relation.reviewing if @reviewing
     relation = relation.processing if @processing
-
-    begin
-      relation = relation.where(created_at: Date.parse(@start_date).beginning_of_day..) if @start_date
-      relation = relation.where(created_at: ..Date.parse(@end_date).end_of_day) if @end_date
-    rescue Date::Error
-      flash.now[:error] = "Invalid date."
-    end
+    relation = apply_date_range_filter(relation)
 
     @count = relation.count
     @disbursements = relation.page(@page).per(@per).order(
@@ -986,10 +944,12 @@ class AdminController < Admin::BaseController
     relation = relation.lost_receipt if @has_receipt == "lost"
 
     begin
-      relation = relation.where("hcb_codes.created_at >= ?", Date.strptime(@start_date, "%Y-%m-%d").beginning_of_day) if @start_date.present?
-      relation = relation.where("hcb_codes.created_at <= ?", Date.strptime(@end_date, "%Y-%m-%d").end_of_day) if @end_date.present?
+      start_date = Date.strptime(@start_date, "%Y-%m-%d").beginning_of_day if @start_date.present?
+      end_date   = Date.strptime(@end_date,   "%Y-%m-%d").end_of_day       if @end_date.present?
+      relation   = relation.where("hcb_codes.created_at >= ?", start_date) if start_date
+      relation   = relation.where("hcb_codes.created_at <= ?", end_date)   if end_date
     rescue Date::Error
-      flash[:error] = "Invalid date."
+      flash.now[:error] = "Invalid date."
     end
 
     @count = relation.count
@@ -1560,6 +1520,22 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def apply_date_range_filter(relation)
+    @start_date = params[:start_date].to_s.presence
+    @end_date   = params[:end_date].to_s.presence
+
+    begin
+      start_date = Date.strptime(@start_date, "%Y-%m-%d").beginning_of_day if @start_date
+      end_date   = Date.strptime(@end_date,   "%Y-%m-%d").end_of_day       if @end_date
+      relation   = relation.where(created_at: start_date..) if start_date
+      relation   = relation.where(created_at: ..end_date)   if end_date
+    rescue Date::Error, TypeError
+      flash.now[:error] = "Invalid date."
+    end
+
+    relation
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])
