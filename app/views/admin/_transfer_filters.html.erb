@@ -1,0 +1,14 @@
+<% show_exclude_reimbursements = local_assigns.fetch(:show_exclude_reimbursements, true) %>
+<%= form.label :start_date do %>
+  <b>From:</b>
+  <%= form.date_field :start_date, value: @start_date %>
+<% end %>
+<%= form.label :end_date do %>
+  <b>To:</b>
+  <%= form.date_field :end_date, value: @end_date %>
+<% end %>
+<% if show_exclude_reimbursements %>
+  <%= form.label :exclude_reimbursements do %>
+    <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+  <% end %>
+<% end %>

@@ -6,6 +6,7 @@
     <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
   </div>
   <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= render "admin/transfer_filters", form: form, show_exclude_reimbursements: false %>
     <%= form.label :in_transit do %>
       <%= form.check_box :in_transit, checked: @in_transit %> In Transit
     <% end %>

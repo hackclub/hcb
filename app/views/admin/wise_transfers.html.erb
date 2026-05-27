@@ -6,7 +6,8 @@
     <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
   </div>
-  <div class="flex items-center mt-2">
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= render "admin/transfer_filters", form: form %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>
