@@ -17,7 +17,7 @@
               <% if card_grant.purpose.present? %>
                 (<strong><%= card_grant.purpose %></strong>)
               <% end %>
-              and adhere to the instructions provided by <%= card_grant.event.name + (":" if card_grant.instructions.present?) %>
+              and adhere to the instructions provided by <%= card_grant.event.name + (card_grant.instructions.present? ? ":" : "") %>
             <% end %>
             <% if card_grant.instructions.present? %>
               <div></div> <%# this empty <div> exists for layout purposes to handle checkbox alignment %>

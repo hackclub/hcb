@@ -4,7 +4,7 @@ require "net/http"
 
 class StaticPagesController < ApplicationController
   skip_after_action :verify_authorized # do not force pundit
-  skip_before_action :signed_in_user, only: [:mobile, :branding, :roles, :security]
+  skip_before_action :signed_in_user, only: [:index, :mobile, :branding, :roles, :security]
   skip_before_action :redirect_to_onboarding, only: [:mobile, :branding, :roles, :security]
 
   after_action only: [:index, :branding, :security] do
@@ -13,35 +13,39 @@ class StaticPagesController < ApplicationController
   end
 
   def index
-    if signed_in?
-      @service = StaticPageService::Index.new(current_user:)
+    return redirect_to first_index_path if current_user(allow_unverified: true)&.redirect_to_first_dashboard?
 
-      @events = @service.events
+    return redirect_to auth_users_path(require_reload: true, signup: params[:signup]) unless signed_in?
 
-      featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
+    @service = StaticPageService::Index.new(current_user:)
 
-      @featured_events = featured_event_ids.map do |id|
-        Event.find_by_public_id(id)
-      end.select do |event|
-        event&.is_public? && event.is_indexable?
-      end.sample(6)
+    @events = @service.events
 
-      @organizer_positions = @service.organizer_positions.not_hidden
-      @invites = @service.invites
-      @invite_requests = @service.invite_requests
-      @applications = @service.applications
+    featured_event_ids = %w[org_MpJurQ org_Y0zun7 org_Y1ZuDz org_DyuReR org_Jounxy org_0zuXDP org_1Zu4Jr org_5Gu7Lo org_E1uGdn org_G3uq7b]
 
-      if auditor_signed_in? && cookies[:admin_activities] == "everyone"
-        @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
-      else
-        @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
-      end
+    @featured_events = featured_event_ids.map do |id|
+      Event.find_by_public_id(id)
+    end.select do |event|
+      event&.is_public? && event.is_indexable?
+    end.sample(6)
 
-      @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+    @organizer_positions = @service.organizer_positions.not_hidden
+    @invites = @service.invites
+    @invite_requests = @service.invite_requests
+    @applications = @service.applications
 
-      @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
-
+    if auditor_signed_in? && cookies[:admin_activities] == "everyone"
+      @activities = PublicActivity::Activity.all.order(created_at: :desc).page(params[:page]).per(25)
+    else
+      @activities = PublicActivity::Activity.for_user(current_user).order(created_at: :desc).page(params[:page]).per(25)
     end
+
+    @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
+
+    @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
+  end
+
+  def first
   end
 
   def admin_tools

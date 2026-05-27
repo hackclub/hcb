@@ -7,7 +7,7 @@ module OneTimeJobs
     def perform(dry_run: false)
       puts "dry run (no changes will be made)" if dry_run
 
-      donations = Donation.where("created_at > '2024-01-01'").where.not(stripe_payment_intent_id: nil)
+      donations = Donation.where("created_at > '2026-03-25'").where.not(stripe_payment_intent_id: nil)
       pi_ids_needed = donations.pluck(:stripe_payment_intent_id).to_set
       puts "Found #{pi_ids_needed.size} donations with payment intent IDs"
 
@@ -17,7 +17,7 @@ module OneTimeJobs
       fetched = 0
 
       Stripe::PaymentIntent.list(
-        created: { gte: Time.parse("2024-01-01").to_i },
+        created: { gte: Time.parse("2026-03-25").to_i },
         limit: 100
       ).auto_paging_each do |intent|
         fetched += 1

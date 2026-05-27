@@ -63,7 +63,7 @@ module StripeAuthorizationService
             .blocked_authorization
             .deliver_later
 
-          return decline_with_reason!("merchant_not_allowed")
+          return decline_with_reason!("merchant_not_allowed_globally")
         end
 
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
