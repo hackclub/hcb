@@ -21,11 +21,11 @@
       <% end %>
       <%= link_to "Edit", edit_document_path(@document), class: "btn bg-info" %>
       <% if @document.archived? %>
-        <%= link_to "Unarchive", document_toggle_path(@document), method: :post, data: { confirm: "This will unarchive the document. Are you sure?" }, class: "btn bg-muted" %>
+        <%= link_to "Unarchive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will unarchive the document. Are you sure?" }, class: "btn bg-muted" %>
       <% else %>
-        <%= link_to "Archive", document_toggle_path(@document), method: :post, data: { confirm: "This will archive the document. Are you sure?" }, class: "btn bg-muted" %>
+        <%= link_to "Archive", document_toggle_path(@document), data: { turbo_method: :post, turbo_confirm: "This will archive the document. Are you sure?" }, class: "btn bg-muted" %>
       <% end %>
-      <%= link_to "Destroy", @document, method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn--destroy" %>
+      <%= link_to "Destroy", @document, data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "btn btn--destroy" %>
     </div>
   <% end %>
 </h1>

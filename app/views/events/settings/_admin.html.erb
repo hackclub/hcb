@@ -226,7 +226,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
-    <%= button_to "Delete organization", event_path(event), method: :delete, class: "btn bg-error", disabled: !event.demo_mode?, data: { confirm: "⚠️ Are you sure you'd like to delete this organization?" } %>
+    <%= button_to "Delete organization", event_path(event), method: :delete, class: "btn bg-error", disabled: !event.demo_mode?, data: { turbo_confirm: "⚠️ Are you sure you'd like to delete this organization?" } %>
     <% unless event.demo_mode? %>
       <p class="h5 muted mt0 mb1">
         Only demo accounts can be deleted.

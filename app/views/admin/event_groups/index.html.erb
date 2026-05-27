@@ -44,7 +44,7 @@
                 <%= button_to(
                       admin_event_group_event_group_membership_path(group, membership),
                       method: :delete,
-                      data: { confirm: "Are you sure" },
+                      data: { turbo_confirm: "Are you sure" },
                       form_class: "m-0 inline-block",
                       class: "m-0 btn btn-small bg-muted p-1 text-center",
                     ) do %>
@@ -60,7 +60,7 @@
                   "Delete",
                   admin_event_group_path(group),
                   method: :delete,
-                  data: { confirm: "Are you sure?" },
+                  data: { turbo_confirm: "Are you sure?" },
                   form_class: "m-0 inline-block",
                   class: "m-0 btn btn-small btn--destroy"
                 ) %>

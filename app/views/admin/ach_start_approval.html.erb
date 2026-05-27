@@ -179,7 +179,7 @@
 
         <div class="flex flex-row gap-2 items-center justify-start">
           <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
-            <%= form.submit "#{verb} ACH transfer", data: { confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+            <%= form.submit "#{verb} ACH transfer", data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
             <% if @ach_transfer.scheduled_on.present? %>
               <br>
               <small>Once approved, this ACH transfer will automatically send on <%= @ach_transfer.scheduled_on.strftime("%Y-%m-%d") %>.</small>
@@ -188,7 +188,7 @@
 
           <% unless @ach_transfer.scheduled_on.present? %>
             <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
-              <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." } %>
+              <%= form.submit "⚡ Send in realtime", data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
             <% end %>
           <% end %>
         </div>
@@ -205,7 +205,7 @@
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
 
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
         <% end %>
       </fieldset>
     <% elsif @ach_transfer.rejected? %>
