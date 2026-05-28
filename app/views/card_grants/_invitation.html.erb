@@ -26,12 +26,6 @@
               I agree to the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %>
             </label>
           </div>
-          <div class="field field--checkbox mb-2">
-            <input type="checkbox" id="grant_terms_cb" data-grant-terms-target="term" data-action="change->grant-terms#update">
-            <label for="grant_terms_cb">
-              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
-            </label>
-          </div>
         </div>
 
         <p class="muted mt-4 mb-2">
@@ -41,8 +35,14 @@
         <div class="flex flex-col md:flex-row gap-4">
           <div class="card card--sunken flex-1 flex flex-col">
             <p class="mt-0">Get a virtual debit card to spend money online or in-person with digital wallets.</p>
+            <div class="field field--checkbox mb-2">
+              <input type="checkbox" id="grant_card_terms" data-grant-terms-target="cardTerm" data-action="change->grant-terms#update">
+              <label for="grant_card_terms">
+                I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
+              </label>
+            </div>
             <%= form_with url: activate_card_grant_path(card_grant), class: "mt-auto" do |form| %>
-              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full", disabled: true, data: { grant_terms_target: "submitButton" } %>
+              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full", disabled: true, data: { grant_terms_target: "cardSubmitButton" } %>
             <% end %>
           </div>
           <div class="card card--sunken flex-1 flex flex-col">
