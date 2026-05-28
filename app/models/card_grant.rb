@@ -79,6 +79,7 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+  before_validation :apply_acceptance_method_defaults, on: :create
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
@@ -133,6 +134,8 @@ class CardGrant < ApplicationRecord
       "muted"
     elsif pending_invite?
       "info"
+    elsif reimbursement_report.present?
+      "success"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "warning"
     else
@@ -149,6 +152,8 @@ class CardGrant < ApplicationRecord
       "Expired"
     elsif pending_invite?
       "Invitation sent"
+    elsif reimbursement_report.present?
+      "Active"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
@@ -382,7 +387,9 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
+  end
 
+  def apply_acceptance_method_defaults
     self.allow_stripe_card = setting.allow_stripe_card if self.allow_stripe_card.nil?
     self.allow_reimbursement_report = setting.allow_reimbursement_report if self.allow_reimbursement_report.nil?
   end
