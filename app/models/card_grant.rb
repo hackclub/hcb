@@ -106,7 +106,7 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
-  validate :at_least_one_acceptance_method
+  validate :at_least_one_acceptance_method, on: :create
 
   def at_least_one_acceptance_method
     unless allow_stripe_card? || allow_reimbursement_report?
