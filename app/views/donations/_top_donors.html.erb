@@ -1,39 +1,40 @@
-<% unless @top_donors.empty? %>
+<%# locals: (top_donors:) %>
+<% unless top_donors.empty? %>
   <div class="card">
   <h2 class="mt-0">Top donors</h2>
 
   <div class="flex items-end justify-center gap-2 mt-4">
 
-    <% if @top_donors[1] %>
+    <% if top_donors[1] %>
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--second">
-          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[1].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[1].amount) %></p>
+          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= top_donors[1].name %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(top_donors[1].amount) %></p>
         </div>
       </div>
     <% end %>
 
-    <% if @top_donors[0] %>
+    <% if top_donors[0] %>
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--first">
-          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[0].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[0].amount) %></p>
+          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= top_donors[0].name %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(top_donors[0].amount) %></p>
         </div>
       </div>
     <% end %>
 
-    <% if @top_donors[2] %>
+    <% if top_donors[2] %>
       <div class="flex flex-col items-center flex-1 min-w-0">
         <div class="podium-block podium-block--third">
-          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= @top_donors[2].name %></p>
-          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(@top_donors[2].amount) %></p>
+          <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= top_donors[2].name %></p>
+          <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(top_donors[2].amount) %></p>
         </div>
       </div>
     <% end %>
 
   </div>
 
-  <% @top_donors[3..]&.each_with_index do |donor, i| %>
+  <% top_donors[3..]&.each_with_index do |donor, i| %>
     <div class="card shadow-none bg-gray-100 mt-2 flex items-center gap-3 py-2">
       <span class="text-xs text-gray-400 font-bold w-5 text-center shrink-0">#<%= i + 4 %></span>
       <span class="text-sm font-medium truncate"><%= donor.name %></span>
