@@ -128,7 +128,7 @@
       <% end %>
 
       <% if @hcb_code.increase_check.column_id.present? %>
-        <% stop_button = button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", data: { turbo_confirm: "This action will stop the check and is irreversible. The recipient may still receive a check in the mail. This check will no longer be valid and can be safely disposed." }, disabled: !policy(@hcb_code.increase_check).stop? %>
+        <% stop_button = button_to "Stop payment", stop_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", target: "_blank", data: { turbo_confirm: "This action will stop the check and is irreversible. The recipient may still receive a check in the mail. This check will no longer be valid and can be disposed of safely." }, disabled: !policy(@hcb_code.increase_check).stop? %>
         <% if policy(@hcb_code.increase_check).stop? %>
           <%= stop_button %>
         <% elsif @hcb_code.increase_check.can_stop? %>
