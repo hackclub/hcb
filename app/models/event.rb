@@ -129,7 +129,7 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
-  def ancestor_ids
+  def self_and_ancestor_ids
     [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
       WITH RECURSIVE parent_events AS (
         SELECT id, parent_id
@@ -159,8 +159,8 @@ class Event < ApplicationRecord
     SQL
   end
 
-  def ancestors
-    Event.where(id: ancestor_ids)
+  def self_and_ancestors
+    Event.where(id: self_and_ancestor_ids)
   end
 
   def descendants
@@ -292,12 +292,12 @@ class Event < ApplicationRecord
   has_many :organizer_position_invite_requests, through: :organizer_position_invite_links, source: :requests
   has_many :organizer_positions, dependent: :destroy
 
-  def ancestor_organizer_positions
-    OrganizerPosition.where(event_id: ancestor_ids)
+  def self_and_ancestor_organizer_positions
+    OrganizerPosition.where(event_id: self_and_ancestor_ids)
   end
 
-  def ancestor_users
-    User.where(id: ancestor_organizer_positions.select(:user_id))
+  def self_and_ancestor_users
+    User.where(id: self_and_ancestor_organizer_positions.select(:user_id))
   end
 
   has_many :contracts, through: :organizer_position_invites
