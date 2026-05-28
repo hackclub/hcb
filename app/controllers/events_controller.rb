@@ -1079,7 +1079,7 @@ class EventsController < ApplicationController
   def request_call
     authorize @event
 
-    EventMailer.with(event: @event, user: current_user).ops_call_requested.deliver_later
+    EventMailer.with(event: @event, requesting_user: current_user).ops_call_requested.deliver_later
     EventMailer.with(event: @event, user: current_user).user_call_requested.deliver_later
     @event.config.update!(hide_onboarding_message: true)
 
