@@ -30,7 +30,19 @@ class Metric
 
       def calculate
         # 1. Get word frequencies from the User's events
-        events_words = user.events.map { |e| ::Metric::Event::Words.from(e).metric }
+        events = user.events.to_a
+        event_ids = events.map(&:id)
+
+        preloaded_metrics = ::Metric::Event::Words
+          .where(subject_type: "Event", subject_id: event_ids, year: Metric.year)
+          .order(completed_at: :desc, updated_at: :desc)
+          .index_by(&:subject_id)
+
+        events_words = events.map do |e|
+          cached = preloaded_metrics[e.id]
+          metric = (cached&.completed? ? cached : ::Metric::Event::Words.from(e))
+          metric.metric
+        end
 
         # 2. Merge the frequency counts
         events_words = events_words.reduce({}) { |memo, el| memo.merge(el) { |k, old_v, new_v| old_v + new_v } }

@@ -18,7 +18,7 @@ module SearchService
         elsif @auditor
           users = User.where.not(full_name: nil)
         else
-          users = User.where(id: @user.events.map { |e| e.users.pluck(:id) }.flatten)
+          users = User.joins(:events).where(events: { id: @user.event_ids }).distinct
         end
         @query["conditions"]&.each do |condition|
           case condition[:property]
