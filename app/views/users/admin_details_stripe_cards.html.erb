@@ -1,0 +1,37 @@
+<%= turbo_frame_tag :admin_details_stripe_cards do %>
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Stripe cards</h3>
+    <% if @stripe_cards.present? %>
+      <table>
+        <tr>
+          <th>Last 4</th>
+          <th>Card type</th>
+          <th>Status</th>
+          <th>Expires on</th>
+          <th></th>
+        </tr>
+        <% @stripe_cards.each do |card| %>
+          <tr>
+            <td><%= card.last4 %></td>
+            <td><%= card.card_type %></td>
+            <td class="inline-flex items-center w-100">
+              <% if card.status_text  == "Active" %>
+                Active
+              <% elsif card.status_text == "Frozen" %>
+                <%= inline_icon "freeze", size: 25 %> Frozen
+              <% elsif card.status_text == "Canceled" %>
+                <%= inline_icon "forbidden", size: 25 %> Canceled
+              <% elsif card.status_text == "Inactive" %>
+                Inactive
+              <% end %>
+            </td>
+            <td class="<%= "primary bold" if card.expired? %>"><%= Date.parse("#{card.stripe_exp_month}/#{card.stripe_exp_year}").strftime("%m/%y") %></td>
+            <td><%= link_to "View", stripe_card_path(card), data: { turbo_frame: "_top" } %></td>
+          </tr>
+        <% end %>
+      </table>
+    <% else %>
+      <%= blankslate "No stripe cards" %>
+    <% end %>
+  <% end %>
+<% end %>

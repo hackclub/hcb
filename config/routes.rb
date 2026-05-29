@@ -158,6 +158,7 @@ Rails.application.routes.draw do
       get "admin_details_lob_checks", to: "users#admin_details_lob_checks"
       get "admin_details_missing_receipts", to: "users#admin_details_missing_receipts"
       get "admin_details_reimbursement_reports", to: "users#admin_details_reimbursement_reports"
+      get "admin_details_stripe_cards", to: "users#admin_details_stripe_cards"
       get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"

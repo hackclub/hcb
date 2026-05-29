@@ -101,6 +101,10 @@ class UserPolicy < ApplicationPolicy
     admin_details?
   end
 
+  def admin_details_stripe_cards?
+    admin_details?
+  end
+
   def admin_details_stripe_transactions?
     admin_details?
   end

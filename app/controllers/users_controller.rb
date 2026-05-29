@@ -32,7 +32,7 @@ class UsersController < ApplicationController
     :edit_admin, :admin_details, :admin_details_ach_transfers,
     :admin_details_check_deposits, :admin_details_disbursements, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
-    :admin_details_reimbursement_reports, :admin_details_stripe_transactions
+    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -294,6 +294,12 @@ class UsersController < ApplicationController
     authorize @user
 
     @reimbursement_reports = @user.reimbursement_reports.includes([:event, :payout_holding])
+  end
+
+  def admin_details_stripe_cards
+    authorize @user
+
+    @stripe_cards = @user.stripe_cards
   end
 
   def admin_details_stripe_transactions
