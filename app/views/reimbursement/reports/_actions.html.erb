@@ -9,7 +9,7 @@
   <% unless (report.closed? && !report.payout_holding&.failed?) || member_viewing %>
     <div class="flex flex-col sm:flex-row !gap-2" id="actions">
       <div class="flex *:w-full justify-start">
-        <% if !report.locked? %>
+        <% if report.draft? %>
           <%= form_with(method: :post, url: reimbursement_expenses_path(report_id: report.id), data: { controller: "form file-drop", turbo: "true" }, class: "tooltipped tooltipped--n", html: { "aria-label": "Drag a file into this button to create a new expense with a receipt attached." }) do |form| %>
             <div class="add-expense-dropzone">
               <%= dropdown_button form:,
@@ -44,7 +44,7 @@
         <% end %>
       </div>
 
-      <% if report.locked? %>
+      <% unless report.draft? %>
         <div style="flex-grow: 1;" class="flex sm:justify-start sm:items-center">
           <% if report.reimbursement_requested? && !admin_signed_in? %>
             <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", method: :post do %>
@@ -364,7 +364,7 @@
           <span class="stat__label">Amount requested</span>
           <span class="stat__value" style="--unit: '<%= report.amount.currency.symbol %>'"><%= report.amount.format(symbol: false) %></span>
         </div>
-        <% if report.locked? %>
+        <% unless report.draft? %>
           <div class="stat shrink-0">
             <span class="stat__label">Expenses approved</span>
             <span class="stat__value stat--plain" style="--unit: ''"><%= report.expenses.approved.to_sum.count %>/<%= report.expenses.to_sum.count %></span>

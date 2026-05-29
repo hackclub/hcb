@@ -36,15 +36,14 @@
       <% end %>
     <% end %>
 
-    <% if @report.draft? && organizer_signed_in?(as: :member) %>
+    <% if policy(@report).destroy? %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
                       data: { turbo_confirm: "Are you sure?", turbo_method: :delete },
                       icon_size: 26,
                       class: "tooltipped tooltipped--w",
                       style: "height: 32px; width: 32px; background: #ec375020; color: #ec3750",
-                      'aria-label': "Delete this report.",
-                      disabled: !policy(@report).destroy? %>
+                      'aria-label': "Delete this report." %>
     <% end %>
     <% if @report.card_grant.present? %>
       <%= pop_icon_to "card",
