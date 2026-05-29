@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1406,6 +1406,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_07_214541) do
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_hcb_codes_on_event_id"
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
