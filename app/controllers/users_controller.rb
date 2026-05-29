@@ -293,7 +293,7 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+    @hcb_codes_missing_receipts = @user.transactions_missing_receipt.includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
   end
 
   def admin_details_reimbursement_reports
