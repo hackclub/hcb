@@ -43,6 +43,8 @@ class CardGrantSetting < ApplicationRecord
   alias_attribute :disallowed_merchants, :banned_merchants
   has_many :card_grants, through: :event
 
+  include HasGrantConflictRestrictions
+
   enum :expiration_preference, {
     "90 days": 90,
     "6 months": 183,
