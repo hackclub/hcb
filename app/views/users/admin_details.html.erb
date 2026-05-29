@@ -11,14 +11,16 @@
       <% end %>
     <% end %>
 
-    <% if @user.events.present? %>
-      <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Organizations</h3>
+    <% admin_tool "p-3" do %>
+      <h3 class="mb2 mt1">Organizations</h3>
+      <% if @user.events.present? %>
         <ul>
           <% @user.events.each do |event| %>
             <li><%= link_to "#{event.name} (#{render_money(event.balance_v2_cents)})", event_path(event), data: { turbo_frame: "_top" } %></li>
           <% end %>
         </ul>
+      <% else %>
+        <%= blankslate "No organizations" %>
       <% end %>
     <% end %>
 
