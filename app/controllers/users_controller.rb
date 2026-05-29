@@ -29,8 +29,8 @@ class UsersController < ApplicationController
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details, :admin_details_ach_transfers,
-    :admin_details_check_deposits, :admin_details_disbursements, :admin_details_increase_checks,
+    :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
+    :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
   ]
@@ -264,6 +264,12 @@ class UsersController < ApplicationController
     authorize @user
 
     @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event])
+  end
+
+  def admin_details_emburse_cards
+    authorize @user
+
+    @emburse_cards = @user.emburse_cards
   end
 
   def admin_details_increase_checks

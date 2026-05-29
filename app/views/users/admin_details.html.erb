@@ -46,34 +46,9 @@
       <% end %>
     <% end %>
 
-    <% if @user.emburse_cards.present? %>
+    <%= turbo_frame_tag :admin_details_emburse_cards, src: admin_details_emburse_cards_user_path(@user), loading: :lazy do %>
       <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Emburse cards</h3>
-        <table>
-          <tr>
-            <th>Last 4</th>
-            <th>Status</th>
-            <th>Expires on</th>
-            <th></th>
-          </tr>
-          <% @user.emburse_cards.each do |card| %>
-            <td><%= card.last_four %></td>
-            <td class="inline-flex">
-              <% if card.status_text == "active" %>
-                Active
-              <% elsif card.status_text == "suspended" %>
-                <%= inline_icon "freeze", size: 25 %> Suspended
-              <% elsif card.status_text == "unactivated" %>
-                <%= inline_icon "forbidden", size: 25 %> Unactivated
-              <% elsif card.status_text == "terminated" %>
-                <%= inline_icon "forbidden", size: 25 %> Terminated
-              <% end %>
-            </td>
-            <td><% Date.parse("#{card.expiration_month}/#{card.expiration_year}").strftime("%m/%y") %></td>
-              <td><%= link_to "View", emburse_card_path(card), data: { turbo_frame: "_top" } %></td>
-            </tr>
-          <% end %>
-        </table>
+        <p>Loading user's emburse cards</p>
       <% end %>
     <% end %>
 

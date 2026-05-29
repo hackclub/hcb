@@ -153,6 +153,7 @@ Rails.application.routes.draw do
       get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
       get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
       get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
       get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
       get "admin_details_invoices", to: "users#admin_details_invoices"
       get "admin_details_lob_checks", to: "users#admin_details_lob_checks"

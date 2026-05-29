@@ -81,6 +81,10 @@ class UserPolicy < ApplicationPolicy
     admin_details?
   end
 
+  def admin_details_emburse_cards?
+    admin_details?
+  end
+
   def admin_details_increase_checks?
     admin_details?
   end
