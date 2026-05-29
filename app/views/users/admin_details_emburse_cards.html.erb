@@ -10,19 +10,20 @@
           <th></th>
         </tr>
         <% @emburse_cards.each do |card| %>
-          <td><%= card.last_four %></td>
-          <td class="inline-flex">
-            <% if card.status_text == "active" %>
-              Active
-            <% elsif card.status_text == "suspended" %>
-              <%= inline_icon "freeze", size: 25 %> Suspended
-            <% elsif card.status_text == "unactivated" %>
-              <%= inline_icon "forbidden", size: 25 %> Unactivated
-            <% elsif card.status_text == "terminated" %>
-              <%= inline_icon "forbidden", size: 25 %> Terminated
-            <% end %>
-          </td>
-          <td><% Date.parse("#{card.expiration_month}/#{card.expiration_year}").strftime("%m/%y") %></td>
+          <tr>
+            <td><%= card.last_four %></td>
+            <td class="inline-flex">
+              <% if card.status_text == "active" %>
+                Active
+              <% elsif card.status_text == "suspended" %>
+                <%= inline_icon "freeze", size: 25 %> Suspended
+              <% elsif card.status_text == "unactivated" %>
+                <%= inline_icon "forbidden", size: 25 %> Unactivated
+              <% elsif card.status_text == "terminated" %>
+                <%= inline_icon "forbidden", size: 25 %> Terminated
+              <% end %>
+            </td>
+            <td><%= Date.parse("#{card.expiration_month}/#{card.expiration_year}").strftime("%m/%y") %></td>
             <td><%= link_to "View", emburse_card_path(card), data: { turbo_frame: "_top" } %></td>
           </tr>
         <% end %>
