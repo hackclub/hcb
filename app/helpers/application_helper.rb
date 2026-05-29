@@ -243,6 +243,10 @@ module ApplicationHelper
     phone_to "+18442372290", "+1 (844) 237 2290", class: "nowrap"
   end
 
+  def stripe_issuing_disclosure
+    "HCB Visa® Commercial cards are powered by Stripe and issued by Celtic Bank."
+  end
+
   def format_date(date)
     if date.nil?
       Rails.error.unexpected "Hey! date is nil here"
