@@ -239,13 +239,13 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
-
-    @permissions_overview = User::PermissionsOverview.new(user: @user)
-    @applications = @user.applications.not_archived
   end
 
   def admin_details
     authorize @user
+
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
+    @applications = @user.applications.not_archived
   end
 
   def admin_details_ach_transfers
