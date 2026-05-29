@@ -41,7 +41,7 @@ module UsersHelper
     }
 
 
-    if current_user&.events&.any? || current_user&.stripe_cards&.any?
+    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.card_grants&.any? || current_user&.reimbursement_reports&.any?
       items << {
         name: "Receipts",
         path: my_inbox_path,
