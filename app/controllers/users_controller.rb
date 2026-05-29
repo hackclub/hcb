@@ -470,7 +470,8 @@ class UsersController < ApplicationController
             :address_city,
             :address_state,
             :address_postal_code,
-            :address_country
+            :address_country,
+            :recipient_name
           ]
         }
       end
@@ -501,6 +502,7 @@ class UsersController < ApplicationController
             :address_postal_code,
             :recipient_country,
             :currency,
+            :recipient_name,
           ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
         }
       end
@@ -509,7 +511,8 @@ class UsersController < ApplicationController
         attributes << {
           payout_method_attributes: [
             :account_number,
-            :routing_number
+            :routing_number,
+            :recipient_name
           ]
         }
       end
@@ -517,7 +520,8 @@ class UsersController < ApplicationController
       if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
         attributes << {
           payout_method_attributes: [
-            :recipient_email
+            :recipient_email,
+            :recipient_name
           ]
         }
       end
