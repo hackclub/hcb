@@ -160,5 +160,36 @@ RSpec.describe User, type: :model do
 
       expect(described_class.find(user.id)).to be_cards_should_lock
     end
+
+    it "locks when the average upload time exceeds 72 hours despite having enough timely uploads" do
+      # 5 timely uploads right at the edge (71h each) — count qualifies but drags average up
+      5.times do |index|
+        settled_at = (30 + index).days.ago
+        create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 71.hours)
+      end
+
+      # One large violation (5 days missing) pushes the average above 72h
+      # avg = (71h * 5 + 5days) / 6 = (355h + 120h) / 6 = 475h / 6 ≈ 79h > 72h
+      create_settled_card_charge(user:, settled_at: 5.days.ago)
+
+      expect(described_class.find(user.id)).to be_cards_should_lock
+    end
+
+    it "does not count charges on SalaryAccount-plan events toward card locking" do
+      salary_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+
+      # Build a charge against the salary event — should be invisible to card locking
+      stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
+      salary_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, event: salary_event)
+      settled_at = 4.days.ago
+      raw = create(:raw_stripe_transaction, stripe_card: salary_card, stripe_authorization_id: SecureRandom.hex(8), created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date)
+      ct = create(:canonical_transaction, amount_cents: -10_00, memo: "Salary Charge", date: settled_at.to_date, created_at: settled_at, updated_at: settled_at, transaction_source: raw)
+      create(:canonical_event_mapping, canonical_transaction: ct, event: salary_event)
+
+      reloaded_user = described_class.find(user.id)
+
+      expect(reloaded_user.card_locking_missing_receipts).to be_empty
+      expect(reloaded_user).not_to be_cards_should_lock
+    end
   end
 end

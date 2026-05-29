@@ -662,14 +662,13 @@ class HcbCode < ApplicationRecord
 
   def card_locking_settled_at
     return unless stripe_card? || stripe_force_capture?
+    return @card_locking_settled_at if defined?(@card_locking_settled_at)
 
-    @card_locking_settled_at ||= begin
-      if association(:canonical_transactions).loaded?
-        canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
-      else
-        canonical_transactions.expense.minimum(:created_at)
-      end
-    end
+    @card_locking_settled_at = if association(:canonical_transactions).loaded?
+                                  canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
+                                else
+                                  canonical_transactions.expense.minimum(:created_at)
+                                end
   end
 
   def card_locking_first_receipt_uploaded_at
