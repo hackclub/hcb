@@ -17,6 +17,7 @@
         </tr>
       <% end %>
     </table>
+    <%= paginate @invoices %>
   <% else %>
     <%= blankslate "No invoices" %>
   <% end %>

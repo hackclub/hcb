@@ -7,6 +7,7 @@
           <%= render "canonical_transactions/canonical_transaction", ct: tx %>
         <% end %>
       </table>
+      <%= paginate @stripe_transactions %>
     <% else %>
       <%= blankslate "No stripe transactions" %>
     <% end %>

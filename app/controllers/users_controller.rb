@@ -251,61 +251,65 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = AchTransfer.where(creator: @user)
+    @ach_transfers = AchTransfer.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = CheckDeposit.where(created_by: @user)
+    @check_deposits = CheckDeposit.where(created_by: @user).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event])
+    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_emburse_cards
     authorize @user
 
-    @emburse_cards = @user.emburse_cards
+    @emburse_cards = @user.emburse_cards.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = IncreaseCheck.where(user: @user)
+    @increase_checks = IncreaseCheck.where(user: @user).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = Invoice.where(creator: @user)
+    @invoices = Invoice.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = Check.where(creator: @user)
+    @lob_checks = Check.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_missing_receipts
     authorize @user
 
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt.includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                       .page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_reimbursement_reports
     authorize @user
 
-    @reimbursement_reports = @user.reimbursement_reports.includes([:event, :payout_holding])
+    @reimbursement_reports = @user.reimbursement_reports
+                                  .includes([:event, :payout_holding])
+                                  .page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_stripe_cards
     authorize @user
 
-    @stripe_cards = @user.stripe_cards
+    @stripe_cards = @user.stripe_cards.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_stripe_transactions
@@ -314,6 +318,7 @@ class UsersController < ApplicationController
     @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
                                   .order(created_at: :desc)
                                   .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                  .page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def update

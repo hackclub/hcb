@@ -33,6 +33,7 @@
         <% end %>
       </tbody>
     </table>
+    <%= paginate @reimbursement_reports %>
   <% else %>
     <%= blankslate "No reimbursement reports" %>
   <% end %>

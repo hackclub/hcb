@@ -7,6 +7,7 @@
           <%= render "canonical_transactions/canonical_transaction", ct: tx %>
         <% end %>
       </table>
+      <%= paginate @hcb_codes_missing_receipts %>
     <% else %>
       <%= blankslate "No missing receipts" %>
     <% end %>

@@ -15,6 +15,7 @@
         </tr>
       <% end %>
     </table>
+    <%= paginate @disbursements %>
   <% else %>
     <%= blankslate "No disbursements" %>
   <% end %>
