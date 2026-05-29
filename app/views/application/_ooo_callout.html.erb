@@ -8,9 +8,9 @@
     <%= resource.pluralize.capitalize %> will be reviewed
 
     <% if financial %>
-      on the <span class="tooltipped" aria-label="<%= 1.business_day.after(Date.today).strftime("%b %e, %Y") %>">next business day</span>
+      on the <span class="tooltipped" aria-label="<%= 1.business_day.after(Date.today).strftime("%b %e, %Y") %>">next business day</span>.
     <% else %>
-      within <span class="tooltipped" aria-label="<%= 2.business_days.after(Date.today).strftime("%b %e, %Y") %>">2 business days</span>
+      within <span class="tooltipped" aria-label="<%= 2.business_days.after(Date.today).strftime("%b %e, %Y") %>">2 business days</span>.
     <% end %>
   <% end %>
 <% end %>
