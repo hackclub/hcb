@@ -18,82 +18,59 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     Flipper.enable(:card_locking_2025_06_09, user)
   end
 
-  def stub_counts(current:, future: current)
-    allow(user).to receive(:transactions_missing_receipt)
-      .with(from: Receipt::CARD_LOCKING_START_DATE, to: kind_of(ActiveSupport::TimeWithZone))
-      .and_return(double("Relation", count: current))
-    allow(user).to receive(:transactions_missing_receipt)
-      .with(from: Receipt::CARD_LOCKING_START_DATE)
-      .and_return(double("Relation", count: future))
+  def stub_warning_state(warning_ids: {}, has_violations: false)
+    User::CARD_LOCKING_WARNING_THRESHOLDS.each do |threshold|
+      hcb_codes = Array(warning_ids[threshold]).map { |id| instance_double(HcbCode, id:) }
+
+      allow(user).to receive(:card_locking_receipts_reaching_warning_threshold)
+        .with(threshold:, now: kind_of(ActiveSupport::TimeWithZone))
+        .and_return(hcb_codes)
+    end
+
+    allow(user).to receive(:has_missing_receipt_violations?)
+      .with(now: kind_of(ActiveSupport::TimeWithZone))
+      .and_return(has_violations)
   end
 
   describe "warning email dedup" do
-    it "enqueues a warning email the first time count hits 5" do
-      stub_counts(current: 5)
+    it "enqueues a warning email when a receipt crosses the 48-hour threshold" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
 
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
 
-    it "does not re-enqueue if count is still 5 on a subsequent run" do
-      stub_counts(current: 5)
+    it "does not re-enqueue the same 48-hour warning on a subsequent run" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
       service.run
 
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end
 
-    it "sends a fresh email when count advances from 5 to 7" do
-      stub_counts(current: 5)
+    it "sends a fresh warning when the same receipt later crosses the 71-hour threshold" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
       service.run
 
-      stub_counts(current: 7)
+      stub_warning_state(warning_ids: { 71.hours => [1] })
+
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
 
-    it "sends at each of 5, 7, and 9 exactly once even with repeat runs between" do
-      stub_counts(current: 5)
-      expect { 3.times { service.run } }.to have_enqueued_mail(CardLockingMailer, :warning).once
+    it "deduplicates every receipt that crosses a threshold in the same run" do
+      stub_warning_state(warning_ids: { 48.hours => [1, 2] })
 
-      stub_counts(current: 7)
-      expect { 3.times { service.run } }.to have_enqueued_mail(CardLockingMailer, :warning).once
-
-      stub_counts(current: 9)
-      expect { 3.times { service.run } }.to have_enqueued_mail(CardLockingMailer, :warning).once
-    end
-
-    it "does not notify at off-threshold counts (6, 8)" do
-      stub_counts(current: 6)
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-
-      stub_counts(current: 8)
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end
 
-    it "re-notifies at the same count after the 25h cache window elapses" do
-      stub_counts(current: 5)
-      service.run
+    it "sends a daily digest while violations exist" do
+      stub_warning_state(has_violations: true)
+
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
 
       travel_to(26.hours.from_now) do
         expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
       end
-    end
-
-    it "dedupes per-user" do
-      other_user = create(:user)
-      Flipper.enable(:card_locking_2025_06_09, other_user)
-
-      stub_counts(current: 5)
-      service.run
-
-      allow(other_user).to receive(:transactions_missing_receipt)
-        .with(from: Receipt::CARD_LOCKING_START_DATE, to: kind_of(ActiveSupport::TimeWithZone))
-        .and_return(double("Relation", count: 5))
-      allow(other_user).to receive(:transactions_missing_receipt)
-        .with(from: Receipt::CARD_LOCKING_START_DATE)
-        .and_return(double("Relation", count: 5))
-
-      expect {
-        described_class.new(user: other_user).run
-      }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
   end
 
@@ -106,38 +83,22 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
       allow(TwilioMessageService::Send).to receive(:new).and_return(twilio_send)
     end
 
-    it "sends the warning SMS once per threshold and no more" do
-      stub_counts(current: 5)
-      service.run
-      service.run
+    it "sends the 48-hour warning SMS once per threshold crossing" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
 
-      expect(TwilioMessageService::Send).to have_received(:new).once
-      expect(twilio_send).to have_received(:run!).once
-    end
-  end
-
-  describe "pre-lock SMS dedup" do
-    let(:twilio_send) { instance_double(TwilioMessageService::Send, run!: true) }
-
-    before do
-      allow(user).to receive(:phone_number).and_return("+15555555555")
-      allow(user).to receive(:phone_number_verified?).and_return(true)
-      allow(TwilioMessageService::Send).to receive(:new).and_return(twilio_send)
-    end
-
-    it "sends the pre-lock SMS once while future_count is >= 10 and current_count is not a warning threshold" do
-      stub_counts(current: 3, future: 11)
-
-      service.run
       service.run
       service.run
 
       expect(twilio_send).to have_received(:run!).once
     end
 
-    it "re-sends after 25h" do
-      stub_counts(current: 3, future: 11)
+    it "sends a daily digest SMS while violations exist" do
+      stub_warning_state(has_violations: true)
+
       service.run
+      service.run
+
+      expect(twilio_send).to have_received(:run!).once
 
       travel_to(26.hours.from_now) do
         service.run
@@ -146,9 +107,9 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
       expect(twilio_send).to have_received(:run!).twice
     end
 
-    it "does not send when phone is unverified" do
+    it "does not send when the phone is unverified" do
       allow(user).to receive(:phone_number_verified?).and_return(false)
-      stub_counts(current: 3, future: 11)
+      stub_warning_state(warning_ids: { 48.hours => [1] })
 
       service.run
 
@@ -156,10 +117,17 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     end
   end
 
-  describe "feature flag" do
-    it "is a no-op when the flag is disabled for the user" do
+  describe "guard rails" do
+    it "does nothing when the user is already locked" do
+      user.update!(cards_locked: true)
+      stub_warning_state(warning_ids: { 48.hours => [1] }, has_violations: true)
+
+      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
+    end
+
+    it "is a no-op when the feature flag is disabled for the user" do
       Flipper.disable(:card_locking_2025_06_09, user)
-      stub_counts(current: 5)
+      stub_warning_state(warning_ids: { 48.hours => [1] })
 
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end

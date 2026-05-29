@@ -5,8 +5,9 @@ class User
     class RecurringJob < ApplicationJob
       queue_as :low
       def perform
-        User.where(cards_locked: true).find_each(batch_size: 100) do |user|
+        User.card_locking_candidates.find_each(batch_size: 100) do |user|
           ::UserService::UpdateCardLocking.new(user:).run
+          ::UserService::SendCardLockingNotification.new(user:).run
         end
       end
 

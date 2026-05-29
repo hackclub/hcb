@@ -59,8 +59,30 @@ class HcbCode < ApplicationRecord
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
+  CARD_LOCKING_STRIPE_CARD_JOIN = "INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id"
+  CARD_LOCKING_STRIPE_CARDHOLDER_JOIN = "INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id"
+  CARD_LOCKING_EVENT_MAPPING_JOIN = "INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id"
+  CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'"
+
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
+  scope :card_locking_relevant, -> {
+    joins(:canonical_transactions)
+      .merge(CanonicalTransaction.stripe_transaction)
+      .joins(CARD_LOCKING_STRIPE_CARD_JOIN)
+      .joins(CARD_LOCKING_EVENT_MAPPING_JOIN)
+      .joins(CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN)
+      .where("canonical_transactions.amount_cents < 0")
+      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
+      .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
+  }
+  scope :card_locking_candidates, -> {
+    card_locking_relevant
+      .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
+      .left_outer_joins(:receipts)
+      .where(receipts: { id: nil })
+      .where(marked_no_or_lost_receipt_at: nil)
+  }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -636,6 +658,52 @@ class HcbCode < ApplicationRecord
   # we have a custom implementation here for caching
   def missing_receipt?(event = self.event, type = self.type)
     receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
+  end
+
+  def card_locking_settled_at
+    return unless stripe_card? || stripe_force_capture?
+
+    @card_locking_settled_at ||= begin
+      if association(:canonical_transactions).loaded?
+        canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
+      else
+        canonical_transactions.expense.minimum(:created_at)
+      end
+    end
+  end
+
+  def card_locking_first_receipt_uploaded_at
+    @card_locking_first_receipt_uploaded_at ||= if association(:receipts).loaded?
+                                                  receipts.map(&:created_at).compact.min
+                                                else
+                                                  receipts.minimum(:created_at)
+                                                end
+  end
+
+  def card_locking_receipt_age(now: Time.current)
+    settled_at = card_locking_settled_at
+    return 0.seconds unless settled_at.present?
+
+    now - settled_at
+  end
+
+  def card_locking_missing_receipt?
+    missing_receipt? && card_locking_settled_at.present?
+  end
+
+  def card_locking_missing_receipt_violation?(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+    card_locking_missing_receipt? && card_locking_receipt_age(now:) >= grace_period
+  end
+
+  def card_locking_receipt_upload_time(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+    settled_at = card_locking_settled_at
+    return unless settled_at.present?
+
+    uploaded_at = card_locking_first_receipt_uploaded_at
+    return [uploaded_at - settled_at, 0].max if uploaded_at.present?
+    return unless card_locking_missing_receipt_violation?(now:, grace_period:)
+
+    now - settled_at
   end
 
   def receipts
