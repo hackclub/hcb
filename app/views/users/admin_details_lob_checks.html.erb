@@ -12,7 +12,7 @@
       </tr>
       <% @lob_checks.each do |check| %>
         <tr>
-          <td><%= check.payment_for %></td>
+          <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;"><%= check.payment_for %></td>
           <td><%= check.memo %></td>
           <td><%= render_money check.amount %></td>
           <td><%= check.aasm_state %></td>
