@@ -55,12 +55,6 @@
       <% end %>
     </h2>
 
-    <% unless @application.approved? %>
-      <div class="w-full md:max-w-2xl">
-        <%= render "event/applications/review_delay_callout" %>
-      </div>
-    <% end %>
-
     <h3 class="m-0 muted">
       <% if !@application.approved? || @application.contract&.party(:signee)&.pending? || @application.contract&.party(:cosigner)&.pending? %>
         Here's what's next for <%= @application.name %>
@@ -92,6 +86,10 @@
                   <% if @application.contract.party(:cosigner)&.pending? %>
                     <button class="btn" data-behavior="modal_trigger" data-modal="parent_agreement">Manage parent's agreement</button>
                   <% end %>
+                </div>
+              <% elsif step[:label] == "Await review" && !@application.approved? %>
+                <div class="w-full">
+                  <%= render "application/ooo_callout", resource: "application", financial: false %>
                 </div>
               <% elsif step[:label] == "Start spending" && @application.event.present? %>
                 <%= link_to "Go to your new organization!", @application.event, class: "btn" %>
