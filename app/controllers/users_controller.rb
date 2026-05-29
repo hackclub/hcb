@@ -251,19 +251,19 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = AchTransfer.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
+    @ach_transfers = @user.ach_transfers.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = CheckDeposit.where(created_by: @user).page(params[:page] || 1).per(params[:per] || 10)
+    @check_deposits = @user.check_deposits.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = Disbursement.where(requested_by: @user).includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+    @disbursements = @user.disbursements.includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_emburse_cards
@@ -275,19 +275,19 @@ class UsersController < ApplicationController
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = IncreaseCheck.where(user: @user).page(params[:page] || 1).per(params[:per] || 10)
+    @increase_checks = @user.increase_checks.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = Invoice.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
+    @invoices = @user.invoices.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = Check.where(creator: @user).page(params[:page] || 1).per(params[:per] || 10)
+    @lob_checks = @user.checks.page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_missing_receipts
