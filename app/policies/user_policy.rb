@@ -93,6 +93,10 @@ class UserPolicy < ApplicationPolicy
     admin_details?
   end
 
+  def admin_details_missing_receipts?
+    admin_details?
+  end
+
   def admin_details_reimbursement_reports?
     admin_details?
   end

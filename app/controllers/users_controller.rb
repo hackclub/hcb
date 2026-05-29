@@ -31,8 +31,8 @@ class UsersController < ApplicationController
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
     :edit_admin, :admin_details, :admin_details_ach_transfers,
     :admin_details_check_deposits, :admin_details_disbursements, :admin_details_increase_checks,
-    :admin_details_invoices, :admin_details_lob_checks, :admin_details_reimbursement_reports,
-    :admin_details_stripe_transactions
+    :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
+    :admin_details_reimbursement_reports, :admin_details_stripe_transactions
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -282,6 +282,12 @@ class UsersController < ApplicationController
     authorize @user
 
     @lob_checks = Check.where(creator: @user)
+  end
+
+  def admin_details_missing_receipts
+    authorize @user
+
+    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
   end
 
   def admin_details_reimbursement_reports

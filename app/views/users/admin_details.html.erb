@@ -1,13 +1,8 @@
 <%= turbo_frame_tag :admin_details do %>
   <div class="flex flex-col gap-4">
-    <% if @user.transactions_missing_receipt.any? %>
+    <%= turbo_frame_tag :admin_details_missing_receipts, src: admin_details_missing_receipts_user_path(@user), loading: :lazy do %>
       <% admin_tool "p-3" do %>
-        <h3 class="mb2 mt1">Missing receipts</h3>
-        <table>
-          <% @user.transactions_missing_receipt.each do |tx| %>
-            <%= render "canonical_transactions/canonical_transaction", ct: tx %>
-          <% end %>
-        </table>
+        <p>Loading user's missing receipts</p>
       <% end %>
     <% end %>
 
