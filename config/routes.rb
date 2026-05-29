@@ -445,7 +445,7 @@ Rails.application.routes.draw do
 
   resources :checks, only: [:show]
 
-  resources :increase_checks, only: [] do
+  resources :increase_checks, only: [:edit, :update] do
     member do
       post "approve"
       post "reject"

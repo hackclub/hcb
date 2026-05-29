@@ -9,6 +9,14 @@ class IncreaseCheckPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  def edit?
+    user&.admin? && record.pending?
+  end
+
+  def update?
+    user&.admin? && record.pending?
+  end
+
   def approve?
     user&.admin?
   end
