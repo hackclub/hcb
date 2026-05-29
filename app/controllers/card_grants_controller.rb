@@ -50,7 +50,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions, :allow_stripe_card, :allow_reimbursement_report).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -249,6 +249,18 @@ class CardGrantsController < ApplicationController
   rescue Stripe::InvalidRequestError => e
     redirect_to @card_grant, flash: { error: "This card could not be activated: #{e.message}" }
   rescue Errors::StripeInvalidNameError => e
+    redirect_to @card_grant, flash: { error: e.message }
+  end
+
+  def accept_as_reimbursement
+    authorize @card_grant
+
+    report = @card_grant.with_lock do
+      Reimbursement::Report.find_by(card_grant_id: @card_grant.id) || @card_grant.convert_to_reimbursement_report!
+    end
+
+    redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
+  rescue ArgumentError => e
     redirect_to @card_grant, flash: { error: e.message }
   end
 

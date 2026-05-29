@@ -45,6 +45,27 @@
           </span>
         <% end %>
       </div>
+
+      <div class="field">
+        <label class="bold mb-1 block">Acceptance methods</label>
+        <p class="h5 muted mt-0 mb-2">Choose how the recipient can accept this grant.</p>
+        <div class="flex flex-col gap-1">
+          <%= form.label :allow_stripe_card, class: "flex gap-2 items-center" do %>
+            <%= form.check_box :allow_stripe_card, disabled:, checked: card_grant.allow_stripe_card.nil? ? (@event.card_grant_setting&.allow_stripe_card != false) : card_grant.allow_stripe_card %>
+            Allow virtual card
+            <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient can activate a virtual Stripe card to make purchases">
+              <%= inline_icon "info", size: 20 %>
+            </span>
+          <% end %>
+          <%= form.label :allow_reimbursement_report, class: "flex gap-2 items-center" do %>
+            <%= form.check_box :allow_reimbursement_report, disabled:, checked: card_grant.allow_reimbursement_report.nil? ? (@event.card_grant_setting&.allow_reimbursement_report == true) : card_grant.allow_reimbursement_report %>
+            Allow reimbursement report
+            <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient can open a reimbursement report instead of using a virtual card">
+              <%= inline_icon "info", size: 20 %>
+            </span>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     <div class="bg-muted self-stretch" style="width: 1px;"></div>
