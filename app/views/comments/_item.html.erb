@@ -46,11 +46,7 @@
       </div>
       <% if comment.has_attached_file? %>
         <div class="border-top card__banner">
-        <% if organizer_signed_in? %>
           <%= link_to "📎 attachment", url_for(comment.file), target: "_blank" %>
-        <% else %>
-          <%= link_to "📎 sign in to download attachment", root_path, target: "_blank" %>
-        <% end %>
         </div>
       <% end %>
         <%# if comment.edited? %>
