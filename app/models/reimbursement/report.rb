@@ -405,7 +405,7 @@ module Reimbursement
         comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
         wise_transfer.local_hcb_code.comments.create!(content: "Created from reimbursement report #{Rails.application.routes.url_helpers.reimbursement_report_url(hashid)}", user: User.system_user)
 
-        expenses.includes(:receipts).each do |expense|
+        expenses.includes(:receipts).find_each do |expense|
           expense.receipts.each do |receipt|
             ::ReceiptService::Create.new(
               receiptable: wise_transfer.local_hcb_code,

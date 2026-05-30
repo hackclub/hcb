@@ -34,9 +34,9 @@ class Metric
         event_ids = events.map(&:id)
 
         preloaded_metrics = ::Metric::Event::Words
-          .where(subject_type: "Event", subject_id: event_ids, year: Metric.year)
-          .order(completed_at: :desc, updated_at: :desc)
-          .index_by(&:subject_id)
+                            .where(subject_type: "Event", subject_id: event_ids, year: Metric.year)
+                            .order(completed_at: :desc, updated_at: :desc)
+                            .index_by(&:subject_id)
 
         events_words = events.map do |e|
           cached = preloaded_metrics[e.id]
