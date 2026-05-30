@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ["year", "month", "day", "message", "submit"]
+  static targets = ['year', 'month', 'day', 'message', 'submit']
 
   connect() {
     this.updateAge()
@@ -26,7 +26,10 @@ export default class extends Controller {
     const age = this.calculateAge(year, month, day)
 
     if (age < 13) {
-      this.showMessage("Sorry, you must be at least 13 years old to sign up.", true)
+      this.showMessage(
+        'Sorry, you must be at least 13 years old to sign up.',
+        true
+      )
       this.disableSubmit()
     } else {
       this.clearMessage()
@@ -41,7 +44,10 @@ export default class extends Controller {
     let age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
 
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--
     }
 
@@ -54,7 +60,7 @@ export default class extends Controller {
   }
 
   clearMessage() {
-    this.messageTarget.textContent = ""
+    this.messageTarget.textContent = ''
     this.messageTarget.classList.remove('warning')
   }
 
