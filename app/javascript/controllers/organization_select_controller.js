@@ -4,6 +4,7 @@ import fuzzysort from 'fuzzysort'
 export default class extends Controller {
   static targets = [
     'dropdown',
+    'otherCheckbox',
     'menu',
     'search',
     'organization',
@@ -40,7 +41,7 @@ export default class extends Controller {
         keys: ['name', 'id', 'slug'],
         all: false,
         threshold: -500000,
-        limit: 50,
+        limit: 25,
       })
 
       const visible =
@@ -48,10 +49,7 @@ export default class extends Controller {
           ? result.map(r => r.obj)
           : this.searchTarget.value.length > 0
             ? []
-            : orgValues
-                .sort((a, b) => a.index - b.index)
-
-                .slice(0, 50)
+            : orgValues.sort((a, b) => a.index - b.index).slice(0, 25)
 
       firstOrganization = visible[0]
 
@@ -123,6 +121,8 @@ export default class extends Controller {
         fieldValue.innerText = button.children[0].innerText
 
         const newValue = id == 'other' ? this.searchTarget.value : id
+        if (this.hasOtherCheckboxTarget)
+          this.otherCheckboxTarget.checked = id == 'other'
         fieldValue.value = newValue
         fieldValue.dataset.fee = fee
         this.dropdownTarget.value = newValue
