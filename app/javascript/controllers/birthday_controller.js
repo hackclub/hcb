@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['year', 'month', 'day', 'message', 'submit']
+  static targets = ['year', 'month', 'day', 'message']
 
   connect() {
     this.updateAge()
@@ -33,6 +33,7 @@ export default class extends Controller {
       this.disableSubmit()
     } else {
       this.clearMessage()
+      this.showMessage("Test")
       this.enableSubmit()
     }
   }
@@ -65,10 +66,10 @@ export default class extends Controller {
   }
 
   disableSubmit() {
-    this.submitTarget?.setAttribute('disabled', 'disabled')
+    document.getElementById('user_submit')?.setAttribute('disabled', 'disabled')
   }
 
   enableSubmit() {
-    this.submitTarget?.removeAttribute('disabled')
+    document.getElementById('user_submit')?.removeAttribute('disabled')
   }
 }

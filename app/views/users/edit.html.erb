@@ -68,19 +68,17 @@
               </div>
               <div class="gap-2 onboarding" data-controller="birthday" style="display: flex; flex-direction: column;">
                 <span style="display: flex; gap: 0.5rem;">
-                <%= form.date_select :birthday,
-                                     {
-                                       start_year: Date.today.year,
-                                       end_year: Date.today.year - 100,
-                                       order: [:month, :day, :year],
-                                       prompt: @user.birthday.nil?
-                                     },
-                                     {
-                                       required: true,
-                                       data: { action: "change->birthday#updateAge" }
-                                     } %>
+                <%= select_month @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { required: true, data: { birthday_target: "month", action: "change->birthday#updateAge" } } %>
+                <%= select_day @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { required: true, data: { birthday_target: "day", action: "change->birthday#updateAge" } } %>
+                <%= select_year @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil?, start_year: Date.today.year, end_year: Date.today.year - 100 },
+                                       { required: true, data: { birthday_target: "year", action: "change->birthday#updateAge" } } %>
                 </span>
-                <span id="birthday_deterence" class="h5 muted"></span>
+                <span data-birthday-target="message" class="h5 muted"></span>
               </div>
             </div>
           </div>
