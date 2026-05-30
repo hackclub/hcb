@@ -1,0 +1,18 @@
+<%# locals: (start_date:, end_date:) %>
+<div data-controller="menu" class="inline-flex items-center">
+  <button type="button" class="btn inline-flex items-center gap-1" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+    <%= inline_icon "clock", size: 16 %>
+    Date<%= " (#{start_date}–#{end_date})" if start_date || end_date %>
+  </button>
+  <div class="menu__content p-2" data-menu-target="content">
+    <div
+      data-controller="date-range-picker"
+      data-date-range-picker-initial-start-value="<%= start_date %>"
+      data-date-range-picker-initial-end-value="<%= end_date %>"
+      data-date-range-picker-name-start-value="start_date"
+      data-date-range-picker-name-end-value="end_date"></div>
+    <% request.query_parameters.except("start_date", "end_date").each do |k, v| %>
+      <%= hidden_field_tag k, v %>
+    <% end %>
+  </div>
+</div>
