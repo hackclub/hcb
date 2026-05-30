@@ -1,0 +1,29 @@
+<%# Shared marketing header. Auth-aware (rendered per-request). Reused by all
+    /for/* landing pages — keep it page-agnostic. %>
+<header class="marketing-nav">
+  <div class="marketing-nav__inner">
+    <% logo_env = Rails.env.local? ? "development" : Rails.env %>
+    <a href="<%= root_path %>" class="marketing-nav__logo" aria-label="HCB home">
+      <%= image_tag "logo-#{logo_env}.svg", alt: "HCB", height: 30 %>
+    </a>
+
+    <nav class="marketing-nav__links" aria-label="Primary">
+      <a href="https://hackclub.com/fiscal-sponsorship">Fiscal sponsorship</a>
+      <a href="<%= funders_path %>" aria-current="page">For funders</a>
+      <a href="https://help.hcb.hackclub.com">Docs</a>
+    </nav>
+
+    <div class="marketing-nav__actions">
+      <% if signed_in? %>
+        <a href="<%= root_path %>" class="marketing-nav__dashboard">
+          <%= avatar_for current_user, size: 26 %>
+          <span>Dashboard</span>
+          <span class="marketing-nav__arrow" aria-hidden="true">&rarr;</span>
+        </a>
+      <% else %>
+        <a href="<%= auth_users_path %>" class="marketing-nav__login">Log in</a>
+        <a href="<%= auth_users_path(signup: true) %>" class="marketing-btn marketing-btn--sm marketing-btn--primary">Get started</a>
+      <% end %>
+    </div>
+  </div>
+</header>

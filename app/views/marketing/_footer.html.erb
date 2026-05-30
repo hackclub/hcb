@@ -1,0 +1,47 @@
+<%# Standardized marketing footer. Shared by every /for/* landing page — keep it
+    page-agnostic. NOTE: the Stripe / card-issuing disclosure below is REQUIRED because
+    marketing pages name Stripe as a financial partner. %>
+<footer class="marketing-footer">
+  <div class="marketing-footer__inner">
+    <% logo_env = Rails.env.local? ? "development" : Rails.env %>
+    <div class="marketing-footer__brand">
+      <%= image_tag "logo-#{logo_env}-dark.svg", alt: "HCB", height: 32 %>
+      <p>The modern infrastructure for funding the future.</p>
+    </div>
+
+    <nav class="marketing-footer__cols" aria-label="Footer">
+      <div>
+        <h3>Product</h3>
+        <a href="https://hackclub.com/fiscal-sponsorship">Fiscal sponsorship</a>
+        <a href="<%= funders_path %>">For funders</a>
+        <a href="https://hackclub.com/hcb/mobile/">Mobile app</a>
+      </div>
+      <div>
+        <h3>Resources</h3>
+        <a href="https://help.hcb.hackclub.com">Docs &amp; help</a>
+        <a href="https://blog.hcb.hackclub.com">Blog</a>
+        <a href="https://hackclub.com/fiscal-sponsorship/directory">Organizations</a>
+      </div>
+      <div>
+        <h3>About</h3>
+        <a href="https://hackclub.com">Hack Club</a>
+        <a href="<%= branding_path %>">Branding</a>
+      </div>
+      <div>
+        <h3>Legal</h3>
+        <a href="https://hackclub.com/privacy-and-terms/">Terms &amp; Privacy</a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="marketing-footer__legal">
+    <p>
+      HCB is a program of The Hack Foundation (d.b.a. Hack Club), a 501(c)(3) nonprofit
+      (EIN: 81-2908499).
+    </p>
+    <p>
+      HCB Visa® Commercial cards are powered by Stripe and issued by Celtic Bank. Banking
+      services provided by Column N.A., Member FDIC.
+    </p>
+  </div>
+</footer>
