@@ -1,4 +1,4 @@
-<% parent_events ||= @event.ancestors[0...-1].reject { |e| e.id == @event.id } %>
+<% parent_events ||= @event.ancestors.reject { |e| e.id == @event.id } %>
 <% if parent_events.present? %>
   <div data-controller="menu" class="-mb-2">
     <button
