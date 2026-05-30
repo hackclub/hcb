@@ -399,7 +399,8 @@ export default class extends Controller {
   submitFilter() {
     const params = new URLSearchParams()
 
-    if (this.start) params.set(this.nameStartValue, this.#formatDate(this.start))
+    if (this.start)
+      params.set(this.nameStartValue, this.#formatDate(this.start))
     if (this.end) params.set(this.nameEndValue, this.#formatDate(this.end))
 
     // Collect other hidden params from the cloned menu content
