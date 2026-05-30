@@ -1,17 +1,52 @@
-<% content_for :title, "For Funders" %>
+<% content_for :title, "For funders: deploy capital as grants" %>
 
 <% content_for :head do %>
-  <% description = "HCB is the modern infrastructure for funding the future: a 501(c)(3) that lets funders deploy capital as grants — to established nonprofits or brand-new initiatives — in days, at any scale, with full transparency." %>
+  <% description = "HCB is a 501(c)(3) that lets funders deploy capital as tax-deductible grants — to nonprofits or brand-new initiatives, in days, at any scale." %>
+  <% share_image = "#{request.base_url}/brand/hcb-icon-icon-original.png" %>
   <meta name="description" content="<%= description %>">
+  <link rel="canonical" href="<%= funders_url %>">
+
+  <meta property="og:type" content="website">
   <meta property="og:site_name" content="HCB">
   <meta property="og:url" content="<%= funders_url %>">
-  <meta property="og:title" content="HCB for Funders — fund the future, in days">
+  <meta property="og:title" content="HCB for funders — deploy capital as grants, in days">
   <meta property="og:description" content="<%= description %>">
-  <meta property="og:image" content="/brand/hcb-icon-icon-original.png">
+  <%# TODO(seo): swap in a purpose-built 1200×630 share image, then set twitter:card to summary_large_image. %>
+  <meta property="og:image" content="<%= share_image %>">
+  <meta property="og:image:alt" content="HCB — deploy your capital as grants">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="HCB for Funders">
+  <meta name="twitter:title" content="HCB for funders — deploy capital as grants">
   <meta name="twitter:description" content="<%= description %>">
-  <meta name="twitter:image" content="/brand/hcb-icon-icon-original.png">
+  <meta name="twitter:image" content="<%= share_image %>">
+
+  <%# Preconnect + preload the brand font so the Phantom Sans hero headline doesn't block LCP. %>
+  <link rel="preconnect" href="https://assets.hackclub.com" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2" crossorigin>
+
+  <script type="application/ld+json"> <%# erb_lint:disable AllowedScriptType %>
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "HCB",
+          "legalName": "The Hack Foundation",
+          "url": "https://hcb.hackclub.com",
+          "logo": "https://hcb.hackclub.com/brand/hcb-icon-icon-original.png",
+          "sameAs": ["https://github.com/hackclub/hcb", "https://hackclub.com"]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            { "@type": "Question", "name": "How fast can I make a grant?", "acceptedAnswer": { "@type": "Answer", "text": "In days, not quarters — no new legal entity and no IRS waiting period." } },
+            { "@type": "Question", "name": "Is my giving tax-deductible?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You contribute to HCB, a 501(c)(3) nonprofit, and your deduction is immediate." } },
+            { "@type": "Question", "name": "Do I need to set up a foundation?", "acceptedAnswer": { "@type": "Answer", "text": "No. You get the legitimacy of a foundation without becoming one — you direct the grants and HCB handles compliance, paperwork, and money movement." } },
+            { "@type": "Question", "name": "Can I give privately?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Transparency is optional — give publicly, privately, or anonymously." } }
+          ]
+        }
+      ]
+    }
+  </script>
 <% end %>
 
 <%# ============================ HERO ============================ %>
@@ -29,11 +64,11 @@
       <p class="mk-hero__subtitle">
         HCB is a 501(c)(3) that turns your contribution into tax-deductible grants — to
         established nonprofits or brand-new initiatives, with you directing every dollar.
-        From a single project to $5M across 500 initiatives, no foundation required.
+        From a single project to a portfolio of hundreds, no foundation required.
         <span class="mk-hero__brandline">Built by engineers, funded by tech leaders.</span>
       </p>
       <div class="mk-hero__cta">
-        <%= render "marketing/funder_inquiry_form" %>
+        <a href="#talk-to-us" class="marketing-btn marketing-btn--primary marketing-btn--lg">Talk to our team</a>
       </div>
     </div>
 
@@ -73,7 +108,7 @@
     </h2>
     <p class="mk-lead">
       More donors — many from tech, AI, and crypto — want to put capital to work now,
-      back ambitious new ideas, and see their impact as it happens. Private foundations
+      back ambitious new ideas, and watch the results in real time. Private foundations
       and donor-advised funds work well for traditional giving, but they weren't built to
       fund brand-new initiatives or to move at the pace today's funders expect.
       <strong>We built HCB for that.</strong>
@@ -103,9 +138,8 @@
       </article>
       <article class="mk-pillar">
         <span class="mk-pillar__icon"><%= inline_icon "analytics", size: 24 %></span>
-        <h3>A live feedback loop</h3>
-        <p>Real-time dashboards on every dollar — balances, spend, and activity — not a
-          year-end PDF.</p>
+        <h3>A live view, not a year-end PDF</h3>
+        <p>Real-time dashboards on every dollar — balances, spend, and activity.</p>
       </article>
       <article class="mk-pillar">
         <span class="mk-pillar__icon"><%= inline_icon "apps", size: 24 %></span>
@@ -162,8 +196,8 @@
         <h2 class="mk-section__title">See exactly where every dollar goes.</h2>
         <p class="mk-lead">
           Every grant, card swipe, and transfer shows up in real time. Track spend across
-          your whole portfolio, drill into any organization, and get the reporting you'd
-          expect from a tool built by engineers.
+          your whole portfolio, drill into any organization, and get reporting built with
+          the rigor engineers expect.
         </p>
         <ul class="mk-ticks">
           <li>Real-time transaction feeds</li>
@@ -197,7 +231,7 @@
       </article>
       <article class="mk-use">
         <h3>Back a builder's project</h3>
-        <p>Fund the work, even from a team of one — almost anywhere in the world.</p>
+        <p>Fund the work — even a team of one, almost anywhere in the world.</p>
       </article>
       <article class="mk-use">
         <h3>Fund AI research &amp; education</h3>
@@ -211,6 +245,66 @@
         <h3>Fund the next generation</h3>
         <p>Young builders and student-led teams are already the heart of what runs on HCB.</p>
       </article>
+    </div>
+  </div>
+</section>
+
+<%# ============================ COMPARISON ============================ %>
+<section class="mk-section">
+  <div class="mk-container mk-narrow">
+    <div class="mk-section__head">
+      <p class="mk-eyebrow">How it compares</p>
+      <h2 class="mk-section__title">The agility of a fund. The legitimacy of a foundation.</h2>
+    </div>
+    <div class="mk-table-wrap">
+      <table class="mk-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="mk-vh">Capability</span></th>
+            <th scope="col" class="mk-table__hcb">HCB</th>
+            <th scope="col">Private foundation</th>
+            <th scope="col">Donor-advised fund</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Setup cost</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>$0</strong></td>
+            <td data-label="Private foundation">Legal &amp; accounting fees</td>
+            <td data-label="Donor-advised fund">Low</td>
+          </tr>
+          <tr>
+            <th scope="row">Time to first grant</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>Days</strong></td>
+            <td data-label="Private foundation">Months</td>
+            <td data-label="Donor-advised fund">Days</td>
+          </tr>
+          <tr>
+            <th scope="row">Fund brand-new initiatives</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>Yes</strong></td>
+            <td data-label="Private foundation">Limited</td>
+            <td data-label="Donor-advised fund">No</td>
+          </tr>
+          <tr>
+            <th scope="row">Real-time transparency &amp; reporting</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>Real-time</strong></td>
+            <td data-label="Private foundation">Annual</td>
+            <td data-label="Donor-advised fund">Limited</td>
+          </tr>
+          <tr>
+            <th scope="row">Ongoing admin</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>We handle it</strong></td>
+            <td data-label="Private foundation">High</td>
+            <td data-label="Donor-advised fund">Low</td>
+          </tr>
+          <tr>
+            <th scope="row">Tax-deductible · 501(c)(3)</th>
+            <td class="mk-table__hcb" data-label="HCB"><strong>Yes</strong></td>
+            <td data-label="Private foundation">Yes</td>
+            <td data-label="Donor-advised fund">Yes</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -237,66 +331,6 @@
         <span class="mk-photo__ph" aria-hidden="true">Photo</span>
         <figcaption>A student-led nonprofit</figcaption>
       </figure>
-    </div>
-  </div>
-</section>
-
-<%# ============================ COMPARISON ============================ %>
-<section class="mk-section">
-  <div class="mk-container mk-narrow">
-    <div class="mk-section__head">
-      <p class="mk-eyebrow">How it compares</p>
-      <h2 class="mk-section__title">The agility of a fund. The legitimacy of a foundation.</h2>
-    </div>
-    <div class="mk-table-wrap">
-      <table class="mk-table">
-        <thead>
-          <tr>
-            <th scope="col"><span class="mk-vh">Capability</span></th>
-            <th scope="col" class="mk-table__hcb">HCB</th>
-            <th scope="col">Private foundation</th>
-            <th scope="col">Donor-advised fund</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">Time to first grant</th>
-            <td class="mk-table__hcb"><strong>Days</strong></td>
-            <td>Months</td>
-            <td>Days</td>
-          </tr>
-          <tr>
-            <th scope="row">Setup cost</th>
-            <td class="mk-table__hcb"><strong>$0</strong></td>
-            <td>Legal &amp; accounting fees</td>
-            <td>Low</td>
-          </tr>
-          <tr>
-            <th scope="row">Fund brand-new initiatives</th>
-            <td class="mk-table__hcb"><strong>Yes</strong></td>
-            <td>Limited</td>
-            <td>No</td>
-          </tr>
-          <tr>
-            <th scope="row">Real-time transparency &amp; reporting</th>
-            <td class="mk-table__hcb"><strong>Yes</strong></td>
-            <td>Manual</td>
-            <td>Limited</td>
-          </tr>
-          <tr>
-            <th scope="row">Tax-deductible · 501(c)(3)</th>
-            <td class="mk-table__hcb"><strong>Yes</strong></td>
-            <td>Yes</td>
-            <td>Yes</td>
-          </tr>
-          <tr>
-            <th scope="row">Ongoing admin burden</th>
-            <td class="mk-table__hcb"><strong>We handle it</strong></td>
-            <td>High</td>
-            <td>Low</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </section>
@@ -338,7 +372,7 @@
     <p class="mk-lead">
       HCB is operated by The Hack Foundation (Hack Club), a registered 501(c)(3) nonprofit.
       Since 2018 we've run the financial back office for thousands of organizations — the
-      same battle-tested infrastructure now open to funders deploying at scale. Funds are
+      same infrastructure, proven at that scale, now open to funders. Funds are
       held and moved through established partners, <strong>Column N.A. (Member FDIC)</strong>
       and <strong>Stripe</strong>. Transparency is optional: publish your giving or keep it
       private, including anonymously.
@@ -354,7 +388,7 @@
 <%# ============================ FINAL CTA ============================ %>
 <section class="mk-section mk-cta" id="talk-to-us">
   <div class="mk-container mk-narrow mk-cta__inner">
-    <% if params[:inquiry] == "received" %>
+    <% if flash[:funder_inquiry] == "received" %>
       <div class="mk-notice mk-notice--success" role="status">
         <span class="mk-notice__icon"><%= inline_icon "check-circle-fill", size: 24 %></span>
         <div>
@@ -364,20 +398,23 @@
         </div>
       </div>
     <% else %>
-      <h2 class="mk-cta__title">Ready to put your capital to work?</h2>
+      <h2 class="mk-cta__title">Put your capital to work.</h2>
       <p class="mk-lead">Tell us a bit about what you want to fund. We'll take it from there.</p>
       <% if flash[:error].present? %>
-        <div class="mk-notice mk-notice--error" role="alert"><%= flash[:error] %></div>
+        <div class="mk-notice mk-notice--error" role="alert">
+          <span class="mk-notice__icon"><%= inline_icon "important-fill", size: 24 %></span>
+          <div><%= flash[:error] %></div>
+        </div>
       <% end %>
       <div class="mk-cta__form">
-        <%= render "marketing/funder_inquiry_form", detailed: true %>
+        <%= render "marketing/funder_inquiry_form" %>
       </div>
 
       <div class="mk-next">
         <ol class="mk-next__steps">
           <li><span class="mk-next__num">1</span>Send us a note about what you want to fund.</li>
-          <li><span class="mk-next__num">2</span>A real person replies within one business day — usually to set up a short call.</li>
-          <li><span class="mk-next__num">3</span>We scope your giving together. You decide — no commitment.</li>
+          <li><span class="mk-next__num">2</span>A real person replies — usually to set up a short call.</li>
+          <li><span class="mk-next__num">3</span>We map out your giving together. You decide — no commitment.</li>
         </ol>
         <div class="mk-team">
           <p class="mk-team__label">You'll hear from one of us</p>
