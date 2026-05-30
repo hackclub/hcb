@@ -16,6 +16,7 @@ class User
       events_by_id
         .values
         .select { |event| event.parent_id.nil? }
+        .sort_by(&:id)
         .map { |event| event_node(event) }
     end
 
