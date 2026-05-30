@@ -131,8 +131,11 @@
         <%= form_errors @user, "profile", "We couldn't update your" %>
         <% if current_season(override_preference: true) %>
           <div class="field field--checkbox">
-            <%= form.check_box :seasonal_themes_enabled, disabled: %>
-            <%= form.label :seasonal_themes_enabled, "#{by_season "✨", override_preference: true, fall: "🎃", winter: "🎄"} Enable #{current_season(override_preference: true)} theme", class: "h3 bold" %>
+            <span class="h3 bold"><%= "#{by_season "✨", override_preference: true, fall: "🎃", winter: "🎄"} Enable #{current_season(override_preference: true)} theme" %></span>
+            <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+              <%= form.check_box :seasonal_themes_enabled, disabled: %>
+              <span class="slider"></span>
+            </label>
           </div>
         <% end %>
 
