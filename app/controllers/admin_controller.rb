@@ -774,8 +774,19 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
-    @wise_transfers = @wise_transfers.where("wise_transfers.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
-    @wise_transfers = @wise_transfers.where("wise_transfers.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
