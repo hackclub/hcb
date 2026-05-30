@@ -5,14 +5,22 @@
     <%= render "events/filters/search", form: %>
     <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
-  </div>
-  <div class="flex flex-col sm:flex-row items-center gap-2 mt-2">
-    <div
-      data-controller="date-range-picker"
-      data-date-range-picker-initial-start-value="<%= @start_date %>"
-      data-date-range-picker-initial-end-value="<%= @end_date %>"
-      data-date-range-picker-name-start-value="start_date"
-      data-date-range-picker-name-end-value="end_date"></div>
+    <div data-controller="menu" class="inline-flex items-center">
+      <button type="button" class="btn" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        Date range<%= " (#{@start_date}–#{@end_date})" if @start_date || @end_date %>
+      </button>
+      <div class="menu__content p-2" data-menu-target="content">
+        <div
+          data-controller="date-range-picker"
+          data-date-range-picker-initial-start-value="<%= @start_date %>"
+          data-date-range-picker-initial-end-value="<%= @end_date %>"
+          data-date-range-picker-name-start-value="start_date"
+          data-date-range-picker-name-end-value="end_date"></div>
+        <% request.query_parameters.except("start_date", "end_date").each do |k, v| %>
+          <%= hidden_field_tag k, v %>
+        <% end %>
+      </div>
+    </div>
   </div>
   <div class="flex items-center mt-2">
     <%= form.submit "Search", class: "ml-auto" %>
