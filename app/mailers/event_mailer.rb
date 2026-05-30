@@ -58,10 +58,10 @@ class EventMailer < ApplicationMailer
   end
 
   def ops_call_requested
-    @requesting_user = params[:requesting_user]
+    @user = params[:user]
 
     mail to: OPERATIONS_EMAIL,
-         subject: "#{@requesting_user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
+         subject: "#{@user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
   end
 
   def transparency_mode_enabled
@@ -99,7 +99,7 @@ class EventMailer < ApplicationMailer
     @whodunnit = params[:whodunnit]
 
     # Not using role_at_least? because we want this to be false for HCB admins
-    @is_manager = @whodunnit && @event.ancestor_organizer_positions.exists?(user: @whodunnit)
+    @is_manager = @event.ancestor_organizer_positions.map(&:user).include?(@whodunnit)
   end
 
 end
