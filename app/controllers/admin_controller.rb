@@ -925,8 +925,19 @@ class AdminController < Admin::BaseController
     relation = relation.pending if @pending
     relation = relation.reviewing if @reviewing
     relation = relation.processing if @processing
-    relation = relation.where("disbursements.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
-    relation = relation.where("disbursements.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @disbursements = relation.page(@page).per(@per).order(
