@@ -683,8 +683,20 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.in_transit if @in_transit
-    relation = relation.where("checks.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
-    relation = relation.where("checks.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @checks = relation.page(@page).per(@per).order(
