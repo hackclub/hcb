@@ -14,4 +14,5 @@ class AddAssignedAtToReceipts < ActiveRecord::Migration[8.0]
         SQL
       end
     end
+  end
 end
