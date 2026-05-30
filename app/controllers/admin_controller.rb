@@ -1490,7 +1490,7 @@ class AdminController < Admin::BaseController
   end
 
   def new_teenagers_leaderboard
-    @link_creators = User.where(id: Referral::Link.distinct.pluck(:creator_id)).includes(:referral_links)
+    @link_creators = User.where(id: Referral::Link.pluck(:creator_id).uniq).includes(:referral_links)
   end
 
   def contracts
