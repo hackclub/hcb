@@ -67,6 +67,13 @@ $mk-bg: $snow; // #f9fafc
   flex: 1 1 auto;
 }
 
+// Consistent, visible focus ring on every marketing link (nav, footer, table, badges).
+.marketing a:focus-visible {
+  outline: 2px solid $red;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .mk-container {
   width: 100%;
   max-width: 1120px;
@@ -92,12 +99,12 @@ $mk-bg: $snow; // #f9fafc
 }
 
 .mk-section__title {
-  font-size: clamp(1.65rem, 3.4vw, 2.6rem);
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
   text-wrap: balance;
 }
 
 .mk-lead {
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
   line-height: 1.6;
   color: $slate;
   text-wrap: pretty;
@@ -111,13 +118,14 @@ $mk-bg: $snow; // #f9fafc
 .mk-eyebrow {
   font-family: $mono;
   font-size: 0.75rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: $red;
   margin-bottom: 14px;
 
+  // Lightened enough to clear AA contrast (≈4.5:1) on the dark band.
   &--light {
-    color: lighten($red, 12%);
+    color: lighten($red, 22%);
   }
 }
 
@@ -241,16 +249,19 @@ $mk-bg: $snow; // #f9fafc
     flex-wrap: wrap;
   }
 
-  &__input {
+  // `& &__input` (0,2,0) beats the app's global `input[type=…]/textarea` rule (0,1,1),
+  // which otherwise imposes a 6px radius, a border, and a 24rem max-width on our fields.
+  & &__input {
     flex: 1 1 240px;
     min-width: 0;
+    max-width: none;
     height: 52px;
     padding: 0 22px;
     font-size: 1.0625rem;
     color: $mk-ink;
     background: $white;
     border: 0;
-    border-radius: 999px;
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-border-sm);
     transition: box-shadow 0.12s ease;
 
@@ -272,14 +283,6 @@ $mk-bg: $snow; // #f9fafc
     color: $muted;
   }
 
-  &__honeypot {
-    position: absolute;
-    left: -9999px;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-  }
-
   // Fuller "send a note" variant (final CTA): stacked name + email + message + submit.
   &--detailed {
     display: flex;
@@ -292,12 +295,11 @@ $mk-bg: $snow; // #f9fafc
     }
   }
 
-  &__textarea {
+  & &__textarea {
     height: auto;
     min-height: 104px;
     padding: 14px 22px;
     line-height: 1.5;
-    border-radius: var(--radius-lg);
     resize: vertical;
     font-family: inherit;
   }
@@ -548,7 +550,7 @@ $mk-bg: $snow; // #f9fafc
     span {
       font-family: $mono;
       font-size: 0.78rem;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: $muted;
     }
@@ -630,7 +632,7 @@ $mk-bg: $snow; // #f9fafc
     color: $muted;
     font-family: $mono;
     font-size: 0.78rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
   }
 
@@ -707,7 +709,7 @@ $mk-bg: $snow; // #f9fafc
   }
 
   h3 {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     margin-bottom: 8px;
   }
 
@@ -752,10 +754,11 @@ $mk-bg: $snow; // #f9fafc
     transform 0.15s ease;
 
   &--wide {
+    box-shadow: inset 0 0 0 1px rgba($red, 0.35); // keep the emphasis ring at all widths
+
     @media (min-width: 1000px) {
       grid-column: span 2;
       background: linear-gradient(120deg, rgba($red, 0.18), rgba($white, 0.04));
-      box-shadow: inset 0 0 0 1px rgba($red, 0.35);
     }
   }
 
@@ -798,6 +801,7 @@ $mk-bg: $snow; // #f9fafc
     padding: 16px 18px;
     border-bottom: 1px solid rgba($black, 0.07);
     overflow-wrap: break-word;
+    white-space: normal; // override the app's global `th { white-space: nowrap }`
   }
 
   // Give the row-label column more room; the three option columns split the rest.
@@ -850,8 +854,20 @@ $mk-bg: $snow; // #f9fafc
     }
   }
 
+  // Cap the top & bottom of the highlighted HCB column so it reads as a lifted column.
   thead .mk-table__hcb {
     color: $red;
+    box-shadow:
+      inset 2px 0 0 $red,
+      inset -2px 0 0 $red,
+      inset 0 2px 0 $red;
+  }
+
+  tbody tr:last-child .mk-table__hcb {
+    box-shadow:
+      inset 2px 0 0 $red,
+      inset -2px 0 0 $red,
+      inset 0 -2px 0 $red;
   }
 }
 
@@ -931,10 +947,6 @@ $mk-bg: $snow; // #f9fafc
 // ---------------------------------------------------------------- trust
 .mk-trust {
   text-align: center;
-
-  .mk-eyebrow {
-    // center the eyebrow alongside centered text
-  }
 }
 
 .mk-badges {
@@ -998,7 +1010,7 @@ $mk-bg: $snow; // #f9fafc
   }
 
   h3 {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     margin-bottom: 8px;
   }
 
@@ -1042,8 +1054,8 @@ $mk-bg: $snow; // #f9fafc
   width: 26px;
   height: 26px;
   border-radius: 999px;
-  background: rgba($red, 0.1);
-  color: $red;
+  background: $red;
+  color: #fff;
   font-weight: 600;
   font-size: 0.85rem;
 }
@@ -1108,34 +1120,54 @@ $mk-bg: $snow; // #f9fafc
     margin-top: clamp(48px, 7vw, 72px);
     font-family: $mono;
     font-size: 0.8rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: $muted;
   }
 }
 
 .mk-notice {
-  padding: 18px 22px;
-  border-radius: var(--radius-lg);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
   text-align: left;
   margin: 0 auto;
   max-width: 560px;
+  padding: 20px 24px;
+  border-radius: var(--radius-2xl);
+  background: $white;
+  box-shadow: var(--shadow-border-md);
+  color: $slate;
+  line-height: 1.55;
 
-  &--success {
-    background: rgba($green, 0.12);
-    box-shadow: inset 0 0 0 1px rgba($green-dark, 0.3);
-    color: $green-dark;
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    color: $mk-ink;
+  }
 
-    strong {
-      color: darken($green-dark, 6%);
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    margin-top: 1px;
+
+    svg {
+      width: 24px;
+      height: 24px;
     }
   }
 
+  &--success &__icon {
+    color: $green-dark;
+  }
+
   &--error {
-    background: rgba($red, 0.08);
-    box-shadow: inset 0 0 0 1px rgba($red, 0.25);
-    color: darken($red, 18%);
     margin-bottom: 20px;
+    color: darken($red, 18%);
+
+    strong {
+      color: darken($red, 18%);
+    }
   }
 }
 
@@ -1202,7 +1234,7 @@ $mk-bg: $snow; // #f9fafc
       font-size: 0.78rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba($snow, 0.45);
+      color: rgba($snow, 0.6);
       margin: 0 0 14px;
       font-weight: 600;
     }
@@ -1229,7 +1261,7 @@ $mk-bg: $snow; // #f9fafc
     p {
       font-size: 0.8rem;
       line-height: 1.6;
-      color: rgba($snow, 0.45);
+      color: rgba($snow, 0.6);
       margin: 0 0 10px;
       max-width: 760px;
     }

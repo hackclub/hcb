@@ -2,7 +2,7 @@
 
 # Sent when a funder submits the inquiry form on the /for/funders landing page.
 # It's a warm confirmation addressed to the funder, with the HCB operations team CC'd
-# (and set as reply-to) so a real person can follow up on the same thread.
+# so a real person can follow up on the same thread.
 class FunderInquiryMailer < ApplicationMailer
   def inquiry
     @name = params[:name].presence

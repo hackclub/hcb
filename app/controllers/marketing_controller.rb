@@ -14,6 +14,7 @@ class MarketingController < ApplicationController
   # Gated behind a Flipper flag during rollout: anyone without it 404s. Flip the flag on
   # per-user (or boolean-enable it globally to make the page public at launch).
   before_action :require_funders_access
+  invisible_captcha only: [:funder_inquiry], honeypot: :subtitle
 
   after_action :allow_indexing, only: [:funders]
 
@@ -27,9 +28,7 @@ class MarketingController < ApplicationController
   end
 
   def funder_inquiry
-    # Honeypot: bots fill hidden fields. Pretend success without sending.
-    return redirect_to funders_path(inquiry: "received") if params[:company].present?
-
+    # Bot submissions are rejected upstream by invisible_captcha (honeypot: :subtitle).
     email = params[:email].to_s.strip
     name = params[:name].to_s.strip
     message = params[:message].to_s.strip

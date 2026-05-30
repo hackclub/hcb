@@ -5,10 +5,8 @@
     fields so funders can actually "send a note"; the hero uses the compact email-only form. %>
 <%= form_with url: funder_inquiry_path, method: :post,
       class: "marketing-form#{' marketing-form--detailed' if detailed}", data: { turbo: false } do %>
-  <%# Honeypot: hidden from humans, tempting to bots. Submissions filling it are dropped. %>
-  <div class="marketing-form__honeypot" aria-hidden="true">
-    <label>Company<input type="text" name="company" tabindex="-1" autocomplete="off"></label>
-  </div>
+  <%# Anti-bot honeypot via the invisible_captcha gem (rejected in MarketingController). %>
+  <%= invisible_captcha :subtitle %>
 
   <% if detailed %>
     <input type="text" name="name" placeholder="Your name" autocomplete="name"

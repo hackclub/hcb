@@ -14,7 +14,7 @@ RSpec.describe "Funders landing page", type: :request do
       get funders_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("The modern infrastructure")
+      expect(response.body).to include("Deploy your capital as grants")
     end
 
     it "shows the signed-out nav (Log in / Get started), not a dashboard link" do
@@ -49,7 +49,7 @@ RSpec.describe "Funders landing page", type: :request do
       get funders_path
 
       expect(response).to have_http_status(:not_found)
-      expect(response.body).not_to include("The modern infrastructure")
+      expect(response.body).not_to include("Deploy your capital as grants")
     end
   end
 
@@ -74,12 +74,10 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response).to redirect_to(funders_path(inquiry: "error", anchor: "talk-to-us"))
     end
 
-    it "silently drops honeypot (bot) submissions" do
+    it "drops bot submissions that fill the invisible_captcha honeypot" do
       expect do
-        post funder_inquiry_path, params: { email: "bot@example.com", company: "spam" }
+        post funder_inquiry_path, params: { email: "bot@example.com", subtitle: "i am a bot" }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
-
-      expect(response).to redirect_to(funders_path(inquiry: "received"))
     end
 
     it "404s when the funders flag is disabled" do
