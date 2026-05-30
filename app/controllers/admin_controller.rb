@@ -447,6 +447,8 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -476,6 +478,8 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.pending if @pending
+    relation = relation.where("ach_transfers.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
+    relation = relation.where("ach_transfers.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
@@ -648,6 +652,8 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -677,6 +683,8 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.in_transit if @in_transit
+    relation = relation.where("checks.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
+    relation = relation.where("checks.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
 
     @count = relation.count
     @checks = relation.page(@page).per(@per).order(
@@ -729,6 +737,8 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -737,6 +747,8 @@ class AdminController < Admin::BaseController
     @wires = @wires.search_recipient(@q) if @q
 
     @wires = @wires.where(event_id: @event.id) if @event
+    @wires = @wires.where("wires.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
+    @wires = @wires.where("wires.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
 
     @wires = @wires.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -751,6 +763,8 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -760,6 +774,8 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
+    @wise_transfers = @wise_transfers.where("wise_transfers.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
+    @wise_transfers = @wise_transfers.where("wise_transfers.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -883,6 +899,8 @@ class AdminController < Admin::BaseController
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
     @processing = params[:processing] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -907,6 +925,8 @@ class AdminController < Admin::BaseController
     relation = relation.pending if @pending
     relation = relation.reviewing if @reviewing
     relation = relation.processing if @processing
+    relation = relation.where("disbursements.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
+    relation = relation.where("disbursements.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
 
     @count = relation.count
     @disbursements = relation.page(@page).per(@per).order(
