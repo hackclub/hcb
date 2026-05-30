@@ -44,7 +44,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(false)
       end
 
-      expect(service.declined_reason).to eq("merchant_not_allowed")
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
 
       ops_email =
         sent_emails
@@ -71,7 +71,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(false)
       end
 
-      expect(service.declined_reason).to eq("merchant_not_allowed")
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
 
       ops_email =
         sent_emails
