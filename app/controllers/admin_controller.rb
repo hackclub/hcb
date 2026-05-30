@@ -747,8 +747,19 @@ class AdminController < Admin::BaseController
     @wires = @wires.search_recipient(@q) if @q
 
     @wires = @wires.where(event_id: @event.id) if @event
-    @wires = @wires.where("wires.created_at >= ?", @start_date.to_date.beginning_of_day) if @start_date
-    @wires = @wires.where("wires.created_at <= ?", @end_date.to_date.end_of_day) if @end_date
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wires = @wires.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
