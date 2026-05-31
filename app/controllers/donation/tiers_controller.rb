@@ -74,9 +74,10 @@ class Donation
     end
 
     def update
+      tiers_by_id = @event.donation_tiers.where(id: params[:tiers]&.keys).index_by { |t| t.id.to_s }
       tiers = []
       params[:tiers]&.each_key do |id|
-        tier = @event.donation_tiers.find_by(id: id)
+        tier = tiers_by_id[id]
         next unless tier
 
         authorize tier, :update?

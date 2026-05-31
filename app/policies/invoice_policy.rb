@@ -4,7 +4,7 @@ class InvoicePolicy < ApplicationPolicy
   def index?
     return true if user&.auditor?
 
-    event_ids = record.map(&:sponsor).map(&:event).pluck(:id)
+    event_ids = record.includes(sponsor: :event).map { |r| r.sponsor&.event_id }.compact
     same_event = event_ids.uniq.size == 1 # same_event is a sanity check that all the records are from the same event
     return false unless Event.find(event_ids.first).plan.invoices_enabled?
     return false if same_event && Event.find(event_ids.first).unapproved?
