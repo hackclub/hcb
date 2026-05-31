@@ -24,14 +24,14 @@ RSpec.describe Reimbursement::Report, type: :model do
         event = create(:event)
         Flipper.enable(:exempt_from_wire_minimum, event)
         report = create(:reimbursement_report, event: event)
-        allow(report).to receive(:card_grant).and_return(double("CardGrant"))
+        allow(report).to receive(:card_grant).and_return(instance_double(CardGrant))
         expect(report.minimum_wire_amount_cents).to eq(100)
       end
 
       it "returns $500 when event is not exempt" do
         event = create(:event)
         report = create(:reimbursement_report, event: event)
-        allow(report).to receive(:card_grant).and_return(double("CardGrant"))
+        allow(report).to receive(:card_grant).and_return(instance_double(CardGrant))
         expect(report.minimum_wire_amount_cents).to eq(500_00)
       end
     end
