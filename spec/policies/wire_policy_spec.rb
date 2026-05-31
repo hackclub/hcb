@@ -49,10 +49,22 @@ RSpec.describe WirePolicy, type: :policy do
       it "allows admin to update" do
         expect(described_class.new(admin, wire).update?).to eq(true)
       end
+
+      it "does not allow non-admin to update" do
+        expect(described_class.new(non_admin, wire).update?).to eq(false)
+      end
     end
 
     context "when wire is approved" do
       let(:wire) { create(:wire, :approved, event: event, user: admin) }
+
+      it "does not allow admin to update" do
+        expect(described_class.new(admin, wire).update?).to eq(false)
+      end
+    end
+
+    context "when wire is deposited" do
+      let(:wire) { create(:wire, :deposited, event: event, user: admin) }
 
       it "does not allow admin to update" do
         expect(described_class.new(admin, wire).update?).to eq(false)
