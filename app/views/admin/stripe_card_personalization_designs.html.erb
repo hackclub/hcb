@@ -3,7 +3,9 @@
 
 <h2 class="flex">
   <span class="flex-grow">Common Designs</span>
-  <%= link_to "New Design", stripe_card_personalization_design_new_admin_index_path, class: "btn" %>
+  <% if current_user.admin? %>
+    <%= link_to "New Design", stripe_card_personalization_design_new_admin_index_path, class: "btn" %>
+  <% end %>
 </h2>
 
 <article class="mixed-grid grid--spacious mt2">
@@ -74,13 +76,15 @@
         <td>
           <%= link_to "Preview", stripe_cards_personalization_design_path(design), target: :_blank %>
           |
-          <% unless design.event&.present? %>
-            <% if design.common? %>
-              <%= link_to "Make Unlisted", make_unlisted_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) unlisted? It will hide it from the card creation menu for all users.", turbo_method: :post } %>
-            <% else %>
-              <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post } %>
+          <% if current_user.admin? %>
+            <% unless design.event&.present? %>
+              <% if design.common? %>
+                <%= link_to "Make Unlisted", make_unlisted_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) unlisted? It will hide it from the card creation menu for all users.", turbo_method: :post } %>
+              <% else %>
+                <%= link_to "Make Public", make_common_stripe_cards_personalization_design_path(design), data: { turbo_confirm: "Are you sure you want to make this design (#{design.name}) public? It will show it in the card creation menu for all users.", turbo_method: :post } %>
+              <% end %>
+              |
             <% end %>
-            |
           <% end %>
           <%= link_to "View on Stripe", design.stripe_dashboard_url, target: "_blank" %>
         </td>
