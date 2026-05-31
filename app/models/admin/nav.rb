@@ -120,7 +120,7 @@ module Admin
 
     def make_divider(name:)
       Item.new(
-        active: true,
+        active: false,
         divider: true,
         name:,
         path: "#",

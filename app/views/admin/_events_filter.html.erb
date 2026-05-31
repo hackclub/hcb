@@ -1,5 +1,3 @@
-<% submit_disable_with_false ||= false %>
-
 <div class="flex flex-wrap gap-2">
   <%= form.label :transparent do %>
     Transparent
@@ -95,4 +93,4 @@
   <% end %>
 </fieldset>
 
-<button class="mt-2 mr-1 btn bg-info">Search</button>
+<%= form.submit "Search", class: "mt-2 mr-1 btn bg-info" %>
