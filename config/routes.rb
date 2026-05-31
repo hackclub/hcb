@@ -628,6 +628,11 @@ Rails.application.routes.draw do
   get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
 
+  # Marketing landing pages. Public, server-rendered, largely static. Built so future
+  # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
+  get "for/funders", to: "marketing#funders", as: :funders
+  post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
+
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
     collection do
       get "export"
