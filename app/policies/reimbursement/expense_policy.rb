@@ -2,6 +2,10 @@
 
 module Reimbursement
   class ExpensePolicy < ApplicationPolicy
+    def show?
+      auditor || creator || reader
+    end
+
     def create?
       unlocked && (admin || manager || creator)
     end
@@ -38,8 +42,16 @@ module Reimbursement
       user&.admin?
     end
 
+    def auditor
+      user&.auditor?
+    end
+
     def manager
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
+    end
+
+    def reader
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def team_member
