@@ -97,7 +97,6 @@
         <summary>Old cards</summary>
         <ul class="grid text-left w-100 pt-2" id="old-card-grid">
           <%= card_to "OnBoard ID", link_to_airtable_task(:onboard_id), async_badge: :pending_onboard_id_airtable %>
-          <%= card_to "PayPal", paypal_transfers_admin_index_path, badge: PaypalTransfer.pending.count %>
           <%= card_to "Boba", link_to_airtable_task(:boba), async_badge: :pending_boba_airtable %>
           <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
           <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
