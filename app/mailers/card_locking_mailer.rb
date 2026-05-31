@@ -22,6 +22,7 @@ class CardLockingMailer < ApplicationMailer
 
   def set_transaction_data
     @hcb_codes, @hcb_codes_upcoming = @user.card_locking_missing_receipts_partitioned
+    @total_missing_count = @hcb_codes.count + @hcb_codes_upcoming.count
     @show_org = @user.events.size > 1
   end
 
