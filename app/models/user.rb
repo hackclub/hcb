@@ -459,7 +459,7 @@ class User < ApplicationRecord
     end
   end
 
-  def card_locking_missing_receipts
+  memo_wise def card_locking_missing_receipts
     card_locking_relevant_hcb_codes.select(&:card_locking_missing_receipt?)
   end
 
