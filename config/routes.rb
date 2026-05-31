@@ -707,7 +707,7 @@ Rails.application.routes.draw do
 
           resources :disbursements, path: "transfers", only: [:create]
 
-          resources :donations, path: "donations", only: [:create] do
+          resources :donations, path: "donations", only: [:index, :create] do
             member do
               post "payment_intent"
             end

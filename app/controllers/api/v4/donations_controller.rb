@@ -4,10 +4,31 @@ module Api
   module V4
     class DonationsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
-      before_action :set_api_event, only: [:create]
+      before_action :set_api_event, only: [:index, :create]
       before_action :set_donation, only: [:payment_intent]
       before_action :require_trusted_oauth_app!, only: [:create, :payment_intent]
+
+      def index
+        authorize @event, :show_in_v4?
+
+        donations = @event.donations.order(created_at: :desc)
+
+        if params[:status].present?
+          valid_statuses = Donation.aasm.states.map { |s| s.name.to_s }
+          return render json: { error: "invalid_operation", messages: ["'#{params[:status]}' is not a valid status."] }, status: :bad_request unless valid_statuses.include?(params[:status])
+
+          donations = donations.where(aasm_state: params[:status])
+        end
+
+        @past_donations = paginate_cursor(donations.to_a, &:public_id)
+
+        if expand?(:stats)
+          @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
+          @monthly_cents = @event.recurring_donations.active.sum(:amount)
+        end
+      end
 
       def create
         amount = params[:amount_cents]
