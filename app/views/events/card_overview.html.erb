@@ -19,9 +19,7 @@
       </span>
 
       <div class="flex items-center gap-2">
-        <%= render "events/filters/filter_cards_menu" unless @has_filter %>
-        <%= pop_icon_to @view == "list" ? "grid" : "list",
-                        "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+        <%= pop_icon_to(@view == "list" ? "grid" : "list", upsert_query_params(view: @view == "list" ? "grid" : "list")) %>
         <% if organizer_signed_in?(as: :member) %>
           <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
             <%= inline_icon "card-add" %>
@@ -31,7 +29,51 @@
       </div>
     </h1>
 
-    <%= render "events/filters/filter_cards" if @has_filter %>
+    <div class="flex items-center gap-2 mt-2">
+      <%= form_with(model: false, local: true, method: :get, class: "flex-1") do |form| %>
+        <%= hidden_field_tag :status, @status if @status %>
+        <%= hidden_field_tag :type, @type if @type %>
+        <%= hidden_field_tag :user, params[:user] if params[:user] %>
+        <%= render "events/filters/search", form: %>
+      <% end %>
+      <% if @has_filter %>
+        <%= render "events/filters/filter_cards_menu" %>
+        <%= link_to upsert_query_params("status" => nil, "type" => nil, "user" => nil, "q" => nil), class: "pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "view-close", size: 28 %>
+        <% end %>
+      <% else %>
+        <%= render "events/filters/filter_cards_menu" %>
+      <% end %>
+    </div>
+    <% if @has_filter %>
+      <div class="filter-menu__chips mt-1">
+        <% if @status %>
+          <div class="badge badge-large bg-muted">
+            <%= @status.humanize %>
+            <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
+          </div>
+        <% end %>
+        <% if @type %>
+          <div class="badge badge-large bg-muted">
+            <%= @type.humanize %>
+            <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
+          </div>
+        <% end %>
+        <% if @user %>
+          <div class="badge badge-large bg-muted">
+            <%= avatar_for @user, size: 18 %>
+            <%= @user.name %>
+            <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+              <%= inline_icon "view-close", size: 20 %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
 
     <% if control = @organizer_position&.active_spending_control %>
       <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
@@ -49,6 +91,39 @@
 
     <% if @view == "list" %>
       <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
+      <%= paginate @paginated_stripe_cards %>
+    <% elsif @cards_by_user %>
+      <% preview_count = 3 %>
+      <% if @cards_by_user.any? %>
+        <% @cards_by_user.each do |user, cards| %>
+          <section class="mt-3">
+            <div class="flex items-center gap-2">
+              <%= link_to upsert_query_params(user: user.slug, page: nil), class: "flex items-center gap-2 text-decoration-none text-inherit flex-1 min-w-0" do %>
+                <%= user_mention user %>
+                <%= badge_for cards.count, class: "bg-muted flex-shrink-0 mx-0" %>
+                <div class="menu__divider flex-1 ml-2"></div>
+              <% end %>
+            </div>
+            <article class="mixed-grid grid--spacious">
+              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true } %>
+            </article>
+            <% if cards.count > preview_count %>
+              <div class="flex">
+                <%= link_to upsert_query_params(user: user.slug, page: nil), class: "btn ml-auto" do %>
+                  +<%= cards.count - preview_count %> more
+                <% end %>
+              </div>
+            <% end %>
+          </section>
+        <% end %>
+        <%= paginate @paginated_user_groups %>
+      <% else %>
+        <% if organizer_signed_in? %>
+          <%= blankslate "You don’t have any #{@status} cards yet" %>
+        <% else %>
+          <%= blankslate "This organization doesn’t have any #{@status} cards" %>
+        <% end %>
+      <% end %>
     <% else %>
       <article class="mixed-grid grid--spacious">
         <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards %>
@@ -62,9 +137,8 @@
         <% end %>
       <% end %>
 
+      <%= paginate @paginated_stripe_cards %>
     <% end %>
-
-    <%= paginate @paginated_stripe_cards %>
 
     <% if organizer_signed_in? || @event.used_emburse? %>
       <section class="grid mt3">

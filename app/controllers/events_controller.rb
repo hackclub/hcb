@@ -449,18 +449,27 @@ class EventsController < ApplicationController
   def card_overview
     @status = %w[active inactive frozen canceled].include?(params[:status]) ? params[:status] : nil
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
+    @q = params[:q].presence
 
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
     @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
 
-    @has_filter = @status.present? || @type.present? || @user.present?
+    @has_filter = @status.present? || @type.present? || @user.present? || @q.present?
 
     all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+                             .includes(stripe_cardholder: { user: { profile_picture_attachment: :blob } })
                              .order("stripe_status asc, created_at desc")
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
+
+    if @q
+      all_stripe_cards = all_stripe_cards.where(
+        "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q",
+        q: "%#{@q}%"
+      )
+    end
 
     all_stripe_cards = case @status
                        when "active"
@@ -509,6 +518,17 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
+
+    unless @user || @q
+      user_groups = display_cards
+                    .group_by(&:user)
+                    .reject { |user, _| user.nil? }
+                    .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
+                    .to_a
+
+      @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
+      @cards_by_user = @paginated_user_groups.to_h
+    end
   end
 
   def documentation
