@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
+ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -464,6 +464,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   end
 
   create_table "card_grant_settings", force: :cascade do |t|
+    t.boolean "allow_reimbursement_report", default: false, null: false
+    t.boolean "allow_stripe_card", default: true, null: false
     t.string "banned_categories"
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
@@ -483,6 +485,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
   end
 
   create_table "card_grants", force: :cascade do |t|
+    t.boolean "allow_reimbursement_report", default: false, null: false
+    t.boolean "allow_stripe_card", default: true, null: false
     t.integer "amount_cents"
     t.string "banned_categories"
     t.string "banned_merchants"
@@ -1075,7 +1079,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_plans_on_event_id"
-    t.index ["event_id"], name: "index_event_plans_on_event_id_when_active", unique: true, where: "aasm_state = 'active'"
+    t.index ["event_id"], name: "index_event_plans_on_event_id_when_active", unique: true, where: "((aasm_state)::text = 'active'::text)"
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
@@ -1122,7 +1126,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
     t.boolean "demo_mode", default: false, null: false
-    t.datetime "demo_mode_request_meeting_at", precision: nil
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"
@@ -1151,6 +1154,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
+    t.boolean "show_recent_donors", default: false
+    t.boolean "show_top_donors", default: false
     t.text "slug"
     t.integer "stripe_card_shipping_type", default: 0, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -1408,6 +1413,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_04_30_044254) do
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_hcb_codes_on_event_id"
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
