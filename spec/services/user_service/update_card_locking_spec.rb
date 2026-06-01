@@ -18,7 +18,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
       expect {
         service.run
       }.to change { user.reload.cards_locked? }.from(false).to(true)
-        .and have_enqueued_mail(CardLockingMailer, :cards_locked)
+                                               .and have_enqueued_mail(CardLockingMailer, :cards_locked)
     end
 
     it "unlocks cards in the default mode when violations clear and enqueues the unlocked email" do
@@ -29,7 +29,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
       expect {
         service.run
       }.to change { user.reload.cards_locked? }.from(true).to(false)
-        .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
+                                               .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
     end
 
     it "unlocks cards in unlock-only mode once violations are cleared" do
