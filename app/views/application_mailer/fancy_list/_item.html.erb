@@ -1,0 +1,29 @@
+<%# locals: (title:, link:, link_name: nil, image: nil) %>
+<li style="margin-bottom: 1.5rem; display: flex; align-items: flex-start;">
+  <div style="background-color: #ec3750; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; margin-right: 1rem; flex-shrink: 0;">
+    <%= @_fancy_list_numbering += 1 %>
+  </div>
+
+  <div>
+    <strong style="color: #ec3750; font-size: 1.2em;">
+      <%= title %>
+    </strong>
+
+    <p>
+      <%= yield %>
+    </p>
+
+    <% if link %>
+      <br>
+      <%= link_to link, style: "color: #ec3750;" do %>
+        <%= link_name.presence || "Do this! →" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if image %>
+    <div style="text-align: center; margin-bottom: 2rem; margin-left: 1rem">
+      <img src="/assets/logo.gif" alt="Welcome to HCB" style="max-width: 100%; height: auto;">
+    </div>
+  <% end %>
+</li>
