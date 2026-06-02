@@ -704,14 +704,45 @@ $mk-bg: $snow; // #f9fafc
   }
 
   &__list {
-    margin: 24px 0 0;
-    padding: 20px 0 0;
-    border-top: 1px solid rgba($black, 0.08);
+    margin: 20px 0 0;
     list-style: none;
     display: grid;
     gap: 10px;
     color: $slate;
     font-size: 0.95rem;
+  }
+
+  // Factual attribution footer: foundation logo + named founder. Mirrors .mk-case's
+  // figcaption so the page's "who said/did this" treatment stays consistent.
+  &__source {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid rgba($black, 0.08);
+  }
+
+  &__logo {
+    height: 36px;
+    width: auto;
+    flex: none;
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    color: $muted;
   }
 }
 

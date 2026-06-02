@@ -319,9 +319,9 @@
 </section>
 
 <%# ============================ CASE STUDY: ARGOSY ============================ %>
-<%# Argosy Foundation / FIRST Robotics. Narrative-only (no pending-approval quote), so
-    this ships ungated alongside the comparison it proves out. The "500+ teams" figure
-    originates from John Abele's (Argosy) account of the program. %>
+<%# Argosy Foundation / FIRST Robotics. Stated as verifiable fact (named funder + founder,
+    foundation logo) rather than a pending-approval quote, so it ships ungated alongside the
+    comparison it proves out. %>
 <section class="mk-section mk-product">
   <div class="mk-container">
     <div class="mk-product__grid">
@@ -331,16 +331,16 @@
           Supporting hundreds of organizations shouldn't require managing hundreds of grants.
         </h2>
         <p class="mk-lead">
-          When the Argosy Foundation set out to fund FIRST Robotics teams nationwide, HCB
-          became the infrastructure that made it possible. Today more than 500 teams receive
-          funding every year through a single, transparent grantmaking program — HCB handles
-          grant distribution, compliance, and financial administration, while giving Argosy
-          full visibility into how every dollar is used.
+          The Argosy Foundation — founded by John Abele, co-founder of Boston Scientific —
+          set out to fund FIRST Robotics teams nationwide. Today more than 500 teams receive
+          funding every year through a single, transparent grantmaking program: Argosy picks
+          the teams, and HCB distributes every grant, hosts each one, and reports back on all
+          of it.
         </p>
         <ul class="mk-ticks">
-          <li>Less administrative overhead</li>
-          <li>Stronger accountability on every grant</li>
-          <li>Scale impact beyond traditional grantmaking</li>
+          <li>No grants team and no per-grant paperwork</li>
+          <li>See how every team spends its grant, in real time</li>
+          <li>Fund 500 teams with the effort of funding one</li>
         </ul>
       </div>
 
@@ -353,6 +353,17 @@
             <li>Nationwide reach</li>
             <li>Real-time reporting on every grant</li>
           </ul>
+          <%# TODO(asset): swap src for the approved Argosy Foundation logo (host on cdn.hackclub.com
+              like the other marketing images). Keep width/height to avoid layout shift. %>
+          <div class="mk-metric__source">
+            <%= image_tag "https://cdn.hackclub.com/argosy-foundation-logo.svg",
+                  class: "mk-metric__logo", alt: "Argosy Foundation",
+                  loading: "lazy", decoding: "async" %>
+            <span class="mk-metric__meta">
+              <span class="mk-metric__name">Argosy Foundation</span>
+              <span class="mk-metric__detail">Founded by John Abele, co-founder of Boston Scientific</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
