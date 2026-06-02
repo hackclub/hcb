@@ -20,10 +20,15 @@ class MarketingController < ApplicationController
 
   FUNDERS_FLAG = :funders_landing_page
 
+  # Gates just the "Funders on HCB" testimonials section, so the page can ship while we
+  # await sign-off on the funder quotes. Enable once the quotes are approved.
+  TESTIMONIALS_FLAG = :funders_landing_testimonials
+
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
+    @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 

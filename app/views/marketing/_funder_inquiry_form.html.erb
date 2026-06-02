@@ -1,25 +1,37 @@
-<%# Funder inquiry form (final CTA). Posts to MarketingController#funder_inquiry, which
-    emails the funder a confirmation and CCs the ops team. Turbo disabled for a plain
-    POST -> redirect -> GET (flash survives, anchor scroll works). On a validation error
-    the controller stashes the submitted values in flash[:funder_form] so the fields
-    re-populate instead of clearing. %>
-<% prefill = flash[:funder_form] || {} %>
+<%# locals: (detailed: false) %>
+<%# Inquiry form. Posts to MarketingController#funder_inquiry, which emails the funder a
+    confirmation and CCs the ops team. Turbo disabled for a plain POST -> redirect -> GET
+    (flash + ?inquiry state survive, anchor scroll works). `detailed` adds name + message
+    fields so funders can actually "send a note"; the hero uses the compact email-only form. %>
 <%= form_with url: funder_inquiry_path, method: :post,
-      class: "marketing-form marketing-form--detailed", data: { turbo: false } do %>
+      class: "marketing-form#{' marketing-form--detailed' if detailed}", data: { turbo: false } do %>
   <%# Anti-bot honeypot via the invisible_captcha gem (rejected in MarketingController). %>
   <%= invisible_captcha :subtitle %>
 
-  <input type="text" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
-         autocomplete="name" aria-label="Your name" class="marketing-form__input">
-  <input type="email" name="email" value="<%= prefill["email"] %>" required
-         placeholder="you@yourfund.com" autocomplete="email" aria-label="Your email address"
-         class="marketing-form__input">
-  <textarea name="message" rows="3" placeholder="What are you looking to fund? (optional)"
-            aria-label="What you want to fund"
-            class="marketing-form__input marketing-form__textarea"><%= prefill["message"] %></textarea>
-  <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">
-    Talk to our team
-  </button>
+  <%# Prefill on a validation-error redirect (values carried via flash) so the form isn't cleared. %>
+  <% prefill = flash[:funder_form] || {} %>
+
+  <% if detailed %>
+    <input type="text" name="name" value="<%= prefill["name"] %>" placeholder="Your name"
+           autocomplete="name" aria-label="Your name" class="marketing-form__input">
+    <input type="email" name="email" value="<%= prefill["email"] %>" required
+           placeholder="you@example.com" autocomplete="email" aria-label="Your email address"
+           class="marketing-form__input">
+    <textarea name="message" rows="3" placeholder="What are you looking to fund? (optional)"
+              aria-label="What you want to fund" class="marketing-form__input marketing-form__textarea"><%= prefill["message"] %></textarea>
+    <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg marketing-form__submit">
+      Talk to our team
+    </button>
+  <% else %>
+    <div class="marketing-form__row">
+      <input type="email" name="email" value="<%= prefill["email"] %>" required
+             placeholder="you@example.com" autocomplete="email" aria-label="Your email address"
+             class="marketing-form__input">
+      <button type="submit" class="marketing-btn marketing-btn--primary marketing-btn--lg">
+        Talk to our team
+      </button>
+    </div>
+  <% end %>
 
   <p class="marketing-form__hint">We'll reply personally — usually within one business day.</p>
 <% end %>

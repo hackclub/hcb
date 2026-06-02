@@ -488,6 +488,23 @@ $mk-bg: $snow; // #f9fafc
     font-size: clamp(1.05rem, 1.4vw, 1.2rem);
     line-height: 1.65;
     color: $slate;
+
+    // Inline link (e.g. "Hack Club") reads as text, not a loud CTA: same ink,
+    // a quiet underline, warming to red on hover.
+    a {
+      color: $mk-ink;
+      text-decoration: underline;
+      text-decoration-color: rgba($slate, 0.35);
+      text-underline-offset: 2px;
+      transition:
+        color 0.15s ease,
+        text-decoration-color 0.15s ease;
+
+      &:hover {
+        color: $red;
+        text-decoration-color: $red;
+      }
+    }
   }
 
   &__brandline {
@@ -534,26 +551,6 @@ $mk-bg: $snow; // #f9fafc
     display: block;
     width: 100%;
     height: auto;
-  }
-
-  // Placeholder fill until a real screenshot is dropped in (replaces &__shot).
-  &__ph {
-    display: flex;
-    align-items: flex-end;
-    aspect-ratio: 16 / 10;
-    padding: 18px;
-    background:
-      radial-gradient(120% 80% at 0% 0%, rgba($red, 0.1), transparent 60%),
-      radial-gradient(120% 80% at 100% 100%, rgba($blue, 0.1), transparent 60%),
-      $snow;
-
-    span {
-      font-family: $mono;
-      font-size: 0.78rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: $muted;
-    }
   }
 }
 
@@ -616,6 +613,8 @@ $mk-bg: $snow; // #f9fafc
   display: flex;
   flex-direction: column;
   gap: 12px;
+  color: inherit;
+  text-decoration: none;
 
   &__ph {
     display: flex;
@@ -636,9 +635,47 @@ $mk-bg: $snow; // #f9fafc
     text-transform: uppercase;
   }
 
-  figcaption {
+  // Real photo: fills the 4:3 frame, cropped to center.
+  &__img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.15s ease;
+  }
+
+  // Logo variant: a brand mark sits centered and contained on a clean surface
+  // (e.g. Ghostty) instead of being cropped like a photo.
+  &--logo &__img {
+    object-fit: contain;
+    padding: 16%;
+    background: $white;
+  }
+
+  &__cap {
     font-size: 0.95rem;
     color: $slate;
+
+    strong {
+      display: block;
+      color: $mk-ink;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+  }
+
+  // Each tile links to the project; lift the frame and warm the name on hover.
+  &:hover &__img,
+  &:focus-visible &__img {
+    box-shadow: var(--shadow-border-md);
+  }
+
+  &:hover &__cap strong,
+  &:focus-visible &__cap strong {
+    color: $red;
   }
 }
 
@@ -791,30 +828,45 @@ $mk-bg: $snow; // #f9fafc
 
 .mk-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: fixed; // columns share width and wrap text, so the table never scrolls
   border-collapse: collapse;
   font-size: 0.975rem;
 
   th,
   td {
+    text-align: left;
     padding: 16px 18px;
     border-bottom: 1px solid rgba($black, 0.07);
     overflow-wrap: break-word;
     white-space: normal; // override the app's global `th { white-space: nowrap }`
-    vertical-align: middle;
-    text-align: left;
+  }
+
+  // Give the row-label column more room; the three option columns split the rest.
+  th:first-child,
+  td:first-child {
+    width: 34%;
+  }
+
+  // Stay fluid — shrink padding/type on narrow screens rather than scrolling sideways.
+  @media (max-width: 600px) {
+    font-size: 0.85rem;
+
+    th,
+    td {
+      padding: 12px 10px;
+    }
   }
 
   thead th {
     font-size: 0.8rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    color: $muted;
     font-weight: 600;
-    color: darken($muted, 18%); // clears AA contrast on white
   }
 
   tbody th {
-    font-weight: 600;
+    font-weight: 500;
     color: $slate;
   }
 
@@ -827,104 +879,32 @@ $mk-bg: $snow; // #f9fafc
     border-bottom: 0;
   }
 
-  // Highlighted HCB column: a soft tint + a red accent on the header — no heavy box.
   &__hcb {
-    background: rgba($red, 0.06);
+    background: rgba($red, 0.05);
     color: $mk-ink;
+    box-shadow:
+      inset 2px 0 0 $red,
+      inset -2px 0 0 $red;
 
     strong {
-      color: darken($red, 14%); // deeper red so values clear AA on the tint
+      color: $red;
     }
   }
 
+  // Cap the top & bottom of the highlighted HCB column so it reads as a lifted column.
   thead .mk-table__hcb {
-    color: darken($red, 14%);
-    box-shadow: inset 0 3px 0 $red;
+    color: $red;
+    box-shadow:
+      inset 2px 0 0 $red,
+      inset -2px 0 0 $red,
+      inset 0 2px 0 $red;
   }
 
-  // Desktop layout; on mobile the table becomes stacked cards (below). Option values are
-  // centered only on desktop — on mobile they're right-aligned within each card.
-  @media (min-width: 641px) {
-    th:first-child,
-    td:first-child {
-      width: 34%;
-    }
-
-    thead th:not(:first-child),
-    td:not(:first-child) {
-      text-align: center;
-    }
-  }
-}
-
-// Comparison table → stacked cards on small screens (avoids a cramped 4-up / scroll).
-@media (max-width: 640px) {
-  .mk-table-wrap {
-    overflow: visible;
-    background: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  .mk-table,
-  .mk-table tbody,
-  .mk-table tr,
-  .mk-table th,
-  .mk-table td {
-    display: block;
-    width: auto;
-  }
-
-  .mk-table thead {
-    display: none;
-  }
-
-  .mk-table tbody tr {
-    background: $white;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-border-sm);
-    padding: 0 18px 12px;
-    margin-bottom: 14px;
-  }
-
-  .mk-table tbody tr:last-child {
-    margin-bottom: 0;
-  }
-
-  .mk-table tbody th[scope='row'] {
-    font-size: 1rem;
-    font-weight: 600;
-    color: $mk-ink;
-    padding: 16px 0 12px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid rgba($black, 0.08);
-  }
-
-  .mk-table tbody td {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    text-align: right;
-    padding: 7px 0;
-    border-bottom: 0;
-
-    &::before {
-      content: attr(data-label);
-      color: $muted;
-      font-size: 0.9rem;
-      text-align: left;
-    }
-  }
-
-  // Drop the column tint in card mode; keep the HCB value + label emphasis.
-  .mk-table .mk-table__hcb {
-    background: none;
-  }
-
-  .mk-table td.mk-table__hcb::before {
-    color: darken($red, 14%);
-    font-weight: 600;
+  tbody tr:last-child .mk-table__hcb {
+    box-shadow:
+      inset 2px 0 0 $red,
+      inset -2px 0 0 $red,
+      inset 0 -2px 0 $red;
   }
 }
 
@@ -969,6 +949,9 @@ $mk-bg: $snow; // #f9fafc
     border-radius: 999px;
     background: linear-gradient(135deg, $snow-dark, $smoke);
     flex: none;
+    // When it's a real photo (vs. the gradient placeholder), crop to the circle.
+    object-fit: cover;
+    object-position: center;
   }
 
   &__meta {
@@ -1218,17 +1201,9 @@ $mk-bg: $snow; // #f9fafc
     color: $green-dark;
   }
 
-  // The error alert is a compact red-tinted card (vs. the neutral white success card).
   &--error {
     margin-bottom: 20px;
-    padding: 16px 20px;
-    background: rgba($red, 0.05);
-    box-shadow: inset 0 0 0 1px rgba($red, 0.2);
     color: darken($red, 18%);
-
-    .mk-notice__icon {
-      color: $red;
-    }
 
     strong {
       color: darken($red, 18%);

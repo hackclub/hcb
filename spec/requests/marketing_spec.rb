@@ -40,7 +40,7 @@ RSpec.describe "Funders landing page", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Dashboard")
-      expect(response.body).not_to include(">Log in<")
+      expect(response.body).not_to include(">Get started<")
     end
 
     it "404s when the funders flag is disabled" do
@@ -67,12 +67,14 @@ RSpec.describe "Funders landing page", type: :request do
       expect(flash[:funder_inquiry]).to eq("received")
     end
 
-    it "rejects an invalid email without sending mail" do
+    it "rejects an invalid email without sending mail, and carries the values back for prefill" do
       expect do
-        post funder_inquiry_path, params: { email: "not-an-email" }
+        post funder_inquiry_path, params: { email: "not-an-email", name: "Ada", message: "Hi" }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
 
       expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
+      expect(flash[:error]).to be_present
+      expect(flash[:funder_form]).to include("email" => "not-an-email", "name" => "Ada", "message" => "Hi")
     end
 
     it "drops bot submissions that fill the invisible_captcha honeypot" do
