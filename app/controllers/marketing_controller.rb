@@ -35,7 +35,9 @@ class MarketingController < ApplicationController
 
     unless email.match?(URI::MailTo::EMAIL_REGEXP)
       flash[:error] = "Please enter a valid email address."
-      return redirect_to funders_path(inquiry: "error", anchor: "talk-to-us")
+      # Carry the submitted values back so the form isn't cleared on the error redirect.
+      flash[:funder_form] = { "name" => name, "email" => email, "message" => message }
+      return redirect_to funders_path(anchor: "talk-to-us")
     end
 
     FunderInquiryMailer.with(name:, email:, message:).inquiry.deliver_later
@@ -43,7 +45,9 @@ class MarketingController < ApplicationController
     # Log the lead so it is never lost if mail delivery later fails.
     Rails.logger.info("[funder_inquiry] new inquiry email=#{email.inspect} name=#{name.inspect}")
 
-    redirect_to funders_path(inquiry: "received", anchor: "talk-to-us")
+    # Use flash (not a query param) so a shared link never shows the confirmation card.
+    flash[:funder_inquiry] = "received"
+    redirect_to funders_path(anchor: "talk-to-us")
   end
 
   private

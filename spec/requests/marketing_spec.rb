@@ -17,11 +17,11 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Deploy your capital as grants")
     end
 
-    it "shows the signed-out nav (Log in / Get started), not a dashboard link" do
+    it "shows the signed-out nav (Log in / Talk to our team), not a dashboard link" do
       get funders_path
 
       expect(response.body).to include("Log in")
-      expect(response.body).to include("Get started")
+      expect(response.body).to include("Talk to our team")
       expect(response.body).not_to include(">Dashboard<")
     end
 
@@ -40,7 +40,7 @@ RSpec.describe "Funders landing page", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Dashboard")
-      expect(response.body).not_to include(">Get started<")
+      expect(response.body).not_to include(">Log in<")
     end
 
     it "404s when the funders flag is disabled" do
@@ -63,7 +63,8 @@ RSpec.describe "Funders landing page", type: :request do
       expect(mail).to be_present
       expect(mail.to).to include("funder@example.com")
       expect(mail.cc).to include(ApplicationMailer::OPERATIONS_EMAIL)
-      expect(response).to redirect_to(funders_path(inquiry: "received", anchor: "talk-to-us"))
+      expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
+      expect(flash[:funder_inquiry]).to eq("received")
     end
 
     it "rejects an invalid email without sending mail" do
@@ -71,7 +72,7 @@ RSpec.describe "Funders landing page", type: :request do
         post funder_inquiry_path, params: { email: "not-an-email" }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
 
-      expect(response).to redirect_to(funders_path(inquiry: "error", anchor: "talk-to-us"))
+      expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))
     end
 
     it "drops bot submissions that fill the invisible_captcha honeypot" do
