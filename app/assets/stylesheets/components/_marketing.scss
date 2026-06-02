@@ -109,6 +109,11 @@ $mk-bg: $snow; // #f9fafc
   color: $slate;
   text-wrap: pretty;
 
+  // Space stacked lead paragraphs (the global reset zeroes <p> margins).
+  & + & {
+    margin-top: 1em;
+  }
+
   strong {
     color: $mk-ink;
     font-weight: 600;
@@ -566,6 +571,15 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
+// Case-study variant: long copy paired with a compact metric card (not a screenshot), so
+// give the copy the wider column and let the card take the narrower one — otherwise the card
+// floats in a too-wide column and the body text is cramped.
+.mk-product--metric .mk-product__grid {
+  @media (min-width: 920px) {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
 .mk-product__copy {
   min-width: 0;
 }
@@ -676,6 +690,77 @@ $mk-bg: $snow; // #f9fafc
   &:hover &__cap strong,
   &:focus-visible &__cap strong {
     color: $red;
+  }
+}
+
+// ---------------------------------------------------------------- case-study metric
+// Sits in the right column of the Argosy case study (reuses .mk-product__grid). Styled to
+// match .mk-case so the page's card surfaces stay consistent.
+.mk-metric {
+  padding: 32px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  &__num {
+    margin: 0;
+    font-size: clamp(3rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: $red; // ties into the HCB accent used on the comparison table column
+  }
+
+  &__label {
+    margin: 12px 0 0;
+    font-size: 1.05rem;
+    color: $mk-ink;
+  }
+
+  &__list {
+    margin: 20px 0 0;
+    padding: 0; // reset default <ul> indent so items align with the number and label
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    color: $slate;
+    font-size: 0.95rem;
+  }
+
+  // Factual attribution footer: foundation logo above, named founder below. Stacked (rather
+  // than logo-left like .mk-case) because a wide wordmark doesn't center cleanly against a
+  // single line of credit text the way a square avatar does.
+  &__source {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 24px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid rgba($black, 0.08);
+  }
+
+  // Links out to the foundation (matches the .mk-photo tiles); shrink-wrap the logo and
+  // soften on hover so it reads as clickable.
+  &__logo-link {
+    display: inline-flex;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.7;
+    }
+  }
+
+  &__logo {
+    height: 40px;
+    width: auto;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: $muted;
   }
 }
 
@@ -1044,6 +1129,11 @@ $mk-bg: $snow; // #f9fafc
 // ---------------------------------------------------------------- trust
 .mk-trust {
   text-align: center;
+
+  // Centered body text reads as jagged when line lengths are uneven; balance evens them.
+  .mk-lead {
+    text-wrap: balance;
+  }
 }
 
 .mk-badges {
