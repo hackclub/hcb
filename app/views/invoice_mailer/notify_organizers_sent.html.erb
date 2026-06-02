@@ -3,7 +3,7 @@
 </p>
 
 <p>
-  <%= @invoice.creator.preferred_name %> on <%= @invoice.sponsor.event.name %> just sent a
+  <%= @invoice.creator.name %> on <%= @invoice.sponsor.event.name %> just sent a
   <strong><%= render_money @invoice.item_amount %></strong>
   <%= link_to hcb_code_url(@invoice.local_hcb_code.hashid) do %>invoice to <%= @invoice.sponsor.name %><% end %>
   for <em><%= @invoice.item_description %></em>.
