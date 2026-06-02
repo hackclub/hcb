@@ -705,6 +705,7 @@ $mk-bg: $snow; // #f9fafc
 
   &__list {
     margin: 20px 0 0;
+    padding: 0; // reset default <ul> indent so items align with the number and label
     list-style: none;
     display: grid;
     gap: 10px;
@@ -724,7 +725,7 @@ $mk-bg: $snow; // #f9fafc
   }
 
   &__logo {
-    height: 36px;
+    height: 40px;
     width: auto;
     flex: none;
   }
