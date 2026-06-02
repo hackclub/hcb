@@ -33,7 +33,6 @@ export default class extends Controller {
       this.disableSubmit()
     } else {
       this.clearMessage()
-      this.showMessage('Test')
       this.enableSubmit()
     }
   }

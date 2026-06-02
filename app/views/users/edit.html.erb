@@ -69,13 +69,13 @@
               <div class="gap-2 onboarding" data-controller="birthday" style="display: flex; flex-direction: column;">
                 <span style="display: flex; gap: 0.5rem;">
                 <%= select_month @user.birthday,
-                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { field_name: "birthday(2i)", prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
                                        { required: true, data: { birthday_target: "month", action: "change->birthday#updateAge" } } %>
                 <%= select_day @user.birthday,
-                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { field_name: "birthday(3i)", prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
                                        { required: true, data: { birthday_target: "day", action: "change->birthday#updateAge" } } %>
                 <%= select_year @user.birthday,
-                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil?, start_year: Date.today.year, end_year: Date.today.year - 100 },
+                                       { field_name: "birthday(1i)", prefix: @user.model_name.param_key, prompt: @user.birthday.nil?, start_year: Date.today.year, end_year: Date.today.year - 100 },
                                        { required: true, data: { birthday_target: "year", action: "change->birthday#updateAge" } } %>
                 </span>
                 <span data-birthday-target="message" class="h5 muted"></span>
