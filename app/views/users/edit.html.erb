@@ -46,13 +46,13 @@
             </div>
           </div>
 
-          <div class="md:flex items-center gap-2">
-            <div class="field flex-1">
+          <div class="md:flex items-start gap-2">
+            <div class="field flex-1" style="display: flex; flex-direction: column;">
               <%= form.label :phone_number, "Mobile phone number" %>
               <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
               <input type="tel" id="phone_raw" style="max-width:100%;" value="<%= @user.phone_number.presence %>" required="required">
               <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
-                <p class="h5 mt1 m0 warning flex items-center">
+                <p class="h5 mt1 m0 warning flex items-center" style="margin-top: auto;">
                   <%= inline_icon "important-fill", class: "warning mr1" %>
                   <span>Your phone number is unverified. <%= link_to "Click here", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } %>
                     to verify it.</span>
@@ -66,14 +66,19 @@
                   <%= inline_icon "info", size: 18 %>
                 </div>
               </div>
-              <div class="flex gap-2 onboarding">
-                <%= form.date_select :birthday,
-                                     { start_year: Date.today.year,
-                                       end_year: Date.today.year - 100,
-                                       order: [:month, :day, :year],
-                                       prompt: @user.birthday.nil?
-                                     },
-                                     { required: true } %>
+              <div class="gap-2 onboarding" data-controller="birthday" style="display: flex; flex-direction: column;">
+                <span style="display: flex; gap: 0.5rem;">
+                <%= select_month @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { required: true, data: { birthday_target: "month", action: "change->birthday#updateAge" } } %>
+                <%= select_day @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil? },
+                                       { required: true, data: { birthday_target: "day", action: "change->birthday#updateAge" } } %>
+                <%= select_year @user.birthday,
+                                       { field_name: :birthday, prefix: @user.model_name.param_key, prompt: @user.birthday.nil?, start_year: Date.today.year, end_year: Date.today.year - 100 },
+                                       { required: true, data: { birthday_target: "year", action: "change->birthday#updateAge" } } %>
+                </span>
+                <span data-birthday-target="message" class="h5 muted"></span>
               </div>
             </div>
           </div>
@@ -89,7 +94,7 @@
           <%= hidden_field_tag :return_to, params[:return_to] if params[:return_to] %>
 
           <div class="actions flex">
-            <button type="submit" class="btn bg-info w-full gap-2">
+            <button type="submit" id="user_submit" class="btn bg-info w-full gap-2">
               Start using HCB
               <%= inline_icon "enter", size: 40 %>
             </button>
