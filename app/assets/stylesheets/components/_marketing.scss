@@ -735,6 +735,18 @@ $mk-bg: $snow; // #f9fafc
     border-top: 1px solid rgba($black, 0.08);
   }
 
+  // Links out to the foundation (matches the .mk-photo tiles); shrink-wrap the logo and
+  // soften on hover so it reads as clickable.
+  &__logo-link {
+    display: inline-flex;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.7;
+    }
+  }
+
   &__logo {
     height: 40px;
     width: auto;
