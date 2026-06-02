@@ -109,6 +109,11 @@ $mk-bg: $snow; // #f9fafc
   color: $slate;
   text-wrap: pretty;
 
+  // Space stacked lead paragraphs (the global reset zeroes <p> margins).
+  & + & {
+    margin-top: 1em;
+  }
+
   strong {
     color: $mk-ink;
     font-weight: 600;
@@ -1124,6 +1129,11 @@ $mk-bg: $snow; // #f9fafc
 // ---------------------------------------------------------------- trust
 .mk-trust {
   text-align: center;
+
+  // Centered body text reads as jagged when line lengths are uneven; balance evens them.
+  .mk-lead {
+    text-wrap: balance;
+  }
 }
 
 .mk-badges {

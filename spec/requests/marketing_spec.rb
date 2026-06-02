@@ -92,13 +92,53 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).not_to include("Funders on HCB")
     end
 
-    it "appears once :funders_landing_testimonials is enabled" do
+    # The section's only card is the Ghostty/Mitchell quote, so it needs the Ghostty flag too
+    # (otherwise it would render with no cards).
+    it "appears once the testimonials and Ghostty flags are enabled" do
       Flipper.enable(MarketingController::TESTIMONIALS_FLAG)
+      Flipper.enable(MarketingController::GHOSTTY_FLAG)
 
       get funders_path
 
       expect(response.body).to include("Funders on HCB")
       expect(response.body).to include("Mitchell Hashimoto")
+    end
+  end
+
+  # All Ghostty content (the "Where it lands" tile and the Mitchell testimonial) is gated by
+  # :funders_landing_ghostty so it can be hidden in a single switch.
+  describe "Ghostty content" do
+    it "is hidden by default" do
+      get funders_path
+
+      expect(response.body).not_to include("ghostty.org")
+    end
+
+    it "shows the Ghostty tile once :funders_landing_ghostty is enabled" do
+      Flipper.enable(MarketingController::GHOSTTY_FLAG)
+
+      get funders_path
+
+      expect(response.body).to include("ghostty.org")
+      expect(response.body).to include("Ghostty")
+    end
+  end
+
+  # The Argosy Foundation case study is gated separately so it can be held back until cleared.
+  describe "Argosy case study" do
+    it "is hidden by default" do
+      get funders_path
+
+      expect(response.body).not_to include("Case study")
+    end
+
+    it "appears once :funders_landing_argosy is enabled" do
+      Flipper.enable(MarketingController::ARGOSY_FLAG)
+
+      get funders_path
+
+      expect(response.body).to include("Case study")
+      expect(response.body).to include("Argosy Foundation")
     end
   end
 
