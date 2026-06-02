@@ -5,11 +5,6 @@ export default class extends Controller {
 
   connect() {
     this.updateAge()
-    this.element.classList.add('birthday-inline')
-  }
-
-  disconnect() {
-    this.element.classList.remove('birthday-inline')
   }
 
   updateAge() {

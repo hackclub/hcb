@@ -458,7 +458,7 @@ class User < ApplicationRecord
   def age_in_range?
     return unless birthday.present?
 
-    if age.nil? || age < 13
+    if age < 13
       errors.add(:birthday, "must be at least 13 years old")
     elsif age > 125
       errors.add(:birthday, "must be less than 125 years old")
