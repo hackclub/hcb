@@ -58,8 +58,7 @@ class InvoicesController < ApplicationController
     @invoices = helpers.sorted_relation(
       relation,
       INVOICE_COLUMNS,
-      sort: [params[:sort], params[:direction]],
-      default: [:created_at, :desc]
+      sort: [params[:sort], params[:direction]]
     ).includes(:sponsor).page(params[:page]).per(25)
 
     @sponsor = Sponsor.new(event: @event)

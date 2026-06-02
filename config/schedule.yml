@@ -111,10 +111,6 @@ receipt_report_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "ReceiptReport::WeeklyJob"
 
-receipt_report_monthly_job:
-  cron: "0 0 3 * *" # run first day of each month
-  class: "ReceiptReport::MonthlyJob"
-
 column_reporting_monthly_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "Column::ReportingJob"
@@ -248,3 +244,7 @@ notify_events_with_negative_balance_job:
 refresh_disposable_domains:
   cron: "0 11 * * *" # run at 6am est every day
   class: "DisposableEmailDomainListUpdateJob"
+
+hide_onboarding_messages:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::HideOnboardingMessagesJob"
