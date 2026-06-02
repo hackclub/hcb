@@ -65,7 +65,7 @@ module HasWiseRecipient
         fields << { type: :text_field, key: "rut_number", placeholder: "12345678-9", label: "RUT number" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings", "Demand": "demand" } }
       elsif currency == "CNY"
-        fields << { type: :text_field, key: "account_number", label: "UnionPay card"}
+        fields << { type: :text_field, key: "account_number", label: "UnionPay card" }
       elsif currency == "COP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
