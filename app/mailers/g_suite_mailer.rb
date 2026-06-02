@@ -41,7 +41,7 @@ class GSuiteMailer < ApplicationMailer
   end
 
   def organization_managers
-    @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
+    @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map { |op| op.user.email_address_with_name }
   end
 
 end
