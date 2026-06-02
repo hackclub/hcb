@@ -27,6 +27,16 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Deploy your capital as grants")
     end
 
+    # The final CTA renders the *detailed* inquiry form (name + message), not the compact
+    # email-only one — guards `detailed: true` on the render, which has been dropped twice by
+    # copy-edit PRs touching that section.
+    it "renders the detailed inquiry form with name and message fields" do
+      get funders_path
+
+      expect(response.body).to include('name="name"')
+      expect(response.body).to include('name="message"')
+    end
+
     # Signed-out funders are funnelled to "Talk to our team" (which scrolls to the inquiry
     # form), NOT to signup — we want a conversation first, not a self-serve account.
     it "shows the signed-out nav (Log in / Talk to our team), not a dashboard link" do
