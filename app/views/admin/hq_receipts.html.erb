@@ -6,6 +6,7 @@
 
 <%= page_entries_info @users, entry_name: "users" %>
 
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -49,5 +50,6 @@
     <% end %>
   </tbody>
 </table>
+</div>
 
 <%= paginate @users %>

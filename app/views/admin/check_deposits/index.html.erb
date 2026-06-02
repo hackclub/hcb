@@ -1,12 +1,6 @@
 <% title "Check Deposits" %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @check_deposits %>
-  </div>
-  <%= paginate @check_deposits %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -34,9 +28,9 @@
         </td>
         <td>
           <% if check_deposit.manual_submission_required? %>
-            <%= link_to "Process", [:admin, check_deposit] %>
+            <%= link_to "Process", [:admin, check_deposit], class: "btn" %>
           <% else %>
-            <%= link_to "View", url_for(check_deposit.local_hcb_code) %>
+            <%= pop_icon_to "external", url_for(check_deposit.local_hcb_code) %>
           <% end %>
         </td>
       </tr>
@@ -44,4 +38,11 @@
   </tbody>
 </table>
 
-<%= paginate @check_deposits %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @check_deposits %>
+  </div>
+  <%= paginate @check_deposits %>
+</div>
+
+</div>

@@ -12,53 +12,10 @@ $font-family:
 $mono:
   ui-monospace, 'SFMono-Regular', 'Roboto Mono', Menlo, Consolas, monospace;
 
-@import 'variables';
-@import 'basscss';
-@import 'space';
-@import 'utilities';
-@import 'components/badges';
-@import 'dark';
-@import 'components/menus';
-@import 'components/receipts';
-@import 'components/modals';
-@import 'components/tooltips';
-@import 'kbar';
-
-@import 'components/buttons';
-@import 'components/steps';
-@import 'components/combobox';
-@import 'components/forms';
-
-.card {
-  --card-bg: #ffffff;
-  background-color: $white;
-  box-shadow: var(--shadow-border-sm);
-  padding: 1rem;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-// // https://raw.githubusercontent.com/waldyrious/downstyler/master/downstyler.css
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Make HTML more responsive (adapted from https://fluidity.sexy ← note: dead link)               */
-// /* ---------------------------------------------------------------------------------------------- */
-img,
-canvas,
-iframe,
-video,
-svg,
-select,
-textarea {
-  max-width: 100%;
-  height: auto;
-}
 pre {
   overflow-x: auto;
 }
 
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Box-model fix (adapted from https://css-tricks.com/box-sizing/)                                */
-// /* ---------------------------------------------------------------------------------------------- */
 html {
   box-sizing: border-box;
 }
@@ -68,63 +25,9 @@ html {
   box-sizing: border-box;
 }
 
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Size text according to screen width (adapted from https://css-tricks.com/molten-leading-css/)  */
-// /* ---------------------------------------------------------------------------------------------- */
 html {
   font-size: clamp(1rem, calc(8px + 0.5vw), 1.2rem);
 }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Improved typography (adapted from http://bettermotherfuckingwebsite.com)                       */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { line-height: 1.5; margin: 0 auto; max-width: 300em; padding: 1em; }
-// h1, h2, h3, h4, h5, h6 { margin-top: 1em; margin-bottom: 0.5em; line-height: 1.2; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Improved contrast (adapted from https://jgthms.com/web-design-in-4-minutes/)                   */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { color: #333; }
-// :not(a[href]) b, :not(a[href]) strong, th { color: #222; }
-// a[href] { color: RoyalBlue; } a[href]:visited { color: BlueViolet; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Clean table style table (adapted from http://getskeleton.com)                                  */
-// /* ---------------------------------------------------------------------------------------------- */
-// table { border-collapse: collapse; }
-// th, td { padding-left: .5em; padding-right: 1em; text-align: left; border: 1px solid #ddd; }
-// th, thead, tfoot { background: #eee; font-weight: bold; }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Logarithmic size scale for headings (https://github.com/waldyrious/downstyler/issues/30)       */
-// /* ---------------------------------------------------------------------------------------------- */
-// h1 { color: #111; font-size: 200.00%; /* 2^(6/6) */ }
-// h2 { color: #222; font-size: 178.18%; /* 2^(5/6) */ }
-// h3 { color: #333; font-size: 158.74%; /* 2^(4/6) */ }
-// h4 { color: #444; font-size: 141.42%; /* 2^(3/6) */ }
-// h5 { color: #555; font-size: 125.99%; /* 2^(2/6) */ }
-// h6 { color: #666; font-size: 112.25%; /* 2^(1/6) */ }
-
-// /* ---------------------------------------------------------------------------------------------- */
-// /* Additional adjustments.                                                                        */
-// /* ---------------------------------------------------------------------------------------------- */
-// body { font-family: 'Libertinus Serif', 'Crimson Text', serif; }
-// pre, code, kbd, samp, tt { padding: .1em .3em; margin: 0 .1em; font-size: 80%; }
-// pre, code, kbd, samp, tt { background: #eee; border: 1px solid #ccc; }
-// pre > code { border: none; margin: 0; padding: 0; font-size: 100%; }
-// textarea { vertical-align: text-top; }
-// textarea, input[type=text], input:not([type]) { font-family: monospace; font-size: 80%; }
-// input[type] { font-family: sans-serif; font-size: 100%; }
-// blockquote { padding-left: 1em; margin-left: 0; border-left: 5px solid #ddd; color: #666; }
-// img[align="right"] { margin-left: 1em; } img[align="left"] { margin-right: 1em; }
-// figcaption { font: caption; color: #999; font-size: 75% !important; }
-// *[class*="social"] svg, *[class*="icon"] svg, svg[class*="icon"], img[class*="emoji"][src$=".svg"]
-// { max-height: 30px; } /* Prevent blowing up SVG images that are meant to be small */
-// *[class*="logo" i] svg, *[id*="logo" i] svg { max-width: 100px; }
-
-/* ---------------------------------------------------------------------------------------------- */
-/* CLASSLESS HACK CLUB THEME                                                                      */
-/* ---------------------------------------------------------------------------------------------- */
 
 :root {
   --hcb-font-sans:
@@ -143,7 +46,7 @@ html {
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
   --hcb-link-tx: #ffffff;
-  --hcb-accent: #338eda; // button color
+  --hcb-accent: #338eda;
   --hcb-primary: #ec3750;
   --hcb-accent-red: #ffcccc;
   --hcb-accent-orange: #ff8c38;
@@ -163,7 +66,7 @@ html[data-dark='true'] {
   --hcb-link-1: #8492a6;
   --hcb-link-2: #3c4858;
   --hcb-link-tx: #ffffff;
-  --hcb-accent: #338eda; // button color
+  --hcb-accent: #338eda;
   --hcb-accent-red: #916262;
   --hcb-accent-orange: #bf6a2e;
   --hcb-accent-pending: #544d29;
@@ -191,708 +94,25 @@ html[data-dark='true'] {
   padding: 0;
 }
 
-html,
-input,
-select,
-button {
-  /* Set body font family */
-  font-family: var(--hcb-font-sans);
-}
-
-body {
-  /* Center body in page */
-  margin: 0 auto;
-  border-radius: 6px;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  background: var(--hcb-bg-1);
-
-  /* Main body text */
-  color: var(--hcb-tx-2);
-  line-height: 1.5;
-}
-
 ::selection {
-  /* Set background color for selected text */
   background: var(--hcb-accent);
   color: var(--hcb-accent-tx);
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  line-height: 1;
-  color: var(--hcb-tx-1);
-  padding-top: 0.875rem;
-}
-
-h1,
-h2,
-h3 {
-  color: var(--hcb-tx-1);
-  padding-bottom: 2px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--hcb-bg-2);
-}
-
-h4,
-h5,
-h6 {
-  margin-bottom: 0.3rem;
-}
-
-h1 {
-  font-size: 2.25rem;
-}
-
-h2 {
-  font-size: 1.85rem;
-}
-
-h3 {
-  font-size: 1.55rem;
-}
-
-h4 {
-  font-size: 1.25rem;
-}
-
-h5 {
-  font-size: 1rem;
-}
-
-h6 {
-  font-size: 0.875rem;
-}
-
-a {
-  color: var(--hcb-link-1);
-}
-
-a:hover {
-  color: var(--hcb-link-2);
-}
-
-abbr:hover {
-  /* Set the '?' cursor while hovering an abbreviation */
-  cursor: help;
-}
-
-blockquote {
-  padding: 1.5rem;
-  background: var(--hcb-bg-2);
-  border-left: 5px solid var(--hcb-bg-3);
-}
-
-abbr {
-  cursor: help;
-}
-
-blockquote *:last-child {
-  padding-bottom: 0;
-  margin-bottom: 0;
-}
-
-header {
-  background: var(--hcb-bg-2);
-  border-bottom: 1px solid var(--hcb-bg-3);
-  padding: 2rem 1.5rem;
-  /* This sets the right and left margins to cancel out the body's margins. It's width is still the same, but the background stretches across the page's width. */
-  margin: -2rem calc(50% - 50vw) 2rem;
-  padding-left: calc(50vw - 50%);
-  padding-right: calc(50vw - 50%);
-}
-
-header h1,
-header h2,
-header h3 {
-  padding-bottom: 0;
-  border-bottom: 0;
-}
-
-header > *:first-child {
-  margin-top: 0;
-  padding-top: 0;
-}
-
-header > *:last-child {
-  margin-bottom: 0;
-}
-
-a button,
-button,
-input[type='submit'],
-input[type='reset'],
-input[type='button'] {
-  font-size: inherit;
-  display: inline-block;
-  padding: 6px 12px;
-  text-align: center;
-  text-decoration: none;
-  white-space: nowrap;
-  background: var(--hcb-accent);
-  color: whitesmoke;
-  border: 0;
-  border-radius: 4px;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-a button[disabled],
-button[disabled],
-input[type='submit'][disabled],
-input[type='reset'][disabled],
-input[type='button'][disabled] {
-  cursor: default;
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.button:focus,
-.button:enabled:hover,
-button:focus,
-button:enabled:hover,
-input[type='submit']:focus,
-input[type='submit']:enabled:hover,
-input[type='reset']:focus,
-input[type='reset']:enabled:hover,
-input[type='button']:focus,
-input[type='button']:enabled:hover {
-  background: var(--hcb-accent);
-}
-
-a img {
-  margin-bottom: 0px;
 }
 
 code,
 pre,
 kbd,
 samp {
-  /* Set the font family for monospaced elements */
   font-family: var(--hcb-font-mono);
 }
 
-code,
-samp,
-kbd,
-pre {
-  /* The main preformatted style. This is changed slightly across different cases. */
-  background: var(--hcb-bg-2);
-  border: 1px solid var(--hcb-bg-3);
-  border-radius: 4px;
-  padding: 3px 6px;
-  /* font-size is relative to containing element, so it scales for titles*/
-  font-size: 0.8em;
-}
-
-kbd {
-  /* Makes the kbd element look like a keyboard key */
-  border-bottom: 3px solid var(--hcb-bg-3);
-}
-
-pre {
-  padding: 1rem 1.4rem;
-  max-width: 100%;
-  overflow: auto;
-}
-
-pre code {
-  /* When <code> is in a <pre>, reset it's formatting to blend in */
-  background: inherit;
-  font-size: inherit;
-  color: inherit;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-code pre {
-  /* When <pre> is in a <code>, reset it's formatting to blend in */
-  display: inline;
-  background: inherit;
-  font-size: inherit;
-  color: inherit;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-details:not(:has(> summary.visual-table-row)) {
-  /* Make the <details> look more "clickable" */
-  padding: 0.6rem 1rem;
-  background: var(--hcb-bg-2);
-  border: 1px solid var(--hcb-bg-3);
-  border-radius: 4px;
-}
-
-summary {
-  /* Makes the <summary> look more like a "clickable" link with the pointer cursor */
-  cursor: pointer;
-  font-weight: bold;
-}
-
-details[open] {
-  /* Adjust the <details> padding while open */
-  padding-bottom: 0.75rem;
-}
-
-details[open] summary {
-  /* Adjust the <details> padding while open */
-  margin-bottom: 6px;
-}
-
-details[open] > *:last-child {
-  /* Resets the bottom margin of the last element in the <details> while <details> is opened. This prevents double margins/paddings. */
-  margin-bottom: 0;
-}
-
-dt {
-  font-weight: bold;
-}
-
-dd::before {
-  /* Add an arrow to data table definitions */
-  content: '→ ';
-}
-
-hr {
-  /* Reset the border of the <hr> separator, then set a better line */
-  border: 0;
-  border-bottom: 1px solid var(--hcb-bg-3);
-  margin: 1rem auto;
-}
-
-legend {
-  padding: auto 0.5rem;
-}
-
-table {
-  /* border-collapse sets the table's elements to share borders, rather than floating as separate "boxes". */
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 76rem;
-}
-
-td,
-th {
-  border: 1px solid var(--hcb-bg-3);
-  text-align: left;
-  padding: 0.5rem;
-}
-
-thead th {
-  background: var(--hcb-bg-2);
-}
-
-tr:nth-child(even) {
-  /* Set every other cell slightly darker. Improves readability. */
-  background: var(--hcb-bg-2);
-}
-
-table.no-stripes {
-  tr:nth-child(even) {
-    background: inherit;
-  }
-}
-
-table caption {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-textarea {
-  /* Don't let the <textarea> extend off the screen naturally or when dragged by the user */
-  max-width: 100%;
-}
-
-ol,
-ul {
-  /* Replace the browser default padding */
-  padding-left: 2rem;
-}
-
-li {
-  margin-top: 0.4rem;
-}
-
-ul ul,
-ol ul,
-ul ol,
-ol ol {
-  margin-bottom: 0;
-}
-
-mark {
-  padding: 3px 6px;
-  background: var(--hcb-accent);
-  color: var(--hcb-accent-tx);
-}
-
-textarea,
-select,
-input {
-  padding: 6px 12px;
-  font-size: inherit;
-  font-family: inherit;
-  background: var(--hcb-bg-3);
-  color: var(--hcb-tx-2);
-  border: 1px solid var(--hcb-bg-3);
-  border-radius: 4px;
-  box-shadow: none;
-  box-sizing: border-box;
-}
-
-img,
-video {
-  max-width: 100%;
-}
-
-/* Skip to main navigation item */
-.skip-to-main {
-  left: -999px;
-  position: absolute;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  z-index: -999;
-}
-
-.skip-to-main:focus,
-.skip-to-main:active {
-  color: var(--hcb-tx-1);
-  background-color: var(--hcb-bg-1);
-  left: auto;
-  top: auto;
-  width: 30%;
-  height: auto;
-  margin: 10px 35%;
-  padding: 5px;
-  border-radius: 15px;
-  text-align: center;
-  z-index: 999;
-}
-
-/* Pagination styles */
-// https://stackoverflow.com/questions/13320851/custom-css-with-kaminari-with-bootstrap
-.pagination a,
-.pagination span.current,
-.pagination span.gap {
-  float: left;
-  padding: 8px;
-  line-height: 19px;
-  text-decoration: none;
-  border-left-width: 0;
-}
-
-.pagination {
-  list-style: none;
-  padding: 0;
-  height: 30px;
-  .first {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .prev {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .page {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .next {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-  .last {
-    padding: 0;
-    float: none;
-    border: none;
-  }
-}
-
-/* Inline styles converted here */
-.admin-bg-red {
-  background-color: var(--hcb-accent-red) !important;
-}
-
-.admin-bg-orange {
-  background-color: var(--hcb-accent-orange) !important;
-}
-
-.admin-bg-pending {
-  /* Needs !important to override the default table-row alternating pattern */
-  background-color: var(--hcb-accent-pending) !important;
-}
-
-.admin-bg-transit {
-  background-color: var(--hcb-accent-transit) !important;
-}
-
-.admin-bg-active {
-  background: var(--hcb-accent-active) !important;
-}
-
-.admin-bg-warning {
-  background: #ec3750;
-}
-
-/* Table column width utility classes adapted from Tailwind CSS https://tailwindcss.com/docs/width  */
-
-.w-96 {
-  width: 24rem;
-}
-.w-80 {
-  width: 20rem;
-}
-.w-64 {
-  width: 16rem;
-}
-.w-48 {
-  width: 12rem;
-}
-.w-40 {
-  width: 10rem;
-}
-.w-32 {
-  width: 8rem;
-}
-.w-24 {
-  width: 6rem;
-}
-.w-16 {
-  width: 4rem;
-}
-.w-12 {
-  width: 3rem;
-}
-.w-8 {
-  width: 2rem;
-}
-
-/* Autosize table on process pages */
-
-.table--autosize {
-  width: auto;
-  min-width: 0;
-}
-
-.pagination {
-  margin-bottom: 0rem !important;
-  gap: 4px;
-}
-
 .pagination > li {
-  margin-top: 0rem !important;
+  margin-top: 0 !important;
 }
 
-.flex-grow {
-  flex-grow: 1;
-}
-
-/* The navigation bar used for admin pages */
-
-.nav-row-scroll-container .nav-item:not(:last-child) {
-  border-right: 1px solid var(--hcb-bg-3) !important;
-}
-
-.nav-row .nav-row-scroll-container {
-  flex-direction: row;
-}
-
-.admin-nav-item:active {
-  pointer-events: none;
-}
-
-.admin-menu-content {
-  min-width: calc(100vw / 6);
-  width: calc(100vw / 6);
-
-  @media (max-width: 768px) {
-    min-width: unset;
-    width: unset;
-  }
-  & .menu__divider {
-    background-color: rgba(190, 190, 190, 0.3);
-  }
-  & a:hover {
-    background-color: rgba(200, 200, 200, 0.3);
-  }
-  & a:active {
-    background-color: rgba(200, 200, 200, 0.4) !important;
-  }
-}
-
-nav {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-summary:hover + detail,
-detail:hover,
-details:hover > .dropdown {
-  display: block;
-}
-
-detail,
-.dropdown {
-  display: none;
-}
-
-.role-badge {
-  margin-bottom: 0px !important;
-}
-
-.sub-items {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid var(--hcb-bg-3);
-  box-shadow: var(--shadow-lg);
-  border-top: none;
-  border-radius: 0px 0px 4px 4px;
-  z-index: 999;
-  overflow: hidden;
-  position: relative;
-  margin-top: -5px;
-  padding-top: 9px;
-  margin-left: -2px;
-}
-
-.sub-items > a:last-child {
-  border-radius: 0px 0px 4px 4px;
-}
-
-.sub-items > a {
-  text-transform: capitalize;
-  pointer-events: auto;
-  color: var(--hcb-tx-1);
-  text-decoration: none;
-  background: #fff;
-  min-width: 220px;
-  padding: 8px 12px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  &:not(:first-child) {
-    border-top: 1px solid var(--hcb-bg-3);
-  }
-}
-
-.badge {
-  margin-left: 0.4rem;
-}
-
-.nav-item > .badge {
-  margin-left: 0.2rem;
-}
-
-.sub-items > a:hover {
-  color: var(--hcb-tx-1);
-  background: var(--hcb-bg-2);
-}
-
-.nav-item {
-  padding: 4px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.role-badge {
-  padding-right: 12px;
-  margin-bottom: 16px;
-}
-
-.role-badge > b {
-  text-transform: uppercase;
-}
-
-.badge-admin {
-  background: rgba(236, 55, 80, 0.4);
-}
-
-.h-38 {
-  height: 38px;
-}
-
-.admin-nav-item {
-  position: relative;
-}
-
-.admin-nav-item {
-  /* Make the <details> look more "clickable" */
-  padding: 0 !important;
-  background: none !important;
-  border: none !important;
-  border-radius: none !important;
-}
-
-summary {
-  /* Makes the <summary> look more like a "clickable" link with the pointer cursor */
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.events-filter-select {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  white-space: nowrap;
-}
-
-.events-filter-select > label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 300px;
-  margin-right: 16px;
-}
-
-.events-filter-select > label > select,
-.events-filter-select > label > input {
-  flex-grow: 1;
-}
-
-.logo-dark {
-  display: none;
-}
-
-#admin-theme-toggle,
-#admin-logout-button {
-  color: var(--hcb-link-1);
-  background: none;
-  padding: 0px;
-}
-#admin-theme-toggle:hover,
-#admin-logout-button:hover {
-  color: var(--hcb-link-2);
-}
-form:has(> #admin-logout-button) {
-  margin: 0px;
-}
-
-@keyframes flash-slide-in {
-  from {
-    translate: 0 calc(100% + var(--flash-offset, 0));
-  }
-
-  to {
-    translate: 0 0;
-  }
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 #flash-container {
   position: fixed;
@@ -946,27 +166,84 @@ form:has(> #admin-logout-button) {
     align-items: center;
     justify-content: center;
     background: transparent;
+    border: 0;
+    box-shadow: none;
+    min-height: 0;
+    height: auto;
     padding: 0;
     margin: 0;
     color: inherit;
   }
 }
-.command-bar-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-md);
-  color: inherit;
-  transition: background-color 0.125s ease-in-out;
-  cursor: pointer;
-  &:hover {
-    transition-duration: 0s;
+
+@keyframes flash-slide-in {
+  from {
+    translate: 0 calc(100% + var(--flash-offset, 0));
   }
-  &:active {
-    transition-duration: 0.125s;
+
+  to {
+    translate: 0 0;
   }
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+.admin-bg-red {
+  background-color: var(--hcb-accent-red) !important;
+}
+
+.admin-bg-orange {
+  background-color: var(--hcb-accent-orange) !important;
+}
+
+.admin-bg-pending {
+  background-color: var(--hcb-accent-pending) !important;
+}
+
+.admin-bg-transit {
+  background-color: var(--hcb-accent-transit) !important;
+}
+
+.admin-bg-warning {
+  background: #ec3750;
+}
+
+.table-container {
+  max-width: unset !important;
+  margin-top: 15px;
+}
+
+.table-footer {
+  background-color: rgba(200, 200, 200, 0.2);
+  padding: 0 20px;
+  border-radius: 10px;
+  margin: 10px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  left: 10px;
+  min-height: 50px;
+}
+
+.skip-to-main {
+  left: -999px;
+  position: absolute;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -999;
+}
+
+.skip-to-main:focus,
+.skip-to-main:active {
+  color: var(--hcb-tx-1);
+  background-color: var(--hcb-bg-1);
+  left: auto;
+  top: auto;
+  width: 30%;
+  height: auto;
+  margin: 10px 35%;
+  padding: 5px;
+  border-radius: 15px;
+  text-align: center;
+  z-index: 999;
+}

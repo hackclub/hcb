@@ -9,7 +9,7 @@
     <%= form.label :in_transit do %>
       <%= form.check_box :in_transit, checked: @in_transit %> In Transit
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
@@ -20,6 +20,7 @@
   <%= paginate @checks %>
 </div>
 
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -49,11 +50,12 @@
         <td><%= render_money_amount(check.amount) %></td>
         <td><%= check.aasm_state.upcase %></td>
         <td>
-          <%= link_to "View", check_path(check) %>
+          <%= pop_icon_to "external", check_path(check) %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
+</div>
 
 <%= paginate @checks %>

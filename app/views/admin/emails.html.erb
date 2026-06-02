@@ -7,17 +7,11 @@
     <%= form.text_field :user_id, value: params[:user_id], placeholder: "User ID" %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @messages, entry_name: "email".pluralize(@count) %>
-  </div>
-  <%= paginate @messages %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -51,6 +45,15 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @messages, entry_name: "email".pluralize(@count) %>
+  </div>
+  <%= paginate @messages %>
+</div>
+
+</div>
 
 <% @messages.each do |msg| %>
   <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">

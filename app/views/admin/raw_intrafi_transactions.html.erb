@@ -1,14 +1,9 @@
 <% title "Intrafi Transactions" %>
 
-<div class="flex items-center mb2 justify-between">
-  <div class="flex-grow">
-    <%= page_entries_info @raw_intrafi_transactions, entry_name: "transactions" %>
-  </div>
-  <%= form_with local: true, url: raw_intrafi_transactions_import_admin_index_path, method: :post, class: "mb-0" do |form| %>
-    <%= form.file_field :file, accept: ".csv", class: "mb-0" %>
-    <%= form.submit class: "mb-0", value: "Import" %>
-  <% end %>
-</div>
+<%= form_with local: true, url: raw_intrafi_transactions_import_admin_index_path, method: :post, class: "mb-0" do |form| %>
+  <%= form.file_field :file, accept: ".csv", class: "mb-0" %>
+  <%= form.submit class: "btn btn-default mb-0", value: "Import" %>
+<% end %>
 
 <% if @raw_imported_file.present? %>
   <details>
@@ -21,6 +16,7 @@
   </details>
 <% end %>
 
+<div class="table-container">
 <table class="min-w-0">
   <thead>
     <tr>
@@ -43,5 +39,13 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @raw_intrafi_transactions, entry_name: "transactions" %>
+  </div>
+</div>
+
+</div>
 
 <%= paginate @raw_intrafi_transactions %>

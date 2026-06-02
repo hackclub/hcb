@@ -181,6 +181,10 @@
   height: 32px;
   cursor: pointer !important;
   background-color: transparent !important;
+  border: 0;
+  box-shadow: none;
+  min-height: 0;
+  padding: 0;
 
   @media (min-width: 32em) {
     margin: -10px;

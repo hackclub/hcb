@@ -6,17 +6,11 @@
     <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
   </div>
   <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @paypal_transfers, entry_name: "transfers" %>
-  </div>
-  <%= paginate @paypal_transfers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -38,13 +32,20 @@
         <td><%= paypal_transfer.recipient_name %></td>
         <td><%= render_money(paypal_transfer.amount) %></td>
         <td><%= paypal_transfer.aasm.human_state %></td>
-        <td>
-          <%= link_to "View", hcb_code_path(paypal_transfer.hcb_code) %>
-          <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer) %>
+        <td class="flex items-center gap-2">
+          <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code) %>
+          <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer), class: "btn" %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @paypal_transfers %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @paypal_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @paypal_transfers %>
+</div>
+
+</div>
