@@ -72,9 +72,9 @@ RSpec.describe "Funders landing page", type: :request do
   end
 
   # The "Funders on HCB" testimonials block has its OWN flag, separate from the page flag.
-  # The quotes (John Abele, Mitchell Hashimoto) are adapted from public material and still
-  # pending the funders' sign-off — so the page can ship publicly while this section stays
-  # hidden until the quotes are approved, then it's flipped on without a deploy.
+  # The Mitchell Hashimoto quote is adapted from public material and still pending sign-off —
+  # so the page can ship publicly while this section stays hidden until the quote is approved,
+  # then it's flipped on without a deploy. (The Argosy story lives in its own ungated section.)
   describe "Funders on HCB testimonials section" do
     it "is hidden by default so the page can launch before the quotes are approved" do
       get funders_path

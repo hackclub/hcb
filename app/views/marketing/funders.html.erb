@@ -318,6 +318,47 @@
   </div>
 </section>
 
+<%# ============================ CASE STUDY: ARGOSY ============================ %>
+<%# Argosy Foundation / FIRST Robotics. Narrative-only (no pending-approval quote), so
+    this ships ungated alongside the comparison it proves out. The "500+ teams" figure
+    originates from John Abele's (Argosy) account of the program. %>
+<section class="mk-section mk-section--alt mk-product">
+  <div class="mk-container">
+    <div class="mk-product__grid">
+      <div class="mk-product__copy">
+        <p class="mk-eyebrow">Case study &middot; Argosy Foundation</p>
+        <h2 class="mk-section__title">
+          Supporting hundreds of organizations shouldn't require managing hundreds of grants.
+        </h2>
+        <p class="mk-lead">
+          When the Argosy Foundation set out to fund FIRST Robotics teams nationwide, HCB
+          became the infrastructure that made it possible. Today more than 500 teams receive
+          funding every year through a single, transparent grantmaking program — HCB handles
+          grant distribution, compliance, and financial administration, while giving Argosy
+          full visibility into how every dollar is used.
+        </p>
+        <ul class="mk-ticks">
+          <li>Less administrative overhead</li>
+          <li>Stronger accountability on every grant</li>
+          <li>Scale impact beyond traditional grantmaking</li>
+        </ul>
+      </div>
+
+      <div class="mk-product__media">
+        <div class="mk-metric">
+          <p class="mk-metric__num">500+</p>
+          <p class="mk-metric__label">FIRST Robotics teams funded every year</p>
+          <ul class="mk-metric__list">
+            <li>One grantmaking program</li>
+            <li>Nationwide reach</li>
+            <li>Real-time reporting on every grant</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <%# ============================ IMPACT (where it lands) ============================ %>
 <%# Three real funded projects (Ghostty, Miami Hack Week, MALAN) — approved logos/photos
     on our CDN, each linking out to the project. Captions final/approved. %>
@@ -355,9 +396,10 @@
 </section>
 
 <%# ============================ CASE STUDIES / TESTIMONIALS ============================ %>
-<%# Two real testimonials below (Abele, Hashimoto) — both pending final approval, so the
-    whole section is gated behind :funders_landing_testimonials; enable that flag once the
-    quotes are signed off. Add more cards as collected; the grid handles 2–4 cleanly. %>
+<%# One real testimonial below (Hashimoto), pending final approval, so the whole section
+    is gated behind :funders_landing_testimonials; enable that flag once the quote is signed
+    off. The Argosy story now lives in its own ungated case-study section above. Add more
+    cards as collected; the grid handles 1–4 cleanly. %>
 <% if @show_testimonials %>
   <section class="mk-section mk-section--alt">
     <div class="mk-container">
@@ -366,22 +408,6 @@
         <h2 class="mk-section__title">Trusted to move capital that matters.</h2>
       </div>
       <div class="mk-cases">
-        <figure class="mk-case">
-          <blockquote>“We wanted to back as many young FIRST robotics teams as possible,
-            but giving at that volume is operationally heavy — and traditional grants give
-            you almost no visibility into how the money is spent. With HCB, we now fund over
-            500 teams a year. We pick the teams; HCB distributes every grant, hosts each one,
-            and gives us detailed reporting every step of the way.”</blockquote>
-          <figcaption>
-            <%= image_tag "https://cdn.hackclub.com/019e85e0-b50f-759d-93a0-35d28ba8f923/image.png",
-                          class: "mk-case__avatar", alt: "", width: 84, height: 84,
-                          loading: "lazy", decoding: "async" %>
-            <span class="mk-case__meta">
-              <span class="mk-case__name">John Abele</span>
-              <span class="mk-case__detail">Argosy Foundation · co-founder of Boston Scientific</span>
-            </span>
-          </figcaption>
-        </figure>
         <%# TODO(content): quote adapted from Mitchell Hashimoto's published writing
             (mitchellh.com/writing/ghostty-non-profit + ghostty.org/docs/sponsor) — pending
             his approval. %>
