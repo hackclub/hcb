@@ -729,19 +729,9 @@ $mk-bg: $snow; // #f9fafc
     flex: none;
   }
 
-  &__meta {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.3;
-  }
-
-  &__name {
-    font-weight: 600;
-    color: $mk-ink;
-  }
-
   &__detail {
     font-size: 0.85rem;
+    line-height: 1.35;
     color: $muted;
   }
 }
