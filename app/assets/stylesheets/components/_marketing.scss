@@ -566,6 +566,15 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
+// Case-study variant: long copy paired with a compact metric card (not a screenshot), so
+// give the copy the wider column and let the card take the narrower one — otherwise the card
+// floats in a too-wide column and the body text is cramped.
+.mk-product--metric .mk-product__grid {
+  @media (min-width: 920px) {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
 .mk-product__copy {
   min-width: 0;
 }
