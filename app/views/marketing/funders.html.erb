@@ -1,7 +1,7 @@
 <% content_for :title, "For funders: deploy capital as grants" %>
 
 <% content_for :head do %>
-  <% description = "HCB by Hack Club lets funders deploy capital as tax-deductible grants — to nonprofits or brand-new initiatives, in days, at any scale. Backed by a 501(c)(3)." %>
+  <% description = "HCB by Hack Club lets funders deploy capital as tax-deductible grants to nonprofits or brand-new initiatives, in days, at any scale. Backed by a 501(c)(3)." %>
   <% share_image = "#{request.base_url}/brand/hcb-icon-icon-original.png" %>
   <meta name="description" content="<%= description %>">
   <link rel="canonical" href="<%= funders_url %>">
@@ -13,7 +13,7 @@
   <meta property="og:description" content="<%= description %>">
   <%# TODO(seo): swap in a purpose-built 1200×630 share image, then set twitter:card to summary_large_image. %>
   <meta property="og:image" content="<%= share_image %>">
-  <meta property="og:image:alt" content="HCB — deploy your capital as grants">
+  <meta property="og:image:alt" content="HCB: deploy your capital as grants">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="HCB for funders: deploy capital as grants">
   <meta name="twitter:description" content="<%= description %>">
@@ -40,10 +40,10 @@
         {
           "@type": "FAQPage",
           "mainEntity": [
-            { "@type": "Question", "name": "How fast can I make a grant?", "acceptedAnswer": { "@type": "Answer", "text": "In days, not quarters — no new legal entity and no IRS waiting period." } },
+            { "@type": "Question", "name": "How fast can I make a grant?", "acceptedAnswer": { "@type": "Answer", "text": "In days, not quarters. There's no new legal entity and no IRS waiting period." } },
             { "@type": "Question", "name": "Is my giving tax-deductible?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You give to HCB by Hack Club, a 501(c)(3) nonprofit, so your deduction is immediate." } },
-            { "@type": "Question", "name": "Do I need to set up a foundation?", "acceptedAnswer": { "@type": "Answer", "text": "No. You get the legitimacy of a foundation without becoming one — you direct the grants and HCB handles compliance, paperwork, and money movement." } },
-            { "@type": "Question", "name": "Can I give privately?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Transparency is optional — give publicly, privately, or anonymously." } }
+            { "@type": "Question", "name": "Do I need to set up a foundation?", "acceptedAnswer": { "@type": "Answer", "text": "No. You get the legitimacy of a foundation without becoming one. You direct the grants, and HCB handles compliance, paperwork, and money movement." } },
+            { "@type": "Question", "name": "Can I give privately?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Transparency is optional, so you can give publicly, privately, or anonymously." } }
           ]
         }
       ]
@@ -61,12 +61,12 @@
     <div class="mk-hero__copy">
       <p class="mk-eyebrow">For funders</p>
       <h1 class="mk-hero__title">
-        Deploy your capital as grants — in days, at any scale.
+        Deploy your capital as grants. In days, at any scale.
       </h1>
       <p class="mk-hero__subtitle">
         HCB by <a href="https://hackclub.com">Hack Club</a> is financial infrastructure,
         backed by a <span class="whitespace-nowrap">501(c)(3)</span>, that turns your capital into
-        tax-deductible grants — to
+        tax-deductible grants for
         established nonprofits or brand-new initiatives, with you directing every dollar.
         Whether it's $10,000 for one project or $10M across many, we have the software and
         team to move money fast and compliantly.
@@ -82,7 +82,7 @@
         <span class="mk-window__bar" aria-hidden="true"><i></i><i></i><i></i></span>
         <%= image_tag "https://cdn.hackclub.com/019e85f1-0dcf-7369-a690-dbb9ddadadf6/image.png",
               class: "mk-window__shot", width: 2620, height: 1638, fetchpriority: "high",
-              alt: "The HCB dashboard — balances and recent activity at a glance" %>
+              alt: "The HCB dashboard, with balances and recent activity at a glance" %>
       </figure>
     </div>
   </div>
@@ -116,8 +116,8 @@
       Philanthropy is changing. Funders want to put capital to work now, back ambitious,
       fast-moving projects, and see the work happen in the open. Private foundations and
       donor-advised funds serve traditional giving well, but they weren't built for that
-      pace — and their overhead can slow the people doing the real work.
-      <strong>We built HCB to counter that</strong> — so you can move fast, adapt as
+      pace, and their overhead can slow the people doing the real work.
+      <strong>We built HCB to counter that</strong>, so you can move fast, adapt as
       circumstances change, and fund the projects you truly believe in.
     </p>
   </div>
@@ -146,13 +146,13 @@
       <article class="mk-pillar">
         <span class="mk-pillar__icon"><%= inline_icon "analytics", size: 24 %></span>
         <h3>Real-time financial data</h3>
-        <p>Dashboards on every dollar — balances, spend, and activity — not a year-end
+        <p>Dashboards on every dollar (balances, spend, and activity), not a year-end
           PDF.</p>
       </article>
       <article class="mk-pillar">
         <span class="mk-pillar__icon"><%= inline_icon "apps", size: 24 %></span>
         <h3>Any scale</h3>
-        <p>Seed a single idea or run a portfolio of thousands — the workflow is the
+        <p>Seed a single idea or run a portfolio of thousands. The workflow is the
           same.</p>
       </article>
     </div>
@@ -171,25 +171,25 @@
         <span class="mk-step__num">1</span>
         <h3>Fund your account</h3>
         <p>Contribute cash, appreciated stock, crypto, check, wire, or ACH. Your tax
-          deduction is immediate — you give to HCB by Hack Club, a 501(c)(3).</p>
+          deduction is immediate, because you give to HCB by Hack Club, a 501(c)(3).</p>
       </li>
       <li class="mk-step">
         <span class="mk-step__num">2</span>
         <h3>Direct your grants</h3>
-        <p>You choose exactly where every dollar goes — established nonprofits or
+        <p>You choose exactly where every dollar goes, whether established nonprofits or
           brand-new initiatives, one or hundreds.</p>
       </li>
       <li class="mk-step">
         <span class="mk-step__num">3</span>
         <h3>We handle the rest</h3>
-        <p>Compliance, recipient checks, paperwork, and money movement — handled for you,
+        <p>Compliance, recipient checks, paperwork, and money movement, all handled for you,
           with grants out the door in days, not quarters.</p>
       </li>
       <li class="mk-step">
         <span class="mk-step__num">4</span>
         <h3>Track it live</h3>
-        <p>Real-time dashboards on every dollar. Keep your giving public or private —
-          including anonymous — your call.</p>
+        <p>Real-time dashboards on every dollar. Keep your giving public or private,
+          including anonymous. It's your call.</p>
       </li>
     </ol>
   </div>
@@ -210,7 +210,7 @@
         <ul class="mk-ticks">
           <li>Real-time transaction feeds</li>
           <li>Per-organization and portfolio-wide views</li>
-          <li>Exportable reporting — no spreadsheets required</li>
+          <li>Exportable reporting, no spreadsheets required</li>
         </ul>
       </div>
       <div class="mk-product__media">
@@ -235,12 +235,12 @@
     <div class="mk-uses">
       <article class="mk-use mk-use--wide">
         <h3>Operate like a philanthropic VC</h3>
-        <p>Bring the thesis and the picks — we're your fund admin, compliance, and
+        <p>Bring the thesis and the picks, and we're your fund admin, compliance, and
           reporting layer. Regrant $10M across hundreds of initiatives without building a back office.</p>
       </article>
       <article class="mk-use">
         <h3>Back a builder's project</h3>
-        <p>Fund the work — even a team of one, almost anywhere in the world.</p>
+        <p>Fund the work, even a team of one, almost anywhere in the world.</p>
       </article>
       <article class="mk-use">
         <h3>Fund AI research &amp; education</h3>
@@ -411,7 +411,7 @@
     <h2 class="mk-section__title">Serious infrastructure for serious capital.</h2>
     <p class="mk-lead">
       HCB is operated by The Hack Foundation (Hack Club), a registered 501(c)(3) nonprofit.
-      Since 2018 we've run the financial back office for thousands of organizations — the
+      Since 2018 we've run the financial back office for thousands of organizations. It's the
       same infrastructure, proven at that scale, now open to funders. Funds are
       held and moved through established partners, <strong>Column N.A. (Member FDIC)</strong>
       and <strong>Stripe</strong>. Transparency is optional: publish your giving or keep it
@@ -432,7 +432,7 @@
       <div class="mk-notice mk-notice--success" role="status">
         <span class="mk-notice__icon"><%= inline_icon "check-circle-fill", size: 24 %></span>
         <div>
-          <strong>Thanks — we've got your note.</strong>
+          <strong>Thanks, we've got your note.</strong>
           Someone from our team will be in touch within one business day, and we've emailed
           you a copy.
         </div>
@@ -453,8 +453,8 @@
       <div class="mk-next">
         <ol class="mk-next__steps">
           <li><span class="mk-next__num">1</span>Send us a note about what you want to fund.</li>
-          <li><span class="mk-next__num">2</span>A real person replies — usually to set up a short call.</li>
-          <li><span class="mk-next__num">3</span>We map out your giving together. You decide — no commitment.</li>
+          <li><span class="mk-next__num">2</span>A real person replies, usually to set up a short call.</li>
+          <li><span class="mk-next__num">3</span>We map out your giving together. You decide, with no commitment.</li>
         </ol>
         <div class="mk-team">
           <p class="mk-team__label">You'll hear from one of us</p>
@@ -475,6 +475,6 @@
         </div>
       </div>
     <% end %>
-    <p class="mk-cta__brandline">HCB — the modern infrastructure for funding the future.</p>
+    <p class="mk-cta__brandline">HCB. The modern infrastructure for funding the future.</p>
   </div>
 </section>
