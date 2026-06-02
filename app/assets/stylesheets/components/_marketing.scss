@@ -713,12 +713,14 @@ $mk-bg: $snow; // #f9fafc
     font-size: 0.95rem;
   }
 
-  // Factual attribution footer: foundation logo + named founder. Mirrors .mk-case's
-  // figcaption so the page's "who said/did this" treatment stays consistent.
+  // Factual attribution footer: foundation logo above, named founder below. Stacked (rather
+  // than logo-left like .mk-case) because a wide wordmark doesn't center cleanly against a
+  // single line of credit text the way a square avatar does.
   &__source {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
     margin: 24px 0 0;
     padding: 24px 0 0;
     border-top: 1px solid rgba($black, 0.08);
@@ -727,7 +729,6 @@ $mk-bg: $snow; // #f9fafc
   &__logo {
     height: 40px;
     width: auto;
-    flex: none;
   }
 
   &__detail {
