@@ -17,6 +17,9 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @percentage = (@goal.progress_amount_cents.to_f / @goal.amount_cents) if @goal.present?
 
+    @delivery_reason = "are a member of an organization on HCB."
+    @unsubscribe_link = settings_notifications_url
+
     mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
   end
 
@@ -28,6 +31,9 @@ class EventMailer < ApplicationMailer
     return if @emails.none?
 
     @total = @follows.length
+
+    @delivery_reason = "are a member of an organization on HCB."
+    @unsubscribe_link = settings_notifications_url
 
     mail to: @emails, subject: "#{@event.name} got #{@total} #{"follower".pluralize(@total)} this past month"
   end

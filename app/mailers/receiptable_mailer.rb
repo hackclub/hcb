@@ -16,6 +16,8 @@ class ReceiptableMailer < ApplicationMailer
 
     @show_org = @user.events.size > 1
 
+    @delivery_reason = "spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}."
+
     mail
   end
 
