@@ -733,7 +733,7 @@ GEM
       execjs
       railties (>= 3.2)
       tilt
-    react_on_rails (16.7.0.rc.0)
+    react_on_rails (17.0.0.rc.1)
       addressable
       connection_pool
       execjs (~> 2.5)
@@ -827,7 +827,7 @@ GEM
       nokogiri (>= 1.12.0)
     securerandom (0.4.1)
     semantic_range (3.1.1)
-    shakapacker (10.1.0.rc.1)
+    shakapacker (10.1.0)
       activesupport (>= 5.2)
       package_json
       rack-proxy (>= 0.6.1)
@@ -1082,7 +1082,7 @@ DEPENDENCIES
   rack-timeout
   rails (~> 8.1)
   react-rails
-  react_on_rails (= 16.7.0.rc.0)
+  react_on_rails (= 17.0.0.rc.1)
   redcarpet
   redis (~> 5.4)
   relaxed-rubocop
@@ -1098,7 +1098,7 @@ DEPENDENCIES
   ruby-limiter
   rubyzip (>= 2.3.0, < 3.0)
   safely_block
-  shakapacker (= 10.1.0.rc.1)
+  shakapacker (= 10.1.0)
   sidekiq (~> 7.3.8)
   sidekiq-cron (~> 2.3)
   simplecov
