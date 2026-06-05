@@ -92,11 +92,8 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).not_to include("Funders on HCB")
     end
 
-    # The section's only card is the Ghostty/Mitchell quote, so it needs the Ghostty flag too
-    # (otherwise it would render with no cards).
-    it "appears once the testimonials and Ghostty flags are enabled" do
+    it "appears once the testimonials flag is enabled" do
       Flipper.enable(MarketingController::TESTIMONIALS_FLAG)
-      Flipper.enable(MarketingController::GHOSTTY_FLAG)
 
       get funders_path
 
@@ -105,18 +102,9 @@ RSpec.describe "Funders landing page", type: :request do
     end
   end
 
-  # All Ghostty content (the "Where it lands" tile and the Mitchell testimonial) is gated by
-  # :funders_landing_ghostty so it can be hidden in a single switch.
+  # The "Where it lands" Ghostty tile is always shown.
   describe "Ghostty content" do
-    it "is hidden by default" do
-      get funders_path
-
-      expect(response.body).not_to include("ghostty.org")
-    end
-
-    it "shows the Ghostty tile once :funders_landing_ghostty is enabled" do
-      Flipper.enable(MarketingController::GHOSTTY_FLAG)
-
+    it "shows the Ghostty tile" do
       get funders_path
 
       expect(response.body).to include("ghostty.org")
