@@ -202,11 +202,11 @@ module UsersHelper
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
 
-      aria_label = [aria_label, "Right click for admin tools"].compact.join(" | ")
+      aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
       # Menu content items
       menu_items = safe_join([
