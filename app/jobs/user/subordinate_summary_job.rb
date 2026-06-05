@@ -14,14 +14,6 @@ class User
         "malted",
         "jared",
         {
-          "graham": [
-            "fayd",
-            "marios",
-            "shubham",
-            "cheru",
-            "josias",
-            "usr_Jptmoo" # Shubham Patil
-          ],
           "melanie": [
             "dylan",
             "kris",
