@@ -42,9 +42,6 @@ module Reimbursement
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
-    def team_member?
-      record.event&.users&.include?(user)
-    end
 
     def creator?
       record.report.user == user
