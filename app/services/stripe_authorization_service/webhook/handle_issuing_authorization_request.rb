@@ -57,13 +57,13 @@ module StripeAuthorizationService
       def approve?
         return decline_with_reason!("event_frozen") if event.financially_frozen?
 
-        if forbidden_merchant? && !card.user&.admin?
+        if forbidden_merchant? && !card.user&.admin? && !Flipper.enabled?(:allowlist_for_blocked_merchants, card.user)
           AdminMailer
             .with(stripe_card: card, merchant_category:)
             .blocked_authorization
             .deliver_later
 
-          return decline_with_reason!("merchant_not_allowed")
+          return decline_with_reason!("merchant_not_allowed_globally")
         end
 
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?

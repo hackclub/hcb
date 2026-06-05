@@ -254,7 +254,7 @@ class User < ApplicationRecord
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
     end
 
-    if phone_number_previously_changed? && phone_number.present?
+    if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
       User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
@@ -374,7 +374,7 @@ class User < ApplicationRecord
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
-    user_sessions.destroy_all
+    user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
     # Invalidate all API tokens
     api_tokens.accessible.update_all(revoked_at: Time.current)
   end

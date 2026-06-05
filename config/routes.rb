@@ -450,7 +450,6 @@ Rails.application.routes.draw do
       post "approve"
       post "reject"
       post "stop"
-      post "reissue"
     end
   end
 
@@ -494,7 +493,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update] do
+  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     post "mark_fulfilled"
     post "reject"
     post "cancel"
@@ -628,6 +627,11 @@ Rails.application.routes.draw do
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
+
+  # Marketing landing pages. Public, server-rendered, largely static. Built so future
+  # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
+  get "for/funders", to: "marketing#funders", as: :funders
+  post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
     collection do
@@ -1055,6 +1059,9 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      post "request_call"
+      post "hide_onboarding_message"
+      get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end
