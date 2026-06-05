@@ -102,7 +102,7 @@
     </div>
   </div>
 
-  <%= render "transfers/domestic_wire_warning" %>
+  <%= render "transfers/domestic_wire_warning", event: @event %>
 
   <button type="submit" <%= "disabled" if disabled %> :disabled="country === 'US'" class="btn !bg-[#9FE870] !text-[#163300] w-full">
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise

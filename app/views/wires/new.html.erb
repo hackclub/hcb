@@ -142,7 +142,7 @@
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
 
-    <%= render "transfers/domestic_wire_warning" %>
+    <%= render "transfers/domestic_wire_warning", event: @event %>
 
     <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="<%= disabled ? 'true' : 'false' %> || country === 'US'">
       Send wire

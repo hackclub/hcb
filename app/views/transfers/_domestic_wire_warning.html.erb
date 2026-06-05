@@ -1,3 +1,5 @@
+<%# locals: (event:) %>
+
 <div x-show="country === 'US'" style="display:none">
   <%= render "application/callout", type: "error", class: "my-2", title: "Use ACH for domestic US transfers" do %>
     <p class="mt0 mb0">Use ACH transfers to send money within the US. They're the standard way to move money and arrive the same day!</p>
