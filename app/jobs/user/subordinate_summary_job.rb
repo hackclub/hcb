@@ -11,7 +11,6 @@ class User
       "zach": [
         "dev",
         "alexren",
-        "malted",
         "jared",
         {
           "melanie": [
