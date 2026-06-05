@@ -20,7 +20,7 @@ class User
             "dawn",
             {
               "gary": [
-                "ian", "sam", "manu", "ruien",
+                "ian", "sam", "manu", "ruien", "luke", "samuelf",
                 "usr_73tAe4" # Albert
               ],
               "daisy": [
