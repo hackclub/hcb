@@ -24,7 +24,7 @@ class User
                 "usr_73tAe4" # Albert
               ],
               "daisy": [
-                "leo", "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
+                "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
                 "usr_MVt1m1", # Alex DeForrest
                 "usr_let591", # Alex Luo
               ],
