@@ -19,7 +19,8 @@ class User
             "dawn",
             {
               "gary": [
-                "ian", "manu", "ruien", "luke", "samuelf",
+                "manu", "ruien", "luke", "samuelf",
+                "usr_BetQLy", # Ian
                 "usr_Jptm3Z", # Sam Poder
                 "usr_73tAe4" # Albert
               ],
