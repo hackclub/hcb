@@ -14,6 +14,7 @@ class User
         "jared",
         {
           "melanie": [
+            "sierra",
             "kris",
             "dawn",
             {
