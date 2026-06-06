@@ -191,7 +191,7 @@ class Event
     end
 
     memo_wise def intra_organization_disbursement_ids
-      event_ids = events.map(&:id)
+      event_ids = events.ids
 
       disbursement_ids = transactions
                          .joins(:category_mapping)
@@ -210,7 +210,7 @@ class Event
     def transactions
       CanonicalTransaction
         .joins(:canonical_event_mapping)
-        .where(canonical_event_mapping: { event_id: events.map(&:id), subledger_id: nil })
+        .where(canonical_event_mapping: { event_id: events.ids, subledger_id: nil })
         .where("date between ? AND ?", start_date, end_date)
         .includes(:local_hcb_code)
         .strict_loading
