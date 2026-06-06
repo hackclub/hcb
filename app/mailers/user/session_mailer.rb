@@ -9,12 +9,6 @@ class User
       mail to: @user.email, subject: "New login to your HCB account"
     end
 
-    def first_login(user:)
-      @user = user
-
-      mail to: @user.email, subject: "Welcome to HCB!"
-    end
-
   end
 
 end

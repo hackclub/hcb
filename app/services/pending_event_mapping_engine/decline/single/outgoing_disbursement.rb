@@ -19,7 +19,7 @@ module PendingEventMappingEngine
         private
 
         def disbursement
-          @canonical_pending_transaction.local_hcb_code.disbursement
+          @canonical_pending_transaction.local_hcb_code.outgoing_disbursement
         end
 
       end

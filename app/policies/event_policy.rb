@@ -59,6 +59,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_member?
   end
 
+  def permit_merchant?
+    admin_or_member?
+  end
+
   def update?
     admin_or_manager?
   end
@@ -140,7 +144,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def new_transfer?
-    admin_or_manager? && !record.demo_mode?
+    auditor_or_reader? && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -203,8 +207,12 @@ class EventPolicy < ApplicationPolicy
     show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
+  def donation_page?
+    record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
+  end
+
   def invoices?
-    show? && record.approved? && record.plan.invoices_enabled?
+    show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
   def account_number?
@@ -216,7 +224,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def receive_grant?
-    record.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def audit_log?
@@ -246,6 +254,12 @@ class EventPolicy < ApplicationPolicy
   def toggle_scoped_tag?
     admin_or_manager?
   end
+
+  def request_call?
+    signee?
+  end
+
+  alias hide_onboarding_message? request_call?
 
   private
 
@@ -279,6 +293,10 @@ class EventPolicy < ApplicationPolicy
 
   def manager?
     OrganizerPosition.role_at_least?(user, record, :manager)
+  end
+
+  def signee?
+    OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 
   def admin_or_manager?

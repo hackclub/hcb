@@ -10,6 +10,10 @@ on:
   pull_request_review:
     types: [submitted]
 
+# Default to no permissions at the workflow level. The job below grants
+# itself exactly what the Claude Code action needs.
+permissions: {}
+
 jobs:
   claude:
     if: |
@@ -26,7 +30,7 @@ jobs:
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 

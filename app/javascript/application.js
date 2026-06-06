@@ -48,12 +48,14 @@ import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'
 import wire_form from './datas/wire_form'
 import check_form from './datas/check_form'
+import application_project_info_form from './datas/application_project_info_form'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
 Alpine.data('ach', ach_form)
 Alpine.data('wire', wire_form)
 Alpine.data('check', check_form)
+Alpine.data('application_project_info', application_project_info_form)
 
 Alpine.start()
 

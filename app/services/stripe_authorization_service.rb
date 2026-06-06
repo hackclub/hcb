@@ -12,7 +12,15 @@ module StripeAuthorizationService
         "government_owned_lotteries_non_us_region",
         "government_owned_lotteries_us_region_only",
         "wires_money_orders",
-        "non_fi_money_orders"
+        "non_fi_money_orders",
+        "non_fi_stored_value_card_purchase_load"
+      ]
+    ).freeze
+
+  FORBIDDEN_MERCHANT_NETWORK_IDS =
+    Set.new(
+      [
+        "8203300025" # HEPTA PAY LTD (primary used for fraud; https://hcb.hackclub.com/blazer/queries/1118-hepta-pay-ltd-card-transactions)
       ]
     ).freeze
 end

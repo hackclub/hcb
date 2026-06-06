@@ -59,7 +59,7 @@ module Twilio
     private
 
     def send_reply(message)
-      TwilioMessageService::Send.new(@user, message).run!
+      TwilioMessageService::Send.new(@user, message, phone_number: @params["From"]).run!
     end
 
     def find_user

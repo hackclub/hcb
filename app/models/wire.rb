@@ -25,6 +25,7 @@
 #  recipient_information     :jsonb
 #  recipient_name            :string           not null
 #  return_reason             :text
+#  send_email_notification   :boolean          default(FALSE)
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -46,6 +47,7 @@
 #
 class Wire < ApplicationRecord
   has_paper_trail
+  include HasPaperTrailHelpers
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
@@ -59,6 +61,9 @@ class Wire < ApplicationRecord
   include AASM
   include Freezable
   include Payment
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :wir
@@ -90,7 +95,7 @@ class Wire < ApplicationRecord
   end
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
@@ -107,6 +112,9 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
+      after_commit do
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
+      end
       transitions from: :pending, to: :approved
     end
 
@@ -163,18 +171,11 @@ class Wire < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted? # don't access local_hcb_code before saving.
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def usd_amount_cents
@@ -243,10 +244,10 @@ class Wire < ApplicationRecord
     save!
   end
 
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
+  def column_wire_details
+    return nil unless column_id.present?
 
-    user_id && User.find(user_id)
+    @column_wire_details ||= ColumnService.international_wire(column_id)
   end
 
 end

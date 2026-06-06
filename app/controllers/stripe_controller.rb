@@ -100,11 +100,13 @@ class StripeController < ActionController::Base
     invoice = Invoice.find_by(stripe_invoice_id: stripe_invoice[:id])
     return unless invoice
 
-    safely do
-      StripeService::Charge.update(
-        stripe_invoice[:charge],
-        { metadata: { event_id: invoice.event.id } },
-      )
+    if stripe_invoice[:charge].present?
+      safely do
+        StripeService::Charge.update(
+          stripe_invoice[:charge],
+          { metadata: { event_id: invoice.event.id } },
+        )
+      end
     end
 
     # Mark invoice as paid

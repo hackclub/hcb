@@ -3,7 +3,7 @@
 module Reimbursement
   class ReportPolicy < ApplicationPolicy
     def new?
-      admin || team_member
+      admin || reader
     end
 
     def create?
@@ -11,7 +11,7 @@ module Reimbursement
     end
 
     def show?
-      admin || team_member || creator || auditor
+      admin || reader || creator || auditor
     end
 
     def wise_transfer_quote?
@@ -28,6 +28,23 @@ module Reimbursement
 
     def update?
       admin || manager || (creator && open)
+    end
+
+    # Authorization for placing a report on `record.event` — either changing
+    # the event of an existing report (ReportsController#update) or building
+    # a fresh report on a destination event as part of moving an expense
+    # (ExpensesController#update). Callers must ensure `record.event` has
+    # been set to the destination event before authorizing (ActiveRecord
+    # FK-cache reset on `event_id=` takes care of this for the reports
+    # path).
+    #
+    # TODO: currently requires manager because changing the event carries
+    # cascade side-effects (expenses reset to pending, stale approved_by_id
+    # on each expense, stale reviewer_id, etc.). The intended long-term
+    # behavior is to allow members to change the event provided approvals
+    # the destination event's managers wouldn't have granted are cleared.
+    def change_event?
+      admin || manager
     end
 
     def submit?
@@ -59,7 +76,7 @@ module Reimbursement
     end
 
     def update_currency?
-      (admin || creator) && open && record.mismatched_currency?
+      (admin || manager || creator) && open && record.mismatched_currency?
     end
 
     def admin_approve?
@@ -89,11 +106,11 @@ module Reimbursement
     end
 
     def manager
-      record.event && OrganizerPosition.find_by(user:, event: record.event)&.manager?
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
-    def team_member
-      record.event&.users&.include?(user)
+    def reader
+      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
     end
 
     def creator

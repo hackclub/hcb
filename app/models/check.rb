@@ -5,7 +5,7 @@
 # Table name: checks
 #
 #  id                     :bigint           not null, primary key
-#  aasm_state             :string
+#  aasm_state             :string           not null
 #  amount                 :integer
 #  approved_at            :datetime
 #  check_number           :integer
@@ -45,6 +45,9 @@ class Check < ApplicationRecord
 
   has_paper_trail skip: [:description] # ciphertext columns will still be tracked
   has_encrypted :description
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :chk
@@ -180,13 +183,8 @@ class Check < ApplicationRecord
     lob_address.try(:name).try(:upcase)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)

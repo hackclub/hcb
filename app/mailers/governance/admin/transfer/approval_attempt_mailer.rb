@@ -7,6 +7,7 @@ module Governance
         REPORT_RECIPIENTS = [
           "usr_8YEt6d", # Gary
           "usr_wVtRav", # Mel
+          "usr_MVtap3", # Lucy
         ].freeze
 
         before_action :set_approval_attempt

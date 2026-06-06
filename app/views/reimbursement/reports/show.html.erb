@@ -46,6 +46,14 @@
                       'aria-label': "Delete this report.",
                       disabled: !policy(@report).destroy? %>
     <% end %>
+    <% if @report.card_grant.present? %>
+      <%= pop_icon_to "card",
+                      @report.card_grant,
+                      icon_size: 26,
+                      class: "tooltipped tooltipped--w bg-info",
+                      style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
+                      'aria-label': "View the associated card grant." %>
+    <% end %>
     <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
       <%= pop_icon_to "settings",
                       "#",
@@ -99,7 +107,7 @@
 
 <% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
   <article class="card mt2 pt0">
-    <%= sanitize(MarkdownService.instance.renderer.render(@report.event.public_reimbursement_page_message), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(@report.event.public_reimbursement_page_message) %>
     <section class="card__banner card__banner--bottom card__darker pt2 pb2">
       <p class="muted mt0 mb0">
         Information from <%= @report.event.name %>
@@ -110,7 +118,7 @@
 
 <% if @report.invite_message.presence %>
   <article class="card mt2 pt0">
-    <%= sanitize(MarkdownService.instance.renderer.render(@report.invite_message), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(@report.invite_message) %>
     <section class="card__banner card__banner--bottom card__darker pt2 pb2">
       <p class="muted mt0 mb0">
         Message from <%= @report.event.name %>

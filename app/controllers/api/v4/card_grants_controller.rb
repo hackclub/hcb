@@ -28,13 +28,15 @@ module Api
 
           if found_user.nil?
             skip_authorization
-            return render json: { error: "invalid_user", messages: "User with email '#{params[:sent_by_email]}' not found" }, status: :bad_request
+            return render json: { error: "invalid_user", messages: ["User with email '#{params[:sent_by_email]}' not found"] }, status: :bad_request
           end
 
           sent_by = found_user
         end
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:))
+        expiration_at = params["expiration_at"]&.to_date
+
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:, expiration_at:))
 
         authorize @card_grant
 
@@ -78,27 +80,21 @@ module Api
       def topup
         authorize @card_grant
 
-        begin
-          @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
+        @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
       end
 
       def withdraw
         authorize @card_grant
 
-        begin
-          @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
+        @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
       end
 
       def update
         authorize @card_grant
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions))
+        expiration_at = params["expiration_at"]&.to_date
+
+        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions).merge(expiration_at:))
 
         render :show
       end
@@ -106,12 +102,7 @@ module Api
       def cancel
         authorize @card_grant
 
-        begin
-          @card_grant.cancel!(current_user)
-        rescue ArgumentError => e
-          return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
-        end
-
+        @card_grant.cancel!(current_user)
         render :show
       end
 
@@ -119,13 +110,7 @@ module Api
         authorize @card_grant
 
         @card_grant.create_stripe_card(request.remote_ip)
-
         render :show
-
-      rescue Stripe::InvalidRequestError => e
-        return render json: { error: "invalid_operation", messages: ["This card could not be activated: #{e.message}"] }, status: :bad_request
-      rescue Errors::StripeInvalidNameError => e
-        return render json: { error: "invalid_operation", messages: [e.message] }, status: :bad_request
       end
 
       def transactions
@@ -133,8 +118,7 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       private

@@ -140,12 +140,10 @@ West Hollywood, CA 90069</pre>
 <% end %>
 
 <% if @emburse_transactions.any? %>
-</main>
-<main class="container">
-  <h2 class="mt3 mb2">
-    Emburse card transactions
-  </h2>
-  <div class="table-container">
+<h2 class="mt3 mb2">
+  Emburse card transactions
+</h2>
+<div class="table-container">
   <table>
     <thead>
       <tr>
@@ -165,5 +163,5 @@ West Hollywood, CA 90069</pre>
                locals: { show_running_sum: true, show_card: true } %>
     </tbody>
   </table>
-  </div>
+</div>
 <% end %>

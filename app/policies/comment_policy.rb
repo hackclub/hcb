@@ -42,21 +42,25 @@ class CommentPolicy < ApplicationPolicy
     user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
-  private
 
   def users
     user_list = []
 
     if record.commentable.respond_to?(:events)
       user_list = record.commentable.events.collect(&:users).flatten
+      user_list = record.commentable.events.collect(&:ancestor_users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
       user_list = [record.commentable.user]
 
       unless record.commentable.event&.users&.empty?
         user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
+        user_list += record.commentable.event&.ancestor_users || []
       end
+    elsif record.commentable.is_a?(Disbursement)
+      # TODO: possibly replace this by adding #events to Disbursement?
+      user_list = record.commentable.source_event.users + record.commentable.destination_event.users
     elsif record.commentable.is_a?(Event)
-      user_list = record.commentable.users
+      user_list = []
     else
       user_list = record.commentable.event.users
     end

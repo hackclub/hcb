@@ -14,9 +14,13 @@
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
       withdrew <%= render_money hcb_code.stripe_atm_fee ? hcb_code.amount_cents.abs - hcb_code.stripe_atm_fee : hcb_code.amount_cents.abs %> from <i><%= humanized_merchant_name(hcb_code.stripe_merchant) %></i> for <%= link_to hcb_code.event&.name, hcb_code.event %>
     <% end %>
+  <% elsif hcb_code.event.present? %>
+    <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
+      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %> for <%= link_to hcb_code.event.name, hcb_code.event %>
+    <% end %>
   <% else %>
     <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: hcb_code_path(hcb_code) } do %>
-      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %> for <%= link_to hcb_code.event&.name, hcb_code.event %>
+      spent <%= render_money hcb_code.amount_cents.abs %> on <%= link_to hcb_code.memo, hcb_code_path(hcb_code) %>
     <% end %>
   <% end %>
 <% else %>

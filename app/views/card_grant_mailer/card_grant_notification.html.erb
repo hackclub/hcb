@@ -2,7 +2,7 @@ You've been sent a <%= @card_grant.amount.format %> grant from <%= @card_grant.e
 
 <br>
 <% if @custom_invite_message.present? %>
-  <%== MarkdownService.instance.renderer.render @custom_invite_message %>
+  <%= MarkdownService.instance.render @custom_invite_message %>
 <% else %>
   <br>
 <% end %>

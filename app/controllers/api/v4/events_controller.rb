@@ -22,13 +22,6 @@ module Api
         parent_event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
         authorize parent_event, :create_sub_organization?
 
-        if params[:email].blank? || params[:name].blank?
-          messages = []
-          messages << "Organizer email is required" if params[:email].blank?
-          messages << "Organization name is required" if params[:name].blank?
-          render json: { error: "invalid_operation", messages: }, status: :bad_request and return
-        end
-
         # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
         poc_id = current_user.admin? ? current_user.id : User.system_user.id
 
@@ -62,6 +55,22 @@ module Api
       end
 
       require_oauth2_scope "event_followers", :followers
+
+      def balance_by_date
+        authorize @event, :show_in_v4?
+
+        balance_by_date = Rails.cache.fetch("balance_by_date_#{@event.id}", expires_in: 5.minutes) do
+          ::TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).running_balance_by_date
+        end
+
+        balance_by_date = balance_by_date.dup
+        balance_by_date[Date.today] = @event.balance_v2_cents
+
+        start_date = [@event.created_at.to_date, 1.year.ago.to_date].max
+        @balance_series = balance_by_date.sort.filter_map { |date, amount| { date: date.to_s, amount: } if date >= start_date }
+      end
+
+      require_oauth2_scope "organizations:read", :balance_by_date
 
       private
 

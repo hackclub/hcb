@@ -1,0 +1,10 @@
+<tr>
+  <td><%= item.hashid %></td>
+  <td><%= item.date.strftime("%b %e, %Y") %></td>
+  <td><%= truncate(item.memo, length: 80) %></td>
+  <td class="nowrap"><%= item.amount.format %></td>
+  <td><%= item.short_code %></td>
+  <td>
+    <%= link_to "View", ledger_item_path(item) %>
+  </td>
+</tr>

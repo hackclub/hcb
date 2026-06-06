@@ -80,27 +80,21 @@
   </div>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
-  <div class="field field--fileupload mb1 mt1" data-controller="file-drop form" data-file-drop-title-value="Drop to add a receipt.">
-    <%= form.label :file, "Choose file", class: "field--fileupload__label", data: {
-          action: "
-        dragover@window->file-drop#dragover
-        drop@window->file-drop#drop
-        dragenter@window->file-drop#dragenter
-        dragleave@window->file-drop#dragleave
-      "
-        } %>
+  <div
+    data-controller="file-upload file-drop form"
+    data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
     <%= form.file_field :file,
         multiple: true,
         include_hidden: false,
         required: false,
         accept: "image/*,image/heic,.pdf",
-        style: "margin: 8px 0px",
-        class: "field--fileupload__field",
         data: {
-          "file-drop-target" => "fileInput"
+          "file-drop-target"   => "fileInput",
+          "file-upload-target" => "input"
         },
         disabled: %>
-    <%= inline_icon "view-close", size: 24, class: "muted", "data-behavior": "clear_input" %>
+    <button data-file-upload-target="preview" type="button"></button>
+    <div data-file-upload-target="clear"></div>
   </div>
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
 

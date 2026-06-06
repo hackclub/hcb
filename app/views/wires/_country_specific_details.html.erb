@@ -5,19 +5,19 @@
     <div>
       <% Wire.information_required_for(country.nil? ? nil : country[0]).each do |field| %>
         <% unless (field[:key]).in?(excluded_fields) %>
-        <div class="field">
-          <%= form.label field[:key], field[:label], class: "mb1" %>
-          <% if field[:type] == :select %>
-            <%= form.select field[:key], field[:options], required:, disabled: "", prompt: "Please select..." %>
-          <% else %>
-            <%= form.send(field[:type], field[:key], required:) %>
-          <% end %>
-          <div class="muted mt1">
+        <div class="flex flex-col mt-2">
+          <%= form.label field[:key], field[:label] %>
+          <div class="muted mb-1">
             <%= field[:description] %>
             <% if field[:refer_to] %>
               <%= link_to "Refer to this document", field[:refer_to], target: "_blank" %>
             <% end %>
           </div>
+          <% if field[:type] == :select %>
+            <%= form.select field[:key], field[:options], required:, disabled: "", prompt: "Please select..." %>
+          <% else %>
+            <%= form.send(field[:type], field[:key], required:, class: "!max-w-full") %>
+          <% end %>
         </div>
         <% end %>
       <% end %>

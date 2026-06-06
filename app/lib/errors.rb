@@ -16,4 +16,7 @@ module Errors
   class StripeInvalidNameError < StandardError
   end
 
+  class TwilioAbuseError < StandardError
+  end
+
 end
