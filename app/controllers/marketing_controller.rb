@@ -28,17 +28,12 @@ class MarketingController < ApplicationController
   # cleared to show.
   ARGOSY_FLAG = :funders_landing_argosy
 
-  # Gates all Ghostty content on the page (the "Where it lands" tile and the Mitchell
-  # Hashimoto testimonial), so it can be hidden in one switch.
-  GHOSTTY_FLAG = :funders_landing_ghostty
-
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
     @show_argosy = Flipper.enabled?(ARGOSY_FLAG, current_user)
-    @show_ghostty = Flipper.enabled?(GHOSTTY_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 

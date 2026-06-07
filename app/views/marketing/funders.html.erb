@@ -385,15 +385,13 @@
       <h2 class="mk-section__title">Capital that reaches real builders.</h2>
     </div>
     <div class="mk-photos">
-      <% if @show_ghostty %>
-        <a class="mk-photo mk-photo--logo" href="https://ghostty.org" target="_blank" rel="noopener" aria-label="Ghostty (opens in a new tab)">
-          <%= image_tag "https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg",
-                class: "mk-photo__img", alt: "", loading: "lazy", decoding: "async" %>
-          <span class="mk-photo__cap"><strong>Ghostty</strong>A fast, open-source terminal by
-            HashiCorp co-founder Mitchell Hashimoto, sustained by tax-deductible community
-            donations.</span>
-        </a>
-      <% end %>
+      <a class="mk-photo mk-photo--logo" href="https://ghostty.org" target="_blank" rel="noopener" aria-label="Ghostty (opens in a new tab)">
+        <%= image_tag "https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg",
+              class: "mk-photo__img", alt: "", loading: "lazy", decoding: "async" %>
+        <span class="mk-photo__cap"><strong>Ghostty</strong>A fast, open-source terminal by
+          HashiCorp co-founder Mitchell Hashimoto, sustained by tax-deductible community
+          donations.</span>
+      </a>
       <a class="mk-photo" href="https://miamihackweek.com" target="_blank" rel="noopener" aria-label="Miami Hack Week (opens in a new tab)">
         <%= image_tag "https://cdn.hackclub.com/019e8700-6497-7abf-984c-8536bf542151/image.png",
               class: "mk-photo__img", alt: "Founders and engineers at Miami Hack Week",
@@ -415,11 +413,8 @@
 
 <%# ============================ CASE STUDIES / TESTIMONIALS ============================ %>
 <%# "Funders on HCB" — currently a single testimonial: the Ghostty/Mitchell quote (pending
-    his sign-off). Gated behind BOTH :funders_landing_testimonials (the section's rollout
-    flag) AND :funders_landing_ghostty (which hides all Ghostty content). Since the Ghostty
-    quote is the only card, the section has nothing to show without it. When a non-Ghostty
-    testimonial is added, drop `&& @show_ghostty` here and gate just the Ghostty card. %>
-<% if @show_testimonials && @show_ghostty %>
+    his sign-off). Gated behind :funders_landing_testimonials (the section's rollout flag). %>
+<% if @show_testimonials %>
   <section class="mk-section mk-section--alt">
     <div class="mk-container">
       <div class="mk-section__head">
