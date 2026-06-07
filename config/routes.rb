@@ -628,6 +628,11 @@ Rails.application.routes.draw do
   get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
 
+  # Marketing landing pages. Public, server-rendered, largely static. Built so future
+  # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
+  get "for/funders", to: "marketing#funders", as: :funders
+  post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
+
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
     collection do
       get "export"
@@ -693,7 +698,7 @@ Rails.application.routes.draw do
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
-            resources :comments, only: [:index, :create]
+            resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
 
             member do
               get "memo_suggestions"
@@ -758,6 +763,8 @@ Rails.application.routes.draw do
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
+
+        resources :comments, only: [:index, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
