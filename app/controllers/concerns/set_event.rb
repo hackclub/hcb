@@ -25,6 +25,10 @@ module SetEvent
           helpers.current_page?(item_path)
         end
 
+        if @nav_item.nil?
+          raise ActionController::RoutingError.new("Not Found")
+        end
+
         if current_user.events.one?
           redirect_to instance_exec(current_user.events.first.slug, &@nav_item[:path_proc])
           return
