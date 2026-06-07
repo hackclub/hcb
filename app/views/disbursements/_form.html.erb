@@ -14,7 +14,7 @@
         <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
       </div>
 
-      <%= render "events/transfer_attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
   </div>
 
@@ -52,9 +52,10 @@
            form.select(
              field,
              options_for_select(
-               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] }
+               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+               "internal-transfer"
              ),
-             include_blank: "None",
+             include_blank: "None"
            )
          } %>
 

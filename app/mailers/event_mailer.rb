@@ -2,13 +2,14 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action { @emails = @event.organizer_contact_emails }
+  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
-
     return if @donations.none?
+
+    @emails = @event.organizer_contact_emails { |users| users.where(monthly_donation_summary: true) }
     return if @emails.none?
 
     @total = @donations.sum(:amount)
@@ -21,8 +22,9 @@ class EventMailer < ApplicationMailer
 
   def monthly_follower_summary
     @follows = @event.event_follows.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
-
     return if @follows.none?
+
+    @emails = @event.organizer_contact_emails { |users| users.where(monthly_follower_summary: true) }
     return if @emails.none?
 
     @total = @follows.length
@@ -46,6 +48,20 @@ class EventMailer < ApplicationMailer
     @balance = params.fetch(:balance)
 
     mail(to: @emails, subject: "#{@event.name} has a negative balance")
+  end
+
+  def user_call_requested
+    @user = params[:user]
+
+    mail to: @user.email_address_with_name,
+         subject: "We've received your request for an onboarding call for #{@event.name}"
+  end
+
+  def ops_call_requested
+    @requesting_user = params[:requesting_user]
+
+    mail to: OPERATIONS_EMAIL,
+         subject: "#{@requesting_user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
   end
 
   def transparency_mode_enabled
@@ -74,6 +90,10 @@ class EventMailer < ApplicationMailer
   end
 
   private
+
+  def set_emails
+    @emails = @event.organizer_contact_emails
+  end
 
   def set_whodunnit
     @whodunnit = params[:whodunnit]

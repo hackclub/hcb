@@ -71,11 +71,11 @@
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.outgoing_disbursement.card_grant), data: card_grant_popover_data(pt.local_hcb_code.outgoing_disbursement.card_grant, hcb_code: pt.local_hcb_code, event: event, state_title: transaction_memo(pt))) %>
               <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: hcb_code_popover_data(pt.local_hcb_code, event: event, transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance) do %>
-                  <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 <% end %>
               <% else %>
                 <span>
-                  <%= render "hcb_codes/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
                 </span>
               <% end %>
             </span>

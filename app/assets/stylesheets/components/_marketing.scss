@@ -1,0 +1,1464 @@
+// Marketing landing pages (/for/*). Refined, editorial take on HCB's design system:
+// snow base, HCB red accent, system-ui type, the signature border-shadow surfaces —
+// elevated with mono eyebrows, generous space, a dark contrast band, and load reveals.
+// Shared by every marketing page; page-specific styling stays prefixed `mk-`.
+
+$mk-ink: $black; // #1f2d3d
+$mk-bg: $snow; // #f9fafc
+
+// Hack Club's brand typeface, served from the HC CDN (same source the app bundle uses).
+// Used for marketing headings; body stays on the system stack for readability.
+@font-face {
+  font-family: 'Phantom Sans';
+  src:
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff2')
+      format('woff2'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff')
+      format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Phantom Sans';
+  src:
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2')
+      format('woff2'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff')
+      format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+// ---------------------------------------------------------------- base / layout
+.marketing {
+  background: $mk-bg;
+  color: $mk-ink;
+}
+
+// Resets wrapped in :where() so their specificity is element-only. Otherwise
+// `.marketing p`/`.marketing h2` (0,1,1) silently beat single-class component margins
+// like `.mk-cta__brandline` or `.marketing-form__hint` (0,1,0), eating their spacing.
+:where(.marketing) {
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: $mk-ink;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.marketing__main {
+  flex: 1 1 auto;
+}
+
+// Consistent, visible focus ring on every marketing link (nav, footer, table, badges).
+.marketing a:focus-visible {
+  outline: 2px solid $red;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.mk-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mk-narrow {
+  max-width: 760px;
+}
+
+.mk-section {
+  padding: clamp(56px, 7.5vw, 104px) 0;
+
+  &--alt {
+    background: $snow-dark;
+  }
+}
+
+.mk-section__head {
+  max-width: 640px;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.mk-section__title {
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+  text-wrap: balance;
+}
+
+.mk-lead {
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  line-height: 1.6;
+  color: $slate;
+  text-wrap: pretty;
+
+  // Space stacked lead paragraphs (the global reset zeroes <p> margins).
+  & + & {
+    margin-top: 1em;
+  }
+
+  strong {
+    color: $mk-ink;
+    font-weight: 600;
+  }
+}
+
+.mk-eyebrow {
+  font-family: $mono;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $red;
+  margin-bottom: 14px;
+
+  // Lightened enough to clear AA contrast (≈4.5:1) on the dark band.
+  &--light {
+    color: lighten($red, 22%);
+  }
+}
+
+.mk-br-md {
+  display: none;
+  @media (min-width: 720px) {
+    display: inline;
+  }
+}
+
+.mk-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+// ---------------------------------------------------------------- hero entrance
+// One-time, CSS-only entrance for the hero. Everything below the fold renders
+// immediately (no scroll-reveal) so content is never hidden — robust without JS.
+@keyframes mk-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mk-hero__copy > *,
+  .mk-hero__media {
+    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .mk-hero__copy > * {
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{0.06s * $i};
+      }
+    }
+  }
+
+  .mk-hero__media {
+    animation-delay: 0.2s;
+  }
+}
+
+// ---------------------------------------------------------------- buttons
+.marketing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 0;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    background-color 0.12s ease;
+
+  &--sm {
+    height: 38px;
+    padding: 0 16px;
+    font-size: 0.9375rem;
+  }
+
+  &--lg {
+    height: 52px;
+    padding: 0 26px;
+    font-size: 1.0625rem;
+  }
+
+  &--primary {
+    color: #fff;
+    background-color: $red;
+    background-image: linear-gradient(to bottom, lighten($red, 6%), $red);
+    box-shadow:
+      0 1px 2px rgba($red, 0.4),
+      0 8px 24px -8px rgba($red, 0.5);
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      box-shadow:
+        0 2px 4px rgba($red, 0.4),
+        0 14px 30px -8px rgba($red, 0.55);
+    }
+  }
+
+  &--ghost {
+    color: $mk-ink;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-border-md);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- email form
+.marketing-form {
+  width: 100%;
+
+  &__row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  // `& &__input` (0,2,0) beats the app's global `input[type=…]/textarea` rule (0,1,1),
+  // which otherwise imposes a 6px radius, a border, and a 24rem max-width on our fields.
+  & &__input {
+    flex: 1 1 240px;
+    min-width: 0;
+    max-width: none;
+    height: 52px;
+    padding: 0 22px;
+    font-size: 1.0625rem;
+    color: $mk-ink;
+    background: $white;
+    border: 0;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.12s ease;
+
+    &::placeholder {
+      color: $muted;
+    }
+
+    &:focus {
+      outline: 0;
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
+  }
+
+  &__hint {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: $muted;
+  }
+
+  // Fuller "send a note" variant (final CTA): stacked name + email + message + submit.
+  &--detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .marketing-form__input {
+      flex: none;
+      width: 100%;
+    }
+  }
+
+  & &__textarea {
+    height: auto;
+    min-height: 104px;
+    padding: 14px 22px;
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  &__submit {
+    width: 100%;
+    margin-top: 2px;
+  }
+}
+
+// ---------------------------------------------------------------- nav
+.marketing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba($snow, 0.8);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  box-shadow: inset 0 -1px 0 rgba($black, 0.07);
+
+  &__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+
+    img {
+      display: block;
+    }
+  }
+
+  &__links {
+    display: none;
+    align-items: center;
+    gap: 26px;
+    margin-left: 8px;
+
+    @media (min-width: 860px) {
+      display: flex;
+    }
+
+    a {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: $slate;
+      text-decoration: none;
+      transition: color 0.12s ease;
+
+      &:hover {
+        color: $mk-ink;
+      }
+
+      &[aria-current='page'] {
+        color: $red;
+      }
+    }
+  }
+
+  &__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__login {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $slate;
+    text-decoration: none;
+
+    &:hover {
+      color: $mk-ink;
+    }
+
+    // Save room for the primary CTA on small phones.
+    @media (max-width: 430px) {
+      display: none;
+    }
+  }
+
+  &__dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 38px;
+    padding: 0 14px 0 8px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $mk-ink;
+    text-decoration: none;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.12s ease;
+
+    &:hover {
+      box-shadow: var(--shadow-border-md);
+    }
+
+    img {
+      border-radius: 999px;
+    }
+  }
+
+  &__arrow {
+    color: $muted;
+  }
+}
+
+// ---------------------------------------------------------------- hero
+.mk-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(56px, 9vw, 120px) 0 clamp(40px, 6vw, 72px);
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &__mesh {
+    position: absolute;
+    inset: -20% -10% 0;
+    background:
+      radial-gradient(42% 52% at 14% 6%, rgba($red, 0.12), transparent 70%),
+      radial-gradient(38% 46% at 86% 0%, rgba($blue, 0.1), transparent 70%),
+      radial-gradient(44% 44% at 72% 64%, rgba($cyan, 0.09), transparent 70%);
+  }
+
+  &__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba($black, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba($black, 0.045) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(
+      circle at 50% 0%,
+      #000,
+      transparent 72%
+    );
+    mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
+  }
+
+  &__inner {
+    position: relative;
+    display: grid;
+    gap: clamp(32px, 5vw, 56px);
+    align-items: center;
+
+    @media (min-width: 920px) {
+      grid-template-columns: 1.05fr 0.95fr;
+    }
+  }
+
+  &__copy {
+    min-width: 0;
+  }
+
+  &__media {
+    position: relative;
+    min-width: 0;
+    margin-top: 8px;
+  }
+
+  &__title {
+    font-size: clamp(2.3rem, 5.4vw, 3.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  &__subtitle {
+    margin-top: 22px;
+    max-width: 54ch;
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.65;
+    color: $slate;
+
+    // Inline link (e.g. "Hack Club") reads as text, not a loud CTA: same ink,
+    // a quiet underline, warming to red on hover.
+    a {
+      color: $mk-ink;
+      text-decoration: underline;
+      text-decoration-color: rgba($slate, 0.35);
+      text-underline-offset: 2px;
+      transition:
+        color 0.15s ease,
+        text-decoration-color 0.15s ease;
+
+      &:hover {
+        color: $red;
+        text-decoration-color: $red;
+      }
+    }
+  }
+
+  &__brandline {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__cta {
+    margin-top: 30px;
+    max-width: 520px;
+  }
+}
+
+// ---------------------------------------------------------------- app window mockup
+.mk-window {
+  margin: 0;
+  border-radius: var(--radius-xl);
+  background: $white;
+  overflow: hidden;
+  box-shadow:
+    var(--shadow-border-lg),
+    0 40px 80px -28px rgba($black, 0.25);
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    background: $snow-dark;
+    box-shadow: inset 0 -1px 0 rgba($black, 0.06);
+
+    i {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: $smoke-dark;
+    }
+  }
+
+  &__shot {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+// ---------------------------------------------------------------- product / visibility
+.mk-product__grid {
+  display: grid;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 920px) {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+// Case-study variant: long copy paired with a compact metric card (not a screenshot), so
+// give the copy the wider column and let the card take the narrower one — otherwise the card
+// floats in a too-wide column and the body text is cramped.
+.mk-product--metric .mk-product__grid {
+  @media (min-width: 920px) {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+.mk-product__copy {
+  min-width: 0;
+}
+
+.mk-product__media {
+  min-width: 0;
+}
+
+.mk-ticks {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+
+  li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 12px;
+    color: $slate;
+    line-height: 1.5;
+
+    &::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: $green-dark;
+      font-weight: 600;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- impact photos
+.mk-photos {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.mk-photo {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+
+  &__ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    background: repeating-linear-gradient(
+      45deg,
+      rgba($black, 0.03) 0 12px,
+      rgba($black, 0.05) 12px 24px
+    );
+    color: $muted;
+    font-family: $mono;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  // Real photo: fills the 4:3 frame, cropped to center.
+  &__img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: center;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.15s ease;
+  }
+
+  // Logo variant: a brand mark sits centered and contained on a clean surface
+  // (e.g. Ghostty) instead of being cropped like a photo.
+  &--logo &__img {
+    object-fit: contain;
+    padding: 16%;
+    background: $white;
+  }
+
+  &__cap {
+    font-size: 0.95rem;
+    color: $slate;
+
+    strong {
+      display: block;
+      color: $mk-ink;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+  }
+
+  // Each tile links to the project; lift the frame and warm the name on hover.
+  &:hover &__img,
+  &:focus-visible &__img {
+    box-shadow: var(--shadow-border-md);
+  }
+
+  &:hover &__cap strong,
+  &:focus-visible &__cap strong {
+    color: $red;
+  }
+}
+
+// ---------------------------------------------------------------- case-study metric
+// Sits in the right column of the Argosy case study (reuses .mk-product__grid). Styled to
+// match .mk-case so the page's card surfaces stay consistent.
+.mk-metric {
+  padding: 32px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  &__num {
+    margin: 0;
+    font-size: clamp(3rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: $red; // ties into the HCB accent used on the comparison table column
+  }
+
+  &__label {
+    margin: 12px 0 0;
+    font-size: 1.05rem;
+    color: $mk-ink;
+  }
+
+  &__list {
+    margin: 20px 0 0;
+    padding: 0; // reset default <ul> indent so items align with the number and label
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    color: $slate;
+    font-size: 0.95rem;
+  }
+
+  // Factual attribution footer: foundation logo above, named founder below. Stacked (rather
+  // than logo-left like .mk-case) because a wide wordmark doesn't center cleanly against a
+  // single line of credit text the way a square avatar does.
+  &__source {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 24px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid rgba($black, 0.08);
+  }
+
+  // Links out to the foundation (matches the .mk-photo tiles); shrink-wrap the logo and
+  // soften on hover so it reads as clickable.
+  &__logo-link {
+    display: inline-flex;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.7;
+    }
+  }
+
+  &__logo {
+    height: 40px;
+    width: auto;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: $muted;
+  }
+}
+
+// ---------------------------------------------------------------- stats
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 40px;
+  margin: clamp(36px, 5vw, 60px) 0 0;
+  padding-top: 32px;
+  border-top: 1px solid rgba($black, 0.08);
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &__item {
+    dt {
+      font-size: clamp(1.7rem, 3vw, 2.3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: $mk-ink;
+    }
+
+    dd {
+      margin: 4px 0 0;
+      font-size: 0.95rem;
+      color: $muted;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- pillars
+.mk-pillars {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 620px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 980px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.mk-pillar {
+  padding: 28px 24px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    margin-bottom: 18px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: $slate;
+    line-height: 1.55;
+    font-size: 0.975rem;
+  }
+}
+
+// ---------------------------------------------------------------- dark band / uses
+.mk-dark {
+  background: $dark;
+  color: $snow;
+
+  .mk-section__title {
+    color: $snow;
+  }
+}
+
+.mk-uses {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1000px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.mk-use {
+  padding: 26px 24px;
+  border-radius: var(--radius-xl);
+  background: rgba($white, 0.04);
+  box-shadow: inset 0 0 0 1px rgba($white, 0.08);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  &--wide {
+    box-shadow: inset 0 0 0 1px rgba($red, 0.35); // keep the emphasis ring at all widths
+
+    @media (min-width: 1000px) {
+      grid-column: span 2;
+      background: linear-gradient(120deg, rgba($red, 0.18), rgba($white, 0.04));
+    }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: rgba($white, 0.07);
+    box-shadow: inset 0 0 0 1px rgba($white, 0.16);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    color: $snow;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: rgba($snow, 0.7);
+    line-height: 1.55;
+    font-size: 0.975rem;
+  }
+}
+
+// ---------------------------------------------------------------- comparison
+.mk-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-md);
+  background: $white;
+}
+
+.mk-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.975rem;
+
+  th,
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba($black, 0.07);
+    overflow-wrap: break-word;
+    white-space: normal; // override the app's global `th { white-space: nowrap }`
+    vertical-align: middle;
+    text-align: left;
+  }
+
+  thead th {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: darken($muted, 18%); // clears AA contrast on white
+  }
+
+  tbody th {
+    font-weight: 600;
+    color: $slate;
+  }
+
+  td {
+    color: $slate;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  // Highlighted HCB column: a soft tint + a red accent on the header — no heavy box.
+  &__hcb {
+    background: rgba($red, 0.06);
+    color: $mk-ink;
+
+    strong {
+      color: darken($red, 14%); // deeper red so values clear AA on the tint
+    }
+  }
+
+  thead .mk-table__hcb {
+    color: darken($red, 14%);
+    box-shadow: inset 0 3px 0 $red;
+  }
+
+  // Desktop layout; on mobile the table becomes stacked cards (below). Option values are
+  // centered only on desktop — on mobile they're right-aligned within each card.
+  @media (min-width: 641px) {
+    th:first-child,
+    td:first-child {
+      width: 34%;
+    }
+
+    thead th:not(:first-child),
+    td:not(:first-child) {
+      text-align: center;
+    }
+  }
+}
+
+// Comparison table → stacked cards on small screens (avoids a cramped 4-up / scroll).
+@media (max-width: 640px) {
+  .mk-table-wrap {
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .mk-table,
+  .mk-table tbody,
+  .mk-table tr,
+  .mk-table th,
+  .mk-table td {
+    display: block;
+    width: auto;
+  }
+
+  .mk-table thead {
+    display: none;
+  }
+
+  .mk-table tbody tr {
+    background: $white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    padding: 0 18px 12px;
+    margin-bottom: 14px;
+  }
+
+  .mk-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .mk-table tbody th[scope='row'] {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $mk-ink;
+    padding: 16px 0 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba($black, 0.08);
+  }
+
+  .mk-table tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: right;
+    padding: 7px 0;
+    border-bottom: 0;
+
+    &::before {
+      content: attr(data-label);
+      color: $muted;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+  }
+
+  // Drop the column tint in card mode; keep the HCB value + label emphasis.
+  .mk-table .mk-table__hcb {
+    background: none;
+  }
+
+  .mk-table td.mk-table__hcb::before {
+    color: darken($red, 14%);
+    font-weight: 600;
+  }
+}
+
+// ---------------------------------------------------------------- case studies
+.mk-cases {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 680px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mk-case {
+  margin: 0; // reset default <figure> inline margin (preflight is disabled)
+  padding: 28px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  blockquote {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: $mk-ink;
+  }
+
+  figcaption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  &__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, $snow-dark, $smoke);
+    flex: none;
+    // When it's a real photo (vs. the gradient placeholder), crop to the circle.
+    object-fit: cover;
+    object-position: center;
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    color: $muted;
+  }
+
+  &--placeholder {
+    blockquote {
+      color: $muted;
+    }
+  }
+}
+
+.mk-cases__note {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: $muted;
+  text-align: center;
+}
+
+// ---------------------------------------------------------------- trust
+.mk-trust {
+  text-align: center;
+
+  // Centered body text reads as jagged when line lengths are uneven; balance evens them.
+  .mk-lead {
+    text-wrap: balance;
+  }
+}
+
+.mk-badges {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+
+  li {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: $slate;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: $red;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- how it works
+.mk-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 28px 24px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 620px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1000px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.mk-step {
+  &__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: $red;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: $slate;
+    line-height: 1.55;
+    font-size: 0.975rem;
+  }
+}
+
+// ---------------------------------------------------------------- post-CTA: next steps + team
+.mk-next {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding-top: clamp(32px, 4vw, 44px);
+  border-top: 1px solid rgba($black, 0.08);
+}
+
+.mk-next__steps {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 480px;
+  display: grid;
+  gap: 16px;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    color: $slate;
+    line-height: 1.5;
+  }
+}
+
+.mk-next__num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: $red;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.mk-team {
+  margin: 32px auto 0;
+  text-align: center;
+
+  &__label {
+    font-size: 0.85rem;
+    color: $muted;
+    margin-bottom: 14px;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 22px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      color: $mk-ink;
+    }
+  }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: $snow-dark; // placeholder tint while the image loads
+    box-shadow: var(--shadow-border-xs);
+  }
+}
+
+// ---------------------------------------------------------------- final CTA
+.mk-cta {
+  &__inner {
+    text-align: center;
+  }
+
+  &__title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    margin-bottom: 16px;
+    text-wrap: balance;
+  }
+
+  &__form {
+    margin: 32px auto 0;
+    max-width: 520px;
+    text-align: left;
+  }
+
+  &__brandline {
+    margin-top: clamp(48px, 7vw, 72px);
+    font-family: $mono;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+}
+
+.mk-notice {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  text-align: left;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 20px 24px;
+  border-radius: var(--radius-2xl);
+  background: $white;
+  box-shadow: var(--shadow-border-md);
+  color: $slate;
+  line-height: 1.55;
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    color: $mk-ink;
+  }
+
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    margin-top: 1px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &--success &__icon {
+    color: $green-dark;
+  }
+
+  // The error alert is a compact red-tinted card (vs. the neutral white success card).
+  &--error {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: rgba($red, 0.05);
+    box-shadow: inset 0 0 0 1px rgba($red, 0.2);
+    color: darken($red, 18%);
+
+    .mk-notice__icon {
+      color: $red;
+    }
+
+    strong {
+      color: darken($red, 18%);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- footer
+.marketing-footer {
+  background: $darker;
+  color: rgba($snow, 0.7);
+  padding: clamp(56px, 7vw, 88px) 0 40px;
+
+  &__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    gap: 48px;
+    grid-template-columns: 1fr;
+
+    @media (min-width: 860px) {
+      grid-template-columns: 1.3fr 2fr;
+    }
+  }
+
+  &__brand {
+    max-width: 320px;
+
+    img {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: rgba($snow, 0.6);
+    }
+  }
+
+  &__social {
+    display: flex;
+    gap: 18px;
+    margin-top: 20px;
+
+    a {
+      font-size: 0.9rem;
+      color: rgba($snow, 0.7);
+      text-decoration: none;
+
+      &:hover {
+        color: $snow;
+      }
+    }
+  }
+
+  &__cols {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+
+    @media (min-width: 620px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    h3 {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba($snow, 0.6);
+      margin: 0 0 14px;
+      font-weight: 600;
+    }
+
+    a {
+      display: block;
+      font-size: 0.95rem;
+      color: rgba($snow, 0.72);
+      text-decoration: none;
+      margin-bottom: 10px;
+
+      &:hover {
+        color: $snow;
+      }
+    }
+  }
+
+  &__legal {
+    max-width: 1120px;
+    margin: clamp(40px, 6vw, 64px) auto 0;
+    padding: 28px 24px 0;
+    border-top: 1px solid rgba($snow, 0.1);
+
+    p {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: rgba($snow, 0.6);
+      margin: 0 0 10px;
+      max-width: 760px;
+    }
+  }
+}

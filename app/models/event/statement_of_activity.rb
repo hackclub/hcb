@@ -4,6 +4,14 @@ class Event
   class StatementOfActivity
     prepend MemoWise
 
+    StatementCategory = Data.define(:slug, :label)
+
+    INTRA_ORG_TRANSFER = StatementCategory.new("intra-organization-transfer", "Intra-organization transfers")
+    INTER_ORG_TRANSFER = StatementCategory.new("inter-organization-transfer", "Inter-organization transfers")
+
+    INTERNAL_TRANSFER_SLUG = "internal-transfer"
+    DISBURSEMENT_HCB_CODE_REGEX = /\AHCB-(?:500|550)-(\d+)\z/
+
     attr_reader(:event, :event_group, :include_descendants)
 
     def initialize(
@@ -51,15 +59,27 @@ class Event
     end
 
     memo_wise def transactions_by_category
-      transactions.includes(:category, :local_hcb_code, :event).group_by(&:category).sort_by do |category, _transactions|
+      grouped_transactions.sort_by do |category, _transactions|
         next Float::INFINITY if category.nil? # Put the "Uncategorized" category at the end
 
-        category_totals[category.slug] # I'm using SQL calculated totals since it is faster than Array's sum(&:amount_cents)
+        category_totals[category.slug]
       end.to_h
     end
 
     memo_wise def category_totals
-      transactions.includes(:category).group("category.slug").sum(:amount_cents)
+      totals = transactions.includes(:category).group("category.slug").sum(:amount_cents)
+
+      # Ideally, we'd use the preprocessed transactions categories provided by `grouped_transactions`. However, in this case, it's more efficient to use the raw `transactions` so that we can compute the majority of these category totals in SQL. Then, we use `grouped_transactions` to correct/replace the category totals for Internal Transfers (which get split into Intra/Inter org transfers)
+      if totals.key?(INTERNAL_TRANSFER_SLUG)
+        virtual_totals = grouped_transactions
+                         .slice(INTRA_ORG_TRANSFER, INTER_ORG_TRANSFER)
+                         .transform_keys(&:slug)
+                         .transform_values { |txns| txns.sum(&:amount_cents) }
+
+        totals.except(INTERNAL_TRANSFER_SLUG).merge(virtual_totals)
+      else
+        totals
+      end
     end
 
     memo_wise def net_asset_change
@@ -153,6 +173,39 @@ class Event
     private
 
     attr_reader(:start_date_param, :end_date_param)
+
+    memo_wise def grouped_transactions
+      transactions.includes(:category, :local_hcb_code, :event).group_by do |transaction|
+        reporting_category_for(transaction)
+      end
+    end
+
+    def reporting_category_for(transaction)
+      category = transaction.category
+      return category unless category&.slug == INTERNAL_TRANSFER_SLUG
+
+      disbursement_id = transaction.hcb_code.to_s[DISBURSEMENT_HCB_CODE_REGEX, 1]&.to_i
+      return category unless disbursement_id
+
+      intra_organization_disbursement_ids.include?(disbursement_id) ? INTRA_ORG_TRANSFER : INTER_ORG_TRANSFER
+    end
+
+    memo_wise def intra_organization_disbursement_ids
+      event_ids = events.map(&:id)
+
+      disbursement_ids = transactions
+                         .joins(:category_mapping)
+                         .where(transaction_category_mappings: { category: TransactionCategory.where(slug: INTERNAL_TRANSFER_SLUG) })
+                         .where("canonical_transactions.hcb_code ~ ?", "^HCB-(500|550)-\\d+$")
+                         .pluck(Arel.sql("substring(canonical_transactions.hcb_code from 'HCB-(?:500|550)-(\\d+)')::int"))
+                         .uniq
+
+      return Set.new if disbursement_ids.empty?
+
+      Disbursement.where(id: disbursement_ids, source_event_id: event_ids, event_id: event_ids)
+                  .pluck(:id)
+                  .to_set
+    end
 
     def transactions
       CanonicalTransaction

@@ -104,7 +104,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates_presence_of :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   # Flowchart: https://www.figma.com/board/Hf3wy2qhR8rH9OAYUCrkoQ/Wise-transfer-flowchart?node-id=0-1&t=nBQqJBuASTxeCObj-1
@@ -194,16 +194,16 @@ class WiseTransfer < ApplicationRecord
 
     response = conn.post("/v3/quotes", {
                            sourceCurrency: "USD",
-                           targetCurrency: initial_local_amount.currency_as_string,
-                           targetAmount: initial_local_amount.dollars
+                           targetCurrency: initial_local_amount.currency.to_s,
+                           targetAmount: initial_local_amount.amount
                          })
 
     payment_option = response.body["paymentOptions"].first
-    price_after_all_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    price_after_all_fees = Money.from_amount(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
 
-    pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
-    unadjusted_fee_total = fees.sum { |fee| Money.from_dollars(fee["value"]["amount"], "USD") }
+    pay_in_fee = Money.from_amount(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    unadjusted_fee_total = fees.sum { |fee| Money.from_amount(fee["value"]["amount"], "USD") }
 
     without_fees_usd_amount = price_after_all_fees - unadjusted_fee_total
 

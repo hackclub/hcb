@@ -139,18 +139,12 @@ class AdminController < Admin::BaseController
   end
 
   def event_balance
-    @event = Event.friendly.find(params[:id])
-    @balance = Rails.cache.fetch("admin_event_balance_#{@event.id}", expires_in: 5.minutes) do
-      @event.balance.to_i
-    end
+    @balance = cache_event_metric(:balance) { @event.balance.to_i }
     render :event_balance, layout: false
   end
 
   def event_raised
-    @event = Event.friendly.find(params[:id])
-    @raised = Rails.cache.fetch("admin_event_raised_#{@event.id}", expires_in: 5.minutes) do
-      @event.total_raised.to_i
-    end
+    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
     render :event_raised, layout: false
   end
 
@@ -375,8 +369,8 @@ class AdminController < Admin::BaseController
     relation = relation.mapped_by_human if @mapped_by_human
 
     if @user_id
-      user = User.find(@user_id)
-      sch_sid = user&.stripe_cardholder&.stripe_id
+      @user = User.find(@user_id)
+      sch_sid = @user&.stripe_cardholder&.stripe_id
       relation = relation.stripe_transaction
                          .where("raw_stripe_transactions.stripe_transaction->>'cardholder' = ?", sch_sid)
     end
@@ -384,6 +378,26 @@ class AdminController < Admin::BaseController
     @count = relation.count
 
     @canonical_transactions = relation.page(@page).per(@per).order(date: :desc)
+  end
+
+  def event_search
+    @q = params[:q].presence
+    @events = if @q.present?
+                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+              else
+                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+              end
+    render turbo_stream: helpers.async_combobox_options(@events)
+  end
+
+  def user_search
+    @q = params[:q].presence
+    @users = if @q.present?
+               User.search_name(@q).limit(20).select(:id, :full_name, :email)
+             else
+               User.order(:full_name).limit(20).select(:id, :full_name, :email)
+             end
+    render turbo_stream: helpers.async_combobox_options(@users)
   end
 
   def pending_ledger
@@ -433,6 +447,7 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -462,6 +477,7 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.pending if @pending
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
@@ -476,6 +492,7 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @failed = params[:failed] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -490,6 +507,8 @@ class AdminController < Admin::BaseController
     relation = relation.search(@q) if @q
 
     relation = relation.reimbursement_requested if @pending
+
+    relation = relation.includes(:payout_holding).where(payout_holding: { aasm_state: :failed }) if @failed
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
@@ -568,7 +587,7 @@ class AdminController < Admin::BaseController
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
   rescue Faraday::Error => e
-    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
@@ -581,7 +600,7 @@ class AdminController < Admin::BaseController
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e
-    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: e.message }
   end
@@ -672,7 +691,12 @@ class AdminController < Admin::BaseController
   def increase_checks
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @checks = IncreaseCheck.page(@page).per(@per).order(
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    relation = IncreaseCheck.all
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    @checks = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
       "created_at desc"
     )
@@ -688,7 +712,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-    @event_id = params[:event_id].presence
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @paypal_transfers = PaypalTransfer.all
 
@@ -712,13 +736,16 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-    @event_id = params[:event_id].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wires = Wire.all
 
     @wires = @wires.search_recipient(@q) if @q
 
-    @wires.where(event_id: @event_id) if @event_id
+    @wires = @wires.where(event_id: @event.id) if @event
+    @wires = @wires.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     @wires = @wires.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -733,6 +760,9 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wise_transfers = WiseTransfer.all
 
@@ -740,6 +770,7 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
+    @wise_transfers = @wise_transfers.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -764,7 +795,7 @@ class AdminController < Admin::BaseController
 
     @applications = Event::Application.all.includes(:user)
     @applications = @applications.not_archived unless @include_archived
-    @applications = @applications.search_name(@q) if @q
+    @applications = @applications.search_name_or_email(@q) if @q
 
     @applications = @applications.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'submitted' DESC"),
@@ -823,6 +854,8 @@ class AdminController < Admin::BaseController
     @canceled = params[:canceled] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
+
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
     relation = RecurringDonation.includes(:event).where.not(stripe_status: [:incomplete, :incomplete_expired])
 
@@ -1347,6 +1380,8 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
     @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
 
+    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+
     relation = Column::AccountNumber.includes(:event)
 
     if @event_id
@@ -1488,6 +1523,13 @@ class AdminController < Admin::BaseController
 
   private
 
+  def cache_event_metric(metric_name, &block)
+    @event = Event.friendly.find(params[:id])
+    Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
+      block.call
+    end
+  end
+
   def stream_data(content_type, filename, data, download = true)
     headers["Content-Type"] = content_type
     headers["Content-disposition"] = "#{download ? 'attachment; ' : ''}filename=#{filename}"
@@ -1515,6 +1557,7 @@ class AdminController < Admin::BaseController
     @tagged_with = params[:tagged_with].presence || "anything"
     @risk_level = params[:risk_level].presence || "any"
     @point_of_contact_id = params[:point_of_contact_id].presence || "all"
+    @point_of_contact = User.find_by(id: @point_of_contact_id) if @point_of_contact_id != "all"
     @plan = params[:plan].presence || "all"
     if params[:country] == 9999.to_s
       @country = 9999

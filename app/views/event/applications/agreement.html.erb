@@ -8,7 +8,9 @@
       Sign the HCB agreement
     </h2>
 
-    <p class="mt-0 text-lg muted">This agreement formalizes the relationship between your project and HCB</p>
+    <p class="mt-0 text-lg muted">
+      This agreement formalizes the relationship between your project and HCB<% if @application.teen_led? %>, but it is not finalized until we review and approve your application<% end %>
+    </p>
 
     <div class="h-[40vh]">
       <%= render partial: "contract/parties/contract_faq", locals: { no_questions: true } %>
