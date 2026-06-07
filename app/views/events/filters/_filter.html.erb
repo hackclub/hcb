@@ -1,4 +1,4 @@
-<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant %>
+<% filter_applied = @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @tag || @missing_receipts || @direction || @category || @merchant || params[:q].present? %>
 
 <div class="flex flex-row justify-between items-center width-100 gap-2 mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
@@ -26,9 +26,9 @@
         <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
         <% if filter_applied %>
           <hr class="my-2">
-          <%= link_to "Filtered transactions (CSV)", transactions_exports_path(event: @event, format: :csv, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
-          <%= link_to "Filtered transactions (JSON)", transactions_exports_path(event: @event, format: :json, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
-          <%= link_to "Filtered transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger, tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+          <%= link_to "Filtered transactions (CSV)", transactions_exports_path(event: @event, format: :csv, q: params[:q], tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+          <%= link_to "Filtered transactions (JSON)", transactions_exports_path(event: @event, format: :json, q: params[:q], tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
+          <%= link_to "Filtered transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger, q: params[:q], tag: params[:tag], user: params[:user], type: params[:type], direction: params[:direction], start: params[:start], end: params[:end], minimum_amount: params[:minimum_amount], maximum_amount: params[:maximum_amount], missing_receipts: params[:missing_receipts], category: params[:category], merchant: params[:merchant]), target: :_blank %>
         <% end %>
         <%= link_to "Monthly statements", event_statements_path(@event) %>
       </div>

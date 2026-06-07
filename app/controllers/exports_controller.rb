@@ -15,7 +15,6 @@ class ExportsController < ApplicationController
       format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
 
-        # Set up filter parameters
         set_export_filters
 
         @export = case file_extension
@@ -30,11 +29,12 @@ class ExportsController < ApplicationController
                       user_id: @user&.id,
                       transaction_type: @type,
                       direction: @direction,
-                      minimum_amount: @minimum_amount&.to_f,
-                      maximum_amount: @maximum_amount&.to_f,
+                      minimum_amount: @minimum_amount&.cents,
+                      maximum_amount: @maximum_amount&.cents,
                       missing_receipts: @missing_receipts,
                       category_slug: @category&.slug,
-                      merchant_id: @merchant
+                      merchant_id: @merchant,
+                      search: @search
                     )
                   when "json"
                     Export::Event::Transactions::Json.new(
@@ -47,11 +47,12 @@ class ExportsController < ApplicationController
                       user_id: @user&.id,
                       transaction_type: @type,
                       direction: @direction,
-                      minimum_amount: @minimum_amount&.to_f,
-                      maximum_amount: @maximum_amount&.to_f,
+                      minimum_amount: @minimum_amount&.cents,
+                      maximum_amount: @maximum_amount&.cents,
                       missing_receipts: @missing_receipts,
                       category_slug: @category&.slug,
-                      merchant_id: @merchant
+                      merchant_id: @merchant,
+                      search: @search
                     )
                   when "ledger"
                     Export::Event::Transactions::Ledger.new(
@@ -64,11 +65,12 @@ class ExportsController < ApplicationController
                       user_id: @user&.id,
                       transaction_type: @type,
                       direction: @direction,
-                      minimum_amount: @minimum_amount&.to_f,
-                      maximum_amount: @maximum_amount&.to_f,
+                      minimum_amount: @minimum_amount&.cents,
+                      maximum_amount: @maximum_amount&.cents,
                       missing_receipts: @missing_receipts,
                       category_slug: @category&.slug,
-                      merchant_id: @merchant
+                      merchant_id: @merchant,
+                      search: @search
                     )
                   end
 
@@ -159,12 +161,13 @@ class ExportsController < ApplicationController
   private
 
   def set_export_filters
-    # Set up all filter parameters for exports
+    params[:q] ||= params[:search]
+    @search = params[:q].presence
     @tag = Tag.find_by(event_id: @event.id, label: params[:tag]) if params[:tag].present?
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user].present?
     @type = params[:type].presence
-    @start_date = params[:start].presence
-    @end_date = params[:end].presence
+    @start_date = (params[:start] || params[:start_date]).presence
+    @end_date = (params[:end] || params[:end_date]).presence
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
