@@ -9,8 +9,6 @@ class ExportsController < ApplicationController
   def transactions
     authorize @event, :show?
 
-    should_queue = @event.canonical_transactions.size > 300
-
     respond_to do |format|
       format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
@@ -161,8 +159,7 @@ class ExportsController < ApplicationController
   private
 
   def set_export_filters
-    params[:q] ||= params[:search]
-    @search = params[:q].presence
+    @search = (params[:q] || params[:search]).presence
     @tag = Tag.find_by(event_id: @event.id, label: params[:tag]) if params[:tag].present?
     @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user].present?
     @type = params[:type].presence

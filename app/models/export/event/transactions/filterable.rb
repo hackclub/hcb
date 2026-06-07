@@ -8,7 +8,7 @@ class Export
           if no_filters_applied?
             event.canonical_transactions.size > 300
           else
-            transactions.size > 300
+            filtered_ids.size > 300
           end
         end
 
@@ -17,7 +17,14 @@ class Export
         def transactions
           return fallback_transactions if no_filters_applied?
 
-          engine = TransactionGroupingEngine::Transaction::All.new(
+          canonical_txs = CanonicalTransaction.includes(local_hcb_code: [:tags, :comments])
+                                              .where(id: filtered_ids)
+                                              .order("date desc, id desc")
+          filter_by_type(canonical_txs)
+        end
+
+        def filtered_ids
+          @filtered_ids ||= TransactionGroupingEngine::Transaction::All.new(
             event_id: event_id,
             search: search,
             tag_id: tag_id,
@@ -32,15 +39,7 @@ class Export
             category: category_slug ? TransactionCategory.find_by(slug: category_slug) : nil,
             merchant: merchant_id,
             order_by: :date
-          )
-
-          ct_ids = engine.run.flat_map(&:canonical_transaction_ids)
-          canonical_txs = CanonicalTransaction.includes(local_hcb_code: [:tags, :comments])
-                                              .where(id: ct_ids)
-                                              .order("date desc, id desc")
-
-          canonical_txs = filter_by_type(canonical_txs) if transaction_type.present?
-          canonical_txs
+          ).run.flat_map(&:canonical_transaction_ids)
         end
 
         def fallback_transactions
