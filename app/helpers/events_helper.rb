@@ -17,6 +17,17 @@ module EventsHelper
       }
     end
 
+    if event.financially_frozen? && (contracts = event.contracts.select { |c| c.parties.not_hcb.all?(&:signed?) }).one? && event.contracts.signed.none?
+      items << {
+        name: "Sign",
+        path: contract_party_path(contracts.first.party(:hcb)),
+        tooltip: "Sign the fiscal sponsorship contract as HCB",
+        icon: "checkmark",
+        selected: false,
+        adminTool: true,
+      }
+    end
+
     if policy(event).show?
       items << {
         name: "Home",
