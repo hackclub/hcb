@@ -31,6 +31,8 @@ class Announcement < ApplicationRecord
   hashid_config salt: ""
 
   include AASM
+  include PublicActivity::Model
+  tracked owner: proc { |controller, record| controller&.current_user || record&.author }, recipient: :event, only: []
 
   ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze
   WHITELISTED_ATTRIBUTES = ["href", "src", "rel", "target", "title", "id", "alt"].freeze
@@ -50,6 +52,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
+        create_activity(key: "announcement.published", owner: author, recipient: event)
         Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
