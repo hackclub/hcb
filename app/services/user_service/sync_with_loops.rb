@@ -27,8 +27,6 @@ module UserService
         user["HCB Has Card Grant?"] = @user.card_grants.any?
 
         user.save
-
-        @user.update(subscribed_to_loops_at: Time.now) if @user.subscribed_to_loops_at.nil?
       else
         body = {
           email: @user.email,
