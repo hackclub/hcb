@@ -15,31 +15,30 @@ class ExportsController < ApplicationController
       format.any(*%w[json csv ledger]) do
         file_extension = params[:format]
 
-        # CSV exports **can** support date ranges
-        set_date_range if file_extension == "csv" && params[:start_date].present?
+        set_export_filters
 
-        @export = case file_extension
-                  when "csv"
-                    Export::Event::Transactions::Csv.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      start_date: @start,
-                      end_date: @end,
-                      public_only: !organizer_signed_in?
-                    )
-                  when "json"
-                    Export::Event::Transactions::Json.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      public_only: !organizer_signed_in?
-                    )
-                  when "ledger"
-                    Export::Event::Transactions::Ledger.new(
-                      requested_by: current_user,
-                      event_id: @event.id,
-                      public_only: !organizer_signed_in?
-                    )
-                  end
+        export_class = case file_extension
+                       when "csv"    then Export::Event::Transactions::Csv
+                       when "json"   then Export::Event::Transactions::Json
+                       when "ledger" then Export::Event::Transactions::Ledger
+                       end
+
+        @export = export_class.new(
+          requested_by: current_user,
+          event_id: @event.id,
+          public_only: !organizer_signed_in?,
+          tag_id: @tag&.id,
+          user_id: @user&.id,
+          transaction_type: @type,
+          direction: @direction,
+          start_date: @start_date,
+          end_date: @end_date,
+          minimum_amount: @minimum_amount&.to_f,
+          maximum_amount: @maximum_amount&.to_f,
+          missing_receipts: @missing_receipts,
+          category_slug: @category&.slug,
+          merchant_id: @merchant
+        )
 
         if @export.async?
           @export.requested_by = User.find_or_create_by(email: params[:email]) if params[:email]
@@ -126,6 +125,20 @@ class ExportsController < ApplicationController
   end
 
   private
+
+  def set_export_filters
+    @tag = Tag.find_by(event_id: @event.id, label: params[:tag]) if params[:tag].present?
+    @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user].present?
+    @type = params[:type].presence
+    @direction = params[:direction].presence
+    @start_date = params[:start].presence
+    @end_date = params[:end].presence
+    @minimum_amount = params[:minimum_amount].present? ? Money.from_amount(params[:minimum_amount].to_f) : nil
+    @maximum_amount = params[:maximum_amount].present? ? Money.from_amount(params[:maximum_amount].to_f) : nil
+    @missing_receipts = params[:missing_receipts].present?
+    @merchant = params[:merchant].presence
+    @category = TransactionCategory.find_by(slug: params[:category]) if params[:category].present?
+  end
 
   def set_date_range
     @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month

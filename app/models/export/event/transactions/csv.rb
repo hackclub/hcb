@@ -23,7 +23,9 @@ class Export
   module Event
     module Transactions
       class Csv < Export
-        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
+        include Export::Event::Transactions::Filterable
+
+        store_accessor :parameters, :event_id, :public_only
         def async?
           event.canonical_transactions.size > 300
         end
@@ -55,10 +57,8 @@ class Export
         private
 
         def transactions
-          tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments])
-          tx = tx.where("date >= ?", start_date) if start_date
-          tx = tx.where("date <= ?", end_date) if end_date
-          tx.order("date desc")
+          base = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments]).order("date desc")
+          filter_transactions(base, check_dates: false)
         end
 
         def event

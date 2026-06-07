@@ -23,6 +23,8 @@ class Export
   module Event
     module Transactions
       class Json < Export
+        include Export::Event::Transactions::Filterable
+
         store_accessor :parameters, :event_id, :public_only
         def async?
           event.canonical_transactions.size > 300
@@ -41,12 +43,15 @@ class Export
         end
 
         def content
-          event.canonical_transactions.order("date desc").map do |ct|
-            row(ct)
-          end.to_json
+          transactions.map { |ct| row(ct) }.to_json
         end
 
         private
+
+        def transactions
+          base = event.canonical_transactions.order("date desc")
+          filter_transactions(base)
+        end
 
         def event
           @event ||= ::Event.find(event_id)
