@@ -4,7 +4,6 @@ module Api
   module V4
     class CardGrantsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:create]
       before_action :set_card_grant, except: [:index, :create]
@@ -118,7 +117,7 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @hcb_codes = helpers.paginate_cursor(@hcb_codes, &:public_id)
       end
 
       private
