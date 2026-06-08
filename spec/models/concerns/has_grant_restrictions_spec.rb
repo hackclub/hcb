@@ -91,33 +91,33 @@ RSpec.describe HasGrantRestrictions do
     it_behaves_like "has grant restrictions"
 
     it "is invalid when a merchant allowed on the grant is blocked by the setting" do
-      setting = build_stubbed(:card_grant_setting,
-                              merchant_lock: [],
-                              banned_merchants: ["merchant_a"],
-                              category_lock: [],
-                              banned_categories: [])
+      grant_setting = build_stubbed(:card_grant_setting,
+                                    merchant_lock: [],
+                                    banned_merchants: ["merchant_a"],
+                                    category_lock: [],
+                                    banned_categories: [])
       grant = build_stubbed(:card_grant,
                             merchant_lock: ["merchant_a"],
                             banned_merchants: [],
                             category_lock: [],
                             banned_categories: [])
-      allow(grant).to receive(:card_grant_setting).and_return(setting)
+      allow(grant).to receive(:setting).and_return(grant_setting)
       grant.valid?
       expect(grant.errors[:base]).to include(match(/merchant_a.*cannot be both allowed and blocked/i))
     end
 
     it "is invalid when a category allowed on the grant is blocked by the setting" do
-      setting = build_stubbed(:card_grant_setting,
-                              merchant_lock: [],
-                              banned_merchants: [],
-                              category_lock: [],
-                              banned_categories: ["food"])
+      grant_setting = build_stubbed(:card_grant_setting,
+                                    merchant_lock: [],
+                                    banned_merchants: [],
+                                    category_lock: [],
+                                    banned_categories: ["food"])
       grant = build_stubbed(:card_grant,
                             merchant_lock: [],
                             banned_merchants: [],
                             category_lock: ["food"],
                             banned_categories: [])
-      allow(grant).to receive(:card_grant_setting).and_return(setting)
+      allow(grant).to receive(:setting).and_return(grant_setting)
       grant.valid?
       expect(grant.errors[:base]).to include(match(/food.*cannot be both allowed and blocked/i))
     end

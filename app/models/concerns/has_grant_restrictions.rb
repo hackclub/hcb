@@ -9,19 +9,14 @@ module HasGrantRestrictions
     alias_attribute :disallowed_merchants, :banned_merchants
     alias_attribute :disallowed_categories, :banned_categories
 
-    validate :no_conflicting_merchant_lists
-    validate :no_conflicting_category_lists
-  end
+    validate do
+      conflicts = allowed_merchants & disallowed_merchants
+      errors.add(:base, "#{"Merchant".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
+    end
 
-  private
-
-  def no_conflicting_merchant_lists
-    conflicts = allowed_merchants & disallowed_merchants
-    errors.add(:base, "#{"Merchant".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
-  end
-
-  def no_conflicting_category_lists
-    conflicts = allowed_categories & disallowed_categories
-    errors.add(:base, "#{"Category".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
+    validate do
+      conflicts = allowed_categories & disallowed_categories
+      errors.add(:base, "#{"Category".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
+    end
   end
 end
