@@ -14,7 +14,7 @@ module TransactionEngine
 
         def run
           plaid_transactions.each do |plaid_transaction|
-            next if plaid_transaction.pending
+next unless plaid_transaction.pending == false
 
             if plaid_transaction.date <= "2024-10-09".to_date
               "[Plaid import] Skipping #{plaid_transaction.transaction_id}".tap do |msg|
