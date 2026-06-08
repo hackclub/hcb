@@ -43,7 +43,7 @@ module Api
             ::ReceiptService::Create.new(
               uploader: current_user,
               attachments: ach_transfer_params[:file],
-              upload_method: :ach_transfer_api,
+              upload_method: :api,
               receiptable: @ach_transfer.local_hcb_code
             ).run!
           end
