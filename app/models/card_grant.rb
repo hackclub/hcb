@@ -107,7 +107,7 @@ class CardGrant < ApplicationRecord
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
-  include HasGrantConflictRestrictions
+  include HasGrantRestrictions
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }

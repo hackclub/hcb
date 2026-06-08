@@ -38,12 +38,9 @@ class CardGrantSetting < ApplicationRecord
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
   serialize :banned_categories, coder: CommaSeparatedCoder
-  alias_attribute :allowed_merchants, :merchant_lock
-  alias_attribute :allowed_categories, :category_lock
-  alias_attribute :disallowed_merchants, :banned_merchants
   has_many :card_grants, through: :event
 
-  include HasGrantConflictRestrictions
+  include HasGrantRestrictions
 
   enum :expiration_preference, {
     "90 days": 90,
