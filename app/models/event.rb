@@ -952,7 +952,7 @@ class Event < ApplicationRecord
   end
 
   def contracts_pending_on_hcb
-    contracts.select { |c| c.parties.not_hcb.all?(&:signed?) }
+    contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
   end
 
   private
