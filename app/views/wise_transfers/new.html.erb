@@ -29,7 +29,7 @@
       model: [@event, @wise_transfer],
       local: true,
       html: {
-        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null, country: null }"
+        "x-data": "{ currency: #{@wise_transfer.currency ? "'#{@wise_transfer.currency}'" : "null"}, amount: null, account_type: null, usd_quote: null, use_same_email_for_interac: false, email: null }"
       }
     ) do |form| %>
 
@@ -102,9 +102,7 @@
     </div>
   </div>
 
-  <%= render "transfers/domestic_wire_warning", event: @event %>
-
-  <button type="submit" <%= "disabled" if disabled %> :disabled="country === 'US'" class="btn !bg-[#9FE870] !text-[#163300] w-full">
+  <button type="submit" <%= "disabled" if disabled %> class="btn !bg-[#9FE870] !text-[#163300] w-full">
     <%= inline_icon "wise", size: 16, class: "inline-block" %> Send transfer with Wise
   </button>
 <% end %>

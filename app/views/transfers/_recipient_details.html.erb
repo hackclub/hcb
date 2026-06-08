@@ -1,4 +1,4 @@
-<%# locals: (form:, disabled:, required: true) %>
+<%# locals: (form:, disabled:, required: true, show_us: false) %>
 
 <%= form.label :address_line1, "Street address" %>
 <div class="grid grid--split gap-2">
@@ -27,6 +27,6 @@
 
   <div class="field flex-auto">
     <%= form.label :recipient_country, "Country" %>
-    <%= form.collection_select :recipient_country, Event.countries_for_select, :first, :last, { include_blank: "Select a country" }, { style: "min-height:37px", "@change": "country = $event.target.value", disabled: } %>
+    <%= form.collection_select :recipient_country, show_us ? Event.countries_for_select : Event.countries_for_select.excluding([["US", "United States"]]), :first, :last, { include_blank: "Select a country" }, { style: "min-height:37px", "@change": "country = $event.target.value", disabled: } %>
   </div>
 </div>
