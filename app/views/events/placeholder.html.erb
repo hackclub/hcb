@@ -11,21 +11,21 @@
   </div>
 </div>
 
-<ul class="grid grid--medium-narrow text-left w-100 <%= @available_events.any? ? "mt-3" : "mt-0"  %>">
+<ul class="grid grid--medium-narrow text-left w-100 <%= @available_events.any? ? "mt-3" : "mt-0" %>">
   <% @available_events.each do |event| %>
-    <%= render partial: "events/event_card", locals: { event:, link_path: instance_exec(event.slug, &@nav_item[:path_proc])} %>
+    <%= render partial: "events/event_card", locals: { event:, link_path: instance_exec(event.slug, &@nav_item[:path_proc]) } %>
   <% end %>
 </ul>
 
 <% if @unavailable_events.any? %>
   <% if @available_events.any? %>
     <p class="text-muted">
-      You are also in <%= pluralize(@unavailable_events.size, "other organization") %> (<%= @unavailable_events.map { |e| link_to e.name, e }.to_sentence.html_safe %>),
+      You are also in <%= pluralize(@unavailable_events.size, "other organization") %> (<%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %>), <%# erb_lint:disable ErbSafety %>
       but do not have access to this page for those organizations.
     </p>
   <% else %>
     <p>
-      You are in <%= pluralize(@unavailable_events.size, "organization") %> (<%= @unavailable_events.map { |e| link_to e.name, e }.to_sentence.html_safe %>),
+      You are in <%= pluralize(@unavailable_events.size, "organization") %> (<%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %>), <%# erb_lint:disable ErbSafety %>
       but do not have access to this page for these organizations.
     </p>
 
@@ -57,5 +57,5 @@
       <%= link_to "Return to homepage", root_path, class: "btn" %>
     </div>
   <% end %>
-  
+
 <% end %>

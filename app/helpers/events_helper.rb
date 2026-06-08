@@ -190,7 +190,7 @@ module EventsHelper
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
     }
-  ]
+  ].freeze
 
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
