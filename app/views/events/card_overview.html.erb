@@ -36,44 +36,10 @@
         <%= hidden_field_tag :user, params[:user] if params[:user] %>
         <%= render "events/filters/search", form: %>
       <% end %>
-      <% if @has_filter %>
-        <%= render "events/filters/filter_cards_menu" %>
-        <%= link_to upsert_query_params("status" => nil, "type" => nil, "user" => nil, "q" => nil), class: "pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
-          <%= inline_icon "view-close", size: 28 %>
-        <% end %>
-      <% else %>
-        <%= render "events/filters/filter_cards_menu" %>
-      <% end %>
+      <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+
     </div>
-    <% if @has_filter %>
-      <div class="filter-menu__chips mt-1">
-        <% if @status %>
-          <div class="badge badge-large bg-muted">
-            <%= @status.humanize %>
-            <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-              <%= inline_icon "view-close", size: 20 %>
-            <% end %>
-          </div>
-        <% end %>
-        <% if @type %>
-          <div class="badge badge-large bg-muted">
-            <%= @type.humanize %>
-            <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-              <%= inline_icon "view-close", size: 20 %>
-            <% end %>
-          </div>
-        <% end %>
-        <% if @user %>
-          <div class="badge badge-large bg-muted">
-            <%= avatar_for @user, size: 18 %>
-            <%= @user.name %>
-            <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-              <%= inline_icon "view-close", size: 20 %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% end %>
+    <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
     <% if control = @organizer_position&.active_spending_control %>
       <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>

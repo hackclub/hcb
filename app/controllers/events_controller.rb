@@ -451,6 +451,12 @@ class EventsController < ApplicationController
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
     @q = params[:q].presence
 
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]], include_blank: "All" },
+      { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]], include_blank: "All" },
+      { key: "user", label: "Cardholder", type: "select", options: @event.users.order(:full_name).map { |u| [u.full_name, u.slug] }, include_blank: "All" },
+    ]
+
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
