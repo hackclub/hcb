@@ -13,7 +13,7 @@ module Api
       def index
         authorize @event, :show_in_v4?
 
-        donations = @event.donations.order(created_at: :desc)
+        donations = @event.donations.not_pending.order(created_at: :desc)
 
         if params[:status].present?
           valid_statuses = Donation.aasm.states.map { |s| s.name.to_s }
@@ -22,11 +22,10 @@ module Api
           donations = donations.where(aasm_state: params[:status])
         end
 
-        @past_donations = paginate_cursor(donations.to_a, &:public_id)
+        @donations = paginate_cursor(donations.to_a, &:public_id)
 
         if expand?(:stats)
-          @total_cents = @event.donations.succeeded_and_not_refunded.sum(:amount)
-          @monthly_cents = @event.recurring_donations.active.sum(:amount)
+          @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
         end
       end
 
