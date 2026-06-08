@@ -263,7 +263,7 @@ class Event
     end
 
     def contract_notify_hcb?
-      !teen_led? || contract.is_reissue?
+      !teen_led? || contract.reissue?
     end
 
     def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)

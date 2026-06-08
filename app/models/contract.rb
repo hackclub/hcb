@@ -223,12 +223,8 @@ class Contract < ApplicationRecord
     update!(document:)
   end
 
-  def is_reissue?
+  def reissue?
     reissue_of_id.present?
-  end
-
-  def reissued?
-    reissued_contract.present?
   end
 
   private
