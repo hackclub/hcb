@@ -24,6 +24,7 @@ module Api
           :address_state,
           :address_postal_code,
           :send_email_notification,
+          :file,
           *Wire.recipient_information_accessors
         )
         @wire = @event.wires.build(wire_params.merge(user: current_user))
@@ -35,6 +36,15 @@ module Api
             error: "invalid_operation",
             messages: ["Wire transfers above the sudo mode threshold of #{ApplicationController.helpers.render_money(SudoModeHandler::THRESHOLD_CENTS)} are not allowed via API."]
           }, status: :bad_request
+        end
+
+        if wire_params[:file]
+          ::ReceiptService::Create.new(
+            uploader: current_user,
+            attachments: wire_params[:file],
+            upload_method: :api,
+            receiptable: @wire.local_hcb_code
+          ).run!
         end
 
         @wire.save!
