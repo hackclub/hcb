@@ -58,10 +58,10 @@ class EventMailer < ApplicationMailer
   end
 
   def ops_call_requested
-    @user = params[:user]
+    @requesting_user = params[:requesting_user]
 
     mail to: OPERATIONS_EMAIL,
-         subject: "#{@user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
+         subject: "#{@requesting_user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
   end
 
   def transparency_mode_enabled
