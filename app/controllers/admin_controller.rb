@@ -139,18 +139,12 @@ class AdminController < Admin::BaseController
   end
 
   def event_balance
-    @event = Event.friendly.find(params[:id])
-    @balance = Rails.cache.fetch("admin_event_balance_#{@event.id}", expires_in: 5.minutes) do
-      @event.balance.to_i
-    end
+    @balance = cache_event_metric(:balance) { @event.balance.to_i }
     render :event_balance, layout: false
   end
 
   def event_raised
-    @event = Event.friendly.find(params[:id])
-    @raised = Rails.cache.fetch("admin_event_raised_#{@event.id}", expires_in: 5.minutes) do
-      @event.total_raised.to_i
-    end
+    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
     render :event_raised, layout: false
   end
 
@@ -453,6 +447,9 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -482,6 +479,21 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.pending if @pending
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("ach_transfers.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("ach_transfers.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
@@ -654,6 +666,8 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -684,6 +698,20 @@ class AdminController < Admin::BaseController
 
     relation = relation.in_transit if @in_transit
 
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
+
     @count = relation.count
     @checks = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -695,7 +723,12 @@ class AdminController < Admin::BaseController
   def increase_checks
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @checks = IncreaseCheck.page(@page).per(@per).order(
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    relation = IncreaseCheck.all
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    @checks = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
       "created_at desc"
     )
@@ -735,6 +768,9 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -743,6 +779,21 @@ class AdminController < Admin::BaseController
     @wires = @wires.search_recipient(@q) if @q
 
     @wires = @wires.where(event_id: @event.id) if @event
+    @wires = @wires.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wires = @wires.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -757,6 +808,9 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -766,6 +820,21 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
+    @wise_transfers = @wise_transfers.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -889,6 +958,8 @@ class AdminController < Admin::BaseController
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
     @processing = params[:processing] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -913,6 +984,19 @@ class AdminController < Admin::BaseController
     relation = relation.pending if @pending
     relation = relation.reviewing if @reviewing
     relation = relation.processing if @processing
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @disbursements = relation.page(@page).per(@per).order(
@@ -1517,6 +1601,13 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def cache_event_metric(metric_name, &block)
+    @event = Event.friendly.find(params[:id])
+    Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
+      block.call
+    end
+  end
 
   def stream_data(content_type, filename, data, download = true)
     headers["Content-Type"] = content_type

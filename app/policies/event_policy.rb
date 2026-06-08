@@ -259,6 +259,8 @@ class EventPolicy < ApplicationPolicy
     signee?
   end
 
+  alias hide_onboarding_message? request_call?
+
   private
 
   def admin_or_member?
