@@ -6,10 +6,13 @@ class Event
 
     def perform(application)
       @application = application
-      return if @application.draft?
+      airrecord = @application.airtable_record
+
+      # If there's already an Airtable record, we want to make sure it stays up to date
+      # This can happen when an application is submitted and then archived, which marks it as a draft again
+      return if @application.draft? && airrecord.nil?
 
       # If Airtable record already exists, update it and move on! (no concerns for race conditions)
-      airrecord = @application.airtable_record
       return update_airtable(airrecord) if airrecord.present?
 
       # Airtable record doesn't exist, let's create it! Lock Application to prevent duplicate new Airtable records
@@ -52,6 +55,7 @@ class Event
       airrecord["Referral Code"] = @application.referral_code
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
       airrecord["Synced from HCB at"] = Time.current
+      airrecord["Archived?"] = @application.archived?
 
       if @application.affiliations.any?(&:is_first?)
         airrecord["Org Type"] = "FIRST/Robotics"

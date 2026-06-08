@@ -23,8 +23,14 @@ export default class extends Controller {
     this.isOpen = false
   }
 
+  connect() {
+    this._closeMenusHandler = () => this.close()
+    document.addEventListener('hcb:close-menus', this._closeMenusHandler)
+  }
+
   disconnect() {
     this.cleanup && this.cleanup()
+    document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
   toggle(e) {
