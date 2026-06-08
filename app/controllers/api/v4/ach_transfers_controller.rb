@@ -39,6 +39,7 @@ module Api
 
         ActiveRecord::Base.transaction do
           @ach_transfer.save!
+
           if ach_transfer_params[:file]
             ::ReceiptService::Create.new(
               uploader: current_user,
