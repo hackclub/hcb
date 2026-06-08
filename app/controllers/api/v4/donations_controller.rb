@@ -15,12 +15,7 @@ module Api
 
         donations = @event.donations.not_pending.order(created_at: :desc)
 
-        if params[:status].present?
-          valid_statuses = Donation.aasm.states.map { |s| s.name.to_s }
-          return render json: { error: "invalid_operation", messages: ["'#{params[:status]}' is not a valid status."] }, status: :bad_request unless valid_statuses.include?(params[:status])
-
-          donations = donations.where(aasm_state: params[:status])
-        end
+        donations = donations.filter_by_visible_state(params[:status]) if params[:status].present?
 
         @donations = paginate_cursor(donations.to_a, &:public_id)
 
