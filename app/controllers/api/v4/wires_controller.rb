@@ -38,16 +38,18 @@ module Api
           }, status: :bad_request
         end
 
-        if wire_params[:file]
-          ::ReceiptService::Create.new(
-            uploader: current_user,
-            attachments: wire_params[:file],
-            upload_method: :api,
-            receiptable: @wire.local_hcb_code
-          ).run!
-        end
+        ActiveRecord::Base.transaction do
+          @wire.save!
 
-        @wire.save!
+          if wire_params[:file]
+            ::ReceiptService::Create.new(
+              uploader: current_user,
+              attachments: wire_params[:file],
+              upload_method: :api,
+              receiptable: @wire.local_hcb_code
+            ).run!
+          end
+        end
 
         render :show, status: :created
       end
