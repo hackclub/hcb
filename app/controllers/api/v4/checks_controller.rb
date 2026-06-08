@@ -55,7 +55,7 @@ module Api
             ::ReceiptService::Create.new(
               uploader: current_user,
               attachments: check_params[:file],
-              upload_method: :check_api,
+              upload_method: :api,
               receiptable: @check.local_hcb_code
             ).run!
           end
