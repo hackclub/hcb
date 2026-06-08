@@ -449,6 +449,7 @@ class AdminController < Admin::BaseController
     @pending = params[:pending] == "1" ? true : nil
     @start_date = params[:start_date].presence
     @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -478,6 +479,7 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.pending if @pending
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     begin
       if @start_date.present?
@@ -721,7 +723,12 @@ class AdminController < Admin::BaseController
   def increase_checks
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @checks = IncreaseCheck.page(@page).per(@per).order(
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    relation = IncreaseCheck.all
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    @checks = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
       "created_at desc"
     )
@@ -763,6 +770,7 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @start_date = params[:start_date].presence
     @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -771,6 +779,8 @@ class AdminController < Admin::BaseController
     @wires = @wires.search_recipient(@q) if @q
 
     @wires = @wires.where(event_id: @event.id) if @event
+    @wires = @wires.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
     begin
       if @start_date.present?
         start_date = Date.strptime(@start_date, "%Y-%m-%d")
@@ -800,6 +810,7 @@ class AdminController < Admin::BaseController
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
     @start_date = params[:start_date].presence
     @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -809,6 +820,8 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
+    @wise_transfers = @wise_transfers.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
     begin
       if @start_date.present?
         start_date = Date.strptime(@start_date, "%Y-%m-%d")

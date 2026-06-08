@@ -7,7 +7,10 @@
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2">
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :exclude_reimbursements do %>
+      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+    <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>

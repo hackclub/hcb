@@ -10,6 +10,9 @@
     <%= form.label :pending do %>
       <%= form.check_box :pending, checked: @pending %> Pending
     <% end %>
+    <%= form.label :exclude_reimbursements do %>
+      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+    <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>
