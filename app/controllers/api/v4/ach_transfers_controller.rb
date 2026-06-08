@@ -37,14 +37,16 @@ module Api
         end
 
 
-        @ach_transfer.save!
-        if ach_transfer_params[:file]
-          ::ReceiptService::Create.new(
-            uploader: current_user,
-            attachments: ach_transfer_params[:file],
-            upload_method: :ach_transfer_api,
-            receiptable: @ach_transfer.local_hcb_code
-          ).run!
+        ActiveRecord::Base.transaction do
+          @ach_transfer.save!
+          if ach_transfer_params[:file]
+            ::ReceiptService::Create.new(
+              uploader: current_user,
+              attachments: ach_transfer_params[:file],
+              upload_method: :ach_transfer_api,
+              receiptable: @ach_transfer.local_hcb_code
+            ).run!
+          end
         end
 
         render :show, status: :created
