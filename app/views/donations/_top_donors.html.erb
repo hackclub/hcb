@@ -4,11 +4,11 @@
     <h2 class="mt-0">Top donors</h2>
 
     <div class="flex items-end justify-center gap-2 mt-4">
-      <% [[1, "second"], [0, "first"], [2, "third"]].each do |index, rank| %>
+      <% [[1, "second", "🥈"], [0, "first", "🥇"], [2, "third", "🥉"]].each do |index, rank, medal| %>
         <% if (donor = top_donors[index]) %>
           <div class="flex flex-col items-center flex-1 min-w-0">
             <div class="podium-block podium-block--<%= rank %>">
-              <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= donor.name %></p>
+              <p class="text-lg font-semibold text-center my-0 leading-tight truncate w-full px-1"><%= medal %> <%= donor.name %></p>
               <p class="text-xs text-center opacity-50 mt-1 mb-0"><%= render_money(donor.amount) %></p>
             </div>
           </div>
