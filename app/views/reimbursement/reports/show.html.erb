@@ -128,11 +128,9 @@
 <% end %>
 
 <% if @report.exceeds_event_balance? %>
-  <%= render "application/callout",
-      type: "warning",
-      icon: "info",
-      title: "Waiting on #{@report.event.name}" do %>
-    This reimbursement exceeds <%= @report.event.name %>'s available balance. The <%= @report.event.name %> team may need time to secure additional funds to process this reimbursement.
+  <% event_name = @report.event.name %>
+  <%= render "application/callout", type: "warning", title: "Waiting on #{event_name}" do %>
+    This reimbursement exceeds <%= event_name %>'s available balance. The <%= event_name %> team may need time to secure additional funds to process this reimbursement.
   <% end %>
 <% end %>
 
