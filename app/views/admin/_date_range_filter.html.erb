@@ -11,7 +11,7 @@
       data-date-range-picker-initial-end-value="<%= end_date %>"
       data-date-range-picker-name-start-value="start_date"
       data-date-range-picker-name-end-value="end_date"></div>
-    <% request.query_parameters.except("start_date", "end_date").each do |k, v| %>
+    <% params.except("start_date", "end_date").each do |k, v| %>
       <%= hidden_field_tag k, v %>
     <% end %>
   </div>
