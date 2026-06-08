@@ -3,7 +3,7 @@
     role="navigation"
     aria-label="Pagination"
     class="flex items-center justify-center list-reset my-4 gap-2">
-    <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
+    <% per_options = ([10, 25, 50, 100] + [per_page].compact).sort.uniq %>
     <div data-controller="menu" data-menu-placement-value="bottom-start" class="mr-auto">
       <button
         type="button"
