@@ -4,7 +4,6 @@ module Api
   module V4
     class TransactionsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:update, :memo_suggestions]
       skip_after_action :verify_authorized, only: [:missing_receipt]
@@ -28,7 +27,7 @@ module Api
 
         @total_count = @pending_transactions.count + @settled_transactions.count
         cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code if params[:after].present?
-        @transactions = paginate_cursor(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
+        @transactions = helpers.paginate_cursor(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
 
         if @transactions.any?
           page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
@@ -64,7 +63,7 @@ module Api
 
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @hcb_codes = helpers.paginate_cursor(@hcb_codes, &:public_id)
       end
 
       def update
