@@ -58,8 +58,8 @@ class DonationsController < ApplicationController
         .select { |d| d.email.present? }
         .group_by(&:email)
         .map do |_, group|
-          most_recent = group.max_by(&:donated_at)
-          donor_summary.new(most_recent.name, group.sum(&:amount))
+          representative = group.reject(&:anonymous?).max_by(&:donated_at) || group.max_by(&:donated_at)
+          donor_summary.new(representative.name, group.sum(&:amount))
         end
         .sort_by { |d| -d.amount }
         .first(10)
@@ -68,7 +68,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8)
+      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end

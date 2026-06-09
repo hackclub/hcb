@@ -43,10 +43,12 @@
   </div>
 </div>
 
-<div class="grid grid-cols-2 gap-2">
-  <%= render "donations/top_donors", top_donors: @top_donors if @event.show_top_donors %>
-  <%= render "donations/recent_donors", recent_donors: @recent_donors if @event.show_recent_donors %>
-</div>
+<% if @event.show_top_donors || @event.show_recent_donors %>
+  <div class="grid <%= @event.show_top_donors && @event.show_recent_donors ? "grid-cols-2" : "grid-cols-1" %> gap-2">
+    <%= render "donations/top_donors", top_donors: @top_donors if @event.show_top_donors %>
+    <%= render "donations/recent_donors", recent_donors: @recent_donors if @event.show_recent_donors %>
+  </div>
+<% end %>
 
 <% if @event.demo_mode? %>
   <div class="container container--sm">
