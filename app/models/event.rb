@@ -131,6 +131,10 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns the id of self as well as all the ancestors,
+  # in order from self->parent->grandparent->...
+  # We guarantee this order using SEARCH BREADTH FIRST https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-SEARCH
   def ancestor_ids
     [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
       WITH RECURSIVE parent_events AS (
@@ -141,8 +145,8 @@ class Event < ApplicationRecord
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
-      )
-      SELECT id FROM parent_events WHERE id != #{id};
+      ) SEARCH BREADTH FIRST BY id SET ordercol
+      SELECT id FROM parent_events WHERE id != #{id} ORDER BY ordercol;
     SQL
   end
 
@@ -161,8 +165,14 @@ class Event < ApplicationRecord
     SQL
   end
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns self as well as all the ancestors
   def ancestors
-    Event.where(id: ancestor_ids)
+    # array_position preserves the order from ancestor_ids; sanitize_sql_array parameterizes the ids so it's statically safe and passes brakeman.
+    fetched_ancestor_ids = ancestor_ids
+    Event.where(id: fetched_ancestor_ids).reorder(Arel.sql(
+                                                    Event.sanitize_sql_array(["array_position(ARRAY[?]::bigint[], events.id)", fetched_ancestor_ids])
+                                                  ))
   end
 
   def descendants
