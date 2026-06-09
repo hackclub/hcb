@@ -20,11 +20,11 @@
 <% if @unavailable_events.any? %>
   <% if @available_events.any? %>
     <p class="text-muted">
-      You are also in <%= pluralize(@unavailable_events.size, "other organization") %> that do not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
+      You are also in <%= pluralize(@unavailable_events.size, "other organization") %> that <%= @unavailable_events.one? ? "does" : "do" %> not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
     </p>
   <% else %>
     <p>
-      You are in <%= pluralize(@unavailable_events.size, "organization") %> that do not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
+      You are in <%= pluralize(@unavailable_events.size, "organization") %> that <%= @unavailable_events.one? ? "does" : "do" %> not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
     </p>
 
     <%= link_to "Return to homepage", root_path, class: "btn" %>
