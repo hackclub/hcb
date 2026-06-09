@@ -55,13 +55,13 @@ class DonationsController < ApplicationController
       donations = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded
 
       @top_donors = donations
-        .group_by(&:email)
-        .map do |_, group|
-          most_recent = group.max_by(&:donated_at)
-          donor_summary.new(most_recent.name, group.sum(&:amount))
-        end
+                    .group_by(&:email)
+                    .map do |_, group|
+        most_recent = group.max_by(&:donated_at)
+        donor_summary.new(most_recent.name, group.sum(&:amount))
+      end
         .sort_by { |d| -d.amount }
-        .first(10)
+                    .first(10)
 
       @top_donors = [] if @top_donors.size < 3
     end
