@@ -23,8 +23,9 @@
 </div>
 
 <% content_for :footer do %>
-  <div class="flex flex-row gap-6 items-start justify-center">
+  <div class="flex flex-row gap-4 items-start justify-center">
     <%= link_to "← Back", personal_info_application_path(@application), class: "btn bg-muted" %>
+    <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
   </div>
   <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}" do |form| %>
     <%= form.hidden_field :return_to, value: review_application_path(@application) %>

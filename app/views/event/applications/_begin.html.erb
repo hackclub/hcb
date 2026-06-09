@@ -75,13 +75,10 @@
   <% content_for :footer do %>
     <% if current_user.present? %>
       <div class="flex items-center justify-start gap-4">
-        <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
+        <%= mobile_link_to applications_path, text: "Back to dashboard", icon: "view-back", class: "btn bg-muted" %>
+
         <% if @application.present? %>
-          <% if @application.archived? %>
-            <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn" %>
-          <% else %>
-            <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
-          <% end %>
+          <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
         <% end %>
       </div>
     <% else %>
