@@ -3,6 +3,23 @@
 require "cgi"
 
 module EventsHelper
+  # Items in the NAV_ITEMS array can be either nav links or sections, and are rendered in order:
+
+  # Nav link schema
+  # name (string): nav item name, displayed in sidebar and placeholder page
+  # path_proc (event_id -> string): path used as link href
+  # tooltip (string): description shown on hover and on placeholder page
+  # icon (string): name of icon to display beside name
+  # symbol (symbol): shows nav item as selected when matches with argument passed to event_nav
+  # available_proc (event -> boolean): whether or not the nav item is available for the given event
+  # adminTool (boolean, optional): whether or not the nav item is shown as an admin tool
+  # async_badge_proc (event -> string, optional): path to a turbo frame that will be displayed as a badge in the top-right corner of the icon
+  # data (hash, optional): HTML data attributes on the link
+
+  # Section schema
+  # section (string): name of the section
+  # available_proc (event -> boolean): whether or not the section header should be shown for the given event
+
   NAV_ITEMS = [
     {
       name: "Activate",
