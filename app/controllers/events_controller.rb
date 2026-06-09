@@ -531,6 +531,12 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
+  def async_card
+    authorize @event
+
+    render :async_card, layout: false
+  end
+
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
