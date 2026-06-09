@@ -150,6 +150,7 @@ module EventsHelper
     {
       name: "Perks",
       path_proc: ->(event_id) { event_promotions_path(event_id:) },
+      tooltip: "Receive promos & discounts",
       dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
       icon: "perks",
       data: { tour_step: "perks" },
@@ -159,6 +160,7 @@ module EventsHelper
     {
       name: "Google Workspace",
       path_proc: ->(event_id) { event_g_suite_overview_path(event_id:) },
+      tooltip: "Manage domain Google Workspace",
       dynamic_tooltip: lambda do |event|
         if !policy(event).g_suite_overview?
           "Your organization isn't eligible for Google Workspace."
