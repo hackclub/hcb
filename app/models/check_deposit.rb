@@ -66,7 +66,7 @@ class CheckDeposit < ApplicationRecord
 
   after_update if: -> { increase_status_previously_changed?(to: "returned") } do
     canonical_pending_transaction.decline!
-    local_hcb_code.canonical_transactions.each do |ct|
+    local_hcb_code.canonical_transactions.includes(:fee).find_each do |ct|
       fee = ct.fee
       fee.amount_cents_as_decimal = 0
       fee.reason = :transfer_returned
