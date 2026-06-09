@@ -83,9 +83,9 @@ module Admin
           .destroy_all
 
         # Find or create the referenced ones
-        groups_by_id = Event::Group.where(id: event_group_ids).index_by(&:id)
+        groups_by_id = Event::Group.where(id: event_group_ids).index_by { |g| g.id.to_s }
         event_group_ids.each do |event_group_id|
-          group = groups_by_id[event_group_id.to_i]
+          group = groups_by_id[event_group_id]
           next unless group
 
           Event::GroupMembership.find_or_create_by!(group:, event: @event)
