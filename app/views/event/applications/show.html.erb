@@ -89,7 +89,7 @@
                 </div>
               <% elsif step[:label] == "Await review" && !@application.approved? %>
                 <div class="w-full">
-                  <%= render "application/ooo_callout", resource: "application", financial: false %>
+                  <%= render "application/ooo_callout", resource: "application", financial: false, business_days: @application.response_business_days %>
                 </div>
               <% elsif step[:label] == "Start spending" && @application.event.present? %>
                 <%= link_to "Go to your new organization!", @application.event, class: "btn" %>
