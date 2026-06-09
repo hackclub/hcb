@@ -339,11 +339,7 @@ module Reimbursement
       maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
 
-    def minimum_wire_amount_cents
-      return event.minimum_wire_amount_cents unless card_grant.present?
-
-      500_00
-    end
+    delegate :minimum_wire_amount_cents, to: :event
 
     def below_minimum_amount?
       user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
