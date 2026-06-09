@@ -51,19 +51,10 @@ class DonationsController < ApplicationController
     return unless build_donation_page!(event: @event, params:, request:)
 
     if @event.show_top_donors
-      donor_summary = Struct.new(:name, :amount)
-      donations = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded
-
-      @top_donors = donations
-                    .group_by(&:email)
-                    .map do |_, group|
-        most_recent = group.max_by(&:donated_at)
-        donor_summary.new(most_recent.name, group.sum(&:amount))
+      @top_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(amount: :desc).limit(10)
+      if @top_donors.size < 3
+        @top_donors = []
       end
-        .sort_by { |d| -d.amount }
-                    .first(10)
-
-      @top_donors = [] if @top_donors.size < 3
     end
 
     if @event.show_recent_donors
