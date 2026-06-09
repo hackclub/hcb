@@ -8,7 +8,7 @@ gem "dotenv-rails", groups: [:development, :test]
 
 gem "rails", "~> 8.0"
 
-gem "puma", "~> 6.6" # app server
+gem "puma", "~> 7.2" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
