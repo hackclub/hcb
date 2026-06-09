@@ -72,8 +72,8 @@ RSpec.shared_examples "has grant restrictions" do
       subject.banned_categories = ["food"]
       subject.valid?
       errors = subject.errors[:base]
-      expect(errors.any? { |e| e.match?(/merchant_a/i) }).to be true
-      expect(errors.any? { |e| e.match?(/food/i) }).to be true
+      expect(errors).to include(match(/merchant_a/i))
+      expect(errors).to include(match(/food/i))
     end
   end
 end

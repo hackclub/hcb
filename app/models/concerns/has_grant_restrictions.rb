@@ -11,12 +11,18 @@ module HasGrantRestrictions
 
     validate do
       conflicts = allowed_merchants & disallowed_merchants
-      errors.add(:base, "#{"Merchant".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
+      if conflicts.any?
+        label = "Merchant".pluralize(conflicts.size)
+        errors.add(:base, "#{label} #{conflicts.join(", ")} cannot be both allowed and blocked")
+      end
     end
 
     validate do
       conflicts = allowed_categories & disallowed_categories
-      errors.add(:base, "#{"Category".pluralize(conflicts.size)} #{conflicts.join(", ")} cannot be both allowed and blocked") if conflicts.any?
+      if conflicts.any?
+        label = "Category".pluralize(conflicts.size)
+        errors.add(:base, "#{label} #{conflicts.join(", ")} cannot be both allowed and blocked")
+      end
     end
   end
 end
