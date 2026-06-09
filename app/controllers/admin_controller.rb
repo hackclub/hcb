@@ -1154,9 +1154,7 @@ class AdminController < Admin::BaseController
 
   def set_event_multiple_transactions
     ActiveRecord::Base.transaction do
-      valid_ids = CanonicalTransaction.where(id: params.select { |_, v| v == "1" }.keys).pluck(:id)
-
-      valid_ids.each do |id|
+      CanonicalTransaction.where(id: params.select { |_, v| v == "1" }.keys).pluck(:id).each do |id|
         begin
           @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(
             canonical_transaction_id: id,
