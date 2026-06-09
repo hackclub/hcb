@@ -263,10 +263,10 @@ class Event
     end
 
     def contract_notify_hcb?
-      !teen_led?
+      !teen_led? || contract.reissue?
     end
 
-    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
+    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -277,13 +277,19 @@ class Event
 
       fs_contract = nil
       ActiveRecord::Base.transaction do
-        fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        fs_contract = Contract::FiscalSponsorship.create!(
+          contractable: self,
+          include_videos: false,
+          external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
+          prefills: { "public_id" => public_id, "name" => name, "description" => description },
+          reissue_of:
+        )
         fs_contract.parties.create!(user:, role: :signee)
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
       fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
-      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
+      fs_contract.party(:cosigner)&.notify unless reissue_of.present?
 
       fs_contract
     end
