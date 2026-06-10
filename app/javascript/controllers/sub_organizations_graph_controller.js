@@ -12,28 +12,38 @@ const MAX_INITIAL = 5
 export default class extends Controller {
   static values = {
     nodes: Array,
+    src: String,
   }
 
   connect() {
     this.expanded = false
     this.render()
+    if (this.hasSrcValue) {
+      fetch(this.srcValue, { headers: { Accept: 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+          const lookup = Object.fromEntries(data.map(d => [d.id, d]))
+          this.nodesValue = this.nodesValue.map(n => ({ ...n, ...(lookup[n.id] || {}) }))
+          this.render()
+        })
+    }
+  }
+
+  buildChildrenOf(nodes) {
+    const allIds = new Set(nodes.map(n => n.id))
+    const childrenOf = Object.fromEntries(nodes.map(n => [n.id, []]))
+    nodes.forEach(n => {
+      if (n.parentId !== null && allIds.has(n.parentId)) childrenOf[n.parentId].push(n)
+    })
+    Object.values(childrenOf).forEach(arr => arr.sort((a, b) => a.name.localeCompare(b.name)))
+    return childrenOf
   }
 
   render() {
     const nodes = this.nodesValue
     if (!nodes.length) return
 
-    const allIds = new Set(nodes.map(n => n.id))
-    const childrenOf = Object.fromEntries(nodes.map(n => [n.id, []]))
-    nodes.forEach(n => {
-      if (n.parentId !== null && allIds.has(n.parentId)) {
-        childrenOf[n.parentId].push(n)
-      }
-    })
-    Object.values(childrenOf).forEach(arr =>
-      arr.sort((a, b) => a.name.localeCompare(b.name))
-    )
-
+    const childrenOf = this.buildChildrenOf(nodes)
     const root = nodes.find(n => n.isRoot)
     if (!root) return
 
@@ -117,7 +127,7 @@ export default class extends Controller {
       .attr('x', x + 12)
       .attr('y', y + 35)
       .attr('dominant-baseline', 'middle')
-      .text(this.formatBalance(node.balanceCents))
+      .text(node.balanceCents == null ? '$ —' : this.formatBalance(node.balanceCents))
 
     a.append('text')
       .attr('class', 'node-meta')
@@ -125,7 +135,7 @@ export default class extends Controller {
       .attr('y', y + 35)
       .attr('text-anchor', 'end')
       .attr('dominant-baseline', 'middle')
-      .text(`💳 ${node.cardCount ?? 0}`)
+      .text(node.cardCount == null ? '💳 —' : `💳 ${node.cardCount}`)
   }
 
   formatBalance(cents) {

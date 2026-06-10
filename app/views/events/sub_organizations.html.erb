@@ -30,11 +30,12 @@
   </div>
 </div>
 
-<% if @all_events&.length.to_i > 1 %>
+<% if @all_events.length > 1 %>
   <div class="card my-3 p-0" style="overflow-x: auto;">
     <div
       data-controller="sub-organizations-graph"
-      data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id, balanceCents: e.balance_v2_cents, cardCount: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? } } }.to_json %>"
+      data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id } }.to_json %>"
+      data-sub-organizations-graph-src-value="<%= event_async_sub_organizations_graph_path(@event) %>"
     ></div>
   </div>
 <% end %>

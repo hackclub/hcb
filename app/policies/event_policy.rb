@@ -9,6 +9,10 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
+  def async_sub_organizations_graph?
+    sub_organizations?
+  end
+
   # Event homepage
   def show?
     is_public || auditor_or_reader?
