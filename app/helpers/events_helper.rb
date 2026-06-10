@@ -204,7 +204,7 @@ module EventsHelper
     {
       name: "Sub-organizations",
       path_proc: ->(event_id) { event_sub_organizations_path(event_id:) },
-      tooltip: "Create & manage subsidiary organisations",
+      tooltip: "Create & manage subsidiary organizations",
       icon: "channels",
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
