@@ -117,7 +117,7 @@ module Api
 
         @hcb_codes = @card_grant.visible_hcb_codes
 
-        @hcb_codes = helpers.paginate_cursor(@hcb_codes, &:public_id)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       private
