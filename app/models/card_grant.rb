@@ -107,6 +107,8 @@ class CardGrant < ApplicationRecord
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
+  include HasGrantRestrictions
+
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
