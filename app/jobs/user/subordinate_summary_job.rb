@@ -11,28 +11,21 @@ class User
       "zach": [
         "dev",
         "alexren",
-        "malted",
         "jared",
         {
-          "graham": [
-            "fayd",
-            "marios",
-            "shubham",
-            "cheru",
-            "josias",
-            "usr_Jptmoo" # Shubham Patil
-          ],
           "melanie": [
-            "dylan",
+            "sierra",
             "kris",
             "dawn",
             {
               "gary": [
-                "ian", "sam", "manu", "ruien",
+                "manu", "ruien", "luke", "samuelf",
+                "usr_BetQLy", # Ian
+                "usr_Jptm3Z", # Sam Poder
                 "usr_73tAe4" # Albert
               ],
               "daisy": [
-                "leo", "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
+                "sarvesh", "rhys", "anish", "sean", "mattsoh", "briyan", "georgia",
                 "usr_MVt1m1", # Alex DeForrest
                 "usr_let591", # Alex Luo
               ],
