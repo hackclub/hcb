@@ -23,7 +23,10 @@ export default class extends Controller {
         .then(r => r.json())
         .then(data => {
           const lookup = Object.fromEntries(data.map(d => [d.id, d]))
-          this.nodesValue = this.nodesValue.map(n => ({ ...n, ...(lookup[n.id] || {}) }))
+          this.nodesValue = this.nodesValue.map(n => ({
+            ...n,
+            ...(lookup[n.id] || {}),
+          }))
           this.render()
         })
     }
@@ -33,9 +36,12 @@ export default class extends Controller {
     const allIds = new Set(nodes.map(n => n.id))
     const childrenOf = Object.fromEntries(nodes.map(n => [n.id, []]))
     nodes.forEach(n => {
-      if (n.parentId !== null && allIds.has(n.parentId)) childrenOf[n.parentId].push(n)
+      if (n.parentId !== null && allIds.has(n.parentId))
+        childrenOf[n.parentId].push(n)
     })
-    Object.values(childrenOf).forEach(arr => arr.sort((a, b) => a.name.localeCompare(b.name)))
+    Object.values(childrenOf).forEach(arr =>
+      arr.sort((a, b) => a.name.localeCompare(b.name))
+    )
     return childrenOf
   }
 
@@ -127,7 +133,11 @@ export default class extends Controller {
       .attr('x', x + 12)
       .attr('y', y + 35)
       .attr('dominant-baseline', 'middle')
-      .text(node.balanceCents == null ? '$ —' : this.formatBalance(node.balanceCents))
+      .text(
+        node.balanceCents == null
+          ? '$ —'
+          : this.formatBalance(node.balanceCents)
+      )
 
     a.append('text')
       .attr('class', 'node-meta')
