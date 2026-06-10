@@ -83,7 +83,7 @@ module Admin
           .destroy_all
 
         # Find or create the referenced ones
-        Event::Group.where(id: event_group_ids).each do |group|
+        Event::Group.where(id: event_group_ids).find_each do |group|
           Event::GroupMembership.find_or_create_by!(group:, event: @event)
         end
 
