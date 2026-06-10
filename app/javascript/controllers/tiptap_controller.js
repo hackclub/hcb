@@ -147,6 +147,7 @@ export default class extends Controller {
   }
 
   link() {
+    // eslint-disable-next-line no-alert
     const url = window.prompt('Link URL')
 
     if (url === null) {
@@ -186,6 +187,7 @@ export default class extends Controller {
   }
 
   image() {
+    // eslint-disable-next-line no-alert
     const url = window.prompt('Image URL')
 
     if (url === null || url === '') {
