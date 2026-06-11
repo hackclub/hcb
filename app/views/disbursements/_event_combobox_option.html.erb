@@ -1,0 +1,7 @@
+<%# locals: (event_combobox_option:, sending:, is_admin:) %>
+<% event = event_combobox_option %>
+<% disabled_message = "Insufficient balance" if sending && !is_admin && event.balance_available <= 0 %>
+<div class="flex justify-between w-full <%= "opacity-50" if disabled_message %>" <%= "data-disabled-option" if disabled_message %>>
+  <span><%= is_admin ? "#{event.name} (#{event.id})" : event.name %></span>
+  <span class="muted"><%= disabled_message || render_money_short(event.balance_available) %></span>
+</div>

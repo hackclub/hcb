@@ -68,25 +68,15 @@ class DisbursementsController < ApplicationController
 
     events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode).to_a
 
-    options = events.map do |e|
-      label = is_admin ? "#{e.name} (#{e.id})" : e.name
-
-      disabled_message = "Insufficient balance" if sending && !is_admin && e.balance_available <= 0
-
-      right = disabled_message || helpers.render_money_short(e.balance_available)
-      attrs = disabled_message ? { data: { disabled_option: "" } } : {}
-      content = helpers.content_tag(:div, class: "flex flex-col justify-between w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
-        helpers.content_tag(:span, label) + helpers.content_tag(:span, right, class: "muted")
-      end
-      { value: e.public_id, display: label, content: content }
-    end
-
-    render turbo_stream: helpers.async_combobox_options(options)
+    render turbo_stream: helpers.async_combobox_options(
+      events,
+      render_in: { partial: "disbursements/event_combobox_option", locals: { sending: sending, is_admin: is_admin } }
+    )
   end
 
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
-    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
+    @source_event = Event.find(disbursement_params[:source_event_id])
+    @destination_event = Event.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
