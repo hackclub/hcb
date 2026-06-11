@@ -7,27 +7,27 @@ module Reimbursement
     end
 
     def create?
-      unlocked && (admin || manager || creator)
+      unlocked? && (admin? || manager? || creator?)
     end
 
     def edit?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      unlocked? && (admin? || manager? || creator?) && !record.is_fee?
     end
 
     def update?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      unlocked? && (admin? || manager? || creator?) && !record.is_fee?
     end
 
     def destroy?
-      unlocked && (admin || manager || creator) && !record.is_fee?
+      unlocked? && (admin? || manager? || creator?) && !record.is_fee?
     end
 
     def approve?
-      (admin || (manager && !creator)) && record.report.submitted?
+      (admin? || (manager? && !creator?)) && record.report.submitted?
     end
 
     def unapprove?
-      (admin || (manager && !creator)) && record.report.submitted?
+      (admin? || (manager? && !creator?)) && record.report.submitted?
     end
 
     def user_made_expense?
@@ -38,31 +38,19 @@ module Reimbursement
 
     private
 
-    def admin
+    def admin?
       user&.admin?
     end
 
-    def auditor
-      user&.auditor?
-    end
-
-    def manager
+    def manager?
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
     end
 
-    def reader
-      record.event && OrganizerPosition.role_at_least?(user, record.event, :reader)
-    end
-
-    def team_member
-      record.event&.users&.include?(user)
-    end
-
-    def creator
+    def creator?
       record.report.user == user
     end
 
-    def unlocked
+    def unlocked?
       !record.report.locked?
     end
 
