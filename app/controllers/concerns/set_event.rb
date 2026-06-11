@@ -19,7 +19,13 @@ module SetEvent
         end
 
         nav_items = EventsHelper::NAV_ITEMS.flat_map do |item|
-          item[:dropdown_items]&.map { |di| di.merge(name: "#{item[:dropdown]} (#{di[:name]})", icon: item[:icon]) } || [item]
+          item[:dropdown_items]&.map do |di|
+            di.merge(
+              name: "#{item[:dropdown]} (#{di[:name]})",
+              icon: item[:icon],
+              available_proc: ->(event) { instance_exec(event, &item[:available_proc]) && instance_exec(event, &di[:available_proc]) }
+            )
+          end || [item]
         end.select { |item| item[:adminTool].nil? && item[:path_proc].present? }
 
         @nav_item = nav_items.find do |item|
