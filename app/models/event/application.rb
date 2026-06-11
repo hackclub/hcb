@@ -362,6 +362,10 @@ class Event
         end
       end
 
+      airrecord = airtable_record
+      airrecord["Status"] = "Onboarded"
+      airrecord.save
+
       schedule_airtable_sync
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
