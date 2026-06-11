@@ -440,7 +440,7 @@ class Event
         self[field].nil? || self[field] == ""
       end
 
-      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES) && !(cosigner_email.present? && cosigner_email == user.email)
     end
 
     def user_ready_to_submit?
