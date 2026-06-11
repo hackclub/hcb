@@ -32,7 +32,7 @@
                   admin: dropdown_item[:adminTool],
                   tooltip: dropdown_item[:tooltip],
                   selected: dropdown_item[:selected],
-                  data: (dropdown_item[:data] || {}) %>
+                  data: dropdown_item[:data] || {} %>
           <% end %>
         </details>
       <% else %>
