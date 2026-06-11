@@ -12,7 +12,4 @@
 <div class="field flex-1">
   <%= form.label field_name, label %>
   <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: display_value, class: "!max-w-full" %>
-  <% if defined?(initial_message) && initial_message %>
-    <p class="muted h5 mt1 mb0"><%= initial_message %></p>
-  <% end %>
 </div>

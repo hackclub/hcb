@@ -5,11 +5,6 @@ class DisbursementsController < ApplicationController
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
-  EventSearchOption = Struct.new(:id, :label) do
-    def to_combobox_display = label
-  end
-  private_constant :EventSearchOption
-
   def show
     authorize @disbursement
 
@@ -79,7 +74,7 @@ class DisbursementsController < ApplicationController
       disabled_message = nil
       if sending && !is_admin
         disabled_message = "Insufficient balance" if e.balance_available <= 0
-        disabled_message = "HCB transfers disabled" unless policy(e).create_transfer?
+        disabled_message = "HCB transfers disabled" if e.demo_mode?
       end
 
       right = disabled_message || helpers.render_money_short(e.balance_available)
@@ -249,7 +244,8 @@ class DisbursementsController < ApplicationController
     source_event_id = params[:source_event_id].presence
     return false unless source_event_id
 
-    Event.find_by(id: source_event_id)&.plan&.unrestricted_disbursements_enabled?
+    event = current_user.manageable_events.find_by(id: source_event_id)
+    event&.plan&.unrestricted_disbursements_enabled?
   end
 
   # Only allow a trusted parameter "white list" through.
