@@ -9,6 +9,7 @@ module EventsHelper
   # name (string): nav item name, displayed in sidebar and placeholder page
   # path_proc (event_id -> string): path used as link href
   # tooltip (string): description shown on hover and on placeholder page
+  # dynamic_tooltip (event -> string): different tooltip to show based on event data
   # icon (string): name of icon to display beside name
   # symbol (symbol): shows nav item as selected when matches with argument passed to event_nav
   # available_proc (event -> boolean): whether or not the nav item is available for the given event
@@ -19,6 +20,13 @@ module EventsHelper
   # Section schema
   # section (string): name of the section
   # available_proc (event -> boolean): whether or not the section header should be shown for the given event
+
+  # Dropdown menu schema
+  # dropdown (string): name of the dropdown menu
+  # available_proc (event -> boolean): whether or not the dropdown and any of its items are available for the given event
+  # tooltip (string): description shown on hover and on placeholder page
+  # icon (string): name of icon to display beside name
+  # dropdown_items (array of nav links): nav links for this dropdown menu. icon, async_badge_proc, and dynamic_tooltip are not supported.
 
   NAV_ITEMS = [
     {
