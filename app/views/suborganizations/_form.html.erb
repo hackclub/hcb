@@ -49,8 +49,7 @@
               <span x-text="scoped_tag.name"></span>
               <button
                 type="button" class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
-                x-on:click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)"
-              >
+                x-on:click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
                 <%= inline_icon "view-close", size: 16 %>
               </button>
             </span>
