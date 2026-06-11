@@ -17,7 +17,7 @@
 
 <div class="flex flex-col items-center flex-grow">
   <div class="md:max-w-[600px] w-full mt-7 space-y-8 pb-5">
-    <%= render "event/applications/review_delay_callout" %>
+    <%= render "application/ooo_callout", resource: "application", financial: false, business_days: @application.response_business_days %>
     <%= render "event/applications/summary", application: @application, allow_edits: true %>
   </div>
 </div>

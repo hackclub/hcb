@@ -11,6 +11,44 @@ module SetEvent
     def set_event
       id = params[:event_name] || params[:event_id] || params[:id]
       id ||= params[:event] if params[:event].is_a?(String) # sometimes params[:event] is a hash with nested attributes
+
+      if request.get? && id == "org"
+        unless signed_in?
+          redirect_to auth_users_path(return_to: request.original_url, require_reload: true)
+          return
+        end
+
+        nav_items = EventsHelper::NAV_ITEMS.select { |i| i[:adminTool].nil? && i[:path_proc].present? }
+        @nav_item = nav_items.find do |item|
+          item_path = instance_exec("org", &item[:path_proc])
+
+          helpers.current_page?(item_path)
+        end
+
+        if @nav_item.nil?
+          raise ActionController::RoutingError.new("Not Found")
+        end
+
+        if current_user.events.one?
+          redirect_to instance_exec(current_user.events.first.slug, &@nav_item[:path_proc])
+          return
+        end
+
+        @available_events = []
+        @unavailable_events = []
+
+        current_user.events.not_hidden.each do |e|
+          if instance_exec(e, &@nav_item[:available_proc])
+            @available_events << e
+          else
+            @unavailable_events << e
+          end
+        end
+
+        render "events/placeholder"
+        return
+      end
+
       @event = auditor_signed_in? ? Event.friendly.find(id) : Event.friendly.find_by_friendly_id(id)
 
       @organizer_position = @event.organizer_positions.find_by(user: current_user) if signed_in?

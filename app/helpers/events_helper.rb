@@ -3,228 +3,223 @@
 require "cgi"
 
 module EventsHelper
+  # Items in the NAV_ITEMS array can be either nav links or sections, and are rendered in order:
+
+  # Nav link schema
+  # name (string): nav item name, displayed in sidebar and placeholder page
+  # path_proc (event_id -> string): path used as link href
+  # tooltip (string): description shown on hover and on placeholder page
+  # icon (string): name of icon to display beside name
+  # symbol (symbol): shows nav item as selected when matches with argument passed to event_nav
+  # available_proc (event -> boolean): whether or not the nav item is available for the given event
+  # adminTool (boolean, optional): whether or not the nav item is shown as an admin tool
+  # async_badge_proc (event -> string, optional): path to a turbo frame that will be displayed as a badge in the top-right corner of the icon
+  # data (hash, optional): HTML data attributes on the link
+
+  # Section schema
+  # section (string): name of the section
+  # available_proc (event -> boolean): whether or not the section header should be shown for the given event
+
+  NAV_ITEMS = [
+    {
+      name: "Activate",
+      path_proc: ->(event_id) { event_activation_flow_path(event_id:) },
+      tooltip: "Activate this organization",
+      icon: "checkmark",
+      symbol: :activation_flow,
+      adminTool: true,
+      available_proc: ->(event) { policy(event).activation_flow? }
+    },
+    {
+      name: "Sign",
+      path_proc: lambda do |event_id|
+        event = Event.friendly.find_by_friendly_id(event_id)
+        if event.present?
+          contract_party_path(event.contracts_pending_on_hcb.first.party(:hcb))
+        else
+          nil
+        end
+      end,
+      tooltip: "Sign the fiscal sponsorship contract as HCB",
+      icon: "checkmark",
+      adminTool: true,
+      available_proc: ->(event) { event.financially_frozen? && event.contracts_pending_on_hcb.one? && event.contracts.signed.none? }
+    },
+    {
+      name: "Home",
+      path_proc: ->(event_id) { event_path(id: event_id) },
+      tooltip: "See everything at-a-glance",
+      icon: "home",
+      symbol: :home,
+      available_proc: ->(event) { policy(event).show? }
+    },
+    {
+      name: "Announcements",
+      path_proc: ->(event_id) { event_announcement_overview_path(event_id:) },
+      tooltip: "View your announcements",
+      icon: "announcement",
+      symbol: :announcements,
+      available_proc: ->(event) { policy(event).announcement_overview? }
+    },
+    {
+      name: "Transactions",
+      path_proc: ->(event_id) { event_transactions_path(event_id:) },
+      tooltip: "View detailed ledger",
+      icon: "bank-account",
+      symbol: :transactions,
+      available_proc: ->(event) { policy(event).transactions? }
+    },
+    {
+      name: "Account numbers",
+      path_proc: ->(event_id) { account_number_event_path(id: event_id) },
+      tooltip: "View account numbers",
+      icon: "hashtag",
+      symbol: :account_number,
+      available_proc: ->(event) { policy(event).account_number? }
+    },
+    {
+      section: "Receive",
+      available_proc: ->(event) { policy(event).donation_overview? || policy(event).invoices? || policy(event.check_deposits.build).index? }
+    },
+    {
+      name: "Donations",
+      path_proc: ->(event_id) { event_donation_overview_path(event_id:) },
+      tooltip: "Support this organization",
+      icon: "support",
+      data: { tour_step: "donations" },
+      symbol: :donations,
+      available_proc: ->(event) { policy(event).donation_overview? }
+    },
+    {
+      name: "Invoices",
+      path_proc: ->(event_id) { event_invoices_path(event_id:) },
+      tooltip: "Collect sponsor payments",
+      icon: "payment-docs",
+      symbol: :invoices,
+      available_proc: ->(event) { policy(event).invoices? }
+    },
+    {
+      name: "Check deposits",
+      path_proc: ->(event_id) { event_check_deposits_path(event_id:) },
+      tooltip: "Deposit a check",
+      icon: "cheque",
+      symbol: :deposit_check,
+      available_proc: ->(event) { policy(event.check_deposits.build).index? }
+    },
+    {
+      section: "Spend",
+      available_proc: ->(event) { policy(event).card_overview? || policy(event).card_grant_overview? || policy(event).transfers? || policy(event).reimbursements? || policy(event).employees? }
+    },
+    {
+      name: "Cards",
+      path_proc: ->(event_id) { event_cards_overview_path(event_id:) },
+      tooltip: "Manage team HCB cards",
+      icon: "card",
+      data: { tour_step: "cards" },
+      symbol: :cards,
+      available_proc: ->(event) { policy(event).card_overview? }
+    },
+    {
+      name: "Grants",
+      path_proc: ->(event_id) { event_card_grant_overview_path(event_id:) },
+      tooltip: "Manage card grants",
+      icon: "bag",
+      symbol: :card_grants,
+      available_proc: ->(event) { policy(event).card_grant_overview? }
+    },
+    {
+      name: "Transfers",
+      path_proc: ->(event_id) { event_transfers_path(event_id:) },
+      tooltip: "Send & transfer money",
+      icon: "payment-transfer",
+      symbol: :transfers,
+      available_proc: ->(event) { policy(event).transfers? }
+    },
+    {
+      name: "Reimbursements",
+      path_proc: ->(event_id) { event_reimbursements_path(event_id:) },
+      async_badge_proc: ->(event) { event_reimbursements_pending_review_icon_path(event) },
+      tooltip: "Reimburse team members & volunteers",
+      icon: "reimbursement",
+      symbol: :reimbursements,
+      available_proc: ->(event) { policy(event).reimbursements? }
+    },
+    {
+      name: "Contractors",
+      path_proc: ->(event_id) { event_employees_path(event_id:) },
+      tooltip: "Manage payroll",
+      icon: "person-badge",
+      symbol: :payroll,
+      available_proc: ->(event) { policy(event).employees? }
+    },
+    {
+      section: "",
+      available_proc: ->(event) { policy(event).team? || policy(event).promotions? || policy(event).g_suite_overview? || policy(event).documentation? || policy(event).sub_organizations? }
+    },
+    {
+      name: "Team",
+      path_proc: ->(event_id) { event_team_path(event_id:) },
+      tooltip: "Manage your team",
+      icon: "people-2",
+      symbol: :team,
+      available_proc: ->(event) { policy(event).team? }
+    },
+    {
+      name: "Perks",
+      path_proc: ->(event_id) { event_promotions_path(event_id:) },
+      tooltip: "Receive promos & discounts",
+      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
+      icon: "perks",
+      data: { tour_step: "perks" },
+      symbol: :promotions,
+      available_proc: ->(event) { policy(event).promotions? }
+    },
+    {
+      name: "Google Workspace",
+      path_proc: ->(event_id) { event_g_suite_overview_path(event_id:) },
+      tooltip: "Manage domain Google Workspace",
+      dynamic_tooltip: lambda do |event|
+        if !policy(event).g_suite_overview?
+          "Your organization isn't eligible for Google Workspace."
+        else
+          if event.g_suites.any?
+            "Manage domain Google Workspace"
+          else
+            Flipper.enabled?(:google_workspace, event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
+          end
+        end
+      end,
+      icon: "google",
+      symbol: :google_workspace,
+      available_proc: ->(event) { policy(event).g_suite_overview? }
+    },
+    {
+      name: "Documents",
+      path_proc: ->(event_id) { event_documents_path(event_id:) },
+      tooltip: "View legal documents and financial statements",
+      icon: "docs",
+      symbol: :documentation,
+      available_proc: ->(event) { policy(event).documentation? }
+    },
+    {
+      name: "Sub-organizations",
+      path_proc: ->(event_id) { event_sub_organizations_path(event_id:) },
+      tooltip: "Create & manage subsidiary organizations",
+      icon: "channels",
+      symbol: :sub_organizations,
+      available_proc: ->(event) { policy(event).sub_organizations? }
+    }
+  ].freeze
+
   def events_nav(event = @event, selected: nil)
-    items = []
-
-    if policy(event).activation_flow?
-      items << {
-        name: "Activate",
-        path: event_activation_flow_path(event_id: event.slug),
-        tooltip: "Activate this organization",
-        icon: "checkmark",
-        selected: selected == :activation_flow,
-        adminTool: true,
-      }
+    NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
+      item.dup.tap do |h|
+        h[:selected] = h[:symbol] == selected if h[:symbol].present?
+        h[:path] = instance_exec(event.slug, &h[:path_proc]) if h[:path_proc].present?
+        h[:async_badge] = instance_exec(event, &h[:async_badge_proc]) if h[:async_badge_proc].present?
+        h[:tooltip] = instance_exec(event, &h[:dynamic_tooltip]) if h[:dynamic_tooltip].present?
+      end
     end
-
-    if event.financially_frozen? && (contracts = event.contracts.select { |c| c.parties.not_hcb.all?(&:signed?) }).one? && event.contracts.signed.none?
-      items << {
-        name: "Sign",
-        path: contract_party_path(contracts.first.party(:hcb)),
-        tooltip: "Sign the fiscal sponsorship contract as HCB",
-        icon: "checkmark",
-        selected: false,
-        adminTool: true,
-      }
-    end
-
-    if policy(event).show?
-      items << {
-        name: "Home",
-        path: event_path(id: event.slug),
-        tooltip: "See everything at-a-glance",
-        icon: "home",
-        selected: selected == :home,
-      }
-    end
-
-    if policy(event).announcement_overview?
-      items << {
-        name: "Announcements",
-        path: event_announcement_overview_path(event_id: event.slug),
-        tooltip: "View your announcements",
-        icon: "announcement",
-        selected: selected == :announcements,
-      }
-    end
-
-    if policy(event).transactions?
-      items << {
-        name: "Transactions",
-        path: event_transactions_path(event_id: event.slug),
-        tooltip: "View detailed ledger",
-        icon: "bank-account",
-        selected: selected == :transactions,
-      }
-    end
-
-    if policy(event).account_number?
-      items << {
-        name: "Account numbers",
-        path: account_number_event_path(event),
-        tooltip: "View account numbers",
-        icon: "hashtag",
-        selected: selected == :account_number,
-      }
-    end
-
-    if policy(event).donation_overview? || policy(event).invoices? || policy(event.check_deposits.build).index?
-      items << { section: "Receive" }
-    end
-
-    if policy(event).donation_overview?
-      items << {
-        name: "Donations",
-        path: event_donation_overview_path(event_id: event.slug),
-        tooltip: "Support this organization",
-        icon: "support",
-        data: { tour_step: "donations" },
-        selected: selected == :donations,
-      }
-    end
-
-    if policy(event).invoices?
-      items << {
-        name: "Invoices",
-        path: event_invoices_path(event_id: event.slug),
-        tooltip: "Collect sponsor payments",
-        icon: "payment-docs",
-        selected: selected == :invoices,
-      }
-    end
-
-    if policy(event.check_deposits.build).index?
-      items << {
-        name: "Check deposits",
-        path: event_check_deposits_path(event),
-        tooltip: "Deposit a check",
-        icon: "cheque",
-        selected: selected == :deposit_check,
-      }
-    end
-
-    if policy(event).card_overview? || policy(event).card_grant_overview? || policy(event).transfers? || policy(event).reimbursements? || policy(event).employees?
-      items << { section: "Spend" }
-    end
-
-    if policy(event).card_overview?
-      items << {
-        name: "Cards",
-        path: event_cards_overview_path(event_id: event.slug),
-        tooltip: "Manage team HCB cards",
-        icon: "card",
-        data: { tour_step: "cards" },
-        selected: selected == :cards,
-      }
-    end
-
-    if policy(event).card_grant_overview?
-      items << {
-        name: "Grants",
-        path: event_card_grant_overview_path(event_id: event.slug),
-        tooltip: "Manage card grants",
-        icon: "bag",
-        selected: selected == :card_grants
-      }
-    end
-
-    if policy(event).transfers?
-      items << {
-        name: "Transfers",
-        path: event_transfers_path(event_id: event.slug),
-        tooltip: "Send & transfer money",
-        icon: "payment-transfer",
-        selected: selected == :transfers,
-      }
-    end
-
-    if policy(event).reimbursements?
-      items << {
-        name: "Reimbursements",
-        path: event_reimbursements_path(event_id: event.slug),
-        async_badge: event_reimbursements_pending_review_icon_path(event),
-        tooltip: "Reimburse team members & volunteers",
-        icon: "reimbursement",
-        selected: selected == :reimbursements
-      }
-    end
-
-    if policy(event).employees?
-      items << {
-        name: "Contractors",
-        path: event_employees_path(event_id: event.slug),
-        tooltip: "Manage payroll",
-        icon: "person-badge",
-        selected: selected == :payroll
-      }
-    end
-
-    if policy(event).team? || policy(event).promotions? || policy(event).g_suite_overview? || policy(event).documentation? || policy(event).sub_organizations?
-      items << { section: "" }
-    end
-
-    if policy(event).team?
-      items << {
-        name: "Team",
-        path: event_team_path(event_id: event.slug),
-        tooltip: "Manage your team",
-        icon: "people-2",
-        selected: selected == :team,
-      }
-    end
-
-    if policy(event).promotions?
-      items << {
-        name: "Perks",
-        path: event_promotions_path(event_id: event.slug),
-        tooltip: !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts",
-        icon: "perks",
-        data: { tour_step: "perks" },
-        disabled: !policy(event).promotions?,
-        selected: selected == :promotions,
-      }
-    end
-
-    if policy(event).g_suite_overview?
-      items << {
-        name: "Google Workspace",
-        path: event_g_suite_overview_path(event_id: event.slug),
-        tooltip: (if !policy(event).g_suite_overview?
-                    "Your organization isn't eligible for Google Workspace."
-                  else
-                    if event.g_suites.any?
-                      "Manage domain Google Workspace"
-                    else
-                      Flipper.enabled?(:google_workspace, event) ? "Set up domain Google Workspace" : "Register for Google Workspace Waitlist"
-                    end
-                  end),
-        icon: "google",
-        disabled: !policy(event).g_suite_overview?,
-        selected: selected == :google_workspace,
-      }
-    end
-
-    if policy(event).documentation?
-      items << {
-        name: "Documents",
-        path: event_documents_path(event_id: event.slug),
-        tooltip: "View legal documents and financial statements",
-        icon: "docs",
-        selected: selected == :documentation,
-      }
-    end
-
-    if policy(event).sub_organizations?
-      items << {
-        name: "Sub-organizations",
-        path: event_sub_organizations_path(event_id: event.slug),
-        tooltip: "Create & manage subsidiary organisations",
-        icon: "channels",
-        selected: selected == :sub_organizations
-      }
-    end
-
-    items
   end
 
   def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
