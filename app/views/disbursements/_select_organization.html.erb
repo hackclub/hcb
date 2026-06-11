@@ -1,6 +1,6 @@
 <%# locals: (form:, field_name:, label:, disabled:, default_event:, sending: false, source_event: nil) %>
 
-<% display_value = admin_signed_in? ? default_event&.to_combobox_display : default_event&.name %>
+<% display_value = default_event&.public_id %>
 <% search_path = if sending
                    event_search_disbursements_path(sending: true)
                  elsif source_event
