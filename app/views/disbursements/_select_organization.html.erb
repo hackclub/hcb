@@ -8,7 +8,12 @@
                    event_search_disbursements_path
                  end %>
 
-<div class="field flex-1">
+<% prefilled_display = admin_signed_in? ? default_event&.to_combobox_display : default_event&.name %>
+<div class="field flex-1"
+     data-controller="combobox-prefill"
+     data-combobox-prefill-name-value="disbursement[<%= field_name %>]"
+     data-combobox-prefill-value-value="<%= default_event&.public_id %>"
+     data-combobox-prefill-display-value="<%= prefilled_display %>">
   <%= form.label field_name, label %>
   <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: default_event&.public_id, class: "!max-w-full" %>
 </div>
