@@ -497,7 +497,7 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("ach_transfers.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -729,7 +729,7 @@ class AdminController < Admin::BaseController
     relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     @checks = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("increase_checks.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -796,7 +796,7 @@ class AdminController < Admin::BaseController
     end
 
     @wires = @wires.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("wires.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -837,8 +837,8 @@ class AdminController < Admin::BaseController
     end
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
-      Arel.sql("aasm_state = 'approved' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'pending' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
