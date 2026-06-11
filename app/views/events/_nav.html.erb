@@ -16,6 +16,25 @@
       <% if item[:section] %>
         <span class="mx-1 dock__section"><%= item[:section] %></span>
         <hr class="opacity-80 border-none h-[1px] bg-gray-200">
+      <% elsif item[:dropdown] %>
+        <details class="dock" <%= "open" if item[:selected] %>>
+          <summary class="dock__item tooltipped tooltipped--e" aria-label="<%= item[:tooltip] %>">
+            <%= inline_icon item[:icon], size: 32, style: "padding: 0" %>
+            <span class="flex-grow">
+              <%= item[:dropdown] %>
+            </span>
+            <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
+          </summary>
+
+          <% item[:dropdown_items].each do |dropdown_item| %>
+              <%= dock_item dropdown_item[:name],
+                  dropdown_item[:path],
+                  admin: dropdown_item[:adminTool],
+                  tooltip: dropdown_item[:tooltip],
+                  selected: dropdown_item[:selected],
+                  data: (dropdown_item[:data] || {}) %>
+          <% end %>
+        </details>
       <% else %>
         <%= dock_item item[:name],
             item[:path],
@@ -27,7 +46,6 @@
             data: item[:data] %>
       <% end %>
     <% end %>
-    <%= render partial: "events/settings_dropdown" %>
   </nav>
 <% end %>
 <% content_for(:container) do %>

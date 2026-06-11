@@ -208,13 +208,94 @@ module EventsHelper
       icon: "channels",
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
+    },
+    {
+      dropdown: "Settings",
+      available_proc: ->(event) { policy(event).edit? },
+      tooltip: "Edit organization settings",
+      icon: "settings",
+      dropdown_items: [
+        {
+          name: "Organization",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "details") },
+          symbol: :settings_details,
+          available_proc: ->(event) { true },
+        },
+        {
+          name: "Donations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "donations") },
+          symbol: :settings_donations,
+          available_proc: ->(event) { event.plan.donations_enabled? }
+        },
+        {
+          name: "Reimbursements",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "reimbursements") },
+          symbol: :settings_reimbursements,
+          available_proc: ->(event) { event.plan.reimbursements_enabled? }
+        },
+        {
+          name: "Card grants",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "card_grants") },
+          symbol: :settings_card_grants,
+          available_proc: ->(event) { event.plan.card_grants_enabled? },
+          tooltip: "Manage card grants"
+        },
+        {
+          name: "Tags",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "tags") },
+          symbol: :settings_tags,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Affiliations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "affiliations") },
+          symbol: :settings_affiliations,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Integrations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "integrations") },
+          symbol: :settings_integrations,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Feature previews",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "features") },
+          symbol: :settings_features,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Audit log",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "audit_log") },
+          symbol: :settings_audit_log,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Admin",
+          path_proc: ->(event_id) { edit_event_path(@event, tab: "admin") },
+          symbol: :settings_admin,
+          available_proc: ->(event) { true },
+          adminTool: true
+        }
+      ]
     }
   ].freeze
 
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
       item.dup.tap do |h|
-        h[:selected] = h[:symbol] == selected if h[:symbol].present?
+        if h[:dropdown].present?
+          h[:dropdown_items] = h[:dropdown_items].select { |i| instance_exec(event, &i[:available_proc]) }.map do |dropdown_item|
+            dropdown_item[:selected] = dropdown_item[:symbol] == selected if dropdown_item[:symbol].present?
+            dropdown_item[:path] = instance_exec(event.slug, &dropdown_item[:path_proc]) if dropdown_item[:path_proc].present?
+
+            dropdown_item
+          end
+          h[:selected] = h[:dropdown_items].any? { |i| i[:selected] }
+        else
+          h[:selected] = h[:symbol] == selected if h[:symbol].present?
+        end
+
         h[:path] = instance_exec(event.slug, &h[:path_proc]) if h[:path_proc].present?
         h[:async_badge] = instance_exec(event, &h[:async_badge_proc]) if h[:async_badge_proc].present?
         h[:tooltip] = instance_exec(event, &h[:dynamic_tooltip]) if h[:dynamic_tooltip].present?
