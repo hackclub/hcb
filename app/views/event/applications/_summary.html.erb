@@ -177,11 +177,11 @@
       <div>
         <p class="text-sm muted mb-1">Parent email</p>
         <p class="mb-0">
-        <% if application.cosigner_email.present? && application.cosigner_email == application.user.email %>
-          <span class="text-primary"><%= application.cosigner_email %></span> - <em>you cannot use your own email</em>
-        <% else %>
-          <%= application.cosigner_email.present? ? application.cosigner_email : missing %>
-        <% end %>
+          <% if application.cosigner_email.present? && application.cosigner_email == application.user.email %>
+            <span class="text-primary"><%= application.cosigner_email %></span> - <em>you cannot use your own email</em>
+          <% else %>
+            <%= application.cosigner_email.present? ? application.cosigner_email : missing %>
+          <% end %>
         </p>
       </div>
 
