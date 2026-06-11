@@ -10,5 +10,5 @@
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: default_event&.public_id, class: "!max-w-full" %>
+  <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: admin_signed_in? ? default_event&.to_combobox_display : default_event&.name, class: "!max-w-full" %>
 </div>
