@@ -254,7 +254,7 @@ class Event
       new_cosigner_email = params[:event_application][:cosigner_email]
 
       if new_cosigner_email == @application.user.email
-        flash[:error] = "You cannot change the cosigner email to your email"
+        flash[:error] = "You cannot use your own email as your parent's email"
       else
         @application.update!(cosigner_email: params[:event_application][:cosigner_email])
 
