@@ -71,18 +71,14 @@ class DisbursementsController < ApplicationController
     options = events.map do |e|
       label = is_admin ? "#{e.name} (#{e.id})" : e.name
 
-      disabled_message = nil
-      if sending && !is_admin
-        disabled_message = "Insufficient balance" if e.balance_available <= 0
-        disabled_message = "HCB transfers disabled" if e.demo_mode?
-      end
+      disabled_message = "Insufficient balance" if sending && !is_admin && e.balance_available <= 0
 
       right = disabled_message || helpers.render_money_short(e.balance_available)
       attrs = disabled_message ? { data: { disabled_option: "" } } : {}
       content = helpers.content_tag(:div, class: "flex flex-col justify-between w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
         helpers.content_tag(:span, label) + helpers.content_tag(:span, right, class: "muted")
       end
-      { value: e.id, display: label, content: content }
+      { value: e.public_id, display: label, content: content }
     end
 
     render turbo_stream: helpers.async_combobox_options(options)
@@ -142,9 +138,13 @@ class DisbursementsController < ApplicationController
       redirect_to event_transfers_path(@source_event)
     end
 
-  rescue ArgumentError, ActiveRecord::RecordInvalid, ActiveRecord::StatementInvalid => e
+  rescue ArgumentError, ActiveRecord::RecordInvalid => e
     skip_authorization
     flash[:error] = e.message
+    redirect_to new_disbursement_path(source_event_id: @source_event)
+  rescue ActiveRecord::StatementInvalid
+    skip_authorization
+    flash[:error] = "Invalid request"
     redirect_to new_disbursement_path(source_event_id: @source_event)
   rescue ActiveRecord::RecordNotFound
     skip_authorization
