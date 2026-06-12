@@ -275,7 +275,7 @@ module EventsHelper
         {
           name: "Feature previews",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "features") },
-          tooltip: "Get access to new HCB features",
+          tooltip: "Enable new HCB features",
           symbol: :settings_features,
           available_proc: ->(event) { true }
         },
