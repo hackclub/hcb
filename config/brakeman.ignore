@@ -212,7 +212,7 @@
       "cwe_id": [
         79
       ],
-      "note": ""
+      "note": "The render method outputs HTML already sanitized by ProsemirrorService with an allowlist of safe attributes and URL schemes."
     },
     {
       "warning_type": "Redirect",
