@@ -226,55 +226,63 @@ module EventsHelper
         {
           name: "Organization",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "details") },
+          tooltip: "Edit organization details and visibility",
           symbol: :settings_details,
           available_proc: ->(event) { true },
         },
         {
           name: "Donations",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "donations") },
+          tooltip: "Edit donation page, goals, and tiers",
           symbol: :settings_donations,
           available_proc: ->(event) { event.approved? && event.plan.donations_enabled? }
         },
         {
           name: "Reimbursements",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "reimbursements") },
+          tooltip: "Edit reimbursement page and review requirements",
           symbol: :settings_reimbursements,
           available_proc: ->(event) { event.approved? && event.plan.reimbursements_enabled? }
         },
         {
           name: "Card grants",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "card_grants") },
+          tooltip: "Edit card grant default settings, restrictions, and support",
           symbol: :settings_card_grants,
           available_proc: ->(event) { event.approved? && event.plan.card_grants_enabled? },
-          tooltip: "Manage card grants"
         },
         {
           name: "Tags",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "tags") },
+          tooltip: "Manage transaction tags",
           symbol: :settings_tags,
           available_proc: ->(event) { true }
         },
         {
           name: "Affiliations",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "affiliations") },
+          tooltip: "Update organization affiliations",
           symbol: :settings_affiliations,
           available_proc: ->(event) { true }
         },
         {
           name: "Integrations",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "integrations") },
+          tooltip: "Setup and manage integrations with HCB",
           symbol: :settings_integrations,
           available_proc: ->(event) { true }
         },
         {
           name: "Feature previews",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "features") },
+          tooltip: "Get access to new HCB features",
           symbol: :settings_features,
           available_proc: ->(event) { true }
         },
         {
           name: "Audit log",
           path_proc: ->(event_id) { edit_event_path(event_id, tab: "audit_log") },
+          tooltip: "View all organization activity",
           symbol: :settings_audit_log,
           available_proc: ->(event) { true }
         },
