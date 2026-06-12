@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class AnnouncementsController < ApplicationController
-  before_action :set_announcement, except: [:new]
+  before_action :set_announcement, except: [:new, :show]
+  before_action :set_announcement_with_deleted, only: [:show]
   before_action :set_event, except: [:new, :create]
   before_action :set_event_follow, except: [:new, :create]
 
@@ -41,6 +42,8 @@ class AnnouncementsController < ApplicationController
   end
 
   def show
+    return if @announcement.deleted?
+
     authorize @announcement
   end
 
@@ -103,9 +106,11 @@ class AnnouncementsController < ApplicationController
   private
 
   def set_announcement
-    if params[:id].present?
-      @announcement = Announcement.find(params[:id])
-    end
+    @announcement = Announcement.find(params[:id]) if params[:id].present?
+  end
+
+  def set_announcement_with_deleted
+    @announcement = Announcement.with_deleted.find(params[:id]) if params[:id].present?
   end
 
   def set_event
