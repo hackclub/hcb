@@ -4,7 +4,6 @@ module Api
   module V4
     class CardGrantsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:create]
       before_action :set_card_grant, except: [:index, :create]
