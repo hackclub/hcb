@@ -29,6 +29,8 @@
 #
 class CardGrant
   class PreAuthorization < ApplicationRecord
+    OPENAI_ALLOWED_CONTENT_TYPES = %w[image/png image/jpeg image/webp image/gif].freeze
+
     has_many_attached :screenshots, dependent: :destroy
     validates :screenshots, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["screenshots"].present? }
 
@@ -128,6 +130,16 @@ class CardGrant
         #{card_grant.instructions.presence || "No specific instructions were provided."}
       PROMPT
 
+      screenshot_image_inputs = screenshots.map do |screenshot|
+        url = if OPENAI_ALLOWED_CONTENT_TYPES.include?(screenshot.content_type)
+                Rails.application.routes.url_helpers.url_for(screenshot)
+              else
+                Rails.application.routes.url_helpers.url_for(screenshot.variant(format: :jpeg).processed)
+              end
+
+        { type: "input_image", image_url: url }
+      end
+
       response = conn.post("/v1/responses", {
                              model: "gpt-4.1",
                              input: [
@@ -147,12 +159,7 @@ class CardGrant
                                      type: "input_text",
                                      text: "The user provided the following URL: #{product_url}. Analyze and respond with the required JSON.",
                                    },
-                                   screenshots.map { |screenshot|
-                                     {
-                                       type: "input_image",
-                                       image_url: Rails.application.routes.url_helpers.url_for(screenshot),
-                                     }
-                                   }
+                                   *screenshot_image_inputs
                                  ].flatten
                                },
 
