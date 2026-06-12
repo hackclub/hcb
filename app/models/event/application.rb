@@ -464,6 +464,8 @@ class Event
         airrecord["Status"] = status
         airrecord.save
       end
+    rescue => e
+      Rails.error.report(e)
     end
 
   end
