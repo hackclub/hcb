@@ -172,7 +172,7 @@
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
-              <span class="bold warning">Warning</span>: your report is beyond your balance. To continue, lower the amount requested.
+              <span class="bold warning">Warning</span>: this report is beyond the organization's balance. To continue, lower the amount requested.
             <% end %>
           </div>
         <% elsif report.draft? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && !report.team_review_required? %>
