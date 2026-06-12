@@ -445,4 +445,26 @@ module ApplicationHelper
     end
   end
 
+  def mobile_link_to(href, text:, icon:, **options)
+    text_class = "#{options[:class]} hidden md:flex"
+    icon_class = "#{options[:class]} flex md:hidden"
+    safe_join([
+                link_to(text, href, options.merge(class: text_class)),
+                link_to(href, options.merge(class: icon_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
+  def mobile_button_to(href, text:, icon:, **options)
+    text_form_class = "#{options[:form_class]} hidden md:flex"
+    icon_form_class = "#{options[:form_class]} flex md:hidden"
+    safe_join([
+                button_to(text, href, options.merge(form_class: text_form_class)),
+                button_to(href, options.merge(form_class: icon_form_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
 end

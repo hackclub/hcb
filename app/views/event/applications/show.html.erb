@@ -33,12 +33,7 @@
     <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
 
     <div class="w-full flex-grow flex items-center justify-end gap-4">
-      <% if @application.archived? %>
-        <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn btn--destroy" %>
-      <% else %>
-        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy" %>
-      <% end %>
-
+      <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
       <%= link_to "View submission", submission_application_path(@application), class: "btn bg-muted" %>
     </div>
   <% end %>
@@ -102,13 +97,12 @@
   </div>
 
   <% content_for :footer do %>
-    <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted flex-shrink-0" %>
+    <div class="flex gap-4">
+      <%= mobile_link_to applications_path, text: "Back to dashboard", icon: "view-back", class: "btn bg-muted" %>
+      <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+    </div>
 
-    <div class="w-full flex-grow flex items-center justify-end gap-4">
-      <% unless @application.archived? %>
-        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
-      <% end %>
-
+    <div class="flex items-center gap-4">
       <% admin_tool do %>
         <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>
       <% end %>
