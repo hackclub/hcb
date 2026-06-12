@@ -50,6 +50,30 @@ class DonationsController < ApplicationController
   def start_donation
     return unless build_donation_page!(event: @event, params:, request:)
 
+    if @event.show_top_donors
+      donor_summary = Struct.new(:name, :amount)
+      donations = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded
+
+      @top_donors = donations
+                    .select { |d| d.email.present? }
+                    .group_by(&:email)
+                    .map do |_, group|
+        representative = group.reject(&:anonymous?).max_by(&:donated_at) || group.max_by(&:donated_at)
+        donor_summary.new(representative.name, group.sum(&:amount))
+      end
+        .sort_by { |d| -d.amount }
+                    .first(10)
+
+      @top_donors = [] if @top_donors.size < 3
+    end
+
+    if @event.show_recent_donors
+      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      if @recent_donors.size < 8
+        @recent_donors = []
+      end
+    end
+
     authorize @donation
     @hide_flash = true
 
