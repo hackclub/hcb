@@ -17,17 +17,8 @@ class OrganizerPosition
       roles.each do |role_name, role_value|
         scope "#{role_name}_access", -> { where("role >= ?", role_value) }
       end
-
-      validate :at_least_one_manager
     end
-
-    private
-
-    def at_least_one_manager
-      unless event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
-        errors.add(:event, "must have at least one manager")
-      end
-    end
+    
   end
 
 end

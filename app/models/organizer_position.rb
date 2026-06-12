@@ -47,6 +47,7 @@ class OrganizerPosition < ApplicationRecord
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
   validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
+  validate :at_least_one_manager
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
@@ -102,6 +103,12 @@ class OrganizerPosition < ApplicationRecord
   def user_must_be_verified
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
+    end
+  end
+
+  def at_least_one_manager
+    unless event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
+      errors.add(:event, "must have at least one manager")
     end
   end
 
