@@ -208,8 +208,8 @@ module Reimbursement
         if @report.user.can_update_payout_method?
           flash[:success][:link_text] = "If needed, you can still edit your payout settings."
         end
-      rescue => e
-        flash[:error] = e.message
+      rescue AASM::InvalidTransition
+        flash[:error] = @report.submission_requirements.to_sentence
       end
 
       redirect_to @report
