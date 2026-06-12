@@ -1,21 +1,16 @@
 <% title "Recurring Donations" %>
 
-<%= form_with local: true, url: recurring_donations_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-
-  <fieldset>
+<%= form_with local: true, class: "card overflow-visible", url: recurring_donations_admin_index_path, method: :get do |form| %>
+  <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :active do %>
-      <%= form.check_box :active, checked: @active %>
-      Active
+      <%= form.check_box :active, checked: @active %> Active
     <% end %>
-
     <%= form.label :canceled do %>
-      <%= form.check_box :canceled, checked: @canceled, class: "ml1" %>
-      Canceled
+      <%= form.check_box :canceled, checked: @canceled %> Canceled
     <% end %>
-  </fieldset>
-
-  <%= form.submit "Search" %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

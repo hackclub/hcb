@@ -65,8 +65,8 @@ gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
-gem "money-rails"
-gem "monetize"
+gem "money-rails", "~> 3.0.0"
+gem "monetize", "~> 2.0.0"
 gem "rounding"
 
 gem "business_time"
@@ -224,7 +224,7 @@ gem "irb"
 
 gem "pstore"
 
-gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.22"
 
 gem "prosemirror_to_html"
 
@@ -235,3 +235,6 @@ gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
 gem "intercom-rails"
+gem "hotwire_combobox"
+
+gem "maintenance_tasks", "~> 2.14"

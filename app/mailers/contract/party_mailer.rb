@@ -18,6 +18,12 @@ class Contract
            template_name: "reissue_#{@party.role}"
     end
 
+    def reminder
+      mail to: @party.email,
+           subject: @party.reminder_email_subject,
+           template_name: "remind_#{@party.role}"
+    end
+
     private
 
     def set_party

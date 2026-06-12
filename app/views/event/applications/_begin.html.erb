@@ -40,6 +40,8 @@
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px] w-full">
       <%= form_with model: @application || false, url: "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
+        <%= form.hidden_field(:referral_code, value: @referral_code) if @referral_code.present? %>
+
         <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
           <%= form.label :teen_led do %>
             Are you a teenager? <span class="text-primary">*</span>
@@ -75,7 +77,11 @@
       <div class="flex items-center justify-start gap-4">
         <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
         <% if @application.present? %>
-          <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to cancel this application? It will be removed from your dashboard and you will no longer be able to edit it." } %>
+          <% if @application.archived? %>
+            <%= button_to "Unarchive application", unarchive_application_path(@application), class: "btn" %>
+          <% else %>
+            <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+          <% end %>
         <% end %>
       </div>
     <% else %>

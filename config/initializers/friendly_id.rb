@@ -103,6 +103,8 @@ FriendlyId.defaults do |config|
     mobile
     deprecated
     apply
+    maintenance_tasks
+    org
   ]
 
   # This adds an option to to treat reserved words as conflicts rather than exceptions.

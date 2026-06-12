@@ -61,8 +61,7 @@ class HcbCodeMailbox < ApplicationMailbox
     when "@rename"
       return unless command["argument"]
 
-      @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: command["argument"]) }
-      @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: command["argument"]) }
+      @hcb_code.update_custom_memo!(command["argument"])
       @renamed_to = command["argument"]
     when "@tag"
       return unless command["argument"]

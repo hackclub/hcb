@@ -10,7 +10,7 @@ module DonationPageSetup
 
     # Handle tier lookup if tier_id is present
     if params[:tier_id].present?
-      @tier = event.donation_tiers.find_by(id: params[:tier_id], published: true) unless params[:tier_id] == "custom"
+      @tier = event.donation_tiers.where(published: true).find_by_hashid!(params[:tier_id]) unless params[:tier_id] == "custom"
 
       if @tier.nil? && params[:tier_id] != "custom"
         redirect_to start_donation_donations_path(event), flash: { error: "Donation tier could not be found." }
@@ -41,7 +41,7 @@ module DonationPageSetup
       utm_content: params[:utm_content]
     )
 
-    @monthly = params[:monthly].present? || params[:tier_id].present?
+    @monthly = params[:monthly].present? || (params[:tier_id].present? && params[:tier_id] != "custom")
     @skip_layout_og_tags = true
 
     if @monthly

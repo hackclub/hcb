@@ -46,5 +46,16 @@ FactoryBot.define do
         }
       end
     end
+
+    trait :forbidden_network_id do
+      merchant_data do
+        {
+          category: "employment_temp_agencies",
+          category_code: "7361",
+          network_id: "8203300025",
+          name: "HEPTA PAY LTD"
+        }
+      end
+    end
   end
 end

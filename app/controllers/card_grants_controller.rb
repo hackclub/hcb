@@ -50,7 +50,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -146,6 +146,10 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
   end
 
+  def edit_expiration
+    authorize @card_grant
+  end
+
   def edit_topup
     authorize @card_grant
   end
@@ -174,7 +178,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :instructions, :merchant_lock, :category_lock, :keyword_lock, :expiration_at))
       flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence

@@ -4,6 +4,7 @@ class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
     before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
+    before_action :prevent_access_if_archived, only: [:project_info, :personal_info, :review, :videos, :agreement]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -13,23 +14,27 @@ class Event
 
     def index
       skip_authorization
+
       @applications = current_user.applications.active
+      @referral_code = params[:ref]
     end
 
     def apply
       skip_authorization
 
-      if signed_in? && current_user.applications.draft.one?
-        redirect_to application_path(current_user.applications.draft.first)
-      elsif signed_in? && current_user.applications.any?
-        redirect_to applications_path
+      if signed_in? && current_user.applications.not_archived.draft.one?
+        redirect_to application_path(current_user.applications.not_archived.draft.first)
+      elsif signed_in? && current_user.applications.not_archived.any?
+        redirect_to applications_path(ref: params[:ref])
       else
-        redirect_to new_application_path
+        redirect_to new_application_path(ref: params[:ref])
       end
     end
 
     def new
       skip_authorization
+
+      @referral_code = params[:ref]
     end
 
     def show
@@ -70,7 +75,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}.",
+          description: "Our operations team will review your application and respond within #{helpers.pluralize(@application.response_business_days, "business day")}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
@@ -107,6 +112,7 @@ class Event
 
       if @application.teen_led?
         party = @application.contract.party :hcb
+        party.update!(user: current_user)
         redirect_to contract_party_path(party)
       else
         redirect_to submission_application_path(@application)
@@ -125,7 +131,7 @@ class Event
     def admin_activate
       authorize @application
 
-      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level])
+      @application.activate_event!(tags: params[:tags], risk_level: params[:risk_level], point_of_contact: current_user)
 
       redirect_to event_path(@application.event), flash: { success: "Successfully activated #{@application.event.name}!" }
     end
@@ -136,10 +142,10 @@ class Event
 
     def create
       unless signed_in?
-        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true) and return
+        redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true"))
+      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -153,11 +159,28 @@ class Event
       authorize @application
     end
 
+    def videos
+      authorize @application
+    end
+
     def agreement
       authorize @application
 
+      unless @application.videos_watched
+        redirect_to videos_application_path(@application)
+        return
+      end
+
       @contract = @application.contract
       @party = @contract.party :signee
+    end
+
+    def mark_videos_watched
+      authorize @application
+
+      @application.update!(videos_watched: true)
+
+      redirect_to agreement_application_path(@application)
     end
 
     def review
@@ -198,12 +221,12 @@ class Event
     def submit
       authorize @application
 
-      if @application.ready_to_submit?
+      begin
         @application.mark_submitted!
         confetti!
         redirect_to application_path(@application)
-      else
-        flash[:error] = "This application is not ready to submit"
+      rescue AASM::InvalidTransition
+        flash[:error] = "This application is not ready to submit. See the summary for what's missing."
         redirect_to review_application_path(@application)
       end
     end
@@ -215,6 +238,14 @@ class Event
       flash[:success] = "Application archived"
 
       redirect_to applications_path
+    end
+
+    def unarchive
+      authorize @application
+
+      @application.unarchive!
+      flash[:success] = "Application unarchived"
+      redirect_to application_path(@application)
     end
 
     def resend_to_cosigner
@@ -253,6 +284,12 @@ class Event
 
     def prevent_access_after_submission
       unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
+      end
+    end
+
+    def prevent_access_if_archived
+      if @application.archived? && !current_user.auditor?
         redirect_to application_path(@application)
       end
     end

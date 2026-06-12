@@ -31,6 +31,9 @@
 class Sponsor < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :spr
 
@@ -49,8 +52,10 @@ class Sponsor < ApplicationRecord
   belongs_to :event
   has_many :invoices
 
-  validates_presence_of :name, :contact_email, :address_line1, :address_city,
+  validates_presence_of :name, :address_line1, :address_city,
                         :address_state, :address_postal_code
+  validates :contact_email, presence: true
+  validates_email_format_of :contact_email, if: :contact_email_changed?
 
   before_create :create_stripe_customer
   before_update :update_stripe_customer

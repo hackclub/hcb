@@ -16,6 +16,7 @@
     <%= inline_icon "loading", size: 20, class: "hidden mr-2", "data-donation-tier-form-target": "loader" %>
     <div class="field--checkbox--switch" style="flex-shrink:0">
       <%= form_with(model: event, local: true) do |form| %>
+        <%= form.hidden_field :tab, value: "donations" %>
         <%= form.label :donation_tiers_enabled do %>
           <%= form.check_box :donation_tiers_enabled,
             data: { "donation-tier-form-target": "checkbox" },
