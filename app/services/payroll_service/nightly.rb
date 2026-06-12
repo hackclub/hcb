@@ -13,7 +13,7 @@ module PayrollService
               memo: "Payment for \"#{payment.title}\"."[0...40],
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payment.employee.user.full_name,
+              recipient_name: payment.employee.user.payout_method.recipient_name.presence || payment.employee.user.full_name,
               address_line1: payment.employee.user.payout_method.address_line1,
               address_line2: payment.employee.user.payout_method.address_line2,
               address_city: payment.employee.user.payout_method.address_city,
@@ -43,7 +43,7 @@ module PayrollService
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payment.employee.user.full_name,
+              recipient_name: payment.employee.user.payout_method.recipient_name.presence || payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
               routing_number: payment.employee.user.payout_method.routing_number,
@@ -81,7 +81,9 @@ module PayrollService
               payment_for: "Payment for \"#{payment.title}\".",
               memo: "Payment for \"#{payment.title}\".",
               recipient_email: payment.employee.user.payout_method.recipient_email,
-              recipient_name: payment.employee.user.name,
+              recipient_name: payment.employee.user.payout_method.recipient_name.presence ||
+                              payment.employee.user.full_name.presence ||
+                              payment.employee.user.name,
               user: User.system_user
             )
             paypal_transfer.save!
