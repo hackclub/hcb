@@ -1,4 +1,4 @@
-<%# locals: (form:, field_name:, label:, disabled:, default_event:, sending: false, source_event: nil) %>
+<%# locals: (form:, field_name:, label:, disabled:, sending: false, source_event: nil) %>
 
 <% search_path = if sending
                    event_search_disbursements_path(sending: true)
@@ -8,12 +8,7 @@
                    event_search_disbursements_path
                  end %>
 
-<% prefilled_display = admin_signed_in? ? default_event&.to_combobox_display : default_event&.name %>
-<div class="field flex-1"
-     data-controller="combobox-prefill"
-     data-combobox-prefill-name-value="disbursement[<%= field_name %>]"
-     data-combobox-prefill-value-value="<%= default_event&.public_id %>"
-     data-combobox-prefill-display-value="<%= prefilled_display %>">
+<div class="field flex-1">
   <%= form.label field_name, label %>
-  <%= combobox_tag "disbursement[#{field_name}]", search_path, placeholder: "Select one...", disabled: disabled, value: default_event&.public_id, class: "!max-w-full" %>
+  <%= form.combobox field_name.to_sym, search_path, placeholder: "Select one...", disabled: disabled, class: "!max-w-full" %>
 </div>
