@@ -5,14 +5,13 @@
 # Table name: events
 #
 #  id                                           :bigint           not null, primary key
-#  aasm_state                                   :string
+#  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
 #  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -59,9 +58,13 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["demo_mode_request_meeting_at"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
+  hashid_config salt: ""
+
   extend FriendlyId
 
   include PublicIdentifiable
@@ -126,6 +129,10 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns the id of self as well as all the ancestors,
+  # in order from self->parent->grandparent->...
+  # We guarantee this order using SEARCH BREADTH FIRST https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-SEARCH
   def ancestor_ids
     [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
       WITH RECURSIVE parent_events AS (
@@ -136,8 +143,8 @@ class Event < ApplicationRecord
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
-      )
-      SELECT id FROM parent_events WHERE id != #{id};
+      ) SEARCH BREADTH FIRST BY id SET ordercol
+      SELECT id FROM parent_events WHERE id != #{id} ORDER BY ordercol;
     SQL
   end
 
@@ -156,8 +163,14 @@ class Event < ApplicationRecord
     SQL
   end
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns self as well as all the ancestors
   def ancestors
-    Event.where(id: ancestor_ids)
+    # array_position preserves the order from ancestor_ids; sanitize_sql_array parameterizes the ids so it's statically safe and passes brakeman.
+    fetched_ancestor_ids = ancestor_ids
+    Event.where(id: fetched_ancestor_ids).reorder(Arel.sql(
+                                                    Event.sanitize_sql_array(["array_position(ARRAY[?]::bigint[], events.id)", fetched_ancestor_ids])
+                                                  ))
   end
 
   def descendants
@@ -291,6 +304,10 @@ class Event < ApplicationRecord
 
   def ancestor_organizer_positions
     OrganizerPosition.where(event_id: ancestor_ids)
+  end
+
+  def ancestor_users
+    User.where(id: ancestor_organizer_positions.select(:user_id))
   end
 
   has_many :contracts, through: :organizer_position_invites
@@ -459,6 +476,17 @@ class Event < ApplicationRecord
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
+
+  after_update_commit if: :is_public_previously_changed? do
+    version = self.versions.where_object_changes(is_public:).last
+    whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
+
+    if is_public
+      EventMailer.with(event: self, whodunnit:).transparency_mode_enabled.deliver_later
+    else
+      EventMailer.with(event: self, whodunnit:).transparency_mode_disabled.deliver_later
+    end
+  end
 
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
@@ -879,8 +907,9 @@ class Event < ApplicationRecord
     config.subevent_plan.present?
   end
 
-  def organizer_contact_emails(only_managers: false)
+  def organizer_contact_emails(only_managers: false, &block)
     included_users = only_managers ? managers : users
+    included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
     emails << config.contact_email if config.contact_email.present?
@@ -914,6 +943,26 @@ class Event < ApplicationRecord
 
   def valid_scoped_tags
     scoped_tags.where(parent_event_id: parent_id)
+  end
+
+  def to_combobox_display
+    "#{name} (#{id})"
+  end
+
+  def onboarding_scheduling_link
+    return unless point_of_contact.present?
+
+    Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
+      begin
+        OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      rescue
+        nil
+      end
+    end
+  end
+
+  def contracts_pending_on_hcb
+    contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
   end
 
   private

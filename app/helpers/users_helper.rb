@@ -1,55 +1,67 @@
 # frozen_string_literal: true
 
-require "digest/md5"
-require "cgi"
-
 module UsersHelper
-  def users_mobile_nav(selected: nil)
+  def users_nav(selected: nil)
     items = [
       {
         name: "Home",
         path: root_path,
         icon: "home",
-        tooltip: "See all your organizations",
+        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
         selected: selected == :home
-      },
-      (if current_user.followed_events.any?
-         {
-           name: "Feed",
-           path: my_feed_path,
-           tooltip: "See announcements for organizations you're following",
-           icon: "announcement",
-           selected: selected == :feed
-         }
-       else
-         nil
-       end),
-      {
-        name: "Cards",
-        path: my_cards_path,
-        icon: "card",
-        tooltip: "See all your cards",
-        selected: selected == :cards,
-      },
-      {
+      }
+    ]
+
+    if current_user(allow_unverified: true)&.show_first_dashboard? && !current_user(allow_unverified: true)&.redirect_to_first_dashboard?
+      items << {
+        name: "FIRST",
+        path: first_index_path,
+        tooltip: "Explore HCB for FIRST teams",
+        icon: "resources",
+        selected: selected == :first
+      }
+    end
+
+    if current_user&.followed_events&.any?
+      items << {
+        name: "Feed",
+        path: my_feed_path,
+        tooltip: "See announcements for organizations you're following",
+        icon: "announcement",
+        selected: selected == :feed
+      }
+    end
+
+    items << {
+      name: "Cards",
+      path: my_cards_path,
+      icon: "card",
+      tooltip: "See all your cards",
+      selected: selected == :cards,
+    }
+
+
+    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
+      items << {
         name: "Receipts",
         path: my_inbox_path,
         icon: "receipt",
         tooltip: "See transactions awaiting receipts",
         selected: selected == :receipts,
         async_badge: my_missing_receipts_icon_path,
-      },
-      {
-        name: "Reimbursements",
-        path: my_reimbursements_path,
-        icon: "reimbursement",
-        tooltip: "See expense reimbursements",
-        async_badge: my_reimbursements_icon_path,
-        selected: selected == :reimbursements
-      },
-    ].compact
+      }
+    end
 
-    if current_user.jobs.any?
+    items << {
+      name: "Reimbursements",
+      path: my_reimbursements_path,
+      icon: "reimbursement",
+      tooltip: "See expense reimbursements",
+      async_badge: (my_reimbursements_icon_path if signed_in?),
+      selected: selected == :reimbursements
+    }
+
+    if current_user&.jobs&.any?
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -59,7 +71,18 @@ module UsersHelper
       }
     end
 
-    items
+    unless signed_in?
+      items << {
+        name: "Verify your email",
+        path: verify_email_first_index_path,
+        icon: "email-exclamation",
+        tooltip: "Verify your email address",
+        selected: false,
+        method: :post
+      }
+    end
+
+    items.compact
   end
 
   def gravatar_url(email, name, id, size)
@@ -69,7 +92,7 @@ module UsersHelper
       temp = email.split("@").first.split(/[^a-z\d]/i).compact_blank
       temp.length == 1 ? temp.first.first(2) : temp.first(2).map(&:first).join
     end
-    hex = Digest::MD5.hexdigest(email.downcase.strip)
+    hex = Digest::SHA256.hexdigest(email.downcase.strip)
     "https://gravatar.com/avatar/#{hex}?s=#{size}&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/#{CGI.escape(name)}/#{size}/#{get_user_color(id)}/fff"
   end
 
@@ -179,11 +202,11 @@ module UsersHelper
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
 
-      aria_label = [aria_label, "Right click for admin tools"].compact.join(" | ")
+      aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
       # Menu content items
       menu_items = safe_join([
@@ -310,6 +333,25 @@ module UsersHelper
         overlay_color: "#802434",
       }
     ]
+  end
+
+  # Renders a social-proof sentence about a list of teammates.
+  # Example: "Maya, Eli, and 3 others are on this team"
+  # When team_label is given, inserts "from <team_label>" before the verb.
+  def team_community_sentence(users:, total:, singular_suffix:, plural_suffix:, team_label: nil)
+    names = users.map(&:first_name)
+    leftover = total - users.size
+    list = case names.size
+           when 1
+             leftover.zero? ? names[0] : "#{names[0]} and #{pluralize(leftover, 'other')}"
+           when 2
+             leftover.zero? ? "#{names[0]} and #{names[1]}" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')}"
+           else
+             extras = leftover + (names.size - 2)
+             "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')}"
+           end
+    prefix = team_label ? "#{list} from #{team_label}" : list
+    "#{prefix} #{total > 1 ? plural_suffix : singular_suffix}"
   end
 
   private

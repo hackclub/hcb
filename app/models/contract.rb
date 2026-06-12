@@ -21,11 +21,13 @@
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
+#  reissue_of_id        :bigint
 #
 # Indexes
 #
-#  index_contracts_on_contractable  (contractable_type,contractable_id)
-#  index_contracts_on_document_id   (document_id)
+#  index_contracts_on_contractable   (contractable_type,contractable_id)
+#  index_contracts_on_document_id    (document_id)
+#  index_contracts_on_reissue_of_id  (reissue_of_id)
 #
 # Foreign Keys
 #
@@ -33,7 +35,15 @@
 #
 class Contract < ApplicationRecord
   include AASM
+
   include Hashid::Rails
+  hashid_config salt: ""
+  def self.inherited(subclass)
+    # Force STI subclasses to use the same hashid configuration to ensure no
+    # salt is used.
+    super
+    subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
+  end
 
   acts_as_paranoid
   has_paper_trail
@@ -41,14 +51,19 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
+  belongs_to :reissue_of, optional: true, class_name: "Contract"
+  has_one :reissued_contract, foreign_key: :reissue_of_id, inverse_of: :reissue_of, class_name: "Contract"
+
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
-  has_many :parties
+  has_many :parties, dependent: :destroy
 
   validate :one_non_void_contract
 
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
   validates :cosigner_email, nondisposable: true, on: :create
+
+  validate :reissue_of_is_voided
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
@@ -63,6 +78,10 @@ class Contract < ApplicationRecord
     parties.create!(user:, role: :hcb)
   end
 
+  before_destroy do
+    mark_voided! if may_mark_voided?
+  end
+
   aasm timestamps: true, requires_lock: true do
     state :pending, initial: true
     state :sent
@@ -71,13 +90,15 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after do |reissue_signee_message = nil, reissue_cosigner_message = nil|
+      after_commit do |reissue_signee_message = nil, reissue_cosigner_message = nil|
         if reissue_signee_message.present? || reissue_cosigner_message.present?
           party(:signee).notify_reissued(message: reissue_signee_message)
           party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
         elsif contractable.contract_notify_when_sent
           parties.not_hcb.each(&:notify)
         end
+
+        parties.not_hcb.each(&:schedule_reminders)
       end
     end
 
@@ -164,6 +185,7 @@ class Contract < ApplicationRecord
       mark_signed!
     elsif parties.not_hcb.all?(&:signed?) && contractable.contract_notify_hcb?
       party(:hcb).notify
+      party(:hcb).schedule_reminders
     end
 
     contractable.on_contract_party_signed(party)
@@ -175,7 +197,7 @@ class Contract < ApplicationRecord
 
   # Adding this back temporarily while we work on fixing missing parties
   def signee_docuseal_url
-    "https://docuseal.co/s/#{contract.docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
+    "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
   end
 
   def create_document!
@@ -199,6 +221,10 @@ class Contract < ApplicationRecord
     document.user = party(:hcb).user
     document.save!
     update!(document:)
+  end
+
+  def reissue?
+    reissue_of_id.present?
   end
 
   private
@@ -248,6 +274,12 @@ class Contract < ApplicationRecord
   # Overrideen in inherited classes
   def document_name
     "Contract with #{party(:signee).user.full_name}"
+  end
+
+  def reissue_of_is_voided
+    if reissue_of.present? && !reissue_of.voided?
+      errors.add(:reissue_of, "must be voided")
+    end
   end
 
 end

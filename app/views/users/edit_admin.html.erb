@@ -19,6 +19,11 @@
       <p>
         <strong>Email:</strong> <%= mail_to @user.email %>
       </p>
+      <% if @user.stripe_cardholder.present? %>
+        <p>
+          <%= link_to "View cardholder on Stripe", @user.stripe_cardholder.stripe_dashboard_url, class: "btn" %>
+        </p>
+      <% end %>
     </section>
   <% end %>
 

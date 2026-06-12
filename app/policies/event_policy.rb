@@ -144,7 +144,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def new_transfer?
-    admin_or_manager? && !record.demo_mode?
+    auditor_or_reader? && !record.demo_mode?
   end
 
   def g_suite_overview?
@@ -212,7 +212,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def invoices?
-    show? && record.approved? && record.plan.invoices_enabled?
+    show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
   def account_number?
@@ -255,6 +255,12 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def request_call?
+    signee?
+  end
+
+  alias hide_onboarding_message? request_call?
+
   private
 
   def admin_or_member?
@@ -287,6 +293,10 @@ class EventPolicy < ApplicationPolicy
 
   def manager?
     OrganizerPosition.role_at_least?(user, record, :manager)
+  end
+
+  def signee?
+    OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 
   def admin_or_manager?
