@@ -88,7 +88,7 @@
 
   <% unless @recurring_donation.canceled? %>
     <div class="actions text-left">
-      <%= button_to "Cancel donation", cancel_recurring_donation_path(@recurring_donation.url_hash), method: :post, class: "btn bg-error", data: { confirm: "Are you sure you'd like to stop donating to #{@recurring_donation.event.name}?" } %>
+      <%= button_to "Cancel donation", cancel_recurring_donation_path(@recurring_donation.url_hash), method: :post, class: "btn bg-error", data: { turbo_confirm: "Are you sure you'd like to stop donating to #{@recurring_donation.event.name}?" } %>
     </div>
   <% end %>
 </div>

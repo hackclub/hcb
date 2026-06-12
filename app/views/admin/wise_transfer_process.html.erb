@@ -167,7 +167,7 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
         <% end %>
 
       </fieldset>
@@ -247,7 +247,7 @@
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
         <% end %>
 
       </fieldset>
@@ -266,7 +266,7 @@
             <%= form.label "Failure reason", class: "bold mb1" %> <br>
             <%= form.text_area :reason, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
-          <%= form.submit "Mark failed", data: { confirm: "Mark as failed?" } %>
+          <%= form.submit "Mark failed", data: { turbo_confirm: "Mark as failed?" } %>
         <% end %>
       </fieldset>
     <% end %>

@@ -133,7 +133,7 @@
     </div>
     <%= form.submit "Reject disbursement",
       class: "admin-bg-orange",
-      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+      data: { turbo_confirm: "Are you sure you want to reject this disbursement?" } %>
   <% end %>
 <% else %>
   <p>This is a human review check.</p>
@@ -154,6 +154,6 @@
     </div>
     <%= form.submit "Reject disbursement",
       class: "admin-bg-orange",
-      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+      data: { turbo_confirm: "Are you sure you want to reject this disbursement?" } %>
   <% end %>
 <% end %>
