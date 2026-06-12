@@ -43,7 +43,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def declined?
-    approved == false
+    !approved
   end
 
   has_paper_trail
