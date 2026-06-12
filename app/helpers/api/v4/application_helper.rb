@@ -5,6 +5,7 @@ module Api
     module ApplicationHelper
       include UsersHelper # for `profile_picture_for`
       include StripeAuthorizationsHelper
+      include AdminScopeCheckable
 
       attr_reader :current_user, :current_token
 
