@@ -2315,8 +2315,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
     t.text "stripe_phone_number"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["stripe_id"], name: "index_stripe_cardholders_on_stripe_id"
-    t.index ["user_id"], name: "index_stripe_cardholders_on_user_id"
+    t.index ["stripe_id"], name: "index_stripe_cardholders_on_stripe_id", unique: true
+    t.index ["user_id"], name: "index_stripe_cardholders_on_user_id", unique: true
   end
 
   create_table "stripe_cards", force: :cascade do |t|
