@@ -23,7 +23,8 @@ module Reimbursement
                   address_postal_code: payout_holding.report.user.payout_method.address_postal_code,
                   recipient_country: payout_holding.report.user.payout_method.recipient_country,
                   recipient_email: payout_holding.report.user.email,
-                  recipient_name: payout_holding.report.user.full_name,
+                  send_email_notification: false,
+                  recipient_name: payout_holding.report.user.payout_method.recipient_name.presence || payout_holding.report.user.full_name,
                   account_number: payout_holding.report.user.payout_method.account_number,
                   bic_code: payout_holding.report.user.payout_method.bic_code,
                   recipient_information: payout_holding.report.user.payout_method.recipient_information.merge({
@@ -68,10 +69,16 @@ module Reimbursement
                   user: User.system_user
                 )
                 check.save!
-                check.send_check!
-                payout_holding.increase_check = check
-                payout_holding.save!
-                payout_holding.mark_sent!
+                begin
+                  check.send_check!
+                  payout_holding.increase_check = check
+                  payout_holding.save!
+                  payout_holding.mark_sent!
+                rescue Faraday::Error => e
+                  check.mark_rejected!
+                  message = e.response_body&.dig("message") || e.message
+                  Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
+                end
               end
             when User::PayoutMethod::AchTransfer
               Rails.error.handle do

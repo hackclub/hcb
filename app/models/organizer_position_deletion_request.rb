@@ -6,7 +6,7 @@
 #
 #  id                                           :bigint           not null, primary key
 #  closed_at                                    :datetime
-#  reason                                       :text
+#  reason                                       :text             not null
 #  subject_emails_should_be_forwarded           :boolean          default(FALSE), not null
 #  subject_has_active_cards                     :boolean          default(FALSE), not null
 #  subject_has_outstanding_expenses_expensify   :boolean          default(FALSE), not null
@@ -15,8 +15,8 @@
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
 #  closed_by_id                                 :bigint
-#  organizer_position_id                        :bigint
-#  submitted_by_id                              :bigint
+#  organizer_position_id                        :bigint           not null
+#  submitted_by_id                              :bigint           not null
 #
 # Indexes
 #

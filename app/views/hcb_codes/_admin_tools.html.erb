@@ -1,5 +1,6 @@
 <%= turbo_frame_tag "#{@hcb_code.public_id}:admin_tools", target: "_top" do %>
   <% admin_tool("mt3") do %>
+  <div class="overflow-x-auto mb3 max-w-full">
     <table class="mb2">
       <tr>
         <th>HCB CODE</th>
@@ -35,5 +36,6 @@
             t_transaction: @hcb_code.ach_transfer&.t_transaction
           }
         ) %>
+    </div>
   <% end %>
 <% end %>

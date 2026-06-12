@@ -69,6 +69,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor?
   end
 
+  def admin_details_stripe_transactions?
+    user.auditor?
+  end
+
   def update?
     user.admin? || record == user
   end

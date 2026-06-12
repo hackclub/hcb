@@ -53,6 +53,11 @@ class User
     validate :non_hcb_email
     validate :non_existing_email
 
+    normalizes :original, with: ->(original) { original.strip.downcase }
+    normalizes :replacement, with: ->(replacement) { replacement.strip.downcase }
+
+    validates :replacement, nondisposable: true, on: :create
+
     after_create_commit do
       user.email_updates.requested.excluding(self).each(&:mark_stale!)
       send_emails unless confirmed?

@@ -27,7 +27,7 @@
         </div>
 
         <div class="field">
-          <%= card_grant_setting_fields.label :expiration_preference, "Expires after..." %>
+          <%= card_grant_setting_fields.label :expiration_preference, "Return grants after..." %>
           <%= card_grant_setting_fields.select :expiration_preference, CardGrantSetting.expiration_preferences.keys, { selected: event.card_grant_setting.expiration_preference }, { disabled: } %>
         </div>
 
@@ -48,7 +48,7 @@
           </div>
         </div>
 
-        <div class="field field--checkbox mb-0 flex flex-row items-center justify-between">
+        <div class="field field--checkbox flex flex-row items-center justify-between">
           <div>
             <span style="font-weight: 700">Enable pre-authorization on new cards by default</span>
             <p class="h5 muted m-0">
@@ -65,8 +65,56 @@
           </div>
         </div>
 
+        <div class="field field--checkbox mb-0 flex flex-row items-center justify-between">
+          <div>
+            <span style="font-weight: 700">
+              <%= inline_icon "rep", class: "purple m-[-6px] pr-1 align-sub" %>
+              Block suspected fraud on pre-authorizations
+            </span>
+            <p class="h5 muted m-0">
+              When HCB suspects a fraudulent pre-authorization submission, automatically block the grant
+            </p>
+          </div>
+          <div class="field--checkbox--switch" style="flex-shrink:0">
+            <%= card_grant_setting_fields.label :block_suspected_fraud do %>
+              <%= card_grant_setting_fields.check_box :block_suspected_fraud,
+                disabled:,
+                switch: true %>
+              <span class="slider"></span>
+            <% end %>
+          </div>
+        </div>
+
         <%= form.submit "Update", disabled:, class: "mt-4" %>
 
+      </div>
+
+      <h3 class="mb1" id="transparency_mode_heading">Support</h3>
+      <div class="card">
+        <div class="field">
+          <%= card_grant_setting_fields.label :support_message, "Support message" %>
+          <p class="h5 muted m-0">
+            This message will be shown when card grant recipients need support with their grant.
+          </p>
+
+          <%= card_grant_setting_fields.text_area :support_message, placeholder: "You can find us on Slack if you need support", value: event.card_grant_setting.support_message, disabled: %>
+          <p class="h5 muted mt0 mb1">
+            <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
+              <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
+            <% end %>
+          </p>
+        </div>
+
+        <div class="field mb-0">
+          <%= card_grant_setting_fields.label :support_url, "Support URL" %>
+          <p class="h5 muted m-0">
+            HCB will automatically detect email addresses and Slack channel links.
+          </p>
+
+          <%= card_grant_setting_fields.text_field :support_url, placeholder: "mailto:orpheus@hackclub.com", value: event.card_grant_setting.support_url, disabled: %>
+        </div>
+
+        <%= form.submit "Update", disabled:, class: "mt-4" %>
       </div>
 
       <h3 class="mb1" id="transparency_mode_heading">Spending restrictions</h3>

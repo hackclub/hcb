@@ -38,6 +38,26 @@ module Api
       record.is_public?
     end
 
+    def wire_transfers?
+      record.is_public?
+    end
+
+    def wise_transfers?
+      record.is_public?
+    end
+
+    def check_deposits?
+      record.is_public?
+    end
+
+    def reimbursed_expenses?
+      record.is_public?
+    end
+
+    def hcb_fees?
+      record.is_public?
+    end
+
     def create_stripe_card?
       admin_or_user? && is_not_demo_mode?
     end
@@ -51,7 +71,7 @@ module Api
     end
 
     def user?
-      record.users.include?(user)
+      OrganizerPosition.role_at_least?(user, record, :reader)
     end
 
     def is_not_demo_mode?

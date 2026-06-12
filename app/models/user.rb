@@ -13,7 +13,10 @@
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
+#  joined_as_teenager            :boolean
 #  locked_at                     :datetime
+#  monthly_donation_summary      :boolean          default(TRUE)
+#  monthly_follower_summary      :boolean          default(TRUE)
 #  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
@@ -28,6 +31,7 @@
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
+#  verified                      :boolean          default(FALSE), not null
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
@@ -42,6 +46,9 @@
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :usr
@@ -58,7 +65,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -76,13 +83,16 @@ class User < ApplicationRecord
     reimbursement_report: 1,
     organizer_position_invite: 2,
     card_grant: 3,
-    grant: 4
+    grant: 4,
+    application_form: 5,
+    first_robotics_form: 6
   }
 
   has_many :logins
+  has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
   has_many :backup_codes, class_name: "User::BackupCode", inverse_of: :user, dependent: :destroy
-  has_many :user_sessions, dependent: :destroy
+  has_many :user_sessions, class_name: "User::Session", dependent: :destroy
   has_many :organizer_position_invites, dependent: :destroy
   has_many :organizer_position_invite_requests, class_name: "OrganizerPositionInvite::Request", inverse_of: :requester, dependent: :destroy
   has_many :contracts, through: :organizer_position_invites
@@ -96,8 +106,13 @@ class User < ApplicationRecord
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
 
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
+  accepts_nested_attributes_for :affiliations
+
   has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
   has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
+
+  has_many :raffles
 
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
@@ -128,6 +143,7 @@ class User < ApplicationRecord
   has_many :checks, inverse_of: :creator
 
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
+  has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
   has_many :assigned_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "reviewer_id", inverse_of: :reviewer
   has_many :approved_expenses, class_name: "Reimbursement::Expense", inverse_of: :approved_by
@@ -152,6 +168,7 @@ class User < ApplicationRecord
 
   belongs_to :payout_method, polymorphic: true, optional: true
   validate :valid_payout_method
+  validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
   has_encrypted :birthday, type: :date
@@ -160,14 +177,22 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update { self.teenager = teenager? }
+  before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 
   before_create :format_number
   before_save :on_phone_number_update
+  validate :second_factor_present_for_2fa
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
-  after_update :queue_sync_with_loops_job
+  after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
+
+  after_update :queue_sync_with_loops_job, if: :verified?
+
+  after_update :update_draft_applications, if: -> { birthday_previously_changed? }
+
+  before_update :set_default_seasonal_theme
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
@@ -180,6 +205,8 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
+  validates :email, nondisposable: true, on: :create
+
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
@@ -215,9 +242,20 @@ class User < ApplicationRecord
     if use_sms_auth_previously_changed?
       if use_sms_auth
         create_activity(key: "user.enabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was enabled").deliver_later
       else
         create_activity(key: "user.disabled_sms_auth")
+        User::SecurityMailer.security_configuration_changed(user: self, change: "SMS authentication was disabled").deliver_later
       end
+    end
+
+    if use_two_factor_authentication_previously_changed?
+      change = use_two_factor_authentication? ? "Two-factor authentication was enabled" : "Two-factor authentication was disabled"
+      User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
+    end
+
+    if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
+      User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
 
@@ -282,7 +320,7 @@ class User < ApplicationRecord
   end
 
   def name
-    preferred_name.presence || full_name || email_handle
+    preferred_name.presence || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -328,11 +366,17 @@ class User < ApplicationRecord
     locked_at.present?
   end
 
+  def locked_by
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+  end
+
   def lock!
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
-    user_sessions.destroy_all
+    user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+    # Invalidate all API tokens
+    api_tokens.accessible.update_all(revoked_at: Time.current)
   end
 
   def unlock!
@@ -342,6 +386,10 @@ class User < ApplicationRecord
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
     full_name_in_database.blank?
+  end
+
+  def was_onboarding?
+    full_name_before_last_save.blank? && full_name_previously_changed?
   end
 
   def active_mailbox_address
@@ -359,16 +407,17 @@ class User < ApplicationRecord
     end
   end
 
-  memo_wise def transactions_missing_receipt(since: nil)
+  memo_wise def transactions_missing_receipt(from: nil, to: nil)
     return HcbCode.none unless hcb_code_ids_missing_receipt.any?
 
     user_hcb_codes = HcbCode.where(id: hcb_code_ids_missing_receipt)
-    user_hcb_codes = user_hcb_codes.where("created_at >= ?", since) if since
+    user_hcb_codes = user_hcb_codes.where("created_at >= ?", from) if from
+    user_hcb_codes = user_hcb_codes.where("created_at <= ?", to) if to
     user_hcb_codes.order(created_at: :desc)
   end
 
-  memo_wise def transactions_missing_receipt_count(since: nil)
-    transactions_missing_receipt(since:).size
+  memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
+    transactions_missing_receipt(from:, to:).size
   end
 
   def build_payout_method(params)
@@ -404,9 +453,26 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def teenager?
-    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
-    age&.<=(18)
+  def is_teenager?
+    return age <= 18 if birthday.present?
+
+    first_robotics_student?
+  end
+
+  def is_minor?
+    age&.<(18)
+  end
+
+  def was_teenager_on_join?
+    return age_on(created_at || Time.current) <= 18 if birthday.present?
+
+    first_robotics_student?
+  end
+
+  FIRST_STUDENT_ROLES = %w[student_leader student_member].freeze
+
+  def first_robotics_student?
+    affiliations.any? { |a| a.is_first? && FIRST_STUDENT_ROLES.include?(a.role) }
   end
 
   def last_seen_at
@@ -426,7 +492,7 @@ class User < ApplicationRecord
   end
 
   def queue_sync_with_loops_job
-    new_user = full_name_before_last_save.blank? && !onboarding?
+    new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
   end
 
@@ -521,6 +587,7 @@ class User < ApplicationRecord
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
   end
 
+  # Total new teens via referrals links created by this user (admin)
   def new_teenagers_from_referrals_count
     self.referral_links.sum { |link| link.new_teenagers.size }
   end
@@ -537,7 +604,70 @@ class User < ApplicationRecord
     @discord_account ||= @discord_bot.user(discord_id)
   end
 
+  def preferred_login_methods
+    factors = logins.complete.last&.authentication_factors&.filter_map { |key, value| key.to_sym if value }
+
+    factors&.sort_by { |factor| Login::AUTHENTICATION_FACTORS.index(factor) } || []
+  end
+
+  def only_draft_application?
+    return false unless events.none? && card_grants.none? &&
+                        organizer_position_invites.none? && contracts.none? &&
+                        reimbursement_reports.none?
+
+    apps = applications.limit(2).to_a
+
+    apps.size == 1 && (apps.first.draft? || apps.first.submitted? || apps.first.under_review?)
+  end
+
+  def phone_number_update_count(since:)
+    versions.where(created_at: since..).where("object_changes ? 'phone_number'").count
+  end
+
+  def readable_events
+    @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
+  end
+
+  def manageable_events
+    @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  def reimbursement_event_options
+    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+  end
+
+  def show_first_dashboard?
+    affiliations.where(name: "first").exists?
+  end
+
+  def redirect_to_first_dashboard?
+    show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
+  end
+
+  def to_combobox_display
+    "#{full_name} (Email: #{email}, ID: #{id})"
+  end
+
+  def unverified?
+    !verified?
+  end
+
   private
+
+  def auditors_must_be_verified
+    if auditor? && !verified?
+      errors.add(:verified, "must be true for auditors")
+    end
+  end
+
+  def sign_out_unverified_sessions
+    user_sessions.not_expired.unverified.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
+
+  def accessible_events(roles:)
+    event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
+    Event.where(id: event_ids)
+  end
 
   def update_stripe_cardholder
     stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
@@ -604,6 +734,12 @@ class User < ApplicationRecord
     end
   end
 
+  def second_factor_present_for_2fa
+    if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
+      errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
+    end
+  end
+
   def admins_cannot_disable_2fa
     return unless use_two_factor_authentication_changed?
     return if Rails.env.development?
@@ -611,6 +747,37 @@ class User < ApplicationRecord
     if needs_to_enable_2fa?
       errors.add(:use_two_factor_authentication, "cannot be disabled for admin accounts")
     end
+  end
+
+  def set_default_seasonal_theme
+    return unless birthday_changed?
+    # Skip if user ever updated their seasonal_themes_enabled setting
+    return if versions.where_attribute_changes(:seasonal_themes_enabled).any?
+
+    self.seasonal_themes_enabled = is_teenager?
+  end
+
+  def send_onboarded_email
+    UserMailer.onboarded(user: self).deliver_later
+  end
+
+  def update_draft_applications
+    applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def should_sync_teenager_columns?
+    new_record? || will_save_change_to_birthday? || pending_affiliation_changes?
+  end
+
+  def pending_affiliation_changes?
+    return false unless association(:affiliations).loaded?
+
+    affiliations.any? { |a| a.new_record? || a.changed? || a.marked_for_destruction? }
+  end
+
+  def sync_teenager_columns
+    self.teenager = is_teenager?
+    self.joined_as_teenager = was_teenager_on_join?
   end
 
 end

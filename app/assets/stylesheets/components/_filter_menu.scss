@@ -1,5 +1,4 @@
 .filter-menu {
-  height: 50px;
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
@@ -21,6 +20,7 @@
     & .badge {
       margin: 0;
       flex-shrink: 0;
+      padding-right: 0.5rem;
     }
 
     [data-dark='true'] & {

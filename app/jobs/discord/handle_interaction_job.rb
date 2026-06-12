@@ -13,14 +13,14 @@ module Discord
       @user_id = @interaction.dig(:member, :user, :id) || @interaction.dig(:user, :id)
       @guild_id = @interaction.dig(:guild, :id)
       @channel_id = @interaction.dig(:channel, :id)
-      @permissions = @interaction.dig(:member, :permissions)&.to_i
+      @permissions = Discordrb::Permissions.new(@interaction.dig(:member, :permissions)&.to_i)
 
       @user = User.find_by(discord_id: @user_id) if @user_id
       @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
 
-      return command_router if @interaction[:type] == 2
-      return component_router if @interaction[:type] == 3
-      return modal_router if @interaction[:type] == 5
+      return command_router if @interaction[:type] == Discordrb::Interaction::TYPES[:command]
+      return component_router if @interaction[:type] == Discordrb::Interaction::TYPES[:component]
+      return modal_router if @interaction[:type] == Discordrb::Interaction::TYPES[:modal_submit]
     rescue => e
       if Rails.env.development?
         backtrace = e.backtrace.join("\n")
@@ -82,22 +82,6 @@ module Discord
       @generate_discord_unlink_server_url ||= url_helpers.discord_unlink_server_url(signed_guild_id: Discord.generate_signed(@guild_id, purpose: :unlink_server))
     end
 
-    def ping_component
-      {
-        "type": 9,
-        "data": {
-          "custom_id": "ping_modal",
-          "title": "Ping",
-          "components": [
-            {
-              "type": 10,
-              "content": "Pong! 🏓",
-            },
-          ]
-        }
-      }
-    end
-
     def attach_receipt_component
       discord_message = Discord::Message.find_by(discord_message_id: @interaction.dig(:message, :id))
       activity = PublicActivity::Activity.find_by(id: discord_message&.activity_id)
@@ -108,17 +92,17 @@ module Discord
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless activity.event_id == @current_event&.id && activity.event_id == hcb_code.event.id
 
       {
-        "type": 9,
+        "type": Discordrb::Interaction::CALLBACK_TYPES[:modal],
         "data": {
           "custom_id": "attach_receipt:#{hcb_code.hashid}",
           "title": "#{Money.from_cents(hcb_code.amount_cents.abs).format} for #{hcb_code.memo}",
           "components": [
             {
-              "type": 18,
+              "type": 18, # Label
               "label": "Attach receipt",
               "component":
                 {
-                  "type": 19,
+                  "type": 19, # File upload
                   "custom_id": "receipt:#{hcb_code.hashid}",
                 }
             },
@@ -133,13 +117,19 @@ module Discord
       return respond(content: "This Discord server is not currently linked to the same HCB organization") unless hcb_code.event.id == @current_event&.id
 
       attachments = @interaction.dig(:data, :resolved, :attachments)
+      file = attachments&.values&.first
+      content_type = file&.[](:content_type)
 
-      file = attachments.values.first if attachments.present? && attachments.values.first[:content_type]&.start_with?("image/")
-      url = file[:url] if file.present?
-      filename = file[:filename] if file.present?
-      content_type = file[:content_type] if file.present?
+      unless file.present? && (content_type == "application/pdf" || content_type&.start_with?("image/"))
+        return respond(embeds: [{
+                         title: "There was a problem with your receipt",
+                         description: "Only images and PDF files are supported. Please try again.",
+                         color:
+                       }])
+      end
 
-      io = URI(url).open if url.present?
+      filename = file[:filename]
+      io = URI(file[:url]).open
 
       ActiveRecord::Base.transaction do
         blob = ActiveStorage::Blob.create_and_upload!(
@@ -170,27 +160,15 @@ module Discord
           color:,
           url: url_helpers.reimbursement_report_url(report)
         }
-      ], components: button_to("View on HCB", url_helpers.reimbursement_report_url(report)), flags: 1 << 6
+      ], components: button_to("View on HCB", url_helpers.reimbursement_report_url(report)), flags: EPHEMERAL_MESSAGE_FLAG
     end
 
     def setup_component
-      respond embeds: linking_embed, flags: 1 << 6
+      respond embeds: linking_embed, flags: EPHEMERAL_MESSAGE_FLAG
     end
 
     def ping_command
-      respond content: "Pong! 🏓", components: [
-        {
-          type: 1,
-          components: [
-            {
-              type: 2,
-              label: "Ping",
-              style: 1,
-              custom_id: "ping"
-            }
-          ]
-        }
-      ]
+      respond content: "Pong! 🏓"
     end
 
     def link_command
@@ -311,16 +289,16 @@ module Discord
     end
 
     def require_linked_user
-      return respond content: "This command requires you to link this Discord server to HCB", components: button_to("Set up HCB", "setup") if @responded
+      return respond content: "This command requires you to link this Discord account to HCB", components: button_to("Set up HCB", "setup") if @responded
 
-      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: 1 << 6
+      respond content: "This command requires you to link your Discord account to HCB", embeds: linking_embed, flags: EPHEMERAL_MESSAGE_FLAG
     end
 
     def linking_embed
       server_name = Discord::Bot.bot.server(@guild_id)&.name if @guild_id.present?
       user_name = Discord::Bot.bot.user(@user_id)&.username if @user_id.present?
 
-      guild_setup_cta = can_manage_guild? ? link_to("Set up here", generate_discord_setup_url) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
+      guild_setup_cta = @permissions.manage_server ? link_to("Set up here", generate_discord_setup_url) : "Ask someone with **Manage server** permissions to run **`/setup`**" if @guild_id.present?
 
       [
         {
@@ -345,14 +323,14 @@ module Discord
     def require_linked_event
       return respond content: "This command requires you to link this Discord server to HCB", components: button_to("Set up HCB", "setup") if @responded
 
-      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed, flags: 1 << 6
+      respond content: "This command requires you to link this Discord server to HCB", embeds: linking_embed, flags: EPHEMERAL_MESSAGE_FLAG
     end
 
     def respond(**body)
       body[:components] = format_components(body[:components]) if body[:components].present?
 
       unless @responded
-        return { type: 4, data: body }
+        return { type: Discordrb::Interaction::CALLBACK_TYPES[:channel_message], data: body }
       end
 
       response = Discord::Bot.faraday_connection.patch("/api/v10/webhooks/#{Credentials.fetch(:DISCORD__APPLICATION_ID)}/#{@interaction[:token]}/messages/@original", body)
@@ -365,10 +343,6 @@ module Discord
         #{e.message}
         \tresponse_body: #{e.response_body.inspect}
       MSG
-    end
-
-    def can_manage_guild?
-      @permissions & 0x0000000000000020 == 0x0000000000000020
     end
 
   end

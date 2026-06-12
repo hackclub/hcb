@@ -7,8 +7,9 @@
 
   .click_to_mention {
     padding: 2px 4px;
-    border-radius: 4px;
-    border: 1px solid map-get($palette, smoke);
+    border-radius: var(--radius-sm);
+    border: 1px solid map-get($palette, divider);
+    border-width: 0.5px;
     color: $black;
   }
 
@@ -46,9 +47,8 @@
   width: 100vw;
   top: 0;
   left: 0;
-  z-index: 2000;
+  z-index: 10;
   display: none;
-  cursor: pointer;
   background: rgba(0, 0, 0, 0.3);
 
   [data-dark='true'] & {

@@ -26,8 +26,6 @@ module TransactionEngine
 
           return "INVOICE #{likely_incoming_invoice_short_name}" if incoming_invoice?
 
-          return "DISBURSEMENT" if disbursement?
-
           # @msw: temporary patch to fix
           # https://github.com/hackclub/hcb/issues/2670 in production. This
           # should have a permanent fix.

@@ -2,7 +2,7 @@
 
 module OrganizerPositionInviteService
   class Create
-    def initialize(event:, sender: nil, user_email: nil, initial: false, role: nil, enable_spending_controls: false, initial_control_allowance_amount: nil)
+    def initialize(event:, sender: nil, user_email: nil, initial: false, role: nil, enable_spending_controls: false, initial_control_allowance_amount: nil, invite_request: nil)
       @event = event
       @sender = sender
       @user_email = user_email
@@ -10,6 +10,7 @@ module OrganizerPositionInviteService
       @role = role
       @enable_spending_controls = enable_spending_controls
       @initial_control_allowance_amount = initial_control_allowance_amount
+      @invite_request = invite_request
 
       args = {}
       args[:event] = @event
@@ -17,6 +18,7 @@ module OrganizerPositionInviteService
       args[:initial] = @initial
       args[:role] = @role if role
       args[:initial_control_allowance_amount_cents] = @enable_spending_controls ? Monetize.parse(@initial_control_allowance_amount).cents : nil
+      args[:organizer_position_invite_request] = @invite_request
 
       @model = OrganizerPositionInvite.new(args)
     end

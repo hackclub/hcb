@@ -16,14 +16,15 @@ class EmburseCardRequestsController < ApplicationController
 
       emburse_card_requests.each do |cr|
         csv << attributes.map do |attr|
-          case attr
-          when "user_email"
-            cr.creator.email
-          when "event_name"
-            "##{cr.event.id} #{cr.event.name}"
-          else
-            cr.send(attr)
-          end
+          value = case attr
+                  when "user_email"
+                    cr.creator.email
+                  when "event_name"
+                    "##{cr.event.id} #{cr.event.name}"
+                  else
+                    cr.send(attr)
+                  end
+          SafeCsv.sanitize(value)
         end
       end
     end

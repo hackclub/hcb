@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module SessionSupport
-  # Implements just enough of the logic in `SessionHelper#sign_in` to make it
+  # Implements just enough of the logic in `SessionHelper#create_session` to make it
   # easier to make authenticated requests in controller tests.
   #
   # @param user [User]
-  # @return [UserSession]
-  def sign_in(user)
+  # @return [User::Session]
+  def create_session(user, verified:)
     expiration_at = user.session_validity_preference.seconds.from_now
 
     required_factor_count = user.use_two_factor_authentication ? 2 : 1
@@ -20,12 +20,12 @@ module SessionSupport
     login.assign_attributes(factors.to_h { |factor| [:"authenticated_with_#{factor}", true] })
     login.save!
 
-    user_session = create(:user_session, user:, expiration_at:)
+    user_session = create(:user_session, user:, expiration_at:, verified:)
     login.update!(user_session:)
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
-      expires: UserSession::MAX_SESSION_DURATION.from_now,
+      expires: User::Session::MAX_SESSION_DURATION.from_now,
       httponly: true,
       secure: true,
     }
@@ -34,12 +34,12 @@ module SessionSupport
   end
 
   # Mimics the logic in `SessionHelper#current_session` so the active
-  # `UserSession` record can easily be retrieved in tests.
+  # `User::Session` record can easily be retrieved in tests.
   #
-  # @return [UserSession]
+  # @return [User::Session]
   # @raise [ActiveRecord::RecordNotFound]
   def current_session!
     session_token = cookies.encrypted[:session_token]
-    UserSession.find_by!(session_token:)
+    User::Session.find_by!(session_token:)
   end
 end

@@ -1,17 +1,19 @@
 <%# locals: (form:, disabled:, required: true, account_number_field_name: :account_number) %>
 
-<div class="field">
+<div class="flex items-center gap-2 justify-between my-2">
     <%= form.label :bic_code, "Beneficiary bank SWIFT / BIC code" %>
     <%= form.text_field :bic_code,
         required:,
         disabled:,
+        class: "!max-w-[200px]",
         placeholder: "CLNOUS66" %>
 </div>
 
-<div class="field">
+<div class="flex items-center gap-2 justify-between">
     <%= form.label account_number_field_name, "Account number (IBAN, if available)" %>
     <%= form.text_field account_number_field_name,
         required:,
         disabled:,
+        class: "!max-w-[200px]",
         placeholder: "123456789" %>
 </div>

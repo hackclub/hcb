@@ -93,6 +93,40 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#ancestor_ids" do
+    it "returns ids ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestor_ids).to eq([grandchild.id, child.id, root.id])
+    end
+  end
+
+  describe "#ancestors" do
+    it "returns events ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestors.to_a).to eq([grandchild, child, root])
+    end
+  end
+
+  describe "#ancestor_organizer_positions" do
+    it "returns positions on self and all ancestors" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      op_root = create(:organizer_position, event: root)
+      op_child = create(:organizer_position, event: child)
+      op_grandchild = create(:organizer_position, event: grandchild)
+
+      expect(grandchild.ancestor_organizer_positions).to match_array([op_grandchild, op_child, op_root])
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)
@@ -114,6 +148,23 @@ RSpec.describe Event, type: :model do
       child = create(:event, plan_type: nil, parent:)
 
       expect(child.plan).to be_instance_of(Event::Plan::Standard)
+    end
+  end
+
+  describe "ledger association" do
+    it "automatically creates a primary ledger after creation" do
+      event = create(:event)
+
+      expect(event.ledger).to be_present
+      expect(event.ledger.primary?).to be true
+      expect(event.ledger.event).to eq(event)
+    end
+
+    it "has a primary ledger association" do
+      event = create(:event)
+
+      expect(event).to respond_to(:ledger)
+      expect(event.ledger).to be_a(Ledger)
     end
   end
 end

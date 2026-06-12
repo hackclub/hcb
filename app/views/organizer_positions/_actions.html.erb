@@ -1,0 +1,36 @@
+<%# locals: (organizer_position:) %>
+
+<% if auditor_signed_in? %>
+  <% unless organizer_position.user == current_user || current_session&.impersonated? || !admin_signed_in? %>
+    <div class="tooltipped tooltipped--s" aria-label="Impersonate user">
+      <%= pop_icon_to "spy", impersonate_user_path(id: organizer_position.user.id, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
+    </div>
+  <% end %>
+  <div class="tooltipped tooltipped--s" aria-label="Edit user's settings">
+    <%= pop_icon_to "settings", admin_user_path(organizer_position.user), data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
+  </div>
+<% end %>
+<% if policy(organizer_position).view_allowances? %>
+  <%= pop_icon_to "payment", event_organizer_position_spending_controls_path(organizer_position_id: organizer_position), data: { turbo: false } %>
+<% end %>
+<% if organizer_position.organizer_position_deletion_requests.under_review.exists? %>
+  <% if auditor_signed_in? %>
+    <%= pop_icon_to "clock", organizer_position.organizer_position_deletion_requests.under_review.last, data: { turbo_frame: "_top" }, class: "admin-tools overflow-hidden" %>
+  <% else %>
+    <div class="tooltipped tooltipped--w" aria-label="Pending removal request">
+      <%= pop_icon_to "clock", "#", class: "muted", disabled: true %>
+    </div>
+  <% end %>
+<% else %>
+  <div class="tooltipped tooltipped--w" aria-label="<%= policy(organizer_position).can_request_removal? ? "Remove user from organization" : "You don't have permission to remove users" %>">
+  <%= pop_icon_to "member-remove",
+                  policy(organizer_position).destroy? ? organizer_path(organizer_position) : new_event_organizer_position_remove_path(organizer_position_id: organizer_position.user.slug),
+                  class: "error",
+                  data: {
+                    turbo_frame: "_top",
+                    turbo_method: policy(organizer_position).destroy? ? :delete : :get,
+                    turbo_confirm: policy(organizer_position).destroy? ? "This will revoke their access to this organization. Their cards will be permanently canceled." : nil,
+                  },
+                  disabled: !policy(organizer_position).can_request_removal? %>
+  </div>
+<% end %>

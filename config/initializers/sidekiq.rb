@@ -20,26 +20,7 @@ Sidekiq.configure_server do |config|
   # (like `critical`) are not blocked by long-running jobs.
   config.capsule("throttled") do |capsule|
     capsule.queues = %w[metrics]
-    # This "throttled" capsule's concurrency is a third of RAILS_MAX_THREADS,
-    # but guarantee at least 1.
-    # (RAILS_MAX_THREADS is the concurrency of the default Sidekiq capsule)
-    #
-    # This means the concurrency (threads) across all Sidekiq capsules for a
-    # given process is:
-    #    RAILS_MAX_THREADS                <- default capsule
-    #  + max(RAILS_MAX_THREADS / 3, 1)    <- throttled capsule
-    #
-    # However, in production, we currently run multiple servers; one process per
-    # server. This means that total concurrency is actually:
-    #   concurrency per process (above) * number of processes
-    # where if
-    #   - RAILS_MAX_THREADS=4
-    #   - and 3 processes
-    # then
-    #   concurrency per process == 4 + max(4 / 3, 1) == 5
-    #   number of processes == 3
-    # total concurrency == 5 * 3 == 15
-    capsule.concurrency = [ENV.fetch("RAILS_MAX_THREADS", 5).to_i / 3, 1].max
+    capsule.concurrency = ENV.fetch("SIDEKIQ_THROTTLED_QUEUE_CONCURRENCY", 5).to_i
   end
 end
 

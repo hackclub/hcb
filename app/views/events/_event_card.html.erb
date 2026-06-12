@@ -1,4 +1,6 @@
-<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false) %>
+<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false, link_path: nil) %>
+
+<% link_path ||= event %>
 
 <% card_contents = capture do %>
   <li class="group card flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %> <%= "card--hover" unless show_scoped_tags %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
@@ -6,19 +8,19 @@
       <% if event.logo.attached? %>
         <div class="flex gap-2 items-center">
           <%= image_tag event.logo, height: 24, width: 24, class: "rounded align-bottom" %>
-          <strong class="text-xl leading-tight">
+          <strong class="text-xl leading-tight text-balance">
             <%= event.name %>
           </strong>
         </div>
       <% else %>
-        <strong class="text-xl leading-tight">
+        <strong class="text-xl leading-tight text-balance">
           <%= event.name %>
         </strong>
       <% end %>
     <% end %>
 
     <% if show_scoped_tags %>
-      <%= link_to event, id: "event-#{event.id}-title", class: "flex mb-4 font-bold no-underline text-black dark:text-smoke hover:underline" do %>
+      <%= link_to link_path, id: "event-#{event.id}-title", class: "flex mb-4 font-bold no-underline text-black dark:text-smoke hover:underline" do %>
         <%= event_title_contents %>
       <% end %>
     <% else %>
@@ -75,7 +77,7 @@
 
               <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
                 <%= inline_icon "plus", size: 15 %>
-                  Create tag
+                Create tag
               </button>
             </div>
           </div>
@@ -83,7 +85,7 @@
       </div>
     <% end %>
 
-    <div class="h4 line-height-2 mb2 mt-1 flex justify-between item-center">
+    <div class="h4 leading-[1.125] mb2 mt-1 flex justify-between item-center">
       <span class="flex items-center gap-1 whitespace-nowrap tabular-nums">
         <%= inline_icon "payment", size: 16, class: "muted align-middle", 'aria-label': "Dollar sign", style: "transform: scale(2)" %>
         <%= turbo_frame_tag "event_balance_#{event.public_id}", src: event_async_balance_path(event), data: { turbo_permanent: true, controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }, loading: :lazy do %>
@@ -120,7 +122,7 @@
     <%= card_contents %>
   </div>
 <% else %>
-  <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+  <%= link_to link_path, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
     <%= card_contents %>
   <% end %>
 <% end %>

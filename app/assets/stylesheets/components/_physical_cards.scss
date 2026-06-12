@@ -1,18 +1,20 @@
 .canceled-card-wrapper {
   margin: 0 auto;
-  height: #{8 * 1.75}rem;
+  width: 100%;
+  aspect-ratio: 364 / 224;
+  max-width: 20rem;
   position: relative;
 }
 
 .stripe-card,
 .emburse-card {
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
   width: 100%;
-  width: #{13 * 1.75}rem;
-  height: #{8 * 1.75}rem;
+  aspect-ratio: 364 / 224;
+  max-width: 20rem;
+  margin: 0 auto;
   padding: 1.5rem;
   position: relative;
   background-repeat: no-repeat;
@@ -23,7 +25,9 @@
   color: $white;
   text-align: left;
   border-radius: 12px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
   transition: 0.25s ease-out transform;
   transform: scale(1);
   transform-style: preserve-3d;
@@ -34,6 +38,7 @@
   }
 
   &.canceled-left {
+    transform: translateX(-4px) scale(0.95) rotate(-1deg) !important;
     @supports (clip-path: polygon(0 0, 20% 0, 80% 100%, 0% 100%)) {
       position: absolute;
       left: 0;
@@ -44,6 +49,7 @@
 
   &.canceled-right {
     display: none;
+    transform: translateX(4px) rotate(0.5deg) !important;
     @supports (clip-path: polygon(20% 0, 100% 0, 100% 100%, 80% 100%)) {
       position: absolute;
       left: 0;
@@ -56,8 +62,32 @@
   &:focus,
   &:hover {
     box-shadow:
-      0 6px 12px 0 rgba(0, 0, 0, 0.25),
-      0 18px 36px 0 rgba(0, 0, 0, 0.25);
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  @media (max-width: 1024px) {
+    & {
+      margin: 0 auto;
+    }
+  }
+}
+
+.canceled-card-wrapper:hover .canceled-left,
+.canceled-card-wrapper:hover .canceled-right {
+  transform: none !important;
+  &.canceled-right {
+    transform: translateX(-1px) !important;
+  }
+  & .js-tilt-glare {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .stripe-card,
+  .emburse-card {
+    max-width: 25rem;
   }
 }
 
@@ -108,8 +138,8 @@
   &:focus,
   &:hover {
     box-shadow:
-      0 6px 12px 0 rgba(0, 0, 0, 0.25),
-      0 18px 36px 0 rgba(0, 0, 0, 0.25);
+      0 20px 25px -5px rgb(0 0 0 / 0.1),
+      0 8px 10px -6px rgb(0 0 0 / 0.1);
   }
 
   &.frozen:before {
@@ -139,7 +169,7 @@
 
   &:before {
     content: '';
-    width: 10rem;
+    width: 20rem;
     height: 3rem;
     background-repeat: no-repeat !important;
     background-size: 100% !important;

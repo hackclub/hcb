@@ -6,7 +6,7 @@ module LoginsHelper
       name: "Assemble",
       time: "Summer 2022",
       slug: "assemble",
-      background: "linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, rgba(0 0 0 / 40%) 100%), url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d58273e5fbfd30f_image.png')"
+      background: "linear-gradient(180deg, rgb(0 0 0 / 20%) 0%, rgba(0 0 0 / 40%) 100%), url('https://cdn.hackclub.com/019c3145-9292-72ce-9c97-6e2fbddcc559/crowd.jpeg')"
     }
   ].map do |hackathon|
     hackathon[:url] = "/#{hackathon[:slug]}"

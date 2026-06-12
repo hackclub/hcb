@@ -111,10 +111,6 @@ receipt_report_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "ReceiptReport::WeeklyJob"
 
-receipt_report_monthly_job:
-  cron: "0 0 3 * *" # run first day of each month
-  class: "ReceiptReport::MonthlyJob"
-
 column_reporting_monthly_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "Column::ReportingJob"
@@ -174,11 +170,11 @@ update_teenager_column_job:
 
 clear_old_user_sessions:
   cron: "0 3 * * *" # every day at 3:00 AM
-  class: "UserSession::ClearOldUserSessionsJob"
+  class: "User::Session::ClearOldUserSessionsJob"
   queue: low
 
 card_grant_expiration_job:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "0 0 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"
 
 card_grant_zero_job:
@@ -192,14 +188,18 @@ stripe_service_fee_job:
 user_seen_at_history_snapshot_job:
   cron: "0,30 * * * *" # twice every hour
   class: "User::SeenAtHistory::SnapshotJob"
-  
+
 user_update_card_locking_recurring:
   cron: "*/5 * * * *" # Every 5 minutes
   class: "User::UpdateCardLocking::RecurringJob"
 
 column_sweep_job:
-  cron: "0 0 * * MON" # run first day of each week
+  cron: "0 0 * * *" # run every 1 day
   class: "Column::SweepJob"
+
+column_operating_balance_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Column::OperatingBalanceJob"
 
 stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes
@@ -216,10 +216,6 @@ events_apply_fee_waiver_job:
 monthly_donation_summary_job:
   cron: "0 0 1 * *" # run first day of each month
   class: "MonthlyDonationSummaryJob"
-
-weekly_ysws_event_summary_job:
-  cron: "0 13 * * 5" # run 9am est friday
-  class: "WeeklyYswsEventSummaryJob"
 
 monthly_follower_summary_job:
   cron: "0 0 1 * *" # run first day of each month
@@ -244,3 +240,11 @@ announcement_delete_unsaved_job:
 notify_events_with_negative_balance_job:
   cron: "0 13 * * 1" # run at 9am est on monday
   class: "NotifyEventsWithNegativeBalanceJob"
+
+refresh_disposable_domains:
+  cron: "0 11 * * *" # run at 6am est every day
+  class: "DisposableEmailDomainListUpdateJob"
+
+hide_onboarding_messages:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::HideOnboardingMessagesJob"

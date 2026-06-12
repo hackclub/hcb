@@ -1,12 +1,14 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, label: "") %>
 
 <% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
-<div class="tooltipped tooltipped--n" aria-label="<%= cancel_tooltip %>">
-  <%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-              method: :post,
-              data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
-              class: "btn bg-error",
-              disabled: !policy(card_grant).cancel? do %>
-    <%= inline_icon "reply", size: 20 %> Cancel grant
-  <% end %>
-</div>
+<%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+            method: :post,
+            data: { confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account." },
+            class: "btn btn--list-item",
+            disabled: !policy(card_grant).cancel? do %>
+  <%= inline_icon "reply", size: 20 %>
+  <div>
+    <strong>Cancel grant</strong>
+    <p class="text-sm opacity-60"><%= label.presence || cancel_tooltip %></p>
+  </div>
+<% end %>

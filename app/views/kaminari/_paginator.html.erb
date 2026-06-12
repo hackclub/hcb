@@ -1,8 +1,36 @@
 <%= paginator.render do -%>
-  <ul class="pagination flex items-center justify-center list-reset pt2 gap-2">
+  <nav
+    role="navigation"
+    aria-label="Pagination"
+    class="flex items-center justify-center list-reset my-4 gap-2">
+    <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
+    <div data-controller="menu" data-menu-placement-value="bottom-start" class="mr-auto">
+      <button
+        type="button"
+        class="btn menu__toggle menu__toggle--arrowless overflow-visible !w-[150px] gap-1 !pl-2 !pr-2"
+        aria-label="Items per page"
+        data-menu-target="toggle"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        <span>
+          <span class="font-[700]"><%= per_page %></span>
+          <span class="font-[400]">per page</span>
+        </span>
+        <%= inline_icon "down-caret" %>
+      </button>
+      <div
+        class="menu__content menu__content--2 menu__content--compact h5 !max-w-[150px] min-w-0"
+        data-menu-target="content">
+        <% per_options.each do |n| %>
+          <%= link_to "#{n} per page",
+                      url_for((request.query_parameters || {}).merge("per" => n, "page" => 1, only_path: true)),
+                      class: "menu__action #{'menu__action--active' if n == per_page}",
+                      aria: { current: n == per_page ? "true" : nil } %>
+        <% end %>
+      </div>
+    </div>
     <%= first_page_tag unless current_page.first? %>
     <%= prev_page_tag unless current_page.first? %>
     <%= next_page_tag unless current_page.last? %>
     <%= last_page_tag unless current_page.last? %>
-  </ul>
+  </nav>
 <% end -%>

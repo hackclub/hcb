@@ -1,0 +1,39 @@
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
+
+  <section class="hcb-code--details">
+    <div>
+      <strong>Date</strong>
+      <%= format_date @hcb_code.date %>
+    </div>
+    <div>
+      <strong>Type</strong>
+      Fee revenue
+    </div>
+  </section>
+
+  <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+
+  <section class="card__banner secondary border-top">
+    <p class="my0">
+      <table>
+        <thead>
+          <tr>
+            <th>Organization</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @hcb_code.fee_revenue.bank_fees.each do |fee| %>
+            <tr>
+              <td><%= link_to fee.event.name, fee.event %></td>
+              <td><%= render_money fee.amount_cents %></td>
+              <td><%= link_to "Details", url_for(fee.local_hcb_code) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </p>
+  </section>
+
+</article>

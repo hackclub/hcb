@@ -46,6 +46,10 @@
       <td style="width: 90%"><%= @g_suite.dkim_key %></td>
     </tr>
     <tr>
+      <td style="text-align: right;">Max Accounts:</td>
+      <td><%= @g_suite.max_accounts %></td>
+    </tr>
+    <tr>
       <td style="text-align: right;">DNS Check:</td>
       <td> <%= link_to @g_suite.domain, @g_suite.dns_check_url, target: :_blank %></td>
     </tr>
@@ -137,6 +141,12 @@
     <%= dkim_key_form.text_field :dkim_key, value: @g_suite.dkim_key %>
   <% end %>
   <%= dkim_key_form.submit "Update DKIM key" %>
+<% end %>
+<br>
+<%= form_with(model: false, local: true, url: google_workspace_update_admin_path(@g_suite), method: :post) do |max_accounts_form| %>
+  <%= max_accounts_form.label :max_accounts, "Max allowed accounts" %>
+  <%= max_accounts_form.number_field :max_accounts, value: @g_suite.max_accounts, min: 1, step: 1 %>
+  <%= max_accounts_form.submit "Update" %>
 <% end %>
 <hr>
 <h3>Google Workspace Revocation Immunity</h3>

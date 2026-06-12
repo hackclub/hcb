@@ -44,7 +44,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         expect(service.run).to be(false)
       end
 
-      expect(service.declined_reason).to eq("merchant_not_allowed")
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
 
       ops_email =
         sent_emails
@@ -52,6 +52,44 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
         .sole
 
       expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+  end
+
+  context "forbidden merchant network IDs" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :forbidden_network_id,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+
+    context "when user is admin" do
+      let(:user) { create(:user, :make_admin) }
+      let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
+      let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:) }
+
+      it "approves when sufficient funds" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+        expect(service.run).to be(true)
+      end
     end
   end
 

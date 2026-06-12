@@ -5,7 +5,7 @@
 # Table name: disbursements
 #
 #  id                                  :bigint           not null, primary key
-#  aasm_state                          :string
+#  aasm_state                          :string           not null
 #  amount                              :integer
 #  deposited_at                        :datetime
 #  errored_at                          :datetime
@@ -51,9 +51,9 @@ class Disbursement < ApplicationRecord
   pg_search_scope :search_name, against: [:name]
 
   include AASM
-  include Commentable
 
   include Freezable
+  include Commentable
 
   validate on: :create do
     if source_event.financially_frozen?
@@ -62,6 +62,9 @@ class Disbursement < ApplicationRecord
   end
 
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
@@ -131,6 +134,13 @@ class Disbursement < ApplicationRecord
       css_class: "transaction--frc",
       icon: "sam",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+    },
+    gene_haas_grant: {
+      title: "Grant from Gene Haas",
+      memo: "Gene Haas Grant",
+      css_class: "transaction--genehaas",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
     }
   }.freeze
 
@@ -220,20 +230,44 @@ class Disbursement < ApplicationRecord
     approved_at || in_transit_at
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}-#{id}"
+  def outgoing_hcb_code
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{id}"
   end
 
+  # Legacy alias - use outgoing_hcb_code instead
+  alias_method :hcb_code, :outgoing_hcb_code
+
+  def incoming_hcb_code
+    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
+  end
+
+  def outgoing_disbursement = Disbursement::Outgoing.new(self)
+  def incoming_disbursement = Disbursement::Incoming.new(self)
+
+  # this method will be removed from disbursement, and we will have to go through IncomingDisbursement or OutgoingDisbursement
   def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
+    @local_hcb_code ||= begin
+      # write a new incoming hcb code for now, we will read from it later
+      HcbCode.find_or_create_by(hcb_code: incoming_hcb_code)
+      HcbCode.find_or_create_by(hcb_code: outgoing_hcb_code)
+    end
+  end
+
+  # Override Commentable#all_comments to include comments from both sides of the disbursement
+  def all_comments
+    Comment.where(commentable: [self, outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code])
+  end
+
+  def events
+    [source_event, destination_event]
   end
 
   def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
+    @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def canonical_pending_transactions
-    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code:)
+    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def transactions_helper
@@ -246,6 +280,10 @@ class Disbursement < ApplicationRecord
 
   def fulfilled?
     deposited?
+  end
+
+  def inter_event_transfer?
+    !source_subledger_id && !destination_subledger_id
   end
 
   def filter_data

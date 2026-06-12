@@ -9,11 +9,7 @@ class ContractPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def resend_to_user?
-    user&.admin?
-  end
-
-  def resend_to_cosigner?
+  def reissue?
     user&.admin?
   end
 

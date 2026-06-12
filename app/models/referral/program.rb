@@ -10,6 +10,7 @@
 #  login_header_text    :string
 #  login_text_color     :string
 #  name                 :string           not null
+#  redirect_to          :string
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  creator_id           :bigint           not null
@@ -25,14 +26,15 @@
 module Referral
   class Program < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     validates :name, presence: true
+    validates :redirect_to, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { redirect_to.present? }
 
     belongs_to :creator, class_name: "User"
 
     has_many :attributions, dependent: :destroy, foreign_key: :referral_program_id, inverse_of: :program
     has_many :users, -> { distinct }, through: :attributions, source: :user
-    has_many :logins, foreign_key: :referral_program_id, class_name: "Login", inverse_of: :referral_program
     has_many :links, class_name: "Referral::Link", inverse_of: :program
 
     def background_image_css

@@ -40,6 +40,8 @@ module GovernanceService
           @approval_attempt.make_decision
           # Don't save to DB. We just want to check if it would be approved
           @approval_attempt.approved?
+        rescue Governance::Admin::Transfer::Limit::MissingApprovalLimitError
+          false
         end
 
         private

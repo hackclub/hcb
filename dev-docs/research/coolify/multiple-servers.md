@@ -125,7 +125,7 @@ TLDR:
         - Go to `Security` on the sidebar. Then the `Certificates` tab
         - Click `Upload certificate`
         - Fill in the form
-            - `Name`: `hcb-certificate-exp-2025-02-12` (includes today's date)
+            - `Name`: `hcb-certificate-2025-02-12` (includes today's date)
             - `Certificate`: Copy the contents of `fullchain.pem`
             - `Private key`: Copy the contents of `privkey.pem`
     4. Destroy the certbot files that were created on your machine.

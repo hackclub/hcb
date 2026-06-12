@@ -4,8 +4,8 @@
     <%= user_mention user, class: "badge bg-muted pl-1 m-0 tooltipped tooltipped--e", aria_label: "Switch account" %>
   <% end %>
   <% if signed_in? %>
-    <%= link_to(logout_users_path, method: :delete) { mention } %>
+    <%= link_to(logout_users_path, method: :delete, class: "mb-2") { mention } %>
   <% else %>
-    <%= link_to(auth_users_path) { mention } %>
+    <%= link_to(auth_users_path, class: "mb-2") { mention } %>
   <% end %>
 <% end %>

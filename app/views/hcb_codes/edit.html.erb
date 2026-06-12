@@ -10,9 +10,6 @@
   <%= turbo_frame_tag @hcb_code do %>
     <%= form_with model: @hcb_code, data: { turbo: true, controller: "form" }, html: { style: "flex-grow: 1" } do |form| %>
       <div class="flex items-center">
-        <button class="pop border-none cursor-pointer mr2 <%= "ai" if @ai_memo %> tooltipped tooltipped--e" aria-label="Save">
-          <%= inline_icon "check", size: 28 %>
-        </button>
 
         <%= form.text_field :memo,
                             list: "custom-memos",
@@ -32,6 +29,10 @@
             <option><%= s_memo %></option>
           <% end %>
         </datalist>
+
+        <button class="pop border-none cursor-pointer <%= "ai" if @ai_memo %> tooltipped tooltipped--e" aria-label="Save">
+          <%= inline_icon "check", size: 28 %>
+        </button>
       </div>
     <% end %>
   <% end %>

@@ -48,16 +48,21 @@ class WiseTransfer < ApplicationRecord
 
   has_encrypted :recipient_information, type: :json
 
-  validates_length_of :payment_for, maximum: 140
-
   include AASM
   include Freezable
 
   include HasWiseRecipient
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
+  include PublicIdentifiable
+  set_public_id_prefix :wse
+
   belongs_to :event
   belongs_to :user
   has_paper_trail
+  include HasPaperTrailHelpers
 
   has_one :canonical_pending_transaction
 
@@ -99,7 +104,7 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates_presence_of :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   # Flowchart: https://www.figma.com/board/Hf3wy2qhR8rH9OAYUCrkoQ/Wise-transfer-flowchart?node-id=0-1&t=nBQqJBuASTxeCObj-1
@@ -148,21 +153,15 @@ class WiseTransfer < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0, message: "must be positive!" }
+  validates :usd_amount_cents, numericality: { less_than: 50_000_00, message: "must be less than $50,000" }, allow_nil: true
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WISE_TRANSFER_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{usd_amount.format} (#{Money.from_cents(amount_cents, currency).format} #{currency}) to #{recipient_name} (#{recipient_email}) from #{event.name}"
-  end
-
-  def local_hcb_code
-    return nil unless persisted?
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
   end
 
   def status_color
@@ -186,12 +185,6 @@ class WiseTransfer < ApplicationRecord
     aasm_state.humanize
   end
 
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
-
-    user_id && User.find(user_id)
-  end
-
   def self.generate_detailed_quote(initial_local_amount)
     conn = Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
@@ -201,16 +194,16 @@ class WiseTransfer < ApplicationRecord
 
     response = conn.post("/v3/quotes", {
                            sourceCurrency: "USD",
-                           targetCurrency: initial_local_amount.currency_as_string,
-                           targetAmount: initial_local_amount.dollars
+                           targetCurrency: initial_local_amount.currency.to_s,
+                           targetAmount: initial_local_amount.amount
                          })
 
     payment_option = response.body["paymentOptions"].first
-    price_after_all_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    price_after_all_fees = Money.from_amount(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
 
-    pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
-    unadjusted_fee_total = fees.sum { |fee| Money.from_dollars(fee["value"]["amount"], "USD") }
+    pay_in_fee = Money.from_amount(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    unadjusted_fee_total = fees.sum { |fee| Money.from_amount(fee["value"]["amount"], "USD") }
 
     without_fees_usd_amount = price_after_all_fees - unadjusted_fee_total
 
@@ -235,6 +228,10 @@ class WiseTransfer < ApplicationRecord
 
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
+  end
+
+  def usd_amount_cents_or_quoted
+    usd_amount_cents || quoted_usd_amount_cents
   end
 
   def generate_quote!

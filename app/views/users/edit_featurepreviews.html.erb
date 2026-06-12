@@ -1,11 +1,9 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings %>
-<h1>
-  Settings
-</h1>
+<%= render "users/nav", selected: :settings_feature_previews %>
+
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "users/settings_nav", active: "previews" %>
+  <%= render "settings_header", active: "previews" %>
   <section>
     <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @user), "mb3") do %>
       <%= render partial: "features/preview", locals: {

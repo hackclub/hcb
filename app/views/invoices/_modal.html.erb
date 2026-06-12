@@ -7,7 +7,7 @@
     <%= render "invoices/form", invoice: @invoice || Invoice.new(sponsor: @sponsor, event: @event), sponsor: @sponsor || Sponsor.new(event: @event) %>
   <% else %>
     <% unless @event.demo_mode %>
-      <p class="h5 line-height-3 muted mt0 mb2">
+      <p class="h5 leading-[1.25] muted mt0 mb2">
         If the sponsor wants to pay via a mailed check or direct deposit instead of
         the online invoice, let the HCB team know.
         <%= help_message %>

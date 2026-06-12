@@ -10,12 +10,35 @@ module Api
     default_format :json
 
     helpers do
+      def public_id_resource!(ivar_name, param_key, model, not_found_message)
+        return instance_variable_get(ivar_name) if instance_variable_defined?(ivar_name)
+
+        instance_variable_set(ivar_name, model.find_by_public_id!(params[param_key]))
+      rescue ActiveRecord::RecordNotFound
+        error!({ message: not_found_message }, 404)
+      end
+
       def orgs
         @orgs ||= paginate(Event.indexable.order(created_at: :asc))
       end
 
       def activities
-        @activities ||= paginate(PublicActivity::Activity.joins("LEFT JOIN \"events\" ON activities.event_id = events.id OR (activities.recipient_id = events.id AND recipient_type = 'Event')").where({ events: { is_public: true, is_indexable: true } }).order(created_at: :desc))
+        # SQL mirror of `PublicActivity::Activity#serialized_event_id`:
+        # when `recipient_type='Event'`, filter on `recipient_id`;
+        # otherwise (including NULL recipient_type) fall back to
+        # `event_id`. Must stay in sync with that method and with
+        # `Api::ActivityPolicy#show?` — they all gate the same data.
+        indexable_event_ids = Event.indexable.select(:id)
+        @activities ||= paginate(
+          PublicActivity::Activity
+            .where(recipient_type: "Event", recipient_id: indexable_event_ids)
+            .or(
+              PublicActivity::Activity
+                .where("recipient_type IS DISTINCT FROM 'Event'")
+                .where(event_id: indexable_event_ids)
+            )
+            .order(created_at: :desc)
+        )
       end
 
       def org
@@ -42,13 +65,7 @@ module Api
       end
 
       def transaction
-        @transaction ||=
-          begin
-            id = params[:transaction_id]
-            HcbCode.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Transaction not found." }, 404)
+        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.")
       end
 
       def card_charges
@@ -68,13 +85,7 @@ module Api
       end
 
       def card_charge
-        @card_charge ||=
-          begin
-            id = params[:card_charge_id]
-            Models::CardCharge.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Card charge not found." }, 404)
+        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge, "Card charge not found.")
       end
 
       def donations
@@ -82,13 +93,7 @@ module Api
       end
 
       def donation
-        @donation ||=
-          begin
-            id = params[:donation_id]
-            Donation.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Donation not found." }, 404)
+        public_id_resource!(:@donation, :donation_id, Donation, "Donation not found.")
       end
 
       def transfers
@@ -96,13 +101,7 @@ module Api
       end
 
       def transfer
-        @transfer ||=
-          begin
-            id = params[:transfer_id]
-            Disbursement.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Transfer not found." }, 404)
+        public_id_resource!(:@transfer, :transfer_id, Disbursement, "Transfer not found.")
       end
 
       def ach_transfers
@@ -110,13 +109,7 @@ module Api
       end
 
       def ach_transfer
-        @ach_transfer ||=
-          begin
-            id = params[:ach_transfer_id]
-            AchTransfer.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "ACH transfer not found." }, 404)
+        public_id_resource!(:@ach_transfer, :ach_transfer_id, AchTransfer, "ACH transfer not found.")
       end
 
       def invoices
@@ -124,13 +117,7 @@ module Api
       end
 
       def invoice
-        @invoice ||=
-          begin
-            id = params[:invoice_id]
-            Invoice.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Invoice not found." }, 404)
+        public_id_resource!(:@invoice, :invoice_id, Invoice, "Invoice not found.")
       end
 
       def checks
@@ -138,13 +125,7 @@ module Api
       end
 
       def check
-        @check ||=
-          begin
-            id = params[:check_id]
-            Check.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Check not found." }, 404)
+        public_id_resource!(:@check, :check_id, Check, "Check not found.")
       end
 
       def cards
@@ -152,23 +133,51 @@ module Api
       end
 
       def card
-        @card ||=
-          begin
-            id = params[:card_id]
-            StripeCard.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Card not found." }, 404)
+        public_id_resource!(:@card, :card_id, StripeCard, "Card not found.")
+      end
+
+      def wire_transfers
+        @wire_transfers ||= paginate(org.wires.order(created_at: :desc))
+      end
+
+      def wire_transfer
+        public_id_resource!(:@wire_transfer, :wire_transfer_id, Wire, "Wire transfer not found.")
+      end
+
+      def wise_transfers
+        @wise_transfers ||= paginate(org.wise_transfers.order(created_at: :desc))
+      end
+
+      def wise_transfer
+        public_id_resource!(:@wise_transfer, :wise_transfer_id, WiseTransfer, "Wise transfer not found.")
+      end
+
+      def check_deposits
+        @check_deposits ||= paginate(org.check_deposits.order(created_at: :desc))
+      end
+
+      def check_deposit
+        public_id_resource!(:@check_deposit, :check_deposit_id, CheckDeposit, "Check deposit not found.")
+      end
+
+      def reimbursed_expenses
+        @reimbursed_expenses ||= paginate(Reimbursement::ExpensePayout.where(event: org).order(created_at: :desc))
+      end
+
+      def reimbursed_expense
+        public_id_resource!(:@reimbursed_expense, :reimbursed_expense_id, Reimbursement::ExpensePayout, "Reimbursed expense not found.")
+      end
+
+      def hcb_fees
+        @hcb_fees ||= paginate(org.bank_fees.order(created_at: :desc))
+      end
+
+      def hcb_fee
+        public_id_resource!(:@hcb_fee, :hcb_fee_id, BankFee, "HCB fee not found.")
       end
 
       def activity
-        @activity ||=
-          begin
-            id = params[:activity_id]
-            PublicActivity::Activity.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Activity not found." }, 404)
+        public_id_resource!(:@activity, :activity_id, PublicActivity::Activity, "Activity not found.")
       end
 
       # FOR TYPE EXPANSION
@@ -377,6 +386,116 @@ module Api
           end
         end
 
+        resource :wire_transfers do
+          desc "Return a list of wire transfers" do
+            summary "List an organization's wire transfers"
+            detail ""
+            produces ["application/json"]
+            consumes ["application/json"]
+            is_array true
+            success Entities::WireTransfer
+            failure [[404, "Organization not found. Check the id/slug and make sure Transparency Mode is on.", Entities::ApiError]]
+            tags ["Wire Transfers"]
+            nickname "list-an-organizations-wire-transfers"
+          end
+          params do
+            use :pagination, per_page: 50, max_per_page: 100
+            use :expand
+          end
+          get do
+            Pundit.authorize(nil, [:api, org], :wire_transfers?)
+            present wire_transfers, with: Api::Entities::WireTransfer, **type_expansion(expand: %w[wire_transfer])
+          end
+        end
+
+        resource :wise_transfers do
+          desc "Return a list of Wise transfers" do
+            summary "List an organization's Wise transfers"
+            detail ""
+            produces ["application/json"]
+            consumes ["application/json"]
+            is_array true
+            success Entities::WiseTransfer
+            failure [[404, "Organization not found. Check the id/slug and make sure Transparency Mode is on.", Entities::ApiError]]
+            tags ["Wise Transfers"]
+            nickname "list-an-organizations-wise-transfers"
+          end
+          params do
+            use :pagination, per_page: 50, max_per_page: 100
+            use :expand
+          end
+          get do
+            Pundit.authorize(nil, [:api, org], :wise_transfers?)
+            present wise_transfers, with: Api::Entities::WiseTransfer, **type_expansion(expand: %w[wise_transfer])
+          end
+        end
+
+        resource :check_deposits do
+          desc "Return a list of check deposits" do
+            summary "List an organization's check deposits"
+            detail ""
+            produces ["application/json"]
+            consumes ["application/json"]
+            is_array true
+            success Entities::CheckDeposit
+            failure [[404, "Organization not found. Check the id/slug and make sure Transparency Mode is on.", Entities::ApiError]]
+            tags ["Check Deposits"]
+            nickname "list-an-organizations-check-deposits"
+          end
+          params do
+            use :pagination, per_page: 50, max_per_page: 100
+            use :expand
+          end
+          get do
+            Pundit.authorize(nil, [:api, org], :check_deposits?)
+            present check_deposits, with: Api::Entities::CheckDeposit, **type_expansion(expand: %w[check_deposit])
+          end
+        end
+
+        resource :reimbursed_expenses do
+          desc "Return a list of reimbursed expenses" do
+            summary "List an organization's reimbursed expenses"
+            detail ""
+            produces ["application/json"]
+            consumes ["application/json"]
+            is_array true
+            success Entities::ReimbursedExpense
+            failure [[404, "Organization not found. Check the id/slug and make sure Transparency Mode is on.", Entities::ApiError]]
+            tags ["Reimbursed Expenses"]
+            nickname "list-an-organizations-reimbursed-expenses"
+          end
+          params do
+            use :pagination, per_page: 50, max_per_page: 100
+            use :expand
+          end
+          get do
+            Pundit.authorize(nil, [:api, org], :reimbursed_expenses?)
+            present reimbursed_expenses, with: Api::Entities::ReimbursedExpense, **type_expansion(expand: %w[reimbursed_expense])
+          end
+        end
+
+        resource :hcb_fees do
+          desc "Return a list of HCB fees" do
+            summary "List an organization's HCB fees"
+            detail ""
+            produces ["application/json"]
+            consumes ["application/json"]
+            is_array true
+            success Entities::HcbFee
+            failure [[404, "Organization not found. Check the id/slug and make sure Transparency Mode is on.", Entities::ApiError]]
+            tags ["HCB Fees"]
+            nickname "list-an-organizations-hcb-fees"
+          end
+          params do
+            use :pagination, per_page: 50, max_per_page: 100
+            use :expand
+          end
+          get do
+            Pundit.authorize(nil, [:api, org], :hcb_fees?)
+            present hcb_fees, with: Api::Entities::HcbFee, **type_expansion(expand: %w[hcb_fee])
+          end
+        end
+
         resource :invoices do
           desc "Return a list of invoices" do
             summary "List an organization's invoices"
@@ -538,6 +657,121 @@ module Api
       end
     end
 
+    resource :wire_transfers do
+      desc "Return a single wire transfer" do
+        summary "Get a single wire transfer"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::WireTransfer
+        failure [[404, "Wire transfer not found. Check the ID.", Entities::ApiError]]
+        tags ["Wire Transfers"]
+        nickname "get-a-single-wire-transfer"
+      end
+      params do
+        requires :wire_transfer_id, type: String, desc: "Wire transfer ID"
+        use :expand
+      end
+      route_param :wire_transfer_id do
+        get do
+          Pundit.authorize(nil, [:api, wire_transfer], :show?, policy_class: Api::WirePolicy)
+          present wire_transfer, with: Api::Entities::WireTransfer, **type_expansion(expand: %w[wire_transfer])
+        end
+      end
+    end
+
+    resource :wise_transfers do
+      desc "Return a single Wise transfer" do
+        summary "Get a single Wise transfer"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::WiseTransfer
+        failure [[404, "Wise transfer not found. Check the ID.", Entities::ApiError]]
+        tags ["Wise Transfers"]
+        nickname "get-a-single-wise-transfer"
+      end
+      params do
+        requires :wise_transfer_id, type: String, desc: "Wise transfer ID"
+        use :expand
+      end
+      route_param :wise_transfer_id do
+        get do
+          Pundit.authorize(nil, [:api, wise_transfer], :show?)
+          present wise_transfer, with: Api::Entities::WiseTransfer, **type_expansion(expand: %w[wise_transfer])
+        end
+      end
+    end
+
+    resource :check_deposits do
+      desc "Return a single check deposit" do
+        summary "Get a single check deposit"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::CheckDeposit
+        failure [[404, "Check deposit not found. Check the ID.", Entities::ApiError]]
+        tags ["Check Deposits"]
+        nickname "get-a-single-check-deposit"
+      end
+      params do
+        requires :check_deposit_id, type: String, desc: "Check deposit ID"
+        use :expand
+      end
+      route_param :check_deposit_id do
+        get do
+          Pundit.authorize(nil, [:api, check_deposit], :show?)
+          present check_deposit, with: Api::Entities::CheckDeposit, **type_expansion(expand: %w[check_deposit])
+        end
+      end
+    end
+
+    resource :reimbursed_expenses do
+      desc "Return a single reimbursed expense" do
+        summary "Get a single reimbursed expense"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::ReimbursedExpense
+        failure [[404, "Reimbursed expense not found. Check the ID.", Entities::ApiError]]
+        tags ["Reimbursed Expenses"]
+        nickname "get-a-single-reimbursed-expense"
+      end
+      params do
+        requires :reimbursed_expense_id, type: String, desc: "Reimbursed expense ID"
+        use :expand
+      end
+      route_param :reimbursed_expense_id do
+        get do
+          Pundit.authorize(nil, [:api, reimbursed_expense], :show?, policy_class: Api::ReimbursedExpensePolicy)
+          present reimbursed_expense, with: Api::Entities::ReimbursedExpense, **type_expansion(expand: %w[reimbursed_expense])
+        end
+      end
+    end
+
+    resource :hcb_fees do
+      desc "Return a single HCB fee" do
+        summary "Get a single HCB fee"
+        detail ""
+        produces ["application/json"]
+        consumes ["application/json"]
+        success Entities::HcbFee
+        failure [[404, "HCB fee not found. Check the ID.", Entities::ApiError]]
+        tags ["HCB Fees"]
+        nickname "get-a-single-hcb-fee"
+      end
+      params do
+        requires :hcb_fee_id, type: String, desc: "HCB fee ID"
+        use :expand
+      end
+      route_param :hcb_fee_id do
+        get do
+          Pundit.authorize(nil, [:api, hcb_fee], :show?, policy_class: Api::HcbFeePolicy)
+          present hcb_fee, with: Api::Entities::HcbFee, **type_expansion(expand: %w[hcb_fee])
+        end
+      end
+    end
+
     resource :invoices do
       desc "Return a single invoice" do
         summary "Get a single invoice"
@@ -670,6 +904,7 @@ module Api
       end
       route_param :activity_id do
         get do
+          Pundit.authorize(nil, [:api, activity], :show?, policy_class: Api::ActivityPolicy)
           present activity, with: Api::Entities::Activity, **type_expansion(expand: %w[organization transaction])
         end
       end
@@ -693,7 +928,7 @@ module Api
       error!({ message: "Not authorized." }, 403)
     end
     rescue_from :all do |e|
-      Rails.error.report(e, handled: false, severity: :error, context: "api")
+      Rails.error.report(e, handled: false, severity: :error, source: "api")
 
       # Provide error message in api response ONLY in development mode
       msg = if Rails.env.development?
@@ -725,6 +960,11 @@ module Api
         Entities::AchTransfer,
         Entities::Check,
         Entities::Transfer,
+        Entities::WireTransfer,
+        Entities::WiseTransfer,
+        Entities::CheckDeposit,
+        Entities::ReimbursedExpense,
+        Entities::HcbFee,
         Entities::Donation,
         Entities::Invoice,
         Entities::Card,
@@ -757,6 +997,21 @@ module Api
         },
         {
           name: "Transfers"
+        },
+        {
+          name: "Wire Transfers"
+        },
+        {
+          name: "Wise Transfers"
+        },
+        {
+          name: "Check Deposits"
+        },
+        {
+          name: "Reimbursed Expenses"
+        },
+        {
+          name: "HCB Fees"
         },
         {
           name: "Cards"

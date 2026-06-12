@@ -6,7 +6,7 @@ module.exports = {
     './app/assets/stylesheets/**/*.css',
     './app/javascript/**/*.js',
   ],
-  blocklist: ['container'],
+  blocklist: ['container', 'border', 'bg-black'],
   corePlugins: {
     preflight: false,
   },
@@ -47,6 +47,32 @@ module.exports = {
       medium: 500,
       bold: 600,
     },
+    borderWidth: {
+      DEFAULT: '0.5px',
+      0: '0',
+      1: '1px',
+      2: '2px',
+    },
+    borderRadius: {
+      none: '0',
+      DEFAULT: 'var(--radius-md)',
+      sm: 'var(--radius-sm)',
+      md: 'var(--radius-md)',
+      lg: 'var(--radius-lg)',
+      xl: 'var(--radius-xl)',
+      full: '999px',
+    },
+    boxShadow: {
+      none: 'none',
+      DEFAULT: 'var(--shadow-md)',
+      border: 'var(--shadow-border)',
+      sm: 'var(--shadow-sm)',
+      'border-sm': 'var(--shadow-border-sm)',
+      md: 'var(--shadow-md)',
+      'border-md': 'var(--shadow-border-md)',
+      lg: 'var(--shadow-lg)',
+      'border-lg': 'var(--shadow-border-lg)',
+    },
     extend: {
       backgroundImage: {
         'check-pattern':
@@ -55,6 +81,7 @@ module.exports = {
           'linear-gradient(to right, rgba(250, 247, 133, 0.66), rgba(250, 247, 133, 0.1))',
       },
       colors: {
+        primary: '#ec3750',
         slate: '#3c4858',
         smoke: '#e0e6ed',
         muted: '#8492a6',

@@ -5,6 +5,7 @@ require_relative "boot"
 require "rails/all"
 require_relative "../app/lib/credentials"
 require_relative "../lib/active_storage/previewer/document_previewer"
+require_relative "../app/middleware/set_current_request_ip"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -15,7 +16,7 @@ Dotenv.load if Rails.env.development?
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.2
+    config.load_defaults 8.0
 
     Credentials.load if ENV["DOPPLER_TOKEN"]
 
@@ -60,6 +61,9 @@ module Bank
     config.to_prepare do
       Doorkeeper::AuthorizationsController.layout "application"
     end
+
+    # Track request IP for all requests
+    config.middleware.insert_after ActionDispatch::RemoteIp, SetCurrentRequestIp
 
     config.active_storage.variant_processor = :mini_magick
 
@@ -117,6 +121,8 @@ module Bank
 
     # CSV previews
     config.active_storage.previewers << ActiveStorage::Previewer::DocumentPreviewer
+
+    config.active_support.deprecation = :notify
 
   end
 end

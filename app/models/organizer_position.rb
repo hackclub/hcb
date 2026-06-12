@@ -12,9 +12,9 @@
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
-#  event_id                       :bigint
+#  event_id                       :bigint           not null
 #  fiscal_sponsorship_contract_id :bigint
-#  user_id                        :bigint
+#  user_id                        :bigint           not null
 #
 # Indexes
 #
@@ -45,10 +45,13 @@ class OrganizerPosition < ApplicationRecord
   has_many :tours, as: :tourable, dependent: :destroy
 
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
+  validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
+
+  after_create_commit :autofollow_event
 
   def tourable_options
     {
@@ -82,6 +85,23 @@ class OrganizerPosition < ApplicationRecord
   def fs_contract_is_proper_type
     if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(::Contract::FiscalSponsorship)
       errors.add(:fiscal_sponsorship_contract, "must be of type Contract::FiscalSponsorship")
+    end
+  end
+
+  def autofollow_event
+    if event.announcements.any? && !event.followers.include?(user:)
+      event.event_follows.create!(user:)
+    end
+
+  rescue ActiveRecord::RecordNotUnique
+    # Do nothing. The user already follows this event.
+  end
+
+  private
+
+  def user_must_be_verified
+    if user&.unverified?
+      errors.add(:user, "must verify their email before becoming an organizer")
     end
   end
 

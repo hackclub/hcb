@@ -9,7 +9,7 @@ class ApplicationJob < ActiveJob::Base
   end
 
   discard_on(Twilio::REST::RestError) do |job, error|
-    Rails.error.report(error) unless error.message.include?("errors/21612") # we can't send text messages to the UK and other countries: https://www.twilio.com/docs/errors/21612
+    Rails.error.report(error) unless TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| error.message.include?("errors/#{code}") }
   end
 
 end

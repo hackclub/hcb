@@ -11,6 +11,7 @@ class ApplicationMailer < ActionMailer::Base
 
   # allow usage of application helper
   helper :application
+  helper :logo
 
   def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt
@@ -30,6 +31,16 @@ class ApplicationMailer < ActionMailer::Base
   ].freeze
 
   def self.earmuffed_recipients
+    # Earmuffing exists to suppress mail to specific real production users
+    # (referenced by their production public_ids). In test and development
+    # no real mail is delivered, so the filter has no job to do — and
+    # running it in test is actively harmful: `usr_b9YtZb` hashid-decodes
+    # to `User#id == 1`, and any test user that happens to land at that id
+    # ends up memoized into this list, silently dropping that user's email
+    # out of every subsequent mailer's recipients for the rest of the
+    # process.
+    return [] unless Rails.env.production?
+
     @earmuffed_recipients ||= EARMUFFED_USER_IDS.filter_map do |id|
       User.find_by_public_id(id)&.email
     end

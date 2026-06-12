@@ -6,14 +6,14 @@
 
   <%= link_to hcb_code_path(@wise_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
     <%= inline_icon "payment-transfer" %>
-    View transaction
+    View transaction (<%= pluralize(@wise_transfer.local_hcb_code.comments.count, "comment") %>)
   <% end %>
 
   <div class="flex-grow"></div>
 
-  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none bg-[#9fe870] text-[#163300] flex-shrink-0", target: "_blank") do %>
+  <%= link_to(@wise_transfer.wise_url || "https://wise.com/send", class: "btn btn-small bg-none !bg-[#9fe870] hover:brightness-90 transition-all text-[#163300] flex-shrink-0", target: "_blank") do %>
     <%= inline_icon "wise" %>
-    Open Wise
+    <%= @wise_transfer.wise_id.present? ? "Open Wise (##{@wise_transfer.wise_id})" : "Open Wise" %>
   <% end %>
 </div>
 
@@ -50,7 +50,12 @@
         </tr>
         <tr>
           <td>Balance available:</td>
-          <td><%= render_money @wise_transfer.event.balance_available_v2_cents %></td>
+          <td>
+            <%= render_money @wise_transfer.event.balance_available_v2_cents %>
+            <% if @wise_transfer.event.balance_available_v2_cents < 0 %>
+              <span class="ml1 badge bg-error">⚠️ Negative balance</span>
+            <% end %>
+          </td>
         </tr>
         <tr>
           <td>Currency:</td>
@@ -76,6 +81,14 @@
           <td>Payment Purpose:</td>
           <td><%= @wise_transfer.payment_for %></td>
         </tr>
+        <% if @wise_transfer.wise_id.present? %>
+          <tr>
+            <td>Wise Transfer ID:</td>
+            <td>
+              <%= link_to @wise_transfer.wise_id, @wise_transfer.wise_url, target: "_blank" %>
+            </td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
 
@@ -142,25 +155,34 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
-        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post %>
+        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "my-3" %>
 
       </fieldset>
 
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Reject</legend>
+        <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
         <%= form_with(model: false, local: true, url: reject_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
             <%= form.text_area :comment, class: "w-[400px]", placeholder: "(Markdown supported)" %>
           </div>
           <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
-          <small>(This requires you to communicate to the organizer about the reason why.)</small>
         <% end %>
 
       </fieldset>
     <% elsif @wise_transfer.approved? %>
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Metadata</legend>
+
+        <div class="field mb-3">
+          <label class="bold mb1">Transaction category</label>
+          <br>
+          <%= render(
+                partial: "hcb_codes/transaction_category_form",
+                locals: { model: @wise_transfer.local_hcb_code.ct || @wise_transfer.local_hcb_code.pt }
+              ) %>
+        </div>
 
         <%= form_with(model: @wise_transfer, local: true, url: wise_transfer_path(@wise_transfer), method: :patch) do |form| %>
           <div class="mb-2">

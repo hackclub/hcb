@@ -1,41 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>
-      <%= yield(:title).concat(" –") if content_for?(:title) %>
-      HCB
-    </title>
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-    <meta name="theme-color" content="#f9fafc">
-
-    <%= yield :head if content_for?(:head) %>
-
-    <% if Rails.env.production? %>
-      <script defer data-domain="hcb.hackclub.com" src="https://plausible.io/js/script.pageview-props.tagged-events.js"></script>
-    <% end %>
-
-    <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
-
-    <meta name="format-detection" content="telephone=no">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <% if content_for?(:favicon) %>
-      <%= yield :favicon %>
-    <% elsif user_birthday? %>
-      <link rel="icon" type="image/png" href="/favicon-party.gif">
-    <% else %>
-      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-<%= Rails.env %>-32x32.png">
-      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
-    <% end %>
-    <link rel="manifest" href="/site.webmanifest">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#ec3750">
-    <meta name="msapplication-TileColor" content="#ec3750">
+    <%= render "layouts/head", bare: true %>
   </head>
   <body>
-
     <%= yield %>
-
     <%= render "application/fullstory" %>
   </body>
 </html>

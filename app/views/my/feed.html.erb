@@ -3,7 +3,7 @@
 <%= render "users/nav", selected: :feed %>
 <%= render "my/following_modal", event_follows: @event_follows %>
 
-<h1 class="heading flex items-center">
+<h1 class="heading flex items-center border-0 mb-0">
   <span class="flex-grow">Feed</span>
   <% if @event_follows.any? %>
     <%= link_to my_feed_path, class: "btn bg-blue flex", data: { behavior: "modal_trigger", modal: "edit_following" } do %>

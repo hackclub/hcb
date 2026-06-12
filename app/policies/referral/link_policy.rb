@@ -2,8 +2,12 @@
 
 module Referral
   class LinkPolicy < ApplicationPolicy
-    def show
-      user.present?
+    def show?
+      true
+    end
+
+    def create?
+      user.auditor?
     end
 
   end

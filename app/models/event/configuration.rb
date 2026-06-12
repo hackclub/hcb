@@ -9,6 +9,7 @@
 #  contact_email                 :string
 #  cover_donation_fees           :boolean          default(FALSE)
 #  generate_monthly_announcement :boolean          default(FALSE), not null
+#  hide_onboarding_message       :boolean          default(FALSE), not null
 #  subevent_plan                 :string
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
@@ -16,7 +17,7 @@
 #
 # Indexes
 #
-#  index_event_configurations_on_event_id  (event_id)
+#  index_event_configurations_on_event_id  (event_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -30,8 +31,18 @@ class Event
     validates_email_format_of :contact_email, allow_nil: true, allow_blank: true
     normalizes :contact_email, with: ->(contact_email) { contact_email.strip.downcase }
     validates :subevent_plan, inclusion: { in: -> { Event::Plan.available_plans.map(&:name) } }, allow_blank: true
+    validates :event, uniqueness: true
 
     after_save :create_or_destroy_monthly_announcement
+    after_update if: :generate_monthly_announcement_previously_changed? do
+      version = self.versions.where_object_changes(generate_monthly_announcement:).last
+      whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
+      if generate_monthly_announcement
+        EventMailer.with(event:, whodunnit:).monthly_announcements_enabled.deliver_later
+      else
+        EventMailer.with(event:, whodunnit:).monthly_announcements_disabled.deliver_later
+      end
+    end
 
     private
 

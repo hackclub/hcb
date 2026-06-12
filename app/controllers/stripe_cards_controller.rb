@@ -83,7 +83,7 @@ class StripeCardsController < ApplicationController
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(25)
 
-    if params[:frame] == "true"
+    if params[:frame] == "true" && turbo_frame_request?
       @frame = true
       @force_no_popover = true
       render :show, layout: false
@@ -123,7 +123,7 @@ class StripeCardsController < ApplicationController
       stripe_shipping_address_line2: sc[:stripe_shipping_address_line2],
       stripe_shipping_address_postal_code: sc[:stripe_shipping_address_postal_code],
       stripe_shipping_address_country: sc[:stripe_shipping_address_country],
-      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.common.first&.id
+      stripe_card_personalization_design_id: sc[:stripe_card_personalization_design_id] || StripeCard::PersonalizationDesign.default&.id
     ).run
 
     redirect_to new_card, flash: { success: "Card was successfully created." }
