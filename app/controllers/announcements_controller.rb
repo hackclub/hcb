@@ -43,6 +43,7 @@ class AnnouncementsController < ApplicationController
 
   def show
     return if @announcement.deleted?
+
     authorize @announcement
   end
 
