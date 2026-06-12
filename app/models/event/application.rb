@@ -291,6 +291,8 @@ class Event
       fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
       fs_contract.party(:cosigner)&.notify unless reissue_of.present?
 
+      set_airtable_status("Documents sent") if reissue_of.present?
+
       fs_contract
     end
 
@@ -361,6 +363,8 @@ class Event
           affiliation_copy.save!
         end
       end
+
+      set_airtable_status("Onboarded")
 
       schedule_airtable_sync
 
@@ -451,6 +455,17 @@ class Event
       end
 
       !missing_fields
+    end
+
+    def set_airtable_status(status)
+      airrecord = airtable_record
+
+      if airrecord.present?
+        airrecord["Status"] = status
+        airrecord.save
+      end
+    rescue => e
+      Rails.error.report(e)
     end
 
   end
