@@ -34,6 +34,9 @@ class BankFee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :bfe
 
+  include PublicActivity::Model
+  tracked owner: proc{ |controller, record| controller&.current_user }, only: [:create]
+
   belongs_to :event
   belongs_to :fee_revenue, optional: true
 
