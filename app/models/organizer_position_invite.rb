@@ -263,7 +263,7 @@ class OrganizerPositionInvite < ApplicationRecord
         end
 
         organizer_position&.update!(role: :owner, fiscal_sponsorship_contract: contract)
-        update!(role: :owner)
+        update!(role: :owner) unless accepted?
       end
     end
   end

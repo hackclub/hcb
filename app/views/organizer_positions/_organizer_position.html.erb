@@ -23,9 +23,14 @@
                   <% end %>
                 <% end %>
                 <% if admin_signed_in? %>
-                  <%= link_to change_position_role_organizer_path(id: organizer_position.id, to: "owner"), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position.role == "owner" }, class: "admin-tools" do %>
+                  <%= link_to "#", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position.organizer_position_invite.id}" }, aria: { current: organizer_position.role == "owner" }, class: "admin-tools" do %>
                     Owner <%= " ✔" if organizer_position.role == "owner" %>
                   <% end %>
+
+                  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position.organizer_position_invite.id %>">
+                    <%= modal_header "Send a contract" %>
+                    <%= render "organizer_position_invites/contract_form", opi: organizer_position.organizer_position_invite %>
+                  </section>
                 <% end %>
                 <div class="menu__divider"></div>
                 <%= link_to "What do these mean?", roles_path %>
@@ -107,14 +112,6 @@
                 <% end %>
               </div>
             </div>
-          <% else %>
-            <%= link_to "#", class: "warning", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position.organizer_position_invite.id}" } do %>
-              <%= inline_icon("docs-negative", size: 24) %>
-            <% end %>
-            <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position.organizer_position_invite.id %>">
-              <%= modal_header "Send a contract" %>
-              <%= render "organizer_position_invites/contract_form", opi: organizer_position.organizer_position_invite %>
-            </section>
           <% end %>
         </div>
       </div>
