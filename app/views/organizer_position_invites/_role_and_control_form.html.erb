@@ -25,14 +25,15 @@
       <p class="muted mb-0"><span class="bold info">Readers</span> have read-only access to the organization.</p>
     </div>
   </div>
+  <% roles = OrganizerPositionInvite.roles.keys.select { |role| admin_signed_in? || role != "owner" } %>
   <%= form.select :role,
-                  OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
+                  roles.map { |role| [role.titleize, role] },
                   {},
                   style: "max-width:120px !important",
                   "x-model": "role" %>
 </div>
 
-<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role !== 'reader' && role !== 'manager'">
+<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role === 'member'">
   <div class="flex items-center gap-4 field field--checkbox">
     <label class="flex flex-col">
       <span>Spending controls</span>
