@@ -29,7 +29,7 @@ module Api
           name: params[:name],
           emails: [params[:email]],
           cosigner_email: params[:cosigner_email],
-          is_signee: true,
+          is_owner: true,
           country: params[:country],
           point_of_contact_id: poc_id,
           invited_by: current_user,
