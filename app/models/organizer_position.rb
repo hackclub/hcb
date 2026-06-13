@@ -48,6 +48,7 @@ class OrganizerPosition < ApplicationRecord
   validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
   validate :at_least_one_manager
+  validate :owner_has_contract
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
@@ -98,8 +99,6 @@ class OrganizerPosition < ApplicationRecord
     # Do nothing. The user already follows this event.
   end
 
-  private
-
   def user_must_be_verified
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
@@ -109,6 +108,12 @@ class OrganizerPosition < ApplicationRecord
   def at_least_one_manager
     unless event&.organizer_positions&.empty? || event&.organizer_positions&.where("role >= #{self.class.roles[:manager]}")&.any?
       errors.add(:event, "must have at least one manager")
+    end
+  end
+
+  def owner_has_contract
+    if owner? && fiscal_sponsorship_contract.nil?
+      errors.add(:base, "owners must have an associated contract")
     end
   end
 
