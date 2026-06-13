@@ -349,7 +349,7 @@ class Event
         )
         contract.create_document!
 
-        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, role: :owner, initial: true)
         invite = service.model
         service.run!
 
