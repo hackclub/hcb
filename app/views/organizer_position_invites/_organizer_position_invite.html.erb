@@ -89,7 +89,7 @@
             <% end %>
           <% end %>
           <% if admin_signed_in? %>
-            <%= link_to "#", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position_invite.id}" }, aria: { current: organizer_position_invite.role == "owner" } do %>
+            <%= link_to "#", data: { behavior: organizer_position_invite.role != "owner" ? "modal_trigger" : "", modal: "send_contract_#{organizer_position_invite.id}" }, aria: { current: organizer_position_invite.role == "owner" }, class: "admin-tools" do %>
               Owner<%= " ✔" if organizer_position_invite.role == "owner" %>
             <% end %>
 

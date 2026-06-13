@@ -103,6 +103,10 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
+  after_update_commit do
+    contract.mark_voided! if role_previously_changed?(from: :owner) && contract.present?
+  end
+
   def contract
     contracts.not_voided.last
   end
