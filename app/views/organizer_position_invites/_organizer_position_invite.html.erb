@@ -48,14 +48,6 @@
                 <%= link_to organizer_position_invite.contract.document || event_documents_path(event: organizer_position_invite.event), class: "success" do %>
                   <%= inline_icon("docs-positive", size: 24) %>
                 <% end %>
-              <% else %>
-                <%= link_to "#", class: "warning", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position_invite.id}" } do %>
-                  <%= inline_icon("docs-negative", size: 24) %>
-                <% end %>
-                <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position_invite.id %>">
-                  <%= modal_header "Send a contract" %>
-                  <%= render "organizer_position_invites/contract_form", opi: organizer_position_invite %>
-                </section>
               <% end %>
             </div>
           </div>
@@ -97,9 +89,14 @@
             <% end %>
           <% end %>
           <% if admin_signed_in? %>
-            <%= link_to change_position_role_organizer_position_invite_path(id: organizer_position_invite.id, to: "owner"), data: { turbo_method: :post, turbo_frame: "_top" }, aria: { current: organizer_position_invite.role == "owner" } do %>
+            <%= link_to "#", data: { behavior: "modal_trigger", modal: "send_contract_#{organizer_position_invite.id}" }, aria: { current: organizer_position_invite.role == "owner" } do %>
               Owner<%= " ✔" if organizer_position_invite.role == "owner" %>
             <% end %>
+
+            <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="send_contract_<%= organizer_position_invite.id %>">
+              <%= modal_header "Change invite role to owner" %>
+              <%= render "organizer_position_invites/contract_form", opi: organizer_position_invite %>
+            </section>
           <% end %>
           <div class="menu__divider"></div>
           <%= link_to "What do these mean?", roles_path %>

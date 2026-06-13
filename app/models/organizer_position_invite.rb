@@ -239,8 +239,8 @@ class OrganizerPositionInvite < ApplicationRecord
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
-      update!(is_signee: true) unless accepted?
-      organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
+      update!(role: :owner) unless accepted?
+      organizer_position&.update(fiscal_sponsorship_contract: fs_contract)
     end
 
     fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
