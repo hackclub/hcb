@@ -18,7 +18,7 @@ class OrganizerPosition
         scope "#{role_name}_access", -> { where("role >= ?", role_value) }
       end
     end
-    
+
   end
 
 end
