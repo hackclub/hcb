@@ -9,7 +9,7 @@ RSpec.describe EventService::Create do
     let!(:parent_manager) { create(:organizer_position, event: parent_event, role: :manager) }
 
     before do
-      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow(User).to receive(:system_user).and_return(create(:user, :make_admin, email: User::SYSTEM_USER_EMAIL))
 
       # Avoid hitting the contract/DocuSeal flow triggered by signee invites.
       invite_model = instance_double(OrganizerPositionInvite, send_contract: true)
