@@ -598,6 +598,28 @@
       "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url"
     },
     {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "0d0bd86271b561ee9e1ed8df0441cae498474004c23f369566152ee733de18ca",
+      "check_name": "LinkToHref",
+      "message": "Unsafe parameter value in `link_to` href",
+      "file": "app/views/kaminari/_paginator.html.erb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }))",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "kaminari/_paginator"
+      },
+      "user_input": "request.query_parameters",
+      "confidence": "High",
+      "cwe_id": [
+        79
+      ],
+      "note": "False positive: url_for with only_path: true generates a relative path through Rails' router, URL-encoding all values. A javascript: scheme injection is impossible."
+    },
+    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "ea01a5d01b4ad6f12938573ff23b5b53a371e24f8eb4cd184514961054f2bfb6",
