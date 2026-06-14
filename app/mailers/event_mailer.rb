@@ -95,7 +95,7 @@ class EventMailer < ApplicationMailer
     @emails = @event.organizer_contact_emails(only_managers: true)
     return if @emails.none?
 
-    mail to: @emails, subject: "#{@creator.name} created a new sub-organization under #{@event.name}"
+    mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private

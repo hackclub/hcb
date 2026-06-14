@@ -24,8 +24,8 @@ RSpec.describe EventMailer, type: :mailer do
       expect(mailer.to).not_to include(member.email)
     end
 
-    it "renders a subject naming the creator and parent" do
-      expect(mailer.subject).to eq("#{creator.name} created a new sub-organization under #{parent_event.name}")
+    it "renders a subject naming the parent, creator, and sub-organization" do
+      expect(mailer.subject).to eq("[#{parent_event.name}] #{creator.name} created #{subevent.name}, a new sub-organization under #{parent_event.name}")
     end
 
     it "links to the new sub-organization in the body" do
