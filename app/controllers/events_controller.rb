@@ -508,7 +508,7 @@ class EventsController < ApplicationController
     ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
-    @all_unique_cardholders = StripeCardholder.joins(:stripe_cards).merge(@event.stripe_cards.on_main_ledger).distinct
+    @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
   end
 
   def documentation
