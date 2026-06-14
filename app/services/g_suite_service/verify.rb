@@ -44,15 +44,15 @@ module GSuiteService
 
     def mx_primary_valid?
       check_dns Resolv::DNS::Resource::IN::MX do |records|
-        return records.any? { |r| r.exchange.to_s.downcase == VALID_MX }
+        return records.map(&:exchange).map(&:to_s).map(&:downcase).include?(VALID_MX)
       end
     end
 
     (1..4).each do |i|
-      expected = "alt#{i}.aspmx.l.google.com"
+      domain = "alt#{i}.aspmx.l.google.com"
       define_method "mx_alt#{i}_valid?" do
         check_dns Resolv::DNS::Resource::IN::MX do |records|
-          return records.any? { |r| r.exchange.to_s.downcase == expected }
+          return records.map(&:exchange).map(&:to_s).map(&:downcase).include?(domain)
         end
       end
     end
