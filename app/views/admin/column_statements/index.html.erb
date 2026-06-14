@@ -1,12 +1,5 @@
 <% title "Column Statements" %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @statements %>
-  </div>
-  <%= paginate @statements %>
-</div>
-
 <div class="table-container">
 <table>
   <thead>
@@ -35,6 +28,11 @@
     <% end %>
   </tbody>
 </table>
-</div>
 
-<%= paginate @statements %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @statements %>
+  </div>
+  <%= paginate @statements %>
+</div>
+</div>
