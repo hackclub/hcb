@@ -43,7 +43,7 @@
         <td><%= render_money_amount(check.amount) %></td>
         <td><%= check.aasm_state.upcase %></td>
         <td>
-          <%= pop_icon_to "external", check_path(check) %>
+          <%= pop_icon_to "external", check_path(check), "aria-label": "View" %>
         </td>
       </tr>
     <% end %>

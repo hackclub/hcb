@@ -67,7 +67,7 @@
           <td><%= link_to ct.canonical_event_mapping.event.id, ct.canonical_event_mapping.event if ct.canonical_event_mapping.try(:event) %></td>
           <td>
             <%= link_to "Process", transaction_admin_path(ct), class: "btn" unless ct.event.present? %>
-            <%= pop_icon_to "external", transaction_admin_path(ct) if ct.event.present? %>
+            <%= pop_icon_to "external", transaction_admin_path(ct), "aria-label": "View" if ct.event.present? %>
             <% if !ct.event.present? && ct.memo.include?("BUSBILLPAY") %>
               <br>
               🕐 This ACH should auto-map within 24 hours

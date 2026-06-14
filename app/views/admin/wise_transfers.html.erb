@@ -37,7 +37,7 @@
         <td><%= Money.from_cents(wise_transfer.amount_cents, wise_transfer.currency).format %></td>
         <td><%= wise_transfer.aasm.human_state %></td>
         <td class="flex items-center gap-2">
-          <%= pop_icon_to "external", hcb_code_path(wise_transfer.hcb_code) %>
+          <%= pop_icon_to "external", hcb_code_path(wise_transfer.hcb_code), "aria-label": "View" %>
           <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn" %>
         </td>
       </tr>

@@ -33,7 +33,7 @@
         <td><%= render_money(paypal_transfer.amount) %></td>
         <td><%= paypal_transfer.aasm.human_state %></td>
         <td class="flex items-center gap-2">
-          <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code) %>
+          <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code), "aria-label": "View" %>
           <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer), class: "btn" %>
         </td>
       </tr>

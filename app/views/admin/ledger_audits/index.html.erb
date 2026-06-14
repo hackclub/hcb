@@ -31,6 +31,10 @@
       </tr>
     <% end %>
 </table>
+
+<div class="table-footer">
+  <%= page_entries_info @ledger_audits, entry_name: "audits" %>
+  <%= paginate @ledger_audits %>
 </div>
 
-<%= paginate @ledger_audits %>
+</div>
