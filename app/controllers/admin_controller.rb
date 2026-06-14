@@ -1448,7 +1448,7 @@ class AdminController < Admin::BaseController
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @users = User.where(id: Event.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
+    @users = User.where(id: Event.omitted.joins(:users).select("users.id")).page(@page).per(@per).order(created_at: :desc)
 
   end
 
@@ -1580,7 +1580,7 @@ class AdminController < Admin::BaseController
   end
 
   def new_teenagers_leaderboard
-    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
+    @link_creators = User.where(id: Referral::Link.select(:creator_id)).includes(:referral_links)
   end
 
   def contracts
