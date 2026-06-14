@@ -1,0 +1,16 @@
+<p><%= @emails.length > 1 ? "Hi all," : "Hi there," %></p>
+
+<p>
+  <%= @creator.name %> (<%= @creator.email %>) has created a new sub-organization,
+  <%= link_to @subevent.name, event_url(@subevent) %>, under <%= @event.name %>.
+</p>
+
+<p>
+  You're receiving this because you're a manager of <%= @event.name %>. You can view all
+  sub-organizations <%= link_to "here", event_sub_organizations_url(@event) %>.
+</p>
+
+<p>
+  From,<br>
+  The HCB Team
+</p>

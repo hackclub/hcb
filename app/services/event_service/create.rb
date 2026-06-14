@@ -44,7 +44,7 @@ module EventService
       raise ArgumentError, "organization name is required" unless @name.present?
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
-      ActiveRecord::Base.transaction do
+      event = ActiveRecord::Base.transaction do
         event = ::Event.create!(attrs)
         @tags
           .filter { |tag| EventTag::Tags::ALL.include?(tag) }
@@ -71,9 +71,22 @@ module EventService
 
         event
       end
+
+      notify_parent_event_managers(event)
+
+      event
     end
 
     private
+
+    def notify_parent_event_managers(event)
+      # Only suborg creation notifies (parent_event present); top-level/admin org creation never does.
+      return if @parent_event.nil? || @invited_by.nil?
+      # Suppress when creator is a manager/admin/ancestor-manager of the parent — only sub-manager creators trigger the email.
+      return if OrganizerPosition.role_at_least?(@invited_by, @parent_event, :manager)
+
+      EventMailer.with(event: @parent_event, subevent: event, creator: @invited_by).subevent_created.deliver_later
+    end
 
     def attrs
       {
