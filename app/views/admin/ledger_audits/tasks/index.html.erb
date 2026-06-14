@@ -1,5 +1,3 @@
-<%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
-
 <h3>Transactions Flagged During Ledger Audits (<%= Admin::LedgerAudit::Task.flagged.count %> unresolved)</h3>
 
 <div>
@@ -49,9 +47,13 @@
       <% end %>
     </tbody>
   </table>
+
+  <div class="table-footer">
+    <%= page_entries_info @tasks, entry_name: "tasks" %>
+    <%= paginate @tasks %>
   </div>
 
-  <%= paginate @tasks %>
+  </div>
 
   <style>
     form, input {

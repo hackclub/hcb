@@ -110,9 +110,8 @@ samp {
   margin-top: 0 !important;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+// Tailwind base/components/utilities are provided by application.css which
+// is loaded before this stylesheet in the admin layout.
 
 #flash-container {
   position: fixed;
