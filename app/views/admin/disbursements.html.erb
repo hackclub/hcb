@@ -1,11 +1,9 @@
 <% title "Disbursements" %>
 
 <% content_for(:admin_actions) do %>
-  <%= link_to disbursement_new_admin_index_path do %>
-    <button class="btn bg-primary" type="button">
-      <%= inline_icon "plus" %>
-      New disbursement
-    </button>
+  <%= link_to disbursement_new_admin_index_path, class: "btn bg-primary" do %>
+    <%= inline_icon "plus" %>
+    New disbursement
   <% end %>
 <% end %>
 

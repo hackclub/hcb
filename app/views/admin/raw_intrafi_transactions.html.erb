@@ -44,8 +44,7 @@
   <div class="flex-grow">
     <%= page_entries_info @raw_intrafi_transactions, entry_name: "transactions" %>
   </div>
+  <%= paginate @raw_intrafi_transactions %>
 </div>
 
 </div>
-
-<%= paginate @raw_intrafi_transactions %>
