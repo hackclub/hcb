@@ -6,7 +6,7 @@
       data-controller="admin-flash"
       data-turbo-temporary>
       <div class="flash--content"><%= value %></div>
-      <button class="flash--close-button" data-action="click->admin-flash#dismiss:prevent">
+      <button class="btn flash--close-button" data-action="click->admin-flash#dismiss:prevent">
         <%= inline_icon("view-close", size: 20, class: "pointer flash--close") %>
       </button>
     </article>

@@ -24,17 +24,11 @@
     <%= form.label :voided do %>
       <%= form.check_box :voided, checked: @voided %> Voided
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @invoices, entry_name: "invoices" %>
-  </div>
-  <%= paginate @invoices %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -68,11 +62,18 @@
         <td><%= invoice.status.upcase %></td>
         <td><%= invoice.fee_reimbursement_id %></td>
         <td>
-          <%= link_to "Process", invoice_process_admin_path(invoice.id) %>
+          <%= link_to "Process", invoice_process_admin_path(invoice.id), class: "btn" %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @invoices %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @invoices, entry_name: "invoices" %>
+  </div>
+  <%= paginate @invoices %>
+</div>
+
+</div>

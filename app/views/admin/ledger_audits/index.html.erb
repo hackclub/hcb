@@ -9,6 +9,7 @@
 <br>
 <br>
 
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -29,6 +30,12 @@
         <td><%= ledger_audit.tasks.pending.count %></td>
       </tr>
     <% end %>
+  </tbody>
 </table>
 
-<%= paginate @ledger_audits %>
+<div class="table-footer">
+  <%= page_entries_info @ledger_audits, entry_name: "audits" %>
+  <%= paginate @ledger_audits %>
+</div>
+
+</div>

@@ -29,6 +29,7 @@
     <h3>Transfer Details</h3>
 
     <%= turbo_frame_tag "admin_ach_#{@ach_transfer.id}" do %>
+      <div class="table-container">
       <table class="table--autosize">
         <tbody>
           <% if @ach_transfer.creator %>
@@ -143,6 +144,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% end %>
 
     <% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
@@ -179,7 +181,7 @@
 
         <div class="flex flex-row gap-2 items-center justify-start">
           <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
-            <%= form.submit "#{verb} ACH transfer", data: { confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+            <%= form.submit "#{verb} ACH transfer", data: { confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." }, class: "btn btn-default" %>
             <% if @ach_transfer.scheduled_on.present? %>
               <br>
               <small>Once approved, this ACH transfer will automatically send on <%= @ach_transfer.scheduled_on.strftime("%Y-%m-%d") %>.</small>
@@ -188,7 +190,7 @@
 
           <% unless @ach_transfer.scheduled_on.present? %>
             <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
-              <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." } %>
+              <%= form.submit "⚡ Send in realtime", data: { confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incurr a $1 fee from Column, that will be covered by HCB." }, class: "btn bg-success" %>
             <% end %>
           <% end %>
         </div>
@@ -205,7 +207,7 @@
             <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
           </div>
 
-          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." } %>
+          <%= form.submit "Reject", data: { confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why." }, class: "btn btn--destroy" %>
         <% end %>
       </fieldset>
     <% elsif @ach_transfer.rejected? %>
