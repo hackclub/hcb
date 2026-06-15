@@ -56,28 +56,49 @@ class DisbursementsController < ApplicationController
     q = params[:q].presence
     # Indicates whether we're searching for source or destination organizations
     sending = params[:sending] == "true"
-    is_admin = admin_signed_in?
 
-    base = if is_admin
-             Event.order(Event::CUSTOM_SORT)
-           elsif !sending && unrestricted_destination_search?
-             manageable = current_user.manageable_events.not_hidden.filter_demo_mode(false)
-             manageable.or(Event.indexable)
-           else
-             current_user.manageable_events.not_hidden.filter_demo_mode(false)
-           end.then { |r| q.present? ? r.search_name(q) : r }
+    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
-    events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode, :financially_frozen).to_a
+    base = if sending
+      if admin_signed_in?
+        Event.select(:name, :id, :demo_mode, :slug, :can_front_balance, :financially_frozen).limit(10).reorder(Event::CUSTOM_SORT).includes(:plan)
+      else
+        current_user.manageable_events.not_hidden.filter_demo_mode(false).limit(10)
+      end
+    else
+      if admin_signed_in?
+        Event.select(:name, :id, :demo_mode, :can_front_balance, :slug, :financially_frozen).limit(10).reorder(Event::CUSTOM_SORT).includes(:plan)
+      elsif @source_event&.plan&.unrestricted_disbursements_enabled?
+        allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+        Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug, :financially_frozen).includes(:plan)
+      else
+        current_user.manageable_events.not_hidden.filter_demo_mode(false).limit(10)
+      end
+    end
+
+    # Apply fuzzy search if query present
+    if q.present?
+      if admin_signed_in?
+        base = base.where("LOWER(name) LIKE ? OR CAST(id AS TEXT) LIKE ?", "%#{q.downcase}%", "%#{q}%")
+      else
+        base = base.where("LOWER(name) LIKE ?", "%#{q.downcase}%")
+      end
+    end
+
+    # Sort by user's event preference
+    base = base.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
+
+    events = base.to_a
 
     options = events.map do |e|
-      disabled_message = "Insufficient balance" if sending && !is_admin && e.balance_available <= 0
+      disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "Demo organization" if e.demo_mode && disabled_message.nil?
       disabled_message = "Frozen organization" if e.financially_frozen? && disabled_message.nil?
 
 
       right = disabled_message || helpers.render_money_short(e.balance_available)
       attrs = disabled_message ? { data: { disabled_option: "" } } : {}
-      name_label = is_admin ? "#{e.name} (#{e.id})" : e.name
+      name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
       content = helpers.content_tag(:div, class: "flex flex-col justify-between w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
         helpers.content_tag(:span, name_label) + helpers.content_tag(:span, right, class: "muted")
       end
