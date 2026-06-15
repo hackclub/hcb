@@ -5,6 +5,47 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#edit" do
+    render_views
+
+    context "when the report is backed by a card grant" do
+      it "disables the organization select and explains why" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        card_grant = create(:card_grant, event:, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event:, card_grant:)
+
+        sign_in(admin)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).to include('disabled="disabled"')
+        expect(response.body).to include("backed by a card grant")
+      end
+    end
+
+    context "when the report is not backed by a card grant" do
+      it "leaves the organization select enabled" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        report = create(:reimbursement_report, user: admin, event:)
+
+        sign_in(admin)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).not_to include("disabled")
+        expect(response.body).not_to include("backed by a card grant")
+      end
+    end
+  end
+
   describe "#update" do
     context "when event_id is changed to an event the user does not belong to" do
       it "blocks the event change and leaves the report on its original event" do
@@ -110,6 +151,26 @@ RSpec.describe Reimbursement::ReportsController do
 
         expect(report.reload.name).to eq("New Name")
         expect(report.event).to eq(event)
+      end
+    end
+
+    context "when the report is backed by a card grant" do
+      it "blocks changing the event even for admins" do
+        admin = create(:user, :make_admin)
+        source_event = create(:event)
+        destination_event = create(:event)
+        card_grant = create(:card_grant, event: source_event, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event: source_event, card_grant:)
+
+        sign_in(admin)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: destination_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(source_event)
       end
     end
 
