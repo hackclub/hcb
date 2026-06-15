@@ -251,7 +251,7 @@ class Event
     def resend_to_cosigner
       authorize @application
 
-      new_cosigner_email = params[:event_application][:cosigner_email]
+      new_cosigner_email = params[:event_application][:cosigner_email]&.strip
 
       if new_cosigner_email == @application.user.email
         flash[:error] = "You cannot use your own email as your parent's email"
