@@ -48,7 +48,7 @@ class OrganizerPosition < ApplicationRecord
   validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
   validate :at_least_one_manager
-  validate :owner_has_contract
+  validate :owner_has_signed_contract
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
@@ -111,9 +111,9 @@ class OrganizerPosition < ApplicationRecord
     end
   end
 
-  def owner_has_contract
-    if owner? && fiscal_sponsorship_contract.nil?
-      errors.add(:base, "owners must have an associated contract")
+  def owner_has_signed_contract
+    if owner? && !fiscal_sponsorship_contract&.signed?
+      errors.add(:base, "owners must have an associated signed contract")
     end
   end
 
