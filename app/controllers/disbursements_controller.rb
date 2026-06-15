@@ -77,15 +77,15 @@ class DisbursementsController < ApplicationController
       content = helpers.content_tag(:div, class: "flex flex-col justify-between w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
         helpers.content_tag(:span, name_label) + helpers.content_tag(:span, right, class: "muted")
       end
-      { value: e.id.to_s, display: e.name, content: content }
+      { value: e.public_id, display: e.name, content: content }
     end
 
     render turbo_stream: helpers.async_combobox_options(options)
   end
 
   def create
-    @source_event = Event.find(disbursement_params[:source_event_id])
-    @destination_event = Event.find(disbursement_params[:event_id])
+    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
+    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
@@ -141,13 +141,9 @@ class DisbursementsController < ApplicationController
     skip_authorization
     flash[:error] = e.message
     redirect_to new_disbursement_path(source_event_id: @source_event)
-  rescue ActiveRecord::StatementInvalid
+  rescue ActiveRecord::RecordNotFound => e
     skip_authorization
-    flash[:error] = "Invalid request"
-    redirect_to new_disbursement_path(source_event_id: @source_event)
-  rescue ActiveRecord::RecordNotFound
-    skip_authorization
-    flash[:error] = "Organization not found"
+    flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
   end
 
@@ -243,7 +239,7 @@ class DisbursementsController < ApplicationController
     source_event_id = params[:source_event_id].presence
     return false unless source_event_id
 
-    event = current_user.manageable_events.find_by(id: source_event_id)
+    event = current_user.manageable_events.find_by_public_id(source_event_id)
     event&.plan&.unrestricted_disbursements_enabled?
   end
 

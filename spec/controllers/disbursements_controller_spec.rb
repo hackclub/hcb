@@ -23,8 +23,8 @@ RSpec.describe DisbursementsController do
           params: {
             disbursement: {
               name: "Boba Drops",
-              source_event_id: source_event.id,
-              event_id: destination_event.id,
+              source_event_id: source_event.public_id,
+              event_id: destination_event.public_id,
               amount: "123.45"
             }
           }
@@ -57,8 +57,8 @@ RSpec.describe DisbursementsController do
           params: {
             disbursement: {
               name: "Boba Drops",
-              source_event_id: source_event.id,
-              event_id: destination_event.id,
+              source_event_id: source_event.public_id,
+              event_id: destination_event.public_id,
               amount: "123.45",
               source_transaction_category_slug: "donations",
               destination_transaction_category_slug: "fundraising",

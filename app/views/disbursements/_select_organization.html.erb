@@ -3,12 +3,15 @@
 <% search_path = if sending
                    event_search_disbursements_path(sending: true)
                  elsif source_event
-                   event_search_disbursements_path(source_event_id: source_event.id)
+                   event_search_disbursements_path(source_event_id: source_event.public_id)
                  else
                    event_search_disbursements_path
                  end %>
 
+<% association_name = field_name.to_s.sub(/_id$/, "") %>
+<% default_value = form.object.try(association_name)&.public_id %>
+
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <%= form.combobox field_name.to_sym, search_path, placeholder: "Select one...", disabled: disabled, class: "!max-w-full" %>
+  <%= form.combobox field_name.to_sym, search_path, value: default_value, placeholder: "Select one...", disabled: disabled, class: "!max-w-full" %>
 </div>
