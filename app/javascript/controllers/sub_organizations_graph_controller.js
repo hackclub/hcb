@@ -134,9 +134,9 @@ export default class extends Controller {
       .attr('y', y + 35)
       .attr('dominant-baseline', 'middle')
       .text(
-        node.balanceCents == null
+        node.balance_cents == null
           ? '$ —'
-          : this.formatBalance(node.balanceCents)
+          : this.formatBalance(node.balance_cents)
       )
 
     a.append('text')
@@ -145,7 +145,7 @@ export default class extends Controller {
       .attr('y', y + 35)
       .attr('text-anchor', 'end')
       .attr('dominant-baseline', 'middle')
-      .text(node.cardCount == null ? '💳 —' : `💳 ${node.cardCount}`)
+      .text(node.card_count == null ? '💳 —' : `💳 ${node.card_count}`)
   }
 
   formatBalance(cents) {

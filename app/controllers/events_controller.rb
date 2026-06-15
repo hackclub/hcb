@@ -543,8 +543,8 @@ class EventsController < ApplicationController
       all_events.map { |e|
         {
           id: e.id,
-          balanceCents: e.balance_v2_cents,
-          cardCount: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
+          balance_cents: e.balance_v2_cents,
+          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
         }
       }
     end
