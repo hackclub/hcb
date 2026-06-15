@@ -9,9 +9,9 @@
 </h1>
 
 <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted"), footer: :questions do %>
-    <p>
-      Starting Monday, June 16th, 2025, HCB will beta test locking cards for users who have more than 10 missing receipts at any given time. Receipts before this beta period do not count towards the limit, though they still need to be submitted. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
+  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted") do %>
+    <p class="my-0">
+      Every receipt must be uploaded within 72 hours of the charge settling. If any settled card charges are still missing receipts after 72 hours, your cards risk being locked. Pending charges do not count. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
     </p>
   <% end %>
 <% end %>
@@ -79,7 +79,7 @@
   Transactions
   <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
     <%= badge_for("#{@count} missing receipts") %>
-    <%= badge_for("#{@locking_count} / 10") %>
+    <%= badge_for("#{@locking_count} violations") %>
   <% else %>
     <%= badge_for(@count) %>
   <% end %>
@@ -88,21 +88,21 @@
 <% if @time_based_sorting %>
   <section class="mb3 card p0 receipt-card">
     <div class="table-container">
-        <table>
+      <table>
         <tbody data-behavior="transactions">
-            <% @hcb_codes.each do |hcb_code| %>
+          <% @hcb_codes.each do |hcb_code| %>
             <% if hcb_code.canonical_transactions.any? %>
-                <% hcb_code.canonical_transactions.each do |ct| %>
-                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
+              <% hcb_code.canonical_transactions.each do |ct| %>
+                <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+              <% end %>
             <% else %>
-                <% hcb_code.canonical_pending_transactions.each do |pt| %>
-                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
+              <% hcb_code.canonical_pending_transactions.each do |pt| %>
+                <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
+              <% end %>
             <% end %>
-            <% end %>
+          <% end %>
         </tbody>
-        </table>
+      </table>
     </div>
   </section>
 <% else %>
