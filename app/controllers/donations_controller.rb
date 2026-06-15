@@ -58,9 +58,9 @@ class DonationsController < ApplicationController
                     .select { |d| d.email.present? }
                     .group_by(&:email)
                     .map do |_, group|
-        representative = group.reject(&:anonymous?).max_by(&:donated_at) || group.max_by(&:donated_at)
-        donor_summary.new(representative.name, group.sum(&:amount))
-      end
+                      representative = group.reject(&:anonymous?).max_by(&:donated_at) || group.max_by(&:donated_at)
+                      donor_summary.new(representative.name, group.sum(&:amount))
+                    end
         .sort_by { |d| -d.amount }
                     .first(10)
 
