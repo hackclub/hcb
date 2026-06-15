@@ -137,6 +137,14 @@
   text-overflow: ellipsis;
   margin-top: 0;
   cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.95);
+
+    &:active {
+      filter: brightness(0.9);
+    }
+  }
 }
 
 .hw-combobox__option--blank {

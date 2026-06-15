@@ -52,7 +52,7 @@ class DisbursementsController < ApplicationController
   end
 
   def event_search
-    skip_authorization
+    authorize Disbursement.new
     q = params[:q].presence
     # Indicates whether we're searching for source or destination organizations
     sending = params[:sending] == "true"
@@ -67,10 +67,13 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end.then { |r| q.present? ? r.search_name(q) : r }
 
-    events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode).to_a
+    events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode, :financially_frozen).to_a
 
     options = events.map do |e|
       disabled_message = "Insufficient balance" if sending && !is_admin && e.balance_available <= 0
+      disabled_message = "Demo organization" if e.demo_mode && disabled_message.nil?
+      disabled_message = "Frozen organization" if e.financially_frozen? && disabled_message.nil?
+
 
       right = disabled_message || helpers.render_money_short(e.balance_available)
       attrs = disabled_message ? { data: { disabled_option: "" } } : {}
@@ -139,7 +142,6 @@ class DisbursementsController < ApplicationController
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
-    skip_authorization
     flash[:error] = e.message
     redirect_to new_disbursement_path(source_event_id: @source_event)
   rescue ActiveRecord::RecordNotFound => e
