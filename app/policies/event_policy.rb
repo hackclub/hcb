@@ -9,10 +9,6 @@ class EventPolicy < ApplicationPolicy
     auditor_or_reader?
   end
 
-  def async_sub_organizations_graph?
-    sub_organizations?
-  end
-
   # Event homepage
   def show?
     is_public || auditor_or_reader?
@@ -198,6 +194,8 @@ class EventPolicy < ApplicationPolicy
   def sub_organizations?
     (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
   end
+
+  alias async_sub_organizations_graph? sub_organizations?
 
   def sub_organizations_in_v4?
     auditor_or_reader? && sub_organizations?
