@@ -908,7 +908,7 @@ class Event < ApplicationRecord
   end
 
   def organizer_contact_emails(only_managers: false, &block)
-    included_users = only_managers ? managers : users
+    included_users = only_managers ? owners_or_managers : users
     included_users = block.call(included_users) if block
 
     emails = included_users.map(&:email_address_with_name)
@@ -1076,6 +1076,10 @@ class Event < ApplicationRecord
     end
 
     Event::Plan::Standard
+  end
+
+  def owners_or_managers
+    [*owners, *managers]
   end
 
 end

@@ -28,7 +28,7 @@
   <% if organizer_signed_in? && (@report.submitted? || @report.draft?) && @report.event %>
    <div class="field">
       <%= form.label :reviewer_id, "Assigned reviewer", class: "mt2" %>
-      <%= form.collection_select :reviewer_id, @report.event.managers, :id, :name, include_blank: "Anyone" %>
+      <%= form.collection_select :reviewer_id, @report.event.owners_or_managers, :id, :name, include_blank: "Anyone" %>
     </div>
   <% end %>
   <div class="flex items-center w-full justify-between">
