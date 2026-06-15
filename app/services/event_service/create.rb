@@ -82,7 +82,7 @@ module EventService
     def notify_parent_event_managers(event)
       # Only suborg creation notifies (parent_event present); top-level/admin org creation never does.
       return if @parent_event.nil? || @invited_by.nil?
-      # Suppress when creator is a manager/admin/ancestor-manager of the parent — only sub-manager creators trigger the email.
+      # Suppress when creator is a manager/admin/ancestor-manager of the parent — only members creators trigger the email.
       return if OrganizerPosition.role_at_least?(@invited_by, @parent_event, :manager)
 
       EventMailer.with(event: @parent_event, subevent: event, creator: @invited_by).subevent_created.deliver_later
