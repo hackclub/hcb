@@ -61,9 +61,9 @@ class DisbursementsController < ApplicationController
              Event.order(Event::CUSTOM_SORT)
            elsif !sending && unrestricted_destination_search?
              manageable = current_user.manageable_events.not_hidden.filter_demo_mode(false)
-             Event.where(id: manageable.select(:id)).or(Event.where(id: Event.indexable.select(:id))).order(Event::CUSTOM_SORT)
+             Event.where(id: manageable.select(:id)).or(Event.where(id: Event.indexable.select(:id)))
            else
-             current_user.manageable_events.not_hidden.filter_demo_mode(false).order(Event::CUSTOM_SORT)
+             current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end.then { |r| q.present? ? r.search_name(q) : r }
 
     events = base.limit(20).select(:id, :name, :can_front_balance, :demo_mode).to_a
