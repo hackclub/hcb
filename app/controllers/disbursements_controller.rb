@@ -54,6 +54,7 @@ class DisbursementsController < ApplicationController
   def event_search
     skip_authorization
     q = params[:q].presence
+    # Indicates whether we're searching for source or destination organizations
     sending = params[:sending] == "true"
     is_admin = admin_signed_in?
 
@@ -61,7 +62,7 @@ class DisbursementsController < ApplicationController
              Event.order(Event::CUSTOM_SORT)
            elsif !sending && unrestricted_destination_search?
              manageable = current_user.manageable_events.not_hidden.filter_demo_mode(false)
-             Event.where(id: manageable.select(:id)).or(Event.where(id: Event.indexable.select(:id)))
+             manageable.or(Event.indexable)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end.then { |r| q.present? ? r.search_name(q) : r }
