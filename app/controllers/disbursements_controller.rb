@@ -58,6 +58,7 @@ class DisbursementsController < ApplicationController
     sending = params[:sending] == "true"
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+    @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
 
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug, :can_front_balance, :financially_frozen).limit(10).reorder(Event::CUSTOM_SORT).includes(:plan)
@@ -84,6 +85,7 @@ class DisbursementsController < ApplicationController
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "Demo organization" if e.demo_mode && disabled_message.nil?
       disabled_message = "Frozen organization" if e.financially_frozen? && disabled_message.nil?
+      disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
 
       right = disabled_message || helpers.render_money_short(e.balance_available)
