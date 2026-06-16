@@ -24,11 +24,16 @@ class MarketingController < ApplicationController
   # await sign-off on the funder quotes. Enable once the quotes are approved.
   TESTIMONIALS_FLAG = :funders_landing_testimonials
 
+  # Gates the Argosy Foundation case study independently, so it can be held back until it's
+  # cleared to show.
+  ARGOSY_FLAG = :funders_landing_argosy
+
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
+    @show_argosy = Flipper.enabled?(ARGOSY_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 

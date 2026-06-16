@@ -8,37 +8,23 @@ class User
     queue_as :low
 
     HQ_ORG_TREE = {
-      "zach": [
-        "dev",
-        "alexren",
-        "malted",
-        "jared",
+      "melanie": [
+        "sierra",
+        "usr_MVt1m1", # Alex DeForrest
+        "rhys",
+        "anish",
         {
-          "graham": [
-            "fayd",
-            "marios",
-            "shubham",
-            "cheru",
-            "josias",
-            "usr_Jptmoo" # Shubham Patil
+          "gary": [
+            "manu", "ruien", "luke", "samuelf",
+            "usr_BetQLy", # Ian
+            "usr_Jptm3Z", # Sam Poder
+            "usr_73tAe4" # Albert
           ],
-          "melanie": [
-            "dylan",
-            "kris",
-            "dawn",
-            {
-              "gary": [
-                "ian", "sam", "manu", "ruien",
-                "usr_73tAe4" # Albert
-              ],
-              "daisy": [
-                "leo", "aryan", "sarvesh", "rhys", "anish", "sean", "arianna",
-                "usr_MVt1m1", # Alex DeForrest
-                "usr_let591", # Alex Luo
-              ],
-              "paul": %w[lucy],
-            }
+          "lucy": [
+            "sean", "mattsoh", "briyan", "kris", "georgia",
+            "usr_let591", # Alex Luo
           ],
+          "paul": %w[sarvesh],
         }
       ]
     }.freeze
