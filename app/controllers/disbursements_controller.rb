@@ -70,11 +70,9 @@ class DisbursementsController < ApplicationController
 
     # Apply fuzzy search if query present
     if q.present?
-      if admin_signed_in?
-        base = base.where("LOWER(name) LIKE ? OR CAST(id AS TEXT) LIKE ?", "%#{q.downcase}%", "%#{q}%")
-      else
-        base = base.where("LOWER(name) LIKE ?", "%#{q.downcase}%")
-      end
+      sql = "LOWER(name) LIKE :name"
+      sql += " OR CAST(id AS TEXT) LIKE :id" if admin_signed_in?
+      base = base.where(sql, name: "%#{q.downcase}%", id: "%#{q}%")
     end
 
     # Sort by user's event preference
