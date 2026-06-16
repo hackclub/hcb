@@ -627,6 +627,14 @@ class EventsController < ApplicationController
 
   end
 
+  def donations
+    authorize @event
+  end
+
+  def recurring_donations
+    authorize @event
+  end
+
   def transfers
     authorize @event
 
