@@ -99,8 +99,8 @@ class DisbursementsController < ApplicationController
       right = disabled_message || helpers.render_money_short(e.balance_available)
       attrs = disabled_message ? { data: { disabled_option: "" } } : {}
       name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
-      content = helpers.content_tag(:div, class: "flex flex-col justify-between w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
-        helpers.content_tag(:span, name_label) + helpers.content_tag(:span, right, class: "muted")
+      content = helpers.content_tag(:div, class: "flex flex-col w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
+        helpers.content_tag(:span, name_label, style: "white-space:normal") + helpers.content_tag(:span, right, class: "text-sm muted")
       end
       { value: e.public_id, display: e.name, content: content }
     end
