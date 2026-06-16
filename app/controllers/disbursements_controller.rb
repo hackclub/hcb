@@ -249,14 +249,6 @@ class DisbursementsController < ApplicationController
 
   private
 
-  def unrestricted_destination_search?
-    source_event_id = params[:source_event_id].presence
-    return false unless source_event_id
-
-    event = current_user.manageable_events.find_by_public_id(source_event_id)
-    event&.plan&.unrestricted_disbursements_enabled?
-  end
-
   # Only allow a trusted parameter "white list" through.
   def disbursement_params
     attributes = [
