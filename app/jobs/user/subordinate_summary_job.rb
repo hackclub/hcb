@@ -11,7 +11,6 @@ class User
       "melanie": [
         "sierra",
         "kris",
-        "dawn",
         {
           "gary": [
             "manu", "ruien", "luke", "samuelf",
