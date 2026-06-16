@@ -45,7 +45,7 @@
           <% end %>
           <% if @event.plan.awards_enabled? %>
             <%= link_to fillout_form("kBxTXjp5g9us", { "org_link" => event_url(@event) }),
-                        class: "text-decoration-none btn--form-option",
+                        class: "text-decoration-none btn--form-option relative overflow-hidden",
                         target: :_blank do %>
               <%= inline_icon "badge-award", size: 28 %>
               <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">HQ-only</div>
