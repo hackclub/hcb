@@ -10,7 +10,6 @@ class User
     HQ_ORG_TREE = {
       "melanie": [
         "sierra",
-        "kris",
         "usr_MVt1m1", # Alex DeForrest
         "rhys",
         "anish",
@@ -22,7 +21,7 @@ class User
             "usr_73tAe4" # Albert
           ],
           "lucy": [
-            "sean", "mattsoh", "briyan", "georgia",
+            "sean", "mattsoh", "briyan", "kris", "georgia",
             "usr_let591", # Alex Luo
           ],
           "paul": %w[sarvesh],
