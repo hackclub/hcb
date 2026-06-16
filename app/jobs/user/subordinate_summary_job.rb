@@ -21,7 +21,7 @@ class User
             "usr_Jptm3Z", # Sam Poder
             "usr_73tAe4" # Albert
           ],
-          "daisy": [
+          "lucy": [
             "sean", "mattsoh", "briyan", "georgia",
             "usr_let591", # Alex Luo
           ],
