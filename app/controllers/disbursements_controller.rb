@@ -61,18 +61,18 @@ class DisbursementsController < ApplicationController
 
     base = if sending
       if admin_signed_in?
-        Event.select(:name, :id, :demo_mode, :slug, :can_front_balance, :financially_frozen).limit(10).reorder(Event::CUSTOM_SORT).includes(:plan)
+        Event.select(:name, :id, :demo_mode, :slug, :can_front_balance, :financially_frozen).reorder(Event::CUSTOM_SORT).includes(:plan)
       else
-        current_user.manageable_events.not_hidden.filter_demo_mode(false).limit(10)
+        current_user.manageable_events.not_hidden.filter_demo_mode(false)
       end
     else
       if admin_signed_in?
-        Event.select(:name, :id, :demo_mode, :can_front_balance, :slug, :financially_frozen).limit(10).reorder(Event::CUSTOM_SORT).includes(:plan)
+        Event.select(:name, :id, :demo_mode, :can_front_balance, :slug, :financially_frozen).reorder(Event::CUSTOM_SORT).includes(:plan)
       elsif @source_event&.plan&.unrestricted_disbursements_enabled?
         allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
         Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug, :financially_frozen).includes(:plan)
       else
-        current_user.manageable_events.not_hidden.filter_demo_mode(false).limit(10)
+        current_user.manageable_events.not_hidden.filter_demo_mode(false)
       end
     end
 
@@ -86,7 +86,7 @@ class DisbursementsController < ApplicationController
     end
 
     # Sort by user's event preference
-    base = base.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
+    base = base.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first).take(10)
 
     events = base.to_a
 
