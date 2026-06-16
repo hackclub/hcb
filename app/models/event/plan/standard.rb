@@ -40,7 +40,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
+        Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements awards]
       end
 
       def receipts_required?

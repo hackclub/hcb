@@ -43,7 +43,7 @@
               <small>A grant sent through HCB</small>
             <% end %>
           <% end %>
-          <% if @event.plan.type.in?([Event::Plan::HackClubAffiliate.name, Event::Plan::HackClubHQ.name]) %>
+          <% if @event.plan.awards_enabled? %>
             <%= link_to fillout_form("kBxTXjp5g9us", { "org_link" => event_url(@event) }),
                         class: "text-decoration-none btn--form-option",
                         target: :_blank do %>
