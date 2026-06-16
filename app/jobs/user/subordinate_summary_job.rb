@@ -11,6 +11,9 @@ class User
       "melanie": [
         "sierra",
         "kris",
+        "usr_MVt1m1", # Alex DeForrest
+        "rhys",
+        "anish",
         {
           "gary": [
             "manu", "ruien", "luke", "samuelf",
@@ -19,8 +22,7 @@ class User
             "usr_73tAe4" # Albert
           ],
           "daisy": [
-            "rhys", "anish", "sean", "mattsoh", "briyan", "georgia",
-            "usr_MVt1m1", # Alex DeForrest
+            "sean", "mattsoh", "briyan", "georgia",
             "usr_let591", # Alex Luo
           ],
           "paul": %w[sarvesh],
