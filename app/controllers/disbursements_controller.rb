@@ -76,10 +76,17 @@ class DisbursementsController < ApplicationController
       base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
     end
 
-    # Sort by user's event preference
-    base = base.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first).take(10)
+    # Sort by user's event preference in SQL, keeping the relation's existing
+    # order as a tiebreaker, then limit before loading records into Ruby.
+    order_clauses = []
+    if user_event_ids.any?
+      ids = user_event_ids.map(&:to_i).join(", ")
+      order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
+    end
+    order_clauses.concat(base.order_values)
+    order_clauses << Arel.sql("events.id ASC")
 
-    events = base.to_a
+    events = base.reorder(*order_clauses).limit(10).to_a
 
     options = events.map do |e|
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
