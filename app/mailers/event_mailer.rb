@@ -2,7 +2,7 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary]
+  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
@@ -87,6 +87,15 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_disabled
     mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+  end
+
+  def subevent_created
+    @subevent = params[:subevent]
+    @creator = params[:creator]
+    @emails = @event.organizer_contact_emails(only_managers: true)
+    return if @emails.none?
+
+    mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private
