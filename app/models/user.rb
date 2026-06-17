@@ -28,6 +28,7 @@
 #  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  subscribed_to_loops_at        :datetime
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
@@ -140,8 +141,6 @@ class User < ApplicationRecord
   has_many :stripe_authorizations, through: :stripe_cards
   has_many :receipts
 
-  has_many :checks, inverse_of: :creator
-
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
@@ -153,7 +152,14 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :ach_transfers, inverse_of: :creator
+  has_many :checks, inverse_of: :creator
+  has_many :disbursements, inverse_of: :requested_by
+  has_many :increase_checks
   has_many :wise_transfers
+
+  has_many :check_deposits, inverse_of: :created_by
+  has_many :invoices, inverse_of: :creator
 
   has_one_attached :profile_picture
   validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
