@@ -485,8 +485,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
   end
 
   create_table "card_grants", force: :cascade do |t|
-    t.boolean "allow_reimbursement_report", default: false, null: false
-    t.boolean "allow_stripe_card", default: true, null: false
+    t.boolean "allow_reimbursement_report", null: false
+    t.boolean "allow_stripe_card", null: false
     t.integer "amount_cents"
     t.string "banned_categories"
     t.string "banned_merchants"

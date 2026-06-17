@@ -5,8 +5,8 @@
 # Table name: card_grants
 #
 #  id                         :bigint           not null, primary key
-#  allow_reimbursement_report :boolean          default(FALSE), not null
-#  allow_stripe_card          :boolean          default(TRUE), not null
+#  allow_reimbursement_report :boolean          not null
+#  allow_stripe_card          :boolean          not null
 #  amount_cents               :integer
 #  banned_categories          :string
 #  banned_merchants           :string
@@ -130,12 +130,14 @@ class CardGrant < ApplicationRecord
   def state
     if suspected_fraud?
       "error"
+    elsif reimbursement_report.present?
+      # A grant accepted as a reimbursement is `canceled` (its funds move into
+      # the report), so this must be checked before `canceled?`.
+      "success"
     elsif canceled? || expired?
       "muted"
     elsif pending_invite?
       "info"
-    elsif reimbursement_report.present?
-      "success"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "warning"
     else
@@ -146,14 +148,16 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif reimbursement_report.present?
+      # A grant accepted as a reimbursement is `canceled` (its funds move into
+      # the report), so this must be checked before `canceled?`.
+      "Active"
     elsif canceled?
       "Canceled"
     elsif expired?
       "Expired"
     elsif pending_invite?
       "Invitation sent"
-    elsif reimbursement_report.present?
-      "Active"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
