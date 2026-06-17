@@ -52,7 +52,7 @@ class DonationsController < ApplicationController
 
     if @event.show_top_donors
       donor_summary = Struct.new(:name, :amount)
-      donations = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded
+      donations = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded
 
       @top_donors = donations
                     .where(anonymous: false)
@@ -68,7 +68,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.not_pending.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end
