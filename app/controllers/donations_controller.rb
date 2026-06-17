@@ -56,7 +56,6 @@ class DonationsController < ApplicationController
 
       @top_donors = donations
                     .where(anonymous: false)
-                    .select { |d| d.email.present? }
                     .group_by(&:email)
                     .map do |_, group|
                       representative = group.max_by(&:donated_at)
