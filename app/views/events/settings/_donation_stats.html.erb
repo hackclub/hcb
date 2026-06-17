@@ -3,7 +3,12 @@
   <div class="menu__divider m-0 my-8"></div>
 <% end %>
 <div class="field field--checkbox mb0 card mt-4">
-  <span style="font-weight: 700">Show top donors</span>
+  <div>
+    <span style="font-weight: 700">Show top donors</span>
+    <p class="text-muted mt-0.5 mb-0 text-sm">
+      Display a leaderboard of top non-anonymous donors by total amount raised, including all recurring payments
+    </p>
+  </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
     <%= form_with(model: event, local: true) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
@@ -21,7 +26,12 @@
 </div>
 
 <div class="field field--checkbox mb0 card mt-4">
-  <span style="font-weight: 700">Show recent donors</span>
+  <div>
+    <span style="font-weight: 700">Show recent donors</span>
+    <p class="text-muted mt-0.5 mb-0 text-sm">
+      Displays the 8 most recent donations, including anonymous ones
+    </p>
+  </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
     <%= form_with(model: event, local: true) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
