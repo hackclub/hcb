@@ -69,9 +69,11 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
 
+    # Apply fuzzy search if query present
     if q.present?
-      sql = "LOWER(name) ILIKE :name OR CAST(id AS TEXT) ILIKE :id OR LOWER(slug) ILIKE :slug"
-      base = base.where(sql, name: "%#{q.downcase}%", id: "%#{q}%", slug: "%#{q.downcase}%")
+      sql = "LOWER(name) ILIKE :name OR LOWER(slug) ILIKE :slug"
+      sql += " OR CAST(id AS TEXT) ILIKE :id" if admin_signed_in?
+      base = base.where(sql, name: "%#{q.downcase}%", slug: "%#{q.downcase}%", id: "%#{q}%")
     end
 
     # Sort by user's event preference
