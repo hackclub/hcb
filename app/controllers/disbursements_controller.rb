@@ -70,7 +70,7 @@ class DisbursementsController < ApplicationController
            end
 
     if q.present?
-      sql = "LOWER(name) LIKE :name OR CAST(id AS TEXT) LIKE :id OR LOWER(slug) LIKE :slug"
+      sql = "LOWER(name) ILIKE :name OR CAST(id AS TEXT) ILIKE :id OR LOWER(slug) ILIKE :slug"
       base = base.where(sql, name: "%#{q.downcase}%", id: "%#{q}%", slug: "%#{q.downcase}%")
     end
 
