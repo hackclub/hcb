@@ -53,20 +53,32 @@ class DonationsController < ApplicationController
     if @event.show_top_donors
       donor_summary = Struct.new(:name, :amount)
       donations = @event.donations
-                        .includes(:recurring_donation)
-                        .references(:recurring_donation)
+                        .left_joins(:recurring_donation)
                         .succeeded_and_not_refunded
                         .where("COALESCE(recurring_donations.email, donations.email) <> ''")
 
-      @top_donors = donations
-                    .where(anonymous: false)
-                    .group_by(&:email)
-                    .map do |_, group|
-                      representative = group.max_by(&:donated_at)
-                      donor_summary.new(representative.name, group.sum(&:amount))
-                    end
-        .sort_by { |d| -d.amount }
-                    .first(10)
+      # Aggregate per donor in SQL: total amount + the id of each group's most
+      # recent donation. This returns at most 10 rows instead of loading every
+      # donation for the org into memory.
+      totals = donations
+               .where(anonymous: false)
+               .group(Arel.sql("COALESCE(recurring_donations.email, donations.email)"))
+               .order(Arel.sql("SUM(donations.amount) DESC"))
+               .limit(10)
+               .pluck(
+                 Arel.sql("SUM(donations.amount)"),
+                 Arel.sql("(ARRAY_AGG(donations.id ORDER BY COALESCE(donations.in_transit_at, donations.created_at) DESC))[1]")
+               )
+
+      # Load only the ~10 representative donations to resolve display names
+      # (which depend on the associated recurring donation).
+      representatives = Donation.includes(:recurring_donation)
+                                .where(id: totals.map(&:last))
+                                .index_by(&:id)
+
+      @top_donors = totals.map do |total, representative_id|
+        donor_summary.new(representatives[representative_id].name, total)
+      end
 
       @top_donors = [] if @top_donors.size < 3
     end
