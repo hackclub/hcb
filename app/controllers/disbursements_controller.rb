@@ -69,7 +69,6 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
 
-    # Apply fuzzy search if query present
     if q.present?
       sql = "LOWER(name) LIKE :name"
       sql += " OR CAST(id AS TEXT) LIKE :id OR LOWER(slug) LIKE :slug" if admin_signed_in?
