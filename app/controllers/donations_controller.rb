@@ -52,7 +52,11 @@ class DonationsController < ApplicationController
 
     if @event.show_top_donors
       donor_summary = Struct.new(:name, :amount)
-      donations = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded
+      donations = @event.donations
+                        .includes(:recurring_donation)
+                        .references(:recurring_donation)
+                        .succeeded_and_not_refunded
+                        .where("COALESCE(recurring_donations.email, donations.email) <> ''")
 
       @top_donors = donations
                     .where(anonymous: false)
