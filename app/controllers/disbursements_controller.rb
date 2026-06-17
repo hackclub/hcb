@@ -86,7 +86,7 @@ class DisbursementsController < ApplicationController
     order_clauses.concat(base.order_values)
     order_clauses << Arel.sql("events.id ASC")
 
-    events = base.reorder(*order_clauses).limit(10).to_a
+    events = base.reorder(*order_clauses).limit(25).to_a
 
     options = events.map do |e|
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
