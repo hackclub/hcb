@@ -43,7 +43,7 @@
   </div>
 </div>
 
-<% if @event.show_top_donors || @event.show_recent_donors %>
+<% if !params[:tier_id] && (@event.show_top_donors || @event.show_recent_donors) %>
   <div class="mt-5 mb-10 grid <%= @event.show_top_donors && @event.show_recent_donors ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1" %> gap-2">
     <%= render "donations/top_donors", top_donors: @top_donors if @event.show_top_donors %>
     <%= render "donations/recent_donors", recent_donors: @recent_donors if @event.show_recent_donors %>
