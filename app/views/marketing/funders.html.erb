@@ -67,7 +67,8 @@
         HCB by <a href="https://hackclub.com">Hack Club</a> is a financial
         technology platform, backed by a <span class="whitespace-nowrap">501(c)(3)</span>,
         that turns your capital into tax-deductible grants for established
-        nonprofits or brand-new initiatives, with you directing every dollar.
+        nonprofits and brand-new initiatives that aren't 501(c)(3)s yet, with you
+        directing every dollar.
         Whether it's $10,000 for one project or $10M across many, we have the
         software and team to move money fast and compliantly.
         <span class="mk-hero__brandline">Built by engineers, funded by tech leaders.</span>
@@ -230,7 +231,12 @@
   <div class="mk-container">
     <div class="mk-section__head">
       <p class="mk-eyebrow mk-eyebrow--light">What you can fund</p>
-      <h2 class="mk-section__title">Put capital exactly where you want it.</h2>
+      <h2 class="mk-section__title">Your giving isn't limited to established 501(c)(3)s.</h2>
+      <p class="mk-lead">
+        The next wave of charitable work — fast-moving projects, new labs, builder-led
+        teams — often doesn't fit the 501(c)(3) timeline or structure. With HCB, you can
+        fund it now, tax-deductibly, without waiting for it to incorporate.
+      </p>
     </div>
     <div class="mk-uses">
       <article class="mk-use mk-use--wide">
@@ -319,9 +325,7 @@
 </section>
 
 <%# ============================ CASE STUDY: ARGOSY ============================ %>
-<%# Argosy Foundation / FIRST Robotics case study, gated behind :funders_landing_argosy so
-    it can be held back until it's cleared to show. %>
-<% if @show_argosy %>
+<%# Argosy Foundation / FIRST Robotics case study. %>
 <section class="mk-section mk-product mk-product--metric">
   <div class="mk-container">
     <div class="mk-product__grid">
@@ -373,7 +377,6 @@
     </div>
   </div>
 </section>
-<% end %>
 
 <%# ============================ IMPACT (where it lands) ============================ %>
 <%# Three real funded projects (Ghostty, Miami Hack Week, MALAN) — approved logos/photos
