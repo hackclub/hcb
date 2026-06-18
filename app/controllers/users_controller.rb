@@ -342,7 +342,7 @@ class UsersController < ApplicationController
       end
 
       locked = params[:user][:locked] == "1"
-      if @user.locked? != locked
+      if @user.locked? != locked && (!params[:user][:locked_reason].empty? || @user.locked?)
         if @user == current_user
           flash[:error] = "As much as you might desire to, you cannot lock yourself out."
           return redirect_to admin_user_path(@user)
@@ -353,10 +353,15 @@ class UsersController < ApplicationController
           flash[:error] = "To lock this user, demote them to a regular admin first."
           return redirect_to admin_user_path(@user)
         elsif locked
+          Comment.create(admin_only: true, commentable: @user, user_id: current_user.id, content: "Locked #{@user.preferred_name} : For - #{params[:user][:locked_reason]}")
           @user.lock!
         else
+          Comment.create(admin_only: true, commentable: @user, user_id: current_user.id, content: "Unlocked #{@user.preferred_name} : At - #{Time.now}")
           @user.unlock!
         end
+      else
+        flash[:error] = "To lock this user, provide a reason"
+        return redirect_to admin_user_path(@user)
       end
     end
 

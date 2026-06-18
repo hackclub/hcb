@@ -6,6 +6,7 @@ import { definitionsFromContext } from '@hotwired/stimulus-webpack-helpers'
 import { installErrorHandler } from '@appsignal/stimulus'
 import { appsignal } from '../appsignal'
 import HwComboboxController from '@josefarias/hotwire_combobox'
+import LockedReasonController from './locked_reason_controller'
 
 const application = Application.start()
 
