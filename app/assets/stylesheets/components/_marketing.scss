@@ -1132,6 +1132,44 @@ $mk-bg: $snow; // #f9fafc
   text-align: center;
 }
 
+// Reboot recipient card: .mk-case plus a brand mark above the quote and a "Backed by" footer.
+.mk-case--reboot {
+  .mk-case__brand {
+    height: 22px;
+    width: auto;
+    align-self: flex-start; // shrink-wrap the wordmark instead of stretching it across the card
+  }
+}
+
+.mk-case__backers {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 22px; // row gap (label to logos) / column gap (between logos)
+  padding-top: 22px;
+  border-top: 1px solid rgba($black, 0.08);
+}
+
+.mk-case__backers-label {
+  flex-basis: 100%; // sit on its own line so the two logos get the card's full width
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $muted;
+}
+
+.mk-case__backer {
+  height: 18px;
+  width: auto;
+
+  // Omidyar's lockup packs an icon plus text into a taller image, so its wordmark reads small at
+  // Ford's height; bump it up to optically match. Also recolor its native grey to black.
+  &--omidyar {
+    height: 24px;
+    filter: brightness(0);
+  }
+}
+
 // ---------------------------------------------------------------- trust
 .mk-trust {
   text-align: center;

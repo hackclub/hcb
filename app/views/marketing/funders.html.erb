@@ -378,6 +378,59 @@
   </div>
 </section>
 
+<%# ============================ RECIPIENT STORY: REBOOT ============================ %>
+<%# Recipient-side counterpart to the Argosy case study. The Ford Foundation and Omidyar Network are
+    credited as Reboot's backers, not as HCB users. Keep it that way. %>
+<section class="mk-section mk-product mk-product--metric">
+  <div class="mk-container">
+    <div class="mk-product__grid">
+      <div class="mk-product__copy">
+        <p class="mk-eyebrow">On HCB &middot; Reboot</p>
+        <h2 class="mk-section__title">
+          The organizations serious funders back already run on HCB.
+        </h2>
+        <p class="mk-lead">
+          <a href="https://joinreboot.org" target="_blank" rel="noopener">Reboot</a> is a nonprofit
+          publication and community on technology and society.
+        </p>
+        <ul class="mk-ticks">
+          <li>Since 2020: a newsletter and five print issues of its magazine, <em>Kernel</em></li>
+          <li>More than $400,000 raised on HCB</li>
+          <li>Run by volunteers, with no back office to staff</li>
+        </ul>
+      </div>
+
+      <div class="mk-product__media">
+        <figure class="mk-case mk-case--reboot">
+          <%= image_tag "https://cdn.hackclub.com/019ed937-fe26-77a0-8d7e-d6b9cf428eb9/image.png",
+                class: "mk-case__brand", alt: "Reboot", loading: "lazy", decoding: "async" %>
+          <blockquote>“HCB’s platform has made it possible to scale Reboot’s team and operations in
+            a way that would be otherwise impossible. The platform is extremely transparent and easy
+            to use; and the team is incredibly kind and responsive.”</blockquote>
+          <figcaption>
+            <%= image_tag "https://cdn.hackclub.com/019ed937-f871-772f-9b5f-1d54f33ae264/image.png",
+                  class: "mk-case__avatar", alt: "Jasmine Sun", width: 84, height: 84,
+                  loading: "lazy", decoding: "async" %>
+            <span class="mk-case__meta">
+              <span class="mk-case__name">Jasmine Sun</span>
+              <span class="mk-case__detail">Co-founder of Reboot</span>
+            </span>
+          </figcaption>
+          <%# Reboot's backers. Not linked, since they're not HCB partners. %>
+          <div class="mk-case__backers">
+            <span class="mk-case__backers-label">Backed by</span>
+            <%= image_tag "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png",
+                  class: "mk-case__backer", alt: "Ford Foundation", loading: "lazy", decoding: "async" %>
+            <%= image_tag "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png",
+                  class: "mk-case__backer mk-case__backer--omidyar", alt: "Omidyar Network",
+                  loading: "lazy", decoding: "async" %>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
 <%# ============================ IMPACT (where it lands) ============================ %>
 <%# Three real funded projects (Ghostty, Miami Hack Week, MALAN) — approved logos/photos
     on our CDN, each linking out to the project. Captions final/approved. %>
