@@ -75,7 +75,7 @@ class Receipt < ApplicationRecord
   end
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
-  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
