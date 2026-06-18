@@ -185,20 +185,23 @@ RSpec.describe UsersController do
         expect(comment.content).to eq("Locked Jane : For - Spam account")
       end
 
-      it "does not create a comment when unlocking" do
+      it "creates an unlock comment when unlocking" do
         target_user.lock!
 
-        expect {
-          patch(
-            :update,
-            params: {
-              id: target_user.id,
-              user: { locked: "0", locked_reason: "" }
-            }
-          )
-        }.not_to change(Comment, :count)
+        patch(
+          :update,
+          params: {
+            id: target_user.id,
+            user: { locked: "0", locked_reason: "" }
+          }
+        )
 
         expect(target_user.reload.locked?).to eq(false)
+
+        comment = Comment.last
+        expect(comment.commentable).to eq(target_user)
+        expect(comment.admin_only).to eq(true)
+        expect(comment.content).to include("Unlocked")
       end
 
       it "requires a lock reason" do
