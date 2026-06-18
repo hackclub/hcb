@@ -681,6 +681,29 @@ $mk-bg: $snow; // #f9fafc
     }
   }
 
+  // Image + caption that link out to the project. Wrapped so a sibling credit line can sit
+  // OUTSIDE this clickable area (the tile's `.mk-photo` is then a plain div).
+  &__link {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  // "Backed by <funder>" line on a tile whose work a named funder paid for (e.g. Founders Fund).
+  // Kept outside `&__link` so clicking it does nothing (it's not the project link).
+  &__backer {
+    display: block;
+    font-size: 0.8rem;
+    color: $muted;
+
+    b {
+      color: $mk-ink;
+      font-weight: 600;
+    }
+  }
+
   // Each tile links to the project; lift the frame and warm the name on hover.
   &:hover &__img,
   &:focus-visible &__img {
@@ -690,6 +713,67 @@ $mk-bg: $snow; // #f9fafc
   &:hover &__cap strong,
   &:focus-visible &__cap strong {
     color: $red;
+  }
+}
+
+// ---------------------------------------------------------------- funders marquee
+// Centered text strip of recognizable funders whose grants have reached orgs on HCB. Names now;
+// swap to logos once assets + clearance are in hand.
+.mk-funders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  // Flex (not grid) so a partial last row centers instead of clinging to the left. A fixed flex-basis
+  // gives grid-like columns; justify-content centers every row, including an incomplete one.
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  row-gap: 36px;
+
+  li {
+    flex: 0 0 50%; // 2 per row
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px; // column gutter
+  }
+
+  @media (min-width: 600px) {
+    li {
+      flex-basis: 33.3333%; // 3 per row
+    }
+  }
+  @media (min-width: 920px) {
+    li {
+      flex-basis: 25%; // 4 per row -> 12 logos fill three even rows
+    }
+  }
+
+  // Render every logo as one uniform silhouette (ignoring each brand's own colors) so the wall reads
+  // evenly. Every asset is transparent, so `brightness(0)` gives a clean black shape; hover animates
+  // to `brightness(1)` (the untouched asset) to reveal the real brand color.
+  img {
+    max-height: 28px; // kept well below the section heading so the logos read as a supporting row
+    max-width: 100%;
+    width: auto;
+    filter: brightness(0);
+    opacity: 0.5;
+    transition:
+      filter 0.2s ease,
+      opacity 0.15s ease;
+  }
+
+  li:hover img {
+    filter: brightness(1);
+    opacity: 1;
+  }
+
+  // Some supplied logos carry heavy transparent padding (e.g. Hewlett: content fills <45% of its
+  // canvas), so they render small at the shared height. Boost those to match optically. (A
+  // tightly-cropped asset would let us drop this.)
+  img.mk-funders__logo--boost {
+    max-height: 52px; // scaled with the base height above to keep Hewlett optically matched
   }
 }
 

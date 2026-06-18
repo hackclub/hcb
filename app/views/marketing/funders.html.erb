@@ -395,13 +395,16 @@
           HashiCorp co-founder Mitchell Hashimoto, sustained by tax-deductible community
           donations.</span>
       </a>
-      <a class="mk-photo" href="https://miamihackweek.com" target="_blank" rel="noopener" aria-label="Miami Hack Week (opens in a new tab)">
-        <%= image_tag "https://cdn.hackclub.com/019e8700-6497-7abf-984c-8536bf542151/image.png",
-              class: "mk-photo__img", alt: "Founders and engineers at Miami Hack Week",
-              loading: "lazy", decoding: "async" %>
-        <span class="mk-photo__cap"><strong>Miami Hack Week</strong>4,000+ engineers and
-          founders building for a week across dozens of themed hacker houses in Miami.</span>
-      </a>
+      <div class="mk-photo">
+        <a class="mk-photo__link" href="https://miamihackweek.com" target="_blank" rel="noopener" aria-label="Miami Hack Week (opens in a new tab)">
+          <%= image_tag "https://cdn.hackclub.com/019e8700-6497-7abf-984c-8536bf542151/image.png",
+                class: "mk-photo__img", alt: "Founders and engineers at Miami Hack Week",
+                loading: "lazy", decoding: "async" %>
+          <span class="mk-photo__cap"><strong>Miami Hack Week</strong>4,000+ engineers and
+            founders building for a week across dozens of themed hacker houses in Miami.</span>
+        </a>
+        <span class="mk-photo__backer">Backed by <b>Founders Fund</b></span>
+      </div>
       <a class="mk-photo" href="https://mutualaidla.org" target="_blank" rel="noopener" aria-label="Mutual Aid LA Network (opens in a new tab)">
         <%= image_tag "https://cdn.hackclub.com/019e870d-d4b0-7ebc-b8a4-928b663bd6c0/image.png",
               class: "mk-photo__img", alt: "Mutual Aid LA Network volunteers with donated supplies",
@@ -411,6 +414,35 @@
           ground.</span>
       </a>
     </div>
+  </div>
+</section>
+
+<%# ============================ FUNDERS MARQUEE ============================ %>
+<%# Recognizable funders whose grants have reached organizations on HCB. The names are factual; these
+    funders are not HCB customers, so the copy must not imply they "use" HCB. Text-only for now;
+    swap to logos once assets + per-funder clearance are in hand. %>
+<section class="mk-section">
+  <div class="mk-container">
+    <div class="mk-section__head">
+      <p class="mk-eyebrow">In good company</p>
+      <h2 class="mk-section__title">Major funders already back organizations on HCB.</h2>
+    </div>
+    <ul class="mk-funders" aria-label="Funders whose grants have reached organizations on HCB">
+      <%# Ordered so the biggest names land where eyes go first (top row + left edge of each row).
+          Excludes funders who only gave to Hack Club HQ itself, not to organizations on HCB. %>
+      <li><%= image_tag "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png", alt: "Ford Foundation", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png", alt: "Omidyar Network", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-3dec-7ee7-a4fd-d93fb2e0b9a0/image.png", alt: "William & Flora Hewlett Foundation", class: "mk-funders__logo--boost", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-46d2-74bd-93d3-63bf843af555/image.png", alt: "Alfred P. Sloan Foundation", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbd-7b5b-7ebf-9086-a4839acf0933/logo_svg.svg", alt: "SoftBank", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-71d3-755b-bf22-b4e958e3b0e9/founders_fund_logo__2015_.svg", alt: "Founders Fund", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-40c8-7556-a50b-2148294561a0/image.png", alt: "11th Hour Project, The Schmidt Family Foundation", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbd-7e32-7078-a5b8-bdc47102cf96/protocol-labs-logo-black.svg", alt: "Protocol Labs", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcca-3c1d-7a8a-8579-a900076d05c5/rbf_2019logo_full-color_no-tagline.png", alt: "Rockefeller Brothers Fund", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-5648-772a-a368-be9751e81f62/image.png", alt: "EQT Foundation", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcbb-540c-71fa-819f-08c17ae34297/future_of_life_institute_logo.svg", alt: "Future of Life Institute", loading: "lazy", decoding: "async" %></li>
+      <li><%= image_tag "https://cdn.hackclub.com/019edcfa-9eea-7015-b7ab-170d560ca012/founders_pledge_green.svg", alt: "Founders Pledge", loading: "lazy", decoding: "async" %></li>
+    </ul>
   </div>
 </section>
 
