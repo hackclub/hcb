@@ -580,6 +580,26 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
+// Mirror the layout (media left, copy right) so stacked product/case sections alternate
+// instead of repeating the same zig. Desktop only — on mobile both columns collapse to one
+// and copy stays first (source order).
+.mk-product--reverse {
+  @media (min-width: 920px) {
+    .mk-product__copy {
+      order: 2;
+    }
+
+    .mk-product__media {
+      order: 1;
+    }
+
+    // Keep the copy in the wider column even though it now sits on the right.
+    &.mk-product--metric .mk-product__grid {
+      grid-template-columns: 0.9fr 1.1fr;
+    }
+  }
+}
+
 .mk-product__copy {
   min-width: 0;
 }
@@ -1132,13 +1152,11 @@ $mk-bg: $snow; // #f9fafc
   text-align: center;
 }
 
-// Reboot recipient card: .mk-case plus a brand mark above the quote and a "Backed by" footer.
-.mk-case--reboot {
-  .mk-case__brand {
-    height: 22px;
-    width: auto;
-    align-self: flex-start; // shrink-wrap the wordmark instead of stretching it across the card
-  }
+// Recipient card brand mark: a wordmark above the quote (used by the Reboot and Public Grids cards).
+.mk-case__brand {
+  height: 22px;
+  width: auto;
+  align-self: flex-start; // shrink-wrap the wordmark instead of stretching it across the card
 }
 
 .mk-case__backers {

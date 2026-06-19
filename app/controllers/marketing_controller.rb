@@ -19,11 +19,16 @@ class MarketingController < ApplicationController
   # await sign-off on the funder quotes. Enable once the quotes are approved.
   TESTIMONIALS_FLAG = :funders_landing_testimonials
 
+  # Gates the Public Grids recipient story, so it can switch on independently of the rest
+  # of the page once its content is approved.
+  PUBLIC_GRIDS_FLAG = :funders_landing_public_grids
+
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
+    @show_public_grids = Flipper.enabled?(PUBLIC_GRIDS_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 

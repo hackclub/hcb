@@ -401,7 +401,7 @@
       </div>
 
       <div class="mk-product__media">
-        <figure class="mk-case mk-case--reboot">
+        <figure class="mk-case">
           <%= image_tag "https://cdn.hackclub.com/019ed937-fe26-77a0-8d7e-d6b9cf428eb9/image.png",
                 class: "mk-case__brand", alt: "Reboot", loading: "lazy", decoding: "async" %>
           <blockquote>“HCB’s platform has made it possible to scale Reboot’s team and operations in
@@ -430,6 +430,57 @@
     </div>
   </div>
 </section>
+
+<%# ============================ RECIPIENT STORY: PUBLIC GRIDS ============================ %>
+<%# Another recipient-side story, like Reboot. Public Grids is an early-stage nonprofit, so we lead
+    with the platform-quality angle and keep the mission description light. Mirrored (media-left)
+    so it doesn't read as a repeat of the Reboot section directly above it. Gated behind
+    :funders_landing_public_grids so it can switch on once the content is approved. %>
+<% if @show_public_grids %>
+  <section class="mk-section mk-product mk-product--metric mk-product--reverse">
+    <div class="mk-container">
+      <div class="mk-product__grid">
+        <div class="mk-product__copy">
+          <p class="mk-eyebrow">On HCB &middot; Public Grids</p>
+          <h2 class="mk-section__title">
+            Early-stage teams run on HCB so their hours go to the work, not the back office.
+          </h2>
+          <p class="mk-lead">
+            <a href="https://www.publicgrids.org" target="_blank" rel="noopener">Public Grids</a> is a
+            national nonprofit. Like many young organizations on HCB, they needed serious financial
+            infrastructure from day one, without standing up a finance team to run it.
+          </p>
+          <ul class="mk-ticks">
+            <li>A tech-first, in-house platform, not a patchwork of vendors</li>
+            <li>More of every hour spent on the mission, not paperwork</li>
+            <li>Built to scale as they grow</li>
+          </ul>
+        </div>
+
+        <div class="mk-product__media">
+          <figure class="mk-case">
+            <%= image_tag "https://cdn.hackclub.com/019edd06-7875-7022-af3a-64517fac3020/image.png",
+                  class: "mk-case__brand", alt: "Public Grids", loading: "lazy", decoding: "async" %>
+            <blockquote>“No one comes close to the quality of Hack Club’s services at a price a startup
+              like ours can afford. The in-house, flexible, tech-first platform lets us spend our team’s
+              finite hours on our work, not on paperwork. But most of all, the team is incomparable in
+              their integrity and transparency, which is why we keep choosing to grow with Hack Club as
+              we scale.”</blockquote>
+            <figcaption>
+              <%= image_tag "https://cdn.hackclub.com/019edd08-6185-7556-a382-67f43d652c04/image.png",
+                    class: "mk-case__avatar", alt: "Isaac Sevier", width: 84, height: 84,
+                    loading: "lazy", decoding: "async" %>
+              <span class="mk-case__meta">
+                <span class="mk-case__name">Isaac Sevier</span>
+                <span class="mk-case__detail">Founder &amp; Executive Director of Public Grids</span>
+              </span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+<% end %>
 
 <%# ============================ IMPACT (where it lands) ============================ %>
 <%# Three real funded projects (Ghostty, Miami Hack Week, MALAN) — approved logos/photos
