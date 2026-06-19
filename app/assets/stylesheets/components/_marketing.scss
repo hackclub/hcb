@@ -163,34 +163,32 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
+// Copy fades up on load; the hero media (the fan-out diagram) runs its own
+// JS-driven intro via the funders-flow controller, with a static fallback.
 @media (prefers-reduced-motion: no-preference) {
-  .mk-hero__copy > *,
-  .mk-hero__media {
-    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
   .mk-hero__copy > * {
+    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+
     @for $i from 1 through 5 {
       &:nth-child(#{$i}) {
         animation-delay: #{0.06s * $i};
       }
     }
   }
-
-  .mk-hero__media {
-    animation-delay: 0.2s;
-  }
 }
 
 // ---------------------------------------------------------------- buttons
+// Squared, flat fills on HCB's own radius + shadow tokens — deliberately the same
+// language as the in-app button (components/_buttons.scss), not a pill with a gradient
+// fill and a colored glow (which read as generic SaaS rather than HCB).
 .marketing-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   height: 44px;
-  padding: 0 22px;
-  border-radius: 999px;
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
@@ -198,36 +196,37 @@ $mk-bg: $snow; // #f9fafc
   cursor: pointer;
   border: 0;
   transition:
-    transform 0.12s ease,
     box-shadow 0.12s ease,
     background-color 0.12s ease;
 
   &--sm {
     height: 38px;
-    padding: 0 16px;
+    padding: 0 14px;
     font-size: 0.9375rem;
   }
 
   &--lg {
-    height: 52px;
-    padding: 0 26px;
+    height: 50px;
+    padding: 0 24px;
     font-size: 1.0625rem;
   }
 
   &--primary {
     color: #fff;
     background-color: $red;
-    background-image: linear-gradient(to bottom, lighten($red, 6%), $red);
     box-shadow:
-      0 1px 2px rgba($red, 0.4),
-      0 8px 24px -8px rgba($red, 0.5);
+      inset 0 0 0 0.5px rgba($black, 0.2),
+      var(--shadow-sm);
 
     &:hover,
     &:focus-visible {
-      transform: translateY(-1px);
+      // Keep the text white on hover — re-stated here so it beats the app's
+      // global `a:hover` colour rule (which otherwise wins by specificity).
+      color: #fff;
+      background-color: darken($red, 6%);
       box-shadow:
-        0 2px 4px rgba($red, 0.4),
-        0 14px 30px -8px rgba($red, 0.55);
+        inset 0 0 0 0.5px rgba($black, 0.2),
+        var(--shadow-md);
     }
   }
 
@@ -238,7 +237,8 @@ $mk-bg: $snow; // #f9fafc
 
     &:hover,
     &:focus-visible {
-      transform: translateY(-1px);
+      color: $mk-ink;
+      background: darken($white, 4%);
       box-shadow: var(--shadow-border-md);
     }
   }
@@ -260,13 +260,13 @@ $mk-bg: $snow; // #f9fafc
     flex: 1 1 240px;
     min-width: 0;
     max-width: none;
-    height: 52px;
-    padding: 0 22px;
+    height: 50px;
+    padding: 0 18px;
     font-size: 1.0625rem;
     color: $mk-ink;
     background: $white;
     border: 0;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-border-sm);
     transition: box-shadow 0.12s ease;
 
@@ -400,6 +400,8 @@ $mk-bg: $snow; // #f9fafc
     gap: 9px;
     height: 38px;
     padding: 0 14px 0 8px;
+    // Pill on purpose: it wraps a circular avatar, so the concentric radius reads
+    // right. (The AI tell was the gradient pill *CTA*, not avatar chips.)
     border-radius: 999px;
     font-size: 0.95rem;
     font-weight: 500;
@@ -435,28 +437,34 @@ $mk-bg: $snow; // #f9fafc
     pointer-events: none;
   }
 
-  &__mesh {
-    position: absolute;
-    inset: -20% -10% 0;
-    background:
-      radial-gradient(42% 52% at 14% 6%, rgba($red, 0.12), transparent 70%),
-      radial-gradient(38% 46% at 86% 0%, rgba($blue, 0.1), transparent 70%),
-      radial-gradient(44% 44% at 72% 64%, rgba($cyan, 0.09), transparent 70%);
-  }
-
-  &__grid {
+  // A single, quiet warm light anchored behind the headline — one hue, low
+  // opacity. Deliberately not the multi-color radial "mesh" blob that reads as AI.
+  &__glow {
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(to right, rgba($black, 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba($black, 0.045) 1px, transparent 1px);
-    background-size: 64px 64px;
+    background: radial-gradient(
+      52% 60% at 8% -8%,
+      rgba($red, 0.07),
+      transparent 68%
+    );
+  }
+
+  // Faint vertical rules echoing HCB's columns mark (pillars / a bar chart),
+  // confined to the right where the diagram sits and softly masked at the edges.
+  &__ledger {
+    position: absolute;
+    inset: 0 0 0 48%;
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba($black, 0.04) 0 1px,
+      transparent 1px 92px
+    );
     -webkit-mask-image: radial-gradient(
-      circle at 50% 0%,
+      120% 90% at 78% 30%,
       #000,
       transparent 72%
     );
-    mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
+    mask-image: radial-gradient(120% 90% at 78% 30%, #000, transparent 72%);
   }
 
   &__inner {
@@ -525,7 +533,226 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// ---------------------------------------------------------------- app window mockup
+// ---------------------------------------------------------------- hero fan-out
+// "Capital → grants": a funder source node wired to several recipient orgs, with
+// pulses traveling the wires (animated by funders_flow_controller). Renders as a
+// sensible static state with no JS / reduced motion.
+.mk-flow {
+  position: relative;
+  width: 100%;
+  // Keep the diagram compact on wide screens so the wires don't sprawl.
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: clamp(330px, 33vw, 430px);
+}
+
+.mk-flow__wires {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mk-flow__rail {
+  stroke: rgba($black, 0.16);
+  stroke-width: 1.5;
+}
+
+.mk-flow__pulse {
+  fill: $red;
+  filter: drop-shadow(0 0 5px rgba($red, 0.55));
+}
+
+.mk-flow__source {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: clamp(118px, 27%, 154px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+}
+
+.mk-flow__mark {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.mk-flow__source-name {
+  font-weight: 700;
+  color: $mk-ink;
+  font-size: 1.05rem;
+}
+
+.mk-flow__source-sub {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: $muted;
+}
+
+.mk-flow__feed {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(210px, 60%, 300px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mk-flow__grant {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  background: $white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-border-sm);
+
+  // "Received" ring. Its strength is driven by --recv, which the flow controller
+  // tweens 1 -> 0 on the same timeline as the ball, so the flash lands exactly
+  // when the ball does. Defaults to 0 (no flash) with no JS / reduced motion.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1.5px rgba($red, 0.6);
+    opacity: var(--recv, 0);
+    pointer-events: none;
+  }
+}
+
+.mk-flow__avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: rgba($black, 0.05);
+  color: $slate;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.mk-flow__org {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.mk-flow__name {
+  font-weight: 600;
+  color: $mk-ink;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mk-flow__meta {
+  font-size: 0.78rem;
+  color: $muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mk-flow__amt {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+}
+
+.mk-flow__sum {
+  font-weight: 700;
+  color: $mk-ink;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mk-flow__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: $green-dark;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: $green;
+  }
+}
+
+// Narrow screens can't fit the source + rows side by side, so stack them and
+// drop the wires (the controller detects the hidden SVG and skips the animation).
+@media (max-width: 640px) {
+  .mk-flow {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mk-flow__wires {
+    display: none;
+  }
+
+  .mk-flow__source {
+    position: static;
+    transform: none;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mk-flow__mark {
+    margin-bottom: 0;
+  }
+
+  .mk-flow__source-sub {
+    margin-top: 0;
+  }
+
+  .mk-flow__feed {
+    position: static;
+    width: auto;
+    gap: 10px;
+  }
+}
+
+// --------------------------------------------------------- app screenshot frame
+// Frameless: the product screenshot already carries the full HCB app chrome, so
+// we just round + lift it. (No invented title bar — it duplicated the shot's own
+// heading/logo and a "LIVE" badge would be false on a static image.)
 .mk-window {
   margin: 0;
   border-radius: var(--radius-xl);
@@ -535,27 +762,21 @@ $mk-bg: $snow; // #f9fafc
     var(--shadow-border-lg),
     0 40px 80px -28px rgba($black, 0.25);
 
-  &__bar {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    height: 38px;
-    padding: 0 16px;
-    background: $snow-dark;
-    box-shadow: inset 0 -1px 0 rgba($black, 0.06);
-
-    i {
-      width: 11px;
-      height: 11px;
-      border-radius: 999px;
-      background: $smoke-dark;
-    }
-  }
-
   &__shot {
     display: block;
     width: 100%;
     height: auto;
+  }
+}
+
+// Soft pulsing dot used by the "Real-time data" value prop in the explorer.
+@keyframes mk-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba($green, 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba($green, 0);
   }
 }
 
@@ -897,52 +1118,231 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// ---------------------------------------------------------------- pillars
-.mk-pillars {
+// ------------------------------------------------------- value-prop explorer
+// Tabs (left) drive a detail panel (right). On no-JS the controller never adds
+// `.is-enhanced`, so every panel stays visible and the tabs read as a plain list.
+.mk-explore {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   grid-template-columns: 1fr;
 
-  @media (min-width: 620px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 980px) {
-    grid-template-columns: repeat(4, 1fr);
+  @media (min-width: 880px) {
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 24px;
+    align-items: stretch;
   }
 }
 
-.mk-pillar {
-  padding: 28px 24px;
+.mk-explore__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mk-explore__tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  background: $white;
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+  cursor: pointer;
+  color: $mk-ink;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  &-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  &-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  &-sub {
+    font-size: 0.85rem;
+    color: $muted;
+  }
+
+  // Chevron that signals each row is selectable (CSS-drawn ">").
+  &-caret {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: solid $smoke-dark;
+    border-width: 2px 2px 0 0;
+    transform: rotate(45deg);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-border-md);
+
+    .mk-explore__tab-caret {
+      border-color: $slate;
+      transform: rotate(45deg) translate(1px, -1px);
+    }
+  }
+
+  // Active tab (set by the controller): red mark + accent ring + red caret.
+  &.is-active {
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0 1.5px rgba($red, 0.5);
+
+    .mk-explore__tab-icon {
+      color: #fff;
+      background: $red;
+    }
+
+    .mk-explore__tab-caret {
+      border-color: $red;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+}
+
+.mk-explore__stage {
+  position: relative;
+}
+
+.mk-explore__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(24px, 3vw, 36px);
   background: $white;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-border-md);
 
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-lg);
-    color: $red;
-    background: rgba($red, 0.08);
-    margin-bottom: 18px;
-
-    svg {
-      width: 24px;
-      height: 24px;
-    }
-  }
-
   h3 {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
+    font-size: clamp(1.3rem, 2.2vw, 1.6rem);
+    margin-bottom: 14px;
+    text-wrap: balance;
   }
 
   p {
     color: $slate;
-    line-height: 1.55;
-    font-size: 0.975rem;
+    line-height: 1.6;
+    font-size: 1.05rem;
+  }
+
+  // When enhanced, the active panel fades in as it swaps.
+  .is-enhanced &.is-active {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+// Stacked-card fallback spacing when JS hasn't enhanced the explorer.
+.mk-explore:not(.is-enhanced) .mk-explore__panel + .mk-explore__panel {
+  margin-top: 12px;
+}
+
+.mk-explore__proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 24px;
+
+  &--badge {
+    align-items: center;
+  }
+}
+
+.mk-explore__stat {
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: $red;
+
+  &--range {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+}
+
+.mk-explore__stat-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $mk-ink;
+  line-height: 1.35;
+
+  span {
+    display: block;
+    margin-top: 3px;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: $muted;
+  }
+}
+
+.mk-explore__badge-mark {
+  display: block;
+  flex: none;
+  border-radius: 11px;
+}
+
+.mk-explore__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $green-dark;
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: $green;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-live-pulse 2s ease-out infinite;
+    }
   }
 }
 
