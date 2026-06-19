@@ -4,8 +4,8 @@
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are subsidiaries of your organization. All members
-      of <%= event.name %> can access and view sub-organizations, but only
-      managers can create and edit them.
+      of <%= event.name %> can access and view sub-organizations<% unless Flipper.enabled?(:member_subevent_creation, event) %>, but only
+      managers can create and edit them<% end %>.
     </p>
   </div>
 
@@ -47,8 +47,11 @@
       <template x-for="scoped_tag in scoped_tags" :key="scoped_tag.id">
             <span class="badge m0 w-fit">
               <span x-text="scoped_tag.name"></span>
-              <button class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
-                <%= inline_icon "view-close", size: 16 %>>
+              <button
+                type="button" class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
+                x-on:click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
+                <%= inline_icon "view-close", size: 16 %>
+              </button>
             </span>
       </template>
     </div>

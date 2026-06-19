@@ -258,6 +258,10 @@ class Disbursement < ApplicationRecord
     Comment.where(commentable: [self, outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code])
   end
 
+  def events
+    [source_event, destination_event]
+  end
+
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
