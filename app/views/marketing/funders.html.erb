@@ -81,11 +81,11 @@
     <div class="mk-hero__media">
       <%# Animated "capital → grants" fan-out: one funder, many recipients. The prose
           above states the same idea, so the diagram is decorative for assistive tech. %>
-      <%# Recipients are generic, illustrative entities (not real orgs), with made-up
-          amounts and dates. They convey the one-to-many concept without implying real
-          transactions; the actual featured organizations live in their own sections below. %>
+      <%# The recipients are illustrative *categories* of fundable work, not real orgs or
+          transactions: no amounts or dates, so nothing reads as a live ledger. The actual
+          featured organizations and funders live in their own sections below. %>
       <div class="mk-flow" data-controller="funders-flow"
-           role="img" aria-label="A funder directing capital as tax-deductible grants to organizations of their choosing on HCB.">
+           role="img" aria-label="A funder directing capital as tax-deductible grants to many kinds of organizations of their choosing on HCB.">
         <svg class="mk-flow__wires" data-funders-flow-target="svg" aria-hidden="true" preserveAspectRatio="none"></svg>
 
         <div class="mk-flow__source" data-funders-flow-target="source">
@@ -98,45 +98,29 @@
           <li class="mk-flow__grant" data-funders-flow-target="grant">
             <span class="mk-flow__avatar"><%= inline_icon "terminal", size: 20 %></span>
             <span class="mk-flow__org">
-              <span class="mk-flow__name">Open-source</span>
+              <span class="mk-flow__name">Open-source projects</span>
               <span class="mk-flow__meta">Builder-led</span>
-            </span>
-            <span class="mk-flow__amt">
-              <span class="mk-flow__sum">$40,000</span>
-              <span class="mk-flow__status">Sent · 2d</span>
             </span>
           </li>
           <li class="mk-flow__grant" data-funders-flow-target="grant">
             <span class="mk-flow__avatar"><%= inline_icon "cpu", size: 20 %></span>
             <span class="mk-flow__org">
-              <span class="mk-flow__name">AI research lab</span>
+              <span class="mk-flow__name">AI research labs</span>
               <span class="mk-flow__meta">Independent</span>
-            </span>
-            <span class="mk-flow__amt">
-              <span class="mk-flow__sum">$120,000</span>
-              <span class="mk-flow__status">Sent · 5d</span>
             </span>
           </li>
           <li class="mk-flow__grant" data-funders-flow-target="grant">
             <span class="mk-flow__avatar"><%= inline_icon "people-2", size: 20 %></span>
             <span class="mk-flow__org">
-              <span class="mk-flow__name">Mutual aid</span>
+              <span class="mk-flow__name">Mutual aid groups</span>
               <span class="mk-flow__meta">Volunteer-run</span>
-            </span>
-            <span class="mk-flow__amt">
-              <span class="mk-flow__sum">$25,000</span>
-              <span class="mk-flow__status">Sent · 1w</span>
             </span>
           </li>
           <li class="mk-flow__grant" data-funders-flow-target="grant">
             <span class="mk-flow__avatar"><%= inline_icon "idea", size: 20 %></span>
             <span class="mk-flow__org">
-              <span class="mk-flow__name">New initiative</span>
+              <span class="mk-flow__name">New initiatives</span>
               <span class="mk-flow__meta">Brand new</span>
-            </span>
-            <span class="mk-flow__amt">
-              <span class="mk-flow__sum">$9,500</span>
-              <span class="mk-flow__status">Sent · 2w</span>
             </span>
           </li>
         </ul>
@@ -170,12 +154,11 @@
       A new generation of funders is giving differently.
     </h2>
     <p class="mk-lead">
-      Philanthropy is changing. Funders want to put capital to work now, back ambitious,
-      fast-moving projects, and see the work happen in the open. Private foundations and
-      donor-advised funds serve traditional giving well, but they weren't built for that
-      pace, and their overhead can slow the people doing the real work.
-      <strong>We built HCB to counter that</strong>, so you can move fast, adapt as
-      circumstances change, and fund the projects you truly believe in.
+      Philanthropy is changing. Technologists, founders, and institutions want to put capital
+      to work now: back fast-moving projects, fund them at any scale, and see the work happen
+      in the open. Private foundations and donor-advised funds serve traditional giving well,
+      but weren't built for that pace. <strong>We built HCB to counter that</strong>, so you
+      can move fast, adapt, and fund the projects you believe in.
     </p>
   </div>
 </section>
@@ -447,6 +430,12 @@
           </tr>
         </tbody>
       </table>
+    </div>
+    <div class="mk-compare-note">
+      <p class="mk-compare-note__lead">Already give through a donor-advised fund or foundation?</p>
+      <p class="mk-compare-note__body">You don't have to choose. Keep your existing vehicle and
+        use HCB as the fast, transparent layer it grants into, reaching the projects and
+        brand-new initiatives a DAF isn't built to fund.</p>
     </div>
   </div>
 </section>
@@ -745,7 +734,9 @@
       </div>
     <% else %>
       <h2 class="mk-cta__title">Put your capital to work.</h2>
-      <p class="mk-lead">Tell us a bit about what you want to fund. We'll take it from there.</p>
+      <p class="mk-lead">HCB pairs modern financial software with a hands-on team. You get a
+        partner who helps map your giving and runs the operations behind it, not just a login.
+        Tell us what you want to fund.</p>
       <% if flash[:error].present? %>
         <div class="mk-notice mk-notice--error" role="alert">
           <span class="mk-notice__icon"><%= inline_icon "important-fill", size: 24 %></span>

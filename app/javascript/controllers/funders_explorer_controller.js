@@ -19,10 +19,11 @@ export default class extends Controller {
   connect() {
     this.element.classList.add('is-enhanced')
     this.hover = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-    // Auto-rotate only where the panel sits beside the tabs (desktop) and the
-    // user hasn't asked to reduce motion; on mobile the panel can be off-screen.
+    // Auto-rotate only where the panel sits beside the tabs (tablet up, matching the
+    // two-column breakpoint) and the user hasn't asked to reduce motion; on a stacked
+    // single column the panel can be scrolled off-screen.
     this.canAuto =
-      window.matchMedia('(min-width: 880px)').matches &&
+      window.matchMedia('(min-width: 720px)').matches &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches
     this.cycles = 0
     this.select(0)
@@ -67,9 +68,11 @@ export default class extends Controller {
       tab.tabIndex = on ? 0 : -1
       tab.classList.toggle('is-active', on)
     })
+    // Only toggle the class; the stylesheet shows the active panel and hides the rest
+    // (via visibility, not display) so every panel keeps its box and the stacked stage
+    // stays as tall as the tallest — no height jump as panels swap.
     this.panelTargets.forEach((panel, i) => {
       panel.classList.toggle('is-active', i === index)
-      panel.hidden = i !== index
     })
   }
 
