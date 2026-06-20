@@ -75,7 +75,7 @@ module StripeAuthorizationService
             return decline_with_reason!("cash_withdrawals_not_allowed")
           end
 
-          if amount_cents > 500_00
+          if amount_cents > 2000_00
             return decline_with_reason!("exceeds_approval_amount_limit")
           end
         end
