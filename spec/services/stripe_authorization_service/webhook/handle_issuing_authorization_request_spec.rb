@@ -256,13 +256,13 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
       expect(service.run).to be(true)
     end
 
-    context "with amount > $500" do
+    context "with amount > $2000" do
       let(:stripe_authorization) do
         build(
           :stripe_authorization,
           :cash_withdrawal,
           card: { id: stripe_card.stripe_id },
-          pending_amount: 500_01,
+          pending_amount: 2000_01,
         )
       end
 
