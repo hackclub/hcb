@@ -267,7 +267,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
       end
 
       it "declines" do
-        create(:canonical_pending_transaction, amount_cents: 1000_00, event:, fronted: true)
+        create(:canonical_pending_transaction, amount_cents: 2000_01, event:, fronted: true)
         stripe_card.update!(cash_withdrawal_enabled: true)
 
         expect(service.run).to be(false)
