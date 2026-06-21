@@ -948,7 +948,7 @@ class Event < ApplicationRecord
   end
 
   def to_combobox_display
-    "#{name} (#{id})"
+    name
   end
 
   def onboarding_scheduling_link
