@@ -106,7 +106,7 @@
 
     <div class="w-full flex-grow flex items-center justify-end gap-4">
       <% unless @application.archived? %>
-        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+        <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?", turbo_confirm_danger: true } %>
       <% end %>
 
       <% admin_tool do %>

@@ -115,7 +115,8 @@
                                    "consequences (e.g. canceled cards). " \
                                    "#{"⚠️ They are the last signee for this organization! " \
                                      "This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}" \
-                                   "Are you sure you want to do this?"
+                                   "Are you sure you want to do this?",
+                    turbo_confirm_danger: true
                   },
                   class: "btn bg-error mr1" %>
     <% elsif @opdr.status == :organizer_deleted %>

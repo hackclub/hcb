@@ -10,7 +10,7 @@
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
-      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone." } %>
+      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone.", turbo_confirm_danger: true } %>
   <% end %>
 
 <% elsif !@event.rejected? %>
@@ -22,7 +22,7 @@
 
   <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
     <%= form.submit "Reject event",
-      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone." } %>
+      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone.", turbo_confirm_danger: true } %>
   <% end %>
 
 <% else %>
