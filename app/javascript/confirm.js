@@ -16,7 +16,7 @@ function showConfirm(
 Turbo.config.forms.confirm = (message, formElement, submitter) => {
   const dangerMode = Boolean(
     submitter?.hasAttribute('data-turbo-confirm-danger') ||
-      formElement?.hasAttribute('data-turbo-confirm-danger')
+    formElement?.hasAttribute('data-turbo-confirm-danger')
   )
   return showConfirm(message, { dangerMode })
 }
