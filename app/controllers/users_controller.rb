@@ -359,6 +359,7 @@ class UsersController < ApplicationController
           Comment.create(admin_only: true, commentable: @user, user_id: current_user.id, content: "Locked #{@user.preferred_name} : For - #{params[:user][:locked_reason]}")
           @user.lock!
         else
+          Comment.create(admin_only: true, commentable: @user, user_id: current_user.id, content: "Unlocked #{@user.preferred_name} : At - #{Time.now}")
           @user.unlock!
         end
       end
