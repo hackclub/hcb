@@ -13,6 +13,7 @@
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
 #  description                                  :text
+#  donation_alerts_enabled                      :boolean          default(FALSE)
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
 #  donation_reply_to_email                      :text
@@ -348,6 +349,7 @@ class Event < ApplicationRecord
   has_many :recurring_donations
   has_one :donation_goal, dependent: :destroy, class_name: "Donation::Goal"
   has_many :donation_tiers, -> { order(sort_index: :asc) }, dependent: :destroy, class_name: "Donation::Tier"
+  has_many :donation_alerts, dependent: :destroy, class_name: "Donation::Alert"
 
   has_many :lob_addresses
   has_many :checks, through: :lob_addresses

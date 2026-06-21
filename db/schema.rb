@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_21_102615) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -751,6 +751,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
     t.index ["user_id"], name: "index_documents_on_user_id"
   end
 
+  create_table "donation_alerts", force: :cascade do |t|
+    t.boolean "active", default: true
+    t.text "alert_message"
+    t.string "alert_name"
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_donation_alerts_on_event_id"
+  end
+
+  create_table "donation_alerts_users", id: false, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "donation_alert_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["donation_alert_id", "user_id"], name: "index_donation_alerts_users_on_donation_alert_id_and_user_id", unique: true
+  end
+
   create_table "donation_goals", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
@@ -1126,6 +1145,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"
+    t.boolean "donation_alerts_enabled", default: false
     t.boolean "donation_page_enabled", default: true
     t.text "donation_page_message"
     t.text "donation_reply_to_email"
@@ -2846,6 +2866,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
   add_foreign_key "documents", "events"
   add_foreign_key "documents", "users"
   add_foreign_key "documents", "users", column: "archived_by_id"
+  add_foreign_key "donation_alerts", "events"
   add_foreign_key "donation_goals", "events"
   add_foreign_key "donation_tiers", "events"
   add_foreign_key "donations", "donation_payouts", column: "payout_id"

@@ -26,6 +26,17 @@ class DonationMailer < ApplicationMailer
     mail to: params[:requested_by].email, subject: "Your request to refund a donation from #{@donation.name} to #{@donation.event.name} was processed."
   end
 
+  def alert_notification
+    @user = params[:user]
+    @donation = params[:donation]
+    @alert = params[:alert]
+
+    mail(
+      to: @user.email,
+      subject: "#{@donation.event.name} received a donation of $#{sprintf('%.2f', @donation.amount / 100.0)}!"
+    )
+  end
+
   private
 
   def set_donation

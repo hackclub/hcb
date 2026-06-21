@@ -280,6 +280,10 @@ input[type='checkbox'] {
   width: 60px;
   height: 34px;
 
+  form {
+    display: inline;
+  }
+
   & input {
     opacity: 0;
     width: 0;
