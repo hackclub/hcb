@@ -850,6 +850,12 @@ $mk-bg: $snow; // #f9fafc
   .mk-section__title {
     color: $snow;
   }
+
+  // Intro lead on the dark band: light, slightly muted body + spacing from the heading.
+  .mk-lead {
+    margin-top: 16px;
+    color: rgba($snow, 0.8);
+  }
 }
 
 .mk-uses {

@@ -23,8 +23,8 @@
 <% end %>
 
 <% if @event.donation_page_message.present? %>
-  <div class="container container--sm">
-    <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
+  <div>
+    <div class="card mt-4 py-0 public-message">
       <%= MarkdownService.instance.render(@event.donation_page_message) %>
     </div>
   </div>
@@ -42,6 +42,13 @@
     <% end %>
   </div>
 </div>
+
+<% if @event.show_top_donors || @event.show_recent_donors %>
+  <div class="grid <%= @event.show_top_donors && @event.show_recent_donors ? "grid-cols-2" : "grid-cols-1" %> gap-2">
+    <%= render "donations/top_donors", top_donors: @top_donors if @event.show_top_donors %>
+    <%= render "donations/recent_donors", recent_donors: @recent_donors if @event.show_recent_donors %>
+  </div>
+<% end %>
 
 <% if @event.demo_mode? %>
   <div class="container container--sm">
