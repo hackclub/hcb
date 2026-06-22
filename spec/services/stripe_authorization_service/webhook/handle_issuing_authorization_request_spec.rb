@@ -93,6 +93,54 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     end
   end
 
+  context "allowlisted merchant network IDs" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :allowlisted_network_id,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "approves despite a forbidden category" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(true)
+    end
+
+    context "when the same network ID is on both the forbidden and allowlist" do
+      # Allowlist the forbidden (fraud) network ID to prove the forbidden list
+      # still wins — an explicitly blocked network ID is never allowlistable.
+      before do
+        stub_const(
+          "StripeAuthorizationService::ALLOWLISTED_MERCHANT_NETWORK_IDS",
+          Set.new(["8203300025"]).freeze
+        )
+      end
+
+      let(:stripe_authorization) do
+        build(
+          :stripe_authorization,
+          :allowlisted_network_id,
+          card: { id: stripe_card.stripe_id },
+          merchant_data: {
+            category: "non_fi_money_orders",
+            category_code: "6051",
+            network_id: "8203300025", # forbidden (fraud) network ID
+            name: "HEPTA PAY LTD"
+          }
+        )
+      end
+
+      it "declines because forbidden network IDs are never allowlisted" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+        expect(service.run).to be(false)
+        expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+      end
+    end
+  end
+
   context "card grants" do
     let(:event) { create(:event, :card_grant_event) }
     before(:example) { create(:canonical_pending_transaction, amount_cents: 10000, event:, fronted: true ) }
