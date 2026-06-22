@@ -109,8 +109,11 @@ module StripeAuthorizationService
       end
 
       def forbidden_merchant?
-        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) ||
-          StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
+        # Explicitly blocked network IDs (e.g. fraud) can never be allowlisted.
+        return true if StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
+
+        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) &&
+          StripeAuthorizationService::ALLOWLISTED_MERCHANT_NETWORK_IDS.exclude?(merchant_network_id)
       end
 
       def merchant_allowed?

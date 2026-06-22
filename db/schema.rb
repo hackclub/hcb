@@ -1155,6 +1155,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
+    t.boolean "show_recent_donors", default: false, null: false
+    t.boolean "show_top_donors", default: false, null: false
     t.text "slug"
     t.integer "stripe_card_shipping_type", default: 0, null: false
     t.datetime "updated_at", precision: nil, null: false

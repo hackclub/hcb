@@ -10,17 +10,11 @@ require "rails_helper"
 #   light-mode only — the funder audience doesn't need dark mode, so it's deferred.
 # - Unlike the rest of the app (which sends a noindex X-Robots-Tag), this page is
 #   *deliberately* indexable — it's public marketing meant to be found in search.
-# - During rollout the whole page sits behind :funders_landing_page. Visitors without the
-#   flag get a 404 (not a 403/redirect) so the unreleased page is indistinguishable from one
-#   that doesn't exist.
 # - "HCB by Hack Club": Hack Club (legally The Hack Foundation) is the 501(c)(3); HCB is the
 #   platform it operates. The page never claims HCB itself is the charity.
 RSpec.describe "Funders landing page", type: :request do
-  # Most examples assume the rollout flag is on; the gating examples flip it off explicitly.
-  before { Flipper.enable(MarketingController::FUNDERS_FLAG) }
-
   describe "GET /for/funders" do
-    it "renders for signed-out visitors when the flag is enabled" do
+    it "renders for signed-out visitors" do
       get funders_path
 
       expect(response).to have_http_status(:ok)
@@ -68,23 +62,12 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Dashboard")
       expect(response.body).not_to include(">Log in<")
     end
-
-    # Before launch the page must be invisible to the public — a 404 (not a redirect or 403)
-    # so its existence isn't leaked.
-    it "404s when the funders flag is disabled" do
-      Flipper.disable(MarketingController::FUNDERS_FLAG)
-
-      get funders_path
-
-      expect(response).to have_http_status(:not_found)
-      expect(response.body).not_to include("Deploy your capital as grants")
-    end
   end
 
-  # The "Funders on HCB" testimonials block has its OWN flag, separate from the page flag.
-  # The Mitchell Hashimoto quote is adapted from public material and still pending sign-off —
-  # so the page can ship publicly while this section stays hidden until the quote is approved,
-  # then it's flipped on without a deploy. (The Argosy story lives in its own ungated section.)
+  # The "Funders on HCB" testimonials block is gated behind its own flag. The Mitchell
+  # Hashimoto quote is adapted from public material and still pending sign-off — so the page
+  # stays public while this section is hidden until the quote is approved, then it's flipped
+  # on without a deploy. (The Argosy story now ships ungated in its own section.)
   describe "Funders on HCB testimonials section" do
     it "is hidden by default so the page can launch before the quotes are approved" do
       get funders_path
@@ -112,17 +95,8 @@ RSpec.describe "Funders landing page", type: :request do
     end
   end
 
-  # The Argosy Foundation case study is gated separately so it can be held back until cleared.
   describe "Argosy case study" do
-    it "is hidden by default" do
-      get funders_path
-
-      expect(response.body).not_to include("Case study")
-    end
-
-    it "appears once :funders_landing_argosy is enabled" do
-      Flipper.enable(MarketingController::ARGOSY_FLAG)
-
+    it "shows the Argosy Foundation case study" do
       get funders_path
 
       expect(response.body).to include("Case study")
@@ -166,14 +140,6 @@ RSpec.describe "Funders landing page", type: :request do
       expect do
         post funder_inquiry_path, params: { email: "bot@example.com", subtitle: "i am a bot" }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
-    end
-
-    it "404s when the funders flag is disabled" do
-      Flipper.disable(MarketingController::FUNDERS_FLAG)
-
-      post funder_inquiry_path, params: { email: "funder@example.com" }
-
-      expect(response).to have_http_status(:not_found)
     end
   end
 end
