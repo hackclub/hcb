@@ -17,9 +17,7 @@
           <div class="flex-grow"></div>
 
           <div class="flex flex-row gap-2">
-            <%= link_to users_admin_index_path(referral_program_id: program.id) do %>
-              <button class="btn">View users</button>
-            <% end %>
+            <%= link_to "View users", users_admin_index_path(referral_program_id: program.id), class: "btn btn-default" %>
             <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="btn bg-warning">Create link</button>
           </div>
         </div>
@@ -40,7 +38,7 @@
       <div class="modal__content">
         <header class="modal__header">
           <h2 class="modal__title">Create referral link for <%= program.name %></h2>
-          <button class="modal__close" data-behavior="modal_close" aria-label="Close modal">&times;</button>
+          <button class="btn modal__close" data-behavior="modal_close" aria-label="Close modal">&times;</button>
         </header>
         <div class="modal__body">
           <%= form_with model: false, local: true, url: referral_link_create_admin_index_path(program_id: program.id) do |form| %>
@@ -52,7 +50,7 @@
               <%= form.label :slug, "Custom slug (optional)" %>
               <%= form.text_field :slug, placeholder: "my-custom-slug", class: "w-100" %>
               <br>
-              <%= form.submit "Create link", class: "bg-success" %>
+              <%= form.submit "Create link", class: "btn bg-success" %>
             </fieldset>
           <% end %>
         </div>

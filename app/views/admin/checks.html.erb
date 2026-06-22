@@ -10,17 +10,11 @@
     <%= form.label :in_transit do %>
       <%= form.check_box :in_transit, checked: @in_transit %> In Transit
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @checks, entry_name: "check" %>
-  </div>
-  <%= paginate @checks %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -50,11 +44,17 @@
         <td><%= render_money_amount(check.amount) %></td>
         <td><%= check.aasm_state.upcase %></td>
         <td>
-          <%= link_to "View", check_path(check) %>
+          <%= pop_icon_to "external", check_path(check), "aria-label": "View" %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @checks %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @checks, entry_name: "check" %>
+  </div>
+  <%= paginate @checks %>
+</div>
+</div>

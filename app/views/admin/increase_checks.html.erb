@@ -5,17 +5,11 @@
     <%= form.label :exclude_reimbursements do %>
       <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
     <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @checks, entry_name: "check" %>
-  </div>
-  <%= paginate @checks %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -37,13 +31,20 @@
         <td><%= check.recipient_name %></td>
         <td><%= render_money(check.amount) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
-        <td>
-          <%= link_to "View", hcb_code_path(check.hcb_code) %>
-          <%= link_to "Process", increase_check_process_admin_path(check) %>
+        <td class="flex items-center gap-2">
+          <%= link_to "Process", increase_check_process_admin_path(check), class: "btn" %>
+          <%= pop_icon_to "external", hcb_code_path(check.hcb_code), "aria-label": "View" %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @checks %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @checks, entry_name: "check" %>
+  </div>
+  <%= paginate @checks %>
+</div>
+
+</div>

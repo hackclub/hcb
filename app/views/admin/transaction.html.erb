@@ -2,7 +2,8 @@
 
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
-<table class="no-stripes <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+<div class="table-container">
+<table class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
   <tbody>
     <tr>
       <th>ID</th>
@@ -51,6 +52,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 
 <% if @suggested_wise_mapping %>
   <div class="border-[#9FE870] border-solid border-1 p-5 my-6">
@@ -65,12 +67,13 @@
 
     <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), class: "mb-0", method: :post do |form| %>
       <%= form.hidden_field :wise_transfer_id, value: @suggested_wise_mapping.id %>
-      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
+      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "btn bg-success !mb-0 mt-3" %>
       <%= link_to "View Wise transfer ##{@suggested_wise_mapping.id}", wise_transfer_process_admin_path(@suggested_wise_mapping), class: "ml-2", target: "_blank" %>
     <% end %>
   </div>
 <% end %>
 
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -85,29 +88,30 @@
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
             <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @canonical_transaction.event&.to_combobox_display %>
-            <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+            <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg }, class: "btn btn-default" %>
           <% end %>
         </div>
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
-          <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" }, class: "my-0" %>
+          <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" }, class: "btn btn--destroy my-0" %>
         <% end %>
       </td>
       <td>
         <%= form_with model: false, local: true, url: set_wire_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:wire_id, Wire.approved + [@canonical_transaction.wire].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wire&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg }, class: "btn btn-default" %>
         <% end %>
       </td>
       <td>
         <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), method: :post do |form| %>
           <%= form.collection_select(:wise_transfer_id, WiseTransfer.sent + [@canonical_transaction.wise_transfer].compact, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.wise_transfer&.id }, { style: "width: 300px;" }) %>
-          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg }, class: "btn btn-default" %>
         <% end %>
       </td>
     </tr>
   </tbody>
 </table>
+</div>
 
 <br><hr>
 
@@ -152,6 +156,7 @@
 <% if @potential_donation_payouts.present? %>
   <h4>Potential DonationPayouts to Map to</h4>
 
+  <div class="table-container">
   <table>
     <tbody>
       <% @potential_donation_payouts.each do |pdp| %>
@@ -165,6 +170,7 @@
       <% end %>
     </tbody>
   </table>
+  </div>
 
   <br><hr>
 <% end %>
@@ -172,6 +178,7 @@
 <% if @potential_invoice_payouts.present? %>
   <h4>Potential InvoicePayouts to Map to</h4>
 
+  <div class="table-container">
   <table>
     <tbody>
       <% @potential_invoice_payouts.each do |pdp| %>
@@ -184,6 +191,7 @@
       <% end %>
     </tbody>
   </table>
+  </div>
 
   <br><hr>
 <% end %>
@@ -191,6 +199,7 @@
 <% if @canonical_pending_transactions.present? %>
   <h4>Potential Pending Transactions to Map to</h4>
 
+  <div class="table-container">
   <table>
     <tbody>
       <% @canonical_pending_transactions.each do |cpt| %>
@@ -205,6 +214,7 @@
       <% end %>
     </tbody>
   </table>
+  </div>
 
   <br><hr>
 <% end %>
