@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "spec_helper"
+require "rails_helper"
 require "rubocop"
-require File.expand_path("../../../../../lib/rubocop/cop/hcb/turbo_confirm", __dir__)
+require Rails.root.join("lib", "rubocop", "cop", "hcb", "turbo_confirm")
 
 RSpec.describe RuboCop::Cop::Hcb::TurboConfirm do
   let(:config) { RuboCop::Config.new("Hcb/TurboConfirm" => { "Enabled" => true }) }
