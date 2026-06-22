@@ -65,8 +65,8 @@ gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
-gem "money-rails"
-gem "monetize"
+gem "money-rails", "~> 3.0.0"
+gem "monetize", "~> 2.0.0"
 gem "rounding"
 
 gem "business_time"
