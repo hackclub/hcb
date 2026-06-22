@@ -7,7 +7,7 @@ var linkHandler = Plaid.create({
   token: <%= @link_token.to_json.html_safe %>,
   onSuccess: function(public_token, metadata) {
     // Don't need to do anything, access token remains the same
-    swal('Done!', 'Feel free to continue using Bank.', 'success')
+    swal('Done!', 'Feel free to continue using HCB.', 'success')
   },
   onExit: function(err, metadata) {
     if (err != null) {
