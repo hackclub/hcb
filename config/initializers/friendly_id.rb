@@ -104,6 +104,7 @@ FriendlyId.defaults do |config|
     deprecated
     apply
     maintenance_tasks
+    org
   ]
 
   # This adds an option to to treat reserved words as conflicts rather than exceptions.
