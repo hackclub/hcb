@@ -3,6 +3,11 @@
 require "rails_helper"
 
 RSpec.describe Disbursement, type: :model do
+  def add_balance_to_event(event)
+    ct = create(:canonical_transaction, amount_cents: 100_000, memo: "Test balance")
+    create(:canonical_event_mapping, canonical_transaction: ct, event: event)
+  end
+
   let(:disbursement) { create(:disbursement) }
 
   it "is valid" do
@@ -291,6 +296,98 @@ RSpec.describe Disbursement, type: :model do
     end
   end
 
+  describe "Disbursement::Incoming" do
+    let(:incoming) { disbursement.incoming_disbursement }
+
+    describe "#counterparty_label" do
+      it "returns the source event name" do
+        expect(incoming.counterparty_label).to eq(disbursement.source_event.name)
+      end
+
+      context "with a card grant subledger" do
+        let(:card_grant) do
+          add_balance_to_event(disbursement.source_event)
+          create(:card_grant, event: disbursement.source_event)
+        end
+
+        before do
+          disbursement.update!(source_subledger: card_grant.subledger)
+        end
+
+        it "returns the grant recipient name" do
+          expect(incoming.counterparty_label).to eq("Grant recipient #{card_grant.user.name}")
+        end
+      end
+    end
+
+    describe "#self_label" do
+      it "returns the destination event name" do
+        expect(incoming.self_label).to eq(disbursement.destination_event.name)
+      end
+
+      context "with a card grant subledger" do
+        let(:card_grant) do
+          add_balance_to_event(disbursement.destination_event)
+          create(:card_grant, event: disbursement.destination_event)
+        end
+
+        before do
+          disbursement.update!(destination_subledger: card_grant.subledger)
+        end
+
+        it "returns the grant recipient name" do
+          expect(incoming.self_label).to eq("Grant recipient #{card_grant.user.name}")
+        end
+      end
+    end
+  end
+
+  describe "Disbursement::Outgoing" do
+    let(:outgoing) { disbursement.outgoing_disbursement }
+
+    describe "#counterparty_label" do
+      it "returns the destination event name" do
+        expect(outgoing.counterparty_label).to eq(disbursement.destination_event.name)
+      end
+
+      context "with a card grant subledger" do
+        let(:card_grant) do
+          add_balance_to_event(disbursement.destination_event)
+          create(:card_grant, event: disbursement.destination_event)
+        end
+
+        before do
+          disbursement.update!(destination_subledger: card_grant.subledger)
+        end
+
+        it "returns the grant recipient name" do
+          expect(outgoing.counterparty_label).to eq("Grant recipient #{card_grant.user.name}")
+        end
+      end
+    end
+
+    describe "#self_label" do
+      it "returns the source event name" do
+        expect(outgoing.self_label).to eq(disbursement.source_event.name)
+      end
+
+      context "with a card grant subledger" do
+        let(:card_grant) do
+          add_balance_to_event(disbursement.source_event)
+          create(:card_grant, event: disbursement.source_event)
+        end
+
+        before do
+          disbursement.update!(source_subledger: card_grant.subledger)
+        end
+
+        it "returns the grant recipient name" do
+          expect(outgoing.self_label).to eq("Grant recipient #{card_grant.user.name}")
+        end
+      end
+    end
+  end
+
   describe "helper methods" do
 
     describe "#outgoing_hcb_code" do
@@ -302,6 +399,21 @@ RSpec.describe Disbursement, type: :model do
     describe "#incoming_hcb_code" do
       it "returns the correct HCB code format" do
         expect(disbursement.incoming_hcb_code).to eq("HCB-550-#{disbursement.id}")
+      end
+    end
+
+    describe "#all_comments" do
+      let(:user) { create(:user) }
+
+      it "includes comments from the disbursement and both sides" do
+        outgoing_hcb_code = disbursement.outgoing_disbursement.local_hcb_code
+        incoming_hcb_code = disbursement.incoming_disbursement.local_hcb_code
+
+        disbursement_comment = create(:comment, commentable: disbursement, user:)
+        outgoing_comment = create(:comment, commentable: outgoing_hcb_code, user:)
+        incoming_comment = create(:comment, commentable: incoming_hcb_code, user:)
+
+        expect(disbursement.all_comments).to contain_exactly(disbursement_comment, outgoing_comment, incoming_comment)
       end
     end
 

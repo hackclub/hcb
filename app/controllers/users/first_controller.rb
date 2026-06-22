@@ -9,7 +9,7 @@ module Users
     invisible_captcha only: [:create], honeypot: :remember_me
 
     def index
-      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true)
+      return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       load_team_community
 
@@ -24,6 +24,15 @@ module Users
 
         Here's a website with more information: https://hackclub.com/fiscal-sponsorship/first/. Seems like it'd be good fit for our team!
       EMAIL
+
+      @advisor_email_subject = "Booster club for our robotics team"
+      @advisor_email_cc = "hcb-raffles@hackclub.com"
+
+      compose_params = { cc: @advisor_email_cc, subject: @advisor_email_subject, body: @advisor_email_body }
+      @gmail_compose_url = "https://mail.google.com/mail/?#{URI.encode_www_form(view: "cm", fs: 1, cc: @advisor_email_cc, su: @advisor_email_subject, body: @advisor_email_body)}"
+      @outlook_compose_url = "https://outlook.office.com/mail/deeplink/compose?#{URI.encode_www_form(compose_params)}"
+      @mailto_compose_url = "mailto:?#{compose_params.map { |k, v| "#{k}=#{v.gsub("\n", "%0A")}" }.join("&")}"
+      @copy_email_text = "To: <your advisor>\nCC: #{@advisor_email_cc}\nSubject: #{@advisor_email_subject}\n\n#{@advisor_email_body}"
     end
 
     def request_org_invite
@@ -73,10 +82,12 @@ module Users
     end
 
     def new
-      return redirect_to first_index_path if signed_in?(allow_unverified: true)
+      return redirect_to first_index_path if signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
+      @user_referral = params[:referred_by] if params[:referred_by].present?
       @user = User.new(affiliations: [Event::Affiliation.new])
+
     end
 
     def verify_email
@@ -94,11 +105,31 @@ module Users
       program = "first-worlds-2026-macbook" if ["student_leader", "student_member"].include?(user_params.dig(:affiliations_attributes, "0", "role"))
 
       unless User.where(email: user_params[:email]).exists?
+        user_referral = nil
+        if user_ref_params[:user_referral].present?
+          user_referral = Raffle.find_by_hashid(user_ref_params[:user_referral])
+
+          # the referral not being eligible should never happen because users should not be able to get a link if program or user is not eligible for referral link
+          # however still adding here because it could eventually be possible that a user becomes ineligible or a program becomes ineligible
+          if user_referral.nil? || !user_referral.program_allows_referrals? || !user_referral.user_allows_referrals?
+            flash[:error] = "We couldn't find that referral link!"
+
+            redirect_to welcome_first_index_path and return
+          end
+        end
+
         @user = User.new(user_params)
         @user.creation_method = :first_robotics_form
         @user.save!
 
-        Raffle.find_or_create_by!(user: @user, program:) if program.present?
+        current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+          attribution.update!(user: @user)
+        end
+
+        if program.present?
+          raf = Raffle.find_or_create_by!(user: @user, program:)
+          raf.update!(referring_raffle: user_referral) if user_referral.present?
+        end
 
         create_session(user: @user, verified: false)
 
@@ -106,6 +137,11 @@ module Users
       end
 
       @user = User.find_by!(email: user_params[:email])
+
+      current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+        attribution.update!(user: @user)
+      end
+
       @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params:, raffle: program }, user: @user)
 
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
@@ -117,10 +153,38 @@ module Users
       render :new, status: :unprocessable_entity
     end
 
+    def macbook_qr_code
+      raffle_link = current_user(allow_unverified: true).raffles.find_by(program: "first-worlds-2026-macbook")&.referral_link
+
+      if raffle_link.nil?
+        head :not_found
+        return
+      end
+
+      qrcode = RQRCode::QRCode.new(raffle_link)
+
+      png = qrcode.as_png(
+        bit_depth: 1,
+        border_modules: 2,
+        color_mode: ChunkyPNG::COLOR_GRAYSCALE,
+        color: "black",
+        fill: "white",
+        module_px_size: 6,
+        size: 300
+      )
+
+      send_data png, filename: "MacBook Raffle Referral.png",
+        type: "image/png", disposition: "inline"
+    end
+
     private
 
     def user_params
       params.require(:user).permit(:email, :full_name, affiliations_attributes: [:league, :team_number, :name, :team_name, :role])
+    end
+
+    def user_ref_params
+      params.permit(:user_referral)
     end
 
     def load_team_community
@@ -133,11 +197,12 @@ module Users
 
       if @team_event
         positions_scope = @team_event.organizer_positions.where(deleted_at: nil).where.not(user_id: user.id)
-        @team_org_members = positions_scope
-                            .joins(:user)
+        @team_org_members = User
+                            .joins(:organizer_positions)
+                            .merge(positions_scope)
                             .order(Arel.sql("users.verified DESC NULLS LAST, organizer_positions.role DESC, organizer_positions.created_at DESC"))
                             .limit(5)
-                            .map(&:user)
+                            .to_a
         @team_org_members_total = positions_scope.count
       else
         peer_user_ids = Event::Affiliation
