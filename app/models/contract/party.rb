@@ -118,6 +118,9 @@ class Contract
       Contract::Party::ReminderJob.set(wait: 3.days).perform_later(self)
       Contract::Party::ReminderJob.set(wait: 7.days).perform_later(self)
       Contract::Party::ReminderJob.set(wait: 14.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 30.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 45.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 60.days).perform_later(self)
     end
 
     private
