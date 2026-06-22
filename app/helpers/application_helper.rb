@@ -388,7 +388,7 @@ module ApplicationHelper
   end
 
   def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
-    block.call
+    capture(&block)
   rescue => e
     Rails.error.report(e) unless e.in?(ignored_errors)
 
