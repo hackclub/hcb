@@ -319,7 +319,7 @@ module Reimbursement
 
     def exceeds_event_balance?
       !draft? && !closed? && currency == "USD" && event.present? &&
-        !::Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)
+        !::Shared::AmpleBalance.ample_balance?(amount_cents, event)
     end
 
     def team_review_required?
