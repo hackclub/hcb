@@ -447,6 +447,9 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
@@ -476,10 +479,25 @@ class AdminController < Admin::BaseController
     end
 
     relation = relation.pending if @pending
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("ach_transfers.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("ach_transfers.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("ach_transfers.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -648,6 +666,8 @@ class AdminController < Admin::BaseController
     @per = params[:per] || 20
     @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -678,6 +698,20 @@ class AdminController < Admin::BaseController
 
     relation = relation.in_transit if @in_transit
 
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("checks.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
+
     @count = relation.count
     @checks = relation.page(@page).per(@per).order(
       Arel.sql("aasm_state = 'pending' DESC"),
@@ -689,8 +723,13 @@ class AdminController < Admin::BaseController
   def increase_checks
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @checks = IncreaseCheck.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
+
+    relation = IncreaseCheck.all
+    relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    @checks = relation.page(@page).per(@per).order(
+      Arel.sql("increase_checks.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -729,6 +768,9 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -737,9 +779,24 @@ class AdminController < Admin::BaseController
     @wires = @wires.search_recipient(@q) if @q
 
     @wires = @wires.where(event_id: @event.id) if @event
+    @wires = @wires.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wires = @wires.where("wires.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wires = @wires.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("wires.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -751,6 +808,9 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+    @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -760,10 +820,25 @@ class AdminController < Admin::BaseController
 
     @wise_transfers = @wise_transfers.where(event_id: @event_id) if @event_id
     @wise_transfers = @wise_transfers.where(aasm_state: @status) if @status
+    @wise_transfers = @wise_transfers.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        @wise_transfers = @wise_transfers.where("wise_transfers.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
-      Arel.sql("aasm_state = 'approved' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'pending' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
@@ -853,7 +928,7 @@ class AdminController < Admin::BaseController
 
     relation = relation.where(event_id: @event_id) if @event_id
 
-    @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
+    @donations = relation.page(params[:page]).per(params[:per] || 20).order(created_at: :desc)
 
   end
 
@@ -883,6 +958,8 @@ class AdminController < Admin::BaseController
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
     @processing = params[:processing] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
 
     @event_id = params[:event_id].presence
 
@@ -907,6 +984,19 @@ class AdminController < Admin::BaseController
     relation = relation.pending if @pending
     relation = relation.reviewing if @reviewing
     relation = relation.processing if @processing
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("disbursements.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
 
     @count = relation.count
     @disbursements = relation.page(@page).per(@per).order(
@@ -1136,6 +1226,13 @@ class AdminController < Admin::BaseController
   def set_event
     @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(canonical_transaction_id: params[:id], event_id: params[:event_id], user: current_user).run
 
+    safely do
+      ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
+      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
+        mapping.on_primary_ledger = true
+      end
+    end
+
     redirect_to transaction_admin_path(@canonical_transaction)
   rescue => e
     redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
@@ -1152,6 +1249,13 @@ class AdminController < Admin::BaseController
             event_id: params[:event_id],
             user: current_user
           ).run
+
+          safely do
+            ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
+            Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
+              mapping.on_primary_ledger = true
+            end
+          end
         rescue => e
           return redirect_to ledger_admin_index_path, flash: { error: e.message }
         end
@@ -1169,6 +1273,13 @@ class AdminController < Admin::BaseController
         event_id: paypal_transfer.event.id,
         user: current_user
       ).run
+
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
 
       CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
 
@@ -1197,6 +1308,13 @@ class AdminController < Admin::BaseController
         user: current_user
       ).run
 
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: wire.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
+
       CanonicalPendingTransactionService::Settle.new(
         canonical_transaction:,
         canonical_pending_transaction: wire.canonical_pending_transaction
@@ -1221,6 +1339,13 @@ class AdminController < Admin::BaseController
         event_id: wise_transfer.event.id,
         user: current_user
       ).run
+
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
 
       CanonicalPendingTransactionService::Settle.new(
         canonical_transaction:,
