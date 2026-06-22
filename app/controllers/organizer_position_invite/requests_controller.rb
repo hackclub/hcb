@@ -20,8 +20,10 @@ class OrganizerPositionInvite
       link = @request.link
       role = params[:role] || "reader"
 
-      if role == "owner" && !admin_signed_in?
-        role = "manager"
+      if role == "owner"
+        flash[:error] = "If you'd like to invite an owner, send them a direct invite."
+        redirect_back_or_to event_team_path(link.event)
+        return
       end
 
       enable_spending_controls = (params[:enable_controls] == "true") && (role != "manager")

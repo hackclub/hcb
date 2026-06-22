@@ -1,4 +1,4 @@
-<%# locals: (form:) %>
+<%# locals: (form:, invite_link: false) %>
 
 <div class="field px-4 gap-2 flex items-center mb-2">
   <%= form.label :role, "Role" %>
@@ -28,7 +28,7 @@
   <% roles = OrganizerPositionInvite.roles.keys.select { |role| admin_signed_in? || role != "owner" } %>
   <%= form.select :role,
                   roles.map { |role| [role.titleize, role] },
-                  {},
+                  { disabled: invite_link ? "owner" : nil },
                   style: "max-width:120px !important",
                   "x-model": "role" %>
 </div>
