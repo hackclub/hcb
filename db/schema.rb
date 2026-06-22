@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1151,6 +1151,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
+    t.boolean "show_recent_donors", default: false, null: false
+    t.boolean "show_top_donors", default: false, null: false
     t.text "slug"
     t.integer "stripe_card_shipping_type", default: 0, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -2683,6 +2685,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_24_221911) do
     t.integer "session_validity_preference", default: 259200, null: false
     t.boolean "sessions_reported", default: false, null: false
     t.string "slug"
+    t.datetime "subscribed_to_loops_at"
     t.boolean "teenager"
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
