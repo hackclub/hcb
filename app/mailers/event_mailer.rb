@@ -2,7 +2,7 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary]
+  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
@@ -50,12 +50,18 @@ class EventMailer < ApplicationMailer
     mail(to: @emails, subject: "#{@event.name} has a negative balance")
   end
 
-  def call_requested
+  def user_call_requested
     @user = params[:user]
 
+    mail to: @user.email_address_with_name,
+         subject: "We've received your request for an onboarding call for #{@event.name}"
+  end
+
+  def ops_call_requested
+    @requesting_user = params[:requesting_user]
+
     mail to: OPERATIONS_EMAIL,
-         subject: "#{@user.name} requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}",
-         reply_to: @user.email_address_with_name
+         subject: "#{@requesting_user.name} is requesting an onboarding call for #{@event.name} #{"with #{@event.point_of_contact.name}" if @event.point_of_contact.present?}"
   end
 
   def transparency_mode_enabled
@@ -81,6 +87,15 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_disabled
     mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+  end
+
+  def subevent_created
+    @subevent = params[:subevent]
+    @creator = params[:creator]
+    @emails = @event.organizer_contact_emails(only_managers: true)
+    return if @emails.none?
+
+    mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private
