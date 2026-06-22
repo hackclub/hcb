@@ -445,7 +445,8 @@ module ApplicationHelper
     end
   end
 
-  def mobile_link_to(href, text:, icon:, **options)
+  # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
+  def responsive_link_to(href, text:, icon:, **options)
     text_class = "#{options[:class]} hidden md:flex"
     icon_class = "#{options[:class]} flex md:hidden"
     safe_join([
