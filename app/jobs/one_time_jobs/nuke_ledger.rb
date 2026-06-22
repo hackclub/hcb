@@ -41,17 +41,16 @@ module OneTimeJobs
     end
 
     def clear_papertrail_versions
-      ledger_versions = PaperTrail::Version.where(item_type: ['Ledger', 'Ledger::Item', 'Ledger::Mapping']).count
+      ledger_versions = PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping"]).count
       puts "Deleting #{ledger_versions} PaperTrail versions for Ledger models"
-      PaperTrail::Version.where(item_type: ['Ledger', 'Ledger::Item', 'Ledger::Mapping']).delete_all
+      PaperTrail::Version.where(item_type: ["Ledger", "Ledger::Item", "Ledger::Mapping"]).delete_all
 
-      hcb_code_versions = PaperTrail::Version.where(item_type: 'HcbCode')
-                                             .where("object_changes::text LIKE ?", '%ledger_item_id%')
+      hcb_code_versions = PaperTrail::Version.where(item_type: "HcbCode")
+                                             .where("object_changes::text LIKE ?", "%ledger_item_id%")
                                              .count
       puts "Deleting #{hcb_code_versions} PaperTrail versions for HcbCode with ledger_item_id changes"
-      PaperTrail::Version.where(item_type: 'HcbCode')
-                         .where("object_changes::text LIKE ?", '%ledger_item_id%')
+      PaperTrail::Version.where(item_type: "HcbCode")
+                         .where("object_changes::text LIKE ?", "%ledger_item_id%")
                          .delete_all
-    end
   end
 end
