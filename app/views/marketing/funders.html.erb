@@ -494,145 +494,183 @@
   </div>
 </section>
 
-<%# ============================ RECIPIENT STORY: REBOOT ============================ %>
-<%# Recipient-side counterpart to the Argosy case study. The Ford Foundation and Omidyar Network are
-    credited as Reboot's backers, not as HCB users. Keep it that way. %>
-<section class="mk-section mk-product mk-product--metric">
+<%# ==================== ORGANIZATIONS ON HCB (live portfolio explorer) ==================== %>
+<%# Replaces the old standalone Reboot / Public Grids / "Where it lands" sections with one
+    interactive showcase of real recipient organizations that *run on* HCB — deliberately
+    distinct from the funder proof (Argosy case study + "In good company" marquee) so the two
+    kinds of organization never read as the same thing. A vertical rail selects an org; the
+    stage on the right swaps to its detail. The final "wildcard" rail item reframes the list as
+    a sample: your giving isn't limited to these orgs, or even to orgs already on HCB.
+
+    Recipients + field docs live in MarketingHelper#funder_recipients. Driven by
+    funders_portfolio_controller (mirrors the value-pillar explorer's a11y pattern). With no JS
+    every panel renders stacked, so nothing is hidden. %>
+<% recipients = funder_recipients(show_public_grids: @show_public_grids) %>
+<% wildcard_index = recipients.length %>
+<section class="mk-section mk-section--alt mk-portfolio-section">
   <div class="mk-container">
-    <div class="mk-product__grid">
-      <div class="mk-product__copy">
-        <p class="mk-eyebrow">On HCB &middot; Reboot</p>
-        <h2 class="mk-section__title">
-          The organizations serious funders back already run on HCB.
-        </h2>
-        <p class="mk-lead">
-          <a href="https://joinreboot.org" target="_blank" rel="noopener">Reboot</a> is a nonprofit
-          publication and community on technology and society.
-        </p>
-        <ul class="mk-ticks">
-          <li>Since 2020: a newsletter and five print issues of its magazine, <em>Kernel</em></li>
-          <li>More than $400,000 raised on HCB</li>
-          <li>Run by volunteers, with no back office to staff</li>
-        </ul>
-      </div>
-
-      <div class="mk-product__media">
-        <figure class="mk-case">
-          <%= image_tag "https://cdn.hackclub.com/019ed937-fe26-77a0-8d7e-d6b9cf428eb9/image.png",
-                class: "mk-case__brand", alt: "Reboot", loading: "lazy", decoding: "async" %>
-          <blockquote>“HCB’s platform has made it possible to scale Reboot’s team and operations in
-            a way that would be otherwise impossible. The platform is extremely transparent and easy
-            to use; and the team is incredibly kind and responsive.”</blockquote>
-          <figcaption>
-            <%= image_tag "https://cdn.hackclub.com/019ed937-f871-772f-9b5f-1d54f33ae264/image.png",
-                  class: "mk-case__avatar", alt: "Jasmine Sun", width: 84, height: 84,
-                  loading: "lazy", decoding: "async" %>
-            <span class="mk-case__meta">
-              <span class="mk-case__name">Jasmine Sun</span>
-              <span class="mk-case__detail">Co-founder of Reboot</span>
-            </span>
-          </figcaption>
-          <%# Reboot's backers. Not linked, since they're not HCB partners. %>
-          <div class="mk-case__backers">
-            <span class="mk-case__backers-label">Backed by</span>
-            <%= image_tag "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png",
-                  class: "mk-case__backer", alt: "Ford Foundation", loading: "lazy", decoding: "async" %>
-            <%= image_tag "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png",
-                  class: "mk-case__backer mk-case__backer--omidyar", alt: "Omidyar Network",
-                  loading: "lazy", decoding: "async" %>
-          </div>
-        </figure>
-      </div>
-    </div>
-  </div>
-</section>
-
-<%# ============================ RECIPIENT STORY: PUBLIC GRIDS ============================ %>
-<%# Another recipient-side story, like Reboot. Public Grids is an early-stage nonprofit, so we lead
-    with the platform-quality angle and keep the mission description light. Mirrored (media-left)
-    so it doesn't read as a repeat of the Reboot section directly above it. Gated behind
-    :funders_landing_public_grids so it can switch on once the content is approved. %>
-<% if @show_public_grids %>
-  <section class="mk-section mk-product mk-product--metric mk-product--reverse">
-    <div class="mk-container">
-      <div class="mk-product__grid">
-        <div class="mk-product__copy">
-          <p class="mk-eyebrow">On HCB &middot; Public Grids</p>
-          <h2 class="mk-section__title">
-            Early-stage teams run on HCB so their hours go to the work, not the back office.
-          </h2>
-          <p class="mk-lead">
-            <a href="https://www.publicgrids.org" target="_blank" rel="noopener">Public Grids</a> is a
-            national nonprofit. Like many young organizations on HCB, they needed serious financial
-            infrastructure from day one, without standing up a finance team to run it.
+    <div class="mk-portfolio" data-controller="funders-portfolio"
+         data-action="keydown->funders-portfolio#keydown mouseenter->funders-portfolio#hoverIn mouseleave->funders-portfolio#hoverOut">
+      <%# Left column: heading + rail. Keeping the heading in-column (rather than in a full-width
+          band above the grid) fills what would otherwise be dead space to the right of it, and
+          lets the detail stage rise to a full-height hero on the right. %>
+      <div class="mk-portfolio__aside">
+        <div class="mk-portfolio__head">
+          <p class="mk-eyebrow">Already on HCB</p>
+          <h2 class="mk-section__title">A few of the thousands of organizations already running on HCB.</h2>
+          <p class="mk-portfolio-count">
+            <span data-funders-portfolio-target="count"><%= @stats[:organizations] %></span>
+            organizations &middot; since <%= @stats[:founded] %>
           </p>
-          <ul class="mk-ticks">
-            <li>A tech-first, in-house platform, not a patchwork of vendors</li>
-            <li>More of every hour spent on the mission, not paperwork</li>
-            <li>Built to scale as they grow</li>
-          </ul>
         </div>
 
-        <div class="mk-product__media">
-          <figure class="mk-case">
-            <%= image_tag "https://cdn.hackclub.com/019edd06-7875-7022-af3a-64517fac3020/image.png",
-                  class: "mk-case__brand", alt: "Public Grids", loading: "lazy", decoding: "async" %>
-            <blockquote>“No one comes close to the quality of Hack Club’s services at a price a startup
-              like ours can afford. The in-house, flexible, tech-first platform lets us spend our team’s
-              finite hours on our work, not on paperwork. But most of all, the team is incomparable in
-              their integrity and transparency, which is why we keep choosing to grow with Hack Club as
-              we scale.”</blockquote>
-            <figcaption>
-              <%= image_tag "https://cdn.hackclub.com/019edd08-6185-7556-a382-67f43d652c04/image.png",
-                    class: "mk-case__avatar", alt: "Isaac Sevier", width: 84, height: 84,
-                    loading: "lazy", decoding: "async" %>
-              <span class="mk-case__meta">
-                <span class="mk-case__name">Isaac Sevier</span>
-                <span class="mk-case__detail">Founder &amp; Executive Director of Public Grids</span>
-              </span>
-            </figcaption>
-          </figure>
+        <%# --- rail: selectable list of orgs, ending in the open-door wildcard --- %>
+        <div class="mk-portfolio__rail" role="tablist" aria-label="Organizations on HCB" aria-orientation="vertical">
+        <% recipients.each_with_index do |org, i| %>
+          <button type="button" class="mk-portfolio__item" role="tab" id="mk-port-tab-<%= i %>"
+                  aria-controls="mk-port-panel-<%= i %>" aria-selected="<%= i.zero? %>"
+                  <%= 'tabindex="-1"'.html_safe unless i.zero? %> data-index="<%= i %>"
+                  data-funders-portfolio-target="tab"
+                  data-action="click->funders-portfolio#choose mouseenter->funders-portfolio#choose focus->funders-portfolio#choose">
+            <span class="mk-portfolio__item-icon mk-portfolio__item-icon--logo">
+              <%# The org's own brand mark identifies it in the rail; the category glyph is a
+                  fallback for any org without a logo asset. %>
+              <% if org[:logo] %>
+                <%= image_tag org[:logo], class: "mk-portfolio__item-logo", alt: "", loading: "eager", decoding: "async" %>
+              <% else %>
+                <%= inline_icon org[:icon], size: 22 %>
+              <% end %>
+            </span>
+            <span class="mk-portfolio__item-text">
+              <span class="mk-portfolio__item-name"><%= org[:name] %></span>
+              <span class="mk-portfolio__item-sub"><%= org[:sub] %></span>
+            </span>
+            <span class="mk-portfolio__item-caret" aria-hidden="true"></span>
+          </button>
+        <% end %>
+        <button type="button" class="mk-portfolio__item mk-portfolio__item--open" role="tab"
+                id="mk-port-tab-<%= wildcard_index %>" aria-controls="mk-port-panel-<%= wildcard_index %>"
+                aria-selected="false" tabindex="-1" data-index="<%= wildcard_index %>" data-wildcard="true"
+                data-funders-portfolio-target="tab"
+                data-action="click->funders-portfolio#choose mouseenter->funders-portfolio#choose focus->funders-portfolio#choose">
+          <span class="mk-portfolio__item-icon"><%= inline_icon "idea", size: 22 %></span>
+          <span class="mk-portfolio__item-text">
+            <span class="mk-portfolio__item-name">Something not here yet</span>
+            <span class="mk-portfolio__item-sub">Fund a new organization, project, or idea</span>
+          </span>
+          <span class="mk-portfolio__item-caret" aria-hidden="true"></span>
+        </button>
+      </div>
+
+        <%# Mobile-only cue: on narrow screens the rail stacks above a single visible panel, so
+            signal that the rail is interactive (hidden ≥880px where rail + stage sit side by side). %>
+        <p class="mk-portfolio__hint" aria-hidden="true">Tap any organization to see its story&nbsp;&darr;</p>
+      </div>
+
+      <%# --- stage: one detail panel per org, plus the open-door wildcard panel --- %>
+      <div class="mk-portfolio__stage">
+        <% recipients.each_with_index do |org, i| %>
+          <%# No `hidden` in the markup: without JS every panel renders stacked (the controller
+              hides non-active panels in connect, so nothing is hidden until enhanced). %>
+          <div class="mk-portfolio__panel" role="tabpanel" id="mk-port-panel-<%= i %>"
+               aria-labelledby="mk-port-tab-<%= i %>" data-funders-portfolio-target="panel">
+            <figure class="mk-portfolio__media mk-portfolio__media--<%= org[:media] %>">
+              <% if org[:media] == :terminal %>
+                <%# Decorative CSS terminal-art cover (no logo/photo): faint "code" lines + a
+                    blinking prompt. Purely presentational, so hidden from assistive tech. %>
+                <div class="mk-portfolio__terminal" aria-hidden="true">
+                  <span class="mk-portfolio__terminal-line"></span>
+                  <span class="mk-portfolio__terminal-line"></span>
+                  <span class="mk-portfolio__terminal-line"></span>
+                  <span class="mk-portfolio__terminal-prompt">&#10095;<i class="mk-portfolio__terminal-cursor"></i></span>
+                </div>
+              <% else %>
+                <%# Eager (not lazy): once enhanced, non-active panels are hidden, so a lazy image
+                    wouldn't load until its panel is revealed — a blank banner on first swap. They're
+                    a small, fixed set, so loading them up front is the right trade. The wordmark/logo
+                    banner is decorative (the name is in the <h3>); only photos get descriptive alt. %>
+                <%= image_tag org[:brand], class: "mk-portfolio__media-img",
+                      alt: org[:media] == :photo ? org[:brand_alt] : "",
+                      style: org[:focus] ? "object-position: #{org[:focus]}" : nil,
+                      loading: "eager", decoding: "async" %>
+              <% end %>
+            </figure>
+
+            <div class="mk-portfolio__body">
+              <%# Main content is vertically centered in the card; the footer stays pinned to the
+                  bottom, so lighter cards read as deliberately spaced rather than top-loaded. %>
+              <div class="mk-portfolio__body-main">
+                <h3 class="mk-portfolio__name"><%= org[:name] %></h3>
+                <p class="mk-portfolio__what"><%= org[:what] %></p>
+
+              <% if org[:stat] %>
+                <div class="mk-portfolio__stat-row">
+                  <span class="mk-portfolio__stat"><%= org[:stat] %></span>
+                  <span class="mk-portfolio__stat-label"><%= org[:stat_label] %></span>
+                </div>
+              <% end %>
+
+              <% if org[:facts] %>
+                <ul class="mk-ticks mk-portfolio__facts">
+                  <% org[:facts].each do |fact| %><li><%= sanitize fact, tags: %w[em] %></li><% end %>
+                </ul>
+              <% end %>
+
+              <% if org[:quote] %>
+                <figure class="mk-portfolio__quote">
+                  <blockquote><%= org[:quote] %></blockquote>
+                  <figcaption class="mk-portfolio__author">
+                    <%= image_tag org[:author_avatar], class: "mk-portfolio__avatar",
+                          alt: org[:author], width: 48, height: 48, loading: "lazy", decoding: "async" %>
+                    <span class="mk-portfolio__author-meta">
+                      <span class="mk-portfolio__author-name"><%= org[:author] %></span>
+                      <span class="mk-portfolio__author-role"><%= org[:author_role] %></span>
+                    </span>
+                  </figcaption>
+                </figure>
+              <% end %>
+              </div>
+
+              <div class="mk-portfolio__footer">
+                <% if org[:funded_by] %>
+                  <%# This org's backer(s). Shown small, greyscaled, and clearly labeled so it reads
+                      as "a real funder's money reached this org on HCB", never as an HCB customer.
+                      "Backed by" (vs "Funded by") covers both grants and funding partnerships. %>
+                  <div class="mk-portfolio__funded">
+                    <span class="mk-portfolio__funded-label">Backed by</span>
+                    <% org[:funded_by].each do |f| %>
+                      <%= image_tag f[:logo], class: ["mk-portfolio__funder", f[:class]].compact.join(" "),
+                            alt: f[:alt], loading: "lazy", decoding: "async" %>
+                    <% end %>
+                  </div>
+                <% end %>
+                <a class="mk-portfolio__visit" href="<%= org[:url] %>" target="_blank" rel="noopener">
+                  Visit <%= org[:name] %><span aria-hidden="true">&nbsp;&rarr;</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Open-door wildcard: the list is a sample, not a menu. Reframes the whole section so a
+            funder never reads it as a closed directory, and lands the page's central wedge. %>
+        <div class="mk-portfolio__panel mk-portfolio__panel--open" role="tabpanel"
+             id="mk-port-panel-<%= wildcard_index %>" aria-labelledby="mk-port-tab-<%= wildcard_index %>"
+             data-funders-portfolio-target="panel">
+          <div class="mk-portfolio__body">
+            <span class="mk-portfolio__open-mark"><%= inline_icon "idea", size: 30 %></span>
+            <h3 class="mk-portfolio__name">Your pick doesn&rsquo;t have to be on this list, or on HCB yet.</h3>
+            <p class="mk-portfolio__what">
+              Fund any of the <%= @stats[:organizations] %> organizations already here, a brand-new
+              project that isn&rsquo;t a 501(c)(3) yet, or an idea that&rsquo;s still just a team of one.
+              You bring the pick; we get them running in days.
+            </p>
+            <div class="mk-portfolio__footer">
+              <a class="marketing-btn marketing-btn--primary" href="#talk-to-us">Talk to our team</a>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-<% end %>
-
-<%# ============================ IMPACT (where it lands) ============================ %>
-<%# Three real funded projects (Ghostty, Miami Hack Week, MALAN) — approved logos/photos
-    on our CDN, each linking out to the project. Captions final/approved. %>
-<section class="mk-section mk-section--alt mk-impact">
-  <div class="mk-container">
-    <div class="mk-section__head">
-      <p class="mk-eyebrow">Where it lands</p>
-      <h2 class="mk-section__title">Capital that reaches real builders.</h2>
-    </div>
-    <div class="mk-photos">
-      <a class="mk-photo mk-photo--logo" href="https://ghostty.org" target="_blank" rel="noopener" aria-label="Ghostty (opens in a new tab)">
-        <%= image_tag "https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg",
-              class: "mk-photo__img", alt: "", loading: "lazy", decoding: "async" %>
-        <span class="mk-photo__cap"><strong>Ghostty</strong>A fast, open-source terminal by
-          HashiCorp co-founder Mitchell Hashimoto, sustained by tax-deductible community
-          donations.</span>
-      </a>
-      <div class="mk-photo">
-        <a class="mk-photo__link" href="https://miamihackweek.com" target="_blank" rel="noopener" aria-label="Miami Hack Week (opens in a new tab)">
-          <%= image_tag "https://cdn.hackclub.com/019e8700-6497-7abf-984c-8536bf542151/image.png",
-                class: "mk-photo__img", alt: "Founders and engineers at Miami Hack Week",
-                loading: "lazy", decoding: "async" %>
-          <span class="mk-photo__cap"><strong>Miami Hack Week</strong>4,000+ engineers and
-            founders building for a week across dozens of themed hacker houses in Miami.</span>
-        </a>
-        <span class="mk-photo__backer">Backed by <b>Founders Fund</b></span>
-      </div>
-      <a class="mk-photo" href="https://mutualaidla.org" target="_blank" rel="noopener" aria-label="Mutual Aid LA Network (opens in a new tab)">
-        <%= image_tag "https://cdn.hackclub.com/019e870d-d4b0-7ebc-b8a4-928b663bd6c0/image.png",
-              class: "mk-photo__img", alt: "Mutual Aid LA Network volunteers with donated supplies",
-              loading: "lazy", decoding: "async" %>
-        <span class="mk-photo__cap"><strong>Mutual Aid LA Network</strong>Mobilized for the
-          2025 LA wildfires, channeling $1M+ in donations to 50+ groups responding on the
-          ground.</span>
-      </a>
     </div>
   </div>
 </section>
