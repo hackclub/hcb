@@ -2,7 +2,7 @@
 
 require "rails_helper"
 require "rubocop"
-require Rails.root.join("lib", "rubocop", "cop", "hcb", "turbo_confirm")
+require Rails.root.join("lib/rubocop/cop/hcb/turbo_confirm")
 
 RSpec.describe RuboCop::Cop::Hcb::TurboConfirm do
   let(:config) { RuboCop::Config.new("Hcb/TurboConfirm" => { "Enabled" => true }) }
