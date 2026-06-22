@@ -355,6 +355,28 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "9d0250d9ac9f2db54434d7a0a1fe5c34aa4edc236cd92def76d77b6bec2a7b44",
+      "check_name": "LinkToHref",
+      "message": "Unsafe parameter value in `link_to` href",
+      "file": "app/views/kaminari/_paginator.html.erb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => request.headers[\"Turbo-Frame\"].presence }))",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "kaminari/_paginator"
+      },
+      "user_input": "request.query_parameters",
+      "confidence": "High",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "a3aa0c676bb018fe906f57502010e05e09135481fcbac02c277a9ca92cd8001e",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -479,28 +501,6 @@
       },
       "user_input": "Admin::LedgerAudit::Task.find(params[:id])",
       "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": ""
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "b72083e5e41bb1cdb7b521acd34434e70c282d6e86d2ae2d9d85d0fc8687492e",
-      "check_name": "LinkToHref",
-      "message": "Unsafe parameter value in `link_to` href",
-      "file": "app/views/kaminari/_paginator.html.erb",
-      "line": 24,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => \"_top\" }))",
-      "render_path": null,
-      "location": {
-        "type": "template",
-        "template": "kaminari/_paginator"
-      },
-      "user_input": "request.query_parameters",
-      "confidence": "High",
       "cwe_id": [
         79
       ],
@@ -666,6 +666,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-06-22 12:11:58 -0400",
+  "updated": "2026-06-22 12:31:41 -0400",
   "brakeman_version": "6.2.2"
 }
