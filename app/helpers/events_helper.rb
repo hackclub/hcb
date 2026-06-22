@@ -9,6 +9,7 @@ module EventsHelper
   # name (string): nav item name, displayed in sidebar and placeholder page
   # path_proc (event_id -> string): path used as link href
   # tooltip (string): description shown on hover and on placeholder page
+  # dynamic_tooltip (event -> string): different tooltip to show based on event data
   # icon (string): name of icon to display beside name
   # symbol (symbol): shows nav item as selected when matches with argument passed to event_nav
   # available_proc (event -> boolean): whether or not the nav item is available for the given event
@@ -19,6 +20,13 @@ module EventsHelper
   # Section schema
   # section (string): name of the section
   # available_proc (event -> boolean): whether or not the section header should be shown for the given event
+
+  # Dropdown menu schema
+  # dropdown (string): name of the dropdown menu
+  # available_proc (event -> boolean): whether or not the dropdown and any of its items are available for the given event
+  # tooltip (string): description shown on hover and on placeholder page
+  # icon (string): name of icon to display beside name
+  # dropdown_items (array of nav links): nav links for this dropdown menu. icon, async_badge_proc, and dynamic_tooltip are not supported.
 
   NAV_ITEMS = [
     {
@@ -204,17 +212,106 @@ module EventsHelper
     {
       name: "Sub-organizations",
       path_proc: ->(event_id) { event_sub_organizations_path(event_id:) },
-      tooltip: "Create & manage subsidiary organisations",
+      tooltip: "Create & manage subsidiary organizations",
       icon: "channels",
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
+    },
+    {
+      dropdown: "Settings",
+      available_proc: ->(event) { policy(event).edit? },
+      tooltip: "Edit organization settings",
+      icon: "settings",
+      dropdown_items: [
+        {
+          name: "Organization",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "details") },
+          tooltip: "Edit organization details and visibility",
+          symbol: :settings_details,
+          available_proc: ->(event) { true },
+        },
+        {
+          name: "Donations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "donations") },
+          tooltip: "Edit donation page, goals, and tiers",
+          symbol: :settings_donations,
+          available_proc: ->(event) { event.approved? && event.plan.donations_enabled? }
+        },
+        {
+          name: "Reimbursements",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "reimbursements") },
+          tooltip: "Edit reimbursement page and review requirements",
+          symbol: :settings_reimbursements,
+          available_proc: ->(event) { event.approved? && event.plan.reimbursements_enabled? }
+        },
+        {
+          name: "Card grants",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "card_grants") },
+          tooltip: "Edit card grant default settings, restrictions, and support",
+          symbol: :settings_card_grants,
+          available_proc: ->(event) { event.approved? && event.plan.card_grants_enabled? },
+        },
+        {
+          name: "Tags",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "tags") },
+          tooltip: "Manage transaction tags",
+          symbol: :settings_tags,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Affiliations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "affiliations") },
+          tooltip: "Update organization affiliations",
+          symbol: :settings_affiliations,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Integrations",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "integrations") },
+          tooltip: "Setup and manage integrations with HCB",
+          symbol: :settings_integrations,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Feature previews",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "features") },
+          tooltip: "Enable new HCB features",
+          symbol: :settings_features,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Audit log",
+          path_proc: ->(event_id) { edit_event_path(event_id, tab: "audit_log") },
+          tooltip: "View all organization activity",
+          symbol: :settings_audit_log,
+          available_proc: ->(event) { true }
+        },
+        {
+          name: "Admin",
+          path_proc: ->(event_id) { edit_event_path(@event, tab: "admin") },
+          symbol: :settings_admin,
+          available_proc: ->(event) { true },
+          adminTool: true
+        }
+      ]
     }
   ].freeze
 
   def events_nav(event = @event, selected: nil)
     NAV_ITEMS.select { |i| instance_exec(event, &i[:available_proc]) }.map do |item|
       item.dup.tap do |h|
-        h[:selected] = h[:symbol] == selected if h[:symbol].present?
+        if h[:dropdown].present?
+          h[:dropdown_items] = h[:dropdown_items].select { |i| instance_exec(event, &i[:available_proc]) }.map do |dropdown_item|
+            dropdown_item[:selected] = dropdown_item[:symbol] == selected if dropdown_item[:symbol].present?
+            dropdown_item[:path] = instance_exec(event.slug, &dropdown_item[:path_proc]) if dropdown_item[:path_proc].present?
+
+            dropdown_item
+          end
+          h[:selected] = h[:dropdown_items].any? { |i| i[:selected] }
+        else
+          h[:selected] = h[:symbol] == selected if h[:symbol].present?
+        end
+
         h[:path] = instance_exec(event.slug, &h[:path_proc]) if h[:path_proc].present?
         h[:async_badge] = instance_exec(event, &h[:async_badge_proc]) if h[:async_badge_proc].present?
         h[:tooltip] = instance_exec(event, &h[:dynamic_tooltip]) if h[:dynamic_tooltip].present?

@@ -497,7 +497,7 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
     @ach_transfers = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("ach_transfers.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -729,7 +729,7 @@ class AdminController < Admin::BaseController
     relation = relation.where.missing(:reimbursement_payout_holding) if @exclude_reimbursements
 
     @checks = relation.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("increase_checks.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -796,7 +796,7 @@ class AdminController < Admin::BaseController
     end
 
     @wires = @wires.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
+      Arel.sql("wires.aasm_state = 'pending' DESC"),
       "created_at desc"
     )
 
@@ -837,8 +837,8 @@ class AdminController < Admin::BaseController
     end
 
     @wise_transfers = @wise_transfers.page(@page).per(@per).order(
-      Arel.sql("aasm_state = 'pending' DESC"),
-      Arel.sql("aasm_state = 'approved' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'pending' DESC"),
+      Arel.sql("wise_transfers.aasm_state = 'approved' DESC"),
       "created_at desc"
     )
   end
@@ -928,7 +928,7 @@ class AdminController < Admin::BaseController
 
     relation = relation.where(event_id: @event_id) if @event_id
 
-    @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
+    @donations = relation.page(params[:page]).per(params[:per] || 20).order(created_at: :desc)
 
   end
 
@@ -1226,6 +1226,13 @@ class AdminController < Admin::BaseController
   def set_event
     @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(canonical_transaction_id: params[:id], event_id: params[:event_id], user: current_user).run
 
+    safely do
+      ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
+      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
+        mapping.on_primary_ledger = true
+      end
+    end
+
     redirect_to transaction_admin_path(@canonical_transaction)
   rescue => e
     redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
@@ -1242,6 +1249,13 @@ class AdminController < Admin::BaseController
             event_id: params[:event_id],
             user: current_user
           ).run
+
+          safely do
+            ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
+            Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
+              mapping.on_primary_ledger = true
+            end
+          end
         rescue => e
           return redirect_to ledger_admin_index_path, flash: { error: e.message }
         end
@@ -1259,6 +1273,13 @@ class AdminController < Admin::BaseController
         event_id: paypal_transfer.event.id,
         user: current_user
       ).run
+
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
 
       CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
 
@@ -1287,6 +1308,13 @@ class AdminController < Admin::BaseController
         user: current_user
       ).run
 
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: wire.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
+
       CanonicalPendingTransactionService::Settle.new(
         canonical_transaction:,
         canonical_pending_transaction: wire.canonical_pending_transaction
@@ -1311,6 +1339,13 @@ class AdminController < Admin::BaseController
         event_id: wise_transfer.event.id,
         user: current_user
       ).run
+
+      safely do
+        ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
+        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
+          mapping.on_primary_ledger = true
+        end
+      end
 
       CanonicalPendingTransactionService::Settle.new(
         canonical_transaction:,
