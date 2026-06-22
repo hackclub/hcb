@@ -53,5 +53,6 @@ module OneTimeJobs
                          .where("object_changes::text LIKE ?", "%ledger_item_id%")
                          .delete_all
     end
+
   end
 end
