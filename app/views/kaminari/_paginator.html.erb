@@ -25,7 +25,7 @@
                       url_for((request.query_parameters || {}).merge("per" => n, "page" => 1, only_path: true)),
                       class: "menu__action #{'menu__action--active' if n == per_page}",
                       aria: { current: n == per_page ? "true" : nil },
-                      data: { turbo_frame: "_top" } %>
+                      data: { turbo_frame: request.headers["Turbo-Frame"].presence } %>
         <% end %>
       </div>
     </div>
