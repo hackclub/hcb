@@ -5,7 +5,7 @@
     <p class="mt0 mb0">
       Sub-organizations are subsidiaries of your organization. All members
       of <%= event.name %> can access and view sub-organizations<% unless Flipper.enabled?(:member_subevent_creation, event) %>, but only
-      managers can create and edit them<% end %>.
+      owners and managers can create and edit them<% end %>.
     </p>
   </div>
 

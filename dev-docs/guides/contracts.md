@@ -57,7 +57,7 @@ INVITEE_EMAIL=
 event = Event.find(EVENT_ID)
 document = Document.find_by!(slug: DOCUMENT_SLUG)
 invite = event.organizer_position_invites.find_by!(email: INVITEE_EMAIL)
-invite.update!(is_signee: true)
+invite.update!(role: :owner)
 
 # external_service 999 identifies a manually-sent contract
 contract = Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false, external_service: 999, document:)
