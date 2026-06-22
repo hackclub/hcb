@@ -3,6 +3,7 @@
 <% disabled = !policy(event).update? %>
 
 <%= form_with(model: event.card_grant_setting, local: true, class: "mb3") do |form| %>
+  <%= form_errors event.card_grant_setting, "organization" %>
   <h3 class="mb1" id="transparency_mode_heading">Grant settings</h3>
   <div class="card">
     <%= form.hidden_field :id, value: event.card_grant_setting.id %>
