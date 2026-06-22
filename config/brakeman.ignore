@@ -88,6 +88,25 @@
         89
       ],
       "note": "Interpolated value is a constant integer defined in has_role.rb"
+      "fingerprint": "1d3b6e20ef6fa701ececbdaf3aad261500d76fbce2d86e84a1a8f27d84db04e9",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/disbursements_controller.rb",
+      "line": 84,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"array_position(ARRAY[#{current_user.organizer_positions.reorder(:sort_index => :asc).pluck(:event_id).map(&:to_i).join(\", \")}]::bigint[], events.id) NULLS LAST\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DisbursementsController",
+        "method": "event_search"
+      },
+      "user_input": "current_user.organizer_positions.reorder(:sort_index => :asc)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -666,6 +685,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-06-12 22:24:12 -0400",
+  "updated": "2026-06-17 12:04:34 -0700",
   "brakeman_version": "6.2.2"
 }

@@ -34,6 +34,8 @@
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
+#  show_recent_donors                           :boolean          default(FALSE), not null
+#  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
 #  website                                      :string
@@ -946,7 +948,7 @@ class Event < ApplicationRecord
   end
 
   def to_combobox_display
-    "#{name} (#{id})"
+    name
   end
 
   def onboarding_scheduling_link
