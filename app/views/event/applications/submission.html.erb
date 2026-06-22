@@ -89,7 +89,11 @@
 </div>
 
 <% content_for :footer do %>
-  <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+  <div class="flex gap-4">
+    <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+    <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+  </div>
+
   <div class="flex items-center justify-end gap-4">
     <% admin_tool do %>
       <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>

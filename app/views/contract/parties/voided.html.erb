@@ -10,10 +10,10 @@
   <% end %>
 </p>
 
-<% unless @contracts.empty? %>
+<% if @contracts.any? %>
   <div class="flex flex-col mt-2 gap-4">
     <%= render partial: "contracts/contract", collection: @contracts, as: :contract %>
   </div>
-<% else %>
+<% elsif signed_in? %>
   <%= link_to "Return to homepage", root_path, class: "btn mt-2" %>
 <% end %>
