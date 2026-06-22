@@ -4,7 +4,6 @@ module Api
   module V4
     class TransactionsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:update, :memo_suggestions]
       skip_after_action :verify_authorized, only: [:missing_receipt]
@@ -113,7 +112,7 @@ module Api
         return {
           event_id: @event.id,
           search: filter_params[:search].presence,
-          tag_id: filter_params[:tag_id].presence,
+          tag_id: filter_params[:tag_id].present? ? Tag.find_by_public_id(filter_params[:tag_id])&.id : nil,
           expenses: filter_params[:expenses].presence,
           revenue: filter_params[:revenue].presence,
           minimum_amount: filter_params[:minimum_amount].presence ? Money.from_amount(filter_params[:minimum_amount].to_f) : nil,

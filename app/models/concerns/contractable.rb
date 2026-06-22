@@ -11,7 +11,7 @@ module Contractable
       contracts.where(aasm_state: [:pending, :sent]).find_each(&:mark_voided!)
     end
 
-    def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
+    def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil)
       # This method should be overwritten in specific classes
       raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented it's own version of send_contract."
     end
