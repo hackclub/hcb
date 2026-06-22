@@ -200,7 +200,9 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_sub_organization?
-    admin_or_manager? && record.subevents_enabled?
+    return false unless record.subevents_enabled?
+
+    admin_or_manager? || (Flipper.enabled?(:member_subevent_creation, record) && member?)
   end
 
   def donation_overview?
@@ -258,6 +260,8 @@ class EventPolicy < ApplicationPolicy
   def request_call?
     signee?
   end
+
+  alias hide_onboarding_message? request_call?
 
   private
 
