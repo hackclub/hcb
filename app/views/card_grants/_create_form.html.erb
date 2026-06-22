@@ -53,7 +53,7 @@
           <%= form.label :allow_stripe_card, class: "flex gap-2 items-center" do %>
             <%= form.check_box :allow_stripe_card, disabled:, checked: card_grant.allow_stripe_card.nil? ? (@event.card_grant_setting&.allow_stripe_card != false) : card_grant.allow_stripe_card %>
             Allow virtual card
-            <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient can activate a virtual Stripe card to make purchases">
+            <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient can activate a virtual card to make purchases">
               <%= inline_icon "info", size: 20 %>
             </span>
           <% end %>
