@@ -290,7 +290,7 @@ class EventsController < ApplicationController
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
+    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
 
     if @event.parent
       ops = @event.ancestor_organizer_positions.includes(:user)
@@ -532,13 +532,22 @@ class EventsController < ApplicationController
   end
 
   def account_number
-    @transactions = if @event.column_account_number.present?
-                      CanonicalTransaction.where(transaction_source_type: "RawColumnTransaction", transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").pluck(:id)).order(created_at: :desc)
-                    else
-                      CanonicalTransaction.none
-                    end
-    page = (params[:page] || 1).to_i
-    @transactions = @transactions.page(page).per(params[:per] || 25)
+    if @event.column_account_number.present?
+      column_transactions = CanonicalTransaction.where(
+        transaction_source_type: "RawColumnTransaction",
+        transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
+      )
+      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                         .order(created_at: :desc)
+      page = (params[:page] || 1).to_i
+      @transactions = @transactions.page(page).per(params[:per] || 25)
+
+      # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
+      @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                                  .where("created_at < ?", Date.new(2026, 5, 21))
+                                                  .any?
+    end
+
     authorize @event
   end
 
@@ -676,7 +685,7 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
   end
 
   def new_transfer
@@ -1070,21 +1079,19 @@ class EventsController < ApplicationController
   def request_call
     authorize @event
 
-    if @event.point_of_contact.present?
-      onboarder_record = OnboardersTable.all(filter: "{HCB ID} = #{@event.point_of_contact.id}").first
-
-      if onboarder_record.present?
-        @event.config.update!(hide_onboarding_message: true)
-
-        redirect_to onboarder_record["Scheduling Link"], allow_other_host: true
-        return
-      end
-    end
-
-    EventMailer.with(event: @event, user: current_user).call_requested.deliver_now
+    EventMailer.with(event: @event, requesting_user: current_user).ops_call_requested.deliver_later
+    EventMailer.with(event: @event, user: current_user).user_call_requested.deliver_later
     @event.config.update!(hide_onboarding_message: true)
 
     flash[:success] = "A member of our team will reach out to schedule a call soon!"
+    redirect_to event_path(@event)
+  end
+
+  def hide_onboarding_message
+    authorize @event
+
+    @event.config.update!(hide_onboarding_message: true)
+
     redirect_to event_path(@event)
   end
 
@@ -1134,6 +1141,8 @@ class EventsController < ApplicationController
       :point_of_contact_id,
       :slug,
       :hidden,
+      :show_top_donors,
+      :show_recent_donors,
       :donation_page_enabled,
       :donation_page_message,
       :donation_tiers_enabled,
@@ -1201,6 +1210,8 @@ class EventsController < ApplicationController
       :hidden,
       :start,
       :end,
+      :show_top_donors,
+      :show_recent_donors,
       :donation_page_enabled,
       :donation_page_message,
       :donation_tiers_enabled,
