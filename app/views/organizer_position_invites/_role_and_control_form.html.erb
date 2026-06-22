@@ -10,6 +10,15 @@
       <%= inline_icon "question-mark", size: 18 %>
     </button>
     <div class="menu__content menu__content--2 menu__content--compact px-4 py-3" data-menu-target="content">
+      <p class="muted mb1 mt-0">
+        <span class="bold info">Owners</span> sign the fiscal sponsorship contract
+        and can do everything in the organization.
+        <% if current_user.admin? && invite_link %>
+          To invite an owner, send them a direct invitation.
+        <% elsif !current_user.admin? %>
+          To invite an owner, email <%= mail_to "hcb@hackclub.com" %>.
+        <% end %>
+      </p>
       <p class="muted mb1 mt-0"><span class="bold info">Managers</span> can do everything
         in the organization.</p>
       <div class="muted mb1">
