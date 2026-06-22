@@ -1,4 +1,6 @@
-<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false) %>
+<%# locals: (event:, show_category_badge: false, show_date_stat: false, show_scoped_tags: false, link_path: nil) %>
+
+<% link_path ||= event %>
 
 <% card_contents = capture do %>
   <li class="group card flex flex-col justify-between h-full mx-auto <%= "card--background-image" if event.background_image.attached? %> <%= "card--hover" unless show_scoped_tags %>" style="<%= "--bg-image: url(#{url_for(event.background_image).dump})" if event.background_image.attached? %>">
@@ -18,7 +20,7 @@
     <% end %>
 
     <% if show_scoped_tags %>
-      <%= link_to event, id: "event-#{event.id}-title", class: "flex mb-4 font-bold no-underline text-black dark:text-smoke hover:underline" do %>
+      <%= link_to link_path, id: "event-#{event.id}-title", class: "flex mb-4 font-bold no-underline text-black dark:text-smoke hover:underline" do %>
         <%= event_title_contents %>
       <% end %>
     <% else %>
@@ -120,7 +122,7 @@
     <%= card_contents %>
   </div>
 <% else %>
-  <%= link_to event, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
+  <%= link_to link_path, style: "max-width: calc(100vw - 2rem)", class: "draggable no-underline" do %>
     <%= card_contents %>
   <% end %>
 <% end %>
