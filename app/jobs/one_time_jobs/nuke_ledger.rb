@@ -52,5 +52,6 @@ module OneTimeJobs
       PaperTrail::Version.where(item_type: "HcbCode")
                          .where("object_changes::text LIKE ?", "%ledger_item_id%")
                          .delete_all
+    end
   end
 end
