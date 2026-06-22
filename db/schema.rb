@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -669,12 +669,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
     t.string "external_template_id"
     t.boolean "include_videos"
     t.jsonb "prefills"
+    t.bigint "reissue_of_id"
     t.datetime "signed_at"
     t.string "type", null: false
     t.datetime "updated_at", null: false
     t.datetime "void_at"
     t.index ["contractable_type", "contractable_id"], name: "index_contracts_on_contractable"
     t.index ["document_id"], name: "index_contracts_on_document_id"
+    t.index ["reissue_of_id"], name: "index_contracts_on_reissue_of_id"
   end
 
   create_table "disbursements", force: :cascade do |t|
@@ -1121,7 +1123,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
     t.boolean "demo_mode", default: false, null: false
-    t.datetime "demo_mode_request_meeting_at", precision: nil
     t.text "description"
     t.string "discord_channel_id"
     t.string "discord_guild_id"
@@ -1150,6 +1151,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
+    t.boolean "show_recent_donors", default: false, null: false
+    t.boolean "show_top_donors", default: false, null: false
     t.text "slug"
     t.integer "stripe_card_shipping_type", default: 0, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -1389,7 +1392,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "hcb_code_tag_suggestions", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.bigint "hcb_code_id", null: false
     t.bigint "tag_id", null: false
@@ -1407,6 +1410,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_hcb_codes_on_event_id"
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
@@ -1432,7 +1436,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "increase_checks", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "address_city"
     t.string "address_line1"
     t.string "address_line2"
@@ -1493,7 +1497,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "invoices", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "amount_due"
     t.bigint "amount_paid"
     t.bigint "amount_remaining"
@@ -1640,7 +1644,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "logins", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.jsonb "authentication_factors"
     t.text "browser_token_ciphertext"
     t.datetime "created_at", null: false
@@ -1656,7 +1660,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "mailbox_addresses", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "address", null: false
     t.datetime "created_at", null: false
     t.datetime "discarded_at"
@@ -2170,7 +2174,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "reimbursement_expense_payouts", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -2184,7 +2188,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "reimbursement_expenses", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.integer "amount_cents", default: 0, null: false
     t.datetime "approved_at"
     t.bigint "approved_by_id"
@@ -2203,7 +2207,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "reimbursement_payout_holdings", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "ach_transfer_id"
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
@@ -2223,7 +2227,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "reimbursement_reports", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.bigint "card_grant_id"
     t.float "conversion_rate", default: 1.0, null: false
     t.datetime "created_at", null: false
@@ -2387,7 +2391,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "suggested_pairings", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "accepted_at"
     t.datetime "created_at", null: false
     t.float "distance"
@@ -2455,7 +2459,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "transaction_csvs", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
@@ -2644,7 +2648,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "user_totps", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.datetime "last_used_at"
@@ -2681,6 +2685,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
     t.integer "session_validity_preference", default: 259200, null: false
     t.boolean "sessions_reported", default: false, null: false
     t.string "slug"
+    t.datetime "subscribed_to_loops_at"
     t.boolean "teenager"
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "use_sms_auth", default: false
@@ -2761,7 +2766,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_05_15_222625) do
   end
 
   create_table "wise_transfers", force: :cascade do |t|
-    t.string "aasm_state"
+    t.string "aasm_state", null: false
     t.string "address_city"
     t.string "address_line1"
     t.string "address_line2"
