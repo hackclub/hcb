@@ -2,6 +2,28 @@
   "ignored_warnings": [
     {
       "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "0d0bd86271b561ee9e1ed8df0441cae498474004c23f369566152ee733de18ca",
+      "check_name": "LinkToHref",
+      "message": "Unsafe parameter value in `link_to` href",
+      "file": "app/views/kaminari/_paginator.html.erb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }))",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "kaminari/_paginator"
+      },
+      "user_input": "request.query_parameters",
+      "confidence": "High",
+      "cwe_id": [
+        79
+      ],
+      "note": "False positive: url_for with only_path: true generates a relative path through Rails' router, URL-encoding all values. A javascript: scheme injection is impossible."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "154fc5e6dd75905b4d439027dc586e15421a58a265d590f753ce34b81d23095e",
       "check_name": "CrossSiteScripting",
@@ -45,6 +67,29 @@
       "note": "Content is never updated directly by user and always rendered on the server"
     },
     {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "1d3b6e20ef6fa701ececbdaf3aad261500d76fbce2d86e84a1a8f27d84db04e9",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/disbursements_controller.rb",
+      "line": 84,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"array_position(ARRAY[#{current_user.organizer_positions.reorder(:sort_index => :asc).pluck(:event_id).map(&:to_i).join(\", \")}]::bigint[], events.id) NULLS LAST\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DisbursementsController",
+        "method": "event_search"
+      },
+      "user_input": "current_user.organizer_positions.reorder(:sort_index => :asc)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": ""
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "24b4bbb940906be890c8fca79f53e06131392c6b52417b1b280fbf1f554b55e5",
@@ -59,7 +104,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -177,7 +222,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/referral/links_controller.rb",
-      "line": 23,
+      "line": 18,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to((Referral::Link.find_by(:slug => params[:id]).program.redirect_to or root_path), :allow_other_host => true)",
       "render_path": null,
@@ -200,7 +245,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/contracts.html.erb",
-      "line": 64,
+      "line": 68,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"DocuSeal\", (Unresolved Model).new.docuseal_submission_url)",
       "render_path": [
@@ -208,7 +253,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "contracts",
-          "line": 1475,
+          "line": 1601,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/contracts",
@@ -242,7 +287,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -276,7 +321,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -310,7 +355,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1047,
+          "line": 1171,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -378,7 +423,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 975,
+          "line": 1099,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -510,7 +555,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 975,
+          "line": 1099,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -578,7 +623,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1047,
+          "line": 1171,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -621,6 +666,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-03-21 00:38:52 -0700",
+  "updated": "2026-06-17 12:04:34 -0700",
   "brakeman_version": "6.2.2"
 }
