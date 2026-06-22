@@ -150,6 +150,10 @@
 <% content_for :footer do %>
   <div class="flex flex-row-reverse justify-between items-center w-full">
     <button id="submit_application" class="btn bg-blue" formaction="<%= application_path(@application, return_to: personal_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue →</button>
-    <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+
+    <div class="flex gap-4">
+      <button class="btn bg-muted" formnovalidate formaction="<%= application_path(@application, return_to: application_path(@application)) %>" form="edit_application_<%= @application.id %>" tabindex="1">← Back</button>
+      <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+    </div>
   </div>
 <% end %>
