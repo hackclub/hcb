@@ -2,28 +2,6 @@
   "ignored_warnings": [
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "0d0bd86271b561ee9e1ed8df0441cae498474004c23f369566152ee733de18ca",
-      "check_name": "LinkToHref",
-      "message": "Unsafe parameter value in `link_to` href",
-      "file": "app/views/kaminari/_paginator.html.erb",
-      "line": 24,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }))",
-      "render_path": null,
-      "location": {
-        "type": "template",
-        "template": "kaminari/_paginator"
-      },
-      "user_input": "request.query_parameters",
-      "confidence": "High",
-      "cwe_id": [
-        79
-      ],
-      "note": "False positive: url_for with only_path: true generates a relative path through Rails' router, URL-encoding all values. A javascript: scheme injection is impossible."
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "154fc5e6dd75905b4d439027dc586e15421a58a265d590f753ce34b81d23095e",
       "check_name": "CrossSiteScripting",
@@ -400,6 +378,28 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
+      "fingerprint": "9d0250d9ac9f2db54434d7a0a1fe5c34aa4edc236cd92def76d77b6bec2a7b44",
+      "check_name": "LinkToHref",
+      "message": "Unsafe parameter value in `link_to` href",
+      "file": "app/views/kaminari/_paginator.html.erb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => request.headers[\"Turbo-Frame\"].presence }))",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "kaminari/_paginator"
+      },
+      "user_input": "request.query_parameters",
+      "confidence": "High",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
       "fingerprint": "a3aa0c676bb018fe906f57502010e05e09135481fcbac02c277a9ca92cd8001e",
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
@@ -689,6 +689,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-06-22 11:52:43 -0400",
+  "updated": "2026-06-22 12:31:41 -0400",
   "brakeman_version": "6.2.2"
 }

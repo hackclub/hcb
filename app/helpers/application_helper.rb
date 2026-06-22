@@ -2,6 +2,28 @@
 
 module ApplicationHelper
   include ActionView::Helpers
+  include LocalTimeHelper
+
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuiteAccountsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PopoverHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
@@ -443,6 +465,29 @@ module ApplicationHelper
         end
       end)
     end
+  end
+
+  # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
+  def responsive_link_to(href, text:, icon:, **options)
+    text_class = "#{options[:class]} hidden md:flex"
+    icon_class = "#{options[:class]} flex md:hidden"
+    safe_join([
+                link_to(text, href, options.merge(class: text_class)),
+                link_to(href, options.merge(class: icon_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
+  def mobile_button_to(href, text:, icon:, **options)
+    text_form_class = "#{options[:form_class]} hidden md:flex"
+    icon_form_class = "#{options[:form_class]} flex md:hidden"
+    safe_join([
+                button_to(text, href, options.merge(form_class: text_form_class)),
+                button_to(href, options.merge(form_class: icon_form_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
   end
 
 end
