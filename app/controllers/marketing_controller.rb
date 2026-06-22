@@ -11,19 +11,24 @@ class MarketingController < ApplicationController
   skip_before_action :redirect_to_onboarding
   skip_after_action :verify_authorized # not Pundit-managed
 
-  # Gated behind a Flipper flag during rollout: anyone without it 404s. Flip the flag on
-  # per-user (or boolean-enable it globally to make the page public at launch).
-  before_action :require_funders_access
   invisible_captcha only: [:funder_inquiry], honeypot: :subtitle
 
   after_action :allow_indexing, only: [:funders]
 
-  FUNDERS_FLAG = :funders_landing_page
+  # Gates just the "Funders on HCB" testimonials section, so the page can ship while we
+  # await sign-off on the funder quotes. Enable once the quotes are approved.
+  TESTIMONIALS_FLAG = :funders_landing_testimonials
+
+  # Gates the Public Grids recipient story, so it can switch on independently of the rest
+  # of the page once its content is approved.
+  PUBLIC_GRIDS_FLAG = :funders_landing_public_grids
 
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
+    @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
+    @show_public_grids = Flipper.enabled?(PUBLIC_GRIDS_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 
@@ -35,7 +40,9 @@ class MarketingController < ApplicationController
 
     unless email.match?(URI::MailTo::EMAIL_REGEXP)
       flash[:error] = "Please enter a valid email address."
-      return redirect_to funders_path(inquiry: "error", anchor: "talk-to-us")
+      # Carry the submitted values back so the form isn't cleared on the error redirect.
+      flash[:funder_form] = { "name" => name, "email" => email, "message" => message }
+      return redirect_to funders_path(anchor: "talk-to-us")
     end
 
     FunderInquiryMailer.with(name:, email:, message:).inquiry.deliver_later
@@ -43,14 +50,12 @@ class MarketingController < ApplicationController
     # Log the lead so it is never lost if mail delivery later fails.
     Rails.logger.info("[funder_inquiry] new inquiry email=#{email.inspect} name=#{name.inspect}")
 
-    redirect_to funders_path(inquiry: "received", anchor: "talk-to-us")
+    # Use flash (not a query param) so a shared link never shows the confirmation card.
+    flash[:funder_inquiry] = "received"
+    redirect_to funders_path(anchor: "talk-to-us")
   end
 
   private
-
-  def require_funders_access
-    not_found unless Flipper.enabled?(FUNDERS_FLAG, current_user)
-  end
 
   # Headline figures for the funders page, computed live and cached so the page never
   # runs heavy aggregates inline.
