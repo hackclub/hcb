@@ -155,8 +155,8 @@ export default class extends Controller {
 
     const btn = document.createElement('button')
     btn.type = 'button'
-    btn.className = 'suborg-graph-toggle'
-    btn.textContent = this.heightExpanded ? 'Show less' : 'Show more'
+    btn.className = `suborg-graph-toggle ${this.heightExpanded ? '!hidden' : ''}`
+    btn.textContent = 'Show more'
     btn.addEventListener('click', () => {
       this.heightExpanded = !this.heightExpanded
       this.render()
