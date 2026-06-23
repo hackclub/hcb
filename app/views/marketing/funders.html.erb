@@ -576,13 +576,32 @@
                aria-labelledby="mk-port-tab-<%= i %>" data-funders-portfolio-target="panel">
             <figure class="mk-portfolio__media mk-portfolio__media--<%= org[:media] %>">
               <% if org[:media] == :terminal %>
-                <%# Decorative CSS terminal-art cover (no logo/photo): faint "code" lines + a
-                    blinking prompt. Purely presentational, so hidden from assistive tech. %>
+                <%# Decorative CSS terminal-art cover (no logo/photo for a terminal emulator):
+                    a Ghostty-themed session — Challenger Deep palette, the ghost mark as a faint
+                    watermark — that types a command and streams output. The animation loops so it
+                    plays whenever this panel is brought forward (panels are visibility-hidden, not
+                    removed, so a one-shot would finish unseen). Purely presentational → aria-hidden. %>
                 <div class="mk-portfolio__terminal" aria-hidden="true">
-                  <span class="mk-portfolio__terminal-line"></span>
-                  <span class="mk-portfolio__terminal-line"></span>
-                  <span class="mk-portfolio__terminal-line"></span>
-                  <span class="mk-portfolio__terminal-prompt">&#10095;<i class="mk-portfolio__terminal-cursor"></i></span>
+                  <div class="mk-portfolio__terminal-bar">
+                    <span class="mk-portfolio__terminal-dot"></span>
+                    <span class="mk-portfolio__terminal-dot"></span>
+                    <span class="mk-portfolio__terminal-dot"></span>
+                    <span class="mk-portfolio__terminal-tab">ghostty</span>
+                  </div>
+                  <div class="mk-portfolio__terminal-screen">
+                    <span class="mk-portfolio__terminal-ghost"></span>
+                    <div class="mk-portfolio__terminal-feed">
+                      <p class="mk-portfolio__terminal-row mk-portfolio__terminal-row--cmd">
+                        <span class="mk-portfolio__terminal-sigil">&#10095;</span><span class="mk-portfolio__terminal-type">ghostty</span><i class="mk-portfolio__terminal-caret"></i>
+                      </p>
+                      <p class="mk-portfolio__terminal-out mk-portfolio__terminal-out--1"></p>
+                      <p class="mk-portfolio__terminal-out mk-portfolio__terminal-out--2"></p>
+                      <p class="mk-portfolio__terminal-out mk-portfolio__terminal-out--3"></p>
+                      <p class="mk-portfolio__terminal-row mk-portfolio__terminal-row--next">
+                        <span class="mk-portfolio__terminal-sigil">&#10095;</span><i class="mk-portfolio__terminal-cursor"></i>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               <% else %>
                 <%# Eager (not lazy): once enhanced, non-active panels are hidden, so a lazy image
