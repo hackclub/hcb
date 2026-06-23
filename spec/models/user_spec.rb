@@ -158,6 +158,55 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "teenager status" do
+    let(:first_student_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "student_leader" }
+    end
+    let(:first_coach_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "head_coach" }
+    end
+
+    it "marks a user with no birthday but a FIRST student affiliation as a teenager" do
+      user = create(:user, affiliations_attributes: [first_student_attrs])
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "does not mark a FIRST head coach as a teenager" do
+      user = create(:user, affiliations_attributes: [first_coach_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).not_to be true
+    end
+
+    it "syncs the teenager column when a FIRST student affiliation is added later" do
+      user = create(:user)
+      expect(user.teenager).not_to be true
+
+      user.update!(affiliations_attributes: [first_student_attrs])
+
+      expect(user.reload.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "still respects the birthday-based check when there is no FIRST affiliation" do
+      user = create(:user, birthday: 16.years.ago)
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+    end
+
+    it "lets birthday take precedence over a FIRST student affiliation when both are present" do
+      user = create(:user, birthday: 30.years.ago, affiliations_attributes: [first_student_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).to be false
+      expect(user.joined_as_teenager).to be false
+    end
+  end
+
   describe "#locked?" do
     context "when locked" do
       it "returns" do
