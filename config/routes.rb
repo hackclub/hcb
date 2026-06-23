@@ -1009,6 +1009,15 @@ Rails.application.routes.draw do
       resource :tiers, only: [:create, :update, :destroy] do
         post :set_index, on: :member
       end
+      resources :alerts do
+        member do
+          post :toggle_subscription
+        end
+        collection do
+          post :subscribe_to_all
+          patch :update
+        end
+      end
     end
 
     resources :recurring_donations, only: [:create], path: "recurring" do

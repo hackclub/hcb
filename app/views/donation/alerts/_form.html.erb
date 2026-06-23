@@ -1,0 +1,44 @@
+<!-- app/views/donation/alerts/_form.html.erb -->
+<div class="container">
+  <div class="row">
+    <div class="col-md-8">
+      <%= form_with(model: [@event, @alert], url: @alert.persisted? ? event_donation_alert_path(@event, @alert) : event_donation_alerts_path(@event), local: true) do |form| %>
+        <% if @alert.errors.any? %>
+          <div id="error_explanation" class="alert alert-danger">
+            <h4><%= pluralize(@alert.errors.count, "error") %> prohibited this alert from being saved:</h4>
+            <ul>
+              <% @alert.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="form-group">
+          <%= form.label :alert_name %>
+          <%= form.text_field :alert_name, class: "form-control", placeholder: "e.g., Large Donation Alert" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :amount_cents, "Minimum Donation Amount ($)" %>
+          <%= form.number_field :amount_cents, class: "form-control", step: 0.01, placeholder: "e.g., 10.00" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :alert_message, "Custom Message (Optional)" %>
+          <%= form.text_area :alert_message, class: "form-control", rows: 4, placeholder: "Add a custom message to include in the email..." %>
+        </div>
+
+        <div class="form-check mb-3">
+          <%= form.check_box :active %>
+          <%= form.label :active, "Active" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.submit class: "btn btn-primary" %>
+          <%= link_to "Cancel", event_donation_alerts_path(@event), class: "btn btn-secondary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

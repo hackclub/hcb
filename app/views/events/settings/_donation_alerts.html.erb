@@ -1,0 +1,94 @@
+<%# locals: (event:, frame:) %>
+
+<% disabled = !policy(event).update? %>
+
+<% if frame %>
+  <div class="menu__divider m-0 my-8"></div>
+<% end %>
+<div data-controller="donation-alert-form" class="card mt-4">
+  <div class="field field--checkbox mb0">
+    <div class="flex-1">
+      <span style="font-weight: 700">Enable donation alerts</span>
+      <p class="text-muted mt-0.5 mb-0 text-sm">
+        Set custom alerts for specific donation thresholds.
+      </p>
+    </div>
+    <%= inline_icon "loading", size: 20, class: "hidden mr-2", "data-donation-alert-form-target": "loader" %>
+    <div class="field--checkbox--switch" style="flex-shrink:0">
+      <%= form_with(model: event, local: true) do |form| %>
+        <%= form.hidden_field :tab, value: "donations" %>
+        <%= form.label :donation_alerts_enabled do %>
+          <%= form.check_box :donation_alerts_enabled,
+            data: { "donation-alert-form-target": "checkbox" },
+            disabled:,
+            checked: event.donation_alerts_enabled,
+            onchange: "this.closest('form').requestSubmit();",
+            switch: true %>
+          <span class="slider"></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  <% if event.donation_alerts_enabled %>
+    <div data-donation-alert-form-target="content">
+      <div class="field mt-5">
+        <%= turbo_frame_tag "donation_alerts_section" do %>
+          <% if flash[:error] %>
+            <div class="error-card mb-3" data-turbo-temporary>
+              <p><%= flash[:error] %></p>
+            </div>
+          <% end %>
+
+          <%= form_with(url: event_donation_alerts_path(event), id: "update-alerts-form", method: :patch, data: { turbo_frame: "donation_alerts_section" }) do |form| %>
+            <ul class="list-none p-0 m-0 flex flex-col gap-2">
+              <% event.donation_alerts.each do |alert| %>
+                <div class="card shadow-none border border-gray-200 dark:border-gray-700 bg-gray-50 flex items-start gap-2 mb-2 transition-none">
+                  <div class="flex-1">
+                    <div class="flex gap-2 w-full">
+                      <%= form.text_field "alerts[#{alert.id}][alert_name]", value: alert.alert_name, class: "flex-1 !max-w-full", placeholder: "Alert name", required: true, data: { "donation-alert-form-target": "field" } %>
+                      <div class="flex items-center gap-2 rounded-md px-3 input min-w-0 p-0 max-w-[155px]">
+                        $
+                        <%= form.number_field "alerts[#{alert.id}][amount_cents]", value: alert.amount_cents / 100.0, required: true, min: 0.01, step: 0.01, class: "!border-none !shadow-none !px-0", style: "width: 80px", placeholder: "Threshold", data: { "donation-alert-form-target": "field" } %>
+                      </div>
+                    </div>
+                    <%= form.text_area "alerts[#{alert.id}][alert_message]", value: alert.alert_message, class: "w-100 max-w-full mt-1", placeholder: "Alert message", data: { "donation-alert-form-target": "field" } %>
+                    <div class="flex items-center gap-3 mt-2">
+                      <label class="inline-flex items-center gap-2">
+                        <%= form.check_box "alerts[#{alert.id}][active]", { checked: alert.active, data: { "donation-alert-form-target": "field" } }, "1", "0" %>
+                        <span>Active?</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-col gap-1">
+                    <% subscribed = alert.subscribed?(current_user) %>
+                    <%= pop_icon_to "delete", event_donation_alert_path(event, alert), method: :delete, data: { turbo_frame: "donation_alerts_section", turbo_confirm: "Are you sure?" } %>
+                    <%= button_tag type: "submit", formmethod: "post", formaction: toggle_subscription_event_donation_alert_path(event, alert), class: "btn btn-sm #{subscribed ? "bg-muted" : "bg-primary"} !p-0", style: "width: 36px; height: 36px;", title: (subscribed ? "Unsubscribe" : "Subscribe") do %>
+                      <%= inline_icon "email", size: 28, class: "!m-0" %>
+                    <% end %>
+
+                    <%= button_tag type: "submit", class: "btn btn-sm save-btn !p-0 !justify-center", data: { "donation-alert-form-target": "saveButton" }, style: "width: 36px; height: 36px;", title: "Save" do %>
+                      <%= inline_icon "save", size: 28, class: "!m-0" %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </ul>
+          <% end %>
+
+          <%= form_with(url: event_donation_alerts_path(event), method: :post, data: { turbo_frame: "donation_alerts_section" }) do |form| %>
+            <div class="flex px-1 my-3 items-center">
+              <button
+                type="submit"
+                class="btn gap-4 pr-2 <%= "w-full !transform-none" if event.donation_alerts.empty? %>">
+                Create alert
+                <%= inline_icon "plus" %>
+              </button>
+
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -106,6 +106,8 @@ class Donation < ApplicationRecord
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
 
+  after_commit :queue_alert_job, if: :just_completed?
+
   aasm timestamps: true do
     state :pending, initial: true
     state :in_transit
@@ -385,6 +387,20 @@ class Donation < ApplicationRecord
     return false if (event.donation_goal.progress_amount_cents - amount) >= event.donation_goal.amount_cents
 
     true
+  end
+
+  def completed?
+    in_transit? || deposited?
+  end
+
+  def just_completed?
+    saved_change_to_status? && completed?
+  end
+
+  def queue_alert_job
+    ::SendDonationAlertsJob.perform_later(id)
+  rescue => e
+    Rails.logger.error("Failed to queue donation alert job: #{e.message}")
   end
 
   def create_payment_intent_attrs(customer)

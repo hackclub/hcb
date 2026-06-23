@@ -1,0 +1,29 @@
+<p>Hi <%= @user.first_name %>,</p>
+
+<p>
+  <strong><%= @donation.event.name %></strong> just received a donation
+  of <%= render_money @donation.amount %>!
+</p>
+
+<p>
+  <strong>Alert:</strong> <%= @alert.alert_name %><br>
+  <strong>Threshold:</strong> <%= render_money(@alert.amount_cents) %>
+</p>
+
+<% if @donation.name.present? %>
+  <p>
+    <strong>Donor:</strong> <%= @donation.name %>
+  </p>
+<% end %>
+
+<% if @alert.alert_message.present? %>
+  <blockquote>
+    <%= @alert.alert_message %>
+  </blockquote>
+<% end %>
+
+<p>
+  <%= link_to "View in HCB", event_url(@donation.event) %>
+</p>
+
+<p>You're receiving this because you're subscribed to donation alerts for <%= @donation.event.name %>.</p>

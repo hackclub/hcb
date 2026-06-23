@@ -1,0 +1,60 @@
+<!-- app/views/donation_alerts/index.html.erb -->
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-md-8">
+      <h1>Donation Alerts</h1>
+      <p class="text-muted">Set up alerts to notify team members when donations exceed certain amounts</p>
+    </div>
+    <div class="col-md-4 text-right">
+      <%= link_to "New Alert", new_event_donation_alert_path(@event), class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <% if @alerts.any? %>
+    <div class="alert-cards">
+      <% @alerts.each do |alert| %>
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h5 class="card-title"><%= alert.alert_name %></h5>
+                <p class="card-text text-muted"><%= alert.alert_message %></p>
+
+                <div class="alert-details">
+                  <span class="badge badge-info">
+                    Threshold: <%= render_money(alert.amount_cents) %>
+                  </span>
+                  <span class="badge <%= alert.active? ? "badge-success" : "badge-secondary" %>">
+                    <%= alert.active? ? "Active" : "Inactive" %>
+                  </span>
+                  <span class="badge badge-light">
+                    <%= pluralize(alert.users.count, "subscriber") %>
+                  </span>
+                </div>
+              </div>
+
+              <div class="col-md-4 text-right">
+                <% if policy(@event).update? %>
+                  <%= link_to "Edit", edit_event_donation_alert_path(@event, alert), class: "btn btn-sm btn-secondary" %>
+                  <%= link_to "Delete", event_donation_alert_path(@event, alert), method: :delete, data: { confirm: "Are you sure?" }, class: "btn btn-sm btn-danger" %>
+                <% end %>
+
+                <% if current_user && @event.users.include?(current_user) %>
+                  <% if alert.subscribed?(current_user) %>
+                    <%= button_to "Unsubscribe", toggle_subscription_event_donation_alert_path(@event, alert), method: :post, class: "btn btn-sm btn-outline-primary" %>
+                  <% else %>
+                    <%= button_to "Subscribe", toggle_subscription_event_donation_alert_path(@event, alert), method: :post, class: "btn btn-sm btn-primary" %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <p>No donation alerts yet. <%= link_to "Create one", new_event_donation_alert_path(@event) %>!</p>
+    </div>
+  <% end %>
+</div>

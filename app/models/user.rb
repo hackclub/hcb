@@ -161,6 +161,11 @@ class User < ApplicationRecord
   has_many :check_deposits, inverse_of: :created_by
   has_many :invoices, inverse_of: :creator
 
+  has_and_belongs_to_many :donation_alerts,
+                          class_name: "Donation::Alert",
+                          join_table: "donation_alerts_users",
+                          association_foreign_key: "donation_alert_id"
+
   has_one_attached :profile_picture
   validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 

@@ -144,8 +144,17 @@ class DonationsController < ApplicationController
   end
 
   def finished
-    @donation = Donation.find_by!(url_hash: params[:donation])
+    @donation = Donation.find_by!(url_hash: params["donation"])
     @event = @donation.event
+
+    if @donation.pending? && @donation.stripe_payment_intent_id.present?
+      pi = StripeService::PaymentIntent.retrieve(
+        id: @donation.stripe_payment_intent_id,
+        expand: ["latest_charge.balance_transaction"]
+      )
+      @donation.set_fields_from_stripe_payment_intent(pi)
+      @donation.save!
+    end
   end
 
   def qr_code
