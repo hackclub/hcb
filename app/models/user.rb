@@ -36,14 +36,20 @@
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
+#  legal_entity_id               :bigint
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #
 # Indexes
 #
-#  index_users_on_discord_id  (discord_id) UNIQUE
-#  index_users_on_email       (email) UNIQUE
-#  index_users_on_slug        (slug) UNIQUE
+#  index_users_on_discord_id       (discord_id) UNIQUE
+#  index_users_on_email            (email) UNIQUE
+#  index_users_on_legal_entity_id  (legal_entity_id)
+#  index_users_on_slug             (slug) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (legal_entity_id => legal_entities.id)
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
@@ -176,6 +182,8 @@ class User < ApplicationRecord
   validate :valid_payout_method
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
+
+  belongs_to :legal_entity, optional: true
 
   has_encrypted :birthday, type: :date
 
