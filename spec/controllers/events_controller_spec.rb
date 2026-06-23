@@ -50,6 +50,42 @@ RSpec.describe EventsController do
       )
     end
 
+    it "includes sub-organizations with their parent slug" do
+      user = create(:user)
+
+      parent_event = create(:event, name: "Parent Event")
+      create(:organizer_position, user:, event: parent_event)
+
+      sub_org = create(:event, name: "Sub Event", parent: parent_event)
+
+      sign_in(user)
+
+      get(:index, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq(
+        [
+          {
+            "name"      => "Parent Event",
+            "slug"      => parent_event.slug,
+            "logo"      => "none",
+            "demo_mode" => false,
+            "member"    => true,
+            "features"  => { "card_grants" => false, "subevents" => false },
+          },
+          {
+            "name"        => "Sub Event",
+            "slug"        => sub_org.slug,
+            "logo"        => "none",
+            "demo_mode"   => false,
+            "member"      => true,
+            "parent_slug" => parent_event.slug,
+            "features"    => { "card_grants" => false, "subevents" => false },
+          }
+        ]
+      )
+    end
+
     it "includes all events if the user is an admin" do
       user = create(:user, :make_admin)
 
