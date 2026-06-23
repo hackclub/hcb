@@ -2,6 +2,18 @@
 
 Rails.application.config.to_prepare do
   ActiveStorage::PreviewImageJob.discard_on ActiveStorage::PreviewError
+  ActiveStorage::TransformJob.discard_on MiniMagick::Error do |job, error|
+    blob, transformations = job.arguments
+
+    Rails.error.report(
+      error,
+      handled: true,
+      context: {
+        active_storage_blob_id: blob&.id,
+        transformations:
+      }
+    )
+  end
 end
 
 Rails.application.configure do
