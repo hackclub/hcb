@@ -1895,6 +1895,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_171305) do
     t.index ["twilio_message_id"], name: "index_outgoing_twilio_messages_on_twilio_message_id"
   end
 
+  create_table "payees", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.bigint "legal_entity_id", null: false
+    t.string "preferred_name"
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_payees_on_event_id"
+    t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
+  end
+
   create_table "payment_recipients", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "email"
