@@ -59,7 +59,7 @@ class InvoicesController < ApplicationController
       relation,
       INVOICE_COLUMNS,
       sort: [params[:sort], params[:direction]]
-    ).includes(:sponsor).page(params[:page]).per(25)
+    ).includes(:sponsor).page(params[:page]).per(params[:per] || 25)
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)

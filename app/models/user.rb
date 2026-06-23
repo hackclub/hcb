@@ -141,8 +141,6 @@ class User < ApplicationRecord
   has_many :stripe_authorizations, through: :stripe_cards
   has_many :receipts
 
-  has_many :checks, inverse_of: :creator
-
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
@@ -154,7 +152,14 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :ach_transfers, inverse_of: :creator
+  has_many :checks, inverse_of: :creator
+  has_many :disbursements, inverse_of: :requested_by
+  has_many :increase_checks
   has_many :wise_transfers
+
+  has_many :check_deposits, inverse_of: :created_by
+  has_many :invoices, inverse_of: :creator
 
   has_one_attached :profile_picture
   validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
@@ -172,6 +177,9 @@ class User < ApplicationRecord
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
+  has_many :legal_entity_users
+  has_many :legal_entities, through: :legal_entity_users
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
@@ -183,6 +191,8 @@ class User < ApplicationRecord
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
+
+  after_create :create_legal_entity
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
@@ -427,8 +437,9 @@ class User < ApplicationRecord
     self.payout_method = payout_method_type.constantize.new(params)
   end
 
-  def email_address_with_name
-    ActionMailer::Base.email_address_with_name(email, name)
+  def email_address_with_name(full_name: false)
+    display_name = full_name ? (self.full_name.presence || name) : name
+    ActionMailer::Base.email_address_with_name(email, display_name)
   end
 
   def hack_clubber?
@@ -654,6 +665,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def create_legal_entity
+    legal_entities.create!(entity_type: :person)
+  end
 
   def auditors_must_be_verified
     if auditor? && !verified?
