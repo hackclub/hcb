@@ -49,6 +49,10 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
 
   validates_presence_of :reason
 
+  def pending?
+    assignee.present?
+  end
+
   def under_review?
     closed_at.nil?
   end
@@ -56,6 +60,8 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
   def status
     if organizer_position.deleted_at.present?
       :organizer_deleted
+    elsif pending?
+      :pending
     elsif under_review?
       :under_review
     else

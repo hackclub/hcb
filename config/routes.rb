@@ -402,6 +402,8 @@ Rails.application.routes.draw do
   resources :organizer_position_deletion_requests, only: [:index, :show, :create], concerns: :commentable do
     post "close"
     post "open"
+    post "assign"
+    post "unassign"
   end
 
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
