@@ -11,6 +11,7 @@ const PADDING = 24
 // "+N organizations" node until the viewer expands it. This keeps the graph
 // short so the existing UI (search bar, list) stays reachable on page load.
 const COLLAPSE_THRESHOLD = 4
+const MAX_COLLAPSED_HEIGHT = 350
 
 export default class extends Controller {
   static values = {
@@ -20,6 +21,7 @@ export default class extends Controller {
 
   connect() {
     this.expandedNodes = new Set()
+    this.heightExpanded = false
     this.render()
     if (this.hasSrcValue) {
       fetch(this.srcValue, { headers: { Accept: 'application/json' } })
@@ -123,18 +125,47 @@ export default class extends Controller {
     const containerWidth = Math.max(this.element.clientWidth || 800, 600)
     select(this.element).selectAll('*').remove()
 
+    this.graphContainer = select(this.element)
+      .append('div')
+      .style('overflow-x', 'auto')
+      .node()
     const markerId = `arr-${Math.random().toString(36).slice(2)}`
-    this.renderTree(
+    const svgHeight = this.renderTree(
       displayNodes,
       root,
       displayChildren,
       containerWidth,
       markerId
     )
+    this.applyHeightToggle(svgHeight)
+  }
+
+  // Clips the graph to MAX_COLLAPSED_HEIGHT and renders a "Show more" toggle
+  // when it is taller than that, so the UI below stays reachable on load.
+  applyHeightToggle(svgHeight) {
+    if (svgHeight <= MAX_COLLAPSED_HEIGHT) return
+
+    if (this.heightExpanded) {
+      this.graphContainer.style.maxHeight = ''
+      this.graphContainer.style.overflowY = ''
+    } else {
+      this.graphContainer.style.maxHeight = `${MAX_COLLAPSED_HEIGHT}px`
+      this.graphContainer.style.overflowY = 'hidden'
+    }
+
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.className = 'suborg-graph-toggle'
+    btn.textContent = this.heightExpanded ? 'Show less' : 'Show more'
+    btn.addEventListener('click', () => {
+      this.heightExpanded = !this.heightExpanded
+      this.render()
+    })
+    this.element.appendChild(btn)
   }
 
   createSvg(width, height, markerId) {
-    const svg = select(this.element)
+    const svg = select(this.graphContainer)
       .append('svg')
       .attr('class', 'hcb-suborg-graph')
       .attr('width', width)
@@ -224,6 +255,9 @@ export default class extends Controller {
       .style('cursor', 'pointer')
       .on('click', () => {
         this.expandedNodes.add(node.parentNodeId)
+        // Expanding a branch also lifts the height cap so the newly revealed
+        // nodes aren't immediately clipped away.
+        this.heightExpanded = true
         this.render()
       })
     moreG
@@ -331,5 +365,7 @@ export default class extends Controller {
         node.isRoot
       )
     )
+
+    return svgHeight
   }
 }
