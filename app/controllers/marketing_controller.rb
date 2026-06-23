@@ -11,34 +11,24 @@ class MarketingController < ApplicationController
   skip_before_action :redirect_to_onboarding
   skip_after_action :verify_authorized # not Pundit-managed
 
-  # Gated behind a Flipper flag during rollout: anyone without it 404s. Flip the flag on
-  # per-user (or boolean-enable it globally to make the page public at launch).
-  before_action :require_funders_access
   invisible_captcha only: [:funder_inquiry], honeypot: :subtitle
 
   after_action :allow_indexing, only: [:funders]
-
-  FUNDERS_FLAG = :funders_landing_page
 
   # Gates just the "Funders on HCB" testimonials section, so the page can ship while we
   # await sign-off on the funder quotes. Enable once the quotes are approved.
   TESTIMONIALS_FLAG = :funders_landing_testimonials
 
-  # Gates the Argosy Foundation case study independently, so it can be held back until it's
-  # cleared to show.
-  ARGOSY_FLAG = :funders_landing_argosy
-
-  # Gates all Ghostty content on the page (the "Where it lands" tile and the Mitchell
-  # Hashimoto testimonial), so it can be hidden in one switch.
-  GHOSTTY_FLAG = :funders_landing_ghostty
+  # Gates the Public Grids recipient story, so it can switch on independently of the rest
+  # of the page once its content is approved.
+  PUBLIC_GRIDS_FLAG = :funders_landing_public_grids
 
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
-    @show_argosy = Flipper.enabled?(ARGOSY_FLAG, current_user)
-    @show_ghostty = Flipper.enabled?(GHOSTTY_FLAG, current_user)
+    @show_public_grids = Flipper.enabled?(PUBLIC_GRIDS_FLAG, current_user)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 
@@ -66,10 +56,6 @@ class MarketingController < ApplicationController
   end
 
   private
-
-  def require_funders_access
-    not_found unless Flipper.enabled?(FUNDERS_FLAG, current_user)
-  end
 
   # Headline figures for the funders page, computed live and cached so the page never
   # runs heavy aggregates inline.
