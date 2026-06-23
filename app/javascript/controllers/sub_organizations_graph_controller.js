@@ -7,7 +7,10 @@ const ROOT_H = 36
 const MIN_H_GAP = 60
 const V_GAP = 8
 const PADDING = 24
-const MAX_INITIAL = 5
+// Any node with more than this many children is collapsed behind a
+// "+N organizations" node until the viewer expands it. This keeps the graph
+// short so the existing UI (search bar, list) stays reachable on page load.
+const COLLAPSE_THRESHOLD = 4
 
 export default class extends Controller {
   static values = {
@@ -16,7 +19,7 @@ export default class extends Controller {
   }
 
   connect() {
-    this.expanded = false
+    this.expandedNodes = new Set()
     this.render()
     if (this.hasSrcValue) {
       fetch(this.srcValue, { headers: { Accept: 'application/json' } })
@@ -45,6 +48,55 @@ export default class extends Controller {
     return childrenOf
   }
 
+  // Replaces children beyond the threshold with a single synthetic "+N more"
+  // node (unless the parent has been expanded). Children that have sub-nodes of
+  // their own are never collapsed — only leaf children are folded away, so we
+  // never hide an entire branch behind a "+N" node. Synthetic nodes get an
+  // empty children list so traversal stops at them.
+  buildDisplayChildren(childrenOf) {
+    const display = {}
+    Object.entries(childrenOf).forEach(([id, children]) => {
+      const leaves = children.filter(c => (childrenOf[c.id] || []).length === 0)
+
+      if (
+        children.length > COLLAPSE_THRESHOLD &&
+        leaves.length > 0 &&
+        !this.expandedNodes.has(id)
+      ) {
+        const parents = children.filter(
+          c => (childrenOf[c.id] || []).length > 0
+        )
+        // Keep every parent child visible; fill any remaining slots up to the
+        // threshold with leaf children, and collapse the rest.
+        const slots = Math.max(0, COLLAPSE_THRESHOLD - parents.length)
+        const visibleLeaves = leaves.slice(0, slots)
+        const hiddenCount = leaves.length - visibleLeaves.length
+
+        if (hiddenCount > 0) {
+          const visibleIds = new Set(
+            [...parents, ...visibleLeaves].map(c => c.id)
+          )
+          const moreNode = {
+            id: `more:${id}`,
+            isMore: true,
+            parentNodeId: id,
+            hiddenCount,
+          }
+          // Preserve the original (alphabetical) ordering among visible nodes.
+          display[id] = [
+            ...children.filter(c => visibleIds.has(c.id)),
+            moreNode,
+          ]
+          display[moreNode.id] = []
+          return
+        }
+      }
+
+      display[id] = children
+    })
+    return display
+  }
+
   render() {
     const nodes = this.nodesValue
     if (!nodes.length) return
@@ -53,20 +105,26 @@ export default class extends Controller {
     const root = nodes.find(n => n.isRoot)
     if (!root) return
 
+    const displayChildren = this.buildDisplayChildren(childrenOf)
+
+    // Flatten the displayed tree (real + synthetic nodes) by walking from root.
+    const displayNodes = []
+    const lookup = Object.fromEntries(nodes.map(n => [n.id, n]))
+    const walk = id => {
+      const node = lookup[id]
+      if (node) displayNodes.push(node)
+      ;(displayChildren[id] || []).forEach(child => {
+        if (child.isMore) displayNodes.push(child)
+        walk(child.id)
+      })
+    }
+    walk(root.id)
+
     const containerWidth = Math.max(this.element.clientWidth || 800, 600)
     select(this.element).selectAll('*').remove()
 
     const markerId = `arr-${Math.random().toString(36).slice(2)}`
-    const directChildren = childrenOf[root.id]
-    const isFlat =
-      nodes.length > 1 &&
-      directChildren.every(c => childrenOf[c.id].length === 0)
-
-    if (isFlat && !this.expanded && directChildren.length > MAX_INITIAL) {
-      this.renderCollapsed(root, directChildren, containerWidth, markerId)
-    } else {
-      this.renderTree(nodes, root, childrenOf, containerWidth, markerId)
-    }
+    this.renderTree(displayNodes, root, displayChildren, containerWidth, markerId)
   }
 
   createSvg(width, height, markerId) {
@@ -94,6 +152,11 @@ export default class extends Controller {
   }
 
   drawNode(svg, node, x, y, isRoot) {
+    if (node.isMore) {
+      this.drawMoreNode(svg, node, x, y)
+      return
+    }
+
     const h = isRoot ? ROOT_H : NODE_H
     const maxChars = 28
     const label =
@@ -148,6 +211,38 @@ export default class extends Controller {
       .text(node.card_count == null ? '💳 —' : `💳 ${node.card_count}`)
   }
 
+  drawMoreNode(svg, node, x, y) {
+    const moreG = svg
+      .append('g')
+      .attr('class', 'more-node')
+      .style('cursor', 'pointer')
+      .on('click', () => {
+        this.expandedNodes.add(node.parentNodeId)
+        this.render()
+      })
+    moreG
+      .append('rect')
+      .attr('class', 'more-rect')
+      .attr('x', x)
+      .attr('y', y)
+      .attr('width', NODE_W)
+      .attr('height', NODE_H)
+      .attr('rx', 6)
+      .attr('stroke-width', 2)
+    const label =
+      node.hiddenCount === 1
+        ? '+1 organization'
+        : `+${node.hiddenCount} organizations`
+    moreG
+      .append('text')
+      .attr('class', 'more-text')
+      .attr('x', x + NODE_W / 2)
+      .attr('y', y + NODE_H / 2)
+      .attr('text-anchor', 'middle')
+      .attr('dominant-baseline', 'central')
+      .text(label)
+  }
+
   formatBalance(cents) {
     const dollars = (cents || 0) / 100
     const abs = Math.abs(dollars)
@@ -156,81 +251,6 @@ export default class extends Controller {
       maximumFractionDigits: 2,
     })
     return (dollars < 0 ? '-$' : '$') + formatted
-  }
-
-  // Single column with truncated list + "+N more" expand button
-  renderCollapsed(root, allChildren, containerWidth, markerId) {
-    const visible = allChildren.slice(0, MAX_INITIAL)
-    const hiddenCount = allChildren.length - visible.length
-    const numRows = MAX_INITIAL + 1 // visible nodes + more node
-
-    const svgWidth = containerWidth
-    const svgHeight = numRows * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
-    const hGap = svgWidth - 2 * PADDING - 2 * NODE_W
-
-    const svg = this.createSvg(svgWidth, svgHeight, markerId)
-
-    const rootX = PADDING
-    const rootY = PADDING
-    const childX = PADDING + NODE_W + hGap
-    const childY = i => PADDING + i * (NODE_H + V_GAP)
-
-    // Edges to visible children
-    visible.forEach((_, i) => {
-      svg
-        .append('line')
-        .attr('class', 'edge')
-        .attr('x1', rootX + NODE_W)
-        .attr('y1', rootY + ROOT_H / 2)
-        .attr('x2', childX)
-        .attr('y2', childY(i) + NODE_H / 2)
-        .attr('stroke-width', 1.5)
-        .attr('marker-end', `url(#${markerId})`)
-    })
-    // Edge to "more" node
-    svg
-      .append('line')
-      .attr('class', 'edge')
-      .attr('x1', rootX + NODE_W)
-      .attr('y1', rootY + ROOT_H / 2)
-      .attr('x2', childX)
-      .attr('y2', childY(MAX_INITIAL) + NODE_H / 2)
-      .attr('stroke-width', 1.5)
-      .attr('marker-end', `url(#${markerId})`)
-
-    this.drawNode(svg, root, rootX, rootY, true)
-    visible.forEach((child, i) =>
-      this.drawNode(svg, child, childX, childY(i), false)
-    )
-
-    // "+N more" expand node
-    const moreX = childX
-    const moreY = childY(MAX_INITIAL)
-    const moreG = svg
-      .append('g')
-      .attr('class', 'more-node')
-      .style('cursor', 'pointer')
-      .on('click', () => {
-        this.expanded = true
-        this.render()
-      })
-    moreG
-      .append('rect')
-      .attr('class', 'more-rect')
-      .attr('x', moreX)
-      .attr('y', moreY)
-      .attr('width', NODE_W)
-      .attr('height', NODE_H)
-      .attr('rx', 6)
-      .attr('stroke-width', 2)
-    moreG
-      .append('text')
-      .attr('class', 'more-text')
-      .attr('x', moreX + NODE_W / 2)
-      .attr('y', moreY + NODE_H / 2)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'central')
-      .text(`+${hiddenCount} more`)
   }
 
   // Tree layout for nested hierarchies (and flat lists)
