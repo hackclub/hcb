@@ -144,6 +144,10 @@ calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "Metric::CalculateSubjectsJob"
 
+detect_logical_transaction_anomalies:
+  cron: "0 7 * * *" # run every 1 day
+  class: "Admin::DetectLogicalTransactionAnomaliesJob"
+
 detect_balance_anomalies:
   cron: "0 7 * * *" # run every 1 day
   class: "Admin::DetectBalanceAnomaliesJob"
