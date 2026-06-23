@@ -10,7 +10,7 @@ Rails.application.config.to_prepare do
       handled: true,
       context: {
         active_storage_blob_id: blob&.id,
-        transformations:
+        transformations: transformations
       }
     )
   end
