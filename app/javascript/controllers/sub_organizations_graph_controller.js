@@ -124,7 +124,13 @@ export default class extends Controller {
     select(this.element).selectAll('*').remove()
 
     const markerId = `arr-${Math.random().toString(36).slice(2)}`
-    this.renderTree(displayNodes, root, displayChildren, containerWidth, markerId)
+    this.renderTree(
+      displayNodes,
+      root,
+      displayChildren,
+      containerWidth,
+      markerId
+    )
   }
 
   createSvg(width, height, markerId) {
