@@ -741,7 +741,7 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     background: linear-gradient(
       transparent,
       rgba($darkless, 0.7) 40%,
-      rgba($darkless) 60%
+      $darkless 60%
     ) !important;
   }
 }
