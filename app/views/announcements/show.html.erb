@@ -47,11 +47,10 @@
           <% end %>
         <% end %>
 
-        <% if policy(@announcement).destroy? || auditor_signed_in? %>
-          <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete } do %>
-            <%= inline_icon "delete" %>
-            Delete
-          <% end %>
+      <% if policy(@announcement).destroy? || auditor_signed_in? %>
+        <%= link_to announcement_path(@announcement), class: "btn flex items-center bg-error #{"disabled" if !policy(@announcement).destroy?}", data: { turbo_confirm: "Are you sure you would like to delete this announcement?", turbo_method: :delete, turbo_confirm_danger: true } do %>
+          <%= inline_icon "delete" %>
+          Delete
         <% end %>
       <% end %>
     </div>

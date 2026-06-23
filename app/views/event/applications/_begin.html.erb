@@ -78,7 +78,7 @@
         <%= responsive_link_to applications_path, text: "Back to dashboard", icon: "view-back", class: "btn bg-muted" %>
 
         <% if @application.present? %>
-          <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+          <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?", turbo_confirm_danger: true } %>
         <% end %>
       </div>
     <% else %>
