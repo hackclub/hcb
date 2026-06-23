@@ -19,13 +19,20 @@ class LegalEntityUser < ApplicationRecord
   belongs_to :legal_entity
   belongs_to :user
 
-  validate :person_entities_have_one_user
+  validate :person_entities_have_one_user, on: :create
+  validate :user_only_has_one_person_entity, on: :create
 
   private
 
   def person_entities_have_one_user
     if legal_entity.person? && legal_entity.users.any?
       errors.add(:base, "Legal entities with type person can only have one user")
+    end
+  end
+
+  def user_only_has_one_person_entity
+    if legal_entity.person? && user.legal_entities.person.any?
+      errors.add(:base, "Users can only have one person legal entity")
     end
   end
 
