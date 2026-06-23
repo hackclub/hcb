@@ -26,11 +26,11 @@ class CardGrantsController < ApplicationController
     card_grants_per_page = (params[:per] || 20).to_i
 
     @card_grants = @event.card_grants
-      .includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger)
-      .order(
-        Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-        "card_grants.created_at DESC"
-      )
+                         .includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger)
+                         .order(
+                           Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+                           "card_grants.created_at DESC"
+                         )
     @table_columns = CARD_GRANT_COLUMNS
 
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
@@ -42,16 +42,16 @@ class CardGrantsController < ApplicationController
       sorted_card_grants.reverse! if direction == :desc
 
       @paginated_card_grants = Kaminari.paginate_array(sorted_card_grants)
-          .page(card_grants_page)
-          .per(card_grants_per_page)
+                                       .page(card_grants_page)
+                                       .per(card_grants_per_page)
     else
       @paginated_card_grants = helpers.sorted_relation(
-          @card_grants.reorder(nil),
-          CARD_GRANT_COLUMNS.reject { |column| column[:key] == "balance" },
-          sort: [params[:sort], params[:direction]]
+        @card_grants.reorder(nil),
+        CARD_GRANT_COLUMNS.reject { |column| column[:key] == "balance" },
+        sort: [params[:sort], params[:direction]]
       )
-      .page(card_grants_page)
-      .per(card_grants_per_page)
+                                      .page(card_grants_page)
+                                      .per(card_grants_per_page)
     end
   end
 
@@ -343,11 +343,12 @@ class CardGrantsController < ApplicationController
   end
 
   CARD_GRANT_COLUMNS = [
-    { key: "status"},
+    { key: "status" },
     { key: "created_at", display: "Date", default: true },
     { key: "user_name", display: "To", column: "users.name", join: :user, sortable: false },
     { key: "purpose", display: "For" },
     { key: "amount_cents", display: "Amount" },
     { key: "balance", right: true }
-  ]
+  ].freeze
+
 end
