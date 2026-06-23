@@ -27,7 +27,7 @@
             <%= status_badge opdr.status_badge_type %>
             <%= opdr.status.to_s.humanize %>
           </td>
-          <td><%= link_to (opdr.under_review? ? "Process" : "View"), opdr, class: "btn" %></td>
+          <td><%= link_to (opdr.under_review? || opdr.assigned? ? "Process" : "View"), opdr, class: "btn" %></td>
         </tr>
       <% end %>
     </tbody>
