@@ -432,8 +432,9 @@ class User < ApplicationRecord
     self.payout_method = payout_method_type.constantize.new(params)
   end
 
-  def email_address_with_name
-    ActionMailer::Base.email_address_with_name(email, name)
+  def email_address_with_name(full_name: false)
+    display_name = full_name ? (self.full_name.presence || name) : name
+    ActionMailer::Base.email_address_with_name(email, display_name)
   end
 
   def hack_clubber?
