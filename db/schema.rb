@@ -1902,6 +1902,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
     t.string "preferred_name", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_payees_on_event_id"
+    t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
   end
 
