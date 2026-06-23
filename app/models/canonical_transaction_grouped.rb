@@ -44,7 +44,11 @@ class CanonicalTransactionGrouped
           # `canonical_pending_transactions` method in this class will be empty
           # if this CanonicalTransactionGrouped represents a CanonicalTransaction
           pts = local_hcb_code.canonical_pending_transactions.select { |pt| pt.fronted? && pt.event == event && pt.subledger == subledger }
-          return Money.new(amount_cents + pts.sum(&:fronted_amount), "USD")
+          if local_hcb_code.canonical_transactions.none?
+            return Money.new(amount_cents + pts.sum(&:fronted_amount), "USD")
+          else
+            return Money.new(amount_cents, "USD")
+          end
         end
 
         # Otherwise, this transaction is just a PT, and the `amount_cents`
