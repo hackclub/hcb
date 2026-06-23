@@ -112,7 +112,7 @@
     <% end %>
 
     <div class="flex gap-3">
-      <% if @opdr.organizer_position.deleted_at.nil? && (@opdr.under_review? || @opdr.pending?) %>
+      <% if @opdr.organizer_position.deleted_at.nil? && (@opdr.under_review? || @opdr.assigned?) %>
         <%= link_to "Delete organizer ⚠️☣☠",
                     organizer_path(@opdr.organizer_position.id),
                     method: :delete,
@@ -132,7 +132,7 @@
         <p><strong>OPDR is marked as closed by </strong><%= user_mention @opdr.closed_by %></p>
       <% end %>
 
-      <% if @opdr.under_review? || @opdr.pending? %>
+      <% if @opdr.under_review? || @opdr.assigned? %>
         <%= link_to "Close request",
                     organizer_position_deletion_request_close_path(@opdr.id),
                     method: :post,

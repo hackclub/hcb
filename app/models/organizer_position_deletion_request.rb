@@ -43,25 +43,25 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
   belongs_to :organizer_position, with_deleted: true
   has_one :event, through: :organizer_position
 
-  scope :under_review, -> { where(closed_at: nil) }
+  scope :under_review, -> { where(closed_at: nil, assignee_id: nil) }
 
   after_create_commit { OrganizerPositionDeletionRequestMailer.with(opdr: self).notify_operations.deliver_later }
 
   validates_presence_of :reason
 
-  def pending?
+  def assigned?
     assignee.present?
   end
 
   def under_review?
-    closed_at.nil?
+    closed_at.nil? && assignee.nil?
   end
 
   def status
     if organizer_position.deleted_at.present?
       :organizer_deleted
-    elsif pending?
-      :pending
+    elsif assigned?
+      :assigned
     elsif under_review?
       :under_review
     else
@@ -72,7 +72,7 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
   def status_badge_type
     if organizer_position.deleted_at.present?
       :primary
-    elsif under_review?
+    elsif under_review? || assigned?
       :pending
     else
       :success
