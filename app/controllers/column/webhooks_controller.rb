@@ -68,7 +68,7 @@ module Column
 
       RawPendingColumnTransaction.create!(
         column_id: @object[:id],
-        amount_cents: @object[:amount],
+        amount_cents: @object[:type] == "DEBIT" ? -1 * @object[:amount] : @object[:amount],
         date_posted: Date.today,
         column_transaction: @object,
         column_event_type:
