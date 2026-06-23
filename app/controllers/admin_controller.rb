@@ -928,7 +928,7 @@ class AdminController < Admin::BaseController
 
     relation = relation.where(event_id: @event_id) if @event_id
 
-    @donations = relation.page(params[:page]).per(20).order(created_at: :desc)
+    @donations = relation.page(params[:page]).per(params[:per] || 20).order(created_at: :desc)
 
   end
 

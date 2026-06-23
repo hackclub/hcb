@@ -5,7 +5,7 @@
 # Table name: invoices
 #
 #  id                                                           :bigint           not null, primary key
-#  aasm_state                                                   :string
+#  aasm_state                                                   :string           not null
 #  amount_due                                                   :bigint
 #  amount_paid                                                  :bigint
 #  amount_remaining                                             :bigint

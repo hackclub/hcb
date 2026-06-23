@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Payment do
+RSpec.describe HasPaymentRecipient do
   let(:attacker_event) do
     e = create(:event)
     create(:canonical_pending_transaction, amount_cents: 100_000, event: e, fronted: true)
