@@ -23,8 +23,10 @@
 #
 class LegalEntity < ApplicationRecord
   belongs_to :managing_event, class_name: "Event", optional: true
-  has_many :users
 
   enum :entity_type, { person: "person", business: "business" }
+
+  has_many :legal_entity_users
+  has_many :users, through: :legal_entity_users
 
 end

@@ -36,20 +36,14 @@
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
-#  legal_entity_id               :bigint
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #
 # Indexes
 #
-#  index_users_on_discord_id       (discord_id) UNIQUE
-#  index_users_on_email            (email) UNIQUE
-#  index_users_on_legal_entity_id  (legal_entity_id)
-#  index_users_on_slug             (slug) UNIQUE
-#
-# Foreign Keys
-#
-#  fk_rails_...  (legal_entity_id => legal_entities.id)
+#  index_users_on_discord_id  (discord_id) UNIQUE
+#  index_users_on_email       (email) UNIQUE
+#  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
@@ -183,7 +177,8 @@ class User < ApplicationRecord
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
-  belongs_to :legal_entity, optional: true
+  has_many :legal_entity_users
+  has_many :legal_entities, through: :legal_entity_users
 
   has_encrypted :birthday, type: :date
 
@@ -196,6 +191,8 @@ class User < ApplicationRecord
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
+
+  after_create :create_legal_entity
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
@@ -667,14 +664,11 @@ class User < ApplicationRecord
     !verified?
   end
 
-  def legal_entity
-    super || begin
-      le = LegalEntity.create!
-      update!(legal_entity: le)
-    end
-  end
-
   private
+
+  def create_legal_entity
+    legal_entities.create!(entity_type: :person)
+  end
 
   def auditors_must_be_verified
     if auditor? && !verified?

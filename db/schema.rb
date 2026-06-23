@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_23_135035) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_23_171305) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1630,6 +1630,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_135035) do
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
   end
 
+  create_table "legal_entity_users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "legal_entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["legal_entity_id"], name: "index_legal_entity_users_on_legal_entity_id"
+    t.index ["user_id"], name: "index_legal_entity_users_on_user_id"
+  end
+
   create_table "lob_addresses", force: :cascade do |t|
     t.string "address1"
     t.string "address2"
@@ -2685,7 +2694,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_135035) do
     t.text "email", null: false
     t.string "full_name"
     t.boolean "joined_as_teenager"
-    t.bigint "legal_entity_id"
     t.datetime "locked_at", precision: nil
     t.boolean "monthly_donation_summary", default: true
     t.boolean "monthly_follower_summary", default: true
@@ -2710,7 +2718,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_135035) do
     t.string "webauthn_id"
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["legal_entity_id"], name: "index_users_on_legal_entity_id"
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end
 
@@ -3005,7 +3012,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_135035) do
   add_foreign_key "user_seen_at_histories", "users"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
-  add_foreign_key "users", "legal_entities"
   add_foreign_key "w9s", "users", column: "uploaded_by_id"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"
