@@ -707,7 +707,7 @@ class EventsController < ApplicationController
       all_transfers = [@paypal_transfers]
     end
 
-    @transfers = Kaminari.paginate_array((all_transfers.flatten.sort_by { |o| o.created_at }.reverse!)).page(params[:page]).per(params[:per] || 100)
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
 
     @filter_options = transfer_filter_options
     helpers.validate_filter_options(@filter_options, params)
@@ -1399,12 +1399,12 @@ class EventsController < ApplicationController
     transfer_types << "paypal" if @event.paypal_transfers.exists?
 
     transfer_type_display = {
-      "ach" => "ACH",
-      "mailed_check" => "Mailed check",
+      "ach"           => "ACH",
+      "mailed_check"  => "Mailed check",
       "wise_transfer" => "Wise transfer",
       "wire_transfer" => "Wire transfer",
-      "hcb_transfer" => "HCB transfer",
-      "paypal" => "PayPal"
+      "hcb_transfer"  => "HCB transfer",
+      "paypal"        => "PayPal"
     }
 
     [
