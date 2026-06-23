@@ -70,7 +70,9 @@
     </div>
   </div>
 
-  TURBO FRAME HERE
+  <%= turbo_frame_tag :donations_donations_overview, src: event_url(@event), loading: :eager do %>
+    <%= render "application/loading_container", klass: "mt-8" %>
+  <% end %>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <%= javascript_include_tag "donation_qr_codes.js" %>
