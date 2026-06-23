@@ -4,6 +4,7 @@ class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
     before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
+    before_action :prevent_access_if_archived, only: [:project_info, :personal_info, :review, :videos, :agreement]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -74,7 +75,7 @@ class Event
           label: "Await review",
           shorthand: "Review",
           name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
+          description: "Our operations team will review your application and respond within #{helpers.pluralize(@application.response_business_days, "business day")}. You'll hear back soon on whether your application was approved or rejected.",
           completed: @application.approved? && (contract_signed || !@application.teen_led?)
         }
         @steps << contract_step unless @application.teen_led?
@@ -250,14 +251,21 @@ class Event
     def resend_to_cosigner
       authorize @application
 
-      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+      new_cosigner_email = params[:event_application][:cosigner_email]&.strip
 
-      # If the user resends to the same email, the after_save callback does not handle this
-      unless @application.cosigner_email_previously_changed?
-        @application.contract.party(:cosigner).notify
+      if new_cosigner_email == @application.user.email
+        flash[:error] = "You cannot use your own email as your parent's email"
+      else
+        @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+        # If the user resends to the same email, the after_save callback does not handle this
+        unless @application.cosigner_email_previously_changed?
+          @application.contract.party(:cosigner).notify
+        end
+
+        flash[:success] = "Resent agreement to parent"
       end
 
-      flash[:success] = "Resent agreement to parent"
       redirect_back_or_to application_path(@application)
     end
 
@@ -283,6 +291,12 @@ class Event
 
     def prevent_access_after_submission
       unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
+      end
+    end
+
+    def prevent_access_if_archived
+      if @application.archived? && !current_user.auditor?
         redirect_to application_path(@application)
       end
     end

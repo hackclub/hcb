@@ -4,7 +4,6 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       def index
         if params[:event_id].present?

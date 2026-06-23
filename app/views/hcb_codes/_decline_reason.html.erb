@@ -69,10 +69,10 @@
 
 <% if local_assigns[:include_troubleshooting] %>
   <% unless hcb_decline_reason == :inadequate_balance %>
-    <h3>Troubleshooting</h3>
+    <h3 class="mb-2">Troubleshooting</h3>
   <% end %>
 
-  <p class="mb-0">
+  <p class="my-0">
     <% if hcb_decline_reason == :merchant_not_allowed_globally %>
       This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a <%= link_to "different transfer method", "https://help.hcb.hackclub.com/en/articles/15033356-how-do-i-transfer-money" %>.
     <% elsif hcb_decline_reason == :merchant_not_allowed %>

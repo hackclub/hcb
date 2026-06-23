@@ -81,9 +81,9 @@ class StripeCardsController < ApplicationController
 
     @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
-                      .page(params[:page]).per(25)
+                      .page(params[:page]).per(params[:per] || 25)
 
-    if params[:frame] == "true"
+    if params[:frame] == "true" && turbo_frame_request?
       @frame = true
       @force_no_popover = true
       render :show, layout: false

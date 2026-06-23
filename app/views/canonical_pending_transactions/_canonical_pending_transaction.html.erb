@@ -109,7 +109,7 @@
                     <%= tag.label %>
                     <%= "✓" if tagged_with.include?(tag) %>
                   <% end %>
-                  <%= button_to event_tag_path(event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message } do %>
+                  <%= button_to event_tag_path(event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message, "data-turbo-confirm-danger" => true } do %>
                     <%= inline_icon "delete", size: 18, style: "margin: 0" %>
                   <% end %>
                 </div>
