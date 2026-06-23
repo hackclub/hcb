@@ -1899,7 +1899,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.bigint "legal_entity_id", null: false
-    t.string "preferred_name"
+    t.string "preferred_name", null: false
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_payees_on_event_id"
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
