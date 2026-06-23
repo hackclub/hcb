@@ -60,7 +60,7 @@ class Wire < ApplicationRecord
 
   include AASM
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include Hashid::Rails
   hashid_config salt: ""
