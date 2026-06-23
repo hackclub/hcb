@@ -7,6 +7,7 @@ module OneTimeJobs
       backfill_event_ledgers
       backfill_card_grant_ledgers
       backfill_ledger_items
+      backfill_ledger_mappings
     end
 
     def backfill_event_ledgers
@@ -39,7 +40,6 @@ module OneTimeJobs
                     event: :ledger
                   )
                   .where.missing(:ledger_item)
-                  .where(event_id: 183) # only backfill HQ for noe
       total = hcb_codes.count
       puts "Backfilling Ledger::Items from #{total} HcbCodes"
 
@@ -84,6 +84,18 @@ module OneTimeJobs
       end
 
       puts "Completed! Processed #{processed} / #{total} HcbCodes (#{errors} errors)"
+    end
+
+    def backfill_ledger_mappings
+      CanonicalPendingTransaction.where.not(ledger_item_id: nil).find_each do |cpt|
+        cpt.ledger_item.map!
+        cpt.ledger_item.write_amount_cents!
+      end
+
+      CanonicalTransaction.where.not(ledger_item_id: nil).find_each do |ct|
+        ct.ledger_item.map!
+        ct.ledger_item.write_amount_cents!
+      end
     end
 
   end
