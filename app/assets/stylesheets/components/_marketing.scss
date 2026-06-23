@@ -1536,59 +1536,289 @@ $mk-portfolio-banner-h: 190px;
     object-position: center;
   }
 
-  // Terminal-art cover (Ghostty): a dark "terminal" with faint code lines and a blinking prompt.
+  // Terminal-art cover (Ghostty): a faux terminal window themed after Ghostty's own branding —
+  // the Challenger Deep palette (deep indigo ground, violet prompt) the project's icon ships with.
+  // It fills the banner instead of floating a few bars in a void: a title bar pinned to the top,
+  // then a session that types a command and streams output beneath it.
   &--terminal {
     display: flex;
-    align-items: center;
-    background: radial-gradient(135% 150% at 82% -10%, #262b38 0%, #15171c 58%);
+    background: radial-gradient(
+      120% 130% at 88% -20%,
+      #2a2545 0%,
+      #1e1c31 52%,
+      #16142a 100%
+    );
   }
 }
+
+// Challenger Deep palette — the scheme Ghostty's icon/brand is built on.
+$mk-term-bg: #1e1c31;
+$mk-term-fg: #cbe3e7;
+$mk-term-violet: #a08cff; // prompt sigil / accent (brand purple, brightened for contrast)
+$mk-term-blue: #65b2ff;
+$mk-term-green: #62d196;
 
 .mk-portfolio__terminal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   width: 100%;
-  padding: 0 clamp(26px, 4vw, 46px);
+  min-width: 0;
+  font-family: $mono;
 }
 
-.mk-portfolio__terminal-line {
-  height: 9px;
-  border-radius: 5px;
-  background: rgba($snow, 0.1);
+// Slim window/tab bar across the top: three ANSI-tinted dots + a faint tab label.
+.mk-portfolio__terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 11px clamp(16px, 3vw, 26px);
+  border-bottom: 1px solid rgba($snow, 0.06);
+  background: rgba($snow, 0.02);
+}
+
+.mk-portfolio__terminal-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba($snow, 0.18);
 
   &:nth-child(1) {
-    width: 42%;
-    background: rgba(#7aa2f7, 0.4); // soft blue
-  }
+    background: #ff5458;
+  } // ANSI red
   &:nth-child(2) {
-    width: 66%;
-  }
+    background: #ffb378;
+  } // ANSI yellow
   &:nth-child(3) {
-    width: 50%;
-    background: rgba(#9ece6a, 0.34); // soft green
+    background: $mk-term-green;
+  } // ANSI green
+}
+
+.mk-portfolio__terminal-tab {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba($mk-term-fg, 0.5);
+}
+
+// The "screen": holds the watermark ghost behind the text feed.
+.mk-portfolio__terminal-screen {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: clamp(14px, 2.6vw, 22px) clamp(16px, 3vw, 26px)
+    clamp(16px, 3vw, 24px);
+}
+
+// The ghost mark, recolored from its flat source via mask and dropped to a faint watermark in the
+// corner so the banner is unmistakably Ghostty without competing with the text.
+.mk-portfolio__terminal-ghost {
+  position: absolute;
+  right: -6%;
+  bottom: -14%;
+  width: clamp(120px, 26%, 220px);
+  aspect-ratio: 1;
+  background: $mk-term-violet;
+  opacity: 0.08;
+  mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+  -webkit-mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+}
+
+.mk-portfolio__terminal-feed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vw, 14px);
+  font-size: clamp(0.82rem, 0.6vw + 0.62rem, 1rem);
+  line-height: 1.2;
+  color: $mk-term-fg;
+}
+
+.mk-portfolio__terminal-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.mk-portfolio__terminal-sigil {
+  flex: 0 0 auto;
+  margin-right: 0.6em;
+  font-weight: 700;
+  color: $mk-term-violet;
+}
+
+// The typed command: a fixed-width monospace box (overflow hidden) the type-on animation widens
+// from zero. "ghostty" is 7 glyphs, so it rests at 7ch with a hair of slack.
+.mk-portfolio__terminal-type {
+  flex: 0 0 auto;
+  width: 7.2ch;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+// Caret that rides the end of the command while it types; hidden when static (no motion).
+.mk-portfolio__terminal-caret {
+  flex: 0 0 auto;
+  width: 0.55em;
+  height: 1.15em;
+  margin-left: 1px;
+  background: $mk-term-fg;
+  border-radius: 1px;
+  opacity: 0;
+}
+
+// Streamed output lines: faint colored bars standing in for the command's result.
+.mk-portfolio__terminal-out {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba($mk-term-fg, 0.16);
+
+  &--1 {
+    width: 64%;
+    background: rgba($mk-term-blue, 0.4);
+  }
+  &--2 {
+    width: 78%;
+  }
+  &--3 {
+    width: 46%;
+    background: rgba($mk-term-green, 0.4);
   }
 }
 
-.mk-portfolio__terminal-prompt {
-  margin-top: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  font-family: $mono;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #7aa2f7;
+// Block cursor at the fresh prompt after output.
+.mk-portfolio__terminal-cursor {
+  width: 0.55em;
+  height: 1.15em;
+  background: $mk-term-fg;
+  border-radius: 1px;
 }
 
-.mk-portfolio__terminal-cursor {
-  width: 11px;
-  height: 1.4rem;
-  background: $snow;
-  border-radius: 1px;
+// --- the looping session ---------------------------------------------------
+// Static resting state (above) = a finished session, fully legible with no JS and under
+// prefers-reduced-motion. The timeline below is layered on only when motion is welcome: every
+// element shares one 9s cycle so the type-on, output stream, and cursor stay in lockstep, and
+// the feed fades out/in at the seam so the reset is never seen.
+@media (prefers-reduced-motion: no-preference) {
+  .mk-portfolio__terminal-feed {
+    animation: mk-term-feed 9s ease-in-out infinite;
+  }
+  .mk-portfolio__terminal-type {
+    animation: mk-term-type 9s steps(7, end) infinite;
+  }
+  .mk-portfolio__terminal-caret {
+    animation: mk-term-caret 9s linear infinite;
+  }
+  .mk-portfolio__terminal-out {
+    opacity: 0;
+    animation: mk-term-out 9s ease-out infinite;
+  }
+  .mk-portfolio__terminal-out--2 {
+    animation-name: mk-term-out-2;
+  }
+  .mk-portfolio__terminal-out--3 {
+    animation-name: mk-term-out-3;
+  }
+  .mk-portfolio__terminal-row--next {
+    opacity: 0;
+    animation: mk-term-next 9s steps(1) infinite;
+  }
+  .mk-portfolio__terminal-cursor {
+    animation: mk-term-blink 1.05s steps(1) infinite;
+  }
+}
 
-  @media (prefers-reduced-motion: no-preference) {
-    animation: mk-term-blink 1.1s steps(1) infinite;
+// Fade the whole feed in at the start and out at the very end, hiding the wrap-around reset.
+@keyframes mk-term-feed {
+  0% {
+    opacity: 0;
+  }
+  4%,
+  93% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+// Type "ghostty" on, then hold for the rest of the cycle.
+@keyframes mk-term-type {
+  0%,
+  5% {
+    width: 0;
+  }
+  23%,
+  100% {
+    width: 7.2ch;
+  }
+}
+
+// Caret visible (and blinking) only while the command is being typed.
+@keyframes mk-term-caret {
+  0%,
+  26% {
+    opacity: 1;
+  }
+  13% {
+    opacity: 0;
+  }
+  27%,
+  100% {
+    opacity: 0;
+  }
+}
+
+// Output bars reveal in sequence after the command "runs".
+@keyframes mk-term-out {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  36%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-2 {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  43%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-3 {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  50%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// The fresh prompt appears once output has finished streaming.
+@keyframes mk-term-next {
+  0%,
+  54% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
   }
 }
 
