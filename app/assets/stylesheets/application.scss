@@ -712,6 +712,40 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   --bottom-mask-size: 48px !important;
 }
 
+.suborg-graph-toggle {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: linear-gradient(
+    transparent,
+    rgba(255, 255, 255, 0.7) 40%,
+    #fff 60%
+  ) !important;
+  font-size: 14px;
+  height: 64px;
+  z-index: 99;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.15s;
+
+  [data-dark='true'] & {
+    background: linear-gradient(
+      transparent,
+      rgba($darkless, 0.7) 40%,
+      rgba($darkless) 60%
+    ) !important;
+  }
+}
+
 .hcb-suborg-graph {
   .node-rect {
     fill: #fff;
