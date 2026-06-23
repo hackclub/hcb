@@ -177,6 +177,9 @@ class User < ApplicationRecord
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
+  has_many :legal_entity_users
+  has_many :legal_entities, through: :legal_entity_users
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
@@ -188,6 +191,8 @@ class User < ApplicationRecord
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
+
+  after_create :create_legal_entity
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
@@ -660,6 +665,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def create_legal_entity
+    legal_entities.create!(entity_type: :person)
+  end
 
   def auditors_must_be_verified
     if auditor? && !verified?

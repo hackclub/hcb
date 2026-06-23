@@ -15,6 +15,7 @@ module MarketingHelper
     ff_logo = "https://cdn.hackclub.com/019edcbb-71d3-755b-bf22-b4e958e3b0e9/founders_fund_logo__2015_.svg"
     ford_logo = "https://cdn.hackclub.com/019ed938-00a8-714d-bd51-3a7145ef976e/image.png"
     omidyar_logo = "https://cdn.hackclub.com/019ed938-0314-7502-9dca-4a7f342c53d7/image.png"
+    sloan_logo = "https://cdn.hackclub.com/019edcbb-46d2-74bd-93d3-63bf843af555/image.png"
     ghostty_mark = "https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg"
 
     [
@@ -57,6 +58,25 @@ module MarketingHelper
         quote: "No one comes close to the quality of Hack Club’s services at a price a startup like ours can afford. The in-house, flexible, tech-first platform lets us spend our team’s finite hours on our work, not on paperwork. But most of all, the team is incomparable in their integrity and transparency, which is why we keep choosing to grow with Hack Club as we scale.",
         author: "Isaac Sevier", author_role: "Founder & Executive Director of Public Grids",
         author_avatar: "https://cdn.hackclub.com/019edd08-6185-7556-a382-67f43d652c04/image.png",
+      },
+      {
+        key: "curioss", name: "CURIOSS", icon: "community",
+        logo: "https://cdn.hackclub.com/019ef115-f769-7ff8-bc2d-fcd1326becb5/color_logo_vert1.svg",
+        sub: "Open source across universities & research",
+        url: "https://curioss.org",
+        media: :logo, brand: "https://cdn.hackclub.com/019ef115-fd15-7200-b180-76ad934859fe/color_horizontal_logotype1.svg",
+        what: "A global community strengthening the open-source program offices that universities and research institutions rely on.",
+        stat: "$750K+", stat_label: "in grants on HCB",
+        facts: [
+          "Founded in 2023 to connect open-source program offices across universities and research institutions worldwide",
+          "Publishes shared standards for the field, including a widely used definition of an academic open-source office",
+        ],
+        quote: "HCB has been an excellent fiscal sponsor that we now routinely suggest to others. Their platform, and especially their amazingly, weirdly speedy team, has made our work a breeze. Cannot recommend enough.",
+        author: "Richard Littauer", author_role: "Co-organizer of CURIOSS",
+        author_avatar: "https://cdn.hackclub.com/019ef598-93fc-7e85-b848-394893f46186/richard-littauer.jpg",
+        funded_by: [
+          { logo: sloan_logo, alt: "Alfred P. Sloan Foundation" },
+        ],
       },
       {
         key: "ghostty", name: "Ghostty", icon: "terminal", logo: ghostty_mark,

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Payment
+module HasPaymentRecipient
   extend ActiveSupport::Concern
   included do
     belongs_to :payment_recipient, optional: true
@@ -14,7 +14,7 @@ module Payment
 
     def payment_recipient_attributes
       # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Payment, but hasn't implemented payment_recipient_attributes."
+      raise NotImplementedError, "The #{self.class.name} model includes HasPaymentRecipient, but hasn't implemented payment_recipient_attributes."
     end
 
     def set_fields_from_payment_recipient
