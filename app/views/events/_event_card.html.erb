@@ -65,7 +65,7 @@
                     <%= scoped_tag.name %>
                     <%= "✓" if event.scoped_tags.include?(scoped_tag) %>
                   <% end %>
-                  <%= button_to event_scoped_tag_path(event, scoped_tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => scoped_tag.removal_confirmation_message } do %>
+                  <%= button_to event_scoped_tag_path(event, scoped_tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => scoped_tag.removal_confirmation_message, "data-turbo-confirm-danger" => true } do %>
                     <%= inline_icon "delete", size: 18, style: "margin: 0" %>
                   <% end %>
                 </div>

@@ -1,5 +1,7 @@
 plugins:
   - rubocop-rails
+require:
+  - ./lib/rubocop/cop/hcb/turbo_confirm
 inherit_from: .rubocop_todo.yml
 
 AllCops:
@@ -193,3 +195,6 @@ Rails/Validation:
 
 Rails/UniqueValidationWithoutIndex:
   Enabled: false
+
+Hcb/TurboConfirm:
+  Enabled: true
