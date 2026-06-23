@@ -72,8 +72,8 @@ module MarketingHelper
           "Publishes shared standards for the field, including a widely used definition of an academic open-source office",
         ],
         quote: "HCB has been an excellent fiscal sponsor that we now routinely suggest to others. Their platform, and especially their amazingly, weirdly speedy team, has made our work a breeze. Cannot recommend enough.",
-        author: "First Last", author_role: "Role, CURIOSS",
-        author_avatar: "https://cdn.hackclub.com/019ef115-f769-7ff8-bc2d-fcd1326becb5/color_logo_vert1.svg",
+        author: "Richard Littauer", author_role: "Co-organizer of CURIOSS",
+        author_avatar: "https://cdn.hackclub.com/019ef598-93fc-7e85-b848-394893f46186/richard-littauer.jpg",
         funded_by: [
           { logo: sloan_logo, alt: "Alfred P. Sloan Foundation" },
         ],
