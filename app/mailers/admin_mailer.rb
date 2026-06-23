@@ -96,4 +96,13 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  def balance_anomalies(anomalous_events:)
+    @anomalous_events = anomalous_events
+
+    mail(
+      to: ["luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{anomalous_events.length} events have balance anomalies"
+    )
+  end
+
 end

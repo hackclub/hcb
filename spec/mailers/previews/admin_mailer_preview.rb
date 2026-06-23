@@ -22,4 +22,8 @@ class AdminMailerPreview < ActionMailer::Preview
       .blocked_authorization
   end
 
+  def balance_anomalies
+    AdminMailer.balance_anomalies(anomalous_events: Event.where(id: 2))
+  end
+
 end
