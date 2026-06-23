@@ -670,8 +670,6 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    return unless stripe_cardholder&.stripe_id.present?
-
     stripe_cardholder.update!(
       stripe_email: email,
       stripe_phone_number: phone_number_verified? ? phone_number : nil,
