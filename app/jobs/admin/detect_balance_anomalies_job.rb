@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-module OneTimeJobs
-  class DetectBalanceAnomalies
-    def self.perform
+module Admin
+  class DetectBalanceAnomaliesJob < ApplicationJob
+    queue_as :low
+
+    def perform
       anomalous_events = []
       Event.find_each do |event|
         anomalous_events << event.id if event.ledger.balance_cents != event.balance_v2_cents

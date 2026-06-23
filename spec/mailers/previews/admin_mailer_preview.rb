@@ -23,7 +23,7 @@ class AdminMailerPreview < ActionMailer::Preview
   end
 
   def balance_anomalies
-    AdminMailer.balance_anomalies(anomalous_events: Event.where(id: 2))
+    AdminMailer.balance_anomalies(anomalous_events: Event.all)
   end
 
 end
