@@ -2,6 +2,6 @@ These events have discrepancies in their balances between the old and new transa
 
 <% @anomalous_events.find_each do |event| %>
   <h2><%= link_to event.name, event_url(event) %> (<%= event.id %>)</h2>
-  <p>Old transaction engine balance: <%= event.balance_v2_cents %></p>
-  <p>New transaction engine balance: <%= event.ledger.balance_cents %></p>
+  <p><%= link_to "Old transaction engine balance:", event_transactions_url(event) %> <%= event.balance_v2_cents %></p>
+  <p><%= link_to "New transaction engine balance:", ledger_url(event.ledger) %> <%= event.ledger.balance_cents %></p>
 <% end %>

@@ -27,7 +27,7 @@ class AdminMailerPreview < ActionMailer::Preview
   end
 
   def logical_transaction_anomalies
-    AdminMailer.balance_anomalies(hcb_codes: HcbCode.where(event_id: 1))
+    AdminMailer.balance_anomalies(hcb_codes: HcbCode.where(event_id: 1).where.not(ledger_item_id: nil))
   end
 
 end
