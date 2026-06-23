@@ -718,8 +718,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   border: 0;
   background: linear-gradient(
     transparent,
-    rgba(255, 255, 255, 0.7) 40%,
-    #fff 60%
+    rgba($snow, 0.7) 40%,
+    $snow 60%
   ) !important;
   font-size: 14px;
   height: 64px;
@@ -734,7 +734,7 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     -apple-system,
     sans-serif;
   cursor: pointer;
-  color: inherit;
+  color: $muted;
   transition: background 0.15s;
 
   [data-dark='true'] & {
