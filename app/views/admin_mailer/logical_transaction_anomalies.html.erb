@@ -1,0 +1,6 @@
+These logical transactions have discrepancies in their amounts between the old and new transaction engine:
+
+<% @hcb_codes.find_each do |hcb_code| %>
+  <p>Old transaction engine balance (HCB Code): <%= hcb_code.amount_cents %></p>
+  <p>New transaction engine balance (Ledger::Item): <%= ledger_item.amount_cents %></p>
+<% end %>
