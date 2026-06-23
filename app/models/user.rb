@@ -667,6 +667,13 @@ class User < ApplicationRecord
     !verified?
   end
 
+  def legal_entity
+    super || begin
+      le = LegalEntity.create!
+      update!(legal_entity: le)
+    end
+  end
+
   private
 
   def auditors_must_be_verified
