@@ -23,8 +23,10 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def new?
-    can_send?(role: :reader) && can_receive?(role: :reader)
+    user&.auditor? || can_send?(role: :reader) && can_receive?(role: :reader)
   end
+
+  alias event_search? new?
 
   def create?
     can_send? && can_receive?

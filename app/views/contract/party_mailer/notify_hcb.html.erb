@@ -1,7 +1,14 @@
 <p>Hi there! 👋</p>
 
+<% signee_user = @contract.party(:signee).user %>
+
 <p>
-  <%= @contract.party(:signee).email %> from <%= @contract.event_name %> is ready for you (HCB Operations) to sign the fiscal sponsorship agreement!
+  <%= link_to "#{signee_user.name} (#{signee_user.email})", admin_user_url(signee_user) %> is ready for you (HCB Operations) to sign the fiscal sponsorship agreement for
+  <% if @contract.contractable.is_a?(Event::Application) %>
+    <%= link_to "their application for #{@contract.event_name}", submission_application_url(@contract.contractable) %>!
+  <% else %>
+    <%= link_to "their invitation to #{@contract.event_name}", organizer_position_invite_url(@contract.contractable) %>!
+  <% end %>
 </p>
 
 <p>

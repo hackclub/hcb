@@ -17,7 +17,7 @@ module Admin
       @check_deposit = CheckDeposit.find(params[:id])
 
       unless @check_deposit.manual_submission_required?
-        redirect_to @check_deposit.local_hcb_code.url
+        redirect_to hcb_code_url(@check_deposit.local_hcb_code)
       end
     end
 
@@ -40,7 +40,7 @@ module Admin
       render :show, status: :unprocessable_entity
     rescue Faraday::Error => e
       Rails.error.report(e)
-      flash.now[:error] = "Something went wrong: #{e.response_body["message"]}"
+      flash.now[:error] = "Something went wrong: #{ColumnService.error_to_admin_message(e)}"
       render :show, status: :unprocessable_entity
     rescue => e
       Rails.error.report(e)

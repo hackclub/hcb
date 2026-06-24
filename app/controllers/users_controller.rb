@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  skip_before_action :signed_in_user, only: [:webauthn_options]
+  # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
+  # and must remain reachable from impersonated sessions whose `verified` flag
+  # mirrors an unverified target — otherwise the admin is locked out.
+  skip_before_action :signed_in_user, only: [:webauthn_options, :unimpersonate]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
   skip_after_action :verify_authorized, only: [:show,
                                                :revoke_oauth_application,
@@ -26,7 +29,10 @@ class UsersController < ApplicationController
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
-    :edit_admin, :admin_details
+    :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
+    :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
+    :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
+    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -47,7 +53,9 @@ class UsersController < ApplicationController
   def unimpersonate
     return redirect_to root_path unless current_session&.impersonated?
 
-    impersonated_user = current_user
+    # Resolve the target through `allow_unverified: true` so the flash message
+    # works for impersonations of unverified shadow accounts.
+    impersonated_user = current_user(allow_unverified: true)
 
     unimpersonate_user
 
@@ -124,7 +132,7 @@ class UsersController < ApplicationController
   end
 
   def receipt_report
-    ReceiptReport::SendJob.perform_later(current_user.id, force_send: true)
+    ReceiptReport::SendJob.perform_later(current_user.id)
     flash[:success] = "Receipt report generating. Check #{current_user.email}"
     redirect_to settings_previews_path
   end
@@ -199,7 +207,7 @@ class UsersController < ApplicationController
     if @totp.may_mark_verified? && @totp.verify(params[:code], drift_behind: 15, after: @user.totp&.last_used_at)
       @user.totp&.mark_expired!
       @totp.mark_verified!
-      redirect_back_or_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
+      redirect_to security_user_path(@user), flash: { success: "Your time-based OTP has been successfully configured." }
     else
       @invalid = true
       render :generate_totp
@@ -209,7 +217,7 @@ class UsersController < ApplicationController
   def disable_totp
     authorize @user
     @user.totp&.mark_expired!
-    redirect_back_or_to security_user_path(@user)
+    redirect_to security_user_path(@user)
   end
 
   def generate_backup_codes
@@ -234,16 +242,83 @@ class UsersController < ApplicationController
   end
 
   def admin_details
-    # User Information
-    @invoices = Invoice.where(creator: @user)
-    @check_deposits = CheckDeposit.where(created_by: @user)
-    @increase_checks = IncreaseCheck.where(user: @user)
-    @lob_checks = Check.where(creator: @user)
-    @ach_transfers = AchTransfer.where(creator: @user)
-    @disbursements = Disbursement.where(requested_by: @user)
-    @permissions_overview = User::PermissionsOverview.new(user: @user)
-
     authorize @user
+
+    @permissions_overview = User::PermissionsOverview.new(user: @user)
+    @applications = @user.applications.not_archived
+  end
+
+  def admin_details_ach_transfers
+    authorize @user
+
+    @ach_transfers = @user.ach_transfers.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_check_deposits
+    authorize @user
+
+    @check_deposits = @user.check_deposits.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_disbursements
+    authorize @user
+
+    @disbursements = @user.disbursements.includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_emburse_cards
+    authorize @user
+
+    @emburse_cards = @user.emburse_cards.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_increase_checks
+    authorize @user
+
+    @increase_checks = @user.increase_checks.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_invoices
+    authorize @user
+
+    @invoices = @user.invoices.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_lob_checks
+    authorize @user
+
+    @lob_checks = @user.checks.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_missing_receipts
+    authorize @user
+
+    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                       .page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_reimbursement_reports
+    authorize @user
+
+    @reimbursement_reports = @user.reimbursement_reports
+                                  .includes([:event, :payout_holding])
+                                  .page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_stripe_cards
+    authorize @user
+
+    @stripe_cards = @user.stripe_cards.page(params[:page] || 1).per(params[:per] || 10)
+  end
+
+  def admin_details_stripe_transactions
+    authorize @user
+
+    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
+                                  .order(created_at: :desc)
+                                  .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                  .page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def update
@@ -302,7 +377,7 @@ class UsersController < ApplicationController
 
     if @user.phone_number_changed? && @user.phone_number_update_count(since: 24.hours.ago) >= 2 && !admin_signed_in?
       flash[:error] = "You're updating your phone number too quickly. Contact support at hcb@hackclub.com."
-      Rails.error.report TwilioAbuseError.new("User #{@user.id} is updating their phone number too quickly.")
+      Rails.error.report Errors::TwilioAbuseError.new("User #{@user.id} is updating their phone number too quickly.")
       return redirect_back_or_to edit_user_path(@user)
     end
 
@@ -415,20 +490,25 @@ class UsersController < ApplicationController
 
   def user_params
     attributes = [
+      # account
       :full_name,
       :preferred_name,
       :phone_number,
+      :birthday,
       :profile_picture,
+      :seasonal_themes_enabled,
+      # admin
       :pretend_is_not_admin,
+      # security
       :sessions_reported,
       :session_validity_preference,
-      :receipt_report_option,
-      :birthday,
-      :seasonal_themes_enabled,
+      :use_sms_auth,
+      :use_two_factor_authentication,
+      # notifications
       :comment_notifications,
       :charge_notifications,
-      :use_sms_auth,
-      :use_two_factor_authentication
+      :monthly_donation_summary,
+      :monthly_follower_summary
     ]
 
     if @user.stripe_cardholder

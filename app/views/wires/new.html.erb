@@ -8,8 +8,8 @@
 <% end %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfer_step_item", number: 1, label: "Recipient details" %>
-  <%= render "events/transfer_step_item", number: 2, label: "Payment information" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient details" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
 <% end %>
 
 <% content_for :sidebar_footer do %>
@@ -67,7 +67,7 @@
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
                 </button>
-                <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
+                <%= link_to event_payment_recipient_path(@event, payment_recipient), data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?", turbo_confirm_danger: true } do %>
                   <%= inline_icon "view-close", size: 24, class: "align-middle" %>
                 <% end %>
               </div>
@@ -80,7 +80,7 @@
         <%= form.label :recipient_email, "Email" %>
         <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
       </div>
-      <%= render "events/notify_transfer_recipient", form:, disabled: %>
+      <%= render "events/transfers/notify_recipient", form:, disabled: %>
 
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
@@ -93,15 +93,15 @@
       </template>
 
       <template x-if="!payment_recipient || editing">
-        <div class="flex flex-col gap-3">
-          <%= render partial: "wires/recipient_details", locals: { form: form, disabled: disabled, required: true } %>
+        <div class="flex flex-col">
+          <%= render partial: "transfers/recipient_details", locals: { form: form, disabled: disabled, required: true, show_us: true } %>
         </div>
       </template>
     </div>
   </div>
 
   <div data-scroll-seek-target="section">
-    <h3 class="mb-2">Payment information</h3>
+    <h3 class="mb-2">Payment details</h3>
     <div class="card mb-4 relative flex flex-col gap-3">
       <div>
         <%= form.label :payment_for, "What are you paying for with this wire?" %>
@@ -132,22 +132,21 @@
         <span class="error">There are no funds to transfer.</span>
       <% end %>
 
-      <template x-if="!payment_recipient || editing">
+      <template x-if="(!payment_recipient || editing) && country !== 'US'">
         <div class="flex flex-col gap-3">
           <%= render partial: "wires/account_details", locals: { form: form, disabled: disabled, required: true } %>
           <%= render partial: "wires/country_specific_details", locals: { form: form, disabled: disabled, required: true } %>
         </div>
       </template>
 
-      <%= render "events/transfer_attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
     </div>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    <%= render "transfers/domestic_wire_warning", event: @event %>
+
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="<%= disabled %> || country === 'US'">
       Send wire
       <%= inline_icon "send" %>
     </button>
-    <p class="muted mt-3 text-center text-sm">
-      Your wire will be sent out on the next business day.
-    </p>
   </div>
 <% end %>

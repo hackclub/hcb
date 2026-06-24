@@ -85,15 +85,6 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
-  def weekly_ysws_event_summary
-    @events = params[:events]
-    mail(
-      to: ["zach@hackclub.com", "max@hackclub.com"],
-      cc: "hcb@hackclub.com",
-      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
-    )
-  end
-
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
@@ -102,6 +93,25 @@ class AdminMailer < ApplicationMailer
     mail(
       to: OPERATIONS_EMAIL,
       subject: "#{@event.name}: Stripe card authorization blocked"
+    )
+  end
+
+  def balance_anomalies(anomalous_events:)
+    @anomalous_events = anomalous_events
+
+    mail(
+      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{anomalous_events.length} events have balance anomalies"
+    )
+  end
+
+  def logical_transaction_anomalies(hcb_codes:)
+    @event = Event.find(183)
+    @hcb_codes = hcb_codes
+
+    mail(
+      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
     )
   end
 

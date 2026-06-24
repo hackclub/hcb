@@ -30,7 +30,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     unless params[:no_flash]
       flash[:success] = "Updated pending transaction"
     end
-    redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
+    redirect_to url_from(params[:redirect_to]) || @canonical_pending_transaction.local_hcb_code
   end
 
 

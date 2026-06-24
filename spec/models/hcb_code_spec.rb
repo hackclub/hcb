@@ -36,6 +36,76 @@ RSpec.describe HcbCode, type: :model do
       end
     end
 
+    describe "#outgoing_disbursement" do
+      it "returns nil for non-disbursement codes" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-100-1")
+        expect(hcb_code.outgoing_disbursement).to be_nil
+      end
+
+      it "memoizes the result so repeated calls do not query" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        hcb_code.outgoing_disbursement # populate
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.outgoing_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "memoizes nil results too (so a missing disbursement doesn't re-query)" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-500-0")
+        expect(hcb_code.outgoing_disbursement).to be_nil
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.outgoing_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "honors the writer (used by FilterTypePreloader)" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        sentinel = Object.new
+        hcb_code.outgoing_disbursement = sentinel
+        expect(hcb_code.outgoing_disbursement).to equal(sentinel)
+      end
+    end
+
+    describe "#incoming_disbursement" do
+      it "returns nil for non-disbursement codes" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-100-1")
+        expect(hcb_code.incoming_disbursement).to be_nil
+      end
+
+      it "memoizes the result so repeated calls do not query" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        hcb_code.incoming_disbursement # populate
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.incoming_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "memoizes nil results too" do
+        hcb_code = HcbCode.find_or_create_by(hcb_code: "HCB-550-0")
+        expect(hcb_code.incoming_disbursement).to be_nil
+
+        allow(Disbursement).to receive(:find_by).and_call_original
+        hcb_code.incoming_disbursement
+        expect(Disbursement).not_to have_received(:find_by)
+      end
+
+      it "honors the writer (used by FilterTypePreloader)" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        sentinel = Object.new
+        hcb_code.incoming_disbursement = sentinel
+        expect(hcb_code.incoming_disbursement).to equal(sentinel)
+      end
+    end
+
     # The goal is to deprecate this method entirely with the disbursement splitting work
     describe "#events" do
       context "with a disbursement that has canonical pending transactions" do
@@ -140,6 +210,7 @@ RSpec.describe HcbCode, type: :model do
                               email: "test@example.com",
                               amount_cents: 1000,
                               invite_message: "Test invite message",
+                              expiration_at: 1.year.from_now,
                               created_at: Time.current,
                               updated_at: Time.current
                             })
@@ -148,6 +219,78 @@ RSpec.describe HcbCode, type: :model do
 
           expect(hcb_code.type).to eq(:card_grant)
         end
+      end
+    end
+
+    describe "#shared_commentable?" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns true for outgoing disbursement codes" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(outgoing.shared_commentable?).to be true
+      end
+
+      it "returns true for incoming disbursement codes" do
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.shared_commentable?).to be true
+      end
+
+      it "returns false for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.shared_commentable?).to be false
+      end
+    end
+
+    describe "#shared_commentable" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns the Disbursement for outgoing disbursement codes" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(outgoing.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns the Disbursement for incoming disbursement codes" do
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns nil for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.shared_commentable).to be_nil
+      end
+    end
+
+    describe "#all_comments" do
+      let(:disbursement) { create(:disbursement) }
+      let(:user) { create(:user) }
+
+      it "includes comments on both the HcbCode and the Disbursement" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        hcb_code_comment = create(:comment, commentable: outgoing, user:)
+        disbursement_comment = create(:comment, commentable: disbursement, user:)
+
+        expect(outgoing.all_comments).to include(hcb_code_comment, disbursement_comment)
+      end
+
+      it "does not include comments from the paired HcbCode" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        incoming_comment = create(:comment, commentable: incoming, user:)
+
+        expect(outgoing.all_comments).not_to include(incoming_comment)
+      end
+
+      it "returns regular comments for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+        comment = create(:comment, commentable: hcb_code, user:)
+
+        expect(hcb_code.all_comments).to include(comment)
       end
     end
 
@@ -175,6 +318,7 @@ RSpec.describe HcbCode, type: :model do
                             email: "test@example.com",
                             amount_cents: 1000,
                             invite_message: "Test invite message",
+                            expiration_at: 1.year.from_now,
                             created_at: Time.current,
                             updated_at: Time.current
                           })

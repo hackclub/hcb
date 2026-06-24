@@ -1,0 +1,12 @@
+<%# locals: (resource:, financial:, business_days: nil) %>
+
+<% what_is_today = Date.today.weekday? ? "a holiday" : "the weekend" %>
+<% business_days ||= financial ? 1 : 2 %>
+
+<% unless Date.today.workday? %>
+  <%= render "application/callout", type: "warning", title: "#{financial ? "Banks are" : "HCB is"} closed", class: "mt-2 mb-0" do %>
+    It is currently <%= what_is_today %> and <%= financial ? "all financial institutions are" : "HCB is" %> closed.
+    <%= resource.pluralize.capitalize %> will be reviewed within
+    <span class="tooltipped" aria-label="<%= business_days.business_days.after(Date.today).strftime("%b %e, %Y") %>"><%= pluralize(business_days, "business day") %></span>.
+  <% end %>
+<% end %>

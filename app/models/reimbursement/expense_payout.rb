@@ -5,7 +5,7 @@
 # Table name: reimbursement_expense_payouts
 #
 #  id                               :bigint           not null, primary key
-#  aasm_state                       :string
+#  aasm_state                       :string           not null
 #  amount_cents                     :integer          not null
 #  hcb_code                         :string
 #  created_at                       :datetime         not null
@@ -31,6 +31,9 @@ module Reimbursement
     include AASM
     include HasBookTransfer
 
+    include Hashid::Rails
+    hashid_config salt: ""
+
     include PublicIdentifiable
     set_public_id_prefix :rep
 
@@ -52,7 +55,9 @@ module Reimbursement
     scope :in_transit_or_pending, -> { where("aasm_state in (?)", ["pending", "in_transit"]) }
 
     after_create do
-      CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
+      cpt = CanonicalPendingTransaction.create!(reimbursement_expense_payout: self, event:, amount_cents:, memo: expense.memo, date: created_at, fronted: true)
+
+      TransactionCategoryService.new(model: cpt).set!(slug: "bank-fees", assignment_strategy: "automatic") if expense.is_fee?
     end
 
     aasm do

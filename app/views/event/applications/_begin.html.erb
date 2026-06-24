@@ -40,6 +40,8 @@
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px] w-full">
       <%= form_with model: @application || false, url: "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
+        <%= form.hidden_field(:referral_code, value: @referral_code) if @referral_code.present? %>
+
         <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
           <%= form.label :teen_led do %>
             Are you a teenager? <span class="text-primary">*</span>
@@ -60,7 +62,7 @@
             <% end %>
           </div>
 
-          <p class="text-sm muted mt-3 mb-0" x-show="teenager == 'true'">HCB is a full financial tool stack that provides 501(c)(3) status for your project. If you are a teenager running a club, nonprofit, club, or robotics team, you qualify.</p>
+          <p class="text-sm muted mt-3 mb-0" x-show="teenager == 'true'">HCB is a full financial tool stack that provides 501(c)(3) status for your project. If you are a teenager running a club, nonprofit, or robotics team, you qualify.</p>
           <p class="text-sm muted mt-3 mb-0" x-show="teenager == 'false'">HCB is a model A fiscal sponsor. If approved, your nonprofit will become a project of The Hack Foundation.</p>
 
         </div>
@@ -73,9 +75,10 @@
   <% content_for :footer do %>
     <% if current_user.present? %>
       <div class="flex items-center justify-start gap-4">
-        <%= link_to "Back to dashboard", applications_path, class: "btn bg-muted" %>
+        <%= responsive_link_to applications_path, text: "Back to dashboard", icon: "view-back", class: "btn bg-muted" %>
+
         <% if @application.present? %>
-          <%= button_to "Archive application", archive_application_path(@application), class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to cancel this application? It will be removed from your dashboard and you will no longer be able to edit it." } %>
+          <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?", turbo_confirm_danger: true } %>
         <% end %>
       </div>
     <% else %>

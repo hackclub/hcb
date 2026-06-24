@@ -69,6 +69,50 @@ class UserPolicy < ApplicationPolicy
     user.auditor?
   end
 
+  def admin_details_ach_transfers?
+    admin_details?
+  end
+
+  def admin_details_check_deposits?
+    admin_details?
+  end
+
+  def admin_details_disbursements?
+    admin_details?
+  end
+
+  def admin_details_emburse_cards?
+    admin_details?
+  end
+
+  def admin_details_increase_checks?
+    admin_details?
+  end
+
+  def admin_details_invoices?
+    admin_details?
+  end
+
+  def admin_details_lob_checks?
+    admin_details?
+  end
+
+  def admin_details_missing_receipts?
+    admin_details?
+  end
+
+  def admin_details_reimbursement_reports?
+    admin_details?
+  end
+
+  def admin_details_stripe_cards?
+    admin_details?
+  end
+
+  def admin_details_stripe_transactions?
+    admin_details?
+  end
+
   def update?
     user.admin? || record == user
   end

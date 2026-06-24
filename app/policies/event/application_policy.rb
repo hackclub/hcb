@@ -32,9 +32,7 @@ class Event
 
     def update?
       return true if user.admin?
-      # Cosigner email is the only field we want to let users update once they've submitted,
-      # but not after they've been activated
-      return record.user == user if record.draft? || record.changed.empty? || (record.changed == ["cosigner_email"] && record.event.nil?)
+      return record.user == user if record.draft?
 
       false
     end
@@ -43,13 +41,26 @@ class Event
       user.admin? || record.user == user
     end
 
+    alias_method :unarchive?, :archive?
+
+    def resend_to_cosigner?
+      return false if record.contract&.party(:cosigner).nil?
+
+      record.contract.party(:cosigner).pending? && (record.user == user || user.admin?)
+    end
+
     alias_method :personal_info?, :show?
     alias_method :project_info?, :show?
+    alias_method :videos?, :show?
     alias_method :agreement?, :show?
     alias_method :review?, :show?
 
+    def mark_videos_watched?
+      user.admin? || record.user == user
+    end
+
     def submission?
-      (record.user == user || user.auditor?) && !record.draft?
+      (record.user == user && !record.draft?) || user.auditor?
     end
 
     alias_method :submit?, :update?
