@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1615,6 +1615,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
     t.check_constraint "\"primary\" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR \"primary\" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL", name: "ledgers_owner_rules"
   end
 
+  create_table "legal_entities", force: :cascade do |t|
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.datetime "created_at", null: false
+    t.string "entity_type"
+    t.bigint "managing_event_id"
+    t.string "tin_hash"
+    t.datetime "updated_at", null: false
+    t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
+  end
+
+  create_table "legal_entity_users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "legal_entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["legal_entity_id"], name: "index_legal_entity_users_on_legal_entity_id"
+    t.index ["user_id"], name: "index_legal_entity_users_on_user_id"
+  end
+
   create_table "lob_addresses", force: :cascade do |t|
     t.string "address1"
     t.string "address2"
@@ -1869,6 +1893,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_005743) do
     t.datetime "updated_at", null: false
     t.index ["hcb_code_id"], name: "index_outgoing_twilio_messages_on_hcb_code_id"
     t.index ["twilio_message_id"], name: "index_outgoing_twilio_messages_on_twilio_message_id"
+  end
+
+  create_table "payees", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.bigint "legal_entity_id", null: false
+    t.string "preferred_name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_payees_on_event_id"
+    t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
+    t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
   end
 
   create_table "payment_recipients", force: :cascade do |t|

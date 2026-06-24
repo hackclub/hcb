@@ -68,7 +68,7 @@ class AchTransfer < ApplicationRecord
   include AASM
   include Commentable
   include Payoutable
-  include Payment
+  include HasPaymentRecipient
   include Freezable
 
   def payment_recipient_attributes
