@@ -35,9 +35,7 @@ class Payment < ApplicationRecord
   monetize :amount_cents
 
   aasm timestamps: true do
-    state :submitted, initial: true
-    state :pending_legal_entity
-    state :pending_payment_method
+    state :pending_legal_entity, initial: true
     state :under_review
     state :sent
     state :rejected
