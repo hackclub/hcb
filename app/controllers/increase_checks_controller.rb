@@ -5,7 +5,7 @@ class IncreaseChecksController < ApplicationController
   include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_check, only: %i[approve reject stop]
+  before_action :set_check, only: %i[approve reject stop edit update]
 
   def new
     @check = @event.increase_checks.build
@@ -38,6 +38,22 @@ class IncreaseChecksController < ApplicationController
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
       render "new", status: :unprocessable_entity
+    end
+  end
+
+  def edit
+    authorize @check
+    @event = @check.event
+  end
+
+  def update
+    authorize @check
+    @event = @check.event
+    params[:increase_check][:amount] = Monetize.parse(params[:increase_check][:amount]).cents
+    if @check.update(check_params.except(:file))
+      redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been updated." }
+    else
+      redirect_to edit_increase_check_path(@check), flash: { error: @check.errors.full_messages.to_sentence }
     end
   end
 

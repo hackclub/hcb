@@ -246,6 +246,10 @@ input[type='search']::-webkit-search-decoration {
   margin-bottom: 1rem;
 }
 
+.field--edit {
+  @apply flex items-center justify-between gap-4 mb-2;
+}
+
 .field--money {
   display: flex;
   align-items: center;

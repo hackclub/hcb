@@ -153,6 +153,10 @@ class IncreaseCheck < ApplicationRecord
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
+  after_update if: -> { amount_previously_changed? } do
+    canonical_pending_transaction.update!(amount_cents: -amount)
+  end
+
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved
@@ -186,7 +190,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validates :amount, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :memo, length: { in: 1..40 }, on: :create
+  validates :memo, length: { in: 1..40 }
   validates :recipient_name, length: { in: 1..250 }
   validates_presence_of :memo, :payment_for, :recipient_name, :address_line1, :address_city, :address_zip
   validates_presence_of :address_state, message: "Please select a state!"
@@ -204,7 +208,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validate do
-    if (address_line1.length + address_line2.length) > 50
+    if (address_line1.to_s.length + address_line2.to_s.length) > 50
       errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end

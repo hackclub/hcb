@@ -4,165 +4,130 @@ require "rails_helper"
 
 RSpec.describe IncreaseChecksController do
   include SessionSupport
-  render_views
 
-  def build_check_attributes(overrides = {})
-    {
-      amount: 100_00,
-      memo: "Test memo",
-      payment_for: "Snacks",
-      recipient_name: "Orpheus",
-      recipient_email: "orpheus@example.com",
-      address_line1: "15 Falls Rd.",
-      address_line2: "",
-      address_city: "Shelburne",
-      address_state: "VT",
-      address_zip: "05482",
-    }.merge(overrides)
-  end
+  describe "edit" do
+    it "allows an admin to edit a pending check" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check)
 
-  describe "stop" do
-    it "stops a stoppable check" do
-      user = create(:user)
-      event = create(:event, :with_positive_balance)
-      create(:organizer_position, user:, event:)
-      check = event.increase_checks.create!(
-        build_check_attributes(column_id: "col_test123", column_status: "issued")
-      )
+      create_session(admin, verified: true)
 
-      create_session(user, verified: true)
+      get :edit, params: { id: check }
 
-      allow(ColumnService).to receive(:post)
-        .with("/transfers/checks/col_test123/stop-payment", idempotency_key: "stop_col_test123")
-        .and_return({ "status" => "stopped", "delivery_status" => "failed" })
-
-      post(:stop, params: { id: check.id })
-
-      expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
-      expect(check.reload.column_status).to eq("stopped")
+      expect(response).to have_http_status(:ok)
     end
 
-    it "denies users without transfer permissions" do
+    it "does not allow a non-admin to edit a check" do
       user = create(:user)
-      event = create(:event, :with_positive_balance)
-      # no organizer position — user has no access to the event
-      check = event.increase_checks.create!(
-        build_check_attributes(column_id: "col_test456", column_status: "issued")
-      )
+      check = create(:increase_check)
 
       create_session(user, verified: true)
 
-      post(:stop, params: { id: check.id })
+      get :edit, params: { id: check }
 
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to be_present
     end
 
-    it "denies stopping a check that is not in a stoppable state" do
-      user = create(:user)
-      event = create(:event, :with_positive_balance)
-      create(:organizer_position, user:, event:)
-      check = event.increase_checks.create!(
-        build_check_attributes(column_id: "col_test789", column_status: "pending_deposit")
-      )
+    it "does not allow editing an approved check" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check, :approved)
 
-      create_session(user, verified: true)
+      create_session(admin, verified: true)
 
-      post(:stop, params: { id: check.id })
+      get :edit, params: { id: check }
 
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to be_present
     end
   end
 
-  describe "create" do
-    def increase_check_params
+  describe "update" do
+    def update_params
       {
-        amount: "123.45",
-        payment_for: "Snacks",
-        memo: "Test memo",
-        recipient_name: "Orpheus",
-        recipient_email: "orpheus@example.com",
-        address_line1: "15 Falls Rd.",
-        address_line2: "",
-        address_city: "Shelburne",
-        address_state: "VT",
-        address_zip: "05482",
-        send_email_notification: "false",
+        memo: "Updated memo",
+        amount: "200.00",
+        payment_for: "New supplies",
+        recipient_name: "Jane Smith",
+        recipient_email: "jane@example.com",
+        address_line1: "2 New Street",
+        address_city: "Oakland",
+        address_state: "CA",
+        address_zip: "94601",
       }
     end
 
-    it "creates a new check" do
-      user = create(:user)
-      event = create(:event, :with_positive_balance)
-      create(:organizer_position, user:, event:)
+    it "updates all editable fields and redirects to the admin process page" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check)
 
-      create_session(user, verified: true)
+      create_session(admin, verified: true)
 
-      post(
-        :create,
-        params: {
-          event_id: event.friendly_id,
-          increase_check: increase_check_params,
-        }
-      )
+      patch :update, params: { id: check, increase_check: update_params }
 
-      check = event.increase_checks.sole
-      expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
-      expect(check).to be_pending
-      expect(check.amount).to eq(123_45)
-      expect(check.payment_for).to eq("Snacks")
-      expect(check.memo).to eq("Test memo")
-      expect(check.recipient_name).to eq("Orpheus")
-      expect(check.recipient_email).to eq("orpheus@example.com")
-      expect(check.address_line1).to eq("15 Falls Rd.")
-      expect(check.address_line2).to eq("")
-      expect(check.address_city).to eq("Shelburne")
-      expect(check.address_state).to eq("VT")
-      expect(check.address_zip).to eq("05482")
-      expect(check.send_email_notification).to eq(false)
+      expect(response).to redirect_to(increase_check_process_admin_path(check))
+      expect(flash[:success]).to eq("Check has been updated.")
+
+      check.reload
+      expect(check.memo).to eq("Updated memo")
+      expect(check.amount).to eq(200_00)
+      expect(check.payment_for).to eq("New supplies")
+      expect(check.recipient_name).to eq("Jane Smith")
+      expect(check.recipient_email).to eq("jane@example.com")
+      expect(check.address_line1).to eq("2 New Street")
+      expect(check.address_city).to eq("Oakland")
+      expect(check.address_state).to eq("CA")
+      expect(check.address_zip).to eq("94601")
     end
 
-    it "requires sudo mode for transactions over $500" do
+    it "syncs the canonical_pending_transaction when amount changes" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check, amount: 10_000)
+
+      create_session(admin, verified: true)
+
+      patch :update, params: { id: check, increase_check: update_params }
+
+      expect(check.canonical_pending_transaction.reload.amount_cents).to eq(-200_00)
+    end
+
+    it "redirects to the edit page with an error flash on validation failure" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check)
+
+      create_session(admin, verified: true)
+
+      patch :update, params: { id: check, increase_check: update_params.merge(memo: "x" * 41) }
+
+      expect(response).to redirect_to(edit_increase_check_path(check))
+      expect(flash[:error]).to be_present
+      expect(check.reload.memo).not_to eq("x" * 41)
+    end
+
+    it "does not allow a non-admin to update a check" do
       user = create(:user)
-      Flipper.enable(:sudo_mode_2015_07_21, user)
-      event = create(:event, :with_positive_balance)
-      create(:organizer_position, user:, event:)
+      check = create(:increase_check)
+      original_memo = check.memo
 
       create_session(user, verified: true)
 
-      travel(3.hours)
+      patch :update, params: { id: check, increase_check: update_params }
 
-      params = {
-        event_id: event.friendly_id,
-        increase_check: {
-          **increase_check_params,
-          amount: "500.01",
-        }
-      }.freeze
+      expect(response).to redirect_to(root_path)
+      expect(check.reload.memo).to eq(original_memo)
+    end
 
-      post(:create, params:)
+    it "does not allow updating an approved check" do
+      admin = create(:user, :make_admin)
+      check = create(:increase_check, :approved)
+      original_memo = check.memo
 
-      expect(response).to have_http_status(:unauthorized)
-      expect(response.body).to include("Confirm Access")
-      expect(event.increase_checks).to be_empty
+      create_session(admin, verified: true)
 
-      post(
-        :create,
-        params: {
-          **params,
-          _sudo: {
-            submit_method: "email",
-            login_code: user.login_codes.last.code,
-            login_id: user.logins.last.hashid,
-          }
-        }
-      )
+      patch :update, params: { id: check, increase_check: update_params }
 
-      check = event.increase_checks.sole
-      expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
-      expect(check.memo).to eq("Test memo")
-      expect(check.amount).to eq(500_01)
+      expect(response).to redirect_to(root_path)
+      expect(check.reload.memo).to eq(original_memo)
     end
   end
 end
