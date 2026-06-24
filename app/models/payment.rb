@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true
-    state :under_review
+    state :under_review # HCB reviewing the underlying transfer
     state :sent
     state :rejected
     state :failed
