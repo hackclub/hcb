@@ -62,8 +62,6 @@ class LegalEntity
     end
 
     def unset_other_defaults
-
-    def unset_other_defaults
       LegalEntity::PayoutMethod
         .where(legal_entity_id:)
         .where.not(id:)
