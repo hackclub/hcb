@@ -2,7 +2,7 @@
 
 class OrganizerPositionDeletionRequestsController < ApplicationController
   include SetEvent
-  before_action :set_opdr, only: [:show, :close, :open]
+  before_action :set_opdr, only: [:show, :close, :open, :assign, :unassign]
 
   def index
     authorize OrganizerPositionDeletionRequest
@@ -72,6 +72,20 @@ class OrganizerPositionDeletionRequestsController < ApplicationController
     authorize OrganizerPositionDeletionRequest
     @opdr.open
     flash[:success] = "Removal request re-opened."
+    redirect_to @opdr
+  end
+
+  def assign
+    authorize OrganizerPositionDeletionRequest
+    @opdr.update!(assignee: current_user)
+    flash[:success] = "Removal request assigned to you."
+    redirect_to @opdr
+  end
+
+  def unassign
+    authorize OrganizerPositionDeletionRequest
+    @opdr.update!(assignee: nil)
+    flash[:success] = "Removal request unassigned."
     redirect_to @opdr
   end
 
