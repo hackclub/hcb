@@ -1923,6 +1923,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_192147) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "failed_at"
+    t.bigint "payee_id", null: false
     t.bigint "payout_id"
     t.string "payout_type"
     t.string "purpose", null: false
@@ -1931,6 +1932,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_192147) do
     t.datetime "successful_at"
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
+    t.index ["payee_id"], name: "index_payments_on_payee_id"
     t.index ["payout_type", "payout_id"], name: "index_payments_on_payout"
   end
 

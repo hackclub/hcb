@@ -12,6 +12,7 @@ class CreatePayments < ActiveRecord::Migration[8.0]
       t.integer :amount_cents, null: false
 
       t.belongs_to :payout, polymorphic: true
+      t.belongs_to :payee, null: false
 
       t.timestamps
     end
