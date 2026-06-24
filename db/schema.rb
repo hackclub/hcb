@@ -1361,8 +1361,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_120000) do
     t.text "secondary_hash"
     t.text "unique_bank_identifier"
     t.datetime "updated_at", null: false
-    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
-    t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"    t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
     t.index ["raw_stripe_transaction_id"], name: "index_hashed_transactions_on_raw_stripe_transaction_id"
