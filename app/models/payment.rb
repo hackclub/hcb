@@ -35,7 +35,7 @@ class Payment < ApplicationRecord
   monetize :amount_cents
 
   aasm timestamps: true do
-    state :pending_legal_entity, initial: true
+    state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
     state :under_review # HCB reviewing the underlying transfer
     state :sent
     state :rejected
