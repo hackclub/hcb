@@ -23,15 +23,13 @@ class LegalEntity
     ALL_METHODS = [
       LegalEntity::PayoutMethod::AchTransfer,
       LegalEntity::PayoutMethod::Check,
-      LegalEntity::PayoutMethod::PaypalTransfer,
       LegalEntity::PayoutMethod::Wire,
       LegalEntity::PayoutMethod::WiseTransfer,
     ].freeze
     UNSUPPORTED_METHODS = {
-      LegalEntity::PayoutMethod::PaypalTransfer => {
-        status_badge: "Unavailable",
-        reason: "Due to integration issues, transfers via PayPal are currently unavailable."
-      }
+      # If a PayoutMethod is deprecated, add a key with the PayoutMethod's
+      # class with the value being a hash with status_badge(string)
+      # and reason(string)
     }.freeze
     SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
@@ -42,10 +40,28 @@ class LegalEntity
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
 
+    validate :details_must_be_supported
+
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, to: :details
 
+    def unsupported?
+      UNSUPPORTED_METHODS.key?(details.class)
+    end
+
+    def unsupported_details
+      UNSUPPORTED_METHODS[details.class]
+    end
+
     private
+
+    def details_must_be_supported
+      if unsupported?
+        errors.add(:base, "#{unsupported_details[:reason]} Please choose another method.")
+      end
+    end
+
+    def unset_other_defaults
 
     def unset_other_defaults
       LegalEntity::PayoutMethod
