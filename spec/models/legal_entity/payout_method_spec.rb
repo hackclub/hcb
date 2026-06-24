@@ -36,6 +36,14 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       expect(payout_method).not_to be_valid
       expect(payout_method.errors[:details]).to be_present
     end
+
+    it "destroys its details record when destroyed" do
+      ach = build_ach
+      payout_method = legal_entity.payout_methods.create!(details: ach)
+
+      expect { payout_method.destroy! }
+        .to change { LegalEntity::PayoutMethod::AchTransfer.exists?(ach.id) }.from(true).to(false)
+    end
   end
 
   describe "multiple payout methods of multiple types" do
