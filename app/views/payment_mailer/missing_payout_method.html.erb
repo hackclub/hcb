@@ -1,0 +1,29 @@
+<p>Hello <%= @payment.payee.preferred_name %>,</p>
+
+<% if @initial %>
+  <p>
+    <%= @payment.event.name %> has requested to send you <%= render_money(@payment.amount_cents) %>
+    for <i>"<%= @payment.purpose %>"</i> through HCB.
+  </p>
+<% else %>
+  <p>
+    Thank you for uploading your tax forms for receiving your payment of <%= render_money(@payment.amount_cents) %>
+    for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB.
+  </p>
+<% end %>
+
+<p>
+  To receive this payment, please login to HCB and configure your payout method.
+</p>
+
+<p>
+  If you have any questions about this payment, please contact <%= @payment.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @payment.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

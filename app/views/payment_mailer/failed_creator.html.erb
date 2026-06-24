@@ -1,0 +1,18 @@
+<p>Hello <%= @creator.name %>,</p>
+
+<p>
+  Your payment of <%= render_money(@payment.amount_cents) %> to
+  <%= @payment.payee.preferred_name %> for <i>"<%= @payment.purpose %>"</i> failed to send.
+</p>
+
+<p>
+  Please try creating the payment again. <%= @payment.payee.preferred_name %> has been
+  notified of the reason for why the payment failed.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+

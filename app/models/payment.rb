@@ -16,13 +16,15 @@
 #  under_review_at :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
+#  creator_id      :bigint           not null
 #  payee_id        :bigint           not null
 #  payout_id       :bigint
 #
 # Indexes
 #
-#  index_payments_on_payee_id  (payee_id)
-#  index_payments_on_payout    (payout_type,payout_id)
+#  index_payments_on_creator_id  (creator_id)
+#  index_payments_on_payee_id    (payee_id)
+#  index_payments_on_payout      (payout_type,payout_id)
 #
 class Payment < ApplicationRecord
   include AASM
@@ -31,6 +33,9 @@ class Payment < ApplicationRecord
 
   belongs_to :payout, polymorphic: true, optional: true
   belongs_to :payee
+  belongs_to :creator, class_name: "User"
+
+  has_one :event, through: :payee
 
   monetize :amount_cents
 
@@ -52,21 +57,22 @@ class Payment < ApplicationRecord
     event :mark_sent do
       transitions from: :under_review, to: :sent
       after do
-        # send payment sent mailer
+        PaymentMailer.with(payment: self).sent.deliver_later
       end
     end
 
     event :mark_rejected do
       transitions from: :under_review, to: :rejected
       after do
-        # send rejected mailer
+        PaymentMailer.with(payment: self).rejected.deliver_later
       end
     end
 
     event :mark_failed do
       transitions from: [:sent, :successful], to: :failed
-      after do
-        # send failed mailer
+      after do |reason: nil|
+        PaymentMailer.with(payment: self).failed_creator.deliver_later
+        PaymentMailer.with(payment: self, reason:).failed_payee.deliver_later
       end
     end
 
@@ -79,9 +85,9 @@ class Payment < ApplicationRecord
     if may_mark_under_review?
       mark_under_review!
     elsif payee.legal_entity.complete?
-      # send missing payment method mailer
+      PaymentMailer.with(payment: self, initial: true).missing_payment_method.deliver_later
     else
-      # send payment mailer
+      PaymentMailer.with(payment: self).missing_information.deliver_later
     end
   end
 

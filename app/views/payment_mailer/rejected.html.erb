@@ -1,0 +1,15 @@
+<p>Hello <%= @creator.name %>,</p>
+
+<p>
+  The HCB team has rejected your request to pay <%= @payment.payee.preferred_name %>
+  <%= render_money(@payment.amount_cents) %> for <i>"<%= @payment.purpose %>"</i>.
+</p>
+
+<p>Please reach out to <%= mail_to "hcb@hackclub.com" %> for more information.</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
