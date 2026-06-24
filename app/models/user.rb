@@ -192,9 +192,9 @@ class User < ApplicationRecord
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
+  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
   after_create :create_legal_entity
 
-  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
@@ -509,7 +509,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    card_grants.size >= 1 && events.size == 0
+    card_grants.any? && events.none?
   end
 
   def backup_codes_enabled?
@@ -686,7 +686,13 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
+    cardholder = stripe_cardholder
+    return unless cardholder&.stripe_id.present?
+
+    cardholder.update!(
+      stripe_email: email,
+      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+    )
   end
 
   def namae(legal: false)

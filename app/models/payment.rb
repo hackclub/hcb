@@ -7,6 +7,7 @@
 #  id              :bigint           not null, primary key
 #  aasm_state      :string           not null
 #  amount_cents    :integer          not null
+#  currency        :string           not null
 #  failed_at       :datetime
 #  payout_type     :string
 #  purpose         :string           not null
@@ -37,7 +38,7 @@ class Payment < ApplicationRecord
 
   has_one :event, through: :payee
 
-  monetize :amount_cents
+  monetize :amount_cents, with_model_currency: :currency
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent

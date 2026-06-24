@@ -531,6 +531,21 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
+  def async_sub_organizations_graph
+    authorize @event
+    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
+      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
+      all_events.map { |e|
+        {
+          id: e.id,
+          balance_cents: e.balance_v2_cents,
+          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
+        }
+      }
+    end
+    render json: data
+  end
+
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
@@ -782,6 +797,7 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html do
         @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
+        @all_events = [@event] + @event.descendants.order(:name).select(:name, :parent_id, :slug, :id).to_a
       end
 
       # CSV export intentionally does not consider filters
