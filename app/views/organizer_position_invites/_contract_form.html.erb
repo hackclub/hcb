@@ -7,8 +7,11 @@
   <p>
 
   <div class="field field--checkbox">
-    <%= form.check_box :include_videos %>
     <%= form.label :include_videos, "Would you like us to include the onboarding videos?" %>
+    <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+      <%= form.check_box :include_videos %>
+      <span class="slider"></span>
+    </label>
   </div>
 
   <div class="field">
