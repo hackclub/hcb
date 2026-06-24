@@ -21,7 +21,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class WiseTransfer < ApplicationRecord
-      include Shared
 
       self.table_name = "user_payout_method_wise_transfers"
       has_encrypted :recipient_information, type: :json

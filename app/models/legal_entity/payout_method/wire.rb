@@ -23,7 +23,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class Wire < ApplicationRecord
-      include Shared
 
       self.table_name = "user_payout_method_wires"
       after_save_commit -> {

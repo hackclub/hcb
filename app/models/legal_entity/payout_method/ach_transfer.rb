@@ -13,7 +13,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class AchTransfer < ApplicationRecord
-      include Shared
 
       self.table_name = "user_payout_method_ach_transfers"
       has_encrypted :account_number, :routing_number
