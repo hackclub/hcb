@@ -19,6 +19,8 @@ module Column
         handle_as_raw_pending_column_transaction("swift.incoming_transfer.completed")
       elsif type == "ach.outgoing_transfer.returned"
         handle_ach_outgoing_transfer_returned
+      elsif type == "ach.outgoing_transfer.canceled"
+        handle_ach_outgoing_transfer_canceled
       elsif type == "check.outgoing_debit.settled"
         handle_check_deposit_settled
       elsif type == "check.outgoing_debit.returned"
@@ -27,6 +29,8 @@ module Column
         handle_swift_outgoing_transfer_returned
       elsif type.start_with?("check.incoming_debit")
         handle_outgoing_check_update
+      else
+        Rails.error.unexpected("Unhandled Column webhook type: #{type}")
       end
     rescue => e
       Rails.error.report(e)
@@ -64,7 +68,7 @@ module Column
 
       RawPendingColumnTransaction.create!(
         column_id: @object[:id],
-        amount_cents: @object[:amount],
+        amount_cents: @object[:type] == "DEBIT" ? -@object[:amount] : @object[:amount],
         date_posted: Date.today,
         column_transaction: @object,
         column_event_type:
@@ -73,6 +77,10 @@ module Column
 
     def handle_ach_outgoing_transfer_returned
       AchTransfer.find_by(column_id: @object[:id])&.mark_failed!(reason: @object[:return_details].pick(:description)&.gsub(/\(trace #: \d+\)\Z/, "")&.strip)
+    end
+
+    def handle_ach_outgoing_transfer_canceled
+      AchTransfer.find_by(column_id: @object[:id])&.mark_failed!(reason: "Transfer canceled by sender")
     end
 
     def handle_swift_outgoing_transfer_returned
@@ -106,6 +114,8 @@ module Column
     end
 
     def verify_signature
+      return head :bad_request if request.headers["Column-Signature"].blank?
+
       signature_valid = ActiveSupport::SecurityUtils.secure_compare(
         OpenSSL::HMAC.hexdigest(
           "SHA256",

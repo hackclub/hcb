@@ -16,8 +16,10 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_hcb_code    (hcb_code) UNIQUE
-#  index_hcb_codes_on_short_code  (short_code) UNIQUE
+#  index_hcb_codes_on_event_id        (event_id)
+#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
+#  index_hcb_codes_on_short_code      (short_code) UNIQUE
 #
 # Foreign Keys
 #
@@ -26,10 +28,11 @@
 class HcbCode < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :txn
-
-  include Hashid::Rails
 
   include Commentable
   include Receiptable
@@ -108,6 +111,15 @@ class HcbCode < ApplicationRecord
     @date ||= ct.try(:date) || pt.try(:date)
   end
 
+  def datetime
+    @datetime ||=
+      pt.try(:raw_pending_stripe_transaction).try { |rpst| rpst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      pt.try(:created_at) ||
+      ct.try(:raw_stripe_transaction).try { |rst| rst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      ct.try(:raw_column_transaction).try { |rct| rct.column_transaction["effective_at"]&.then { |t| Time.parse(t) } } ||
+      ct.try(:created_at)
+  end
+
   def has_pending_expired?
     canonical_pending_transactions.pending_expired.any?
   end
@@ -121,6 +133,7 @@ class HcbCode < ApplicationRecord
     return :card_grant if card_grant?
     return :disbursement if outgoing_disbursement? || incoming_disbursement?
     return :card_charge if stripe_card?
+    return :card_force_capture if stripe_force_capture?
     return :bank_fee if bank_fee?
     return :reimbursement_expense_payout if reimbursement_expense_payout?
     return :paypal_transfer if paypal_transfer?
@@ -307,6 +320,10 @@ class HcbCode < ApplicationRecord
     pt.try(:stripe_auth_dashboard_url) || ct.try(:stripe_auth_dashboard_url)
   end
 
+  def stripe_txn_dashboard_url
+    pt.try(:stripe_txn_dashboard_url) || ct.try(:stripe_txn_dashboard_url)
+  end
+
   def raw_emburse_transaction
     ct&.raw_emburse_transaction
   end
@@ -364,9 +381,9 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement?
-    Rails.error.unexpected "HcbCode#disbursement? accessed"
+    Rails.application.deprecators[:hcb].warn("HcbCode#disbursement? accessed")
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    outgoing_disbursement? || incoming_disbursement?
   end
 
   def outgoing_disbursement?
@@ -431,7 +448,8 @@ class HcbCode < ApplicationRecord
   end
 
   def disbursement
-    Rails.error.unexpected "HcbCode#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "HcbCode#disbursement accessed"
+
     return nil unless disbursement?
 
     @disbursement ||= begin
@@ -446,16 +464,30 @@ class HcbCode < ApplicationRecord
     end
   end
 
+  attr_writer :incoming_disbursement, :outgoing_disbursement
+
   def incoming_disbursement
     return nil unless incoming_disbursement?
+    return @incoming_disbursement if defined?(@incoming_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
+    @incoming_disbursement = Disbursement.find_by(id: hcb_i2)&.incoming_disbursement
   end
 
   def outgoing_disbursement
     return nil unless outgoing_disbursement?
+    return @outgoing_disbursement if defined?(@outgoing_disbursement)
 
-    Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+    @outgoing_disbursement = Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+  end
+
+  # Overrides shared_commentable? in Commentable concern to avoid
+  # unnecessary database read
+  def shared_commentable?
+    outgoing_disbursement? || incoming_disbursement?
+  end
+
+  def shared_commentable
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
   def card_grant
@@ -565,6 +597,7 @@ class HcbCode < ApplicationRecord
   # HCB-350: PayPal Transfers
   # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
   # HCB-600: Stripe card charges (always required)
+  # HCB-601: Stripe force captures (always required)
   # @sampoder
 
   # receipt_required (the scope) diverges from receipt_required?
@@ -600,7 +633,7 @@ class HcbCode < ApplicationRecord
     # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
     return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
 
-    return true if [:card_charge, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
+    return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
     # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
     false
@@ -715,6 +748,11 @@ class HcbCode < ApplicationRecord
 
   def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
     update(event_id: event&.id, subledger_id: subledger&.id)
+  end
+
+  def update_custom_memo!(memo)
+    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end
 
 end

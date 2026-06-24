@@ -13,16 +13,18 @@ module UserService
       future_count = @user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE).count
 
       if current_count.in?([5, 7, 9])
-        CardLockingMailer.warning(user: @user).deliver_later
+        if Rails.cache.write("card_locking_warning:#{@user.id}:#{current_count}", true, expires_in: 25.hours, unless_exist: true)
+          CardLockingMailer.warning(user: @user).deliver_later
 
-        if @user.phone_number.present? && @user.phone_number_verified?
-          message = "You now have #{current_count} transactions missing receipts from more than a day ago. If you have ten or more missing receipts, your cards will be locked. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
+          if @user.phone_number.present? && @user.phone_number_verified?
+            message = "You now have #{current_count} transactions missing receipts from more than a day ago. If you have ten or more missing receipts, your cards will be locked. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
 
-          TwilioMessageService::Send.new(@user, message).run!
+            TwilioMessageService::Send.new(@user, message).run!
+          end
         end
 
       elsif future_count >= 10
-        if @user.phone_number.present? && @user.phone_number_verified?
+        if @user.phone_number.present? && @user.phone_number_verified? && Rails.cache.write("card_locking_pre_lock_sms:#{@user.id}", true, expires_in: 25.hours, unless_exist: true)
           message = "You have ten or more transactions missing receipts. In the next twenty-four hours, your cards will be locked unless receipts are uploaded for these transactions. You can manage your receipts at #{Rails.application.routes.url_helpers.my_inbox_url}."
 
           TwilioMessageService::Send.new(@user, message).run!

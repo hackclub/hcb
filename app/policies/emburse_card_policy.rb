@@ -6,7 +6,7 @@ class EmburseCardPolicy < ApplicationPolicy
   end
 
   def show?
-    record.event.users.include?(user) || user&.auditor?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.auditor?
   end
 
 end

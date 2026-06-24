@@ -19,7 +19,7 @@
 
   &.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, smoke), 0.75);
+    background-color: rgba(map-get($palette, smoke), 0.5);
   }
 
   &.b--warning {
@@ -74,6 +74,33 @@
         linear-gradient(rgba(37, 36, 41, 0.5) 0%, rgba(37, 36, 41, 0.85) 75%),
         var(--bg-image) !important;
     }
+  }
+}
+
+.podium-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem 1rem var(--radius-lg) var(--radius-lg);
+  font-weight: 700;
+  color: white;
+  padding: 12px;
+  font-size: 1.25rem;
+
+  &--first {
+    height: 13.5rem;
+    background: #d79c32;
+    font-size: 1.5rem;
+  }
+  &--second {
+    height: 9.75rem;
+    background: #757575;
+  }
+  &--third {
+    height: 7.5rem;
+    background: #bb581c;
   }
 }
 
@@ -253,7 +280,7 @@ a.card {
 }
 
 .card--sunset {
-  background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
 }
 
 #card-pin {

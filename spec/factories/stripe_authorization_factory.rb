@@ -46,5 +46,28 @@ FactoryBot.define do
         }
       end
     end
+
+    trait :forbidden_network_id do
+      merchant_data do
+        {
+          category: "employment_temp_agencies",
+          category_code: "7361",
+          network_id: "8203300025",
+          name: "HEPTA PAY LTD"
+        }
+      end
+    end
+
+    # A merchant whose category is forbidden but whose network ID is allowlisted.
+    trait :allowlisted_network_id do
+      merchant_data do
+        {
+          category: "non_fi_money_orders",
+          category_code: "6051",
+          network_id: "088011245800",
+          name: "AlipayHK"
+        }
+      end
+    end
   end
 end

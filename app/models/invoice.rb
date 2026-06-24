@@ -5,7 +5,7 @@
 # Table name: invoices
 #
 #  id                                                           :bigint           not null, primary key
-#  aasm_state                                                   :string
+#  aasm_state                                                   :string           not null
 #  amount_due                                                   :bigint
 #  amount_paid                                                  :bigint
 #  amount_remaining                                             :bigint
@@ -100,6 +100,9 @@ class Invoice < ApplicationRecord
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :inv
 
@@ -148,7 +151,7 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
-  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true
@@ -193,7 +196,7 @@ class Invoice < ApplicationRecord
   before_create :set_defaults
 
   after_create_commit -> {
-    unless OrganizerPosition.find_by(user: creator, event: event)&.manager?
+    unless OrganizerPosition.role_at_least?(creator, event, :manager)
       InvoiceMailer.with(invoice: self).notify_organizers_sent.deliver_later
     end
   }
@@ -371,13 +374,8 @@ class Invoice < ApplicationRecord
     sponsor.name
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE
 
   def canonical_transactions
     @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)
