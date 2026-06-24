@@ -3,8 +3,8 @@
 class User
   class UpdateCardLockingJob < ApplicationJob
     queue_as :low
-    def perform(user:)
-      ::UserService::UpdateCardLocking.new(user:).run
+    def perform(user:, unlock_only: false)
+      ::UserService::UpdateCardLocking.new(user:, unlock_only:).run
     end
 
   end
