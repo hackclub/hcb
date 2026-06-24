@@ -5,7 +5,7 @@
 # Table name: disbursements
 #
 #  id                                  :bigint           not null, primary key
-#  aasm_state                          :string
+#  aasm_state                          :string           not null
 #  amount                              :integer
 #  deposited_at                        :datetime
 #  errored_at                          :datetime
@@ -53,6 +53,7 @@ class Disbursement < ApplicationRecord
   include AASM
 
   include Freezable
+  include Commentable
 
   validate on: :create do
     if source_event.financially_frozen?
@@ -61,6 +62,9 @@ class Disbursement < ApplicationRecord
   end
 
   has_paper_trail
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
@@ -130,6 +134,13 @@ class Disbursement < ApplicationRecord
       css_class: "transaction--frc",
       icon: "sam",
       qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+    },
+    gene_haas_grant: {
+      title: "Grant from Gene Haas",
+      memo: "Gene Haas Grant",
+      css_class: "transaction--genehaas",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
     }
   }.freeze
 
@@ -240,6 +251,15 @@ class Disbursement < ApplicationRecord
       HcbCode.find_or_create_by(hcb_code: incoming_hcb_code)
       HcbCode.find_or_create_by(hcb_code: outgoing_hcb_code)
     end
+  end
+
+  # Override Commentable#all_comments to include comments from both sides of the disbursement
+  def all_comments
+    Comment.where(commentable: [self, outgoing_disbursement.local_hcb_code, incoming_disbursement.local_hcb_code])
+  end
+
+  def events
+    [source_event, destination_event]
   end
 
   def canonical_transactions

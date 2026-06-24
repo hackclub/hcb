@@ -4,11 +4,7 @@ class ApplicationController < ActionController::Base
   # set Current.session - this should come first as
   # a large portion of the code below this depends on this
   before_action do
-    Current.session = begin
-      # Find a valid session (not expired) using the session token
-      session_token = cookies.encrypted[:session_token]
-      session_token.present? ? User::Session.not_expired.find_by(session_token:) : nil
-    end
+    Current.session = find_current_session
   end
 
   include Pundit::Authorization
@@ -20,11 +16,11 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  before_action :attach_error_reference
-
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
+
+  before_action :ensure_created_session
 
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
@@ -34,6 +30,8 @@ class ApplicationController < ActionController::Base
 
   # update the current session's last_seen_at
   before_action { Current.session&.update_session_timestamps }
+
+  before_action :attach_appsignal_tags
 
   before_action do
     # Disallow indexing and following
@@ -138,9 +136,19 @@ class ApplicationController < ActionController::Base
     flash[:confetti_emojis] = emojis.join(",") if emojis
   end
 
-  def attach_error_reference
+  def attach_appsignal_tags
+    return unless defined?(Appsignal) && Appsignal.active?
+
     error_reference = ErrorReference.from_request_id(request.uuid)
-    Appsignal.add_tags(error_reference:) if defined?(Appsignal) && Appsignal.active?
+    user_id = current_user(allow_unverified: true)&.id
+    session_id = Current.session&.id
+    ip_address = request.remote_ip
+    user_agent = request.user_agent
+    referrer = request.referrer
+    unverified_user = Current.session&.unverified?
+
+    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
+    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
   end
 
 end

@@ -33,6 +33,8 @@ class GSuiteAccount < ApplicationRecord
 
   include Rejectable
 
+  attr_accessor :skip_gsuite_sync
+
   after_update :attempt_notify_user_of_password_change
 
   paginates_per 50
@@ -44,8 +46,10 @@ class GSuiteAccount < ApplicationRecord
 
   validates_presence_of :address, :backup_email, :first_name, :last_name
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
+  validates :backup_email, nondisposable: true, on: :create
 
   validate :status_accepted_or_rejected
+  validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
 
   before_update :sync_update_to_gsuite
@@ -103,6 +107,35 @@ class GSuiteAccount < ApplicationRecord
     self.save
   end
 
+  # Engineer-only via Rails console. Removes this account from HCB
+  # management, leaving the Google Workspace user (and its aliases) intact.
+  # Intended for use in the Rails console when a user's account is being
+  # transferred to the unmanaged hackclub.com domain from an HCB managed domain
+  # (e.g., events.hackclub.com).
+  def unmanage!(confirm:)
+    raise ArgumentError, "confirm must match address" unless confirm == address
+
+    # Materialize once so the in-memory `skip_gsuite_sync` we set below
+    # survives — a later reload would drop the flag and re-trigger the
+    # Google Workspace alias deletion callback.
+    aliases = g_suite_aliases.reload.to_a
+
+    Rails.logger.info(
+      "[GSuiteAccount#unmanage!] unmanaging " \
+      "id=#{id} address=#{address} g_suite_id=#{g_suite_id} " \
+      "aliases=#{aliases.size}"
+    )
+
+    transaction do
+      aliases.each do |gsa|
+        gsa.skip_gsuite_sync = true
+        gsa.destroy!
+      end
+      self.skip_gsuite_sync = true
+      destroy!
+    end
+  end
+
   private
 
   def notify_user_of_password_change(first_password = false)
@@ -128,6 +161,8 @@ class GSuiteAccount < ApplicationRecord
   end
 
   def sync_delete_to_gsuite
+    return if skip_gsuite_sync
+
     unless Rails.env.production?
       puts "☣️ In production, we would currently be syncing the GSuite account deletion ☣️"
       return
@@ -164,6 +199,12 @@ class GSuiteAccount < ApplicationRecord
         notify_user_of_password_change
       end
     end
+  end
+
+  def within_quota
+    return if g_suite.accounts.count < g_suite.max_accounts
+
+    errors.add(:base, "You've reached your quota of #{g_suite.max_accounts} accounts and won't be able to create more accounts until you delete existing ones.")
   end
 
 end

@@ -1,0 +1,15 @@
+<%= turbo_frame_tag :admin_details_stripe_transactions do %>
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Stripe transactions</h3>
+    <% if @stripe_transactions.any? %>
+      <table>
+        <% @stripe_transactions.each do |tx| %>
+          <%= render "canonical_transactions/canonical_transaction", ct: tx %>
+        <% end %>
+      </table>
+      <%= paginate @stripe_transactions %>
+    <% else %>
+      <%= blankslate "No stripe transactions" %>
+    <% end %>
+  <% end %>
+<% end %>

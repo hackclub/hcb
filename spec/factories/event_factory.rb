@@ -8,13 +8,22 @@ FactoryBot.define do
       organizers { [] }
     end
 
-    after(:create) do |event, context|
-      event.plan.update!(type: context.plan_type) if context.plan_type.present?
+    # Set the plan type up front. `Event#before_validation` builds a
+    # plan with the fallback type (Event::Plan::Standard) when none is
+    # set, so building the plan here saves an UPDATE + reload per
+    # `create(:event)` — hit on ~250 event creations per suite run.
+    after(:build) do |event, context|
+      event.build_plan(type: context.plan_type.to_s) if context.plan_type.present? && event.plan.nil?
+    end
 
+    after(:create) do |event, context|
       context.organizers.each do |user|
         create(:organizer_position, event:, user:)
       end
 
+      # Clear cached associations (e.g. `plan`) so specs like
+      # spec/models/event_spec.rb "uses the standard plan as a fallback"
+      # see post-callback state rather than the factory's in-memory copy.
       event.reload
     end
 
@@ -33,21 +42,12 @@ FactoryBot.define do
     end
 
     trait :with_positive_balance do
+      # Event#balance sums amount_cents on mapped canonical_transactions
+      # (see Event#settled_balance_cents), so a single positive mapping
+      # is enough to give the event a balance for tests that need one.
       after :create do |event|
-        raw_csv_transaction = RawCsvTransactionService::Create.new(
-          unique_bank_identifier: "FSMAIN",
-          date: 3.days.ago.iso8601(3),
-          memo: "🏦 Test Donation",
-          amount: 1_000
-        ).run
-
-        TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
-        TransactionEngine::CanonicalTransactionService::Import::All.new.run
-
-        CanonicalEventMapping.create!(
-          canonical_transaction_id: CanonicalTransaction.find_by!(memo: raw_csv_transaction.memo).id,
-          event_id: event.id,
-        )
+        canonical_transaction = create(:canonical_transaction, amount_cents: 100_000, memo: "🏦 Test Donation")
+        create(:canonical_event_mapping, canonical_transaction:, event:)
       end
     end
   end

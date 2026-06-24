@@ -1,0 +1,30 @@
+<% title "Sign the HCB agreement" %>
+
+<script src="https://cdn.docuseal.com/js/form.js"></script>
+
+<% content_for :info_pane do %>
+  <div class="flex flex-col">
+    <h2 class="text-4xl">
+      Sign the HCB agreement
+    </h2>
+
+    <p class="mt-0 text-lg muted">
+      This agreement formalizes the relationship between your project and HCB<% if @application.teen_led? %>, but it is not finalized until we review and approve your application<% end %>
+    </p>
+
+    <div class="h-[40vh] flex">
+      <%= render partial: "contract/parties/contract_faq", locals: { no_questions: true } %>
+    </div>
+  </div>
+<% end %>
+
+<div data-controller="contract" data-contract-advance-path-value="<%= application_path(@application) %>">
+  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party } %>
+</div>
+
+<% content_for :footer do %>
+  <div class="flex gap-4">
+    <a class="btn bg-muted" href="<%= videos_application_path(@application) %>">← Back</a>
+    <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+  </div>
+<% end %>

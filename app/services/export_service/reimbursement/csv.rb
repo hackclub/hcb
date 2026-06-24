@@ -30,7 +30,7 @@ module ExportService
       end
 
       def row(rr)
-        ::CSV::Row.new(
+        SafeCsv::Row.new(
           headers,
           [
             rr.created_at,
@@ -44,7 +44,7 @@ module ExportService
       end
 
       def header
-        ::CSV::Row.new(headers, headers, true)
+        SafeCsv::Row.new(headers, headers, true)
       end
 
       def headers

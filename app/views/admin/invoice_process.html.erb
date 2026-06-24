@@ -71,7 +71,7 @@
     </fieldset>
 
     <p>
-      <%= form.submit "Mark Paid", data: { confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
+      <%= form.submit "Mark Paid", data: { turbo_confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
     </p>
   <% end %>
 <% else %>

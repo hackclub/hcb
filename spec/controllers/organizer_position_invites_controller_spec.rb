@@ -16,7 +16,7 @@ RSpec.describe OrganizerPositionInvitesController do
       user = create(:user)
       event = create(:event, organizers: [user])
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -51,7 +51,7 @@ RSpec.describe OrganizerPositionInvitesController do
         receive(:all)
           .with(filter: include(event.id.to_s))
           .and_return([])
-          .twice
+          .once
       )
       create_docuseal_request =
         stub_request(:post, "https://api.docuseal.co/submissions")
@@ -68,7 +68,7 @@ RSpec.describe OrganizerPositionInvitesController do
           headers: { content_type: "application/json" }
         )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,

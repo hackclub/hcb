@@ -84,13 +84,13 @@
       <td>
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
-            <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT).not_demo_mode, :id, :admin_dropdown_description, { include_blank: true, selected: @canonical_transaction.event.try(:id) }, { style: "width: 300px;" }) %>
+            <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @canonical_transaction.event&.to_combobox_display %>
             <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
           <% end %>
         </div>
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
           <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
-          <%= form.submit "Map to NoEvent", data: { confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" }, class: "my-0" %>
+          <%= form.submit "Map to NoEvent", data: { turbo_confirm: @canonical_transaction.local_hcb_code.unknown? ? "Hey there– you sure you want to map this transaction to NoEvent?" : "Woaaahaa! 😯 This seems like a transaction that SHOULD NOT be manually mapped! Are you sure you want to do this? 👀" }, class: "my-0" %>
         <% end %>
       </td>
       <td>
@@ -140,7 +140,7 @@
   <% if comment.content.blank? %>
     <div class="muted mb1"><em>Comment left blank.</em></div>
   <% else %>
-    <%= sanitize(MarkdownService.instance.renderer(current_user:, record: comment).render(comment.content), scrubber: MarkdownScrubber.new) %>
+    <%= MarkdownService.instance.render(comment.content, current_user:, record: comment) %>
   <% end %>
   <% if comment.has_attached_file? %>
     <p>
