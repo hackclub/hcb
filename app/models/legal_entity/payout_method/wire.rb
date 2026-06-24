@@ -24,11 +24,7 @@ class LegalEntity
   class PayoutMethod < ApplicationRecord
     class Wire < ApplicationRecord
       self.table_name = "user_payout_method_wires"
-      after_save_commit -> {
-        next unless user
 
-        Reimbursement::PayoutHolding.where(report: user.reimbursement_reports).failed.each(&:mark_settled!)
-      }
       has_encrypted :account_number, :bic_code
       blind_index :account_number, :bic_code
 
