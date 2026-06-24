@@ -51,6 +51,7 @@ class LegalEntity
       end
 
     end
+
   end
 
 end
