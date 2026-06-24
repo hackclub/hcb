@@ -106,7 +106,8 @@ class AdminMailer < ApplicationMailer
   end
 
   def logical_transaction_anomalies(hcb_codes:)
-    @event = hcb_codes.first.event
+    @event = Event.find(183)
+    @hcb_codes = hcb_codes
 
     mail(
       to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],

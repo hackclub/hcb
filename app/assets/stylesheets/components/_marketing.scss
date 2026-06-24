@@ -1961,7 +1961,9 @@ $mk-term-green: #62d196;
 .mk-portfolio__funded {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap; // wrap onto multiple lines on a narrow card instead of overflowing
+  gap: 8px 12px;
+  min-width: 0;
 }
 
 .mk-portfolio__funded-label {
@@ -1969,11 +1971,17 @@ $mk-term-green: #62d196;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: $muted;
+
+  // Give the label its own line on phone widths so both logos sit together beneath it.
+  @media (max-width: 600px) {
+    flex-basis: 100%;
+  }
 }
 
 .mk-portfolio__funder {
   height: 18px;
   width: auto;
+  max-width: 100%; // never let a wide logo bleed past the card edge
   // Greyscale + slight transparency downweights the backer logos so a recipient card never
   // reads as a funder testimonial — and so they don't compete with the full-colour logos in
   // the "In good company" funder marquee directly below.

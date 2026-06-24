@@ -1,7 +1,7 @@
 <%= form_with url: link_receipts_path, method: :post, data: {
       controller: "receipt-select"
 } do |form| %>
-  <% if @receipts.size == 0 %>
+  <% if @receipts.empty? %>
     <%= blankslate "Receipt Bin is empty." %>
   <% else %>
     <input placeholder="Search" style="max-width: none;" class="mb3" type="text" id="q">
