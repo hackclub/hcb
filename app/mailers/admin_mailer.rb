@@ -101,7 +101,17 @@ class AdminMailer < ApplicationMailer
 
     mail(
       to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
-      subject: "#{pluralize(anomalous_events, "event")} have balance anomalies"
+      subject: "#{anomalous_events.length} events have balance anomalies"
+    )
+  end
+
+  def logical_transaction_anomalies(hcb_codes:)
+    @event = hcb_codes.first.event
+    @hcb_codes = hcb_codes
+
+    mail(
+      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
     )
   end
 
