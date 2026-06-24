@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -58,7 +58,7 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -142,7 +142,13 @@ class IncreaseCheck < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
-  after_update if: -> { column_status_previously_changed?(to: "stopped") || column_status_previously_changed?(to: "rejected") } do
+  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+    canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+    IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
