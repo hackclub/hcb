@@ -1,6 +1,10 @@
 These logical transactions have discrepancies in their amounts between the old and new transaction engine:
 
 <% @hcb_codes.find_each do |hcb_code| %>
-  <p>Old transaction engine balance (HCB Code <%= link_to hcb_code.hashid, hcb_code_url(hcb_code) %>): <%= hcb_code.smart_amount_cents %></p>
-  <p>New transaction engine balance (Ledger::Item <%= link_to hcb_code.ledger_item.hashid, ledger_item_url(hcb_code.ledger_item) %>): <%= hcb_code.ledger_item.amount_cents %></p>
+  <p>Old transaction engine amount (HCB Code <%= link_to hcb_code.hashid, hcb_code_url(hcb_code) %>): <%= hcb_code.smart_amount_cents %></p>
+  <% if hcb_code.ledger_item.nil? %>
+    <p>Missing Ledger::Item record</p>
+  <% else %>
+    <p>New transaction engine amount (Ledger::Item <%= link_to hcb_code.ledger_item.hashid, ledger_item_url(hcb_code.ledger_item) %>): <%= hcb_code.ledger_item.amount_cents %></p>
+  <% end %>
 <% end %>
