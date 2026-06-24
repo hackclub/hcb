@@ -35,16 +35,9 @@
           "legalName": "The Hack Foundation",
           "url": "https://hcb.hackclub.com",
           "logo": "https://hcb.hackclub.com/brand/hcb-icon-icon-original.png",
-          "sameAs": ["https://github.com/hackclub/hcb", "https://hackclub.com"]
-        },
-        {
-          "@type": "FAQPage",
-          "mainEntity": [
-            { "@type": "Question", "name": "How fast can I make a grant?", "acceptedAnswer": { "@type": "Answer", "text": "In days, not quarters. There's no new legal entity and no IRS waiting period." } },
-            { "@type": "Question", "name": "Is my giving tax-deductible?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. You give to HCB by Hack Club, a 501(c)(3) nonprofit, so your deduction is immediate." } },
-            { "@type": "Question", "name": "Do I need to set up a foundation?", "acceptedAnswer": { "@type": "Answer", "text": "No. You get the legitimacy of a foundation without becoming one. You direct the grants, and HCB handles compliance, paperwork, and money movement." } },
-            { "@type": "Question", "name": "Can I give privately?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Transparency is optional, so you can give publicly, privately, or anonymously." } }
-          ]
+          "taxID": "81-2908499",
+          "identifier": { "@type": "PropertyValue", "propertyID": "EIN", "value": "81-2908499" },
+          "sameAs": ["https://github.com/hackclub/hcb", "https://hackclub.com", "https://en.wikipedia.org/wiki/Hack_Club", "https://projects.propublica.org/nonprofits/organizations/812908499"]
         }
       ]
     }
@@ -376,11 +369,75 @@
 
 <%# ============================ COMPARISON ============================ %>
 <section class="mk-section">
-  <div class="mk-container mk-narrow">
+  <div class="mk-container <%= @show_comparison_faq ? "mk-compare-wide" : "mk-narrow" %>">
     <div class="mk-section__head">
       <p class="mk-eyebrow">How it compares</p>
       <h2 class="mk-section__title">The agility of a fund. The legitimacy of a foundation.</h2>
     </div>
+    <% if @show_comparison_faq %>
+    <%# Comparison rows come from MarketingHelper#funder_comparison_rows. Each row's detail ships
+        EXPANDED in the server HTML (so AI crawlers and no-JS visitors read every fact + source);
+        the funders-compare controller collapses them once JS runs and toggles per row. %>
+    <p class="mk-compare-lead">Fund a charitable project tax-deductibly from day one,
+      <strong>even if it isn't its own 501(c)(3)</strong>, without standing up a foundation.</p>
+    <div class="mk-table-wrap" data-controller="funders-compare">
+      <%# Stuck-state sentinel: when it scrolls above the nav line, the controller flags the
+          sticky header so it can show a drop shadow. %>
+      <div class="mk-table__sentinel" data-funders-compare-target="sentinel" aria-hidden="true"></div>
+      <table class="mk-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="mk-vh">Capability</span></th>
+            <th scope="col" class="mk-table__hcb">HCB</th>
+            <th scope="col">Private foundation</th>
+            <th scope="col">Donor-advised fund</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% funder_comparison_rows.each_with_index do |row, i| %>
+            <tr class="mk-compare-row">
+              <th scope="row">
+                <button type="button" class="mk-table__toggle" aria-expanded="true"
+                        aria-controls="cmp-detail-<%= i %>"
+                        data-funders-compare-target="toggle"
+                        data-action="funders-compare#toggle">
+                  <span class="mk-table__toggle-label"><%= row[:label] %></span>
+                  <span class="mk-table__chevron" aria-hidden="true"></span>
+                </button>
+              </th>
+              <td class="mk-table__hcb" data-label="HCB"><strong><%= row[:hcb] %></strong><% if row[:hcb_sub] %><span class="mk-table__hcb-sub"><%= row[:hcb_sub] %></span><% end %></td>
+              <td data-label="Private foundation"><%= row[:pf] %></td>
+              <td data-label="Donor-advised fund"><%= row[:daf] %></td>
+            </tr>
+            <tr class="mk-table__detail" id="cmp-detail-<%= i %>" data-funders-compare-target="detail">
+              <td colspan="4">
+                <p class="mk-compare-detail__text"><%= row[:detail] %></p>
+                <% if row[:sources].present? %>
+                  <p class="mk-meta">
+                    <span class="mk-meta__label">Sources</span>
+                    <% row[:sources].each do |source| %>
+                      <a class="mk-meta__link" href="<%= source[:url] %>" target="_blank" rel="noopener"><%= source[:text] %><span class="mk-vh"> (opens in a new tab)</span></a>
+                    <% end %>
+                  </p>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <p class="mk-compare-entity">HCB by Hack Club, a registered 501(c)(3) (The Hack Foundation,
+      EIN 81-2908499).</p>
+    <p class="mk-compare-disclaimer">This comparison is general information, not tax or legal advice;
+      confirm specifics with your own advisor.</p>
+    <div class="mk-compare-note">
+      <p class="mk-compare-note__lead">Already give through a donor-advised fund or foundation?</p>
+      <p class="mk-compare-note__body">You don't have to choose. Route your existing vehicle's grants
+        into HCB to reach the fast-moving projects and brand-new initiatives it can't fund on its own,
+        with real-time visibility into every dollar. It's where your giving goes to work.</p>
+    </div>
+    <% else %>
+    <%# Original static comparison table (shown when the funders_landing_comparison_faq flag is off). %>
     <div class="mk-table-wrap">
       <table class="mk-table">
         <thead>
@@ -437,6 +494,7 @@
         use HCB as the fast, transparent layer it grants into, reaching the projects and
         brand-new initiatives a DAF isn't built to fund.</p>
     </div>
+    <% end %>
   </div>
 </section>
 
@@ -777,6 +835,30 @@
   </div>
 </section>
 
+<%# ===================== COMMON QUESTIONS (FAQ teaser) ===================== %>
+<%# The top funder questions; the full set lives on the dedicated /for/funders/faq subpage. %>
+<% if @show_comparison_faq %>
+<section class="mk-section mk-section--alt">
+  <div class="mk-container mk-narrow">
+    <div class="mk-section__head">
+      <p class="mk-eyebrow">Common questions</p>
+      <h2 class="mk-section__title">Funders ask, we answer.</h2>
+    </div>
+    <div class="mk-faq mk-faq--teaser">
+      <% funder_faqs(stats: @stats).flat_map { |group| group[:faqs] }.select { |faq| faq[:teaser] }.each do |faq| %>
+        <div class="mk-faq__item">
+          <h3 class="mk-faq__q"><%= faq[:q] %></h3>
+          <p class="mk-faq__a"><%= faq[:a] %></p>
+        </div>
+      <% end %>
+    </div>
+    <p class="mk-faq__more">
+      <a class="marketing-btn marketing-btn--ghost" href="<%= funders_faq_path %>">See all funder questions</a>
+    </p>
+  </div>
+</section>
+<% end %>
+
 <%# ============================ FINAL CTA ============================ %>
 <section class="mk-section mk-cta" id="talk-to-us">
   <div class="mk-container mk-narrow mk-cta__inner">
@@ -813,18 +895,12 @@
         <div class="mk-team">
           <p class="mk-team__label">You'll hear from one of us</p>
           <ul class="mk-team__list">
-            <li>
-              <img class="mk-team__avatar" src="https://cdn.hackclub.com/019e7570-8304-7de8-abfe-cbcaf12616b7/image.png" alt="" width="72" height="72" loading="lazy" decoding="async">
-              Melanie Smith
-            </li>
-            <li>
-              <img class="mk-team__avatar" src="https://cdn.hackclub.com/019e7570-80b5-7eae-9d54-cf4bf1460953/image.png" alt="" width="72" height="72" loading="lazy" decoding="async">
-              Paul Spitler
-            </li>
-            <li>
-              <img class="mk-team__avatar" src="https://cdn.hackclub.com/019e7570-7d87-707e-bb85-4d39a3fc5114/image.png" alt="" width="72" height="72" loading="lazy" decoding="async">
-              Gary Tou
-            </li>
+            <% funder_team.each do |member| %>
+              <li>
+                <img class="mk-team__avatar" src="<%= member[:avatar] %>" alt="" width="72" height="72" loading="lazy" decoding="async">
+                <%= member[:name] %>
+              </li>
+            <% end %>
           </ul>
         </div>
       </div>

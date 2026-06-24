@@ -34,6 +34,7 @@ $mk-bg: $snow; // #f9fafc
 
 // ---------------------------------------------------------------- base / layout
 .marketing {
+  --mk-nav-h: 64px; // sticky nav height; sticky-header + scroll-margin offsets all derive from this
   background: $mk-bg;
   color: $mk-ink;
 }
@@ -83,6 +84,13 @@ $mk-bg: $snow; // #f9fafc
 
 .mk-narrow {
   max-width: 760px;
+}
+
+// The comparison section runs wider than the page's prose columns so the table's labels and
+// values wrap less. Tablet falls back to the container's own responsive width (padding-bounded),
+// and mobile renders the table as stacked cards.
+.mk-compare-wide {
+  max-width: 960px;
 }
 
 .mk-section {
@@ -2113,10 +2121,38 @@ $mk-term-green: #62d196;
 
 // ---------------------------------------------------------------- comparison
 .mk-table-wrap {
-  overflow-x: auto;
+  // `clip` clips to the border-radius (keeping the rounded corners) WITHOUT creating a scroll
+  // container, so the sticky <thead> still sticks to the viewport. `hidden`/`auto` would trap
+  // the sticky header; `visible` would let the opaque header square off (and leak through) the
+  // rounded corners. table-layout is fixed so nothing overflows horizontally; mobile is cards.
+  position: relative; // containing block for the stuck-state sentinel
+  overflow: clip;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-border-md);
   background: $white;
+}
+
+// A zero-footprint marker at the top of the table; the controller watches it to know when the
+// sticky header has parked under the nav.
+.mk-table__sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+// Once the header is stuck under the nav, give it a drop shadow so it reads as a floating bar,
+// distinct from the rows scrolling beneath it. (At rest it sits flush in the rounded card.)
+.mk-table-wrap.is-stuck thead th {
+  box-shadow: 0 6px 11px -7px rgba($black, 0.32);
+}
+
+.mk-table-wrap.is-stuck thead .mk-table__hcb {
+  box-shadow:
+    inset 0 3px 0 $red,
+    0 6px 11px -7px rgba($black, 0.32);
 }
 
 // Closing note under the comparison table: invites funders who already give through a
@@ -2142,6 +2178,37 @@ $mk-term-green: #62d196;
     color: $slate;
     line-height: 1.6;
   }
+
+  // Variant with the team avatar cluster (the FAQ page's "didn't find your answer" card).
+  &--team {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+
+// Compact overlapping avatar cluster (mirrors the app's `.avatar-row`: faces overlap, separated by
+// a white ring). Decorative, so the images carry empty alt and the wrapper is aria-hidden.
+.mk-avatar-stack {
+  display: flex;
+  flex: 0 0 auto;
+
+  &__img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px $white;
+
+    & + & {
+      margin-left: -10px;
+    }
+  }
 }
 
 .mk-table {
@@ -2161,6 +2228,13 @@ $mk-term-green: #62d196;
   }
 
   thead th {
+    // Sticky column headers: stay visible while scrolling a long (expanded) table. They
+    // park just below the sticky marketing nav (64px), with an opaque background so rows
+    // pass cleanly underneath.
+    position: sticky;
+    top: var(--mk-nav-h);
+    z-index: 2;
+    background: $white;
     font-size: 0.8rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -2194,6 +2268,7 @@ $mk-term-green: #62d196;
 
   thead .mk-table__hcb {
     color: darken($red, 14%);
+    background: mix($red, $white, 6%); // opaque version of the column tint, for the sticky header
     box-shadow: inset 0 3px 0 $red;
   }
 
@@ -2202,7 +2277,7 @@ $mk-term-green: #62d196;
   @media (min-width: 641px) {
     th:first-child,
     td:first-child {
-      width: 34%;
+      width: 38%; // a bit more room for the label column so dimension names wrap less
     }
 
     thead th:not(:first-child),
@@ -2280,6 +2355,404 @@ $mk-term-green: #62d196;
   .mk-table td.mk-table__hcb::before {
     color: darken($red, 14%);
     font-weight: 600;
+  }
+}
+
+// ------------------------------------------------- comparison table interactivity
+// The comparison table's detail rows ship expanded in the HTML (so AI crawlers and
+// no-JS visitors get every fact + source); `funders-compare` adds `is-enhanced` and
+// collapses them, then toggles per row. Affordances (chevron, pointer cursor) are
+// gated on `is-enhanced` so a no-JS visitor never sees a control that does nothing.
+
+// Answer-first interceptor line above the table — also a clean, citable passage for AI.
+.mk-compare-lead {
+  margin: 0 0 22px;
+  color: $slate;
+  font-size: 1.05rem;
+  line-height: 1.6;
+
+  strong {
+    color: $mk-ink;
+  }
+}
+
+// Entity-disambiguation line directly under the comparison table, so an AI engine that extracts
+// just the table chunk still knows what HCB legally is. Matches the disclaimer so the two footnote
+// lines below the table read as one uniform block.
+.mk-compare-entity {
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-disclaimer {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: darken($muted, 18%); // legal "not tax advice" line must clear AA
+}
+
+// Each row label becomes a full-width toggle button; plain text until JS enhances it.
+.mk-table__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+}
+
+.mk-table__chevron {
+  display: none; // shown only once enhanced (see .is-enhanced below)
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg); // expanded → points down
+  opacity: 0.45;
+  transition: transform 0.18s ease;
+}
+
+// Collapsed → chevron points right.
+.mk-table__toggle[aria-expanded='false'] .mk-table__chevron {
+  transform: rotate(-45deg);
+}
+
+// Secondary clause on an HCB value (e.g. "one simple fee"): its own muted line under the
+// headline value, so a separator never dangles at the end of a wrapped line.
+.mk-table__hcb-sub {
+  display: block;
+  margin-top: 3px;
+  font-weight: 400;
+  font-size: 0.82em;
+  line-height: 1.3;
+  color: $slate;
+}
+
+.is-enhanced {
+  .mk-table__toggle {
+    cursor: pointer;
+  }
+
+  // Hover affordance so the row reads as clickable.
+  .mk-table__toggle:hover {
+    color: $mk-ink;
+
+    .mk-table__chevron {
+      opacity: 0.8;
+    }
+  }
+
+  .mk-table__chevron {
+    display: inline-block;
+  }
+}
+
+// Collapsed detail rows: beat the mobile `tr { display: block }` rule further down.
+.mk-table tbody tr.mk-table__detail[hidden] {
+  display: none;
+}
+
+.mk-table__detail td {
+  // The expanded explanation, set off as a tinted sub-panel with a clear whitespace gap below, so
+  // each label-and-detail pair reads as one group, plainly separate from the next row.
+  padding: 16px 20px;
+  text-align: left;
+  background: rgba($black, 0.03);
+  border-bottom: 14px solid $white;
+}
+
+// Group an expanded row with its detail so the detail clearly belongs to the label ABOVE it: drop
+// the divider between the row and its detail. (Desktop; the stacked mobile cards join via their
+// own rules below.)
+@media (min-width: 641px) {
+  .mk-table tbody tr.mk-compare-row:has(+ .mk-table__detail:not([hidden])) > th,
+  .mk-table tbody tr.mk-compare-row:has(+ .mk-table__detail:not([hidden])) > td {
+    border-bottom-color: transparent;
+  }
+}
+
+.mk-compare-detail__text {
+  max-width: 64ch;
+  margin: 0;
+  color: $slate;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-table__chevron {
+    transition: none;
+  }
+}
+
+// Mobile (cards): the detail reads as attached to its summary card — full-width prose,
+// no label/value split, and squared-off joining corners.
+@media (max-width: 640px) {
+  .mk-table tbody tr.mk-table__detail td {
+    display: block;
+    padding: 0 0 4px;
+    text-align: left;
+    background: none;
+    border-bottom: 0; // the desktop group-gap doesn't apply inside the stacked card
+
+    &::before {
+      content: none;
+    }
+  }
+
+  .mk-table tbody tr.mk-compare-row:has(+ tr.mk-table__detail:not([hidden])) {
+    margin-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .mk-table tbody tr.mk-table__detail:not([hidden]) {
+    margin-top: 0;
+    padding-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+// ---------------------------------------------------------------- funder FAQ
+// Q&A on the dedicated /for/funders/faq page and the short teaser on the main page. Plain,
+// fully-visible Q&A (no JS) so every answer is server-rendered, extractable, and scannable.
+
+// FAQ page: a wide editorial layout with a sticky, scroll-tracked table-of-contents rail.
+.mk-faq-page {
+  max-width: 1040px;
+}
+
+.mk-faq-page__head {
+  max-width: 720px;
+}
+
+.mk-faq-layout {
+  display: grid;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: start;
+
+  @media (min-width: 900px) {
+    grid-template-columns: 216px minmax(0, 1fr);
+  }
+}
+
+// Sticky TOC rail (desktop only; narrow screens skim the content directly).
+.mk-faq-toc {
+  display: none;
+
+  @media (min-width: 900px) {
+    position: sticky;
+    top: calc(var(--mk-nav-h) + 24px);
+    display: block;
+    align-self: start;
+  }
+}
+
+.mk-faq-toc__label {
+  margin: 0 0 14px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: darken($muted, 18%); // clears AA contrast on snow
+}
+
+.mk-faq-toc__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-faq-toc__link {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  color: $slate;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    color: $mk-ink;
+    background: rgba($black, 0.04);
+  }
+
+  &.is-active {
+    color: darken($red, 14%); // the table's already-validated AA red
+    background: rgba($red, 0.07);
+    font-weight: 600;
+  }
+}
+
+.mk-faq-toc__num {
+  flex: 0 0 auto;
+  padding-top: 1px;
+  font-family: $mono;
+  font-size: 0.72rem;
+  color: darken($muted, 18%);
+}
+
+.mk-faq-toc__link.is-active .mk-faq-toc__num {
+  color: darken($red, 14%);
+}
+
+// Smooth in-page jumps for marketing anchor links (the TOC, "talk to us", etc.).
+.marketing {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing {
+    scroll-behavior: auto;
+  }
+}
+
+.mk-faq {
+  display: grid;
+  gap: 40px;
+}
+
+// The topic is a mono section label (not another bold heading), so it never competes with the
+// bold questions below it. A hairline rule sets the section off.
+.mk-faq__topic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba($black, 0.09);
+  scroll-margin-top: calc(var(--mk-nav-h) + 16px); // clear the sticky nav when jumped to
+}
+
+.mk-faq__topic-num {
+  flex: 0 0 auto;
+  font-family: $mono;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $red;
+}
+
+.mk-faq__topic-text {
+  font-family: $mono;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: darken($muted, 16%);
+}
+
+.mk-faq__item {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba($black, 0.07);
+}
+
+.mk-faq__group .mk-faq__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.mk-faq__q {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: $mk-ink;
+  scroll-margin-top: calc(var(--mk-nav-h) + 16px); // clear the sticky nav when a question is deep-linked
+}
+
+.mk-faq__a {
+  max-width: 68ch;
+  margin: 0;
+  color: $slate;
+  line-height: 1.65;
+}
+
+// Meta links under an answer or a comparison detail row (Sources and Related share one treatment so
+// they read as siblings): a small mono label + subtle dotted-underline links. Shared by the FAQ page
+// and the comparison table so a citation looks the same everywhere.
+.mk-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+  margin: 12px 0 0;
+}
+
+.mk-meta__label {
+  font-family: $mono;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: darken($muted, 18%); // clears AA contrast on snow
+}
+
+.mk-meta__link {
+  font-size: 0.85rem;
+  color: darken($muted, 18%); // AA-legible: these are citation/cross-link affordances funders click
+  text-decoration: none;
+  border-bottom: 1px dotted rgba($black, 0.4);
+
+  &:hover {
+    color: $mk-ink;
+    border-bottom-color: $mk-ink;
+  }
+}
+
+// Footer (disclaimer + "didn't find your answer" card) sits in the content column, set off from
+// the Q&A with clear space so the bottom of the page doesn't feel crowded.
+.mk-faq-content .mk-compare-disclaimer {
+  margin-top: 44px;
+}
+
+.mk-faq__more {
+  margin: 36px 0 0;
+}
+
+.mk-faq__back {
+  color: inherit;
+  text-decoration: none;
+
+  &::before {
+    content: '← ';
+  }
+}
+
+// Teaser block on the main page: a flat list (no topic groups), divider-separated.
+.mk-faq--teaser {
+  gap: 0;
+
+  .mk-faq__item:first-child {
+    padding-top: 0;
+  }
+
+  .mk-faq__item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
   }
 }
 
