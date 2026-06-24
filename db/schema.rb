@@ -12,13 +12,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[8.0].define(version: 2026_06_24_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
@@ -1364,7 +1361,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
     t.text "secondary_hash"
     t.text "unique_bank_identifier"
     t.datetime "updated_at", null: false
-    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -1628,6 +1625,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_23_183752) do
     t.string "tin_hash"
     t.datetime "updated_at", null: false
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
+  end
+
+  create_table "legal_entity_payout_methods", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "default", default: false, null: false
+    t.bigint "details_id", null: false
+    t.string "details_type", null: false
+    t.bigint "legal_entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details"
+    t.index ["legal_entity_id"], name: "index_le_payout_methods_one_default_per_entity", unique: true, where: "(\"default\" = true)"
+    t.index ["legal_entity_id"], name: "index_legal_entity_payout_methods_on_legal_entity_id"
   end
 
   create_table "legal_entity_users", force: :cascade do |t|
