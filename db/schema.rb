@@ -1930,6 +1930,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_120000) do
     t.index ["name"], name: "index_payment_recipients_on_name"
   end
 
+  create_table "payments", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.datetime "failed_at"
+    t.bigint "payee_id", null: false
+    t.bigint "payout_id"
+    t.string "payout_type"
+    t.string "purpose", null: false
+    t.datetime "rejected_at"
+    t.datetime "sent_at"
+    t.datetime "successful_at"
+    t.datetime "under_review_at"
+    t.datetime "updated_at", null: false
+    t.index ["payee_id"], name: "index_payments_on_payee_id"
+    t.index ["payout_type", "payout_id"], name: "index_payments_on_payout"
+  end
+
   create_table "paypal_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
