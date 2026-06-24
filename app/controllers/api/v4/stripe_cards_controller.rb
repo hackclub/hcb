@@ -4,7 +4,6 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       def index
         if params[:event_id].present?
@@ -27,8 +26,7 @@ module Api
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       def create
