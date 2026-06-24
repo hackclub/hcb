@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
   belongs_to :payee
   belongs_to :creator, class_name: "User"
 
-  monetize :amount_cents
+  monetize :amount_cents, with_model_currency: :currency
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
