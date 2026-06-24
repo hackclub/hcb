@@ -13,7 +13,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class AchTransfer < ApplicationRecord
-
       self.table_name = "user_payout_method_ach_transfers"
       has_encrypted :account_number, :routing_number
       validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }

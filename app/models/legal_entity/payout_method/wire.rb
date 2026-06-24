@@ -23,7 +23,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class Wire < ApplicationRecord
-
       self.table_name = "user_payout_method_wires"
       after_save_commit -> {
         next unless user

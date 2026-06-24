@@ -17,7 +17,6 @@
 class LegalEntity
   class PayoutMethod < ApplicationRecord
     class Check < ApplicationRecord
-
       self.table_name = "user_payout_method_checks"
       validates_presence_of :address_line1, :address_city, :address_postal_code
       validates_presence_of :address_state, message: "Please select a state!"
