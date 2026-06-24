@@ -5,7 +5,7 @@
 # Table name: reimbursement_expense_payouts
 #
 #  id                               :bigint           not null, primary key
-#  aasm_state                       :string
+#  aasm_state                       :string           not null
 #  amount_cents                     :integer          not null
 #  hcb_code                         :string
 #  created_at                       :datetime         not null

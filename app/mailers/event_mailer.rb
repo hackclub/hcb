@@ -2,7 +2,7 @@
 
 class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
-  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary]
+  before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
 
   def monthly_donation_summary
@@ -65,10 +65,12 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_enabled
+    @can_disable_transparency = @event.eligible_for_disabling_transparency?
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
   def transparency_mode_disabled
+    @can_enable_transparency = @event.eligible_for_transparency?
     @visible_pages = []
     @visible_pages << { name: "donation page", link: start_donation_donations_url(@event) } if @event.donation_page_available?
     @visible_pages << { name: "public reimbursements page", link: reimbursement_start_reimbursement_report_url(@event) } if @event.public_reimbursement_page_enabled?
@@ -87,6 +89,15 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_disabled
     mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+  end
+
+  def subevent_created
+    @subevent = params[:subevent]
+    @creator = params[:creator]
+    @emails = @event.organizer_contact_emails(only_managers: true)
+    return if @emails.none?
+
+    mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private
