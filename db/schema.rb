@@ -14,7 +14,7 @@
 
 ActiveRecord::Schema[8.0].define(version: 2026_06_24_120000) do
   create_schema "google_sheets"
-  
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
