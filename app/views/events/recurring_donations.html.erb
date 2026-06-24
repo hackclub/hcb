@@ -1,5 +1,5 @@
 <%= turbo_frame_tag :donations_recurring_donations_overview do %>
-  <% if @recurring_donations.size > 0 %>
+  <% if @recurring_donations && @recurring_donations.size > 0 %>
     <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
       Recurring donations
     </h2>
