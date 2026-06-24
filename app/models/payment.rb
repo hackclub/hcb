@@ -41,6 +41,48 @@ class Payment < ApplicationRecord
     state :rejected
     state :failed
     state :successful
+
+    event :mark_under_review do
+      transitions from: :pending_legal_entity, to: :under_review, if: -> { payee.legal_entity.complete? && payee.legal_entity.default_payment_method.present? }
+      after do
+        create_transfer!
+      end
+    end
+
+    event :mark_sent do
+      transitions from: :under_review, to: :sent
+      after do
+        # send payment sent mailer
+      end
+    end
+
+    event :mark_rejected do
+      transitions from: :under_review, to: :rejected
+      after do
+        # send rejected mailer
+      end
+    end
+
+    event :mark_failed do
+      transitions from: [:sent, :successful], to: :failed
+      after do
+        # send failed mailer
+      end
+    end
+
+    event :mark_successful do
+      transitions from: :sent, to: :successful
+    end
+  end
+
+  after_create do
+    if may_mark_under_review?
+      mark_under_review!
+    elsif payee.legal_entity.complete?
+      # send missing payment method mailer
+    else
+      # send payment mailer
+    end
   end
 
   def receipt_required?
@@ -49,6 +91,12 @@ class Payment < ApplicationRecord
 
   def marked_no_or_lost_receipt_at
     nil
+  end
+
+  private
+
+  def create_transfer!
+    # actually send
   end
 
 end
