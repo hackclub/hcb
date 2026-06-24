@@ -28,8 +28,14 @@ module OneTimeJobs
 
     def delete_ledger_items
       count = Ledger::Item.count
-      puts "Deleting #{count} Ledger::Item records"
-      Ledger::Item.delete_all
+      batches = (count / 10_000.0).ceil
+      puts "Deleting #{count} Ledger::Item records in #{batches} batches of 10,000"
+
+      batches.ceil.times do |batch|
+        Ledger::Item.order(created_at: :desc).limit(10_000).delete_all
+        puts "Deleted batch #{batch + 1} of Ledger::Item records"
+      end
+
       puts "Deleted all Ledger::Item records"
     end
 
