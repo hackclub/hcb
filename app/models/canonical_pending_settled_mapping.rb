@@ -45,5 +45,4 @@ class CanonicalPendingSettledMapping < ApplicationRecord
     ledger_item.write_amount_cents!
   end
 
-
 end
