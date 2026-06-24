@@ -163,7 +163,7 @@ module HasWireRecipient
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "phone", label: "Phone number associated with account" }
         fields << { type: :text_field, key: "local_bank_code", label: "Local bank code", description: "11-character IFSC codes" }
-        fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 5-character purpose of payment code, beginning with 'P'.", refer_to: "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/ASAP840212FL.pdf", reimbursement_default: "S1099" }
+        fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 5-character purpose of payment code, beginning with 'P'.", refer_to: "https://cdn.hackclub.com/019ecca2-62ce-75c8-a16a-40e2d557434e/ASAP840212FL.pdf", reimbursement_default: "S1099" }
       when "JO"
         fields << { type: :text_area, key: "remittance_info", label: "Remittance information", description: "Payment purpose must be clearly identified" }
         fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 4-digit purpose of payment code.", refer_to: "https://www.cbj.gov.jo/EchoBusv3.0/SystemAssets/PDFs/1%D8%A7%D9%84%D8%BA%D8%B1%D8%B6%20%D9%85%D9%86%20%D8%A7%D9%84%D8%AA%D8%AD%D9%88%D9%8A%D9%84%D8%A7%D8%AA%200%D8%A7%D9%84%D9%85%D8%A7%D9%84%D9%8A%D8%A9-20191029.pdf" }

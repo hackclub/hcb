@@ -163,34 +163,32 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
+// Copy fades up on load; the hero media (the fan-out diagram) runs its own
+// JS-driven intro via the funders-flow controller, with a static fallback.
 @media (prefers-reduced-motion: no-preference) {
-  .mk-hero__copy > *,
-  .mk-hero__media {
-    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
   .mk-hero__copy > * {
+    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+
     @for $i from 1 through 5 {
       &:nth-child(#{$i}) {
         animation-delay: #{0.06s * $i};
       }
     }
   }
-
-  .mk-hero__media {
-    animation-delay: 0.2s;
-  }
 }
 
 // ---------------------------------------------------------------- buttons
+// Squared, flat fills on HCB's own radius + shadow tokens — deliberately the same
+// language as the in-app button (components/_buttons.scss), not a pill with a gradient
+// fill and a colored glow (which read as generic SaaS rather than HCB).
 .marketing-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   height: 44px;
-  padding: 0 22px;
-  border-radius: 999px;
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
   font-size: 1rem;
   font-weight: 600;
   text-decoration: none;
@@ -198,36 +196,37 @@ $mk-bg: $snow; // #f9fafc
   cursor: pointer;
   border: 0;
   transition:
-    transform 0.12s ease,
     box-shadow 0.12s ease,
     background-color 0.12s ease;
 
   &--sm {
     height: 38px;
-    padding: 0 16px;
+    padding: 0 14px;
     font-size: 0.9375rem;
   }
 
   &--lg {
-    height: 52px;
-    padding: 0 26px;
+    height: 50px;
+    padding: 0 24px;
     font-size: 1.0625rem;
   }
 
   &--primary {
     color: #fff;
     background-color: $red;
-    background-image: linear-gradient(to bottom, lighten($red, 6%), $red);
     box-shadow:
-      0 1px 2px rgba($red, 0.4),
-      0 8px 24px -8px rgba($red, 0.5);
+      inset 0 0 0 0.5px rgba($black, 0.2),
+      var(--shadow-sm);
 
     &:hover,
     &:focus-visible {
-      transform: translateY(-1px);
+      // Keep the text white on hover — re-stated here so it beats the app's
+      // global `a:hover` colour rule (which otherwise wins by specificity).
+      color: #fff;
+      background-color: darken($red, 6%);
       box-shadow:
-        0 2px 4px rgba($red, 0.4),
-        0 14px 30px -8px rgba($red, 0.55);
+        inset 0 0 0 0.5px rgba($black, 0.2),
+        var(--shadow-md);
     }
   }
 
@@ -238,7 +237,8 @@ $mk-bg: $snow; // #f9fafc
 
     &:hover,
     &:focus-visible {
-      transform: translateY(-1px);
+      color: $mk-ink;
+      background: darken($white, 4%);
       box-shadow: var(--shadow-border-md);
     }
   }
@@ -260,13 +260,13 @@ $mk-bg: $snow; // #f9fafc
     flex: 1 1 240px;
     min-width: 0;
     max-width: none;
-    height: 52px;
-    padding: 0 22px;
+    height: 50px;
+    padding: 0 18px;
     font-size: 1.0625rem;
     color: $mk-ink;
     background: $white;
     border: 0;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-border-sm);
     transition: box-shadow 0.12s ease;
 
@@ -400,6 +400,8 @@ $mk-bg: $snow; // #f9fafc
     gap: 9px;
     height: 38px;
     padding: 0 14px 0 8px;
+    // Pill on purpose: it wraps a circular avatar, so the concentric radius reads
+    // right. (The AI tell was the gradient pill *CTA*, not avatar chips.)
     border-radius: 999px;
     font-size: 0.95rem;
     font-weight: 500;
@@ -435,28 +437,34 @@ $mk-bg: $snow; // #f9fafc
     pointer-events: none;
   }
 
-  &__mesh {
-    position: absolute;
-    inset: -20% -10% 0;
-    background:
-      radial-gradient(42% 52% at 14% 6%, rgba($red, 0.12), transparent 70%),
-      radial-gradient(38% 46% at 86% 0%, rgba($blue, 0.1), transparent 70%),
-      radial-gradient(44% 44% at 72% 64%, rgba($cyan, 0.09), transparent 70%);
-  }
-
-  &__grid {
+  // A single, quiet warm light anchored behind the headline — one hue, low
+  // opacity. Deliberately not the multi-color radial "mesh" blob that reads as AI.
+  &__glow {
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(to right, rgba($black, 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba($black, 0.045) 1px, transparent 1px);
-    background-size: 64px 64px;
+    background: radial-gradient(
+      52% 60% at 8% -8%,
+      rgba($red, 0.07),
+      transparent 68%
+    );
+  }
+
+  // Faint vertical rules echoing HCB's columns mark (pillars / a bar chart),
+  // confined to the right where the diagram sits and softly masked at the edges.
+  &__ledger {
+    position: absolute;
+    inset: 0 0 0 48%;
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba($black, 0.04) 0 1px,
+      transparent 1px 92px
+    );
     -webkit-mask-image: radial-gradient(
-      circle at 50% 0%,
+      120% 90% at 78% 30%,
       #000,
       transparent 72%
     );
-    mask-image: radial-gradient(circle at 50% 0%, #000, transparent 72%);
+    mask-image: radial-gradient(120% 90% at 78% 30%, #000, transparent 72%);
   }
 
   &__inner {
@@ -525,7 +533,195 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// ---------------------------------------------------------------- app window mockup
+// ---------------------------------------------------------------- hero fan-out
+// "Capital → grants": a funder source node wired to several recipient orgs, with
+// pulses traveling the wires (animated by funders_flow_controller). Renders as a
+// sensible static state with no JS / reduced motion.
+.mk-flow {
+  position: relative;
+  width: 100%;
+  // Keep the diagram compact on wide screens so the wires don't sprawl.
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: clamp(330px, 33vw, 430px);
+}
+
+.mk-flow__wires {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mk-flow__rail {
+  stroke: rgba($black, 0.16);
+  stroke-width: 1.5;
+}
+
+.mk-flow__pulse {
+  fill: $red;
+  filter: drop-shadow(0 0 5px rgba($red, 0.55));
+}
+
+.mk-flow__source {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: clamp(118px, 27%, 154px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+}
+
+.mk-flow__mark {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.mk-flow__source-name {
+  font-weight: 700;
+  color: $mk-ink;
+  font-size: 1.05rem;
+}
+
+.mk-flow__source-sub {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: $muted;
+}
+
+.mk-flow__feed {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(210px, 60%, 300px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mk-flow__grant {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  background: $white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-border-sm);
+
+  // "Received" ring. Its strength is driven by --recv, which the flow controller
+  // tweens 1 -> 0 on the same timeline as the ball, so the flash lands exactly
+  // when the ball does. Defaults to 0 (no flash) with no JS / reduced motion.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1.5px rgba($red, 0.6);
+    opacity: var(--recv, 0);
+    pointer-events: none;
+  }
+}
+
+.mk-flow__avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: rgba($black, 0.05);
+  color: $slate;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.mk-flow__org {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.mk-flow__name {
+  font-weight: 600;
+  color: $mk-ink;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mk-flow__meta {
+  font-size: 0.78rem;
+  color: $muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Narrow screens can't fit the source + rows side by side, so stack them and
+// drop the wires (the controller detects the hidden SVG and skips the animation).
+@media (max-width: 640px) {
+  .mk-flow {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mk-flow__wires {
+    display: none;
+  }
+
+  .mk-flow__source {
+    position: static;
+    transform: none;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mk-flow__mark {
+    margin-bottom: 0;
+  }
+
+  .mk-flow__source-sub {
+    margin-top: 0;
+  }
+
+  .mk-flow__feed {
+    position: static;
+    width: auto;
+    gap: 10px;
+  }
+}
+
+// --------------------------------------------------------- app screenshot frame
+// Frameless: the product screenshot already carries the full HCB app chrome, so
+// we just round + lift it. (No invented title bar — it duplicated the shot's own
+// heading/logo and a "LIVE" badge would be false on a static image.)
 .mk-window {
   margin: 0;
   border-radius: var(--radius-xl);
@@ -535,27 +731,21 @@ $mk-bg: $snow; // #f9fafc
     var(--shadow-border-lg),
     0 40px 80px -28px rgba($black, 0.25);
 
-  &__bar {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    height: 38px;
-    padding: 0 16px;
-    background: $snow-dark;
-    box-shadow: inset 0 -1px 0 rgba($black, 0.06);
-
-    i {
-      width: 11px;
-      height: 11px;
-      border-radius: 999px;
-      background: $smoke-dark;
-    }
-  }
-
   &__shot {
     display: block;
     width: 100%;
     height: auto;
+  }
+}
+
+// Soft pulsing dot used by the "Real-time data" value prop in the explorer.
+@keyframes mk-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba($green, 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba($green, 0);
   }
 }
 
@@ -577,6 +767,26 @@ $mk-bg: $snow; // #f9fafc
 .mk-product--metric .mk-product__grid {
   @media (min-width: 920px) {
     grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+// Mirror the layout (media left, copy right) so stacked product/case sections alternate
+// instead of repeating the same zig. Desktop only — on mobile both columns collapse to one
+// and copy stays first (source order).
+.mk-product--reverse {
+  @media (min-width: 920px) {
+    .mk-product__copy {
+      order: 2;
+    }
+
+    .mk-product__media {
+      order: 1;
+    }
+
+    // Keep the copy in the wider column even though it now sits on the right.
+    &.mk-product--metric .mk-product__grid {
+      grid-template-columns: 0.9fr 1.1fr;
+    }
   }
 }
 
@@ -611,85 +821,64 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// ---------------------------------------------------------------- impact photos
-.mk-photos {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr;
-
-  @media (min-width: 720px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.mk-photo {
+// ---------------------------------------------------------------- funders marquee
+// Centered text strip of recognizable funders whose grants have reached orgs on HCB. Names now;
+// swap to logos once assets + clearance are in hand.
+.mk-funders {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  // Flex (not grid) so a partial last row centers instead of clinging to the left. A fixed flex-basis
+  // gives grid-like columns; justify-content centers every row, including an incomplete one.
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  color: inherit;
-  text-decoration: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  row-gap: 36px;
 
-  &__ph {
+  li {
+    flex: 0 0 50%; // 2 per row
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 4 / 3;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-border-sm);
-    background: repeating-linear-gradient(
-      45deg,
-      rgba($black, 0.03) 0 12px,
-      rgba($black, 0.05) 12px 24px
-    );
-    color: $muted;
-    font-family: $mono;
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    padding: 0 14px; // column gutter
   }
 
-  // Real photo: fills the 4:3 frame, cropped to center.
-  &__img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    object-position: center;
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-border-sm);
-    transition: box-shadow 0.15s ease;
+  @media (min-width: 600px) {
+    li {
+      flex-basis: 33.3333%; // 3 per row
+    }
   }
-
-  // Logo variant: a brand mark sits centered and contained on a clean surface
-  // (e.g. Ghostty) instead of being cropped like a photo.
-  &--logo &__img {
-    object-fit: contain;
-    padding: 16%;
-    background: $white;
-  }
-
-  &__cap {
-    font-size: 0.95rem;
-    color: $slate;
-
-    strong {
-      display: block;
-      color: $mk-ink;
-      font-weight: 600;
-      transition: color 0.15s ease;
+  @media (min-width: 920px) {
+    li {
+      flex-basis: 25%; // 4 per row -> 12 logos fill three even rows
     }
   }
 
-  // Each tile links to the project; lift the frame and warm the name on hover.
-  &:hover &__img,
-  &:focus-visible &__img {
-    box-shadow: var(--shadow-border-md);
+  // Render every logo as one uniform silhouette (ignoring each brand's own colors) so the wall reads
+  // evenly. Every asset is transparent, so `brightness(0)` gives a clean black shape; hover animates
+  // to `brightness(1)` (the untouched asset) to reveal the real brand color.
+  img {
+    max-height: 28px; // kept well below the section heading so the logos read as a supporting row
+    max-width: 100%;
+    width: auto;
+    filter: brightness(0);
+    opacity: 0.5;
+    transition:
+      filter 0.2s ease,
+      opacity 0.15s ease;
   }
 
-  &:hover &__cap strong,
-  &:focus-visible &__cap strong {
-    color: $red;
+  li:hover img {
+    filter: brightness(1);
+    opacity: 1;
+  }
+
+  // Some supplied logos carry heavy transparent padding (e.g. Hewlett: content fills <45% of its
+  // canvas), so they render small at the shared height. Boost those to match optically. (A
+  // tightly-cropped asset would let us drop this.)
+  img.mk-funders__logo--boost {
+    max-height: 52px; // scaled with the base height above to keep Hewlett optically matched
   }
 }
 
@@ -793,52 +982,1065 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// ---------------------------------------------------------------- pillars
-.mk-pillars {
+// ------------------------------------------------------- value-prop explorer
+// Tabs (left) drive a detail panel (right). On no-JS the controller never adds
+// `.is-enhanced`, so every panel stays visible and the tabs read as a plain list.
+.mk-explore {
   display: grid;
-  gap: 20px;
+  gap: 16px;
   grid-template-columns: 1fr;
 
-  @media (min-width: 620px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 980px) {
-    grid-template-columns: repeat(4, 1fr);
+  // Go side-by-side from tablet up (matches the stats/uses breakpoint) so iPad-width
+  // viewers get the panel beside the tabs rather than scrolled off below them.
+  @media (min-width: 720px) {
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 24px;
+    align-items: stretch;
   }
 }
 
-.mk-pillar {
-  padding: 28px 24px;
+.mk-explore__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mk-explore__tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  background: $white;
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+  cursor: pointer;
+  color: $mk-ink;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  &-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  &-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  &-sub {
+    font-size: 0.85rem;
+    color: darken($muted, 18%); // clears AA contrast on white at this size
+  }
+
+  // Chevron that signals each row is selectable (CSS-drawn ">").
+  &-caret {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: solid $smoke-dark;
+    border-width: 2px 2px 0 0;
+    transform: rotate(45deg);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-border-md);
+
+    .mk-explore__tab-caret {
+      border-color: $slate;
+      transform: rotate(45deg) translate(1px, -1px);
+    }
+  }
+
+  // Active tab (set by the controller): red mark + accent ring + red caret.
+  &.is-active {
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0 1.5px rgba($red, 0.5);
+
+    .mk-explore__tab-icon {
+      color: #fff;
+      background: $red;
+    }
+
+    .mk-explore__tab-caret {
+      border-color: $red;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+}
+
+.mk-explore__stage {
+  position: relative;
+
+  // When enhanced, stack every panel into a single grid cell so the stage always
+  // reserves the height of the *tallest* panel. Switching props (by hand or via
+  // auto-rotate) then never changes the stage height, so there's no layout jump.
+  .is-enhanced & {
+    display: grid;
+  }
+}
+
+.mk-explore__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(24px, 3vw, 36px);
   background: $white;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-border-md);
 
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-lg);
-    color: $red;
-    background: rgba($red, 0.08);
-    margin-bottom: 18px;
-
-    svg {
-      width: 24px;
-      height: 24px;
-    }
-  }
-
   h3 {
-    font-size: 1.2rem;
-    margin-bottom: 8px;
+    font-size: clamp(1.3rem, 2.2vw, 1.6rem);
+    margin-bottom: 14px;
+    text-wrap: balance;
   }
 
   p {
     color: $slate;
-    line-height: 1.55;
-    font-size: 0.975rem;
+    line-height: 1.6;
+    font-size: 1.05rem;
+  }
+
+  // Enhanced: every panel shares the one grid cell on the stage, so they overlap and
+  // the stage stays as tall as the tallest. Inactive panels keep their layout box (so
+  // that height holds steady) but are hidden from view and assistive tech.
+  .is-enhanced & {
+    grid-area: 1 / 1;
+    visibility: hidden;
+  }
+
+  .is-enhanced &.is-active {
+    visibility: visible;
+
+    // The active panel fades in as it swaps.
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+// Stacked-card fallback spacing when JS hasn't enhanced the explorer.
+.mk-explore:not(.is-enhanced) .mk-explore__panel + .mk-explore__panel {
+  margin-top: 12px;
+}
+
+.mk-explore__proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 24px;
+
+  &--badge {
+    align-items: center;
+  }
+}
+
+.mk-explore__stat {
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: $red;
+
+  &--range {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+}
+
+.mk-explore__stat-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $mk-ink;
+  line-height: 1.35;
+
+  span {
+    display: block;
+    margin-top: 3px;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: $muted;
+  }
+}
+
+.mk-explore__badge-mark {
+  display: block;
+  flex: none;
+  border-radius: 11px;
+}
+
+.mk-explore__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $green-dark;
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: $green;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-live-pulse 2s ease-out infinite;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- organizations on HCB (portfolio)
+// Sibling of .mk-explore: a selectable rail of real recipient orgs + a detail stage that swaps as
+// you pick one. Deliberately shares the explorer's rail look so the page's two selectable rails
+// read as one family, while staying visually distinct from the funder proof (Argosy card, funders
+// marquee) so funders vs. recipients never blur together.
+
+// Live org-count anchor under the heading; the number counts up on first scroll-in.
+.mk-portfolio-count {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $slate;
+
+  span {
+    color: $red;
+    font-variant-numeric: tabular-nums; // no width jitter while the count animates
+  }
+}
+
+.mk-portfolio {
+  display: grid;
+  gap: 16px;
+  // minmax(0, …) not the default 1fr (== minmax(auto, 1fr)): the `auto` floor would let a track
+  // grow to its widest child's intrinsic width, so a panel with a non-wrapping element (e.g. the
+  // "Visit <long org name> →" link) would push the shared column — and the rail rows in it — wider
+  // than the viewport and overflow horizontally on mobile.
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 880px) {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: 28px;
+    // `start`, not `stretch`: the stage takes its own (tallest-panel) height rather than being
+    // forced to the taller heading+rail aside, which would leave a big void in the lighter cards.
+    align-items: start;
+  }
+}
+
+// Left column wrapper: the section heading stacked above the selectable rail.
+.mk-portfolio__aside {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mk-portfolio__head {
+  margin-bottom: clamp(22px, 3vw, 34px);
+}
+
+.mk-portfolio__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mk-portfolio__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  background: $white;
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+  cursor: pointer;
+  color: $mk-ink;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  // Logo variant of the icon slot: the org's own brand mark on a clean plate instead of a
+  // tinted glyph. Stays a white surface (even when active) so colored logos read correctly.
+  &-icon--logo {
+    background: $white;
+    box-shadow: inset 0 0 0 1px rgba($black, 0.08);
+    overflow: hidden;
+    padding: 4px;
+  }
+
+  &-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  &-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  &-name {
+    font-weight: 600;
+    font-size: 1.02rem;
+  }
+
+  &-sub {
+    font-size: 0.83rem;
+    color: $muted;
+  }
+
+  // Chevron that signals each row is selectable (CSS-drawn ">"), matching .mk-explore.
+  &-caret {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: solid $smoke-dark;
+    border-width: 2px 2px 0 0;
+    transform: rotate(45deg);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-border-md);
+
+    .mk-portfolio__item-caret {
+      border-color: $slate;
+      transform: rotate(45deg) translate(1px, -1px);
+    }
+  }
+
+  // Active item (set by the controller): red mark + accent ring + red caret.
+  &.is-active {
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0 1.5px rgba($red, 0.5);
+
+    .mk-portfolio__item-icon {
+      color: $white;
+      background: $red;
+    }
+
+    // A logo plate keeps its white surface when active (a red fill would clash with the mark).
+    .mk-portfolio__item-icon--logo {
+      background: $white;
+    }
+
+    .mk-portfolio__item-caret {
+      border-color: $red;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+
+  // Open-door wildcard sits a touch apart from the real orgs, with a lighter "add a thing" feel.
+  &--open {
+    margin-top: 4px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px rgba($black, 0.12);
+
+    .mk-portfolio__item-icon {
+      color: $slate;
+      background: rgba($black, 0.05);
+    }
+
+    &:hover {
+      box-shadow: inset 0 0 0 1.5px rgba($red, 0.4);
+    }
+
+    &.is-active {
+      background: $white;
+      box-shadow:
+        var(--shadow-border-md),
+        inset 0 0 0 1.5px rgba($red, 0.5);
+
+      .mk-portfolio__item-icon {
+        color: $white;
+        background: $red;
+      }
+    }
+  }
+}
+
+// Mobile-only "tap a row" cue; on desktop the rail + stage are side by side so it's redundant.
+.mk-portfolio__hint {
+  margin: 4px 2px 0;
+  font-size: 0.85rem;
+  color: $muted;
+
+  @media (min-width: 880px) {
+    display: none;
+  }
+}
+
+.mk-portfolio__stage {
+  position: relative;
+  min-width: 0; // allow the stage to shrink within its grid track instead of forcing overflow
+
+  // Desktop: stack every panel in one grid cell so the stage reserves the TALLEST panel's height
+  // and never resizes on swap (no layout shift). Mobile keeps normal flow (one panel shown).
+  @media (min-width: 880px) {
+    display: grid;
+  }
+}
+
+.mk-portfolio__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; // clip the media banner to the card's rounded corners
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+  scroll-margin-top: 84px; // clear the header when a tap scrolls a panel to the top (mobile)
+
+  @media (min-width: 880px) {
+    grid-area: 1 / 1; // overlap all panels in the same cell
+  }
+}
+
+// Stacked-card fallback spacing when JS hasn't enhanced the explorer (no-JS shows every panel).
+.mk-portfolio:not(.is-enhanced) .mk-portfolio__panel + .mk-portfolio__panel {
+  margin-top: 12px;
+}
+
+// Once enhanced, only the active panel shows. On mobile inactive panels are removed from flow
+// (display:none); on desktop they stay in the overlap cell but are hidden via `visibility`, so
+// they still reserve the tallest height and the stage stays a constant size.
+.mk-portfolio.is-enhanced .mk-portfolio__panel:not(.is-active) {
+  display: none;
+
+  @media (min-width: 880px) {
+    display: flex;
+    visibility: hidden;
+  }
+}
+
+// Brand banner at the top of a panel: a cropped photo, a contained wordmark/mark (logo), or CSS
+// terminal art. Its height is fluid: $mk-portfolio-banner-h is the *minimum*, and the banner grows
+// to fill whatever height a panel has to spare (see .mk-portfolio__media), so a light card reads as
+// a taller hero instead of a centered block ringed by whitespace.
+$mk-portfolio-banner-h: 190px;
+
+.mk-portfolio__media {
+  position: relative; // anchors the absolutely-positioned photo (below)
+  overflow: hidden;
+  margin: 0;
+  // Grow to absorb a panel's slack height. Because every panel is stretched to the tallest panel's
+  // height (no layout shift on swap), a sparse card would otherwise strand that slack as voids
+  // around its centered body; letting the banner take it keeps the card visually full.
+  flex: 1 1 auto;
+  min-height: $mk-portfolio-banner-h;
+
+  &-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  // Logo/wordmark on a clean plate, centered within the banner height. A slightly stronger
+  // divider keeps the pale plate reading as a distinct header zone above the white card body.
+  &--logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $snow;
+    border-bottom: 1px solid rgba($black, 0.09);
+
+    .mk-portfolio__media-img {
+      width: auto;
+      max-width: 64%;
+      height: auto;
+      max-height: 84px;
+      object-fit: contain;
+    }
+  }
+
+  // Absolutely positioned so the photo's own aspect ratio never inflates the banner's intrinsic
+  // height (a portrait image would otherwise force a huge banner). The banner sizes from min-height
+  // + flex-grow only; the photo just covers whatever height that yields.
+  &--photo .mk-portfolio__media-img {
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  // Terminal-art cover (Ghostty): a faux terminal window themed after Ghostty's own branding —
+  // the Challenger Deep palette (deep indigo ground, violet prompt) the project's icon ships with.
+  // It fills the banner instead of floating a few bars in a void: a title bar pinned to the top,
+  // then a session that types a command and streams output beneath it.
+  &--terminal {
+    display: flex;
+    background: radial-gradient(
+      120% 130% at 88% -20%,
+      #2a2545 0%,
+      #1e1c31 52%,
+      #16142a 100%
+    );
+  }
+}
+
+// Challenger Deep palette — the scheme Ghostty's icon/brand is built on.
+$mk-term-bg: #1e1c31;
+$mk-term-fg: #cbe3e7;
+$mk-term-violet: #a08cff; // prompt sigil / accent (brand purple, brightened for contrast)
+$mk-term-blue: #65b2ff;
+$mk-term-green: #62d196;
+
+.mk-portfolio__terminal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  font-family: $mono;
+}
+
+// Slim window/tab bar across the top: three ANSI-tinted dots + a faint tab label.
+.mk-portfolio__terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 11px clamp(16px, 3vw, 26px);
+  border-bottom: 1px solid rgba($snow, 0.06);
+  background: rgba($snow, 0.02);
+}
+
+.mk-portfolio__terminal-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba($snow, 0.18);
+
+  &:nth-child(1) {
+    background: #ff5458;
+  } // ANSI red
+  &:nth-child(2) {
+    background: #ffb378;
+  } // ANSI yellow
+  &:nth-child(3) {
+    background: $mk-term-green;
+  } // ANSI green
+}
+
+.mk-portfolio__terminal-tab {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba($mk-term-fg, 0.5);
+}
+
+// The "screen": holds the watermark ghost behind the text feed.
+.mk-portfolio__terminal-screen {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: clamp(14px, 2.6vw, 22px) clamp(16px, 3vw, 26px)
+    clamp(16px, 3vw, 24px);
+}
+
+// The ghost mark, recolored from its flat source via mask and dropped to a faint watermark in the
+// corner so the banner is unmistakably Ghostty without competing with the text.
+.mk-portfolio__terminal-ghost {
+  position: absolute;
+  right: -6%;
+  bottom: -14%;
+  width: clamp(120px, 26%, 220px);
+  aspect-ratio: 1;
+  background: $mk-term-violet;
+  opacity: 0.08;
+  mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+  -webkit-mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+}
+
+.mk-portfolio__terminal-feed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vw, 14px);
+  font-size: clamp(0.82rem, 0.6vw + 0.62rem, 1rem);
+  line-height: 1.2;
+  color: $mk-term-fg;
+}
+
+.mk-portfolio__terminal-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.mk-portfolio__terminal-sigil {
+  flex: 0 0 auto;
+  margin-right: 0.6em;
+  font-weight: 700;
+  color: $mk-term-violet;
+}
+
+// The typed command: a fixed-width monospace box (overflow hidden) the type-on animation widens
+// from zero. "ghostty" is 7 glyphs, so it rests at 7ch with a hair of slack.
+.mk-portfolio__terminal-type {
+  flex: 0 0 auto;
+  width: 7.2ch;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+// Caret that rides the end of the command while it types; hidden when static (no motion).
+.mk-portfolio__terminal-caret {
+  flex: 0 0 auto;
+  width: 0.55em;
+  height: 1.15em;
+  margin-left: 1px;
+  background: $mk-term-fg;
+  border-radius: 1px;
+  opacity: 0;
+}
+
+// Streamed output lines: faint colored bars standing in for the command's result.
+.mk-portfolio__terminal-out {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba($mk-term-fg, 0.16);
+
+  &--1 {
+    width: 64%;
+    background: rgba($mk-term-blue, 0.4);
+  }
+  &--2 {
+    width: 78%;
+  }
+  &--3 {
+    width: 46%;
+    background: rgba($mk-term-green, 0.4);
+  }
+}
+
+// Block cursor at the fresh prompt after output.
+.mk-portfolio__terminal-cursor {
+  width: 0.55em;
+  height: 1.15em;
+  background: $mk-term-fg;
+  border-radius: 1px;
+}
+
+// --- the looping session ---------------------------------------------------
+// Static resting state (above) = a finished session, fully legible with no JS and under
+// prefers-reduced-motion. The timeline below is layered on only when motion is welcome: every
+// element shares one 9s cycle so the type-on, output stream, and cursor stay in lockstep, and
+// the feed fades out/in at the seam so the reset is never seen.
+@media (prefers-reduced-motion: no-preference) {
+  .mk-portfolio__terminal-feed {
+    animation: mk-term-feed 9s ease-in-out infinite;
+  }
+  .mk-portfolio__terminal-type {
+    animation: mk-term-type 9s steps(7, end) infinite;
+  }
+  .mk-portfolio__terminal-caret {
+    animation: mk-term-caret 9s linear infinite;
+  }
+  .mk-portfolio__terminal-out {
+    opacity: 0;
+    animation: mk-term-out 9s ease-out infinite;
+  }
+  .mk-portfolio__terminal-out--2 {
+    animation-name: mk-term-out-2;
+  }
+  .mk-portfolio__terminal-out--3 {
+    animation-name: mk-term-out-3;
+  }
+  .mk-portfolio__terminal-row--next {
+    opacity: 0;
+    animation: mk-term-next 9s steps(1) infinite;
+  }
+  .mk-portfolio__terminal-cursor {
+    animation: mk-term-blink 1.05s steps(1) infinite;
+  }
+}
+
+// Fade the whole feed in at the start and out at the very end, hiding the wrap-around reset.
+@keyframes mk-term-feed {
+  0% {
+    opacity: 0;
+  }
+  4%,
+  93% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+// Type "ghostty" on, then hold for the rest of the cycle.
+@keyframes mk-term-type {
+  0%,
+  5% {
+    width: 0;
+  }
+  23%,
+  100% {
+    width: 7.2ch;
+  }
+}
+
+// Caret visible (and blinking) only while the command is being typed.
+@keyframes mk-term-caret {
+  0%,
+  26% {
+    opacity: 1;
+  }
+  13% {
+    opacity: 0;
+  }
+  27%,
+  100% {
+    opacity: 0;
+  }
+}
+
+// Output bars reveal in sequence after the command "runs".
+@keyframes mk-term-out {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  36%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-2 {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  43%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-3 {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  50%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// The fresh prompt appears once output has finished streaming.
+@keyframes mk-term-next {
+  0%,
+  54% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes mk-term-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.mk-portfolio__body {
+  display: flex;
+  flex-direction: column;
+  // Content-height: the banner above takes the slack (flex-grow), so the body sits compactly
+  // beneath it with the footer flush to the card's bottom edge. (The wildcard panel, which has no
+  // banner, overrides this back to flex:1 so it can center its CTA.)
+  flex: 0 0 auto;
+  padding: clamp(22px, 2.6vw, 32px);
+}
+
+.mk-portfolio__body-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.mk-portfolio__name {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+
+.mk-portfolio__what {
+  color: $slate;
+  line-height: 1.55;
+  font-size: 1.02rem;
+}
+
+.mk-portfolio__stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.mk-portfolio__stat {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: $red;
+}
+
+.mk-portfolio__stat-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $mk-ink;
+  line-height: 1.35;
+}
+
+.mk-portfolio__facts {
+  margin-top: 18px;
+}
+
+// Pull-quote inside a panel (deep entries like Reboot / Public Grids). A large, faint quotation
+// mark sits behind the text so the block reads unmistakably as a quote at a glance.
+.mk-portfolio__quote {
+  position: relative;
+  margin: 24px 0 0;
+
+  &::before {
+    content: '\201C'; // left double quotation mark
+    position: absolute;
+    top: -0.36em;
+    left: -0.04em;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: rgba($red, 0.16);
+    pointer-events: none;
+  }
+
+  blockquote {
+    position: relative; // sit above the decorative mark
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: $mk-ink;
+  }
+}
+
+.mk-portfolio__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mk-portfolio__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  flex: none;
+  object-fit: cover;
+  object-position: center;
+}
+
+.mk-portfolio__author-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.mk-portfolio__author-name {
+  font-weight: 600;
+  color: $mk-ink;
+}
+
+.mk-portfolio__author-role {
+  font-size: 0.85rem;
+  color: $muted;
+}
+
+// Footer pinned to the card bottom: optional funder credit + the "visit" link.
+.mk-portfolio__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+// The org's grantmaker(s). Small + clearly labeled so it reads "a funder's money reached this org
+// on HCB", never as the funder being an HCB customer.
+.mk-portfolio__funded {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; // wrap onto multiple lines on a narrow card instead of overflowing
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.mk-portfolio__funded-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $muted;
+
+  // Give the label its own line on phone widths so both logos sit together beneath it.
+  @media (max-width: 600px) {
+    flex-basis: 100%;
+  }
+}
+
+.mk-portfolio__funder {
+  height: 18px;
+  width: auto;
+  max-width: 100%; // never let a wide logo bleed past the card edge
+  // Greyscale + slight transparency downweights the backer logos so a recipient card never
+  // reads as a funder testimonial — and so they don't compete with the full-colour logos in
+  // the "In good company" funder marquee directly below.
+  filter: grayscale(1);
+  opacity: 0.75;
+
+  &--omidyar {
+    height: 22px;
+    filter: grayscale(1) brightness(0); // Omidyar's lockup needs darkening to read at this size
+  }
+}
+
+.mk-portfolio__visit {
+  margin-left: auto; // hug the right even when a funder credit shares the row
+  font-weight: 600;
+  color: $red;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Open-door wildcard panel: lighter, content centered vertically, ends in the primary CTA.
+.mk-portfolio__panel--open {
+  // A faint dot grid turns the open space into an intentional "blank canvas to fund something
+  // new" rather than an empty card — echoing the hero's ledger motif.
+  background:
+    radial-gradient(circle, rgba($black, 0.05) 1.1px, transparent 1.4px) 0 0 /
+      22px 22px,
+    $white;
+
+  .mk-portfolio__body {
+    flex: 1 1 auto; // no banner here, so let the body fill the panel and center its CTA
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .mk-portfolio__footer {
+    margin-top: 24px;
+    padding-top: 0;
+  }
+}
+
+.mk-portfolio__open-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  color: $red;
+  background: rgba($red, 0.08);
+  margin-bottom: 18px;
+
+  svg {
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -849,6 +2051,12 @@ $mk-bg: $snow; // #f9fafc
 
   .mk-section__title {
     color: $snow;
+  }
+
+  // Intro lead on the dark band: light, slightly muted body + spacing from the heading.
+  .mk-lead {
+    margin-top: 16px;
+    color: rgba($snow, 0.8);
   }
 }
 
@@ -909,6 +2117,31 @@ $mk-bg: $snow; // #f9fafc
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-border-md);
   background: $white;
+}
+
+// Closing note under the comparison table: invites funders who already give through a
+// DAF or foundation to use HCB alongside it (not instead of it). A left-aligned callout
+// card with a bold hook so it reads as an aside, not another paragraph of body copy.
+.mk-compare-note {
+  margin: 28px 0 0;
+  padding: 20px 24px;
+  text-align: left;
+  background: $white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+
+  &__lead {
+    margin: 0 0 4px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: $mk-ink;
+  }
+
+  &__body {
+    margin: 0;
+    color: $slate;
+    line-height: 1.6;
+  }
 }
 
 .mk-table {
@@ -1294,6 +2527,14 @@ $mk-bg: $snow; // #f9fafc
   &__title {
     font-size: clamp(1.8rem, 4vw, 2.8rem);
     margin-bottom: 16px;
+    text-wrap: balance;
+  }
+
+  // Centered lead: cap the width and balance the lines so it forms a tidy block
+  // instead of two long lines over one short one.
+  .mk-lead {
+    max-width: 48ch;
+    margin-inline: auto;
     text-wrap: balance;
   }
 

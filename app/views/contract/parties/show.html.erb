@@ -16,7 +16,7 @@
             <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
           <% end %>
 
-          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?" } %>
+          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
           <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
         </div>
 
@@ -41,7 +41,19 @@
         <% end %>
       </div>
     <% else %>
-      <%= render partial: "contract_faq" %>
+      <div class="flex flex-col max-h-full gap-4">
+        <% if @party.signee? %>
+          <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", class: "my-0 flex-shrink-0" do %>
+            <p class="my-0">
+              If you haven't had an onboarding meeting, please watch:
+              <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk" target="_blank">HCB Onboarding (#1): Introduction</a> and
+              <a href="https://www.youtube.com/watch?v=LMh9FCm8iIE" target="_blank">HCB Onboarding (#2): Rules & Regulations</a>.
+            </p>
+          <% end %>
+        <% end %>
+
+        <%= render partial: "contract_faq" %>
+      </div>
     <% end %>
   </div>
 </div>
