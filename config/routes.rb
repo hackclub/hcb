@@ -643,7 +643,7 @@ Rails.application.routes.draw do
 
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
 
-  resources :donations, only: [:index, :show, :update] do
+  resources :donations, only: [:show, :update] do
     collection do
       get "start/:event_name", to: "donations#start_donation", as: "start_donation"
       post "start/:event_name", to: "donations#make_donation", as: "make_donation"
@@ -805,7 +805,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :recurring_donations, only: [:index, :show, :edit, :update], path: "recurring" do
+  resources :recurring_donations, only: [:show, :edit, :update], path: "recurring" do
     member do
       post "cancel"
     end
@@ -962,6 +962,7 @@ Rails.application.routes.draw do
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
+    get "recurring_donations", to: "events#recurring_donations", as: :recurring_donations
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]

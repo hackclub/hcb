@@ -36,7 +36,7 @@
     </div>
   </div>
 
-  <%= turbo_frame_tag :donations_recurring_donations_overview, src: event_url(@event), loading: :eager do %>
+  <%= turbo_frame_tag :donations_recurring_donations_overview, src: event_recurring_donations_path(@event), loading: :eager do %>
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 
@@ -70,7 +70,7 @@
     </div>
   </div>
 
-  <%= turbo_frame_tag :donations_donations_overview, src: event_url(@event), loading: :eager do %>
+  <%= turbo_frame_tag :donations_donations_overview, src: event_donation_overview_path(@event), loading: :eager do %>
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 
