@@ -628,11 +628,11 @@ class EventsController < ApplicationController
   end
 
   def donations
-    authorize @event;
+    authorize @event
   end
 
   def recurring_donations
-    authorize @event;
+    authorize @event
   end
 
   def transfers
