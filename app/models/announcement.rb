@@ -32,7 +32,7 @@ class Announcement < ApplicationRecord
 
   include AASM
   include PublicActivity::Model
-  tracked owner: proc { |controller, record| controller&.current_user || record&.author }, recipient: :event, only: []
+  tracked owner: proc { |controller, record| controller&.current_user || record&.author }, recipient: :event, only: [:create, :update, :destroy]
 
   ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze
   WHITELISTED_ATTRIBUTES = ["href", "src", "rel", "target", "title", "id", "alt"].freeze
@@ -81,6 +81,12 @@ class Announcement < ApplicationRecord
   before_save :autofollow_organizers
 
   before_save :remove_unsafe_content
+
+  after_create :create_activity
+
+  before_update :update_activity
+
+  before_destroy :destroy_activity
 
   def render
     ProsemirrorService::Renderer.render_html(content, event)
@@ -151,4 +157,16 @@ class Announcement < ApplicationRecord
     end
   end
 
+end
+
+def create_activity
+  create_activity(key: "announcement.create", owner: author, recipient: event)
+end
+
+def update_activity
+  create_activity(key: "announcement.update", owner: author, recipient: event)
+end
+
+def destroy_activity
+  create_activity(key: "announcement.destroy", owner: author, recipient: event)
 end
