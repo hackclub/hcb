@@ -38,7 +38,7 @@ class LegalEntity
     self.table_name = "legal_entity_payout_methods"
 
     belongs_to :legal_entity
-    belongs_to :details, polymorphic: true, dependent: :destroy
+    belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
 

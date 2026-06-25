@@ -27,7 +27,9 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
-        persist
+        # autosave: true on :details saves the detail record and the payout
+        # method together, atomically, even inside the controller's transaction.
+        @payout_method.save
       end
 
       def run!
@@ -37,7 +39,12 @@ class LegalEntity
       def error_messages
         return [] unless @payout_method
 
-        (@payout_method.errors.full_messages +
+        # Read base errors off the payout method (unsupported type, the Wise
+        # guards) and field errors off the details record. Autosave also mirrors
+        # the field errors onto the parent as "details.<attr>" ("Details routing
+        # number must be 9 digits"); reading the child instead keeps the clean
+        # "Routing number must be 9 digits" wording without duplication.
+        (@payout_method.errors.full_messages_for(:base) +
           (@payout_method.details&.errors&.full_messages || [])).uniq
       end
 
@@ -72,18 +79,6 @@ class LegalEntity
         @payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
           !@user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
           @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES).any?
-      end
-
-      def persist
-        saved = false
-        # requires_new so that, when called inside an outer transaction (e.g.
-        # alongside the user save in UsersController#update), a failure rolls
-        # back only this savepoint and returns false to the caller.
-        ActiveRecord::Base.transaction(requires_new: true) do
-          saved = @payout_method.details.save && @payout_method.save
-          raise ActiveRecord::Rollback unless saved
-        end
-        saved
       end
 
     end

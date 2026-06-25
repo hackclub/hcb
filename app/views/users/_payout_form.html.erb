@@ -29,7 +29,7 @@
   </fieldset>
   <% if attempted && (attempted.errors.any? || attempted.details&.errors&.any?) %>
     <p class="error">
-      <%= (attempted.errors.full_messages + (attempted.details&.errors&.full_messages || [])).to_sentence %>.
+      <%= (attempted.errors.full_messages_for(:base) + (attempted.details&.errors&.full_messages || [])).to_sentence %>.
     </p>
   <% end %>
   <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::Check) %>">
