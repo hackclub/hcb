@@ -123,6 +123,7 @@ class Wire < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
+        payment_attempt&.payment&.mark_rejected!
         create_activity(key: "wire.rejected")
       end
       transitions from: [:pending, :approved], to: :rejected

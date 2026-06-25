@@ -182,6 +182,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt&.payment&.mark_rejected!
       end
       transitions from: :pending, to: :rejected
     end

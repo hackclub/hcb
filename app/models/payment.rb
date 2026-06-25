@@ -90,6 +90,13 @@ class Payment < ApplicationRecord
     end
   end
 
+  def retry!
+    raise ArgumentError, "this payment was rejected" if rejected?
+    raise ArgumentError, "all attempts must have failed" unless payout_attempts.all?(&:failed?)
+
+    payout_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+  end
+
   def receipt_required?
     true
   end
