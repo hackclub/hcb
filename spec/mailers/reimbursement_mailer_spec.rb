@@ -10,7 +10,7 @@ RSpec.describe ReimbursementMailer do
         full_name: "Test User",
         email: "user@example.com",
       )
-      user.person_legal_entity.payout_methods.create!(
+      user.personal_legal_entity.payout_methods.create!(
         default: true,
         details: LegalEntity::PayoutMethod::WiseTransfer.new(
           address_line1: "123 Rue Main",

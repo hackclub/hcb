@@ -437,12 +437,12 @@ class User < ApplicationRecord
     self.payout_method = payout_method_type.constantize.new(params)
   end
 
-  def person_legal_entity
+  def personal_legal_entity
     legal_entities.find_by(entity_type: :person)
   end
 
   def default_payout_method
-    person_legal_entity&.default_payout_method
+    personal_legal_entity&.default_payout_method
   end
 
   def default_payout_method_details
@@ -458,7 +458,7 @@ class User < ApplicationRecord
     return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
 
     @new_default_payout_method = LegalEntity::PayoutMethod.new(
-      legal_entity: person_legal_entity,
+      legal_entity: personal_legal_entity,
       default: true,
       details: details_class.new(details_attrs)
     )
@@ -775,7 +775,7 @@ class User < ApplicationRecord
       errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
     end
 
-    # Block switching *to* Wise while reports are being processed, but allow
+    # Block switching to Wise while reports are being processed, but allow
     # re-saving an existing Wise method.
     if pm.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
        !default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&

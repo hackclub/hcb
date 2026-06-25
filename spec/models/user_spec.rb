@@ -490,10 +490,10 @@ RSpec.describe User, type: :model do
       LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
     end
 
-    describe "#person_legal_entity" do
+    describe "#personal_legal_entity" do
       it "returns the user's person-type legal entity" do
-        expect(user.person_legal_entity).to be_present
-        expect(user.person_legal_entity).to be_person
+        expect(user.personal_legal_entity).to be_present
+        expect(user.personal_legal_entity).to be_person
       end
     end
 
@@ -504,7 +504,7 @@ RSpec.describe User, type: :model do
       end
 
       it "returns the person entity's default payout method and its details" do
-        pm = user.person_legal_entity.payout_methods.create!(default: true, details: build_ach)
+        pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
 
         expect(user.default_payout_method).to eq(pm)
         expect(user.default_payout_method_details).to eq(pm.details)
@@ -522,7 +522,7 @@ RSpec.describe User, type: :model do
         expect(pm).to be_a(LegalEntity::PayoutMethod)
         expect(pm).to be_default
         expect(pm).not_to be_persisted
-        expect(pm.legal_entity).to eq(user.person_legal_entity)
+        expect(pm.legal_entity).to eq(user.personal_legal_entity)
         expect(pm.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
         expect(user.new_default_payout_method).to eq(pm)
       end
@@ -541,7 +541,7 @@ RSpec.describe User, type: :model do
       end
 
       it "is false when the default is Wise and a reimbursement is being processed" do
-        user.person_legal_entity.payout_methods.create!(
+        user.personal_legal_entity.payout_methods.create!(
           default: true,
           details: LegalEntity::PayoutMethod::WiseTransfer.new(
             address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
