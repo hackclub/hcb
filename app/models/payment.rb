@@ -47,7 +47,7 @@ class Payment < ApplicationRecord
     state :successful
 
     event :mark_under_review do
-      transitions from: :pending_legal_entity, to: :under_review, if: -> { payee.legal_entity.complete? && payee.legal_entity.default_payment_method.present? }
+      transitions from: :pending_legal_entity, to: :under_review, if: -> { payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present? }
       after do
         payout_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
       end
