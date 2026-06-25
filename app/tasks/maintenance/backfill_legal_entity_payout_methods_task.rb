@@ -5,14 +5,13 @@ module Maintenance
   class BackfillLegalEntityPayoutMethodsTask < MaintenanceTasks::Task
     def collection
       User.where.not(payout_method_id: nil)
-          .where(id: LegalEntityUser.joins(:legal_entity)
-                                    .where(legal_entities: { entity_type: :person })
-                                    .select(:user_id))
     end
 
     def process(user)
       legal_entity = user.legal_entities.find_by(entity_type: :person)
-      return unless legal_entity
+      if legal_entity.nil?
+        raise ArgumentError, "LE missing for User #{user.id}"
+      end
 
       details_class = user.payout_method_type.sub(/\AUser::/, "LegalEntity::").safe_constantize
       return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
