@@ -13,7 +13,7 @@ class MarketingController < ApplicationController
 
   invisible_captcha only: [:funder_inquiry], honeypot: :subtitle
 
-  after_action :allow_indexing, only: [:funders]
+  after_action :allow_indexing, only: [:funders, :funders_faq]
 
   # Gates just the "Funders on HCB" testimonials section, so the page can ship while we
   # await sign-off on the funder quotes. Enable once the quotes are approved.
@@ -23,12 +23,28 @@ class MarketingController < ApplicationController
   # of the page once its content is approved.
   PUBLIC_GRIDS_FLAG = :funders_landing_public_grids
 
+  # Gates the redesigned comparison table and the funder FAQ (the on-page "Common questions" teaser
+  # plus the /for/funders/faq subpage). Lets the new work ship dark and switch on when approved.
+  # When off, the page falls back to the original static comparison table and the FAQ subpage 404s.
+  COMPARISON_FAQ_FLAG = :funders_landing_comparison_faq
+
   FUNDER_STATS_CACHE_KEY = "marketing/funder_stats"
 
   def funders
     @stats = funder_stats
     @show_testimonials = Flipper.enabled?(TESTIMONIALS_FLAG, current_user)
     @show_public_grids = Flipper.enabled?(PUBLIC_GRIDS_FLAG, current_user)
+    @show_comparison_faq = Flipper.enabled?(COMPARISON_FAQ_FLAG, current_user)
+    @skip_layout_og_tags = true # page provides its own funder-specific meta
+  end
+
+  # Dedicated funder FAQ subpage (the main /for/funders page links here from its short
+  # "Common questions" block). Static, indexable, same marketing layout.
+  def funders_faq
+    # Gated: the FAQ subpage isn't reachable unless the user has the flag.
+    return head :not_found unless Flipper.enabled?(COMPARISON_FAQ_FLAG, current_user)
+
+    @stats = funder_stats # the FAQ cites live platform figures ($ moved, organizations)
     @skip_layout_og_tags = true # page provides its own funder-specific meta
   end
 
