@@ -7,6 +7,7 @@
 #  id              :bigint           not null, primary key
 #  aasm_state      :string           not null
 #  amount_cents    :integer          not null
+#  currency        :string           not null
 #  failed_at       :datetime
 #  payout_type     :string
 #  purpose         :string           not null
@@ -16,13 +17,15 @@
 #  under_review_at :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
+#  creator_id      :bigint           not null
 #  payee_id        :bigint           not null
 #  payout_id       :bigint
 #
 # Indexes
 #
-#  index_payments_on_payee_id  (payee_id)
-#  index_payments_on_payout    (payout_type,payout_id)
+#  index_payments_on_creator_id  (creator_id)
+#  index_payments_on_payee_id    (payee_id)
+#  index_payments_on_payout      (payout_type,payout_id)
 #
 class Payment < ApplicationRecord
   include AASM
@@ -31,8 +34,9 @@ class Payment < ApplicationRecord
 
   belongs_to :payout, polymorphic: true, optional: true
   belongs_to :payee
+  belongs_to :creator, class_name: "User"
 
-  monetize :amount_cents
+  monetize :amount_cents, with_model_currency: :currency
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
