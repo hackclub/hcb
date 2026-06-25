@@ -3,9 +3,13 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = [
     // Slides
+    'recipients',
     'home',
     'wizard',
     'answer',
+    // Recipient picker targets
+    'recipient',
+    'noResults',
     // Wizard slide question targets
     'question',
     'yes',
@@ -56,6 +60,40 @@ export default class extends Controller {
       },
     },
   ]
+
+  // Reveal the manual "what type of transfer?" picker from the recipient list
+  showManual = () => {
+    if (this.hasRecipientsTarget) this.recipientsTarget.hidden = true
+    this.homeTarget.hidden = false
+    this.answerTarget.hidden = true
+    this.wizardTarget.hidden = true
+  }
+
+  // Return to the recipient picker (the modal's first screen)
+  showRecipients = () => {
+    if (!this.hasRecipientsTarget) return
+    this.recipientsTarget.hidden = false
+    this.homeTarget.hidden = true
+    this.answerTarget.hidden = true
+    this.wizardTarget.hidden = true
+  }
+
+  // Client-side filter of the "recently paid" list by name or email
+  filterRecipients = event => {
+    const query = event.target.value.trim().toLowerCase()
+    let visibleCount = 0
+
+    this.recipientTargets.forEach(row => {
+      const haystack = (row.dataset.search || '').toLowerCase()
+      const matches = !query || haystack.includes(query)
+      row.hidden = !matches
+      if (matches) visibleCount += 1
+    })
+
+    if (this.hasNoResultsTarget) {
+      this.noResultsTarget.hidden = visibleCount !== 0
+    }
+  }
 
   showWizard = () => {
     this.homeTarget.hidden = true
