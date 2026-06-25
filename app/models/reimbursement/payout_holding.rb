@@ -115,7 +115,7 @@ module Reimbursement
         mark_reversed!
 
         # This is the created_at of the first payout holding that had a CPT
-        if self.created_at < DateTime.parse("2024-08-09 00:45:12.992236000 UTC +00:00")
+        if self.created_at <= DateTime.parse("2024-08-09 00:45:12.992236000 UTC +00:00")
           canonical_pending_transaction&.decline!
         else
           canonical_pending_transaction.decline!
