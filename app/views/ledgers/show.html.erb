@@ -31,6 +31,21 @@
   </div>
 </section>
 
+<% admin_tool do %>
+  <details class="mb-6 block w-full" <%= "open" if params[:query].present? %>>
+    <summary><strong>Query</strong></summary>
+    <%= form_with url: ledger_path(@ledger), method: :get, local: true, class: "pt-1 w-full" do |f| %>
+      <%= f.text_area :query, value: params[:query], rows: 6, placeholder: '{"memo": {"$eq": "example"}}', class: "input-reset border rounded p1 !w-full font-mono" %>
+      <div class="flex flex-row items-start justify-start gap-2 my-2">
+        <%= f.submit "Run Query", class: "btn pt-1" %>
+        <% if params[:query].present? %>
+          <%= link_to "Clear", ledger_path(@ledger), class: "btn" %>
+        <% end %>
+      </div>
+    <% end %>
+  </details>
+<% end %>
+
 <h2>Ledger Items</h2>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
