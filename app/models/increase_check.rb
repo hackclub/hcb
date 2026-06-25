@@ -154,6 +154,10 @@ class IncreaseCheck < ApplicationRecord
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
   end
 
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
+  end
+
   aasm timestamps: true, whiny_persistence: true do
     state :pending, initial: true
     state :approved

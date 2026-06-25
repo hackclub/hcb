@@ -165,6 +165,9 @@ class AchTransfer < ApplicationRecord
 
     event :mark_deposited do
       transitions from: :in_transit, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_scheduled do

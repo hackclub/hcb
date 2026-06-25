@@ -139,6 +139,9 @@ class WiseTransfer < ApplicationRecord
 
     event :mark_deposited do
       transitions from: :sent, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_failed do
