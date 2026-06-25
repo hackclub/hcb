@@ -7,8 +7,8 @@ module OneTimeJobs
     # needing backfill. Those jobs run on the throttled "metrics" queue to
     # avoid overloading the database.
     def perform
-      # backfill_event_ledgers
-      # backfill_card_grant_ledgers
+      backfill_event_ledgers
+      backfill_card_grant_ledgers
       queue_ledger_item_jobs
     end
 
