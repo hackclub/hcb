@@ -7,7 +7,7 @@
   <em><%= @payment.title %></em>.
 </p>
 
-<% payout_method = @employee.user&.payout_method&.details %>
+<% payout_method = @employee.user&.default_payout_method&.details %>
 <p>
   <% if payout_method&.kind == "check" %>
     You'll receive a check for <%= render_money @payment.amount_cents %> from us in approximately 10-12 business days.
