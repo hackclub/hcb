@@ -29,16 +29,6 @@ class User
 
         delegate :unsupported?, to: :class
         delegate :unsupported_details, to: :class
-      end
-
-      class_methods do
-        def unsupported?
-          User::PayoutMethod::UNSUPPORTED_METHODS.key?(self)
-        end
-
-        def unsupported_details
-          User::PayoutMethod::UNSUPPORTED_METHODS[self]
-        end
 
         def create_legal_entity_payout_method
           legal_entity = user.legal_entities.find_by(entity_type: :person)
@@ -53,6 +43,16 @@ class User
           LegalEntity::PayoutMethod.find_or_create_by!(legal_entity:, details:) do |payout_method|
             payout_method.default = true
           end
+        end
+      end
+
+      class_methods do
+        def unsupported?
+          User::PayoutMethod::UNSUPPORTED_METHODS.key?(self)
+        end
+
+        def unsupported_details
+          User::PayoutMethod::UNSUPPORTED_METHODS[self]
         end
       end
     end
