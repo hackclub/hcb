@@ -144,7 +144,7 @@ class MyController < ApplicationController
 
     @reports = @reports.search(params[:q]) if params[:q].present?
 
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method_details
   end
 
   def reimbursements_icon
@@ -155,7 +155,7 @@ class MyController < ApplicationController
 
   def payroll
     @jobs = current_user.jobs
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method_details
   end
 
   def feed

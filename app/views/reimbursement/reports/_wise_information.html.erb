@@ -1,5 +1,7 @@
 <%# locals: (report:) %>
 
+<% payout_method = report.user.default_payout_method_details %>
+
 <table class="w-full table-fixed my-6">
   <tbody>
     <tr>
@@ -24,13 +26,13 @@
     <tr>
       <td>Name on account:</td>
       <td>
-        <%= report.user.payout_method.account_holder %>
+        <%= payout_method.account_holder %>
       </td>
     </tr>
     <tr>
       <td>Bank name:</td>
       <td>
-        <%= report.user.payout_method.bank_name %>
+        <%= payout_method.bank_name %>
       </td>
     </tr>
     <tr>
@@ -39,38 +41,38 @@
     </tr>
     <tr>
       <td>Address (Line 1):</td>
-      <td><%= report.user.payout_method.address_line1 %></td>
+      <td><%= payout_method.address_line1 %></td>
     </tr>
     <tr>
       <td>Address (Line 2):</td>
-      <td><%= report.user.payout_method.address_line2 %></td>
+      <td><%= payout_method.address_line2 %></td>
     </tr>
     <tr>
       <td>City:</td>
-      <td><%= report.user.payout_method.address_city %></td>
+      <td><%= payout_method.address_city %></td>
     </tr>
     <tr>
       <td>State:</td>
-      <td><%= report.user.payout_method.address_state %></td>
+      <td><%= payout_method.address_state %></td>
     </tr>
     <tr>
       <td>Postal code:</td>
-      <td><%= report.user.payout_method.address_postal_code %></td>
+      <td><%= payout_method.address_postal_code %></td>
     </tr>
     <tr>
       <td>Recipient country:</td>
-      <td><%= report.user.payout_method.recipient_country %></td>
+      <td><%= payout_method.recipient_country %></td>
     </tr>
     <% WiseTransfer.recipient_information_accessors.each do |key| %>
-      <% if report.user.payout_method.recipient_information[key].presence != nil %>
+      <% if payout_method.recipient_information[key].presence != nil %>
         <tr>
           <td><%= key.humanize %></td>
-          <td><%= report.user.payout_method.recipient_information[key] %></td>
+          <td><%= payout_method.recipient_information[key] %></td>
         </tr>
-      <% elsif report.user.payout_method.read_attribute(key.to_sym).present? %>
+      <% elsif payout_method.read_attribute(key.to_sym).present? %>
         <tr>
           <td><%= key.humanize %></td>
-          <td><%= report.user.payout_method.read_attribute(key.to_sym) %></td>
+          <td><%= payout_method.read_attribute(key.to_sym) %></td>
         </tr>
       <% end %>
     <% end %>

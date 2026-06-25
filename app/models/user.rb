@@ -437,6 +437,33 @@ class User < ApplicationRecord
     self.payout_method = payout_method_type.constantize.new(params)
   end
 
+  def person_legal_entity
+    legal_entities.find_by(entity_type: :person)
+  end
+
+  def default_payout_method
+    person_legal_entity&.default_payout_method
+  end
+
+  def default_payout_method_details
+    default_payout_method&.details
+  end
+
+  # Builds (but does not save) a new default LegalEntity::PayoutMethod.
+  # Memoized so the controller and form can read validation errors back off it.
+  attr_reader :new_default_payout_method
+
+  def build_default_payout_method(details_type, details_attrs)
+    details_class = details_type&.safe_constantize
+    return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+
+    @new_default_payout_method = LegalEntity::PayoutMethod.new(
+      legal_entity: person_legal_entity,
+      default: true,
+      details: details_class.new(details_attrs)
+    )
+  end
+
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)
@@ -587,8 +614,8 @@ class User < ApplicationRecord
   end
 
   def can_update_payout_method?
-    return true if payout_method.nil?
-    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return true if default_payout_method_details.nil?
+    return true unless default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
     return false if reimbursement_reports.reimbursement_requested.any?
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 
@@ -740,18 +767,19 @@ class User < ApplicationRecord
   end
 
   def valid_payout_method
-    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
-      # I'm using `try` here in the slim chance that `payout_method` is some
-      # random model and doesn't include `User::PayoutMethod::Shared`.
-      if payout_method.try(:unsupported?)
-        reason = payout_method.unsupported_details[:reason]
-        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
-      else
-        errors.add(:payout_method, "is invalid. Please choose another option.")
-      end
+    pm = new_default_payout_method
+    return unless pm
+
+    if pm.unsupported?
+      reason = pm.unsupported_details[:reason]
+      errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
     end
 
-    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
+    # Block switching *to* Wise while reports are being processed, but allow
+    # re-saving an existing Wise method.
+    if pm.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
+       !default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
+       reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
       errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end

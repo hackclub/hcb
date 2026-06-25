@@ -483,6 +483,79 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "payout methods" do
+    let(:user) { create(:user) }
+
+    def build_ach
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+    end
+
+    describe "#person_legal_entity" do
+      it "returns the user's person-type legal entity" do
+        expect(user.person_legal_entity).to be_present
+        expect(user.person_legal_entity).to be_person
+      end
+    end
+
+    describe "#default_payout_method / #default_payout_method_details" do
+      it "is nil when no default payout method exists" do
+        expect(user.default_payout_method).to be_nil
+        expect(user.default_payout_method_details).to be_nil
+      end
+
+      it "returns the person entity's default payout method and its details" do
+        pm = user.person_legal_entity.payout_methods.create!(default: true, details: build_ach)
+
+        expect(user.default_payout_method).to eq(pm)
+        expect(user.default_payout_method_details).to eq(pm.details)
+        expect(user.default_payout_method_details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+      end
+    end
+
+    describe "#build_default_payout_method" do
+      it "builds an unsaved default LegalEntity::PayoutMethod of the given type" do
+        pm = user.build_default_payout_method(
+          "LegalEntity::PayoutMethod::AchTransfer",
+          { account_number: "12345678", routing_number: "021000021" }
+        )
+
+        expect(pm).to be_a(LegalEntity::PayoutMethod)
+        expect(pm).to be_default
+        expect(pm).not_to be_persisted
+        expect(pm.legal_entity).to eq(user.person_legal_entity)
+        expect(pm.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+        expect(user.new_default_payout_method).to eq(pm)
+      end
+
+      it "returns nil for a type that isn't a LegalEntity::PayoutMethod detail" do
+        expect(
+          user.build_default_payout_method("User::PayoutMethod::AchTransfer", { account_number: "1", routing_number: "2" })
+        ).to be_nil
+        expect(user.build_default_payout_method("NotARealClass", {})).to be_nil
+      end
+    end
+
+    describe "#can_update_payout_method?" do
+      it "is true when there is no payout method" do
+        expect(user.can_update_payout_method?).to be(true)
+      end
+
+      it "is false when the default is Wise and a reimbursement is being processed" do
+        user.person_legal_entity.payout_methods.create!(
+          default: true,
+          details: LegalEntity::PayoutMethod::WiseTransfer.new(
+            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
+            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
+          )
+        )
+        event = create(:event)
+        create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
+
+        expect(user.can_update_payout_method?).to be(false)
+      end
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
