@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class PaymentMailer < ApplicationRecord
+class PaymentMailer < ApplicationMailer
   before_action :set_payment
 
   def missing_payment_method
