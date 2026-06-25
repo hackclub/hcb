@@ -79,10 +79,12 @@ class Payment < ApplicationRecord
   end
 
   def retry!
-    raise ArgumentError, "this payment was rejected" if rejected?
-    raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
+    self.with_lock do
+      raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
 
-    attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+    end
   end
 
   def usd_amount_cents
