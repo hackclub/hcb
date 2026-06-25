@@ -512,28 +512,6 @@ RSpec.describe User, type: :model do
       end
     end
 
-    describe "#build_default_payout_method" do
-      it "builds an unsaved default LegalEntity::PayoutMethod of the given type" do
-        pm = user.build_default_payout_method(
-          "LegalEntity::PayoutMethod::AchTransfer",
-          { account_number: "12345678", routing_number: "021000021" }
-        )
-
-        expect(pm).to be_a(LegalEntity::PayoutMethod)
-        expect(pm).to be_default
-        expect(pm).not_to be_persisted
-        expect(pm.legal_entity).to eq(user.personal_legal_entity)
-        expect(pm.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
-        expect(user.new_default_payout_method).to eq(pm)
-      end
-
-      it "returns nil for a type that isn't a LegalEntity::PayoutMethod detail" do
-        expect(
-          user.build_default_payout_method("User::PayoutMethod::AchTransfer", { account_number: "1", routing_number: "2" })
-        ).to be_nil
-        expect(user.build_default_payout_method("NotARealClass", {})).to be_nil
-      end
-    end
 
     describe "#can_update_payout_method?" do
       it "is true when there is no payout method" do

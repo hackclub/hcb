@@ -1,0 +1,90 @@
+# frozen_string_literal: true
+
+class LegalEntity
+  module PayoutMethodService
+    # Builds, validates, and persists a user's default personal-legal-entity
+    # payout method. Encapsulates the business rules that previously lived
+    # across User#build_default_payout_method, User#valid_payout_method,
+    # User#can_update_payout_method?, and the UsersController#update transaction.
+    #
+    # On failure, #run returns false and the (unsaved) payout method, exposed
+    # via #payout_method, carries the relevant errors.
+    class Update
+      # Report states that count as "being processed" for the purpose of
+      # blocking a switch to Wise.
+      PROCESSING_STATES = %i[submitted reimbursement_requested reimbursement_approved].freeze
+
+      attr_reader :payout_method
+
+      def initialize(user:, details_type:, details_attrs: {})
+        @user = user
+        @details_type = details_type
+        @details_attrs = details_attrs || {}
+      end
+
+      def run
+        @payout_method = build_payout_method
+        apply_business_rules
+        return false if @payout_method.errors.any?
+
+        persist
+      end
+
+      def run!
+        run || raise(ActiveRecord::RecordInvalid, @payout_method)
+      end
+
+      def error_messages
+        return [] unless @payout_method
+
+        (@payout_method.errors.full_messages +
+          (@payout_method.details&.errors&.full_messages || [])).uniq
+      end
+
+      private
+
+      def build_payout_method
+        details_class = @details_type&.safe_constantize
+        pm = LegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: true)
+        pm.details = details_class.new(@details_attrs) if LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+        pm
+      end
+
+      def apply_business_rules
+        unless @user.can_update_payout_method?
+          @payout_method.errors.add(:base, "can't be changed while a reimbursement is being processed. Please reach out to the HCB team if you need this changed.")
+          return
+        end
+
+        if @payout_method.details.nil?
+          @payout_method.errors.add(:base, "is invalid. Please choose another method.")
+          return
+        end
+
+        if switching_to_wise_while_processing?
+          @payout_method.errors.add(:base, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
+        end
+      end
+
+      def switching_to_wise_while_processing?
+        @payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
+          !@user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
+          @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES).any?
+      end
+
+      def persist
+        saved = false
+        # requires_new so that, when called inside an outer transaction (e.g.
+        # alongside the user save in UsersController#update), a failure rolls
+        # back only this savepoint and returns false to the caller.
+        ActiveRecord::Base.transaction(requires_new: true) do
+          saved = @payout_method.details.save && @payout_method.save
+          raise ActiveRecord::Rollback unless saved
+        end
+        saved
+      end
+
+    end
+  end
+
+end

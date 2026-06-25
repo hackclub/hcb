@@ -1,4 +1,5 @@
-<% payout_method = user.new_default_payout_method&.details || user.default_payout_method&.details %>
+<% attempted = local_assigns[:attempted] %>
+<% payout_method = attempted&.details || user.default_payout_method&.details %>
 <% selected_type = payout_method&.class&.name %>
 <%= form_with model: user, html: {
       "x-data": "{ country: #{payout_method.instance_of?(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null"} }"
@@ -26,10 +27,9 @@
       <% end %>
     </div>
   </fieldset>
-  <% pm_errors = user.new_default_payout_method %>
-  <% if pm_errors && (pm_errors.errors.any? || pm_errors.details&.errors&.any?) %>
+  <% if attempted && (attempted.errors.any? || attempted.details&.errors&.any?) %>
     <p class="error">
-      <%= (pm_errors.errors.full_messages + (pm_errors.details&.errors&.full_messages || [])).to_sentence %>.
+      <%= (attempted.errors.full_messages + (attempted.details&.errors&.full_messages || [])).to_sentence %>.
     </p>
   <% end %>
   <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::Check) %>">

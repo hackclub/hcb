@@ -173,7 +173,6 @@ class User < ApplicationRecord
   # but this is a convenient way to set up the association.
 
   belongs_to :payout_method, polymorphic: true, optional: true
-  validate :valid_payout_method
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
 
@@ -432,26 +431,11 @@ class User < ApplicationRecord
   end
 
   def personal_legal_entity
-    legal_entities.find_by(entity_type: :person)
+    @personal_legal_entity ||= legal_entities.find_by(entity_type: :person)
   end
 
   def default_payout_method
     personal_legal_entity&.default_payout_method
-  end
-
-  # Builds (but does not save) a new default LegalEntity::PayoutMethod.
-  # Memoized so the controller and form can read validation errors back off it.
-  attr_reader :new_default_payout_method
-
-  def build_default_payout_method(details_type, details_attrs)
-    details_class = details_type&.safe_constantize
-    return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
-
-    @new_default_payout_method = LegalEntity::PayoutMethod.new(
-      legal_entity: personal_legal_entity,
-      default: true,
-      details: details_class.new(details_attrs)
-    )
   end
 
   def email_address_with_name(full_name: false)
@@ -753,24 +737,6 @@ class User < ApplicationRecord
       # turn all this stuff off until they reverify
       self.phone_number_verified = false
       self.use_sms_auth = false
-    end
-  end
-
-  def valid_payout_method
-    pm = new_default_payout_method
-    return unless pm
-
-    if pm.unsupported?
-      reason = pm.unsupported_details[:reason]
-      errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
-    end
-
-    # Block switching to Wise while reports are being processed, but allow
-    # re-saving an existing Wise method.
-    if pm.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-       !default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-       reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
-      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 

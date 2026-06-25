@@ -330,9 +330,7 @@ class UsersController < ApplicationController
     @user.assign_attributes(user_params)
 
     payout_method_type = params.dig(:user, :payout_method_type)
-    if payout_method_type.present? && @user.can_update_payout_method?
-      @user.build_default_payout_method(payout_method_type, payout_method_details_params)
-    end
+    update_payout_method = payout_method_type.present? && @user.can_update_payout_method?
 
     if @user.use_two_factor_authentication_changed?
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
@@ -386,17 +384,23 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
-    payout_method = @user.new_default_payout_method
+    payout_update = nil
     saved = ActiveRecord::Base.transaction do
       user_ok = @user.save
-      pm_ok = true
-      if payout_method
-        pm_ok = payout_method.details.save && payout_method.save
+      payout_ok = true
+      if update_payout_method
+        payout_update = LegalEntity::PayoutMethodService::Update.new(
+          user: @user,
+          details_type: payout_method_type,
+          details_attrs: payout_method_details_params
+        )
+        payout_ok = payout_update.run
       end
-      raise ActiveRecord::Rollback unless user_ok && pm_ok
+      raise ActiveRecord::Rollback unless user_ok && payout_ok
 
       true
     end
+    @payout_method = payout_update&.payout_method
 
     if saved
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
@@ -405,7 +409,7 @@ class UsersController < ApplicationController
         flash[:success] = "Profile created!"
         redirect_to(return_to || root_path)
       else
-        if payout_method&.saved_changes? && @user == current_user
+        if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
           flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
@@ -426,11 +430,8 @@ class UsersController < ApplicationController
         return
       end
 
-      payout_method_errors = @user.errors[:payout_method] +
-                             (payout_method&.errors&.full_messages || []) +
-                             (payout_method&.details&.errors&.full_messages || [])
-      if payout_method_errors.any?
-        flash.now[:error] = payout_method_errors.to_sentence
+      if payout_update&.error_messages&.any?
+        flash.now[:error] = payout_update.error_messages.to_sentence
         render :edit_payout, status: :unprocessable_entity
         return
       end
