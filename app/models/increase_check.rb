@@ -145,8 +145,14 @@ class IncreaseCheck < ApplicationRecord
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
     canonical_pending_transaction.decline!
-    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
-    IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
   end
 
   after_update if: -> { column_status_previously_changed?(to: "rejected") } do

@@ -181,6 +181,8 @@ class AchTransfer < ApplicationRecord
           reimbursement_payout_holding.mark_failed!
         elsif employee_payment.present?
           employee_payment.mark_failed!(reason:)
+        elsif payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
         else
           AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
         end

@@ -142,6 +142,8 @@ class Wire < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:).wire_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
         else
           WireMailer.with(wire: self, reason:).notify_failed.deliver_later
         end

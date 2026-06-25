@@ -64,10 +64,13 @@ class Payment
 
       event :mark_failed do
         transitions from: :sent, to: :failed
-        after do
+        after do |reason: nil|
           payout.receipts.each do |receipt|
             receipt.update!(receiptable: payment)
           end
+
+          Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
+          Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
         end
       end
     end

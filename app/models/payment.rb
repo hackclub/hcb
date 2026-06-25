@@ -64,14 +64,6 @@ class Payment < ApplicationRecord
       end
     end
 
-    event :mark_failed do
-      transitions from: [:sent, :successful], to: :failed
-      after do |reason: nil|
-        PaymentMailer.with(payment: self).failed_creator.deliver_later
-        PaymentMailer.with(payment: self, reason:).failed_payee.deliver_later
-      end
-    end
-
     event :mark_successful do
       transitions from: :sent, to: :successful
     end

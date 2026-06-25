@@ -19,15 +19,6 @@ class PaymentMailer < ApplicationMailer
     mail to: @creator, subject: "Your payment to #{@payment.payee.preferred_name} was rejected"
   end
 
-  def failed_creator
-    mail to: @creator, subject: "[Action Required] Your payment to #{@payment.payee.preferred_name} failed to send"
-  end
-
-  def failed_payee
-    @reason = params[:reason]
-    mail to: @recipients, subject: "We couldn't send you your payment for #{@payment.purpose} from #{@payment.event.name}"
-  end
-
   private
 
   def initial_subject
