@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   has_one :event, through: :payee
-  has_many :attempts
+  has_many :payment_attempts, class: "Payment::Attempt"
 
   monetize :amount_cents, with_model_currency: :currency
 
@@ -49,7 +49,7 @@ class Payment < ApplicationRecord
     event :mark_under_review do
       transitions from: :pending_legal_entity, to: :under_review, if: -> { payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present? }
       after do
-        payout_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+        payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
       end
     end
 
@@ -92,9 +92,9 @@ class Payment < ApplicationRecord
 
   def retry!
     raise ArgumentError, "this payment was rejected" if rejected?
-    raise ArgumentError, "all attempts must have failed" unless payout_attempts.all?(&:failed?)
+    raise ArgumentError, "all attempts must have failed" unless payment_attempts.all?(&:failed?)
 
-    payout_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+    payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
   end
 
   def receipt_required?
