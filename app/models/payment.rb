@@ -85,6 +85,10 @@ class Payment < ApplicationRecord
     attempts.create!(payout_method: payee.legal_entity.default_payout_method)
   end
 
+  def usd_amount_cents
+    MoneyService.convert_to_usd(amount_cents, currency)
+  end
+
   def receipt_required?
     true
   end

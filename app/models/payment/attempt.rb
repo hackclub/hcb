@@ -86,7 +86,7 @@ class Payment
         safely do
           check = payment.event.increase_checks.build(
             memo: "Payment for \"#{payment.purpose}\"."[0...40],
-            amount: payment.amount_cents,
+            amount: payment.usd_amount_cents,
             payment_for: "Payment for \"#{payment.purpose}\".",
             recipient_name: payment.payee.preferred_name,
             recipient_email: payment.payee.email,
@@ -108,7 +108,7 @@ class Payment
       when LegalEntity::PayoutMethod::AchTransfer
         safely do
           ach_transfer = payment.event.ach_transfers.build(
-            amount: payment.amount_cents,
+            amount: payment.usd_amount_cents,
             payment_for: "Payment for \"#{payment.purpose}\".",
             recipient_name: payment.payee.preferred_name,
             recipient_email: payment.payee.email,
@@ -145,7 +145,7 @@ class Payment
                                                                                        purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
                                                                                        remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
                                                                                      }),
-            currency: "USD",
+            currency:,
             user: User.system_user
           )
 
