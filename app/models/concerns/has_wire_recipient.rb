@@ -233,7 +233,7 @@ module HasWireRecipient
     end
 
     def self.payment_purpose_code_for(country)
-      # TODO
+      # Add exceptions
       "IVPT"
     end
 
@@ -244,7 +244,7 @@ module HasWireRecipient
     end
 
     def self.payment_remittance_info_for(country)
-      # TODO
+      # Edit for each country
       "Payment of invoice"
     end
 
