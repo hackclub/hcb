@@ -200,7 +200,7 @@ class Payment
     end
 
     def failed_successful_attempts_frozen
-      if failed? || successful?
+      if (failed? || successful?) && !aasm_state_changed?
         errors.add(:base, "failed or successful payment attempts cannot be updated")
       end
     end
