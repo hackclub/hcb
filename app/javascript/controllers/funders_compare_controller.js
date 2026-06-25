@@ -14,12 +14,29 @@ import { Controller } from '@hotwired/stimulus'
 // the sticky header is parked under the nav, so it can show a drop shadow (a no-JS
 // table just scrolls without the stuck styling).
 export default class extends Controller {
-  static targets = ['toggle', 'detail', 'sentinel']
+  static targets = ['toggle', 'detail', 'sentinel', 'switchOpt']
 
   connect() {
     this.element.classList.add('is-enhanced')
     this.toggleTargets.forEach((_, i) => this.setExpanded(i, false))
+    // On mobile the table shows HCB vs. one alternative at a time; default to the private foundation.
+    // With no JS, no data-compare is set and the full table (all columns) renders.
+    if (this.hasSwitchOptTarget) this.setCompare('pf')
     this.watchStuck()
+  }
+
+  // Mobile "compare against" segmented control: pick which alternative sits beside HCB.
+  compareAgainst(event) {
+    this.setCompare(event.currentTarget.dataset.vehicle)
+  }
+
+  setCompare(vehicle) {
+    this.element.dataset.compare = vehicle
+    this.switchOptTargets.forEach(opt => {
+      const active = opt.dataset.vehicle === vehicle
+      opt.classList.toggle('is-active', active)
+      opt.setAttribute('aria-pressed', String(active))
+    })
   }
 
   disconnect() {

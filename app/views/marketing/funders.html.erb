@@ -384,6 +384,20 @@
       <%# Stuck-state sentinel: when it scrolls above the nav line, the controller flags the
           sticky header so it can show a drop shadow. %>
       <div class="mk-table__sentinel" data-funders-compare-target="sentinel" aria-hidden="true"></div>
+      <%# Mobile-only control: compare HCB against one alternative at a time, so the two values sit
+          side by side on a narrow screen. Shown only once JS enhances the table; with no JS the full
+          table (all three columns) renders and stays readable. %>
+      <div class="mk-compare-switch">
+        <span class="mk-compare-switch__label">Compare against</span>
+        <div class="mk-compare-switch__track" role="group" aria-label="Compare HCB against">
+          <button type="button" class="mk-compare-switch__opt" data-vehicle="pf"
+                  data-action="funders-compare#compareAgainst"
+                  data-funders-compare-target="switchOpt">Private foundation</button>
+          <button type="button" class="mk-compare-switch__opt" data-vehicle="daf"
+                  data-action="funders-compare#compareAgainst"
+                  data-funders-compare-target="switchOpt">Donor-advised fund</button>
+        </div>
+      </div>
       <table class="mk-table">
         <thead>
           <tr>
@@ -405,13 +419,24 @@
                   <span class="mk-table__chevron" aria-hidden="true"></span>
                 </button>
               </th>
-              <td class="mk-table__hcb" data-label="HCB"><strong><%= row[:hcb] %></strong><% if row[:hcb_sub] %><span class="mk-table__hcb-sub"><%= row[:hcb_sub] %></span><% end %></td>
-              <td data-label="Private foundation"><%= row[:pf] %></td>
-              <td data-label="Donor-advised fund"><%= row[:daf] %></td>
+              <%# data-label is the compact vehicle name shown only in the mobile card layout; the
+                  full column names live in <thead> for desktop and screen readers. %>
+              <td class="mk-table__hcb" data-label="HCB" data-status="yes"><span class="mk-cell__v"><strong><%= row[:hcb] %></strong><% if row[:hcb_sub] %><span class="mk-table__hcb-sub"><%= row[:hcb_sub] %></span><% end %></span></td>
+              <td data-label="Foundation" data-status="<%= row[:pf_status] %>"><span class="mk-cell__v"><%= row[:pf] %></span></td>
+              <td data-label="DAF" data-status="<%= row[:daf_status] %>"><span class="mk-cell__v"><%= row[:daf] %></span></td>
             </tr>
             <tr class="mk-table__detail" id="cmp-detail-<%= i %>" data-funders-compare-target="detail">
               <td colspan="4">
-                <p class="mk-compare-detail__text"><%= row[:detail] %></p>
+                <%# One short explanation per vehicle. On mobile the non-selected alternative is
+                    hidden (see the data-compare CSS), so you only read about the two you're comparing. %>
+                <div class="mk-compare-detail">
+                  <% [["hcb", "HCB"], ["pf", "Foundation"], ["daf", "DAF"]].each do |vehicle, name| %>
+                    <div class="mk-compare-detail__vehicle" data-vehicle="<%= vehicle %>">
+                      <p class="mk-compare-detail__vehicle-name"><%= name %></p>
+                      <p class="mk-compare-detail__text"><%= row[:detail][vehicle.to_sym] %></p>
+                    </div>
+                  <% end %>
+                </div>
                 <% if row[:sources].present? %>
                   <p class="mk-meta">
                     <span class="mk-meta__label">Sources</span>

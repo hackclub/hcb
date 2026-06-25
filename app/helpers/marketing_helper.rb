@@ -131,7 +131,10 @@ module MarketingHelper
   # IRS sources are visible to AI crawlers and no-JS visitors. Per-row keys:
   # - :label — the comparison dimension (also the expand toggle's label)
   # - :hcb / :pf / :daf — the short value for each vehicle (:hcb_sub is an optional lighter clause)
-  # - :detail — the expandable explanation; :sources is an optional list of { :text, :url } cites
+  # - :detail — a per-vehicle hash { :hcb, :pf, :daf } of short explanations. On mobile only HCB and
+  #   the chosen alternative show; desktop shows all three.
+  # - :sources — optional list of { :text, :url, :for } cites (`for` tags the vehicle a source backs).
+  #   They render together below the explanations.
   # Stats are verified against the cited IRS pages.
   def funder_comparison_rows
     irs = {
@@ -148,66 +151,119 @@ module MarketingHelper
     [
       {
         label: "Setup cost", hcb: "$0", pf: "Legal & accounting + $600 IRS fee", daf: "Low",
-        detail: "Standing up a private foundation means incorporating an entity and filing IRS Form 1023 (a $600 user fee), plus legal and accounting work. A donor-advised fund is inexpensive to open. With HCB there's no entity to form. You start under Hack Club's existing 501(c)(3).",
-        sources: [{ text: "IRS · Life cycle of a private foundation", url: irs[:life_cycle] }]
+        pf_status: "no", daf_status: "yes",
+        detail: {
+          hcb: "No entity to form and no setup cost. Your project runs on an established 501(c)(3), with the legal and compliance groundwork already in place.",
+          pf: "Incorporate an entity and file IRS Form 1023 (a $600 user fee), plus legal and accounting work.",
+          daf: "Inexpensive to open."
+        },
+        sources: [{ text: "IRS · Life cycle of a private foundation", url: irs[:life_cycle], for: "pf" }]
       },
       {
         label: "Time to first grant", hcb: "Days", pf: "Months", daf: "Days",
-        detail: "A new private foundation must file the full IRS Form 1023 (the faster 1023-EZ isn't available to private foundations) and typically waits months for a determination letter before funders and banks treat its grants as settled. HCB lets you move within days of deciding, because the 501(c)(3) already exists, every bit as fast as a donor-advised fund.",
-        sources: [{ text: "IRS · Where's my application", url: irs[:application] }]
+        pf_status: "no", daf_status: "yes",
+        detail: {
+          hcb: "Move within days of deciding. You build on an established 501(c)(3), so there's no new entity to form and no IRS waiting period.",
+          pf: "Must file the full Form 1023 (the faster 1023-EZ isn't available to private foundations) and typically waits months for a determination letter before funders and banks treat its grants as settled.",
+          daf: "Fast, like HCB. You can grant within days."
+        },
+        sources: [{ text: "IRS · Where's my application", url: irs[:application], for: "pf" }]
       },
       {
         label: "Practical minimum to be worth it", hcb: "None", pf: "~$250k to $1M+ commonly cited", daf: "Low",
-        detail: "A private foundation's fixed setup and annual costs only pencil out at scale, and are commonly cited at roughly $250k to $1M+ in assets. A donor-advised fund has little or no minimum, though its fees stack up as your balance grows. HCB has no minimum at all; fund $500 or $5M.",
-        sources: [{ text: "Foundation startup guidance", url: "https://www.cpakpa.com/learn-about-foundations/how-much-money-do-you-need-to-start-a-foundation" }]
+        pf_status: "no", daf_status: "yes",
+        detail: {
+          hcb: "No minimum at all. Fund $500 or $5M.",
+          pf: "Fixed setup and annual costs only pencil out at scale, commonly cited at roughly $250k to $1M+ in assets.",
+          daf: "Little or no minimum, though its fees stack up as your balance grows."
+        },
+        sources: [{ text: "Foundation startup guidance", url: "https://www.cpakpa.com/learn-about-foundations/how-much-money-do-you-need-to-start-a-foundation", for: "pf" }]
       },
       {
         label: "Fund projects that aren't 501(c)(3)s", hcb: "Yes", pf: "Limited (expenditure responsibility)", daf: "No (existing charities only)",
-        detail: "DAFs can only grant to existing, qualified 501(c)(3) public charities. A private foundation can support a non-charity only through expenditure responsibility, an added compliance step. HCB lets you fund a charitable project now, even a brand-new one run by a single person, and it never has to incorporate as its own nonprofit. Because your gift funds charitable work, and HCB makes sure it's used for that purpose, it stays fully tax-deductible.",
-        sources: [{ text: "IRS · Donor-advised funds", url: irs[:daf] }]
+        pf_status: "partial", daf_status: "partial",
+        detail: {
+          hcb: "Fund a charitable project now, even a brand-new one run by a single person, and it never has to incorporate. Because your gift funds charitable work and HCB makes sure it's used for that purpose, it stays fully tax-deductible.",
+          pf: "Can support a non-charity, but only through expenditure responsibility, an added compliance step.",
+          daf: "Most sponsors grant only to existing 501(c)(3) public charities. A sponsor can fund others through expenditure responsibility, but few do."
+        },
+        sources: [{ text: "IRS · Donor-advised funds", url: irs[:daf], for: "daf" }]
       },
       {
         label: "Back office (bank, cards, bookkeeping)", hcb: "Handled for funder & project", pf: "Build & staff your own", daf: "Recipient runs their own",
-        detail: "A DAF grants money to a charity that must already have its own bank account, accounting, and compliance. A private foundation can operate directly, but you build and staff that back office. HCB is the back office on both sides. The project gets a real bank account, debit cards, and bookkeeping, and you get clean reporting, with compliance handled for you."
+        pf_status: "no", daf_status: "partial",
+        detail: {
+          hcb: "HCB is the back office on both sides. The project gets a real bank account, debit cards, and bookkeeping; you get clean reporting, with compliance handled for you.",
+          pf: "Can operate directly, but you build and staff that back office yourself.",
+          daf: "The sponsor handles your account, but it grants to a charity that must already have its own bank account, accounting, and compliance."
+        }
       },
       {
         label: "Donor control over grants", hcb: "You direct grants", hcb_sub: "compliance handled", pf: "Full", daf: "Advisory only",
-        detail: "With a DAF you recommend grants; the sponsor holds legal control and approves them. A private foundation gives you full control, but you run the entity and its compliance. With HCB you direct where grants go while HCB keeps every grant compliant. As with any 501(c)(3), the charity retains ultimate discretion and control, and that's what makes your gift deductible.",
-        sources: [{ text: "IRS · Donor-advised funds", url: irs[:daf] }]
+        pf_status: "yes", daf_status: "partial",
+        detail: {
+          hcb: "You direct where grants go, and HCB keeps every grant compliant. Like any 501(c)(3) sponsor, HCB has final legal sign-off, which is what makes your gift deductible, but in practice you decide what to fund.",
+          pf: "Full control, but you run the entity and its compliance.",
+          daf: "You recommend grants; the sponsor holds legal control and approves them."
+        },
+        sources: [{ text: "IRS · Donor-advised funds", url: irs[:daf], for: "daf" }]
       },
       {
         label: "Mandatory annual payout & excise tax", hcb: "None", pf: "~5% payout + 1.39% excise", daf: "None",
-        detail: "Private foundations must pay out about 5% of their investment assets each year or owe an initial 30% excise tax on the shortfall (rising to 100% if uncorrected), and they owe a 1.39% excise tax on net investment income. DAFs and HCB carry no such requirement.",
-        sources: [{ text: "IRS · §4942 (payout)", url: irs[:payout] }, { text: "IRS · §4940 (excise)", url: irs[:excise] }]
+        pf_status: "no", daf_status: "yes",
+        detail: {
+          hcb: "No mandatory payout and no excise tax.",
+          pf: "Must pay out about 5% of investment assets each year or owe an initial 30% excise tax on the shortfall (rising to 100% if uncorrected), plus a 1.39% excise tax on net investment income.",
+          daf: "No mandatory payout or excise tax."
+        },
+        sources: [{ text: "IRS · §4942 (payout)", url: irs[:payout], for: "pf" }, { text: "IRS · §4940 (excise)", url: irs[:excise], for: "pf" }]
       },
       {
         label: "Real-time transparency", hcb: "Real-time", hcb_sub: "every dollar as it moves", pf: "Annual (Form 990-PF)", daf: "Limited (periodic statements)",
-        detail: "Foundations report publicly once a year on Form 990-PF. A DAF shows you your contributions and grants out, but not live, transaction-level visibility into how the money is used. HCB gives you a real-time dashboard down to every transaction, so you can see exactly where each dollar goes, break spending out by project and category, and turn it into the impact reports your board and stakeholders expect.",
-        sources: [{ text: "IRS · About Form 990-PF", url: irs[:form990pf] }]
+        pf_status: "no", daf_status: "partial",
+        detail: {
+          hcb: "A real-time dashboard down to every transaction. See exactly where each dollar goes, break spending out by project and category, and turn it into the impact reports your board and stakeholders expect.",
+          pf: "Reports publicly once a year on Form 990-PF.",
+          daf: "Shows your contributions and grants out, but not live, transaction-level visibility into how the money is used."
+        },
+        sources: [{ text: "IRS · About Form 990-PF", url: irs[:form990pf], for: "pf" }]
       },
       {
         label: "Ongoing admin & cost", hcb: "We handle it", hcb_sub: "one simple fee", pf: "High (990-PF, staff/advisors)", daf: "Layered fees (admin + investment + advisor)",
-        detail: "Private foundations file Form 990-PF annually and often need staff or advisors. A DAF is low-effort to maintain, but its costs stack up: an administrative (sponsor) fee, the underlying investment fees, and often a separate advisor fee, each charged on your balance, year after year. HCB handles bookkeeping, compliance, and reporting for you, for one simple fee, with no stacked or recurring charges. We'll walk you through it.",
-        sources: [{ text: "Fidelity Charitable · what a DAF costs", url: "https://www.fidelitycharitable.org/giving-account/what-it-costs.html" }]
+        pf_status: "no", daf_status: "partial",
+        detail: {
+          hcb: "HCB handles bookkeeping, compliance, and reporting for you, for one simple fee, with no stacked or recurring charges.",
+          pf: "File Form 990-PF annually and often need staff or advisors.",
+          daf: "Low-effort to maintain, but costs stack up: an administrative (sponsor) fee, the underlying investment fees, and often a separate advisor fee, each charged on your balance, year after year."
+        },
+        sources: [{ text: "Fidelity Charitable · what a DAF costs", url: "https://www.fidelitycharitable.org/giving-account/what-it-costs.html", for: "daf" }]
       },
       {
         label: "Deduction limit, cash gifts", hcb: "Up to 60% of AGI", hcb_sub: "plus a 2026 break the others don't get", pf: "30% of AGI", daf: "Up to 60% of AGI",
-        detail: "Because HCB operates as a public charity, cash gifts are generally deductible up to 60% of AGI, versus 30% for gifts to a private foundation (appreciated assets: 30% vs. 20%, and public charities like HCB let you deduct appreciated assets such as stock or crypto at fair market value). Starting in tax year 2026, federal rules add a 0.5%-of-AGI floor, cap the deduction's value at 35% for top-bracket donors, and let non-itemizers deduct up to $1,000 ($2,000 joint) in cash gifts to public charities, a break that doesn't apply to DAFs or private foundations.",
-        sources: [{ text: "IRS · Publication 526", url: irs[:pub526] }, { text: "Tax Foundation · 2026 charitable deduction changes", url: "https://taxfoundation.org/blog/charitable-deduction-big-beautiful-bill/" }]
+        pf_status: "no", daf_status: "yes",
+        detail: {
+          hcb: "As a public charity, cash gifts are generally deductible up to 60% of AGI, and you can deduct appreciated assets such as stock or crypto at fair market value. Starting in 2026, non-itemizers can also deduct up to $1,000 ($2,000 joint) in cash gifts to public charities, a break that doesn't apply to DAFs or private foundations.",
+          pf: "Cash gifts deductible up to 30% of AGI. Appreciated assets are capped at 20%, and non-publicly-traded stock is valued at cost basis.",
+          daf: "Like HCB, a public charity: cash gifts deductible up to 60% of AGI, and appreciated assets at fair market value."
+        },
+        sources: [{ text: "IRS · Publication 526", url: irs[:pub526], for: "hcb" }, { text: "Tax Foundation · 2026 charitable deduction changes", url: "https://taxfoundation.org/blog/charitable-deduction-big-beautiful-bill/", for: "hcb" }]
       },
       {
         label: "Tax-deductible · 501(c)(3)", hcb: "Yes", pf: "Yes", daf: "Yes",
-        detail: "All three give you a tax-deductible gift backed by a real 501(c)(3). The limits differ (above), but the deduction is real in every case.",
-        sources: [{ text: "IRS · Charitable contribution deductions", url: irs[:deductions] }]
+        pf_status: "yes", daf_status: "yes",
+        detail: {
+          hcb: "A tax-deductible gift backed by a real 501(c)(3). The limits differ (above), but the deduction is real.",
+          pf: "Also a real 501(c)(3); your gift is deductible, at the lower limits above.",
+          daf: "Also a real 501(c)(3); your gift is deductible at the same limits as HCB."
+        },
+        sources: [{ text: "IRS · Charitable contribution deductions", url: irs[:deductions], for: "hcb" }]
       }
     ]
   end
 
   # Q&A for the funder FAQ, grouped by topic. The full set renders on the dedicated
   # /for/funders/faq subpage; the `teaser: true` ones also surface in a short "Common questions"
-  # block on the main funders page. Answers stay consistent with the comparison table and the
-  # strategy doc (the fee stays a "simple pricing, let's talk" pointer, not a number) and avoid
-  # claims that need confirmation (custody, audit dates, exact stats, wind-down mechanics, etc.).
+  # block on the main funders page.
   def funder_faqs(stats: nil)
     [
       {
@@ -216,7 +272,7 @@ module MarketingHelper
           {
             teaser: true,
             q: "How do I accept tax-deductible donations for a project that isn't a 501(c)(3)?",
-            a: "Through fiscal sponsorship. HCB takes your charitable project under Hack Club's 501(c)(3), so donations are tax-deductible from day one, with no nonprofit of your own to form. The project gets a real bank account, debit cards, and compliance, and HCB handles the paperwork for one simple fee.",
+            a: "Through fiscal sponsorship. Your charitable project runs on an established 501(c)(3), so donations are tax-deductible from day one, with no nonprofit of your own to form. The project keeps its own name and gets a real bank account, debit cards, and compliance, while HCB handles the paperwork for one simple fee.",
             related: ["fiscal-sponsorship"]
           },
           {
@@ -276,7 +332,7 @@ module MarketingHelper
           {
             id: "is-hcb-a-daf",
             q: "Is HCB a donor-advised fund?",
-            a: "No. HCB is fiscal sponsorship: your charitable project becomes part of Hack Club's 501(c)(3) with its own account, not a donor-advised account that can only grant to other charities. That's why HCB can fund brand-new, not-yet-incorporated work that a DAF can't.",
+            a: "No. HCB is fiscal sponsorship: your charitable project operates under an established 501(c)(3) with its own account and identity, not a donor-advised account that can only grant to other charities. That's why HCB can fund brand-new, not-yet-incorporated work that a DAF can't.",
             related: ["fiscal-sponsorship"]
           },
           {
@@ -297,6 +353,10 @@ module MarketingHelper
             teaser: true,
             q: "Who decides where the money goes, me or HCB?",
             a: "You direct where grants go. HCB's role is to keep every grant compliant and handle the money movement, paperwork, and reporting. As with any 501(c)(3), the charity retains final legal discretion, which is what makes your gift deductible, but in practice you choose what to fund."
+          },
+          {
+            q: "Does my project keep its own identity and get credit for the work?",
+            a: "Yes. Your project keeps its own name and brand, and the work and the funding are credited to it, not to HCB. HCB is the financial infrastructure behind the scenes, the account, cards, and compliance, not the public face. The funds sit under an established 501(c)(3), which is what makes gifts tax-deductible, but day to day your project operates as itself, and the impact is yours to claim and report."
           },
           {
             q: "Can I run a regranting program, funding many projects at once?",
@@ -368,7 +428,7 @@ module MarketingHelper
           },
           {
             q: "What happens to unspent funds if a project winds down?",
-            a: "By IRS rules, the money stays dedicated to charitable purposes within the 501(c)(3) world. A project that's closing can direct its remaining balance to another charitable organization, either another nonprofit or another project on HCB. It never reverts to a donor."
+            a: "You stay in control of the unspent balance. If a project you funded closes with money left over, you can re-grant it to another project or charitable organization. By IRS rules the funds stay dedicated to charitable purposes and never revert to you personally, but you decide where they go next."
           },
           {
             q: "How much does HCB cost?",

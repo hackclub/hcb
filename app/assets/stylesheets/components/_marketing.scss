@@ -2268,7 +2268,11 @@ $mk-term-green: #62d196;
 
   thead .mk-table__hcb {
     color: darken($red, 14%);
-    background: mix($red, $white, 6%); // opaque version of the column tint, for the sticky header
+    background: mix(
+      $red,
+      $white,
+      6%
+    ); // opaque version of the column tint, for the sticky header
     box-shadow: inset 0 3px 0 $red;
   }
 
@@ -2287,8 +2291,65 @@ $mk-term-green: #62d196;
   }
 }
 
-// Comparison table → stacked cards on small screens (avoids a cramped 4-up / scroll).
+// "Compare against" segmented control (mobile only): pick which alternative sits beside HCB.
+.mk-compare-switch {
+  display: none;
+}
+
+.mk-compare-switch__label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-switch__track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: rgba($black, 0.05);
+  border-radius: var(--radius-lg);
+}
+
+.mk-compare-switch__opt {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $slate;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &.is-active {
+    background: $white;
+    color: $mk-ink;
+    box-shadow: var(--shadow-border-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+}
+
+// Comparison table on small screens: the "compare against" control picks one alternative, and each
+// dimension shows HCB beside it as two equal cards, so the two values sit side by side.
 @media (max-width: 640px) {
+  // The segmented control appears only once JS can drive it (no-JS keeps the full table).
+  .mk-table-wrap.is-enhanced .mk-compare-switch {
+    display: block;
+    margin-bottom: 18px;
+  }
+
   .mk-table-wrap {
     overflow: visible;
     background: none;
@@ -2309,52 +2370,141 @@ $mk-term-green: #62d196;
     display: none;
   }
 
-  .mk-table tbody tr {
+  // Show HCB vs. the chosen alternative: hide the other one (only once JS sets data-compare).
+  .mk-table-wrap[data-compare='pf'] .mk-table tbody td[data-label='DAF'],
+  .mk-table-wrap[data-compare='daf']
+    .mk-table
+    tbody
+    td[data-label='Foundation'] {
+    display: none;
+  }
+
+  // Likewise hide the non-selected alternative's explanation in the expanded detail.
+  .mk-table-wrap[data-compare='pf']
+    .mk-compare-detail__vehicle[data-vehicle='daf'],
+  .mk-table-wrap[data-compare='daf']
+    .mk-compare-detail__vehicle[data-vehicle='pf'] {
+    display: none;
+  }
+
+  // Each dimension is a card: a full-width label header, then HCB and the alternative as two cards.
+  .mk-table tbody tr.mk-compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    align-items: stretch;
     background: $white;
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-border-sm);
-    padding: 0 18px 12px;
+    padding: 4px 14px 14px;
     margin-bottom: 14px;
   }
 
-  .mk-table tbody tr:last-child {
+  .mk-table tbody tr.mk-compare-row:last-of-type {
     margin-bottom: 0;
   }
 
+  // Dimension label spans both columns; the toggle is a full-width accordion (chevron at the edge).
   .mk-table tbody th[scope='row'] {
+    grid-column: 1 / -1;
+    padding: 14px 2px 12px;
+    border-bottom: 0; // drop the base table-cell rule so no stray line sits above the value cards
     font-size: 1rem;
     font-weight: 600;
     color: $mk-ink;
-    padding: 16px 0 12px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid rgba($black, 0.08);
   }
 
+  .mk-table tbody th[scope='row'] .mk-table__toggle {
+    justify-content: space-between;
+  }
+
+  // Equal-height value cards (grid stretch): HCB is the tinted hero, the alternative is neutral.
   .mk-table tbody td {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    text-align: right;
-    padding: 7px 0;
-    border-bottom: 0;
+    align-content: flex-start; // keep the label row pinned to the top, so both cards' labels line up
+    column-gap: 8px;
+    padding: 11px 12px;
+    border: 1px solid rgba($black, 0.07);
+    border-radius: var(--radius-md);
+    background: rgba($black, 0.015);
+    color: $mk-ink;
+    font-weight: 500;
+    line-height: 1.4;
 
+    // Status chip then label share the top line; the value wraps to its own line below.
     &::before {
+      order: 1;
       content: attr(data-label);
-      color: $muted;
-      font-size: 0.9rem;
-      text-align: left;
+      font-family: $mono;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: darken($muted, 18%);
     }
   }
 
-  // Drop the column tint in card mode; keep the HCB value + label emphasis.
-  .mk-table .mk-table__hcb {
-    background: none;
+  .mk-cell__v {
+    order: 2;
+    flex: 0 0 100%;
+    margin-top: 5px;
   }
 
-  .mk-table td.mk-table__hcb::before {
+  .mk-table tbody td.mk-table__hcb {
+    background: rgba($red, 0.06);
+    border-color: rgba($red, 0.22);
     color: darken($red, 14%);
-    font-weight: 600;
+
+    &::before {
+      color: darken($red, 14%);
+    }
+  }
+
+  .mk-table tbody td.mk-table__hcb .mk-table__hcb-sub {
+    display: block;
+    margin-top: 3px;
+    color: darken($red, 14%);
+    opacity: 0.8;
+  }
+
+  // At-a-glance status chip (favorable / partial / unfavorable), inline after the vehicle label. The
+  // "no" mark is a dash, not an ✗, so the chip never reads as a close button.
+  .mk-table tbody td[data-status]::after {
+    order: 0; // chip sits before the vehicle label
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mk-table tbody td[data-status='yes']::after {
+    content: '\2713'; // check
+    background: rgba($slate, 0.12);
+    color: $slate;
+  }
+
+  .mk-table tbody td[data-status='partial']::after {
+    content: '~';
+    background: rgba($yellow, 0.25);
+    color: darken($yellow, 28%);
+  }
+
+  .mk-table tbody td[data-status='no']::after {
+    content: '\2013'; // en dash (not a cross, so it doesn't read as a close button)
+    background: rgba($black, 0.06);
+    color: darken($muted, 12%);
+  }
+
+  // HCB is the recommended option: a filled red chip, cohesive with its red card, so it reads as best.
+  .mk-table tbody td.mk-table__hcb[data-status='yes']::after {
+    background: $red;
+    color: $white;
   }
 }
 
@@ -2483,9 +2633,33 @@ $mk-term-green: #62d196;
 // own rules below.)
 @media (min-width: 641px) {
   .mk-table tbody tr.mk-compare-row:has(+ .mk-table__detail:not([hidden])) > th,
-  .mk-table tbody tr.mk-compare-row:has(+ .mk-table__detail:not([hidden])) > td {
+  .mk-table
+    tbody
+    tr.mk-compare-row:has(+ .mk-table__detail:not([hidden]))
+    > td {
     border-bottom-color: transparent;
   }
+}
+
+// The expanded detail is one short, labeled explanation per vehicle (HCB / Foundation / DAF).
+.mk-compare-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.mk-compare-detail__vehicle-name {
+  margin: 0 0 3px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-detail__vehicle[data-vehicle='hcb']
+  .mk-compare-detail__vehicle-name {
+  color: darken($red, 14%);
 }
 
 .mk-compare-detail__text {
@@ -2496,22 +2670,32 @@ $mk-term-green: #62d196;
   line-height: 1.6;
 }
 
-
 @media (prefers-reduced-motion: reduce) {
   .mk-table__chevron {
     transition: none;
   }
 }
 
-// Mobile (cards): the detail reads as attached to its summary card — full-width prose,
-// no label/value split, and squared-off joining corners.
+// Mobile (cards): the expanded detail is a card joined to the summary above it (shared squared
+// corners), so the full-width prose reads as that dimension opened up, not a separate card.
 @media (max-width: 640px) {
+  .mk-table tbody tr.mk-table__detail:not([hidden]) {
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    border-radius: var(--radius-xl);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin: 0 0 14px;
+    padding: 0 14px 14px;
+  }
+
   .mk-table tbody tr.mk-table__detail td {
     display: block;
-    padding: 0 0 4px;
+    padding: 12px 0 0; // top padding so the prose clears the values it expands from
     text-align: left;
     background: none;
-    border-bottom: 0; // the desktop group-gap doesn't apply inside the stacked card
+    border: 0; // not a value card: drop the card border/radius so the prose isn't boxed
+    border-radius: 0;
 
     &::before {
       content: none;
@@ -2522,13 +2706,6 @@ $mk-term-green: #62d196;
     margin-bottom: 0;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-  }
-
-  .mk-table tbody tr.mk-table__detail:not([hidden]) {
-    margin-top: 0;
-    padding-top: 0;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
   }
 }
 
@@ -2646,7 +2823,9 @@ $mk-term-green: #62d196;
   margin: 0 0 18px;
   padding-bottom: 13px;
   border-bottom: 1px solid rgba($black, 0.09);
-  scroll-margin-top: calc(var(--mk-nav-h) + 16px); // clear the sticky nav when jumped to
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when jumped to
 }
 
 .mk-faq__topic-num {
@@ -2682,7 +2861,9 @@ $mk-term-green: #62d196;
   font-weight: 600;
   line-height: 1.35;
   color: $mk-ink;
-  scroll-margin-top: calc(var(--mk-nav-h) + 16px); // clear the sticky nav when a question is deep-linked
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when a question is deep-linked
 }
 
 .mk-faq__a {
@@ -2695,11 +2876,14 @@ $mk-term-green: #62d196;
 // Meta links under an answer or a comparison detail row (Sources and Related share one treatment so
 // they read as siblings): a small mono label + subtle dotted-underline links. Shared by the FAQ page
 // and the comparison table so a citation looks the same everywhere.
+// Two columns: the mono label sits in a fixed left column and the links stack in the right one, so a
+// second citation aligns under the first instead of wrapping back under the label.
 .mk-meta {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  row-gap: 5px;
   align-items: baseline;
-  gap: 6px 14px;
   margin: 12px 0 0;
 }
 
@@ -2712,14 +2896,21 @@ $mk-term-green: #62d196;
 }
 
 .mk-meta__link {
+  grid-column: 2; // every link shares the right column, so they stack and align
+  justify-self: start;
   font-size: 0.85rem;
-  color: darken($muted, 18%); // AA-legible: these are citation/cross-link affordances funders click
-  text-decoration: none;
-  border-bottom: 1px dotted rgba($black, 0.4);
+  color: darken(
+    $muted,
+    18%
+  ); // AA-legible: these are citation/cross-link affordances funders click
+  // Dotted underline via text-decoration (not border-bottom) so it hugs the text uniformly, even
+  // when a long citation wraps to a second line.
+  text-decoration: underline dotted rgba($black, 0.4);
+  text-underline-offset: 3px;
 
   &:hover {
     color: $mk-ink;
-    border-bottom-color: $mk-ink;
+    text-decoration-color: $mk-ink;
   }
 }
 
