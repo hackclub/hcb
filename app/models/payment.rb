@@ -8,7 +8,6 @@
 #  aasm_state      :string           not null
 #  amount_cents    :integer          not null
 #  currency        :string           not null
-#  failed_at       :datetime
 #  purpose         :string           not null
 #  rejected_at     :datetime
 #  sent_at         :datetime
@@ -26,7 +25,7 @@
 #  index_payments_on_payout      (payout_type,payout_id)
 #
 class Payment < ApplicationRecord
-  self.ignored_columns += ["payout_type", "payout_id"]
+  self.ignored_columns += ["payout_type", "payout_id", "failed_at"]
 
   include AASM
   include Receiptable
