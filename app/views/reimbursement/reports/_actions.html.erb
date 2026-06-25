@@ -85,7 +85,7 @@
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !user.default_payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.default_payout_method.present? && user.default_payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !user.default_payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.default_payout_method.present? && user.default_payout_method.details.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
@@ -95,8 +95,8 @@
                   <span class="bold warning">Warning</span>: your report is is in <%= report.currency %>, but your payouts are configured for <%= user.default_payout_method.currency %>.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
-                  <% if user.default_payout_method.present? && user.default_payout_method.unsupported? %>
-                    update your payout information. <%= user.default_payout_method.unsupported_details[:reason] %>
+                  <% if user.default_payout_method.present? && user.default_payout_method.details.unsupported? %>
+                    update your payout information. <%= user.default_payout_method.details.unsupported_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
                   <% end %>
@@ -119,8 +119,8 @@
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s payout information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if user.default_payout_method.present? && user.default_payout_method.unsupported? %>
-                  update your payout information. <%= user.default_payout_method.unsupported_details[:reason] %>
+                <% if user.default_payout_method.present? && user.default_payout_method.details.unsupported? %>
+                  update your payout information. <%= user.default_payout_method.details.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
                 <% end %>
@@ -288,13 +288,8 @@
                     </strong>
                   </div>
 
-<<<<<<< Updated upstream
-                  <% if report.user.default_payout_method&.details.wise_recipient_id.present? %>
-                    <%= link_to "https://wise.com/send#?contact=#{report.user.default_payout_method&.details&.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
-=======
                   <% if payout_method.wise_recipient_id.present? %>
                     <%= link_to "https://wise.com/send#?contact=#{payout_method.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
->>>>>>> Stashed changes
                       <%= inline_icon "wise" %>
                       Open <%= report.user.full_name %> on Wise
                     <% end %>
@@ -349,11 +344,7 @@
             <% else %>
               <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
-<<<<<<< Updated upstream
-                Approve <%= report.user.default_payout_method.human_kind %> reimbursement
-=======
                 Approve <%= payout_method.human_kind %> reimbursement
->>>>>>> Stashed changes
               <% end %>
             <% end %>
           <% end %>
