@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   has_one :event, through: :payee
-  has_many :payment_attempts, class: "Payment::Attempt"
+  has_many :payment_attempts, class_name: "Payment::Attempt"
 
   monetize :amount_cents, with_model_currency: :currency
 

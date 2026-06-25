@@ -26,8 +26,8 @@ class Payment
     include AASM
 
     belongs_to :payment
-    belongs_to :payout, polymorphic: true
-    belongs_to :payout_method
+    belongs_to :payout, polymorphic: true, optional: true
+    belongs_to :payout_method, class_name: "LegalEntity::PayoutMethod"
 
     scope :not_failed, -> { where.not(aasm_state: "failed" ) }
 
@@ -69,20 +69,21 @@ class Payment
     private
 
     def create_transfer!
-      payout_method = payee.legal_entity.default_payout_method
-      case payout_method
-      when User::PayoutMethod::Check
+      payout_method = payment.payee.legal_entity.default_payout_method
+      case payout_method.details
+      when LegalEntity::PayoutMethod::Check
         safely do
-          check = event.increase_checks.build(
-            memo: "Payment for \"#{purpose}\"."[0...40],
-            amount: amount_cents,
-            payment_for: "Payment for \"#{purpose}\".",
-            recipient_name: payee.preferred_name,
-            address_line1: payout_method.address_line1,
-            address_line2: payout_method.address_line2,
-            address_city: payout_method.address_city,
-            address_state: payout_method.address_state,
-            address_zip: payout_method.address_postal_code,
+          check = payment.event.increase_checks.build(
+            memo: "Payment for \"#{payment.purpose}\"."[0...40],
+            amount: payment.amount_cents,
+            payment_for: "Payment for \"#{payment.purpose}\".",
+            recipient_name: payment.payee.preferred_name,
+            recipient_email: payment.payee.email,
+            address_line1: payout_method.details.address_line1,
+            address_line2: payout_method.details.address_line2,
+            address_city: payout_method.details.address_city,
+            address_state: payout_method.details.address_state,
+            address_zip: payout_method.details.address_postal_code,
             user: User.system_user
           )
 
@@ -93,14 +94,15 @@ class Payment
 
           transfer_receipts(check.local_hcb_code)
         end
-      when User::PayoutMethod::AchTransfer
+      when LegalEntity::PayoutMethod::AchTransfer
         safely do
-          ach_transfer = event.ach_transfers.build(
-            amount: amount_cents,
-            payment_for: "Payment for \"#{purpose}\".",
-            recipient_name: payee.preferred_name,
-            routing_number: payout_method.routing_number,
-            account_number: payout_method.account_number,
+          ach_transfer = payment.event.ach_transfers.build(
+            amount: payment.amount_cents,
+            payment_for: "Payment for \"#{payment.purpose}\".",
+            recipient_name: payment.payee.preferred_name,
+            recipient_email: payment.payee.email,
+            routing_number: payout_method.details.routing_number,
+            account_number: payout_method.details.account_number,
             bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
             creator: User.system_user
           )
@@ -112,25 +114,26 @@ class Payment
 
           transfer_receipts(ach_transfer.local_hcb_code)
         end
-      when User::PayoutMethod::Wire
+      when LegalEntity::PayoutMethod::Wire
         safely do
-          wire = event.wires.build(
-            memo: "Payment for \"#{purpose}\".",
-            payment_for: "Payment for #{purpose}."[0...140],
-            amount_cents:,
-            address_line1: payout_method.address_line1,
-            address_line2: payout_method.address_line2,
-            address_city: payout_method.address_city,
-            address_state: payout_method.address_state,
-            address_postal_code: payout_method.address_postal_code,
-            recipient_country: payout_method.recipient_country,
-            recipient_name: payout_method.recipient_name.presence || payee.preferred_name,
-            account_number: payout_method.account_number,
-            bic_code: payout_method.bic_code,
-            recipient_information: payout_method.recipient_information.merge({
-                                                                               purpose_code: Wire.payment_purpose_code_for(payout_method.recipient_country),
-                                                                               remittance_info: Wire.payment_remittance_info_for(payout_method.recipient_country),
-                                                                             }),
+          wire = payment.event.wires.build(
+            memo: "Payment for \"#{payment.purpose}\".",
+            payment_for: "Payment for #{payment.purpose}."[0...140],
+            amount_cents: payment.amount_cents,
+            address_line1: payout_method.details.address_line1,
+            address_line2: payout_method.details.address_line2,
+            address_city: payout_method.details.address_city,
+            address_state: payout_method.details.address_state,
+            address_postal_code: payout_method.details.address_postal_code,
+            recipient_country: payout_method.details.recipient_country,
+            recipient_name: payout_method.details.recipient_name.presence || payment.payee.preferred_name,
+            recipient_email: payment.payee.email,
+            account_number: payout_method.details.account_number,
+            bic_code: payout_method.details.bic_code,
+            recipient_information: payout_method.details.recipient_information.merge({
+                                                                                       purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
+                                                                                       remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
+                                                                                     }),
             currency: "USD",
             user: User.system_user
           )
@@ -142,22 +145,22 @@ class Payment
 
           transfer_receipts(wire.local_hcb_code)
         end
-      when User::PayoutMethod::WiseTransfer
+      when LegalEntity::PayoutMethod::WiseTransfer
         safely do
-          wise = event.wise_transfers.build(
-            memo: "Payment for \"#{purpose}\"",
-            amount: amount_cents,
-            payment_for: "Payment for \"#{purpose}\"",
-            recipient_name: payee.preferred_name,
-            recipient_email: payee.email,
-            address_line1: payout_method.address_line1,
-            address_line2: payout_method.address_line2,
-            address_city: payout_method.address_city,
-            address_state: payout_method.address_state,
-            address_postal_code: payout_method.address_postal_code,
-            recipient_country: payout_method.recipient_country,
-            bank_name: payout_method.bank_name,
-            recipient_information: payout_method.recipient_information,
+          wise = payment.event.wise_transfers.build(
+            memo: "Payment for \"#{payment.purpose}\"",
+            amount: payment.amount_cents,
+            payment_for: "Payment for \"#{payment.purpose}\"",
+            recipient_name: payment.payee.preferred_name,
+            recipient_email: payment.payee.email,
+            address_line1: payout_method.details.address_line1,
+            address_line2: payout_method.details.address_line2,
+            address_city: payout_method.details.address_city,
+            address_state: payout_method.details.address_state,
+            address_postal_code: payout_method.details.address_postal_code,
+            recipient_country: payout_method.details.recipient_country,
+            bank_name: payout_method.details.bank_name,
+            recipient_information: payout_method.details.recipient_information,
             currency:,
             user: User.system_user
           )
@@ -183,7 +186,7 @@ class Payment
     end
 
     def other_attempts_failed
-      if PaymentAttempt.not_failed.where(payment:).excluding(self).any?
+      if Payment::Attempt.not_failed.where(payment:).excluding(self).any?
         errors.add(:base, "all other attempts for this payment must be failed before creating a new attempt")
       end
     end
