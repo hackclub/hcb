@@ -44,9 +44,11 @@ class LegalEntity
       private
 
       def build_payout_method
-        details_class = @details_type&.safe_constantize
+        # Resolve the user-supplied type against the allowlist by name rather
+        # than constantizing it, so arbitrary class names can never be loaded.
+        details_class = LegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
         pm = LegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: true)
-        pm.details = details_class.new(@details_attrs) if LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+        pm.details = details_class.new(@details_attrs) if details_class
         pm
       end
 

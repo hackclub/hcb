@@ -67,6 +67,23 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(user.reload.default_payout_method).to be_nil
     end
 
+    it "does not instantiate an arbitrary class named by the type" do
+      # Guards against code injection: a real but non-allowlisted class must be
+      # rejected by name without being resolved or instantiated.
+      user # create before spying (FactoryBot legitimately calls User.new)
+      allow(User).to receive(:new).and_call_original
+
+      service = described_class.new(
+        user:,
+        details_type: "User",
+        details_attrs: valid_ach_attrs
+      )
+
+      expect(service.run).to be(false)
+      expect(user.reload.default_payout_method).to be_nil
+      expect(User).not_to have_received(:new)
+    end
+
     it "surfaces detail validation errors without persisting" do
       service = described_class.new(
         user:,
