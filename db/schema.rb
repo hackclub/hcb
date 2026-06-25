@@ -1923,6 +1923,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_150652) do
   create_table "payment_attempts", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.datetime "failed_at"
     t.bigint "payment_id", null: false
     t.bigint "payout_id"

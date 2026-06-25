@@ -9,6 +9,7 @@ class CreatePaymentAttempts < ActiveRecord::Migration[8.0]
 
       t.datetime :sent_at
       t.datetime :failed_at
+      t.datetime :deleted_at
 
       t.timestamps
     end

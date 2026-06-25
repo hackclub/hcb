@@ -6,6 +6,7 @@
 #
 #  id               :bigint           not null, primary key
 #  aasm_state       :string           not null
+#  deleted_at       :datetime
 #  failed_at        :datetime
 #  payout_type      :string
 #  sent_at          :datetime
@@ -24,6 +25,7 @@
 class Payment
   class Attempt < ApplicationRecord
     include AASM
+    acts_as_paranoid
 
     belongs_to :payment
     belongs_to :payout, polymorphic: true, optional: true
