@@ -36,12 +36,20 @@ class Payment
 
     aasm timestamps: true do
       state :pending, initial: true
+      state :under_review
       state :sent
       state :successful
       state :failed
 
+      event :mark_under_review do
+        transitions from: :pending, to: :under_review, if: -> { payout.present? }
+        after do
+          payment.mark_under_review!
+        end
+      end
+
       event :mark_sent do
-        transitions from: :pending, to: :sent, if: -> { payout.present? }
+        transitions from: :under_review, to: :sent
         after do
           payment.mark_sent!
         end
@@ -176,7 +184,7 @@ class Payment
         raise ArgumentError, "🚨⚠️ unsupported payout method!"
       end
 
-      mark_sent!
+      mark_under_review!
     end
 
     def transfer_receipts(hcb_code)

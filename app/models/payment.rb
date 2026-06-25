@@ -47,10 +47,7 @@ class Payment < ApplicationRecord
     state :successful
 
     event :mark_under_review do
-      transitions from: :pending_legal_entity, to: :under_review, if: -> { payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present? }
-      after do
-        payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
-      end
+      transitions from: :pending_legal_entity, to: :under_review
     end
 
     event :mark_sent do
@@ -81,8 +78,8 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if may_mark_under_review?
-      mark_under_review!
+    if payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present?
+      payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
     elsif payee.legal_entity.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payment_method.deliver_later
     else
