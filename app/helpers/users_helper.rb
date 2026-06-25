@@ -195,7 +195,7 @@ module UsersHelper
                 avi + name
               end
 
-    if user && viewer&.auditor?
+    if user && viewer&.auditor? && !options[:disable_admin_menu]
       button = content_tag(
         :span,
         content,
