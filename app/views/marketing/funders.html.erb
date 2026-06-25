@@ -84,46 +84,57 @@
       <%# The recipients are illustrative *categories* of fundable work, not real orgs or
           transactions: no amounts or dates, so nothing reads as a live ledger. The actual
           featured organizations and funders live in their own sections below. %>
+      <%# A perspective "stage" holds depth layers that parallax against one
+          another on cursor + scroll (funders_flow_controller). The atmosphere
+          sits farthest back; the field (wires + cards) rides in front. Degrades
+          to a flat, static diagram with no JS / reduced motion, and stacks into
+          a plain list on narrow screens. %>
       <div class="mk-flow" data-controller="funders-flow"
            role="img" aria-label="A funder directing capital as tax-deductible grants to many kinds of organizations of their choosing on HCB.">
-        <svg class="mk-flow__wires" data-funders-flow-target="svg" aria-hidden="true" preserveAspectRatio="none"></svg>
+        <div class="mk-flow__scene" data-funders-flow-target="scene">
+          <div class="mk-flow__atmosphere" data-funders-flow-target="atmosphere" aria-hidden="true"></div>
 
-        <div class="mk-flow__source" data-funders-flow-target="source">
-          <%= image_tag "/brand/hcb-icon-icon-original.svg", class: "mk-flow__mark", alt: "", width: 36, height: 36 %>
-          <span class="mk-flow__source-name">Your capital</span>
-          <span class="mk-flow__source-sub">You pick who gets funded</span>
+          <div class="mk-flow__field" data-funders-flow-target="field">
+            <svg class="mk-flow__wires" data-funders-flow-target="svg" aria-hidden="true"></svg>
+
+            <div class="mk-flow__source" data-funders-flow-target="source">
+              <%= image_tag "/brand/hcb-icon-icon-original.svg", class: "mk-flow__mark", alt: "", width: 36, height: 36 %>
+              <span class="mk-flow__source-name">Your capital</span>
+              <span class="mk-flow__source-sub">You pick who gets funded</span>
+            </div>
+
+            <ul class="mk-flow__feed">
+              <li class="mk-flow__grant" data-funders-flow-target="grant">
+                <span class="mk-flow__avatar"><%= inline_icon "terminal", size: 20 %></span>
+                <span class="mk-flow__org">
+                  <span class="mk-flow__name">Open-source projects</span>
+                  <span class="mk-flow__meta">Builder-led</span>
+                </span>
+              </li>
+              <li class="mk-flow__grant" data-funders-flow-target="grant">
+                <span class="mk-flow__avatar"><%= inline_icon "cpu", size: 20 %></span>
+                <span class="mk-flow__org">
+                  <span class="mk-flow__name">AI research labs</span>
+                  <span class="mk-flow__meta">Independent</span>
+                </span>
+              </li>
+              <li class="mk-flow__grant" data-funders-flow-target="grant">
+                <span class="mk-flow__avatar"><%= inline_icon "people-2", size: 20 %></span>
+                <span class="mk-flow__org">
+                  <span class="mk-flow__name">Mutual aid groups</span>
+                  <span class="mk-flow__meta">Volunteer-run</span>
+                </span>
+              </li>
+              <li class="mk-flow__grant" data-funders-flow-target="grant">
+                <span class="mk-flow__avatar"><%= inline_icon "idea", size: 20 %></span>
+                <span class="mk-flow__org">
+                  <span class="mk-flow__name">New initiatives</span>
+                  <span class="mk-flow__meta">Brand new</span>
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
-
-        <ul class="mk-flow__feed">
-          <li class="mk-flow__grant" data-funders-flow-target="grant">
-            <span class="mk-flow__avatar"><%= inline_icon "terminal", size: 20 %></span>
-            <span class="mk-flow__org">
-              <span class="mk-flow__name">Open-source projects</span>
-              <span class="mk-flow__meta">Builder-led</span>
-            </span>
-          </li>
-          <li class="mk-flow__grant" data-funders-flow-target="grant">
-            <span class="mk-flow__avatar"><%= inline_icon "cpu", size: 20 %></span>
-            <span class="mk-flow__org">
-              <span class="mk-flow__name">AI research labs</span>
-              <span class="mk-flow__meta">Independent</span>
-            </span>
-          </li>
-          <li class="mk-flow__grant" data-funders-flow-target="grant">
-            <span class="mk-flow__avatar"><%= inline_icon "people-2", size: 20 %></span>
-            <span class="mk-flow__org">
-              <span class="mk-flow__name">Mutual aid groups</span>
-              <span class="mk-flow__meta">Volunteer-run</span>
-            </span>
-          </li>
-          <li class="mk-flow__grant" data-funders-flow-target="grant">
-            <span class="mk-flow__avatar"><%= inline_icon "idea", size: 20 %></span>
-            <span class="mk-flow__org">
-              <span class="mk-flow__name">New initiatives</span>
-              <span class="mk-flow__meta">Brand new</span>
-            </span>
-          </li>
-        </ul>
       </div>
     </div>
   </div>

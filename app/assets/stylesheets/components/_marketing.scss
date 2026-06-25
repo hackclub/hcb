@@ -534,9 +534,11 @@ $mk-bg: $snow; // #f9fafc
 }
 
 // ---------------------------------------------------------------- hero fan-out
-// "Capital → grants": a funder source node wired to several recipient orgs, with
-// pulses traveling the wires (animated by funders_flow_controller). Renders as a
-// sensible static state with no JS / reduced motion.
+// "Capital → grants" staged in 2.5D: a funder source node wired to several
+// recipient orgs, with capital flowing the wires (animated by
+// funders_flow_controller). The scene sits on a perspective stage whose depth
+// layers parallax against one another on cursor + scroll. Renders as a flat,
+// static diagram with no JS / reduced motion, and stacks on narrow screens.
 .mk-flow {
   position: relative;
   width: 100%;
@@ -544,6 +546,42 @@ $mk-bg: $snow; // #f9fafc
   max-width: 560px;
   margin: 0 auto;
   min-height: clamp(330px, 33vw, 430px);
+  // 3D stage: the children below are depth layers parallaxed by the controller.
+  perspective: 1200px;
+}
+
+// The transformable stage. The controller tilts it toward the cursor and settles
+// it on scroll; its children sit at different depths and parallax against it.
+.mk-flow__scene {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+// Farthest layer: a soft warm bloom that lights the scene from behind and drifts
+// most under parallax. Purely atmospheric (depth + light), never interactive.
+.mk-flow__atmosphere {
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    radial-gradient(38% 48% at 32% 42%, rgba($red, 0.12), transparent 70%),
+    radial-gradient(42% 52% at 72% 60%, rgba($black, 0.05), transparent 72%);
+  filter: blur(6px);
+}
+
+// The scene's front plane: wires + source + recipient cards. Measured and drawn
+// in its own coordinate space, then moved/tilted as one rigid layer so the wires
+// stay glued to the cards under any parallax.
+.mk-flow__field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .mk-flow__wires {
@@ -554,14 +592,21 @@ $mk-bg: $snow; // #f9fafc
   pointer-events: none;
 }
 
-.mk-flow__rail {
-  stroke: rgba($black, 0.16);
+.mk-flow__wire {
+  stroke: rgba($black, 0.14);
   stroke-width: 1.5;
 }
 
-.mk-flow__pulse {
-  fill: $red;
-  filter: drop-shadow(0 0 5px rgba($red, 0.55));
+// A comet of capital riding a wire: a short, round-capped red streak with a soft
+// glow. Its position/length are animated via stroke-dashoffset by the controller,
+// so it follows the curved wire exactly with no per-frame point math.
+.mk-flow__charge {
+  stroke: $red;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  // Layered bloom so the comet reads as luminous capital, not a flat line.
+  filter: drop-shadow(0 0 4px rgba($red, 0.55))
+    drop-shadow(0 0 11px rgba($red, 0.35));
 }
 
 .mk-flow__source {
@@ -578,6 +623,23 @@ $mk-bg: $snow; // #f9fafc
   background: $white;
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-border-md);
+
+  // Output port: a small glowing node where the wires leave the source, anchoring
+  // the fan-out to "your capital" instead of floating off the card's edge.
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    transform: translate(50%, -50%);
+    border-radius: 50%;
+    background: $red;
+    box-shadow:
+      0 0 0 4px rgba($red, 0.12),
+      0 0 8px rgba($red, 0.5);
+  }
 }
 
 .mk-flow__mark {
@@ -624,15 +686,18 @@ $mk-bg: $snow; // #f9fafc
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-border-sm);
 
-  // "Received" ring. Its strength is driven by --recv, which the flow controller
-  // tweens 1 -> 0 on the same timeline as the ball, so the flash lands exactly
-  // when the ball does. Defaults to 0 (no flash) with no JS / reduced motion.
+  // "Received" swell. --recv is tweened 1 -> 0 by the controller on the comet's
+  // own timeline, so the swell lands exactly when the capital does. A faint rim
+  // plus a soft, wide bloom that contracts as it fades reads as a calm
+  // acknowledgement, not a hard flash. Defaults to 0 (no JS / reduced motion).
   &::after {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1.5px rgba($red, 0.6);
+    box-shadow:
+      inset 0 0 0 1px rgba($red, 0.45),
+      0 14px calc(22px + var(--recv, 0) * 20px) -14px rgba($red, 0.6);
     opacity: var(--recv, 0);
     pointer-events: none;
   }
@@ -646,8 +711,14 @@ $mk-bg: $snow; // #f9fafc
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
-  background: rgba($black, 0.05);
-  color: $slate;
+  // Warms toward red and pops slightly as its grant lands (driven by --recv).
+  background: color-mix(
+    in srgb,
+    #{$red} calc(var(--recv, 0) * 22%),
+    rgba($black, 0.05)
+  );
+  color: color-mix(in srgb, #{$red} calc(var(--recv, 0) * 85%), #{$slate});
+  transform: scale(calc(1 + var(--recv, 0) * 0.08));
 
   svg {
     width: 20px;
@@ -680,11 +751,28 @@ $mk-bg: $snow; // #f9fafc
   text-overflow: ellipsis;
 }
 
-// Narrow screens can't fit the source + rows side by side, so stack them and
-// drop the wires (the controller detects the hidden SVG and skips the animation).
+// Narrow screens can't fit the source + rows side by side, so collapse the 3D
+// stage and stack the field into a plain list (the controller detects the hidden
+// SVG and disables the scene + animation).
 @media (max-width: 640px) {
   .mk-flow {
     min-height: 0;
+    perspective: none;
+  }
+
+  .mk-flow__scene {
+    position: static;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mk-flow__atmosphere {
+    display: none;
+  }
+
+  .mk-flow__field {
+    position: static;
+    transform: none !important;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -701,6 +789,11 @@ $mk-bg: $snow; // #f9fafc
     flex-direction: row;
     align-items: center;
     gap: 12px;
+
+    // No wires to anchor when stacked, so drop the output port node.
+    &::after {
+      display: none;
+    }
   }
 
   .mk-flow__mark {
@@ -715,6 +808,15 @@ $mk-bg: $snow; // #f9fafc
     position: static;
     width: auto;
     gap: 10px;
+  }
+}
+
+// Reduced motion: never transform the stage layers, even if JS sets them.
+@media (prefers-reduced-motion: reduce) {
+  .mk-flow__scene,
+  .mk-flow__field,
+  .mk-flow__atmosphere {
+    transform: none !important;
   }
 }
 
