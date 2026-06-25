@@ -431,12 +431,6 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
-  def build_payout_method(params)
-    return unless payout_method_type
-
-    self.payout_method = payout_method_type.constantize.new(params)
-  end
-
   def personal_legal_entity
     legal_entities.find_by(entity_type: :person)
   end
