@@ -52,7 +52,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
-        create_activity(key: "announcement.published", owner: author, recipient: event)
+        create_activity(key: "announcement.create", owner: author, recipient: event)
         Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
@@ -81,12 +81,6 @@ class Announcement < ApplicationRecord
   before_save :autofollow_organizers
 
   before_save :remove_unsafe_content
-
-  after_create :create_activity
-
-  before_update :update_activity
-
-  before_destroy :destroy_activity
 
   def render
     ProsemirrorService::Renderer.render_html(content, event)
@@ -157,16 +151,4 @@ class Announcement < ApplicationRecord
     end
   end
 
-end
-
-def create_activity
-  create_activity(key: "announcement.create", owner: author, recipient: event)
-end
-
-def update_activity
-  create_activity(key: "announcement.update", owner: author, recipient: event)
-end
-
-def destroy_activity
-  create_activity(key: "announcement.destroy", owner: author, recipient: event)
 end
