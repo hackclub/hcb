@@ -147,7 +147,7 @@ class AchTransfer < ApplicationRecord
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
-        payment_attempt.mark_sent! if payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
