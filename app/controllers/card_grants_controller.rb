@@ -243,6 +243,10 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
+    unless current_user.phone_number_verified?
+      return redirect_to @card_grant, flash: { error: "Please verify your phone number in your #{helpers.link_to("settings", my_settings_path)} before activating your grant card.".html_safe }
+    end
+
     @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant
