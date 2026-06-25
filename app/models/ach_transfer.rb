@@ -122,7 +122,7 @@ class AchTransfer < ApplicationRecord
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
-  has_one :payment, as: :payout
+  has_one :payment_attempt, as: :payout
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
@@ -147,7 +147,7 @@ class AchTransfer < ApplicationRecord
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
-        payment.mark_sent! if payment.present?
+        payment_attempt.mark_sent! if payment.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end

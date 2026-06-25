@@ -55,7 +55,7 @@ class Wire < ApplicationRecord
   blind_index :account_number, :bic_code
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
-  has_one :payment, as: :payout
+  has_one :payment_attempt, as: :payout
 
   validates_length_of :payment_for, maximum: 140
 
@@ -115,7 +115,7 @@ class Wire < ApplicationRecord
     event :mark_approved do
       after_commit do
         WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
-        payment.mark_sent! if payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: :pending, to: :approved
     end

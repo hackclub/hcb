@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_25_135511) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_25_150652) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1918,6 +1918,21 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_135511) do
     t.index ["event_id"], name: "index_payees_on_event_id"
     t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
+  end
+
+  create_table "payment_attempts", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "failed_at"
+    t.bigint "payment_id", null: false
+    t.bigint "payout_id"
+    t.bigint "payout_method_id", null: false
+    t.string "payout_type"
+    t.datetime "sent_at"
+    t.datetime "updated_at", null: false
+    t.index ["payment_id"], name: "index_payment_attempts_on_payment_id"
+    t.index ["payout_method_id"], name: "index_payment_attempts_on_payout_method_id"
+    t.index ["payout_type", "payout_id"], name: "index_payment_attempts_on_payout"
   end
 
   create_table "payment_recipients", force: :cascade do |t|
