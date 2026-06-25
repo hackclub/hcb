@@ -19,43 +19,40 @@
       </div>
 
       <p class="eyebrow mb-1">Recently paid</p>
-      <div class="flex flex-col mb2">
-          <% recent_recipients.each do |recipient| %>
-            <% new_transfer_path = case recipient.payment_model
-                                   when IncreaseCheck.name then new_event_increase_check_path(@event)
-                                   when Wire.name then new_event_wire_path(@event)
-                                   else new_event_ach_transfer_path(@event)
-                                   end %>
-            <%= link_to new_transfer_path,
-                  class: "flex items-center gap-2 p-2 rounded text-decoration-none clickable hover:bg-muted",
-                  data: { turbo_frame: "_top", transfer_form_target: "recipient", search: "#{recipient.name} #{recipient.email}" } do %>
-              <span class="flex items-center justify-center bg-muted rounded-full w-9 h-9 font-bold text-sm flex-shrink-0">
-                <%= recipient.name.to_s.split.map { |part| part[0] }.first(2).join.upcase %>
-              </span>
-              <span class="flex-1 min-w-0">
-                <span class="block font-bold truncate"><%= recipient.name %></span>
-                <span class="block text-sm text-muted truncate"><%= recipient.email %></span>
-              </span>
-              <%= inline_icon "view-forward", size: 20, class: "text-muted flex-shrink-0" %>
-            <% end %>
+      <ul class="list list--row mb2">
+        <% recent_recipients.each do |recipient| %>
+          <% new_transfer_path = case recipient.payment_model
+                                 when IncreaseCheck.name then new_event_increase_check_path(@event)
+                                 when Wire.name then new_event_wire_path(@event)
+                                 else new_event_ach_transfer_path(@event)
+                                 end %>
+          <%= link_to new_transfer_path,
+                data: { turbo_frame: "_top", transfer_form_target: "recipient", search: "#{recipient.name} #{recipient.email}" } do %>
+            <li class="gap-2">
+              <%= image_tag gravatar_url(recipient.email, recipient.name.to_s, recipient.id, 64), width: 32, height: 32, class: "rounded-full shrink-none", alt: recipient.name %>
+              <p class="min-w-0">
+                <strong class="block truncate"><%= recipient.name %></strong>
+                <span class="muted block truncate"><%= recipient.email %></span>
+              </p>
+            </li>
           <% end %>
-        </div>
-      <p class="text-center text-muted" data-transfer-form-target="noResults" hidden>No recipients match your search.</p>
+        <% end %>
+      </ul>
+      <p class="muted text-center" data-transfer-form-target="noResults" hidden>No recipients match your search.</p>
 
-      <div class="border-t border-muted -mx-4 mb2"></div>
-
-      <button type="button"
-              class="flex items-center gap-2 p-2 rounded w-full text-left clickable hover:bg-muted bg-transparent border-0"
-              data-action="click->transfer-form#showManual">
-        <span class="flex items-center justify-center bg-muted rounded-full w-9 h-9 flex-shrink-0">
-          <%= inline_icon "payment-transfer", size: 20 %>
-        </span>
-        <span class="flex-1">
-          <span class="block font-bold">Send manually</span>
-          <span class="block text-sm text-muted">Enter recipient &amp; transfer details directly</span>
-        </span>
-        <%= inline_icon "view-forward", size: 20, class: "text-muted" %>
-      </button>
+      <ul class="list list--row">
+        <a href="javascript:void(0)" data-action="click->transfer-form#showManual">
+          <li class="gap-2">
+            <span class="flex items-center justify-center bg-muted rounded-full" style="width: 32px; height: 32px;">
+              <%= inline_icon "payment-transfer", size: 20 %>
+            </span>
+            <p>
+              <strong class="block">Send manually</strong>
+              <span class="muted block">Enter recipient &amp; transfer details directly</span>
+            </p>
+          </li>
+        </a>
+      </ul>
     </div>
     <% end %>
     <div data-transfer-form-target="home" <%= "hidden" if recent_recipients.any? %>>
