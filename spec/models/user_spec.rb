@@ -495,6 +495,25 @@ RSpec.describe User, type: :model do
         expect(user.personal_legal_entity).to be_present
         expect(user.personal_legal_entity).to be_person
       end
+
+      it "returns the person entity, never a business entity the user also belongs to" do
+        business = create(:legal_entity, :business)
+        user.legal_entity_users.create!(legal_entity: business)
+
+        expect(user.reload.personal_legal_entity).to be_person
+        expect(user.personal_legal_entity).not_to eq(business)
+      end
+    end
+
+    describe "#person_legal_entity_user" do
+      it "returns the join row for the person-type legal entity" do
+        create(:legal_entity, :business).tap { |b| user.legal_entity_users.create!(legal_entity: b) }
+
+        expect(user.reload.person_legal_entity_user).to eq(
+          user.legal_entity_users.find_by(legal_entity: user.personal_legal_entity)
+        )
+        expect(user.person_legal_entity_user.legal_entity).to be_person
+      end
     end
 
     describe "#default_payout_method" do
