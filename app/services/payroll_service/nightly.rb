@@ -6,7 +6,7 @@ module PayrollService
       Employee::Payment.approved.find_each(batch_size: 100) do |payment|
         next if payment.payout.present?
 
-        payout_method = payment.employee.user.default_payout_method_details
+        payout_method = payment.employee.user.default_payout_method&.details
 
         case payout_method
         when LegalEntity::PayoutMethod::Check

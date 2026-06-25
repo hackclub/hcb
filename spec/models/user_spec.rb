@@ -497,18 +497,18 @@ RSpec.describe User, type: :model do
       end
     end
 
-    describe "#default_payout_method / #default_payout_method_details" do
+    describe "#default_payout_method" do
       it "is nil when no default payout method exists" do
         expect(user.default_payout_method).to be_nil
-        expect(user.default_payout_method_details).to be_nil
+        expect(user.default_payout_method&.details).to be_nil
       end
 
       it "returns the person entity's default payout method and its details" do
         pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
 
         expect(user.default_payout_method).to eq(pm)
-        expect(user.default_payout_method_details).to eq(pm.details)
-        expect(user.default_payout_method_details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+        expect(user.default_payout_method.details).to eq(pm.details)
+        expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       end
     end
 

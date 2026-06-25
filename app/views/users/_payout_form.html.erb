@@ -1,4 +1,4 @@
-<% payout_method = user.new_default_payout_method&.details || user.default_payout_method_details %>
+<% payout_method = user.new_default_payout_method&.details || user.default_payout_method&.details %>
 <% selected_type = payout_method&.class&.name %>
 <%= form_with model: user, html: {
       "x-data": "{ country: #{payout_method.instance_of?(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null"} }"

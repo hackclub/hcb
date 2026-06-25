@@ -304,20 +304,20 @@ module Reimbursement
           payout_holding.reload
           payout_holding.mark_settled!
         end
-        payout_method = @report.user.default_payout_method_details
-        payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+        wise_payout_method = @report.user.default_payout_method&.details
+        wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",
-          address_line1: payout_method.address_line1,
-          address_line2: payout_method.address_line2,
-          address_city: payout_method.address_city,
-          address_state: payout_method.address_state,
-          address_postal_code: payout_method.address_postal_code,
-          recipient_country: payout_method.recipient_country,
+          address_line1: wise_payout_method.address_line1,
+          address_line2: wise_payout_method.address_line2,
+          address_city: wise_payout_method.address_city,
+          address_state: wise_payout_method.address_state,
+          address_postal_code: wise_payout_method.address_postal_code,
+          recipient_country: wise_payout_method.recipient_country,
           recipient_email: @report.user.email,
           recipient_name: @report.user.full_name,
-          bank_name: payout_method.bank_name,
-          recipient_information: payout_method.recipient_information,
+          bank_name: wise_payout_method.bank_name,
+          recipient_information: wise_payout_method.recipient_information,
           currency: @report.currency,
           user: User.system_user,
           usd_amount_cents: payout_holding.amount_cents,

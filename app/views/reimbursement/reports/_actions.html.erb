@@ -245,7 +245,7 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
-            <% if report.user.default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+            <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
@@ -287,8 +287,8 @@
                     </strong>
                   </div>
 
-                  <% if report.user.default_payout_method_details.wise_recipient_id.present? %>
-                    <%= link_to "https://wise.com/send#?contact=#{report.user.default_payout_method_details.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
+                  <% if report.user.default_payout_method&.details.wise_recipient_id.present? %>
+                    <%= link_to "https://wise.com/send#?contact=#{report.user.default_payout_method&.details.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
                       <%= inline_icon "wise" %>
                       Open <%= report.user.full_name %> on Wise
                     <% end %>
@@ -395,7 +395,7 @@
           <%= button_hint %>
         </div>
       <% end %>
-      <% if report.user.default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+      <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
         <div class="card mt-2">
           <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
             Fetching latest estimate...

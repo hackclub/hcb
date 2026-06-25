@@ -1,7 +1,7 @@
 <%# locals: (report:) %>
 
 <% user = report.user %>
-<% payout_method = user.default_payout_method_details %>
+<% payout_method = user.default_payout_method&.details %>
 
 <h3 class="mt-0">Payout information</h3>
 

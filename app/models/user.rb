@@ -439,10 +439,6 @@ class User < ApplicationRecord
     personal_legal_entity&.default_payout_method
   end
 
-  def default_payout_method_details
-    default_payout_method&.details
-  end
-
   # Builds (but does not save) a new default LegalEntity::PayoutMethod.
   # Memoized so the controller and form can read validation errors back off it.
   attr_reader :new_default_payout_method
@@ -608,8 +604,8 @@ class User < ApplicationRecord
   end
 
   def can_update_payout_method?
-    return true if default_payout_method_details.nil?
-    return true unless default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+    return true if default_payout_method&.details.nil?
+    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
     return false if reimbursement_reports.reimbursement_requested.any?
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 
@@ -772,7 +768,7 @@ class User < ApplicationRecord
     # Block switching to Wise while reports are being processed, but allow
     # re-saving an existing Wise method.
     if pm.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-       !default_payout_method_details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
+       !default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
        reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
       errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
