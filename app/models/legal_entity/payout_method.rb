@@ -15,7 +15,7 @@
 # Indexes
 #
 #  index_le_payout_methods_one_default_per_entity        (legal_entity_id) UNIQUE WHERE ("default" = true)
-#  index_legal_entity_payout_methods_on_details          (details_type,details_id)
+#  index_legal_entity_payout_methods_on_details          (details_type,details_id) UNIQUE
 #  index_legal_entity_payout_methods_on_legal_entity_id  (legal_entity_id)
 #
 class LegalEntity

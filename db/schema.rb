@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_24_192401) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1364,7 +1364,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_192401) do
     t.text "secondary_hash"
     t.text "unique_bank_identifier"
     t.datetime "updated_at", null: false
-    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -1638,7 +1638,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_192401) do
     t.string "details_type", null: false
     t.bigint "legal_entity_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details"
+    t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details", unique: true
     t.index ["legal_entity_id"], name: "index_le_payout_methods_one_default_per_entity", unique: true, where: "(\"default\" = true)"
     t.index ["legal_entity_id"], name: "index_legal_entity_payout_methods_on_legal_entity_id"
   end
