@@ -644,6 +644,7 @@ Rails.application.routes.draw do
   # Marketing landing pages. Public, server-rendered, largely static. Built so future
   # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
   get "for/funders", to: "marketing#funders", as: :funders
+  get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
   post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do

@@ -32,6 +32,12 @@ class LegalEntity < ApplicationRecord
   has_many :legal_entity_users
   has_many :users, through: :legal_entity_users
 
+  has_many :payout_methods, class_name: "LegalEntity::PayoutMethod"
+
+  def default_payout_method
+    payout_methods.find_by(default: true)
+  end
+
   def complete?
     REQUIRED_COLUMNS.all? { |col| self[col].present? }
   end
