@@ -178,6 +178,13 @@ class User < ApplicationRecord
 
   has_many :legal_entity_users
   has_many :legal_entities, through: :legal_entity_users
+  # A user always has exactly one person-type legal entity (created in
+  # create_legal_entity and enforced by LegalEntityUser#user_only_has_one_person_entity).
+  # Modeled as a has_one so it can be eager-loaded (e.g. includes(:personal_legal_entity)).
+  # has_one :through requires a singular intermediate, so we hop through a
+  # person-scoped has_one join row rather than the legal_entity_users collection.
+  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
+  has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
 
   has_encrypted :birthday, type: :date
 
@@ -428,10 +435,6 @@ class User < ApplicationRecord
 
   memo_wise def transactions_missing_receipt_count(from: nil, to: nil)
     transactions_missing_receipt(from:, to:).size
-  end
-
-  def personal_legal_entity
-    @personal_legal_entity ||= legal_entities.find_by(entity_type: :person)
   end
 
   def default_payout_method
