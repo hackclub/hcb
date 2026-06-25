@@ -169,9 +169,8 @@ class User < ApplicationRecord
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
-  # a user does not actually belong to its payout method,
-  # but this is a convenient way to set up the association.
-
+  # Legacy: payout methods now live on the personal legal entity (default_payout_method).
+  # Kept only so the payout form's `fields_for :payout_method` yields payout_method_attributes params.
   belongs_to :payout_method, polymorphic: true, optional: true
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
