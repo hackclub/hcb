@@ -1,4 +1,5 @@
 <% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
+<% payout_method = report.user.payout_method&.details %>
 
 <div id="action-wrapper" class="mt-5">
   <% button_hint = "" %>
@@ -245,7 +246,11 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
+<<<<<<< Updated upstream
             <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+=======
+            <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+>>>>>>> Stashed changes
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
@@ -287,8 +292,13 @@
                     </strong>
                   </div>
 
+<<<<<<< Updated upstream
                   <% if report.user.default_payout_method&.details.wise_recipient_id.present? %>
                     <%= link_to "https://wise.com/send#?contact=#{report.user.default_payout_method&.details&.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
+=======
+                  <% if payout_method.wise_recipient_id.present? %>
+                    <%= link_to "https://wise.com/send#?contact=#{payout_method.wise_recipient_id}", class: "btn btn-small tooltipped tooltipped--w bg-[#9FE870] text-[#163300] flex-shrink-0", style: "color: #163300!important; background: #9FE870", target: "_blank", "aria-label": "Use recipient information from previous transfer" do %>
+>>>>>>> Stashed changes
                       <%= inline_icon "wise" %>
                       Open <%= report.user.full_name %> on Wise
                     <% end %>
@@ -343,7 +353,11 @@
             <% else %>
               <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
+<<<<<<< Updated upstream
                 Approve <%= report.user.default_payout_method.human_kind %> reimbursement
+=======
+                Approve <%= payout_method.human_kind %> reimbursement
+>>>>>>> Stashed changes
               <% end %>
             <% end %>
           <% end %>
