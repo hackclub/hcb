@@ -525,7 +525,9 @@
         </div>
 
         <%# --- rail: selectable list of orgs, ending in the open-door wildcard --- %>
-        <div class="mk-portfolio__rail" role="tablist" aria-label="Organizations on HCB" aria-orientation="vertical">
+        <div class="mk-portfolio__rail" role="tablist" aria-label="Organizations on HCB"
+             aria-orientation="vertical" data-funders-portfolio-target="rail"
+             data-action="scroll->funders-portfolio#onScroll">
         <% recipients.each_with_index do |org, i| %>
           <button type="button" class="mk-portfolio__item" role="tab" id="mk-port-tab-<%= i %>"
                   aria-controls="mk-port-panel-<%= i %>" aria-selected="<%= i.zero? %>"
@@ -562,9 +564,19 @@
         </button>
       </div>
 
-        <%# Mobile-only cue: on narrow screens the rail stacks above a single visible panel, so
-            signal that the rail is interactive (hidden ≥880px where rail + stage sit side by side). %>
-        <p class="mk-portfolio__hint" aria-hidden="true">Tap any organization to see its story&nbsp;&darr;</p>
+        <%# Mobile-only position dots beneath the swipe strip: one per real org (the wildcard is
+            lifted out of the strip into a standalone CTA below), updated by the controller as you
+            select. Decorative — the rail itself is the real control — so it's aria-hidden. %>
+        <div class="mk-portfolio__dots" aria-hidden="true">
+          <% recipients.each_index do |i| %>
+            <span class="mk-portfolio__dot<%= " is-active" if i.zero? %>" data-funders-portfolio-target="dot"></span>
+          <% end %>
+        </div>
+
+        <%# Mobile-only cue: below 880px the rail is a horizontal swipeable strip above the active
+            org's card, so advertise the swipe (some users won't realize more orgs sit off-screen)
+            as well as the tap (hidden ≥880px where the rail + stage sit side by side). %>
+        <p class="mk-portfolio__hint" aria-hidden="true">Swipe to browse organizations&nbsp;&middot; tap to read its story</p>
       </div>
 
       <%# --- stage: one detail panel per org, plus the open-door wildcard panel --- %>
@@ -690,6 +702,21 @@
           </div>
         </div>
       </div>
+
+      <%# Mobile-only closing CTA: below 880px the open-door wildcard is lifted out of the swipe
+          strip (its tab + panel are hidden there) and shown here as a standalone statement, set
+          apart by its eyebrow so it reads as "and beyond this list", not more detail about the
+          selected org above it. Desktop keeps the in-stage wildcard tab/panel. %>
+      <aside class="mk-portfolio__open-cta">
+        <p class="mk-eyebrow">Beyond this list</p>
+        <h3 class="mk-portfolio__name">Your pick doesn&rsquo;t have to be on here, or on HCB yet.</h3>
+        <p class="mk-portfolio__what">
+          Fund any of the <%= @stats[:organizations] %> organizations already here, a brand-new
+          project that isn&rsquo;t a 501(c)(3) yet, or an idea that&rsquo;s still just a team of one.
+          You bring the pick; we get them running in days.
+        </p>
+        <a class="marketing-btn marketing-btn--primary" href="#talk-to-us">Talk to our team</a>
+      </aside>
     </div>
   </div>
 </section>

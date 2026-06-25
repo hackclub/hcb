@@ -1432,7 +1432,7 @@ $mk-bg: $snow; // #f9fafc
   }
 }
 
-// Mobile-only "tap a row" cue; on desktop the rail + stage are side by side so it's redundant.
+// Mobile-only "swipe / tap" cue; on desktop the rail + stage are side by side so it's redundant.
 .mk-portfolio__hint {
   margin: 4px 2px 0;
   font-size: 0.85rem;
@@ -1440,6 +1440,63 @@ $mk-bg: $snow; // #f9fafc
 
   @media (min-width: 880px) {
     display: none;
+  }
+}
+
+// Mobile-only position dots beneath the swipe strip: one per real org, so the count itself signals
+// how many orgs there are; the active dot (set by the controller) mirrors the selected org. Hidden
+// on desktop, where the full vertical rail makes a position indicator redundant.
+.mk-portfolio__dots {
+  display: none;
+  justify-content: center;
+  gap: 7px;
+  margin: 12px 0 2px;
+
+  @media (max-width: 879.98px) {
+    display: flex;
+  }
+}
+
+.mk-portfolio__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba($black, 0.16);
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+
+  &.is-active {
+    background: $red;
+    transform: scale(1.4);
+  }
+}
+
+// Mobile-only closing CTA — the open-door wildcard lifted out of the swipe strip. Desktop keeps the
+// in-stage wildcard tab/panel; on mobile it's a standalone card set apart by its own eyebrow so it
+// reads as "and beyond this list", not more detail about the selected org above it.
+.mk-portfolio__open-cta {
+  display: none;
+
+  @media (max-width: 879.98px) {
+    display: block;
+    margin-top: 16px;
+    padding: clamp(20px, 5vw, 26px);
+    border-radius: var(--radius-2xl);
+    background: $snow;
+    box-shadow: inset 0 0 0 1.5px rgba($black, 0.1);
+
+    .mk-portfolio__name {
+      margin-top: 6px;
+    }
+
+    .mk-portfolio__what {
+      margin-bottom: 18px;
+    }
+
+    .marketing-btn {
+      width: 100%; // full-width tap target to close out the section
+    }
   }
 }
 
@@ -1483,6 +1540,122 @@ $mk-bg: $snow; // #f9fafc
   @media (min-width: 880px) {
     display: flex;
     visibility: hidden;
+  }
+}
+
+// ---- mobile (<880px): FSO spotlight as a horizontal swipeable strip ----
+// The vertical rail of orgs pushed the detail card a full screen below the nav, so picking an org
+// and reading its story were never visible together. Below 880px the rail becomes a horizontal,
+// swipeable strip (the next card peeks → "there's more") with position dots beneath it, the active
+// org's card renders directly under it, and the open-door wildcard is lifted out of the strip into
+// a standalone closing CTA (.mk-portfolio__open-cta). Desktop (>=880px) is untouched.
+@media (max-width: 879.98px) {
+  .mk-portfolio__rail {
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    // No scroll-snap: snapping every chip made the strip feel jumpy and refused to rest a card
+    // mid-scroll. Free momentum scroll instead; the dots + peeking neighbour carry the position cue.
+    padding-block: 6px; // room so the cards' shadows aren't clipped by the scroll container
+    margin-inline: -4px; // bleed into the gutter so the first card lines up with the heading
+    padding-inline: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // the peeking card + dots are the scroll cue; a bar would clutter it
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    // Edge fades are class-driven (the controller sets these from scroll position) so a fade only
+    // shows where there's actually more to scroll: both edges mid-scroll, and neither on a short
+    // strip that doesn't overflow. At a boundary the relevant override below drops that edge.
+    &.is-overflowing {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+    }
+
+    // At the start there's nothing to the left — keep that edge crisp, fade only the right.
+    &.is-overflowing.is-at-start {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+    }
+
+    // At the end there's nothing to the right — fade only the left, so the last card stays solid.
+    &.is-overflowing.is-at-end {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 100%
+      );
+    }
+  }
+
+  .mk-portfolio__item {
+    // Fixed-ish width so the next org card always peeks at the right edge as a scroll affordance.
+    flex: 0 0 auto;
+    width: min(76%, 320px);
+  }
+
+  // The chevron points right, which on a horizontal strip reads as "swipe" and fights the scroll
+  // axis; the chips are obviously tappable, so drop it here.
+  .mk-portfolio__item-caret {
+    display: none;
+  }
+
+  // Fixed-width chips can't wrap a long name (e.g. "Mutual Aid LA Network") to two lines without
+  // throwing off the strip's baseline, so clamp the name and sub to one line each.
+  .mk-portfolio__item-name,
+  .mk-portfolio__item-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Shorter banner on a phone so the org's story sits higher and shares the screen with the strip
+  // (the desktop hero-height banner is overkill here). The terminal art keeps a touch more room.
+  .mk-portfolio__media {
+    min-height: 132px;
+  }
+
+  .mk-portfolio__media--terminal {
+    min-height: 160px;
+  }
+
+  // The wildcard is desktop-only as a tab: on mobile its tab AND panel are hidden, and it's
+  // re-rendered as a standalone, non-tab CTA below the content (see .mk-portfolio__open-cta). This
+  // keeps the strip a clean roster of real orgs and avoids an orphan tabpanel in the a11y tree.
+  .mk-portfolio__item--open,
+  .mk-portfolio__panel--open {
+    display: none;
   }
 }
 
