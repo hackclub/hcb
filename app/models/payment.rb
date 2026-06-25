@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   has_one :event, through: :payee
-  has_many :payment_attempts, class_name: "Payment::Attempt"
+  has_many :attempts, class_name: "Payment::Attempt"
 
   monetize :amount_cents, with_model_currency: :currency
 
@@ -79,7 +79,7 @@ class Payment < ApplicationRecord
 
   after_create do
     if payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present?
-      payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
     elsif payee.legal_entity.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payment_method.deliver_later
     else
@@ -89,9 +89,9 @@ class Payment < ApplicationRecord
 
   def retry!
     raise ArgumentError, "this payment was rejected" if rejected?
-    raise ArgumentError, "all attempts must have failed" unless payment_attempts.all?(&:failed?)
+    raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
 
-    payment_attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+    attempts.create!(payout_method: payee.legal_entity.default_payout_method)
   end
 
   def receipt_required?
