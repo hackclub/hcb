@@ -27,7 +27,8 @@ class ContractsController < ApplicationController
       cosigner_email: @contract.party(:cosigner)&.email,
       include_videos: @contract.include_videos,
       reissue_signee_message: signee_message,
-      reissue_cosigner_message: cosigner_message
+      reissue_cosigner_message: cosigner_message,
+      reissue_of: @contract
     )
 
     flash[:success] = "Contract reissued successfully."

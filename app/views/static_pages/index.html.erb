@@ -36,7 +36,7 @@
   </div>
 <% end %>
 
-<% if current_user.card_grants.not_activated.size > 0 %>
+<% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
@@ -60,7 +60,7 @@
   </ul>
 <% end %>
 
-<% if current_user.card_grants.activated.size > 0 %>
+<% if current_user.card_grants.activated.any? %>
   <h2 class="user-home-section">Your grants</h2>
 
   <div class="mixed-grid grid--spacious">
@@ -106,6 +106,7 @@
                 data: {
                   turbo_method: :post,
                   turbo_confirm: "Are you sure you want to cancel this join request?",
+                  turbo_confirm_danger: true,
                 },
                 'aria-label': "Cancel",
                 disabled: !policy(invite_request).deny? %>

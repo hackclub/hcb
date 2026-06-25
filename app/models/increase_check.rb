@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -58,7 +58,7 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
