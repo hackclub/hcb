@@ -246,11 +246,7 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
-<<<<<<< Updated upstream
-            <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
-=======
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
->>>>>>> Stashed changes
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
