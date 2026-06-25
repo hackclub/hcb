@@ -39,7 +39,10 @@ class LegalEntity < ApplicationRecord
   end
 
   def complete?
-    REQUIRED_COLUMNS.all? { |col| self[col].present? }
+    # Bypass until tax form is implemented
+    # REQUIRED_COLUMNS.all? { |col| self[col].present? }
+
+    true
   end
 
 end
