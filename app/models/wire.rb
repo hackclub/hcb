@@ -55,7 +55,7 @@ class Wire < ApplicationRecord
   blind_index :account_number, :bic_code
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
-  has_one :payment_attempt, as: :payout
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   validates_length_of :payment_for, maximum: 140
 

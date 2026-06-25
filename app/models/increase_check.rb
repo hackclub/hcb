@@ -137,7 +137,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
-  has_one :payment_attempt, as: :payout
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
