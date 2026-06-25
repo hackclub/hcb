@@ -82,6 +82,7 @@ class Payment < ApplicationRecord
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
       raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
+      raise ArgumentError, "there is no default payout method" if payee.legal_entity.default_payout_method.nil?
 
       attempts.create!(payout_method: payee.legal_entity.default_payout_method)
     end
