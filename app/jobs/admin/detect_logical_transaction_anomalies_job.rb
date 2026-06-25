@@ -7,7 +7,9 @@ module Admin
     def perform
       hcb_codes = []
       HcbCode.where(event_id:).find_each do |hcb_code|
-        hcb_codes << hcb_code.id if (hcb_code.ledger_item.nil? && hcb_code.no_transactions?) || hcb_code.smart_amount_cents != hcb_code.ledger_item.amount_cents
+        if !(hcb_code.ledger_item.nil? && hcb_code.no_transactions?) && (hcb_code.ledger_item.nil? || hcb_code.smart_amount_cents != hcb_code.ledger_item.amount_cents)
+          hcb_codes << hcb_code.id
+        end
       end
 
       ledger_items = []
