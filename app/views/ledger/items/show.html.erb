@@ -29,6 +29,89 @@
   </div>
 </section>
 
+<section class="my-5 flex flex-col gap-3">
+  <% cts = 0 %>
+  <% pts = 0 %>
+  <% [@item.canonical_transactions, @item.canonical_pending_transactions].flatten.sort_by(&:created_at).reverse.each do |transaction| %>
+    <% index = cts + pts %>
+
+    <% if transaction.is_a?(CanonicalTransaction) %>
+
+      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
+
+        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
+          <% if index.zero? %>
+            Created
+          <% elsif cts.zero? %>
+            Settled
+          <% else %>
+            Updated
+          <% end %>
+          <span class="text-sm muted">
+            <%= transaction.created_at.strftime("%b %e, %Y") %>
+          </span>
+        </div>
+
+        <div class="card flex flex-grow w-full">
+          
+          <div class="flex flex-row justify-between items-center">
+            <div class="flex flex-row justify-start items-center gap-3">
+              <%= inline_icon "transactions" %>
+              <% admin_tool do %>
+                <%= badge_for transaction.id, class: "bg-muted m-0" %>
+              <% end %>
+              <span>
+                <%= transaction.amount.format %>
+              </span>
+              <span>
+                <%= transaction.memo %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% cts += 1 %>
+    <% else %>
+      <% pt = transaction %>
+
+      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
+
+        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
+          <% if index.zero? %>
+            Created
+          <% else %>
+            Updated
+          <% end %>
+          <span class="text-sm muted">
+            <%= transaction.created_at.strftime("%b %e, %Y") %>
+          </span>
+        </div>
+
+        <div class="card flex flex-grow w-full">
+          
+          <div class="flex flex-row justify-between items-center">
+            <div class="flex flex-row justify-start items-center gap-3">
+              <%= inline_icon "transfers-horizontal" %>
+              <% admin_tool do %>
+                <%= badge_for transaction.id, class: "bg-muted m-0" %>
+              <% end %>
+              <span>
+                <%= transaction.amount.format %>
+              </span>
+              <span>
+                <%= transaction.memo %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% pts += 1 %>
+    <% end %>
+  <% end %>
+</section>
+
 <%= render "comments/list", comments: @item.comments %>
 <%= render "comments/form", commentable: @item %>
 
