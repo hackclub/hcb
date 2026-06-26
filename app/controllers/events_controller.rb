@@ -1137,6 +1137,13 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
+  def books
+    authorize @event
+
+    @ledger = @event.ledger
+    @items = @ledger.items.order(date: :desc, created_at: :desc).page(params[:page])
+  end
+
   private
 
   def process_hidden_param!(params_hash)
