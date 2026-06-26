@@ -48,7 +48,7 @@ class Payment < ApplicationRecord
     state :rejected
 
     event :mark_under_review do
-      transitions from: :pending_legal_entity, to: :under_review
+      transitions from: [:pending_legal_entity, :sent], to: :under_review
     end
 
     event :mark_sent do
