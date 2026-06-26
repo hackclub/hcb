@@ -49,7 +49,9 @@ export default class extends Controller {
 
   closeAll() {
     this.rowPanels().slideUp(200)
-    this.element.querySelectorAll('[data-pm-actions]').forEach((a) => a.classList.remove('is-editing'))
+    this.element
+      .querySelectorAll('[data-pm-actions]')
+      .forEach(a => a.classList.remove('is-editing'))
   }
 
   collapseAllForCache() {
@@ -57,7 +59,9 @@ export default class extends Controller {
       $(el).hide()
       el.dataset.open = 'false'
     })
-    this.element.querySelectorAll('[data-pm-actions]').forEach((a) => a.classList.remove('is-editing'))
+    this.element
+      .querySelectorAll('[data-pm-actions]')
+      .forEach(a => a.classList.remove('is-editing'))
   }
 
   rowPanels() {
@@ -65,7 +69,9 @@ export default class extends Controller {
   }
 
   actionsForPanel(panel) {
-    return panel.closest('[data-payout-methods-row]')?.querySelector('[data-pm-actions]')
+    return panel
+      .closest('[data-payout-methods-row]')
+      ?.querySelector('[data-pm-actions]')
   }
 
   serialize(form) {

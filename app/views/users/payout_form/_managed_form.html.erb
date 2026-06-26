@@ -15,8 +15,8 @@
      end %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
-<% detail_for = ->(klass) { pm_is.(klass) ? payout_method : klass.new } %>
-<% country_init = pm_is.(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null" %>
+<% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
+<% country_init = pm_is.call(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null" %>
 <% form_class = "no-error-styling" %>
 <% form_class += " payout-form--managed" if editing %>
 <% form_opts = { model: user, html: { "x-data": "{ country: #{country_init} }", class: form_class } } %>
@@ -49,8 +49,8 @@
     </fieldset>
   <% end %>
 
-  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.(LegalEntity::PayoutMethod::Check) %>">
-    <%= form.fields_for :payout_method, detail_for.(LegalEntity::PayoutMethod::Check) do |form| %>
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
+    <%= form.fields_for :payout_method, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
       <p class="muted mt-2 mb-5">
         Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
       </p>
@@ -93,8 +93,8 @@
     <% end %>
   </section>
 
-  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless pm_is.(LegalEntity::PayoutMethod::Wire) %>">
-    <%= form.fields_for :payout_method_wire, detail_for.(LegalEntity::PayoutMethod::Wire) do |form| %>
+  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method_wire, detail_for.call(LegalEntity::PayoutMethod::Wire) do |form| %>
       <p class="muted mt-2 mb-5">
         International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
       </p>
@@ -119,8 +119,8 @@
     <% end %>
   </section>
 
-  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
-    <%= form.fields_for :payout_method_wise_transfer, detail_for.(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
+  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+    <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
       <p class="muted mt-2 mb-5">
         We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
         <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %>
@@ -143,7 +143,7 @@
     <% end %>
   </section>
 
-  <% ach = payout_method if pm_is.(LegalEntity::PayoutMethod::AchTransfer) %>
+  <% ach = pm_is.call(LegalEntity::PayoutMethod::AchTransfer) ? payout_method : nil %>
   <% ach_errored = ach&.invalid? || false %>
   <% mask = ->(value) { value = value.to_s; "•" * [value.length - 4, 0].max + value[[-4, -value.length].max..] } %>
   <% routing_display = ach_errored ? ach.routing_number : mask.call(ach&.routing_number) %>
