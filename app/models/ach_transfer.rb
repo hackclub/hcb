@@ -158,7 +158,7 @@ class AchTransfer < ApplicationRecord
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
-        payment_attempt&.payment&.mark_rejected!
+        payment_attempt&.mark_rejected!
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end

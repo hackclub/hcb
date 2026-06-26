@@ -39,6 +39,7 @@ class Payment
     aasm timestamps: true do
       state :pending, initial: true
       state :under_review
+      state :rejected
       state :sent
       state :successful
       state :failed
@@ -73,6 +74,13 @@ class Payment
 
           Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
+        end
+      end
+
+      event :mark_rejected do
+        transitions from: :under_review, to: :rejected
+        after do
+          payment.mark_rejected!
         end
       end
     end
