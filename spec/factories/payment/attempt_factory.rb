@@ -49,20 +49,16 @@ FactoryBot.define do
     trait :check do
       association :payout_method, factory: :legal_entity_payout_method_check
     end
- 
     trait :ach do
       association :payout_method, factory: :legal_entity_payout_method_ach
     end
- 
     trait :wire do
       association :payout_method, factory: :legal_entity_payout_method_wire
     end
- 
     trait :wise do
       association :payout_method, factory: :legal_entity_payout_method_wise
     end
   end
- 
   # ---------------------------------------------------------------------------
   # Typed payout method factories
   #
@@ -72,15 +68,12 @@ FactoryBot.define do
   factory :legal_entity_payout_method_check, parent: :legal_entity_payout_method do
     association :details, factory: :check_payout_method_details
   end
- 
   factory :legal_entity_payout_method_ach, parent: :legal_entity_payout_method do
     association :details, factory: :ach_transfer_payout_method_details
   end
- 
   factory :legal_entity_payout_method_wire, parent: :legal_entity_payout_method do
     association :details, factory: :wire_payout_method_details
   end
- 
   factory :legal_entity_payout_method_wise, parent: :legal_entity_payout_method do
     association :details, factory: :wise_transfer_payout_method_details
   end
