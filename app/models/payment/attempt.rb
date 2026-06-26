@@ -95,7 +95,7 @@ class Payment
 
     def create_transfer!
       self.with_lock do
-        payout_method = payment.payee.legal_entity.default_payout_method
+        payout_method = payment.legal_entity.default_payout_method
         case payout_method.details
         when LegalEntity::PayoutMethod::Check
           safely do

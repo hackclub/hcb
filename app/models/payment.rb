@@ -35,6 +35,7 @@ class Payment < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   has_one :event, through: :payee
+  has_one :legal_entity, through: :payee
   has_many :attempts, class_name: "Payment::Attempt"
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
@@ -68,9 +69,9 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present?
+    if legal_entity.complete? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif payee.legal_entity.complete?
+    elsif legal_entity.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -99,9 +100,9 @@ class Payment < ApplicationRecord
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
       raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
-      raise ArgumentError, "there is no default payout method" if payee.legal_entity.default_payout_method.nil?
+      raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 
-      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+      attempts.create!(payout_method: legal_entity.default_payout_method)
     end
   end
 

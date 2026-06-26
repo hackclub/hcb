@@ -24,7 +24,7 @@ class PaymentMailer < ApplicationMailer
 
   def set_payment
     @payment = params[:payment]
-    @recipients = @payment.payee.legal_entity.users.map(&:email_address_with_name)
+    @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
     @creator = @payment.creator.email_address_with_name
   end
 

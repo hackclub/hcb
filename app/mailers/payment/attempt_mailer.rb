@@ -18,7 +18,7 @@ class Payment
     def set_attempt
       @attempt = params[:attempt]
       @payment = @attempt.payment
-      @recipients = @payment.payee.legal_entity.users.map(&:email_address_with_name)
+      @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
       @creator = @payment.creator.email_address_with_name
     end
 
