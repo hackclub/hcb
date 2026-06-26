@@ -161,8 +161,8 @@ RSpec.describe Payment::Attempt, type: :model do
         expect(mail).to have_received(:deliver_later)
       end
 
-      it "accepts an optional reason keyword argument" do
-        expect { attempt.mark_failed!(reason: "NSF") }.not_to raise_error
+      it "accepts an optional reason" do
+        expect { attempt.mark_failed!(reason: "Receipt is insufficient for this payment") }.not_to raise_error
       end
     end
   end
