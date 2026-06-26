@@ -68,10 +68,6 @@ class Payment
       event :mark_failed do
         transitions from: :sent, to: :failed
         after do |reason: nil|
-          payout.receipts.each do |receipt|
-            receipt.update!(receiptable: payment)
-          end
-
           Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
         end
@@ -113,7 +109,7 @@ class Payment
           self.payout = check
           save!
 
-          transfer_receipts(check.local_hcb_code)
+          Receipt.reupload(payment, check.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::AchTransfer
         safely do
@@ -133,7 +129,7 @@ class Payment
           self.payout = ach_transfer
           save!
 
-          transfer_receipts(ach_transfer.local_hcb_code)
+          Receipt.reupload(payment, ach_transfer.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::Wire
         safely do
@@ -164,7 +160,7 @@ class Payment
           self.payout = wire
           save!
 
-          transfer_receipts(wire.local_hcb_code)
+          Receipt.reupload(wire.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::WiseTransfer
         safely do
@@ -191,19 +187,13 @@ class Payment
           self.payout = wise
           save!
 
-          transfer_receipts(wise.local_hcb_code)
+          Receipt.reupload(wise.local_hcb_code)
         end
       else
         raise ArgumentError, "🚨⚠️ unsupported payout method!"
       end
 
       mark_under_review!
-    end
-
-    def transfer_receipts(hcb_code)
-      payment.receipts.each do |receipt|
-        receipt.update!(receiptable: hcb_code)
-      end
     end
 
     def other_attempts_failed
