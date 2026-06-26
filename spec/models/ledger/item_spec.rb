@@ -299,22 +299,6 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "date/datetime synchronization" do
-    # Temporary dual-write while the `date` column is being renamed to
-    # `datetime`. Remove these specs once `date` is dropped.
-    it "copies date into datetime when only date is set" do
-      item = Ledger::Item.new(amount_cents: 0, memo: "Test", date: Time.current)
-      item.valid?
-      expect(item.datetime).to eq(item.date)
-    end
-
-    it "copies datetime into date when only datetime is set" do
-      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
-      item.valid?
-      expect(item.date).to eq(item.datetime)
-    end
-  end
-
   describe "#calculate_amount_cents" do
     let(:item) do
       i = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)

@@ -6,7 +6,6 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
-#  date                         :datetime
 #  datetime                     :datetime         not null
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
@@ -24,6 +23,11 @@
 class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
+
+    # `date` was renamed to `datetime`. Ignore the column so Active Record's
+    # schema cache stops referencing it. This must ship and deploy before the
+    # follow-up PR drops the column.
+    self.ignored_columns += ["date"]
 
     include Hashid::Rails
     has_paper_trail
@@ -44,12 +48,6 @@ class Ledger
     validates_presence_of :amount_cents, :memo, :datetime
 
     monetize :amount_cents
-
-    # The `date` column is being renamed to `datetime` without downtime. While
-    # both columns exist, keep them in sync so either code version (reading
-    # `date` or `datetime`) sees consistent data during a rolling deploy. This
-    # callback is removed once `date` is dropped.
-    before_validation :sync_date_and_datetime
 
     def receipt_required?
       false
@@ -74,16 +72,6 @@ class Ledger
     def map!
       Ledger::Mapper.new(ledger_item: self).run
       write_amount_cents!
-    end
-
-    private
-
-    def sync_date_and_datetime
-      if datetime_changed? && !date_changed?
-        self.date = datetime
-      elsif date_changed? && !datetime_changed?
-        self.datetime = date
-      end
     end
 
   end
