@@ -3,11 +3,11 @@
 class PaymentMailer < ApplicationMailer
   before_action :set_payment
 
-  def missing_payment_method
+  def missing_payout_method
     mail to: @recipients, subject: params[:initial] ? initial_subject : "[Action Required] Configure a payout method for \"#{@payment.purpose}\" from #{@payment.event.name}"
   end
 
-  def missing_information
+  def missing_tax_information
     mail to: @recipients, subject: initial_subject
   end
 

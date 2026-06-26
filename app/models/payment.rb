@@ -73,9 +73,9 @@ class Payment < ApplicationRecord
     if payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present?
       attempts.create!(payout_method: payee.legal_entity.default_payout_method)
     elsif payee.legal_entity.complete?
-      PaymentMailer.with(payment: self, initial: true).missing_payment_method.deliver_later
+      PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
-      PaymentMailer.with(payment: self).missing_information.deliver_later
+      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
     end
   end
 

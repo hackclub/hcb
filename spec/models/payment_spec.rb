@@ -91,9 +91,9 @@ RSpec.describe Payment, type: :model do
         expect(payment.attempts).to be_empty
       end
 
-      it "delivers the missing_payment_method mailer" do
+      it "delivers the missing_payout_method mailer" do
         mail = double("mail", deliver_later: true)
-        allow(PaymentMailer).to receive_message_chain(:with, :missing_payment_method).and_return(mail)
+        allow(PaymentMailer).to receive_message_chain(:with, :missing_payout_method).and_return(mail)
         create_payment_with_legal_entity(complete: true, payout_method: nil)
         expect(mail).to have_received(:deliver_later)
       end
@@ -105,9 +105,9 @@ RSpec.describe Payment, type: :model do
         expect(payment.attempts).to be_empty
       end
 
-      it "delivers the missing_information mailer" do
+      it "delivers the missing_tax_information mailer" do
         mail = double("mail", deliver_later: true)
-        allow(PaymentMailer).to receive_message_chain(:with, :missing_information).and_return(mail)
+        allow(PaymentMailer).to receive_message_chain(:with, :missing_tax_information).and_return(mail)
         create_payment_with_legal_entity(complete: false, payout_method: nil)
         expect(mail).to have_received(:deliver_later)
       end
