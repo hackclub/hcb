@@ -7,7 +7,7 @@
   </p>
 <% else %>
   <p>
-    Thank you for uploading your tax forms for receiving your payment of <%= render_money(@payment.amount_cents) %>
+    Thank you for uploading your tax information for receiving your payment of <%= render_money(@payment.amount_cents) %>
     for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB.
   </p>
 <% end %>
