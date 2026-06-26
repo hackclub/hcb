@@ -120,3 +120,16 @@
       include_spacing: true,
       turbo: true
     } %>
+
+<% admin_tool("p-2") do %>
+  <h3 class="my-2">Quickly go to</h3>
+  <% if @item.hcb_code.present? %>
+    <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
+  <% end %>
+  <% @item.canonical_transactions.each do |tx| %>
+    <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+  <% end %>
+  <% @item.canonical_pending_transactions.each do |tx| %>
+    <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+  <% end %>
+<% end %>
