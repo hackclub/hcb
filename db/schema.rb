@@ -1626,6 +1626,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_185646) do
     t.datetime "created_at", null: false
     t.string "entity_type"
     t.bigint "managing_event_id"
+    t.string "name"
     t.string "tin_hash"
     t.datetime "updated_at", null: false
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"

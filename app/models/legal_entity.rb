@@ -12,6 +12,7 @@
 #  address_postal_code :string
 #  address_state       :string
 #  entity_type         :string
+#  name                :string
 #  tin_hash            :string
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
