@@ -5,7 +5,7 @@ class Payment
     before_action :set_attempt
 
     def failed_creator
-      mail to: @creator, subject: "[Action Required] Your payment to #{@payment.payee.preferred_name} failed to send"
+      mail to: @creator, subject: "[Action Required] Your payment to #{@payment.payee.display_name} failed to send"
     end
 
     def failed_payee
