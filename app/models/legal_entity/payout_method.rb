@@ -63,6 +63,10 @@ class LegalEntity
       self.class.unsupported_details(details.class)
     end
 
+    def create_transfer(event, **attr)
+      details.create_transfer(event, **attr)
+    end
+
     private
 
     def details_must_be_supported
@@ -76,10 +80,6 @@ class LegalEntity
         .where(legal_entity_id:)
         .excluding(self)
         .update_all(default: false)
-    end
-
-    def create_transfer(event, **attr)
-      details.create_transfer(event, **attr)
     end
 
   end

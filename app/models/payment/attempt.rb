@@ -96,7 +96,9 @@ class Payment
     def create_transfer!
       self.with_lock do
         payout_method = payment.legal_entity.default_payout_method
-        raise ArgumentError, "🚨⚠️ unsupported payout method!" if payout_method.unsupported?
+        unless PAYOUT_METHOD_TRANSFER_MAPPING.key?(payout_method.details.class)
+          raise ArgumentError, "🚨⚠️ unsupported payout method!"
+        end
 
         safely do
           transfer = payout_method.create_transfer(
@@ -116,9 +118,9 @@ class Payment
           save!
 
           Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-
-          mark_under_review!
         end
+
+        mark_under_review!
       end
     end
 

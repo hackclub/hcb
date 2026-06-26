@@ -49,7 +49,7 @@ class LegalEntity
         attr[:amount] = MoneyService.convert_to_usd(attr[:amount], currency) if currency && attr[:amount]
         attr.delete(:memo)
         creator = attr.delete(:user) || attr.delete(:creator)
-        attr[:bank_name] ||= (ColumnService.get("/institutions/#{routing_number}")["full_name"] rescue "Bank Account")
+        attr[:bank_name] ||= ColumnService.get("/institutions/#{routing_number}")["full_name"] rescue "Bank Account"
 
         event.ach_transfers.build(
           routing_number:,
