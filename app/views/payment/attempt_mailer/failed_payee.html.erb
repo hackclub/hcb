@@ -5,9 +5,11 @@
   for <i>"<%= @payment.purpose %>"</i>:
 </p>
 
-<blockquote>
-  <%= @reason %>
-</blockquote>
+<% if @reason.present? %>
+  <blockquote>
+    <%= @reason %>
+  </blockquote>
+<% end %>
 
 <p>
   Please login to HCB to edit your payout information and retry the payment.
