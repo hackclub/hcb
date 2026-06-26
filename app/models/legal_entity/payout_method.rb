@@ -78,6 +78,10 @@ class LegalEntity
         .update_all(default: false)
     end
 
+    def create_transfer(event, **attr)
+      details.create_transfer(event, **attr)
+    end
+
   end
 
 end

@@ -56,6 +56,21 @@ class LegalEntity
         "USD"
       end
 
+      def create_transfer(event, **attr)
+        check = event.increase_checks.build(
+          amount: payout_holding.amount_cents,
+          recipient_name: payout_holding.report.user.full_name,
+          address_line1: payout_method.address_line1,
+          address_line2: payout_method.address_line2,
+          address_city: payout_method.address_city,
+          address_state: payout_method.address_state,
+          recipient_email: payout_holding.report.user.email,
+          address_zip: payout_method.address_postal_code,
+          **attr
+        )
+        return check
+      end
+
     end
 
   end
