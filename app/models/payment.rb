@@ -44,6 +44,7 @@ class Payment < ApplicationRecord
     state :under_review # HCB reviewing the underlying transfer
     state :sent
     state :successful
+    state :rejected
 
     event :mark_under_review do
       transitions from: :pending_legal_entity, to: :under_review
