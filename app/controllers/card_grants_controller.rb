@@ -25,10 +25,12 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
+    fraud_last = Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC")
+
     @card_grants = @event.card_grants
                          .includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger)
                          .order(
-                           Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
+                           fraud_last
                            "card_grants.created_at DESC"
                          )
     @table_columns = CARD_GRANT_COLUMNS
@@ -348,12 +350,13 @@ class CardGrantsController < ApplicationController
   end
 
   CARD_GRANT_COLUMNS = [
-    { key: "status" },
+    { key: "status", sortable: false },
     { key: "created_at", display: "Date", default: true },
     { key: "user_name", display: "To", column: "users.name", join: :user, sortable: false },
     { key: "purpose", display: "For" },
     { key: "amount_cents", display: "Amount" },
     { key: "balance", right: true }
   ].freeze
+  private_constant :CARD_GRANT_COLUMNS
 
 end
