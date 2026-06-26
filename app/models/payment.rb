@@ -36,6 +36,7 @@ class Payment < ApplicationRecord
 
   has_one :event, through: :payee
   has_many :attempts, class_name: "Payment::Attempt"
+  has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
 
