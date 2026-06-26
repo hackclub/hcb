@@ -169,9 +169,9 @@ RSpec.describe Payment::Attempt, type: :model do
 
   describe "#transfer_matches_payout_method validation" do
     {
-      check_payout_method_details:        IncreaseCheck,
+      check_payout_method_details: IncreaseCheck,
       ach_transfer_payout_method_details: AchTransfer,
-      wire_payout_method_details:          Wire,
+      wire_payout_method_details: Wire,
       wise_transfer_payout_method_details: WiseTransfer,
     }.each do |details_factory, payout_class|
       context "with #{details_factory} and the matching #{payout_class} payout" do
