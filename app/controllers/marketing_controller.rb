@@ -82,7 +82,7 @@ class MarketingController < ApplicationController
     Rails.cache.fetch(FUNDER_STATS_CACHE_KEY, expires_in: 12.hours) do
       {
         moved: humanized_money(CanonicalTransaction.included_in_stats.sum("ABS(amount_cents)")),
-        organizations: humanized_count(Event.where(demo_mode: false).count),
+        organizations: humanized_count(Event.not_omitted.not_hidden.not_demo_mode.approved.count),
         countries: "40+", # TODO(stats): compute from a real country source
         founded: "2018",
       }
