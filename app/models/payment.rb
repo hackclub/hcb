@@ -22,7 +22,6 @@
 #
 #  index_payments_on_creator_id  (creator_id)
 #  index_payments_on_payee_id    (payee_id)
-#  index_payments_on_payout      (payout_type,payout_id)
 #
 class Payment < ApplicationRecord
   self.ignored_columns += ["payout_type", "payout_id", "failed_at"]
