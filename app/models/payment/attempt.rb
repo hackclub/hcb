@@ -149,9 +149,9 @@ class Payment
               account_number: payout_method.details.account_number,
               bic_code: payout_method.details.bic_code,
               recipient_information: payout_method.details.recipient_information.merge({
-                                                                                        purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
-                                                                                        remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
-                                                                                      }),
+                                                                                         purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
+                                                                                         remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
+                                                                                       }),
               currency:,
               user: User.system_user
             )

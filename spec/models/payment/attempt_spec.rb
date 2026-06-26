@@ -238,11 +238,10 @@ RSpec.describe Payment::Attempt, type: :model do
       checks_rel = double("checks_rel", build: check)
       event_dbl  = double("event", increase_checks: checks_rel)
       payment_dbl = double("payment",
-        payee: payee_dbl,
-        event: event_dbl,
-        purpose: "Test purpose",
-        estimate_usd_amount_cents: 10_000
-      )
+                           payee: payee_dbl,
+                           event: event_dbl,
+                           purpose: "Test purpose",
+                           estimate_usd_amount_cents: 10_000)
       allow(payment_dbl).to receive_message_chain(:payee, :legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_dbl)
 
