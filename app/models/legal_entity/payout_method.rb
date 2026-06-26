@@ -38,7 +38,7 @@ class LegalEntity
     self.table_name = "legal_entity_payout_methods"
 
     belongs_to :legal_entity
-    belongs_to :details, polymorphic: true, dependent: :destroy
+    belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
 
@@ -47,12 +47,20 @@ class LegalEntity
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, to: :details
 
+    def self.unsupported?(details_class)
+      UNSUPPORTED_METHODS.key?(details_class)
+    end
+
+    def self.unsupported_details(details_class)
+      UNSUPPORTED_METHODS[details_class]
+    end
+
     def unsupported?
-      UNSUPPORTED_METHODS.key?(details.class)
+      self.class.unsupported?(details.class)
     end
 
     def unsupported_details
-      UNSUPPORTED_METHODS[details.class]
+      self.class.unsupported_details(details.class)
     end
 
     private

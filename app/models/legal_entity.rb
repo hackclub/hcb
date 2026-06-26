@@ -33,10 +33,8 @@ class LegalEntity < ApplicationRecord
   has_many :users, through: :legal_entity_users
 
   has_many :payout_methods, class_name: "LegalEntity::PayoutMethod"
-
-  def default_payout_method
-    payout_methods.find_by(default: true)
-  end
+  # At most one default per entity is enforced by a partial unique index.
+  has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
 
   def complete?
     # Bypass until tax form is implemented

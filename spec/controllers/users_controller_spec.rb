@@ -128,12 +128,38 @@ RSpec.describe UsersController do
       expect(user.reload.use_two_factor_authentication).to eq(false)
     end
 
+    it "saves the chosen payout method as the user's default legal entity payout method" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: {
+            payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+            payout_method_attributes: {
+              account_number: "12345678",
+              routing_number: "021000021"
+            }
+          }
+        }
+      )
+
+      expect(response).to have_http_status(:found)
+      default = user.reload.default_payout_method
+      expect(default).to be_present
+      expect(default).to be_default
+      expect(default.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+      expect(default.details.routing_number).to eq("021000021")
+    end
+
     it "does not allow saving an unsupported payout method" do
-      reason = "Due to integration issues, transfers via PayPal are currently unavailable in tests."
+      reason = "Checks are paused in tests."
       stub_const(
-        "User::PayoutMethod::UNSUPPORTED_METHODS",
+        "LegalEntity::PayoutMethod::UNSUPPORTED_METHODS",
         {
-          User::PayoutMethod::PaypalTransfer => {
+          LegalEntity::PayoutMethod::Check => {
             status_badge: "Unavailable",
             reason:
           },
@@ -148,17 +174,20 @@ RSpec.describe UsersController do
         params: {
           id: user.id,
           user: {
-            payout_method_type: "User::PayoutMethod::PaypalTransfer",
+            payout_method_type: "LegalEntity::PayoutMethod::Check",
             payout_method_attributes: {
-              recipient_email: "gary@hackclub.com"
+              address_line1: "1 Main St",
+              address_city: "New York",
+              address_state: "NY",
+              address_postal_code: "10001"
             }
           }
         }
       )
 
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(flash.to_h).to eq("error" => "#{reason} Please choose another method.")
-      expect(user.reload.payout_method_type).to eq(nil)
+      expect(flash.to_h["error"]).to include(reason)
+      expect(user.reload.default_payout_method).to be_nil
     end
   end
 

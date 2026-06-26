@@ -117,7 +117,7 @@ module Reimbursement
       event :mark_submitted do
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
-            user.payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
+            user.default_payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
               expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
@@ -332,7 +332,7 @@ module Reimbursement
     end
 
     def mismatched_currency?
-      user.payout_method.present? && currency != user.payout_method.currency
+      user.default_payout_method.present? && currency != user.default_payout_method.currency
     end
 
     def exceeds_maximum_amount?
@@ -346,7 +346,7 @@ module Reimbursement
     end
 
     def below_minimum_amount?
-      user.payout_method.is_a?(User::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
+      user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
     end
 
     def from_public_reimbursement_form?
@@ -378,9 +378,11 @@ module Reimbursement
     def convert_to_wise_transfer!(as: User.system_user)
       raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
 
+      payout_method = user.default_payout_method&.details
+
       account_holder =
-        if user.payout_method.respond_to?(:account_holder)
-          user.payout_method.account_holder.presence
+        if payout_method.respond_to?(:account_holder)
+          payout_method.account_holder.presence
         end
 
       ActiveRecord::Base.transaction do
@@ -392,14 +394,14 @@ module Reimbursement
           payment_for: name,
           recipient_name: account_holder || user.full_name,
           recipient_email: user.email,
-          address_city: user.payout_method.address_city,
-          address_line1: user.payout_method.address_line1,
-          address_line2: user.payout_method.address_line2,
-          address_postal_code: user.payout_method.address_postal_code,
-          address_state: user.payout_method.address_state,
-          bank_name: user.payout_method.bank_name,
-          recipient_country: user.payout_method.recipient_country,
-          recipient_information: user.payout_method.recipient_information,
+          address_city: payout_method.address_city,
+          address_line1: payout_method.address_line1,
+          address_line2: payout_method.address_line2,
+          address_postal_code: payout_method.address_postal_code,
+          address_state: payout_method.address_state,
+          bank_name: payout_method.bank_name,
+          recipient_country: payout_method.recipient_country,
+          recipient_information: payout_method.recipient_information,
         )
 
         comments.create!(content: "Converted to Wise transfer by @#{as.email} for processing: #{Rails.application.routes.url_helpers.hcb_code_url(wise_transfer.local_hcb_code)}", user: User.system_user)
@@ -445,7 +447,7 @@ module Reimbursement
     end
 
     def payout_method_allowed?
-      user.payout_method.present? && !user.payout_method.unsupported?
+      user.default_payout_method.present? && !user.default_payout_method.unsupported?
     end
 
     def invalidate_cached_data
