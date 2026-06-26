@@ -57,6 +57,11 @@ class LegalEntity
       end
 
       def create_transfer(event, **attr)
+        # Checks always pay out in USD (no `currency`) and cap `memo` at 40 chars.
+        currency = attr.delete(:currency)
+        attr[:amount] = MoneyService.convert_to_usd(attr[:amount], currency) if currency && attr[:amount]
+        attr[:memo] = attr[:memo][0...40] if attr[:memo]
+
         event.increase_checks.build(
           address_line1:,
           address_line2:,

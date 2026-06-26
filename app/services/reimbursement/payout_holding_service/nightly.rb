@@ -16,8 +16,11 @@ module Reimbursement
               Rails.error.handle do
                 wire = payout_method.create_transfer(
                   clearinghouse,
+                  amount: payout_holding.amount_cents,
                   memo: "Reimbursement for #{payout_holding.report.name}.",
-                  payment_for: "Reimbursement for #{payout_holding.report.name}."[0...140],
+                  payment_for: "Reimbursement for #{payout_holding.report.name}.",
+                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
                   user: User.system_user,
                   currency: "USD"
@@ -44,8 +47,11 @@ module Reimbursement
               Rails.error.handle do
                 check = payout_method.create_transfer(
                   clearinghouse,
-                  memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
+                  amount: payout_holding.amount_cents,
+                  memo: "Reimbursement for #{payout_holding.report.name}.",
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
+                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
                   user: User.system_user
                 )
@@ -65,11 +71,12 @@ module Reimbursement
               Rails.error.handle do
                 ach_transfer = payout_method.create_transfer(
                   clearinghouse,
-                  memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
+                  amount: payout_holding.amount_cents,
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
-                  bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
+                  recipient_name: payout_holding.report.user.full_name,
+                  recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
-                  creator: User.system_user,
+                  user: User.system_user,
                   company_entry_description: "REIMBURSE"
                 )
                 ach_transfer.save!

@@ -55,6 +55,10 @@ class LegalEntity
       end
 
       def create_transfer(event, **attr)
+        # `Wire` stores the amount in `amount_cents` and caps `payment_for`.
+        amount_cents = attr.delete(:amount)
+        attr[:payment_for] = attr[:payment_for][0...140] if attr[:payment_for]
+
         event.wires.build(
           address_line1:,
           address_line2:,
@@ -68,6 +72,7 @@ class LegalEntity
                                                                purpose_code: Wire.reimbursement_purpose_code_for(recipient_country),
                                                                remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
                                                              }),
+          amount_cents:,
           **attr,
           recipient_name: recipient_name.presence || attr[:recipient_name],
         )
