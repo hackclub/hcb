@@ -7,6 +7,7 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  date                         :datetime         not null
+#  datetime                     :datetime
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  short_code                   :text
@@ -17,6 +18,7 @@
 #
 #  index_ledger_items_on_amount_cents  (amount_cents)
 #  index_ledger_items_on_date          (date)
+#  index_ledger_items_on_datetime      (datetime)
 #  index_ledger_items_on_short_code    (short_code) UNIQUE
 #
 class Ledger
@@ -43,6 +45,12 @@ class Ledger
 
     monetize :amount_cents
 
+    # The `date` column is being renamed to `datetime` without downtime. While
+    # both columns exist, keep them in sync so either code version (reading
+    # `date` or `datetime`) sees consistent data during a rolling deploy. This
+    # callback is removed once `date` is dropped.
+    before_validation :sync_date_and_datetime
+
     def receipt_required?
       false
     end
@@ -66,6 +74,16 @@ class Ledger
     def map!
       Ledger::Mapper.new(ledger_item: self).run
       write_amount_cents!
+    end
+
+    private
+
+    def sync_date_and_datetime
+      if datetime_changed? && !date_changed?
+        self.date = datetime
+      elsif date_changed? && !datetime_changed?
+        self.datetime = date
+      end
     end
 
   end
