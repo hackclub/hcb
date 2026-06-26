@@ -40,7 +40,7 @@
 
 <h2>All transactions</h2>
 
-<%= paginate @transactions %>
+<%= paginate @transact_so_ns %>
 
 <table>
 <tr>
@@ -51,7 +51,7 @@
   <th>Event</th>
   <th colspan="2"></th>
 </tr>
-<% @transactions.each do |t| %>
+<% @transact_so_ns.each do |t| %>
   <tr class="<%= "shade-yellow" if !t.event && t.is_event_related %>">
     <td>
       <%= t.date %>

@@ -581,7 +581,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :transactions, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
+  resources :transact_so_ns, only: [:index, :show, :edit, :update], path: "deprecated/transactions"
 
   namespace :reimbursement do
     resources :reports, only: [:show, :create, :edit, :update, :destroy] do
@@ -710,7 +710,7 @@ Rails.application.routes.draw do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
-          resources :transactions, only: [:show, :update] do
+          resources :transact_so_ns, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
 
@@ -737,7 +737,7 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :transactions, only: [:show] do
+        resources :transact_so_ns, only: [:show] do
           member do
             post "mark_no_receipt"
           end

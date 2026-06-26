@@ -40,7 +40,7 @@ class StripeCardholder < ApplicationRecord
   alias_method :cards, :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
   alias_method :authorizations, :stripe_authorizations
-  alias_method :transactions, :stripe_authorizations
+  alias_method :transact_so_ns, :stripe_authorizations
 
   validates_uniqueness_of :stripe_id
 

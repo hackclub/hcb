@@ -2,7 +2,7 @@
 
 class AddAccountToTransactions < ActiveRecord::Migration[5.2]
   def change
-    add_reference :transactions, :bank_account, foreign_key: true
+    add_reference :transact_so_ns, :bank_account, foreign_key: true
   end
 
 end

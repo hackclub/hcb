@@ -23,7 +23,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalPendingEventMapping < ApplicationRecord
-  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
+  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transact_so_ns] }
 
   belongs_to :canonical_pending_transaction
   belongs_to :cartel

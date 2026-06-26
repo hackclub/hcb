@@ -70,7 +70,7 @@
 #  fk_rails_...  (fee_relationship_id => fee_relationships.id)
 #  fk_rails_...  (invoice_payout_id => invoice_payouts.id)
 #
-class Transaction < ApplicationRecord
+class TransactSON < ApplicationRecord
   include Receiptable
   extend FriendlyId
 
@@ -210,7 +210,7 @@ class Transaction < ApplicationRecord
   # As noted by the "potential" prefix, these are not reliable,
   # and meant to aid human work.
   #
-  # They are used in try_pair_automatically! and rendering Transaction#edit
+  # They are used in try_pair_automatically! and rendering TransactSON#edit
   #
   # TODO: eventually, we want to move these concerns out to their
   # corresponding models. i.e. potential_donation_payout?
@@ -315,7 +315,7 @@ class Transaction < ApplicationRecord
     # transactions that were deleted, that match in TX memo, date,
     # and amount, are good candidates for a previously pending TX
     # that is now complete as `self`.
-    matching_deleted_tx = Transaction.with_deleted
+    matching_deleted_tx = TransactSON.with_deleted
                                      .where(date: self.date)
                                      .where(amount: self.amount)
                                      .where.not(deleted_at: nil)

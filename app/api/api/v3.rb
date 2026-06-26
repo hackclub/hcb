@@ -54,7 +54,7 @@ module Api
 
       def transactions
         # TODO: this can be optimized
-        @transactions ||=
+        @transact_so_ns ||=
           begin
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
@@ -65,7 +65,7 @@ module Api
       end
 
       def transaction
-        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.")
+        public_id_resource!(:@transact_son, :transaction_id, HcbCode, "Transaction not found.")
       end
 
       def card_charges
@@ -298,7 +298,7 @@ module Api
           end
         end
 
-        resource :transactions do
+        resource :transact_so_ns do
           desc "Return a list of transactions" do
             summary "List an organization's transactions"
             detail "Transaction represent a line item on an Organization's ledger. There are various <em>types</em> of transaction (see the <em>type</em> below).<br/><br/>"
@@ -315,7 +315,7 @@ module Api
             use :expand
           end
           get do
-            Pundit.authorize(nil, [:api, org], :transactions?)
+            Pundit.authorize(nil, [:api, org], :transact_so_ns)
             present transactions, with: Api::Entities::Transaction, **type_expansion(expand: %w[transaction]), org:
           end
         end
@@ -864,7 +864,7 @@ module Api
       end
     end
 
-    resource :transactions do
+    resource :transact_so_ns do
       desc "Return a single transaction" do
         summary "Get a single transaction"
         detail ""

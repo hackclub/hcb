@@ -3,9 +3,9 @@
 <% elsif t.is_a? EmburseTransaction %>
   <%= render t %>
 <% elsif t&.name&.include? 'HCB Gift' %>
-  <%= render "transactions/fancy_transaction", transaction: t %>
+  <%= render "transact_so_ns/fancy_transaction", transact_son: t %>
 <% elsif t&.name&.include? 'GitHub Grant' %>
-  <%= render "transactions/github_transaction", transaction: t %>
+  <%= render "transact_so_ns/github_transaction", transact_son: t %>
 <% elsif t&.invoice_payout&.invoice %>
   <%= render t&.invoice_payout&.invoice %>
 <% elsif t&.donation_payout&.donation %>

@@ -18,7 +18,7 @@ class ReceiptablesController < ApplicationController
 
   private
 
-  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
+  RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, TransactSON, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage, Reimbursement::Expense::Fee,
                           Api::Models::CardCharge, Ledger::Item, Payment].index_by(&:to_s).freeze
 

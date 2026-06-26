@@ -22,7 +22,7 @@ class FeeReimbursement < ApplicationRecord
 
   has_one :invoice, required: false
   has_one :donation, required: false
-  has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_reimbursement
+  has_one :t_transaction, class_name: "TransactSON", inverse_of: :fee_reimbursement
 
   belongs_to :stripe_topup, optional: true
 
@@ -31,9 +31,9 @@ class FeeReimbursement < ApplicationRecord
   validates_length_of :transaction_memo, maximum: 30
   validates_uniqueness_of :transaction_memo
 
-  scope :unprocessed, -> { includes(:t_transaction).where(processed_at: nil, transactions: { fee_reimbursement_id: nil }) }
-  scope :pending, -> { includes(:t_transaction).where.not(processed_at: nil).where(transactions: { fee_reimbursement_id: nil }) }
-  scope :completed, -> { includes(:t_transaction).where.not(transactions: { fee_reimbursement_id: nil }) }
+  scope :unprocessed, -> { includes(:t_transaction).where(processed_at: nil, transact_so_ns: { fee_reimbursement_id: nil }) }
+  scope :pending, -> { includes(:t_transaction).where.not(processed_at: nil).where(transact_so_ns: { fee_reimbursement_id: nil }) }
+  scope :completed, -> { includes(:t_transaction).where.not(transact_so_ns: { fee_reimbursement_id: nil }) }
 
   def unprocessed?
     processed_at.nil? && t_transaction.nil?

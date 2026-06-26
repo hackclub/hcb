@@ -1,0 +1,13 @@
+<% title "Rename transaction for #{render_money @transact_son.amount}" %>
+<% page_sm %>
+
+<%= render "cartels/nav" if @event %>
+
+<h1 class="h1">
+  Rename <%= render_money @transact_son.amount %> <%= @fee && @fee.fee_amount.nil? ? "fee payment" : "transaction" %>
+</h1>
+
+<strong>Original transaction name</strong>
+<pre class="bg-smoke mt0"><%= organizer_signed_in? ? @transact_son.name : "REDACTED– SIGN IN TO REVEAL" %></pre>
+
+<%= render "transact_so_ns/form", transact_son: @transact_son %>

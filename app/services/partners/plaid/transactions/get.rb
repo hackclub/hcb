@@ -24,11 +24,11 @@ module Partners
 
         def plaid_transactions
           resp = fetch_transactions
-          ts = resp.transactions
+          ts = resp.transact_so_ns
 
           while ts.length < resp.total_transactions
             resp = fetch_transactions(offset: ts.length)
-            ts += resp.transactions
+            ts += resp.transact_so_ns
           end
 
           ts

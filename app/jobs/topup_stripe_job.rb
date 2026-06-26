@@ -67,7 +67,7 @@ class TopupStripeJob < ApplicationJob
     authorizations = StripeService::Issuing::Authorization.list(status: :pending)
     authorizations.auto_paging_each do |auth|
       expected_tx_sum += auth[:amount] if auth[:approved] &&
-                                          auth[:transactions].empty?
+                                          auth[:transact_so_ns].empty?
     end
 
     topup_amount = buffer - pending - available - enroute_sum + expected_tx_sum

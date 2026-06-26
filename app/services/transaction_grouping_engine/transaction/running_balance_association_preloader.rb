@@ -4,7 +4,7 @@ module TransactionGroupingEngine
   module Transaction
     class RunningBalanceAssociationPreloader
       def initialize(transactions:, event:)
-        @transactions = transactions
+        @transact_so_ns = transactions
         @event = event
       end
 
@@ -13,7 +13,7 @@ module TransactionGroupingEngine
       end
 
       def preload_associations!
-        hcb_code_codes = @transactions.map(&:hcb_code)
+        hcb_code_codes = @transact_so_ns.map(&:hcb_code)
         included_models = [:receipts, :comments,
                            { canonical_transactions: :canonical_event_mapping },
                            { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping] }]
@@ -23,7 +23,7 @@ module TransactionGroupingEngine
                            .where(hcb_code: hcb_code_codes)
         hcb_code_by_code = hcb_code_objects.index_by(&:hcb_code)
 
-        @transactions.each do |t|
+        @transact_so_ns.each do |t|
           t.local_hcb_code = hcb_code_by_code[t.hcb_code]
         end
       end

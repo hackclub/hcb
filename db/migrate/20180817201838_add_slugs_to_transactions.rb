@@ -2,8 +2,8 @@
 
 class AddSlugsToTransactions < ActiveRecord::Migration[5.2]
   def change
-    add_column :transactions, :slug, :text
-    add_index :transactions, :slug, unique: true
+    add_column :transact_so_ns, :slug, :text
+    add_index :transact_so_ns, :slug, unique: true
   end
 
 end

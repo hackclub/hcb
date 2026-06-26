@@ -149,8 +149,8 @@ class HcbCode < ApplicationRecord
     return "Card grant" if card_grant?
     return "Transfer" if outgoing_disbursement? || incoming_disbursement?
 
-    t = type || :transaction
-    t = :transaction if unknown?
+    t = type || :transact_son
+    t = :transact_son if unknown?
 
     t.to_s.humanize
   end
@@ -269,7 +269,7 @@ class HcbCode < ApplicationRecord
 
   def pretty_title(show_event_name: true, show_amount: false, event: self.event)
     event_preposition = [:unknown, :invoice, :ach, :check, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "in" : "to"
-    amount_preposition = [:transaction, :donation, :disbursement, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "of" : "for"
+    amount_preposition = [:transact_son, :donation, :disbursement, :card_charge, :bank_fee, :card_grant].include?(type || :unknown) ? "of" : "for"
 
     amount_preposition = "refunded" if stripe_refund?
 

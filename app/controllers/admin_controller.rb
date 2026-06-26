@@ -1836,8 +1836,8 @@ class AdminController < Admin::BaseController
         FeeReimbursement.unprocessed.size
       when :g_suite_accounts
         GSuiteAccount.under_review.size
-      when :transactions
-        Transaction.needs_action.size
+      when :transact_so_ns
+        TransactSON.needs_action.size
       when :disbursements
         Disbursement.pending.size
       when :organizer_position_deletion_requests
@@ -1871,7 +1871,7 @@ class AdminController < Admin::BaseController
     pending_task :fee_reimbursements
     pending_task :emburse_transactions
     pending_task :g_suite_accounts
-    pending_task :transactions
+    pending_task :transact_so_ns
     pending_task :disbursements
     pending_task :organizer_position_deletion_requests
 

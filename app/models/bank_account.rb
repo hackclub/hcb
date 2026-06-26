@@ -21,7 +21,7 @@ class BankAccount < ApplicationRecord
   has_paper_trail skip: [:plaid_access_token] # ciphertext columns will still be tracked
   has_encrypted :plaid_access_token
 
-  has_many :transactions
+  has_many :transact_so_ns
   has_many :raw_plaid_transactions, primary_key: :plaid_account_id, foreign_key: :plaid_account_id
   has_many :canonical_transactions, through: :raw_plaid_transactions
 

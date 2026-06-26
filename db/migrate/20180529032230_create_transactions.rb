@@ -2,7 +2,7 @@
 
 class CreateTransactions < ActiveRecord::Migration[5.2]
   def change
-    create_table :transactions do |t|
+    create_table :transact_so_ns do |t|
       t.text :plaid_id
       t.text :transaction_type
       t.text :plaid_category_id

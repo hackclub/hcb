@@ -57,7 +57,7 @@
     <% end %>
   <% end %>
 
-  <% if !(@transactions.nil? || @transactions.length == 0) %>
+  <% if !(@transact_so_ns.nil? || @transact_so_ns.length == 0) %>
     <div class="table-container">
         <table>
           <thead>
@@ -69,12 +69,12 @@
             </tr>
           </thead>
           <tbody data-behavior="transactions">
-            <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: false, show_tags: true } %>
+            <%= render partial: "canonical_transactions/canonical_transaction", collection: @transact_so_ns, as: :ct, locals: { event: @event, show_amount: true, selectable: false, show_tags: true } %>
           </tbody>
         </table>
       </div>
 
-      <%= paginate @transactions %>
+      <%= paginate @transact_so_ns %>
   <% else %>
     <%= blankslate "No transactions yet" %>
   <% end %>

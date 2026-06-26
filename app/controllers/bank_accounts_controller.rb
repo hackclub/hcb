@@ -55,7 +55,7 @@ class BankAccountsController < ApplicationController
   def show
     @account = BankAccount.find(params[:id])
     authorize @account
-    @transactions = @account.transactions.includes(:event)
+    @transact_so_ns = @account.transact_so_ns.includes(:event)
   end
 
   def reauthenticate

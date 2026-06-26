@@ -1,0 +1,165 @@
+<% title "Transaction for #{render_money @transact_son.amount}" %>
+<% page_sm %>
+
+<%= render "cartels/nav" if @event %>
+
+<% if @transact_son&.local_hcb_code %>
+  <% admin_tool("mt3") do %>
+    <p>
+      <strong>HCB Code:</strong>
+      <span>
+        <%= link_to @transact_son.hcb_code, @transact_son.local_hcb_code %>
+      </span>
+    </p>
+  <% end %>
+<% end %>
+
+<% if @transact_son.stripe_auth_dashboard_url %>
+  <% admin_tool("mt1") do %>
+    <%= link_to "View on Stripe", @transact_son.stripe_auth_dashboard_url, class: "btn bg-accent" %>
+  <% end %>
+<% end %>
+
+<article class="card mt2">
+  <h1 class="heading h1 mt0 mb0">
+    <span class="flex-auto">
+      <%= @transact_son.fee_payment? ? "Fee payment" : "Transaction" %>
+    </span>
+    <span class="h2 regular">
+      <%= number_to_currency @transact_son.amount %>
+    </span>
+  </h1>
+
+  <div class="flex items-center mb2">
+    <p class="flex-auto mr1 mb0">
+      <strong class="block">Memo</strong>
+      <span>
+        <%= @transact_son.display_name %>
+      </span>
+    </p>
+
+    <%= pop_icon_to "edit",
+      edit_canonical_transaction_path(@transact_son),
+      disabled: !organizer_signed_in?,
+      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
+  </div>
+
+  <section class="details">
+    <p>
+      <strong>Date</strong>
+      <%= format_date @transact_son.date.to_date %>
+    </p>
+
+    <% if @transact_son.invoice_payout&.invoice %>
+      <p>
+        <strong>For</strong>
+        <%= link_to "Invoice of #{render_money @transact_son.invoice_payout.invoice.item_amount}", invoice_path(@transact_son.invoice_payout.invoice) %>
+      </p>
+    <% end %>
+
+    <% if @transact_son.fee_reimbursement&.invoice %>
+    <p>
+      <strong>For</strong>
+      <span>
+      <%= link_to "Refunding fees from an invoice of #{render_money @transact_son.fee_reimbursement.invoice.item_amount}", @transact_son.fee_reimbursement.invoice %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son&.disbursement %>
+    <p>
+      <strong>For</strong>
+      <span>
+      <%= link_to "A disbursement of #{render_money @transact_son.disbursement.amount}", @transact_son.disbursement %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son&.check %>
+    <p>
+      <strong>For</strong>
+      <span>
+      <%= link_to "A check of #{render_money @transact_son.check.amount}", @transact_son.check %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son&.local_hcb_code&.ach_transfer %>
+    <p>
+      <strong>For</strong>
+      <span>
+      <%= link_to "A transfer of #{render_money @transact_son.local_hcb_code.ach_transfer.amount}", @transact_son.local_hcb_code.ach_transfer %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son&.donation_payout %>
+    <p>
+      <strong>For</strong>
+      <span>
+       <%= link_to "A donation of #{render_money @transact_son.donation_payout.donation.amount} from #{@transact_son.donation_payout.donation.name}", @transact_son.donation_payout.donation %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son.fee_reimbursement&.donation %>
+    <p>
+      <strong>For</strong>
+      <span>
+      <%= link_to "Refunding fees from a donation of #{render_money @transact_son.fee_reimbursement.donation.amount}", @transact_son.fee_reimbursement.donation %>
+      </span>
+    </p>
+    <% end %>
+
+    <% if @transact_son.fee_applies? %>
+      <p>
+        <strong>Fee</strong>
+        <span>
+          <%= render_money @transact_son.fee.amount_cents_as_decimal %> (<%= render_percentage @transact_son.fee.event_sponsorship_fee %>)
+          <% admin_tool("py0 ml1", "span") do %>
+            <%= link_to "[waive fee]", waive_fee_canonical_transaction_url(@transact_son), method: :post if @transact_son.fee.amount_cents_as_decimal > 0 %>
+          <% end %>
+        </span>
+      </p>
+    <% elsif @transact_son.fee_payment? %>
+      <p>
+        <strong>Note</strong>
+        <strong>This is a fee payment</strong>
+      </p>
+    <% else %>
+      <% admin_tool("py0", "p") do %>
+        <strong>Fee</strong>
+        <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transact_son), method: :post if @transact_son.fee&.revenue_waived? %>
+      <% end %>
+    <% end %>
+
+  </section>
+
+  <% if @transact_son&.disbursement %>
+    <% admin_tool("py0 mt2") do %>
+      <%# admin tools because disbursements are not designed
+        to be end-user visible %>
+      <p>
+        This transaction is linked to
+        <%= link_to "a #{render_money @transact_son.disbursement.amount} disbursement '#{@transact_son.disbursement.name}'", @transact_son.disbursement %>
+      </p>
+    <% end %>
+  <% end %>
+
+</article>
+
+<% if @hcb_code %>
+  <h2>Receipts</h2>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+  <%= render partial: "receipts/form_v3", locals: {
+        receiptable: @hcb_code,
+        enable_linking: true,
+        upload_method: "transaction_page",
+        include_spacing: true,
+        turbo: false
+      } %>
+
+  <h2>Comments</h2>
+  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/form", commentable: @hcb_code %>
+<% end %>

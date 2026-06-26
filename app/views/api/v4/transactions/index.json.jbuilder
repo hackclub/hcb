@@ -2,4 +2,4 @@
 
 pagination_metadata(json)
 
-json.data @transactions, partial: "api/v4/transactions/transaction", as: :tx
+json.data @transact_so_ns, partial: "api/v4/transactions/transaction", as: :tx

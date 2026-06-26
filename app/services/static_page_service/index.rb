@@ -53,7 +53,7 @@ module StaticPageService
     end
 
     def transactions_count
-      Transaction.needs_action.count
+      TransactSON.needs_action.count
     end
 
     def disbursements_count

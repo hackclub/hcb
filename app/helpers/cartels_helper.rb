@@ -74,7 +74,7 @@ module CartelsHelper
       path_proc: ->(event_id) { event_transactions_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
-      symbol: :transactions,
+      symbol: :transact_so_ns,
       available_proc: ->(event) { policy(event).transactions? }
     },
     {

@@ -57,7 +57,7 @@ class Export
               elsif merchant
                 category = "CardCharge"
               end
-              journal.transactions << ::LedgerJournal::Transaction.new(
+              journal.transactions << ::LedgerJournal::TransactSON.new(
                 date: ct.date,
                 payee: ct.local_hcb_code.memo,
                 metadata:,
@@ -73,7 +73,7 @@ class Export
               elsif hcb_code.invoice?
                 income_type = "Invoice"
               end
-              journal.transactions << ::LedgerJournal::Transaction.new(
+              journal.transactions << ::LedgerJournal::TransactSON.new(
                 date: ct.date,
                 payee: ct.local_hcb_code.memo,
                 postings: [

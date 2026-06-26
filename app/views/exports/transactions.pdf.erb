@@ -46,7 +46,7 @@
       <%= number_to_currency @start_balance  %>
     </td>
   </tr>
-  <% @transactions.reverse.each do |ct| %>
+  <% @transact_so_ns.reverse.each do |ct| %>
     <% unless ct.likely_account_verification_related? && !organizer_signed_in? %>
       <tr>
         <td style="white-space: nowrap;"><%= ct.date %></td>

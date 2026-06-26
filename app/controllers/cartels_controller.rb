@@ -8,12 +8,12 @@ class CartelsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_transaction_filters, only: [:transact_so_ns, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
   skip_before_action :signed_in_user
-  before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
+  before_action :set_event_follow, only: [:show, :transact_so_ns, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
@@ -212,14 +212,14 @@ class CartelsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
 
-    @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
-    TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
+    @transact_so_ns = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
+    TransactionGroupingEngine::Transaction::AssociationPreloader.new(transact_so_ns: @transact_so_ns, event: @event).run!
 
     if show_running_balance?
       offset = page * per_page
 
       initial_subtotal = if @all_transactions.count > offset
-                           TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transactions: @all_transactions, event: @event).run!
+                           TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transact_so_ns: @all_transactions, event: @event).run!
                            # sum up transactions on pages after this one to get the initial subtotal
                            @all_transactions.slice(offset...).map(&:amount).sum
                          else
@@ -227,7 +227,7 @@ class CartelsController < ApplicationController
                            0
                          end
 
-      @transactions.reverse.reduce(initial_subtotal) do |running_total, transaction|
+      @transact_so_ns.reverse.reduce(initial_subtotal) do |running_total, transaction|
         transaction.running_balance = running_total + transaction.amount
       end
     end
@@ -552,10 +552,10 @@ class CartelsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                         .order(created_at: :desc)
+      @transact_so_ns = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                           .order(created_at: :desc)
       page = (params[:page] || 1).to_i
-      @transactions = @transactions.page(page).per(params[:per] || 25)
+      @transact_so_ns = @transact_so_ns.page(page).per(params[:per] || 25)
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")

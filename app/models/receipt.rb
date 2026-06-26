@@ -55,7 +55,7 @@ class Receipt < ApplicationRecord
 
   belongs_to :user, class_name: "User", optional: true
   alias_method :uploader, :user
-  alias_method :transaction, :receiptable
+  alias_method :transact_son, :receiptable
 
   has_many :suggested_pairings, dependent: :destroy
   has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings

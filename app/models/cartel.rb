@@ -325,7 +325,7 @@ class Cartel < ApplicationRecord
   has_many :followers, through: :event_follows, source: :user
 
   has_many :fee_relationships
-  has_many :transactions, through: :fee_relationships, source: :t_transaction
+  has_many :transact_so_ns, through: :fee_relationships, source: :t_transaction
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
 

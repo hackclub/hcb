@@ -15,13 +15,13 @@ RSpec.describe FeeRelationship, type: :model do
     end
 
     context "when before_validation is called" do
-      let(:transaction) { create(:transaction, amount: 100) }
+      let(:transact_son) { create(:transact_son, amount: 100) }
       let(:event) do
         event = create(:event)
         event.plan.update(type: Cartel::Plan::FivePercent)
         event.reload
       end
-      let(:fee_relationship) { create(:fee_relationship, fee_applies:, t_transaction: transaction, event:) }
+      let(:fee_relationship) { create(:fee_relationship, fee_applies:, t_transaction: transact_son, event:) }
 
       context "when fee_applies is true" do
         let(:fee_applies) { true }

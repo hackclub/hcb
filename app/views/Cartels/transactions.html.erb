@@ -1,5 +1,5 @@
 <% if organizer_signed_in? %>
-  <%= turbo_stream_from @event, :transactions %>
+  <%= turbo_stream_from @event, :transact_so_ns %>
   <%= turbo_stream_from @event, :tags %>
   <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% end %>
@@ -25,7 +25,7 @@
 
 <% title "Transactions for #{@event.name}" %>
 
-<%= render "cartels/nav", selected: :transactions %>
+<%= render "cartels/nav", selected: :transact_so_ns %>
 
 <%= render "cartels/heading", event: @event, event_follow: @event_follow do %>
   <span class="flex-grow">Transactions</span>

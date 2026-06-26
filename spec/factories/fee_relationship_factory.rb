@@ -3,6 +3,6 @@
 FactoryBot.define do
   factory :fee_relationship do
     association :event
-    association :t_transaction, factory: :transaction
+    association :t_transaction, factory: :transact_son
   end
 end

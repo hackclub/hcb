@@ -1,7 +1,7 @@
 <% cache_if @cacheable, "#{@event.id}_ledger", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
   <%= turbo_frame_tag [dom_id(@event), :ledger] do %>
     <%= render partial: "events/filters/filter" %>
-    <% if @pending_transactions.any? || @transactions.any? || show_mock_data? %>
+    <% if @pending_transactions.any? || @transact_so_ns.any? || show_mock_data? %>
       <div class="table-container mt-4" data-tour-step="transactions">
         <table>
           <thead>
@@ -21,11 +21,11 @@
 
           <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: @pending_transactions, as: :pt, locals: { event: @event, show_amount: true, selectable: @event.tags.any?, show_author_column: true, show_tags: true } %>
 
-          <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: @event.tags.any?, show_author_column: true, show_tags: true } %>
+          <%= render partial: "canonical_transactions/canonical_transaction", collection: @transact_so_ns, as: :ct, locals: { event: @event, show_amount: true, selectable: @event.tags.any?, show_author_column: true, show_tags: true } %>
           </tbody>
         </table>
       </div>
-      <%= paginate @transactions %>
+      <%= paginate @transact_so_ns %>
     <% else %>
       <%= blankslate "No transactions yet" %>
     <% end %>

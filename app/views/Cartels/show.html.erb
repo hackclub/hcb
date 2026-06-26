@@ -1,5 +1,5 @@
 <% if organizer_signed_in? %>
-  <%= turbo_stream_from @event, :transactions %>
+  <%= turbo_stream_from @event, :transact_so_ns %>
   <%= turbo_stream_from @event, :tags %>
   <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% end %>

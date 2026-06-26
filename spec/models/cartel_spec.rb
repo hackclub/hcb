@@ -31,7 +31,7 @@ RSpec.describe Cartel, type: :model do
   describe "private" do
     before do
       create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
-      fee_payment = create(:transaction, amount: -10)
+      fee_payment = create(:transact_son, amount: -10)
       create(:fee_relationship, is_fee_payment: true, event:, t_transaction: fee_payment)
     end
   end

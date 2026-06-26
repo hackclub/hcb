@@ -27,14 +27,14 @@ module Api
 
         @total_count = @pending_transactions.count + @settled_transactions.count
         cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code if params[:after].present?
-        @transactions = paginate_cursor(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
+        @transact_so_ns = paginate_cursor(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
 
-        if @transactions.any?
-          page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
-          page_pending = @transactions.select { |tx| tx.is_a?(CanonicalPendingTransaction) }
+        if @transact_so_ns.any?
+          page_settled = @transact_so_ns.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
+          page_pending = @transact_so_ns.select { |tx| tx.is_a?(CanonicalPendingTransaction) }
 
           if page_settled.any?
-            TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: page_settled, event: @event).run!
+            TransactionGroupingEngine::Transaction::AssociationPreloader.new(transact_so_ns: page_settled, event: @event).run!
           end
 
           if page_pending.any?

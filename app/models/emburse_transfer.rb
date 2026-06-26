@@ -46,7 +46,7 @@ class EmburseTransfer < ApplicationRecord
   belongs_to :cartel
   belongs_to :fulfilled_by, class_name: "User", optional: true
   belongs_to :creator, class_name: "User"
-  has_one :t_transaction, class_name: "Transaction"
+  has_one :t_transaction, class_name: "TransactSON"
 
   validate :status_accepted_canceled_or_rejected
   validates :load_amount, numericality: { greater_than_or_equal_to: 1 }
@@ -60,18 +60,18 @@ class EmburseTransfer < ApplicationRecord
       .accepted
       .where(
         emburse_transaction_id: nil,
-        transactions: { id: nil }
+        transact_so_ns: { id: nil }
       )
   end
   scope :unpaired, -> do
     includes(:t_transaction)
       .accepted
       .where(
-        transactions: { id: nil }
+        transact_so_ns: { id: nil }
       )
   end
   scope :completed, -> { accepted.where.not(id: pending) }
-  scope :transferred, -> { completed.includes(:t_transaction).where.not(transactions: { id: nil }) }
+  scope :transferred, -> { completed.includes(:t_transaction).where.not(transact_so_ns: { id: nil }) }
   scope :canceled, -> { where.not(canceled_at: nil) }
   scope :rejected, -> { where.not(rejected_at: nil) }
 

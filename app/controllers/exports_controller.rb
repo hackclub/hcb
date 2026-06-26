@@ -2,7 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions, :reimbursements]
+  before_action :set_event, only: [:transact_so_ns, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -68,14 +68,14 @@ class ExportsController < ApplicationController
         set_date_range # PDF monthly statements require a date range
 
         all = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-        TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: all, event: @event).run!
+        TransactionGroupingEngine::Transaction::AssociationPreloader.new(transact_so_ns: all, event: @event).run!
 
         all.reverse.reduce(0) do |running_total, transaction|
           transaction.running_balance = running_total + transaction.amount
         end
-        @transactions = all.select { |t| t.date >= @start && t.date <= @end }
-        @start_balance = if @transactions.length > 0
-                           @transactions.last.running_balance - @transactions.last.amount
+        @transact_so_ns = all.select { |t| t.date >= @start && t.date <= @end }
+        @start_balance = if @transact_so_ns.length > 0
+                           @transact_so_ns.last.running_balance - @transact_so_ns.last.amount
                          elsif all.size.zero?
                            0
                          else
@@ -83,11 +83,11 @@ class ExportsController < ApplicationController
                            # or if there's no transaction before the start date, $0.
                            all.find { |t| t.date < @start }&.running_balance || 0
                          end
-        @end_balance = @transactions.first&.running_balance || @start_balance
+        @end_balance = @transact_so_ns.first&.running_balance || @start_balance
 
         @withdrawn = 0
         @deposited = 0
-        @transactions.each do |ct|
+        @transact_so_ns.each do |ct|
           if ct.amount > 0
             @deposited += ct.amount
           else

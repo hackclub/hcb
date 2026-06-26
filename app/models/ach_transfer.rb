@@ -117,7 +117,7 @@ class AchTransfer < ApplicationRecord
     on: :create
   )
 
-  has_one :t_transaction, class_name: "Transaction", inverse_of: :ach_transfer
+  has_one :t_transaction, class_name: "TransactSON", inverse_of: :ach_transfer
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout

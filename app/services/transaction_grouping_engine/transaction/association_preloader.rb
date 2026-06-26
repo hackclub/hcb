@@ -4,7 +4,7 @@ module TransactionGroupingEngine
   module Transaction
     class AssociationPreloader
       def initialize(transactions:, event:)
-        @transactions = transactions
+        @transact_so_ns = transactions
         @event = event
       end
 
@@ -13,7 +13,7 @@ module TransactionGroupingEngine
       end
 
       def preload_associations!
-        hcb_code_codes = @transactions.map(&:hcb_code)
+        hcb_code_codes = @transact_so_ns.map(&:hcb_code)
         included_models = [
           :receipts,
           :comments,
@@ -36,7 +36,7 @@ module TransactionGroupingEngine
         canonical_transactions = CanonicalTransaction
                                  .where(hcb_code: hcb_code_codes)
                                  .or(
-                                   CanonicalTransaction.where(id: @transactions.flat_map(&:canonical_transaction_ids))
+                                   CanonicalTransaction.where(id: @transact_so_ns.flat_map(&:canonical_transaction_ids))
                                  )
 
         canonical_transactions_by_id = canonical_transactions.index_by(&:id)
@@ -81,7 +81,7 @@ module TransactionGroupingEngine
           end
         end
 
-        @transactions.each do |t|
+        @transact_so_ns.each do |t|
           t.canonical_transactions = canonical_transactions_by_id
                                      .slice(*t.canonical_transaction_ids)
                                      .values

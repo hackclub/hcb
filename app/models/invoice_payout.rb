@@ -36,7 +36,7 @@ class InvoicePayout < ApplicationRecord
   include StripePayoutable
 
   # find invoice payouts that don't yet have an associated transaction
-  scope :lacking_transaction, -> { includes(:t_transaction).where(transactions: { invoice_payout_id: nil }) }
+  scope :lacking_transaction, -> { includes(:t_transaction).where(transact_so_ns: { invoice_payout_id: nil }) }
   scope :invoice_hcb_code, -> { where("statement_descriptor ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
 
   # Although it normally doesn't make sense for a payout not to be linked to an invoice,
@@ -44,7 +44,7 @@ class InvoicePayout < ApplicationRecord
   has_one :invoice, inverse_of: :payout, foreign_key: :payout_id
   stripe_payoutable :invoice
   has_one :event, through: :invoice
-  has_one :t_transaction, class_name: "Transaction"
+  has_one :t_transaction, class_name: "TransactSON"
 
   delegate :hcb_code, :local_hcb_code, to: :invoice
 

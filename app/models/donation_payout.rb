@@ -37,7 +37,7 @@ class DonationPayout < ApplicationRecord
   # most of this was copied from models/invoice.rb
 
   # find donation payouts that don't yet have an associated transaction
-  scope :lacking_transaction, -> { includes(:t_transaction).where(transactions: { donation_payout_id: nil }) }
+  scope :lacking_transaction, -> { includes(:t_transaction).where(transact_so_ns: { donation_payout_id: nil }) }
   scope :in_transit, -> { where(status: "in_transit") }
   scope :paid, -> { where(status: "paid") }
   scope :donation_hcb_code, -> { where("statement_descriptor ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
@@ -47,7 +47,7 @@ class DonationPayout < ApplicationRecord
   has_one :donation, inverse_of: :payout, foreign_key: :payout_id
   stripe_payoutable :donation
   has_one :cartel, through: :donation
-  has_one :t_transaction, class_name: "Transaction"
+  has_one :t_transaction, class_name: "TransactSON"
 
   delegate :hcb_code, :local_hcb_code, to: :donation
 

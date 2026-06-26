@@ -2,7 +2,7 @@
 
 class AddEventRelatedBoolToTransactions < ActiveRecord::Migration[5.2]
   def change
-    add_column :transactions, :is_event_related, :boolean
+    add_column :transact_so_ns, :is_event_related, :boolean
   end
 
 end

@@ -16,7 +16,7 @@
     </div>
     <div class="stat stat--plain stat--small">
       <span class="stat__label">Transactions</span>
-      <span class="stat__value"><%= @transactions.size %></span>
+      <span class="stat__value"><%= @transact_so_ns.size %></span>
     </div>
   </section>
 </div>
@@ -29,7 +29,7 @@
     <th>Event</th>
     <th>Details</th>
   </tr>
-  <% @transactions.each do |t| %>
+  <% @transact_so_ns.each do |t| %>
     <tr class="<%= "shade-yellow" if !t.event && t.is_event_related %>">
       <td>
         <%= t.date %>

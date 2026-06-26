@@ -26,7 +26,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class CanonicalEventMapping < ApplicationRecord
-  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
+  broadcasts_refreshes_to ->(mapping) { [mapping.event, :transact_so_ns] }
 
   belongs_to :canonical_transaction
   belongs_to :cartel

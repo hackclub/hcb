@@ -16,7 +16,7 @@ module HcbCodeService
     def run
       return [] unless @event
 
-      @hcb_code.suggested_memos + ranked_similar_transactions.pluck(:transaction).pluck(:custom_memo).uniq
+      @hcb_code.suggested_memos + ranked_similar_transactions.pluck(:transact_son).pluck(:custom_memo).uniq
     end
 
     def ranked_similar_transactions
@@ -32,7 +32,7 @@ module HcbCodeService
       # can can apply additional context outside of the transaction memo.
       similar_transactions.map do |t|
         {
-          transaction: t,
+          transact_son: t,
           ranking: rank_transaction(
             t,
             hcb_amount:,

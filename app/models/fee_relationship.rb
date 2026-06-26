@@ -22,7 +22,7 @@
 #
 class FeeRelationship < ApplicationRecord
   belongs_to :cartel
-  has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_relationship
+  has_one :t_transaction, class_name: "TransactSON", inverse_of: :fee_relationship
 
   # these two are mutually exclusive
   validates :fee_applies, inclusion: { in: [false] }, if: :is_fee_payment
