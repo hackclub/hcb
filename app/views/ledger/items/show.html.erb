@@ -121,7 +121,7 @@
       turbo: true
     } %>
 
-<% admin_tool("p-2") do %>
+<% admin_tool("p-2 my-3") do %>
   <h3 class="my-2">Quickly go to</h3>
   <% if @item.hcb_code.present? %>
     <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
