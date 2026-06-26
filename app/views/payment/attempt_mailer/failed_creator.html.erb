@@ -2,11 +2,11 @@
 
 <p>
   Your payment of <%= @payment.amount.format(with_currency: true) %> to
-  <%= @payment.payee.preferred_name %> for <i>"<%= @payment.purpose %>"</i> failed to send.
+  <%= @payment.payee.display_name %> for <i>"<%= @payment.purpose %>"</i> failed to send.
 </p>
 
 <p>
-  <%= @payment.payee.preferred_name %> has been notified of the failure
+  <%= @payment.payee.display_name %> has been notified of the failure
   and how to retry the payment.
 </p>
 

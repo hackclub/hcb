@@ -271,7 +271,7 @@ RSpec.describe Payment::Attempt, type: :model do
       allow(attempt).to receive(:mark_under_review!)
       allow(attempt).to receive(:payout=)
 
-      payee_dbl = double("payee", preferred_name: "Alice", email: "alice@example.com")
+      payee_dbl = double("payee", display_name: "Alice", email: "alice@example.com")
       hcb_code  = double("hcb_code")
       check     = double("check", save!: nil, local_hcb_code: hcb_code)
       checks_rel = double("checks_rel", build: check)

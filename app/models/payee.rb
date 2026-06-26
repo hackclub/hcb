@@ -5,8 +5,8 @@
 # Table name: payees
 #
 #  id              :bigint           not null, primary key
+#  display_name    :string           not null
 #  email           :string           not null
-#  preferred_name  :string           not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  event_id        :bigint           not null

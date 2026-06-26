@@ -1,4 +1,4 @@
-<p>Hello <%= @payment.payee.preferred_name %>,</p>
+<p>Hello <%= @payment.payee.display_name %>,</p>
 
 <p>
   Your payment of <%= @payment.amount.format(with_currency: true) %> from <%= @payment.event.name %>

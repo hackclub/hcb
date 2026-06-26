@@ -1,4 +1,4 @@
-<p>Hello <%= @payment.payee.preferred_name %>,</p>
+<p>Hello <%= @payment.payee.display_name %>,</p>
 
 <% if @initial %>
   <%= render partial: "initial_message", locals: { payment: @payment } %>
