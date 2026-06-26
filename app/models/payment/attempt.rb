@@ -24,6 +24,13 @@
 #
 class Payment
   class Attempt < ApplicationRecord
+    PAYOUT_METHOD_TRANSFER_MAPPING = {
+      LegalEntity::PayoutMethod::Check        => IncreaseCheck,
+      LegalEntity::PayoutMethod::AchTransfer  => AchTransfer,
+      LegalEntity::PayoutMethod::Wire         => Wire,
+      LegalEntity::PayoutMethod::WiseTransfer => WiseTransfer
+    }.freeze
+
     include AASM
     acts_as_paranoid
 
@@ -35,6 +42,7 @@ class Payment
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
+    validate :transfer_matches_payout_method
 
     aasm timestamps: true do
       state :pending, initial: true
@@ -207,6 +215,12 @@ class Payment
     def terminal_states_freeze_attempt
       if (failed? || successful? || rejected?) && !aasm_state_changed?
         errors.add(:base, "failed, successful, or rejected payment attempts cannot be updated")
+      end
+    end
+
+    def transfer_matches_payout_method
+      if payout.present? && PAYOUT_METHOD_TRANSFER_MAPPING[payout_method.details.class] != payout.class
+        errors.add(:base, "transfer type must match payout method")
       end
     end
 

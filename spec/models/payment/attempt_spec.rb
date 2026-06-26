@@ -74,14 +74,14 @@ RSpec.describe Payment::Attempt, type: :model do
 
       it "transitions to under_review when payout is set" do
         attempt.save!
-        allow(attempt).to receive(:payout).and_return(double(present?: true))
+        allow(attempt).to receive(:payout).and_return(double(present?: true, class: AchTransfer))
         attempt.mark_under_review!
         expect(attempt).to be_under_review
       end
 
       it "calls mark_under_review! on the parent payment" do
         attempt.save!
-        allow(attempt).to receive(:payout).and_return(double(present?: true))
+        allow(attempt).to receive(:payout).and_return(double(present?: true, class: AchTransfer))
         expect(attempt.payment).to receive(:mark_under_review!)
         attempt.mark_under_review!
       end
@@ -127,7 +127,7 @@ RSpec.describe Payment::Attempt, type: :model do
 
     describe "#mark_failed!" do
       let(:attempt) { create(:payment_attempt, aasm_state: "sent") }
-      let(:payout)  { double("payout") }
+      let(:payout)  { double("payout", class: AchTransfer) }
       let(:receipt) { double("receipt") }
 
       before do
@@ -163,6 +163,45 @@ RSpec.describe Payment::Attempt, type: :model do
 
       it "accepts an optional reason" do
         expect { attempt.mark_failed!(reason: "Receipt is insufficient for this payment") }.not_to raise_error
+      end
+    end
+  end
+
+  describe "#transfer_matches_payout_method validation" do
+    {
+      check_payout_method_details:        IncreaseCheck,
+      ach_transfer_payout_method_details: AchTransfer,
+      wire_payout_method_details:          Wire,
+      wise_transfer_payout_method_details: WiseTransfer,
+    }.each do |details_factory, payout_class|
+      context "with #{details_factory} and the matching #{payout_class} payout" do
+        it "is valid" do
+          payout_method = build(:legal_entity_payout_method, details: build(details_factory))
+          attempt = build(:payment_attempt, payout_method:)
+          allow(attempt).to receive(:payout).and_return(double("payout", present?: true, class: payout_class))
+          attempt.valid?
+          expect(attempt.errors[:base]).not_to include("transfer type must match payout method")
+        end
+      end
+    end
+
+    context "when the payout class does not match the payout method" do
+      it "adds an error" do
+        payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
+        attempt = build(:payment_attempt, payout_method:)
+        allow(attempt).to receive(:payout).and_return(double("payout", present?: true, class: AchTransfer))
+        attempt.valid?
+        expect(attempt.errors[:base]).to include("transfer type must match payout method")
+      end
+    end
+
+    context "when payout is absent" do
+      it "is valid (skips the check)" do
+        payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
+        attempt = build(:payment_attempt, payout_method:)
+        allow(attempt).to receive(:payout).and_return(nil)
+        attempt.valid?
+        expect(attempt.errors[:base]).not_to include("transfer type must match payout method")
       end
     end
   end
