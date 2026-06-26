@@ -14,7 +14,7 @@
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #
-class LegalEntity
+class IlegalEntity
   class PayoutMethod < ApplicationRecord
     class Check < ApplicationRecord
       self.table_name = "user_payout_method_checks"

@@ -170,7 +170,7 @@
   <% end %>
 <% end %>
 
-<% if @report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
+<% if @report.user.default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
   <% admin_tool("mt-4") do %>
     <h3 class="mt-0">Process Wise reimbursement</h3>
 
@@ -218,7 +218,7 @@
   <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 
-<% if @report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
+<% if @report.user.default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
   <%= render "application/callout",
       type: "info",
       icon: "wise",

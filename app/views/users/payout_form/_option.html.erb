@@ -1,6 +1,6 @@
 <%# locals: (form:, model:, title:, description:, icon:, checked: false) %>
 
-<% unsupported = LegalEntity::PayoutMethod.unsupported?(model) %>
+<% unsupported = IlegalEntity::PayoutMethod.unsupported?(model) %>
 <%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported %>
 <%= form.label :payout_method_type, value: model.name do %>
   <%= inline_icon icon, size: 28 %>
@@ -9,8 +9,8 @@
   <%= yield %><%# in case you wanna add more flare to a specific option %>
 
   <% if unsupported %>
-    <div class="badge bg-warning m1 mt0 w-fit"><%= LegalEntity::PayoutMethod.unsupported_details(model)[:status_badge] %></div>
-    <small><%= LegalEntity::PayoutMethod.unsupported_details(model)[:reason] %></small>
+    <div class="badge bg-warning m1 mt0 w-fit"><%= IlegalEntity::PayoutMethod.unsupported_details(model)[:status_badge] %></div>
+    <small><%= IlegalEntity::PayoutMethod.unsupported_details(model)[:reason] %></small>
   <% else %>
     <small><%= description %></small>
   <% end %>

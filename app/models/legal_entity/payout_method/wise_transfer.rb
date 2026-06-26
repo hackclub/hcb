@@ -18,7 +18,7 @@
 #  updated_at                       :datetime         not null
 #  wise_recipient_id                :text
 #
-class LegalEntity
+class IlegalEntity
   class PayoutMethod < ApplicationRecord
     class WiseTransfer < ApplicationRecord
       self.table_name = "user_payout_method_wise_transfers"

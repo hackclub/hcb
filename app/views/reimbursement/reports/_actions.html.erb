@@ -246,7 +246,7 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
-            <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+            <% if payout_method.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
                 Approve & send Wise reimbursement
@@ -396,7 +396,7 @@
           <%= button_hint %>
         </div>
       <% end %>
-      <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+      <% if report.user.default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) %>
         <div class="card mt-2">
           <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
             Fetching latest estimate...

@@ -27,7 +27,7 @@
         <td><%= user.email %></td>
       </tr>
 
-      <% if payout_method.is_a?(LegalEntity::PayoutMethod::AchTransfer) %>
+      <% if payout_method.is_a?(IlegalEntity::PayoutMethod::AchTransfer) %>
         <tr>
           <td>Routing number:</td>
           <td><%= payout_method.routing_number %></td>
@@ -37,7 +37,7 @@
           <td><%= payout_method.account_number %></td>
         </tr>
 
-      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::Check) %>
+      <% elsif payout_method.is_a?(IlegalEntity::PayoutMethod::Check) %>
         <tr>
           <td>Address (Line 1):</td>
           <td><%= payout_method.address_line1 %></td>
@@ -65,7 +65,7 @@
           <td><%= payout_method.address_country %></td>
         </tr>
 
-      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::Wire) %>
+      <% elsif payout_method.is_a?(IlegalEntity::PayoutMethod::Wire) %>
         <tr>
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>
@@ -113,7 +113,7 @@
           <% end %>
         <% end %>
 
-      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+      <% elsif payout_method.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) %>
         <tr>
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>

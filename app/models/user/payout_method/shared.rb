@@ -35,12 +35,12 @@ class User
           return unless legal_entity
 
           details_class = self.class.name.sub(/\AUser::/, "LegalEntity::").safe_constantize
-          return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+          return unless IlegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
 
           details = details_class.find_by(id:)
           return unless details
 
-          LegalEntity::PayoutMethod.find_or_create_by!(legal_entity:, details:) do |payout_method|
+          IlegalEntity::PayoutMethod.find_or_create_by!(legal_entity:, details:) do |payout_method|
             payout_method.default = true
           end
         end

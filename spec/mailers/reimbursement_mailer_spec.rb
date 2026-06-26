@@ -12,7 +12,7 @@ RSpec.describe ReimbursementMailer do
       )
       user.personal_legal_entity.payout_methods.create!(
         default: true,
-        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+        details: IlegalEntity::PayoutMethod::WiseTransfer.new(
           address_line1: "123 Rue Main",
           address_city: "Shawinigan",
           address_state: "QC",

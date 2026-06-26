@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :legal_entity do
+  factory :ilegal_entity do
     entity_type { :business }
 
     trait :person do

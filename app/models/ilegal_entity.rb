@@ -21,7 +21,7 @@
 #
 #  index_legal_entities_on_managing_event_id  (managing_event_id)
 #
-class LegalEntity < ApplicationRecord
+class IlegalEntity < ApplicationRecord
   # Some legal entities will be managed by events,
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true

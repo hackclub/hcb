@@ -346,7 +346,7 @@ module Reimbursement
     end
 
     def below_minimum_amount?
-      user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
+      user.default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents
     end
 
     def from_public_reimbursement_form?

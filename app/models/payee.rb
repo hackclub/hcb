@@ -19,7 +19,7 @@
 #
 class Payee < ApplicationRecord
   belongs_to :event
-  belongs_to :legal_entity
+  belongs_to :ilegal_entity
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id]
 

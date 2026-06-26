@@ -389,7 +389,7 @@ class UsersController < ApplicationController
       user_ok = @user.save
       payout_ok = true
       if update_payout_method
-        payout_update = LegalEntity::PayoutMethodService::Update.new(
+        payout_update = IlegalEntity::PayoutMethodService::Update.new(
           user: @user,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
@@ -558,7 +558,7 @@ class UsersController < ApplicationController
 
     permitted =
       case params.dig(:user, :payout_method_type)
-      when LegalEntity::PayoutMethod::Check.name
+      when IlegalEntity::PayoutMethod::Check.name
         params.require(:user).permit(payout_method_attributes: [
                                        :address_line1,
                                        :address_line2,
@@ -567,7 +567,7 @@ class UsersController < ApplicationController
                                        :address_postal_code,
                                        :address_country
                                      ])[:payout_method_attributes]
-      when LegalEntity::PayoutMethod::Wire.name
+      when IlegalEntity::PayoutMethod::Wire.name
         params.require(:user).permit(payout_method_wire: [
           :address_line1,
           :address_line2,
@@ -578,8 +578,8 @@ class UsersController < ApplicationController
           :recipient_name,
           :bic_code,
           :account_number
-        ] + LegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
-      when LegalEntity::PayoutMethod::WiseTransfer.name
+        ] + IlegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
+      when IlegalEntity::PayoutMethod::WiseTransfer.name
         params.require(:user).permit(payout_method_wise_transfer: [
           :address_line1,
           :address_line2,
@@ -588,8 +588,8 @@ class UsersController < ApplicationController
           :address_postal_code,
           :recipient_country,
           :currency,
-        ] + LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
-      when LegalEntity::PayoutMethod::AchTransfer.name
+        ] + IlegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
+      when IlegalEntity::PayoutMethod::AchTransfer.name
         params.require(:user).permit(payout_method_attributes: [
                                        :account_number,
                                        :routing_number

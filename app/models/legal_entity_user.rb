@@ -16,7 +16,7 @@
 #  index_legal_entity_users_on_user_id          (user_id)
 #
 class LegalEntityUser < ApplicationRecord
-  belongs_to :legal_entity
+  belongs_to :ilegal_entity
   belongs_to :user
 
   validate :person_entities_have_one_user

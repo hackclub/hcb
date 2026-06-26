@@ -12,7 +12,7 @@ module Reimbursement
             payout_method = payout_holding.report.user.default_payout_method&.details
 
             case payout_method
-            when LegalEntity::PayoutMethod::Wire
+            when IlegalEntity::PayoutMethod::Wire
               Rails.error.handle do
                 wire = clearinghouse.wires.build(
                   memo: "Reimbursement for #{payout_holding.report.name}.",
@@ -54,7 +54,7 @@ module Reimbursement
                   payout_holding.mark_sent!
                 end
               end
-            when LegalEntity::PayoutMethod::Check
+            when IlegalEntity::PayoutMethod::Check
               Rails.error.handle do
                 check = clearinghouse.increase_checks.build(
                   memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
@@ -82,7 +82,7 @@ module Reimbursement
                   Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
                 end
               end
-            when LegalEntity::PayoutMethod::AchTransfer
+            when IlegalEntity::PayoutMethod::AchTransfer
               Rails.error.handle do
                 ach_transfer = clearinghouse.ach_transfers.build(
                   amount: payout_holding.amount_cents,
@@ -112,7 +112,7 @@ module Reimbursement
                   payout_holding.mark_sent!
                 end
               end
-            when LegalEntity::PayoutMethod::WiseTransfer
+            when IlegalEntity::PayoutMethod::WiseTransfer
               if payout_holding.created_at < 20.minutes.ago
                 Rails.error.unexpected "🚨 WiseTransfer payout holding (#{payout_holding.id}) created more than 20 minutes ago but still unsent."
               end

@@ -178,7 +178,7 @@ class User < ApplicationRecord
   has_many :legal_entity_users
   has_many :legal_entities, through: :legal_entity_users
   # has_one :through needs a singular intermediate, so hop through a person-scoped join row.
-  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
+  has_one :person_legal_entity_user, -> { where(legal_entity_id: IlegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
 
@@ -584,7 +584,7 @@ class User < ApplicationRecord
 
   def can_update_payout_method?
     return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+    return true unless default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer)
     return false if reimbursement_reports.reimbursement_requested.any?
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 

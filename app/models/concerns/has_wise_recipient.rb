@@ -24,7 +24,7 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
-      if self == User::PayoutMethod::WiseTransfer || self == LegalEntity::PayoutMethod::WiseTransfer
+      if self == User::PayoutMethod::WiseTransfer || self == IlegalEntity::PayoutMethod::WiseTransfer
         fields << {
           type: :text_field,
           key: "account_holder",
