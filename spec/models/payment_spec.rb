@@ -45,13 +45,6 @@ RSpec.describe Payment, type: :model do
         payment.save!
         payment.update_columns(aasm_state: "under_review")
       end
-
-      it "delivers the rejected mailer" do
-        mail = double("mail", deliver_later: true)
-        allow(PaymentMailer).to receive_message_chain(:with, :rejected).and_return(mail)
-        payment.mark_rejected!
-        expect(mail).to have_received(:deliver_later)
-      end
     end
 
   end

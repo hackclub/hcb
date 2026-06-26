@@ -59,9 +59,6 @@ class Payment < ApplicationRecord
 
     event :mark_rejected do
       transitions from: :under_review, to: :rejected
-      after do
-        PaymentMailer.with(payment: self).rejected.deliver_later
-      end
     end
 
     event :mark_successful do

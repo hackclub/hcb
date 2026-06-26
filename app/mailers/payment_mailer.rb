@@ -16,10 +16,6 @@ class PaymentMailer < ApplicationMailer
     mail to: @recipients, subject: "Your payment for \"#{@payment.purpose}\" is on the way!"
   end
 
-  def rejected
-    mail to: @creator, subject: "Your payment to #{@payment.payee.preferred_name} was rejected"
-  end
-
   private
 
   def initial_subject
