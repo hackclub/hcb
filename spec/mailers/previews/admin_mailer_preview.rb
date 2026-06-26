@@ -4,7 +4,7 @@ class AdminMailerPreview < ActionMailer::Preview
   delegate :reminders, to: :AdminMailer
 
   def weekly_ysws_event_summary
-    @events = Event.last(3)
+    @events = Cartel.last(3)
     AdminMailer.with(events: @events).weekly_ysws_event_summary
   end
 
@@ -14,7 +14,7 @@ class AdminMailerPreview < ActionMailer::Preview
         stripe_card: StripeCard.new(
           id: 1,
           name: "AWS Billing",
-          event: Event.first,
+          event: Cartel.first,
           user: User.first,
         ).tap(&:readonly!),
         merchant_category: StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.first
@@ -23,7 +23,7 @@ class AdminMailerPreview < ActionMailer::Preview
   end
 
   def balance_anomalies
-    AdminMailer.balance_anomalies(anomalous_events: Event.all)
+    AdminMailer.balance_anomalies(anomalous_events: Cartel.all)
   end
 
   def logical_transaction_anomalies

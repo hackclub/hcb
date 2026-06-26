@@ -12,7 +12,7 @@ module EventService
                    is_public: true,
                    is_indexable: true,
                    approved: false,
-                   plan: Event::Plan::Standard,
+                   plan: Cartel::Plan::Standard,
                    tags: [],
                    can_front_balance: true,
                    demo_mode: false,
@@ -45,7 +45,7 @@ module EventService
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
       event = ActiveRecord::Base.transaction do
-        event = ::Event.create!(attrs)
+        event = ::Cartel.create!(attrs)
         @tags
           .filter { |tag| EventTag::Tags::ALL.include?(tag) }
           .each do |tag|
@@ -100,7 +100,7 @@ module EventService
         demo_mode: @demo_mode,
         financially_frozen: true,
         parent: @parent_event,
-        plan: Event::Plan.new(type: @plan),
+        plan: Cartel::Plan.new(type: @plan),
         event_scoped_tags_events_attributes: @scoped_tags.map { |scoped_tag_id| { event_scoped_tag_id: scoped_tag_id } }
       }.tap do |hash|
         hash[:risk_level] = @risk_level if @risk_level.present?

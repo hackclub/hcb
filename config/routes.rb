@@ -884,7 +884,7 @@ Rails.application.routes.draw do
     end
   end
 
-  scope module: :event do
+  scope module: :cartel do
     get "apply", to: "applications#apply"
 
     resources :applications, only: [:index, :create, :show, :new, :update] do
@@ -912,10 +912,10 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :affiliations, only: [:create, :update, :destroy], module: :event
+  resources :affiliations, only: [:create, :update, :destroy], module: :cartel
 
   get "/events" => "events#index"
-  resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
+  resources :cartels, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
 
     # Loaded as Turbo frames on the home page
     get :team_stats
@@ -1063,7 +1063,7 @@ Rails.application.routes.draw do
 
     resources :payment_recipients, only: [:destroy]
 
-    resources :scoped_tags, module: :event, only: [:create, :update, :destroy] do
+    resources :scoped_tags, module: :cartel, only: [:create, :update, :destroy] do
       member do
         post "toggle_tag"
       end

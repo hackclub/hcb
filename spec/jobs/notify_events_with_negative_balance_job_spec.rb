@@ -23,7 +23,7 @@ RSpec.describe NotifyEventsWithNegativeBalanceJob do
     expect(event2.balance).to eq(-12_34)
 
     # An internal event with a negative balance
-    event3 = create(:event, name: "Internal event with negative balance", plan_type: Event::Plan::Internal)
+    event3 = create(:event, name: "Internal event with negative balance", plan_type: Cartel::Plan::Internal)
     event3_user = create(:user, full_name: "Internal User", email: "internal@example.com")
     create(:organizer_position, event: event3, user: event3_user)
     # Create a card grant with an admin user that makes the balance negative

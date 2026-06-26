@@ -5,7 +5,7 @@ module BankFeeService
     def run
       bank_fees = []
 
-      Event.pending_fees_v2.find_each(batch_size: 100) do |event|
+      Cartel.pending_fees_v2.find_each(batch_size: 100) do |event|
         bank_fees << BankFeeService::Create.new(event_id: event.id).run
       end
 

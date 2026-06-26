@@ -48,7 +48,7 @@ class CheckDeposit < ApplicationRecord
 
   monetize :amount_cents
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :created_by, class_name: "User"
   has_one :canonical_pending_transaction
 

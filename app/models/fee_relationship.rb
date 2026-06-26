@@ -21,7 +21,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class FeeRelationship < ApplicationRecord
-  belongs_to :event
+  belongs_to :cartel
   has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_relationship
 
   # these two are mutually exclusive

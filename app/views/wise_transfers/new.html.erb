@@ -9,7 +9,7 @@
 
 <% content_for :sidebar_footer do %>
   <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
+    <%= render partial: "cartels/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
   <% end %>
   <%= render "application/callout",
       type: "info",

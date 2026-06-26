@@ -41,9 +41,9 @@ module Users
       end
 
       user = current_user(allow_unverified: true)
-      event = Event::Affiliation.matching_first_event_for(user)
+      event = Cartel::Affiliation.matching_first_event_for(user)
 
-      unless Event::Affiliation.eligible_to_request_invite?(user, event)
+      unless Cartel::Affiliation.eligible_to_request_invite?(user, event)
         redirect_to first_index_path, flash: { error: "You're not eligible to request to join this organization." } and return
       end
 
@@ -66,7 +66,7 @@ module Users
         return render json: { error: "Team prefill is unsupported for #{params[:league]}" }, status: :not_found
       end
 
-      result = Event::Affiliation.tba_lookup(params[:league], params[:team_number])
+      result = Cartel::Affiliation.tba_lookup(params[:league], params[:team_number])
 
       if result.nil?
         return render json: { error: "Team not found" }, status: :not_found
@@ -86,7 +86,7 @@ module Users
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user_referral = params[:referred_by] if params[:referred_by].present?
-      @user = User.new(affiliations: [Event::Affiliation.new])
+      @user = User.new(affiliations: [Cartel::Affiliation.new])
 
     end
 
@@ -193,7 +193,7 @@ module Users
       return unless affiliation && affiliation.league.present? && affiliation.team_number.present?
 
       @first_affiliation = affiliation
-      @team_event = Event::Affiliation.matching_first_event_for(user)
+      @team_event = Cartel::Affiliation.matching_first_event_for(user)
 
       if @team_event
         positions_scope = @team_event.organizer_positions.where(deleted_at: nil).where.not(user_id: user.id)
@@ -205,7 +205,7 @@ module Users
                             .to_a
         @team_org_members_total = positions_scope.count
       else
-        peer_user_ids = Event::Affiliation
+        peer_user_ids = Cartel::Affiliation
                         .where(affiliable_type: "User", name: "first")
                         .where("metadata ->> 'league' = ?", affiliation.league)
                         .where("metadata ->> 'team_number' = ?", affiliation.team_number)

@@ -49,7 +49,7 @@ class Export
         private
 
         def event
-          @event ||= ::Event.find(event_id)
+          @event ||= ::Cartel.find(event_id)
         end
 
         def row(ct)

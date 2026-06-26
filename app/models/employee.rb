@@ -50,7 +50,7 @@ class Employee < ApplicationRecord
     end
   end
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :entity, polymorphic: true
   has_many :payments
 

@@ -9,7 +9,7 @@ These tasks are older than 24 hours:
 These events are currently negative:
 
 <ul>
-  <% Event.negatives.each do |event| %>
+  <% Cartel.negatives.each do |event| %>
     <li style="margin-top: 8px;"><%= link_to event.name, event %>: <%= render_money event.balance %></li>
   <% end %>
 </ul>

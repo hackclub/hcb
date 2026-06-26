@@ -27,7 +27,7 @@ module CanonicalTransactionService
     private
 
     def event
-      @event ||= ::Event.find_by(id: @event_id)
+      @event ||= ::Cartel.find_by(id: @event_id)
     end
 
     def attrs

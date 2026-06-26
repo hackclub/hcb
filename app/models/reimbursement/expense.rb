@@ -38,7 +38,7 @@ module Reimbursement
     validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
     attribute :expense_number, :integer
     has_one :expense_payout
-    has_one :event, through: :report
+    has_one :cartel, through: :report
     has_one :user, through: :report
     belongs_to :approved_by, class_name: "User", optional: true
     include AASM

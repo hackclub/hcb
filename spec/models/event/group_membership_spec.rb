@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Event::GroupMembership do
+RSpec.describe Cartel::GroupMembership do
   it "cannot contain duplicate entries" do
     event = create(:event)
     group = create(:event_group)

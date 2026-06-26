@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class StatementOfActivity
     prepend MemoWise
 
@@ -23,9 +23,9 @@ class Event
       @event_group, @event = nil
 
       case event_or_event_group
-      when Event
+      when Cartel
         @event = event_or_event_group
-      when Event::Group
+      when Cartel::Group
         @event_group = event_or_event_group
       else
         raise(ArgumentError, "unsupported event_or_event_group: #{event_or_event_group.inspect}")
@@ -163,7 +163,7 @@ class Event
       elsif include_descendants
         [
           event,
-          *Event.where(id: event.descendant_ids).to_a
+          *Cartel.where(id: event.descendant_ids).to_a
         ]
       else
         [event]

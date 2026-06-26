@@ -34,7 +34,7 @@ class BankFee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :bfe
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :fee_revenue, optional: true
 
   monetize :amount_cents

@@ -24,7 +24,7 @@ RSpec.describe EventService::Create do
         point_of_contact_id: User.system_user.id,
         invited_by:,
         parent_event:,
-        plan: Event::Plan::Standard
+        plan: Cartel::Plan::Standard
       )
     end
 

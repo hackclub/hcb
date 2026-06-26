@@ -6,7 +6,7 @@ module OneTimeJobs
 
     # Backfills `Ledger::Item`s for all HcbCodes on a single event.
     def perform(event_id)
-      event = Event.find(event_id)
+      event = Cartel.find(event_id)
 
       hcb_codes = event.hcb_codes
                        .left_joins(:canonical_transactions, :canonical_pending_transactions)

@@ -16,7 +16,7 @@
 #
 #  index_event_affiliations_on_affiliable  (affiliable_type,affiliable_id)
 #
-class Event
+class Cartel
   class Affiliation < ApplicationRecord
     include Hashid::Rails
     hashid_config salt: ""
@@ -85,7 +85,7 @@ class Event
       aff = user&.affiliations&.find_by(name: "first")
       return nil unless aff&.league.present? && aff&.team_number.present?
 
-      Event.joins(:affiliations)
+      Cartel.joins(:affiliations)
            .where(affiliations: { name: "first" })
            .where("affiliations.metadata->>'league' = ?", aff.league)
            .where("affiliations.metadata->>'team_number' = ?", aff.team_number)

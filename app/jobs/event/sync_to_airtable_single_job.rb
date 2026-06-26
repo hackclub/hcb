@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class SyncToAirtableSingleJob < ApplicationJob
     queue_as :low
 

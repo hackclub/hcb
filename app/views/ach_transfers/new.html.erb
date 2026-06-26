@@ -19,7 +19,7 @@
     </ul>
   <% end %>
   <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
+    <%= render partial: "cartels/unauthorized_callout", locals: { action: "send an ACH" } %>
   <% end %>
 <% end %>
 

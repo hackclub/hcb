@@ -12,14 +12,14 @@ module Api
         use :pagination, per_page: 50, max_per_page: 100
       end
       get :organizations do
-        orgs = Event.indexable.includes(:event_tags).where(event_tags: { name: [EventTag::Tags::HACKATHON, EventTag::Tags::ROBOTICS_TEAM, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS, EventTag::Tags::ORGANIZED_BY_TEENAGERS] })
-                    .or(
+        orgs = Cartel.indexable.includes(:event_tags).where(event_tags: { name: [EventTag::Tags::HACKATHON, EventTag::Tags::ROBOTICS_TEAM, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS, EventTag::Tags::ORGANIZED_BY_TEENAGERS] })
+                     .or(
                       # Tagged as okay to list in the Climate Directory
-                      Event.includes(:event_tags).where({ event_tags: { name: EventTag::Tags::CLIMATE, purpose: :directory } }),
+                       Cartel.includes(:event_tags).where({ event_tags: { name: EventTag::Tags::CLIMATE, purpose: :directory } }),
                     )
-        orgs = Event.where(id: orgs.select(:id))
-                    .includes(:event_tags)
-                    .with_attached_logo.with_attached_background_image
+        orgs = Cartel.where(id: orgs.select(:id))
+                     .includes(:event_tags)
+                     .with_attached_logo.with_attached_background_image
 
         @organizations = paginate(orgs.reorder(name: :asc))
 

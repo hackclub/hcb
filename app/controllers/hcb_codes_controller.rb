@@ -17,7 +17,7 @@ class HcbCodesController < ApplicationController
         route = Rails.application.routes.recognize_path(request.referrer)
         model = route[:controller].classify.constantize
         object = model.find(route[:id])
-        event = model == Event ? object : object.event
+        event = model == Cartel ? object : object.event
         raise StandardError unless @hcb_code.events.include?(event) && current_user.events.include?(event)
 
         event
@@ -68,7 +68,7 @@ class HcbCodesController < ApplicationController
       if @hcb_code.canonical_transactions.any?
         txs = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         pos = txs.index { |tx| tx.hcb_code == hcb } + 1
-        page = (pos.to_f / EventsController::TRANSACTIONS_PER_PAGE).ceil
+        page = (pos.to_f / CartelsController::TRANSACTIONS_PER_PAGE).ceil
 
         redirect_to event_path(@event, page:, anchor: hcb_id)
       else
@@ -99,7 +99,7 @@ class HcbCodesController < ApplicationController
 
   def pin
     @hcb_code = HcbCode.find(params[:id])
-    param_event = Event.friendly.find_by_friendly_id(params[:event])
+    param_event = Cartel.friendly.find_by_friendly_id(params[:event])
     @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
 
     authorize @hcb_code

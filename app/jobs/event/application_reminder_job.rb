@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class ApplicationReminderJob < ApplicationJob
     queue_as :low
     def perform(application, tip_number)
       return unless application.draft? && !application.archived?
 
-      Event::ApplicationMailer.with(application:, tip_number:).incomplete.deliver_later
+      Cartel::ApplicationMailer.with(application:, tip_number:).incomplete.deliver_later
     end
 
   end

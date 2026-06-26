@@ -10,11 +10,11 @@ class NotifyEventsWithNegativeBalanceJob
   sidekiq_options(queue: :low, retry: false)
 
   def build_enumerator(cursor:)
-    active_record_records_enumerator(Event.all, cursor:)
+    active_record_records_enumerator(Cartel.all, cursor:)
   end
 
   def each_iteration(event)
-    return if event.plan.is_a?(Event::Plan::Internal)
+    return if event.plan.is_a?(Cartel::Plan::Internal)
 
     event_balance = event.balance
     return unless event_balance.negative?

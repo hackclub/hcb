@@ -16,7 +16,7 @@ module SearchService
         if @context[:user_id] && @query["types"].length == 1
           events = User.find(@context[:user_id]).events
         elsif @auditor
-          events = Event
+          events = Cartel
         else
           events = @user.events
         end

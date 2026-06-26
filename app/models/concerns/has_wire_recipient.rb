@@ -213,7 +213,7 @@ module HasWireRecipient
 
     def self.recipient_information_accessors
       fields = []
-      Event.countries_for_select.each do |country|
+      Cartel.countries_for_select.each do |country|
         fields += self.information_required_for(country[0])
       end
       fields.collect{ |field| field[:key] }.uniq

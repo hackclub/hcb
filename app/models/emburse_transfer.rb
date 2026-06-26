@@ -43,7 +43,7 @@ class EmburseTransfer < ApplicationRecord
   # association for compatability with migrations
   belongs_to :emburse_card, optional: true
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :fulfilled_by, class_name: "User", optional: true
   belongs_to :creator, class_name: "User"
   has_one :t_transaction, class_name: "Transaction"

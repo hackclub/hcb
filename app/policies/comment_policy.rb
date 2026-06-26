@@ -55,7 +55,7 @@ class CommentPolicy < ApplicationPolicy
         user_list += record.commentable.event&.users || [] # event&.users can be nil (event-less reports)
         user_list += record.commentable.event&.ancestor_users || []
       end
-    elsif record.commentable.is_a?(Event)
+    elsif record.commentable.is_a?(Cartel)
       user_list = []
     else
       user_list = record.commentable.event.users

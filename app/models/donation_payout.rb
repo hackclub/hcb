@@ -46,7 +46,7 @@ class DonationPayout < ApplicationRecord
   # Stripe's schema makes this possible, and when that happens, requiring donation<>payout breaks bank
   has_one :donation, inverse_of: :payout, foreign_key: :payout_id
   stripe_payoutable :donation
-  has_one :event, through: :donation
+  has_one :cartel, through: :donation
   has_one :t_transaction, class_name: "Transaction"
 
   delegate :hcb_code, :local_hcb_code, to: :donation

@@ -53,7 +53,7 @@ class StripeAuthorization < ApplicationRecord
   has_one :stripe_cardholder, through: :stripe_card, as: :cardholder
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
-  has_one :event, through: :stripe_card
+  has_one :cartel, through: :stripe_card
 
   enum :stripe_status, { pending: 0, closed: 1, reversed: 2 }
   enum :authorization_method, { keyed_in: 0, swipe: 1, chip: 2, contactless: 3, online: 4 }

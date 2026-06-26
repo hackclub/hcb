@@ -37,8 +37,8 @@ class DisbursementsController < ApplicationController
   end
 
   def new
-    @destination_event = Event.friendly.find(params[:event_id]) if params[:event_id]
-    @source_event = Event.friendly.find(params[:source_event_id]) if params[:source_event_id]
+    @destination_event = Cartel.friendly.find(params[:event_id]) if params[:event_id]
+    @source_event = Cartel.friendly.find(params[:source_event_id]) if params[:source_event_id]
     @event = @source_event # this is to render the navigation bar for the correct event.
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
@@ -58,13 +58,13 @@ class DisbursementsController < ApplicationController
     sending = params[:sending] == "true"
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-    @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
+    @source_event = Cartel.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug, :can_front_balance).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Cartel.select(:name, :id, :demo_mode, :slug, :can_front_balance).reorder(Cartel::CUSTOM_SORT).includes(:plan)
            elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
-             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
+             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Cartel.indexable.select(:id)
+             Cartel.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
@@ -106,8 +106,8 @@ class DisbursementsController < ApplicationController
   end
 
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
-    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
+    @source_event = Cartel.find_by_public_id(disbursement_params[:source_event_id])
+    @destination_event = Cartel.find_by_public_id(disbursement_params[:event_id]) || Cartel.friendly.find(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement

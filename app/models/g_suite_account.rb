@@ -40,7 +40,7 @@ class GSuiteAccount < ApplicationRecord
   paginates_per 50
 
   belongs_to :g_suite
-  has_one :event, through: :g_suite
+  has_one :cartel, through: :g_suite
   has_many :g_suite_aliases, dependent: :destroy
   belongs_to :creator, class_name: "User"
 

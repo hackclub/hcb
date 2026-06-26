@@ -18,7 +18,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class Subledger < ApplicationRecord
-  belongs_to :event
+  belongs_to :cartel
 
   has_one :card_grant
 

@@ -7,7 +7,7 @@ class StatsController < ApplicationController
   def project_stats
     slug = params[:slug]
 
-    event = Event.find_by(is_public: true, slug:)
+    event = Cartel.find_by(is_public: true, slug:)
 
     return render plain: "404 Not found", status: :not_found unless event
 

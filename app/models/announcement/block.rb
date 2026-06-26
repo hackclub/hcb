@@ -27,7 +27,7 @@ class Announcement
     acts_as_paranoid
 
     belongs_to :announcement
-    has_one :event, through: :announcement
+    has_one :cartel, through: :announcement
 
     before_save { self.parameters ||= {} }
 

@@ -15,7 +15,7 @@ module Api
           category = "hack_club" if organization.event_tags.where(name: EventTag::Tags::HACK_CLUB).exists?
           category = "hackathon" if organization.hackathon?
           category = "robotics_team" if organization.robotics_team?
-          category = "hack_club_hq" if organization.plan.is_a?(Event::Plan::HackClubAffiliate)
+          category = "hack_club_hq" if organization.plan.is_a?(Cartel::Plan::HackClubAffiliate)
 
           category
         end

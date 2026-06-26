@@ -46,15 +46,15 @@ Most contracts are sent automatically by HCB, but we sometimes need custom contr
 
 ```ruby
 # Copy the event ID from HCB
-EVENT_ID=
+EVENT_ID =
 
-# Use the last part of the URL to the document on HCB
-DOCUMENT_SLUG=
+  # Use the last part of the URL to the document on HCB
+  DOCUMENT_SLUG =
 
-# The email of the invited user who signed the contract
-INVITEE_EMAIL=
+    # The email of the invited user who signed the contract
+    INVITEE_EMAIL =
 
-event = Event.find(EVENT_ID)
+      event = Cartel.find(EVENT_ID)
 document = Document.find_by!(slug: DOCUMENT_SLUG)
 invite = event.organizer_position_invites.find_by!(email: INVITEE_EMAIL)
 invite.update!(is_signee: true)

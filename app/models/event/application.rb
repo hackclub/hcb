@@ -55,7 +55,7 @@
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (user_id => users.id)
 #
-class Event
+class Cartel
   class Application < ApplicationRecord
     has_paper_trail
 
@@ -73,7 +73,7 @@ class Event
     set_public_id_prefix :apl
 
     belongs_to :user
-    belongs_to :event, optional: true
+    belongs_to :cartel, optional: true
     belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
@@ -90,10 +90,10 @@ class Event
     include Rails.application.routes.url_helpers
 
     after_create_commit do
-      Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
-      Event::ApplicationReminderJob.set(wait: 2.days).perform_later(self, 2)
-      Event::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
-      Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
+      Cartel::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
+      Cartel::ApplicationReminderJob.set(wait: 2.days).perform_later(self, 2)
+      Cartel::ApplicationReminderJob.set(wait: 7.days).perform_later(self, 3)
+      Cartel::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
     end
 
     scope :not_archived, -> { where(archived_at: nil) }
@@ -127,7 +127,7 @@ class Event
 
           if teen_led?
             send_contract
-            Event::ApplicationMailer.with(application: self).confirmation.deliver_later
+            Cartel::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
             mark_under_review!
           end
@@ -137,7 +137,7 @@ class Event
       event :mark_under_review do
         transitions from: [:draft, :submitted], to: :under_review
         after do
-          Event::ApplicationMailer.with(application: self).under_review.deliver_later
+          Cartel::ApplicationMailer.with(application: self).under_review.deliver_later
         end
       end
 
@@ -148,7 +148,7 @@ class Event
             contract.party(:hcb).schedule_reminders
           else
             send_contract unless contract.present?
-            Event::ApplicationMailer.with(application: self).approved.deliver_later
+            Cartel::ApplicationMailer.with(application: self).approved.deliver_later
           end
         end
       end
@@ -159,7 +159,7 @@ class Event
           contract.mark_voided! if contract.present?
 
           if rejection_message.present?
-            Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
+            Cartel::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
         end
       end
@@ -280,7 +280,7 @@ class Event
         fs_contract = Contract::FiscalSponsorship.create!(
           contractable: self,
           include_videos: false,
-          external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
+          external_template_id: Cartel::Plan::Standard.new.contract_docuseal_template_id,
           prefills: { "public_id" => public_id, "name" => name, "description" => description },
           reissue_of:
         )
@@ -341,7 +341,7 @@ class Event
         raise ArgumentError.new("Event was already created") if event.present?
 
         poc_user = point_of_contact.presence || contract.party(:hcb).user
-        Event.create!(
+        Cartel.create!(
           name:,
           country: address_country,
           point_of_contact_id: poc_user.id,
@@ -368,7 +368,7 @@ class Event
 
       schedule_airtable_sync
 
-      Event::ApplicationMailer.with(application: self).activated.deliver_later
+      Cartel::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
     end
@@ -412,7 +412,7 @@ class Event
     private
 
     def schedule_airtable_sync
-      Event::ApplicationSyncToAirtableJob.perform_later(self)
+      Cartel::ApplicationSyncToAirtableJob.perform_later(self)
     end
 
     def cosigner_cannot_change_after_sign

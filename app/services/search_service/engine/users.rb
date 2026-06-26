@@ -14,7 +14,7 @@ module SearchService
 
       def run
         if @context[:event_id] && @query["types"].length == 1
-          users = Event.find(@context[:event_id]).users.where.not(full_name: nil)
+          users = Cartel.find(@context[:event_id]).users.where.not(full_name: nil)
         elsif @auditor
           users = User.where.not(full_name: nil)
         else

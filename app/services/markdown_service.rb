@@ -71,7 +71,7 @@ class MarkdownService
 
       if found_event
         event_id = found_event[2]
-        event = Event.find_by_slug(event_id) || Event.find_by_id(event_id)
+        event = Cartel.find_by_slug(event_id) || Cartel.find_by_id(event_id)
 
         return nil unless event
 

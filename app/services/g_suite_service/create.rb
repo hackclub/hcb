@@ -48,7 +48,7 @@ module GSuiteService
     end
 
     def event
-      @event ||= Event.find(@event_id)
+      @event ||= Cartel.find(@event_id)
     end
 
     def error_message

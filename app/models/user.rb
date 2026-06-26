@@ -415,7 +415,7 @@ class User < ApplicationRecord
 
   def hcb_code_ids_missing_receipt
     @hcb_code_ids_missing_receipt ||= begin
-      user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
+      user_cards = stripe_cards.includes(event: :plan).where.not(plan: { type: Cartel::Plan::SalaryAccount.name }) + emburse_cards.includes(:emburse_transactions)
       user_cards.flat_map { |card| card.local_hcb_codes.missing_receipt.receipt_required.pluck(:id) }
     end
   end
@@ -641,7 +641,7 @@ class User < ApplicationRecord
   end
 
   def reimbursement_event_options
-    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+    events.not_demo_mode.or(Cartel.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
   def show_first_dashboard?
@@ -678,7 +678,7 @@ class User < ApplicationRecord
 
   def accessible_events(roles:)
     event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
-    Event.where(id: event_ids)
+    Cartel.where(id: event_ids)
   end
 
   def update_stripe_cardholder

@@ -11,7 +11,7 @@
 
   <div class="field">
     <%= form.label :event %>
-    <%= form.collection_select(:event_id, Event.reorder(:name), :id, :name, include_blank: "Select one…") %>
+    <%= form.collection_select(:event_id, Cartel.reorder(:name), :id, :name, include_blank: "Select one…") %>
   </div>
 
   <div class="field">

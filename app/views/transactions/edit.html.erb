@@ -1,7 +1,7 @@
 <% title "Rename transaction for #{render_money @transaction.amount}" %>
 <% page_sm %>
 
-<%= render "events/nav" if @event %>
+<%= render "cartels/nav" if @event %>
 
 <h1 class="h1">
   Rename <%= render_money @transaction.amount %> <%= @fee && @fee.fee_amount.nil? ? "fee payment" : "transaction" %>

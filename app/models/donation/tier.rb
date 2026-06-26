@@ -28,7 +28,7 @@ class Donation
     include Hashid::Rails
     hashid_config salt: ""
 
-    belongs_to :event
+    belongs_to :cartel
 
     validates :name, :amount_cents, presence: true
     validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }

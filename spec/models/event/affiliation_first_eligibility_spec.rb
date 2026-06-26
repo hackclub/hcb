@@ -7,7 +7,7 @@ require "rails_helper"
 # callback. Centralizing the predicate prevents drift between "can the user see
 # the Request-to-join button?", "can they actually request?", and "do they get a
 # raffle entry on approval?".
-RSpec.describe Event::Affiliation, type: :model do
+RSpec.describe Cartel::Affiliation, type: :model do
   # The /first flow calls these via `current_user(allow_unverified: true)`,
   # so the predicates must work for users who haven't verified their email.
   let(:user) { create(:user, verified: false) }

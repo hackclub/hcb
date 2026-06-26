@@ -24,7 +24,7 @@
 class HcbCode
   class Pin < ApplicationRecord
     belongs_to :hcb_code
-    belongs_to :event
+    belongs_to :cartel
     validate :validate_max_pins_for_event, on: :create
     validate :validate_pinnable, on: :create
 

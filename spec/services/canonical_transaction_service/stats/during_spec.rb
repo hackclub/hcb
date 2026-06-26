@@ -7,7 +7,7 @@ RSpec.describe CanonicalTransactionService::Stats::During do
   let(:event_2) { create(:event) }
   let(:event_3) {
     event = create(:event)
-    event.plan.update(type: Event::Plan::HackClubAffiliate)
+    event.plan.update(type: Cartel::Plan::HackClubAffiliate)
     event.reload
   }
 

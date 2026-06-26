@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class AffiliationsController < ApplicationController
     # these actions are called before the user has completed their profile during the application process
     skip_before_action :redirect_to_onboarding
@@ -10,7 +10,7 @@ class Event
     def create
       authorize @affiliable, policy_class: AffiliationPolicy
 
-      affiliation = Event::Affiliation.new(
+      affiliation = Cartel::Affiliation.new(
         {
           name: params[:type],
           metadata: @metadata,
@@ -48,9 +48,9 @@ class Event
     def set_affiliable
       case params[:affiliable_type]
       when "Event"
-        @affiliable = Event.find(params[:affiliable_id])
+        @affiliable = Cartel.find(params[:affiliable_id])
       when "Event::Application"
-        @affiliable = Event::Application.find(params[:affiliable_id])
+        @affiliable = Cartel::Application.find(params[:affiliable_id])
       end
     end
 

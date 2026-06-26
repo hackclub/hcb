@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class FollowsController < ApplicationController
     include SetEvent
     skip_before_action :signed_in_user, only: :create
@@ -16,7 +16,7 @@ class Event
         user_id: current_user.id,
         event: @event
       }
-      follow = Event::Follow.new(attrs)
+      follow = Cartel::Follow.new(attrs)
       authorize follow
       begin
         follow.save!
@@ -28,7 +28,7 @@ class Event
     end
 
     def destroy
-      @event_follow = Event::Follow.find(params[:id])
+      @event_follow = Cartel::Follow.find(params[:id])
       authorize @event_follow
       slug = @event_follow.event.slug
       @event_follow.destroy!

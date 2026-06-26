@@ -145,7 +145,7 @@ RSpec.describe "Users::FirstController", type: :request do
     context "when the team org exists on HCB" do
       let!(:team_event) { create(:event) }
       let!(:event_affiliation) do
-        Event::Affiliation.create!(affiliable: team_event, name: "first", metadata: affiliation_metadata)
+        Cartel::Affiliation.create!(affiliable: team_event, name: "first", metadata: affiliation_metadata)
       end
       let!(:teammate) { create(:user, verified: true, full_name: "Maya Patel") }
       let!(:teammate_position) { create(:organizer_position, user: teammate, event: team_event) }

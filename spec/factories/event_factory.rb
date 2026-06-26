@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
-  factory :event do
+  factory :cartel do
     name { Faker::Name.unique.name }
     transient do
-      plan_type { Event::Plan::FeeWaived }
+      plan_type { Cartel::Plan::FeeWaived }
       organizers { [] }
     end
 

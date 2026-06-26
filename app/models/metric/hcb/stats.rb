@@ -37,13 +37,13 @@ class Metric
         day_ago = now - 1.day
 
 
-        events_list = ::Event.not_omitted
-                             .where("events.created_at <= ?", now)
-                             .order(created_at: :desc)
-                             .limit(10)
-                             .pluck(:created_at)
-                             .map(&:to_i)
-                             .map { |time| { created_at: time } }
+        events_list = ::Cartel.not_omitted
+                              .where("events.created_at <= ?", now)
+                              .order(created_at: :desc)
+                              .limit(10)
+                              .pluck(:created_at)
+                              .map(&:to_i)
+                              .map { |time| { created_at: time } }
 
         tx_all = CanonicalTransaction.where.not("hcb_code LIKE 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'")
                                      .included_in_stats
@@ -56,12 +56,12 @@ class Metric
 
         {
           date: now,
-          events_count: ::Event.not_omitted
-                               .not_hidden
-                               .not_demo_mode
-                               .approved
-                               .where("events.created_at <= ?", now)
-                               .count,
+          events_count: ::Cartel.not_omitted
+                                .not_hidden
+                                .not_demo_mode
+                                .approved
+                                .where("events.created_at <= ?", now)
+                                .count,
           last_transaction_date: tx_all.order(:date).last.date.beginning_of_day.to_i,
 
           # entire time period. this remains to prevent breaking changes to existing systems that use this endpoint

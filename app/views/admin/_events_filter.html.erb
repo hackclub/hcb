@@ -37,7 +37,7 @@
 
   <%= form.label :country do %>
     Country
-    <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: @country } %>
+    <%= form.select :country, { 'Outside US': 9999 }.merge(Cartel.countries), { include_blank: "all", selected: @country } %>
   <% end %>
 
   <%= form.label :point_of_contact_id do %>
@@ -52,7 +52,7 @@
 
   <%= form.label :plan do %>
     Current plan
-    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
+    <%= form.select :plan, Cartel::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
   <% end %>
 
   <%= form.label :sort_by do %>
@@ -67,7 +67,7 @@
 
   <%= form.label :risk_level do %>
     <span style="text-wrap: nowrap;">Risk level</span>
-    <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
+    <%= form.select :risk_level, Cartel.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
   <% end %>
 
 </div>

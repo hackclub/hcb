@@ -18,7 +18,7 @@ module SetEvent
           return
         end
 
-        nav_items = EventsHelper::NAV_ITEMS.flat_map do |item|
+        nav_items = CartelsHelper::NAV_ITEMS.flat_map do |item|
           item[:dropdown_items]&.map do |di|
             di.merge(
               name: "#{item[:dropdown]} (#{di[:name]})",
@@ -58,7 +58,7 @@ module SetEvent
         return
       end
 
-      @event = auditor_signed_in? ? Event.friendly.find(id) : Event.friendly.find_by_friendly_id(id)
+      @event = auditor_signed_in? ? Cartel.friendly.find(id) : Cartel.friendly.find_by_friendly_id(id)
 
       @organizer_position = @event.organizer_positions.find_by(user: current_user) if signed_in?
       @first_time = params[:first_time] || @organizer_position&.first_time?
@@ -89,9 +89,9 @@ module SetEvent
 
     def set_api_event
       if params[:event_id]
-        @event = Event.find_by_public_id(params[:event_id]) || Event.friendly.find(params[:event_id])
+        @event = Cartel.find_by_public_id(params[:event_id]) || Cartel.friendly.find(params[:event_id])
       else
-        @event = Event.find_by_public_id(params[:organization_id]) || Event.friendly.find(params[:organization_id])
+        @event = Cartel.find_by_public_id(params[:organization_id]) || Cartel.friendly.find(params[:organization_id])
       end
     end
 

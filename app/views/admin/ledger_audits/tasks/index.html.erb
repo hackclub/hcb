@@ -18,7 +18,7 @@
     <tbody>
       <% @tasks.each do |task| %>
         <% hcb_code = task.hcb_code %>
-        <tr class="<%= hcb_code.event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "admin-bg-red" : "" %>">
+        <tr class="<%= hcb_code.event.plan.is_a?(Cartel::Plan::HackClubAffiliate) ? "admin-bg-red" : "" %>">
           <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
           <td>
             <span style="display: flex; align-items: center; gap: 8px;">

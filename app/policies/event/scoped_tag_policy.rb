@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class ScopedTagPolicy < ApplicationPolicy
     def create?
       admin_or_manager?

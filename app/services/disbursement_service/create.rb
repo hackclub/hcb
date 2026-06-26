@@ -27,9 +27,9 @@ module DisbursementService
       category_assignment_strategy: "manual"
     )
       @source_event_id = source_event_id
-      @source_event = Event.find(@source_event_id)
+      @source_event = Cartel.find(@source_event_id)
       @destination_event_id = destination_event_id
-      @destination_event = Event.find(@destination_event_id)
+      @destination_event = Cartel.find(@destination_event_id)
       @destination_subledger_id = destination_subledger_id
       @source_subledger_id = source_subledger_id
       @name = name
@@ -129,11 +129,11 @@ module DisbursementService
     end
 
     def source_event
-      @source_event ||= Event.find(@source_event_id)
+      @source_event ||= Cartel.find(@source_event_id)
     end
 
     def destination_event
-      @destination_event ||= Event.find(@destination_event_id)
+      @destination_event ||= Cartel.find(@destination_event_id)
     end
 
     def source_transaction_category

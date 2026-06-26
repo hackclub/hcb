@@ -59,7 +59,7 @@ class WiseTransfer < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :wse
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :user
   has_paper_trail
   include HasPaperTrailHelpers

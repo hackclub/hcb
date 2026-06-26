@@ -1,5 +1,5 @@
 <% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user.name}, #{(@event || @card.event).name})" : "Inactive card" %>
-<%= render "events/nav", selected: :cards unless @frame %>
+<%= render "cartels/nav", selected: :cards unless @frame %>
 
 <%= turbo_frame_tag "stripe_card_#{@card.public_id}" do %>
   <%= render partial: "stripe_cards/canceled_warning", locals: { stripe_card: @card } %>

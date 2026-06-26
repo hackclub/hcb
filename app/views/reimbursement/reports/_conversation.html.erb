@@ -28,7 +28,7 @@
         <% changes = {
              "submitted"               => ["send", "info", "submitted this report"],
              "rejected"                => ["thumbsdown", "error", "rejected this report"],
-             "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Event.find_by_id(item.object&.[]("event_id") || @report.event_id)&.name}"],
+             "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Cartel.find_by_id(item.object&.[]("event_id") || @report.event_id)&.name}"],
              "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
              "draft_created"           => ["plus", "success", @report.card_grant.present? ? "converted a card grant into this draft report" : "created this draft report"],

@@ -72,7 +72,7 @@
                 <% if op.organizer_position_deletion_requests.any? %>
                   <%= link_to "#{op&.event&.id}☥", op.organizer_position_deletion_requests.first %>
                 <% else %>
-                  <%= link_to "#{op.event_id}☥", Event.with_deleted.find(op.event_id) %>
+                  <%= link_to "#{op.event_id}☥", Cartel.with_deleted.find(op.event_id) %>
                 <% end %>
               </em>
             <% else %>

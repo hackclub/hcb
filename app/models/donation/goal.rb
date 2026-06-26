@@ -26,7 +26,7 @@ class Donation
     validates_as_paranoid
     has_paper_trail
 
-    belongs_to :event
+    belongs_to :cartel
 
     validates :amount_cents, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
     validates :tracking_since, presence: true

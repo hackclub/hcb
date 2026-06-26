@@ -42,7 +42,7 @@ class GSuite < ApplicationRecord
   include AASM
   include Commentable
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :created_by, class_name: "User", optional: true
   has_many :accounts, class_name: "GSuiteAccount", dependent: :destroy
   has_one :revocation, class_name: "GSuite::Revocation", dependent: :destroy

@@ -15,7 +15,7 @@ class Comment
       end
 
       respond_to do |format|
-        format.html { redirect_to @comment.commentable.is_a?(Event) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable }
+        format.html { redirect_to @comment.commentable.is_a?(Cartel) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable }
         format.turbo_stream { render "comments/reactions/react", locals: { comment: @comment } }
       end
     end

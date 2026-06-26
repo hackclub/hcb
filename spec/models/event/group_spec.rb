@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Event::Group do
+RSpec.describe Cartel::Group do
   describe "#name" do
     it "must be unique" do
       user = create(:user)

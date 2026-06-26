@@ -49,7 +49,7 @@ class Sponsor < ApplicationRecord
 
   friendly_id :slug_candidates, use: :slugged
 
-  belongs_to :event
+  belongs_to :cartel
   has_many :invoices
 
   validates_presence_of :name, :address_line1, :address_city,

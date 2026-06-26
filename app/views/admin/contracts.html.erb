@@ -42,7 +42,7 @@
         <td>
           <% if contract.contractable.is_a?(OrganizerPositionInvite) %>
             <%= link_to "Invite to #{contract.contractable.event.name}", organizer_position_invite_path(contract.contractable) %>
-          <% elsif contract.contractable.is_a?(Event::Application) %>
+          <% elsif contract.contractable.is_a?(Cartel::Application) %>
             <%= link_to "Application for #{contract.contractable.name}", application_path(contract.contractable) %>
           <% end %>
         </td>

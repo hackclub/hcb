@@ -38,7 +38,7 @@ class Metric
           nil
         else
           {
-            "organization"   => ::Event.find(card.event_id).name,
+            "organization"   => ::Cartel.find(card.event_id).name,
             "lastFourDigits" => card.last4
           }
         end

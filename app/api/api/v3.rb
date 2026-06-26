@@ -19,7 +19,7 @@ module Api
       end
 
       def orgs
-        @orgs ||= paginate(Event.indexable.order(created_at: :asc))
+        @orgs ||= paginate(Cartel.indexable.order(created_at: :asc))
       end
 
       def activities
@@ -28,7 +28,7 @@ module Api
         # otherwise (including NULL recipient_type) fall back to
         # `event_id`. Must stay in sync with that method and with
         # `Api::ActivityPolicy#show?` — they all gate the same data.
-        indexable_event_ids = Event.indexable.select(:id)
+        indexable_event_ids = Cartel.indexable.select(:id)
         @activities ||= paginate(
           PublicActivity::Activity
             .where(recipient_type: "Event", recipient_id: indexable_event_ids)
@@ -45,8 +45,8 @@ module Api
         @org ||=
           begin
             id = params[:organization_id]
-            event ||= Event.transparent.find_by_public_id id # by public id (ex. org_1234). Will NOT error if not found
-            event ||= Event.transparent.friendly.find_by_friendly_id id # by slug. Will error if not found
+            event ||= Cartel.transparent.find_by_public_id id # by public id (ex. org_1234). Will NOT error if not found
+            event ||= Cartel.transparent.friendly.find_by_friendly_id id # by slug. Will error if not found
           end
       rescue ActiveRecord::RecordNotFound
         error!({ message: "Organization not found." }, 404)

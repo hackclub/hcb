@@ -20,13 +20,13 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan < ApplicationRecord
     FALLBACK_REVENUE_FEE = 0.07
 
     has_paper_trail
 
-    belongs_to :event
+    belongs_to :cartel
 
     include AASM
     aasm timestamps: true do
@@ -52,7 +52,7 @@ class Event
     end
 
     def standard?
-      type == Event::Plan::Standard.name
+      type == Cartel::Plan::Standard.name
     end
 
     def default_values
@@ -79,7 +79,7 @@ class Event
     end
 
     def self.available_plans
-      Event::Plan.descendants
+      Cartel::Plan.descendants
     end
 
     def self.available_plans_by_popularity
@@ -87,7 +87,7 @@ class Event
     end
 
     def self.plan_popularities
-      Event::Plan.joins(:event).group(:type).select(:type, "count(*)").to_h { |p| [p.class, p.count] }
+      Cartel::Plan.joins(:event).group(:type).select(:type, "count(*)").to_h { |p| [p.class, p.count] }
     end
 
     def self.that(method)
@@ -95,13 +95,13 @@ class Event
     end
 
     validate do
-      if Event::Plan.where(event_id:, aasm_state: :active).excluding(self).any?
+      if Cartel::Plan.where(event_id:, aasm_state: :active).excluding(self).any?
         errors.add(:base, "An event can only have one active plan at a time.")
       end
     end
 
     validate do
-      unless type.in?(Event::Plan.descendants.map(&:name))
+      unless type.in?(Cartel::Plan.descendants.map(&:name))
         errors.add(:type, "is invalid")
       end
     end

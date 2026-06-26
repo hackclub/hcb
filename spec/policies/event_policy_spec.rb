@@ -20,7 +20,7 @@ RSpec.describe EventPolicy, type: :policy do
     end
 
     context "when sub-organizations are enabled" do
-      before { event.config.update!(subevent_plan: Event::Plan::Standard.name) }
+      before { event.config.update!(subevent_plan: Cartel::Plan::Standard.name) }
 
       context "as a manager" do
         before { create(:organizer_position, user:, event:, role: :manager) }
@@ -66,7 +66,7 @@ RSpec.describe EventPolicy, type: :policy do
 
         before do
           create(:organizer_position, user:, event:, role: :manager)
-          subevent.config.update!(subevent_plan: Event::Plan::Standard.name)
+          subevent.config.update!(subevent_plan: Cartel::Plan::Standard.name)
         end
 
         it "is allowed without the flag" do

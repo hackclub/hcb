@@ -8,7 +8,7 @@ class AnnouncementsController < ApplicationController
   skip_before_action :signed_in_user, only: [:show]
 
   def new
-    @event = Event.friendly.find(params[:event_id])
+    @event = Cartel.friendly.find(params[:event_id])
     @announcement = Announcement.build(content: {}, title: "", author: current_user, event: @event)
 
     authorize @announcement
@@ -20,7 +20,7 @@ class AnnouncementsController < ApplicationController
 
   def create
     json_content = params[:announcement][:json_content]
-    @event = Event.friendly.find(params[:announcement][:event_id])
+    @event = Cartel.friendly.find(params[:announcement][:event_id])
 
     @announcement = authorize Announcement.build(announcement_params.merge(author: current_user, event: @event, content: json_content ))
 
@@ -113,7 +113,7 @@ class AnnouncementsController < ApplicationController
   end
 
   def set_event_follow
-    @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+    @event_follow = Cartel::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
   end
 
   def announcement_params

@@ -10,24 +10,24 @@ class EventMailerPreview < ActionMailer::Preview
   end
 
   def monthly_follower_summary
-    EventMailer.with(event: Event::Follow.last.event).monthly_follower_summary
+    EventMailer.with(event: Cartel::Follow.last.event).monthly_follower_summary
   end
 
   def negative_balance
     EventMailer
       .with(
-        event: Event.first,
+        event: Cartel.first,
         balance: -123_45,
       )
       .negative_balance
   end
 
   def call_requested
-    EventMailer.with(event: Event.last, user: Event.last.users.first).call_requested
+    EventMailer.with(event: Cartel.last, user: Cartel.last.users.first).call_requested
   end
 
   def transparency_mode_enabled
-    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_enabled
+    EventMailer.with(event: Cartel.first, whodunnit: Cartel.first.users.first).transparency_mode_enabled
   end
 
   def monthly_announcements_enabled
@@ -36,15 +36,15 @@ class EventMailerPreview < ActionMailer::Preview
   end
 
   def transparency_mode_disabled
-    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).transparency_mode_disabled
+    EventMailer.with(event: Cartel.first, whodunnit: Cartel.first.users.first).transparency_mode_disabled
   end
 
   def monthly_announcements_disabled
-    EventMailer.with(event: Event.first, whodunnit: Event.first.users.first).monthly_announcements_disabled
+    EventMailer.with(event: Cartel.first, whodunnit: Cartel.first.users.first).monthly_announcements_disabled
   end
 
   def subevent_created
-    subevent = Event.where.not(parent_id: nil).last
+    subevent = Cartel.where.not(parent_id: nil).last
     EventMailer.with(event: subevent.parent, subevent:, creator: subevent.users.first).subevent_created
   end
 

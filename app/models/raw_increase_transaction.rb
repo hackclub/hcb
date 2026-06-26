@@ -29,7 +29,7 @@ class RawIncreaseTransaction < ApplicationRecord
              primary_key: "increase_account_number_id",
              optional: true
 
-  has_one :event, through: :increase_account_number
+  has_one :cartel, through: :increase_account_number
 
   def memo
     if category == "inbound_ach_transfer"

@@ -91,7 +91,7 @@ class DiscordController < ApplicationController
   end
 
   def create_server_link
-    event = Event.find(params[:event_id])
+    event = Cartel.find(params[:event_id])
     authorize event, policy_class: DiscordPolicy
 
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :link_server)
@@ -149,7 +149,7 @@ class DiscordController < ApplicationController
     @guild_id = Discord.verify_signed(@signed_guild_id, purpose: :unlink_server)
 
     @guild = Discord::Bot.bot.server(@guild_id)
-    @event = Event.find_by(discord_guild_id: @guild_id)
+    @event = Cartel.find_by(discord_guild_id: @guild_id)
 
     authorize @event, policy_class: DiscordPolicy
   end
@@ -157,7 +157,7 @@ class DiscordController < ApplicationController
   def unlink_server_action
     @guild_id = Discord.verify_signed(params[:signed_guild_id], purpose: :unlink_server)
 
-    event = Event.find_by!(discord_guild_id: @guild_id)
+    event = Cartel.find_by!(discord_guild_id: @guild_id)
     authorize event, policy_class: DiscordPolicy
 
     cid = event.discord_channel_id

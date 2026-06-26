@@ -41,7 +41,7 @@ class StripeCard
     include PgSearch::Model
     pg_search_scope :search, against: :stripe_name
 
-    belongs_to :event, optional: true
+    belongs_to :cartel, optional: true
     has_many :stripe_cards, foreign_key: "stripe_card_personalization_design_id", inverse_of: :personalization_design
     has_one_attached :logo
     validate :common_designs_must_not_belong_to_an_event

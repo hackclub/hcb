@@ -13,7 +13,7 @@ RSpec.describe Admin::EventGroupMembershipsController do
 
       event = create(:event)
       group = create(:event_group, user:)
-      membership = Event::GroupMembership.create!(group:, event:)
+      membership = Cartel::GroupMembership.create!(group:, event:)
 
       delete(:destroy, params: { event_group_id: group.id, id: membership.id })
 

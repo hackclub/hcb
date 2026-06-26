@@ -4,7 +4,7 @@ module Reimbursement
   module PayoutHoldingService
     class Nightly
       def run
-        clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+        clearinghouse = Cartel.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
         Reimbursement::PayoutHolding.settled.find_each(batch_size: 100) do |payout_holding|
           payout_holding.with_lock do
             next unless payout_holding.settled?

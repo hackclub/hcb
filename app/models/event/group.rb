@@ -19,7 +19,7 @@
 #
 #  fk_rails_...  (user_id => users.id)
 #
-class Event
+class Cartel
   class Group < ApplicationRecord
     belongs_to(:user)
     has_many(
@@ -28,7 +28,7 @@ class Event
       inverse_of: :group,
       dependent: :destroy
     )
-    has_many(:events, through: :memberships)
+    has_many(:cartels, through: :memberships)
 
     validates(:name, uniqueness: { case_sensitive: false }, presence: true)
 

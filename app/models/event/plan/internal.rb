@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan
     class Internal < FeeWaived
       def label
@@ -32,7 +32,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features
+        Cartel::Plan.available_features
       end
 
       def requires_reimbursement_expense_categorization?

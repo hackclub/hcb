@@ -69,7 +69,7 @@ class Announcement < ApplicationRecord
   scope :saved, -> { where.not(aasm_state: :template_draft).where.not(content: {}).and(where.not(template_type: Announcement::Templates::Monthly.name, published_at: nil).or(where(template_type: nil))) }
 
   belongs_to :author, class_name: "User"
-  belongs_to :event
+  belongs_to :cartel
 
   has_many :blocks, dependent: :destroy
 

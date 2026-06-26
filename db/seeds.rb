@@ -19,7 +19,7 @@ system_user = User.create_with(email: User::SYSTEM_USER_EMAIL, verified: true).c
 system_user.make_admin! unless system_user.admin?
 
 # DEMO
-demo_event = Event.create_with(
+demo_event = Cartel.create_with(
   name: "DevHacks (Demo Event)",
   slug: "devhacks",
   can_front_balance: true,
@@ -35,7 +35,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # NON_TRANSPARENT
-non_transparent_event = Event.create_with(
+non_transparent_event = Cartel.create_with(
   name: "ExpensiCon 2023 (Non-Transparent Event)",
   slug: "expensicon23",
   can_front_balance: true,
@@ -51,7 +51,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # TRANSPARENT
-transparent_event = Event.create_with(
+transparent_event = Cartel.create_with(
   name: "Hack The Seas (Transparent Event)",
   slug: "hack_the_seas",
   can_front_balance: true,
@@ -67,7 +67,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # INCOMING_FEES
-incoming_fees_event = Event.create_with(
+incoming_fees_event = Cartel.create_with(
   name: "Incoming Fees",
   slug: "incoming-fees",
   can_front_balance: true,
@@ -76,7 +76,7 @@ incoming_fees_event = Event.create_with(
   is_public: false
 ).create_or_find_by!(id: EventMappingEngine::EventIds::INCOMING_FEES)
 
-incoming_fees_event.plan.update(type: Event::Plan::Internal)
+incoming_fees_event.plan.update(type: Cartel::Plan::Internal)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: incoming_fees_event,
@@ -85,7 +85,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # HACK_CLUB_BANK
-hack_club_bank_event = Event.create_with(
+hack_club_bank_event = Cartel.create_with(
   name: "HCB Operations",
   slug: "bank",
   can_front_balance: true,
@@ -94,7 +94,7 @@ hack_club_bank_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
 
-hack_club_bank_event.plan.update(type: Event::Plan::HackClubAffiliate)
+hack_club_bank_event.plan.update(type: Cartel::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: hack_club_bank_event,
@@ -103,7 +103,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # NOEVENT
-noevent_event = Event.create_with(
+noevent_event = Cartel.create_with(
   name: "Hack Club NoEvent",
   slug: "noevent",
   can_front_balance: true,
@@ -112,7 +112,7 @@ noevent_event = Event.create_with(
   is_public: false
 ).create_or_find_by!(id: EventMappingEngine::EventIds::NOEVENT)
 
-noevent_event.plan.update(type: Event::Plan::Internal)
+noevent_event.plan.update(type: Cartel::Plan::Internal)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: noevent_event,
@@ -121,7 +121,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # HACKATHON_GRANT_FUND
-hackathon_grant_fund_event = Event.create_with(
+hackathon_grant_fund_event = Cartel.create_with(
   name: "Hackathon Grant Fund",
   slug: "hackathon-grant-fund",
   can_front_balance: true,
@@ -130,7 +130,7 @@ hackathon_grant_fund_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
 
-hackathon_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+hackathon_grant_fund_event.plan.update(type: Cartel::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: hackathon_grant_fund_event,
@@ -139,7 +139,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # WINTER_HARDWARE_WONDERLAND_GRANT_FUND
-winter_hardware_wonderland_grant_fund_event = Event.create_with(
+winter_hardware_wonderland_grant_fund_event = Cartel.create_with(
   name: "Winter Hardware Wonderland",
   slug: "winter-hardware-wonderland",
   can_front_balance: true,
@@ -148,7 +148,7 @@ winter_hardware_wonderland_grant_fund_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
 
-winter_hardware_wonderland_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+winter_hardware_wonderland_grant_fund_event.plan.update(type: Cartel::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: winter_hardware_wonderland_grant_fund_event,
@@ -157,7 +157,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # GENE_HAAS_GRANT_FUND
-gene_haas_grant_fund_event = Event.create_with(
+gene_haas_grant_fund_event = Cartel.create_with(
   name: "Gene Haas",
   slug: "gene-haas",
   can_front_balance: true,
@@ -173,7 +173,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # ARGOSY_GRANT_FUND
-argosy_grant_fund_event = Event.create_with(
+argosy_grant_fund_event = Cartel.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-foundation-grant",
   can_front_balance: true,
@@ -189,7 +189,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # ARGOSY_GRANT_FUND_2025
-argosy_grant_fund_2025_event = Event.create_with(
+argosy_grant_fund_2025_event = Cartel.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-hardship-rookie-grant-2025-26-season",
   can_front_balance: true,
@@ -198,7 +198,7 @@ argosy_grant_fund_2025_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025)
 
-argosy_grant_fund_2025_event.plan.update(type: Event::Plan::FeeWaived)
+argosy_grant_fund_2025_event.plan.update(type: Cartel::Plan::FeeWaived)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: argosy_grant_fund_2025_event,
@@ -207,7 +207,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # FIRST_TRANSPARENCY_GRANT_FUND
-first_transparency_grant_fund_event = Event.create_with(
+first_transparency_grant_fund_event = Cartel.create_with(
   name: "Transparency Grant Fund",
   slug: "transparency-grant-fund",
   can_front_balance: true,
@@ -216,7 +216,7 @@ first_transparency_grant_fund_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
 
-first_transparency_grant_fund_event.plan.update(type: Event::Plan::HackClubAffiliate)
+first_transparency_grant_fund_event.plan.update(type: Cartel::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: first_transparency_grant_fund_event,
@@ -225,7 +225,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # HACK_FOUNDATION_INTEREST
-hack_foundation_interest_event = Event.create_with(
+hack_foundation_interest_event = Cartel.create_with(
   name: "Hack Foundation Interest Earnings",
   slug: "hack-foundation-interest-earnings",
   can_front_balance: true,
@@ -234,7 +234,7 @@ hack_foundation_interest_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
 
-hack_foundation_interest_event.plan.update(type: Event::Plan::HackClubAffiliate)
+hack_foundation_interest_event.plan.update(type: Cartel::Plan::HackClubAffiliate)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: hack_foundation_interest_event,
@@ -243,7 +243,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # REIMBURSEMENT_CLEARING
-reimbursement_clearing_event = Event.create_with(
+reimbursement_clearing_event = Cartel.create_with(
   name: "HCB Reimbursement Clearinghouse",
   slug: "reimbursement-clearinghouse",
   can_front_balance: true,
@@ -252,7 +252,7 @@ reimbursement_clearing_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
 
-reimbursement_clearing_event.plan.update(type: Event::Plan::Internal)
+reimbursement_clearing_event.plan.update(type: Cartel::Plan::Internal)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: reimbursement_clearing_event,
@@ -261,7 +261,7 @@ OrganizerPositionInvite.create_or_find_by!(
 )
 
 # SVB_SWEEPS
-svb_sweeps_event = Event.create_with(
+svb_sweeps_event = Cartel.create_with(
   name: "HCB Sweeps",
   slug: "hcb-sweeps",
   can_front_balance: true,
@@ -270,7 +270,7 @@ svb_sweeps_event = Event.create_with(
   is_public: true
 ).create_or_find_by!(id: EventMappingEngine::EventIds::SVB_SWEEPS)
 
-svb_sweeps_event.plan.update(type: Event::Plan::Internal)
+svb_sweeps_event.plan.update(type: Cartel::Plan::Internal)
 
 OrganizerPositionInvite.create_or_find_by!(
   event: svb_sweeps_event,

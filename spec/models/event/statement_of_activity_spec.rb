@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe Event::StatementOfActivity do
+RSpec.describe Cartel::StatementOfActivity do
   describe "#start_date" do
     it "parses the param value if one is provided" do
       event = create(:event)

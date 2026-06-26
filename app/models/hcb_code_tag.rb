@@ -22,7 +22,7 @@ class HcbCodeTag < ApplicationRecord
 
   belongs_to :hcb_code
   belongs_to :tag
-  has_one :event, through: :tag
+  has_one :cartel, through: :tag
 
   after_create_commit {
     HcbCode::Tag::Suggestion.suggested.find_by(hcb_code_id:, tag_id:)&.mark_accepted!

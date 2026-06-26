@@ -26,7 +26,7 @@ class CanonicalPendingEventMapping < ApplicationRecord
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
   belongs_to :canonical_pending_transaction
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :subledger, optional: true
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }

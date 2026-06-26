@@ -96,7 +96,7 @@ class Transaction < ApplicationRecord
   belongs_to :bank_account
 
   belongs_to :fee_relationship, inverse_of: :t_transaction, optional: true
-  has_one :event, through: :fee_relationship
+  has_one :cartel, through: :fee_relationship
 
   belongs_to :emburse_transfer, inverse_of: :t_transaction, optional: true
   belongs_to :invoice_payout, inverse_of: :t_transaction, optional: true
@@ -515,7 +515,7 @@ class Transaction < ApplicationRecord
 
     # we don't use Event.find here because it will raise
     # an exception if the ID doesn't exist.
-    matching_events = Event.where(id: event_id)
+    matching_events = Cartel.where(id: event_id)
 
     return unless matching_events.count == 1
 
@@ -557,7 +557,7 @@ class Transaction < ApplicationRecord
     return unless potential_github?
 
     potential_event_name = /(.*)GitHub Grant.*/.match(self.name)[1].strip
-    matching_events = Event.where(name: potential_event_name)
+    matching_events = Cartel.where(name: potential_event_name)
 
     return unless matching_events.count == 1
 

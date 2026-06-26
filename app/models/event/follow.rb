@@ -20,13 +20,13 @@
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (user_id => users.id)
 #
-class Event
+class Cartel
   class Follow < ApplicationRecord
     include Hashid::Rails
     hashid_config salt: ""
 
     belongs_to :user
-    belongs_to :event
+    belongs_to :cartel
 
     # TODO: validate :user uniqueness in scope :event_id
 

@@ -46,7 +46,7 @@ class EmburseCardRequest < ApplicationRecord
 
   belongs_to :creator, class_name: "User"
   belongs_to :fulfilled_by, class_name: "User", optional: true
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :emburse_card, optional: true
 
   delegate :emburse_department_id, to: :event

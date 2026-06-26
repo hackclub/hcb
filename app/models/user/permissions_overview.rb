@@ -62,10 +62,10 @@ class User
 
     def events_by_id
       @events_by_id ||= begin
-        active_events = Event.unscoped.where(Event.paranoid_default_scope)
+        active_events = Cartel.unscoped.where(Cartel.paranoid_default_scope)
 
         recursive_query = ->(non_recursive_term, recursive_term) {
-          Event
+          Cartel
             .unscoped
             .with_recursive(event_graph: [non_recursive_term, recursive_term])
             .select("event_graph.*")

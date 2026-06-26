@@ -140,7 +140,7 @@ class Invoice < ApplicationRecord
 
   belongs_to :sponsor
   accepts_nested_attributes_for :sponsor
-  has_one :event, through: :sponsor
+  has_one :cartel, through: :sponsor
 
   belongs_to :creator, class_name: "User"
   belongs_to :manually_marked_as_paid_user, class_name: "User", optional: true

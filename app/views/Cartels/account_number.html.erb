@@ -1,0 +1,85 @@
+<% title "Account number for #{@event.name}" %>
+<% page_md %>
+<%= render "cartels/nav", selected: :account_number %>
+<%= render "cartels/account_number_modal" unless @event.demo_mode? %>
+
+<h1 class="heading items-center">
+  <div class="flex flex-col justify-center">
+    <span class="flex items-center flex-grow">
+      Account & routing number
+    </span>
+    <h4 class="mt1 mb1 muted medium center">Connect your HCB account to GoFundMe, Shopify, Venmo, and more.</h4>
+  </div>
+  <% unless @event.demo_mode? %>
+    <a href="#" data-behavior="modal_trigger" data-modal="account_number" class="btn">
+      <%= inline_icon "bank-account" %>
+      Account details
+    </a>
+  <% end %>
+</h1>
+
+<% if @event.demo_mode? %>
+  <%= blankslate "Unavailable in Playground Mode" %>
+<% elsif @event.column_account_number.present? %>
+  <div class="flex items-start justify-start h2 mb2" style="gap: 2rem">
+    <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
+      <span class="h4 muted">
+        Account
+        <% if @event.column_account_number&.deposit_only? %>
+          (deposit-only)
+        <% else %>
+          (receive + send)
+        <% end %>
+      </span>
+      <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy" data-controller="<%= "reveal-animation" if @animated %>">
+        <% if organizer_signed_in? %>
+          <%= @event.account_number %>
+        <% else %>
+          <%= "•" * @event.account_number.length %>
+        <% end %>
+      </span>
+    </span>
+    <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.routing_number if organizer_signed_in? %>">
+      <span class="h4 muted">Routing</span>
+      <span class="font-mono pointer tooltipped tooltipped--n fs-mask" aria-label="<%= organizer_signed_in? ? "Click to copy" : "Sign in to view" %>" data-action="click->clipboard#copy" data-controller="<%= "reveal-animation" if @animated %>">
+        <% if organizer_signed_in? %>
+          <%= @event.routing_number %>
+        <% else %>
+          <%= "•" * @event.routing_number.length %>
+        <% end %>
+      </span>
+    </span>
+  </div>
+
+  <% if @show_transfer_callout %>
+    <%= render "application/callout", type: "info", title: "Starting May 21st, 2026, this page only shows direct #{@event.column_account_number.deposit_only? ? "credits" : "debits and credits"}.", class: "mt-2 mb-3" do %>
+      Your previous transfers can still be viewed on the <%= link_to "Transfers", event_transfers_path(@event) %> page.
+    <% end %>
+  <% end %>
+
+  <% if !(@transactions.nil? || @transactions.length == 0) %>
+    <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th><%# icon %></th>
+              <th>Date</th>
+              <th>Description</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody data-behavior="transactions">
+            <%= render partial: "canonical_transactions/canonical_transaction", collection: @transactions, as: :ct, locals: { event: @event, show_amount: true, selectable: false, show_tags: true } %>
+          </tbody>
+        </table>
+      </div>
+
+      <%= paginate @transactions %>
+  <% else %>
+    <%= blankslate "No transactions yet" %>
+  <% end %>
+<% else %>
+  <div class="card container--sm mx-auto center pt4 pb4 mb3">
+    <%= button_to "View account number", event_column_account_number_path(@event), method: :post, class: "btn bg-accent" %>
+  </div>
+<% end %>

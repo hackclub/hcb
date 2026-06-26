@@ -38,11 +38,11 @@ class PublicActivity::Activity
       streams = []
 
       if event_id
-        event = Event.find(event_id)
+        event = Cartel.find(event_id)
 
         event.users.each do |user|
           streams << [user, "activities"]
-          streams << [user, Event.find(event_id), "activities"]
+          streams << [user, Cartel.find(event_id), "activities"]
         end
 
         ::Discord::ProcessNotificationJob.perform_later(self.id) if event.has_discord_guild?
@@ -52,7 +52,7 @@ class PublicActivity::Activity
         streams << [recipient, "activities"]
       end
 
-      if recipient.is_a?(Event)
+      if recipient.is_a?(Cartel)
         recipient.users.each do |user|
           streams << [user, "activities"]
           streams << [user, recipient, "activities"]
@@ -100,7 +100,7 @@ class PublicActivity::Activity
 
   def event
     id = serialized_event_id
-    Event.find(id) if id
+    Cartel.find(id) if id
   end
 
   def user

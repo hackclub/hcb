@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan
     class HackClubAffiliate < FeeWaived
       def label
@@ -32,7 +32,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features - %w[promotions]
+        Cartel::Plan.available_features - %w[promotions]
       end
 
       def exempt_from_wire_minimum?

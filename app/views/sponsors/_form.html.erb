@@ -4,7 +4,7 @@
   <% admin_tool do %>
     <div class="field">
       <%= form.label :event_id %>
-      <%= form.collection_select(:event_id, Event.all, :id, :name, prompt: "Select event…") %>
+      <%= form.collection_select(:event_id, Cartel.all, :id, :name, prompt: "Select event…") %>
     </div>
   <% end %>
   <%= form.hidden_field :event_id, value: params[:event_id] unless admin_signed_in? %>

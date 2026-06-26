@@ -22,7 +22,7 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class IncreaseAccountNumber < ApplicationRecord
-  belongs_to :event
+  belongs_to :cartel
 
   has_encrypted :account_number, :routing_number
 

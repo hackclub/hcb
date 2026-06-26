@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan
     class FeeWaived < Standard
       def revenue_fee

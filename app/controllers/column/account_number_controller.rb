@@ -11,7 +11,7 @@ module Column
         column_account_number.save!
 
         @animated = true
-        render "events/account_number", status: :unprocessable_entity
+        render "cartels/account_number", status: :unprocessable_entity
       else
         skip_authorization
         redirect_to account_number_event_path(@event)

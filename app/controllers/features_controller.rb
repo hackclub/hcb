@@ -46,7 +46,7 @@ class FeaturesController < ApplicationController
 
   def set_actor_and_feature
     if params[:event_id]
-      @actor = Event.find(params[:event_id])
+      @actor = Cartel.find(params[:event_id])
     elsif params[:user_id]
       @actor = User.find(params[:user_id])
     else
@@ -58,7 +58,7 @@ class FeaturesController < ApplicationController
 
   def actor_features_index(actor)
     case actor
-    when Event
+    when Cartel
       edit_event_path(actor, tab: :features)
     when User
       if actor == current_user

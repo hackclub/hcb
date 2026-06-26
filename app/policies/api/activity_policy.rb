@@ -13,7 +13,7 @@ module Api
       id = record.serialized_event_id
       return false if id.blank?
 
-      Event.indexable.exists?(id:)
+      Cartel.indexable.exists?(id:)
     end
 
   end

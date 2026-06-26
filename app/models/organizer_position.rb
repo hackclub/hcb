@@ -37,7 +37,7 @@ class OrganizerPosition < ApplicationRecord
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 
   belongs_to :user
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :fiscal_sponsorship_contract, optional: true, class_name: "Contract"
 
   has_one :organizer_position_invite, required: true

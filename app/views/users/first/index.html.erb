@@ -71,7 +71,7 @@
 <% end %>
 
 <% if ["student_leader", "student_member"].include?(affiliation&.role) && @teammates.present? %>
-  <% matching_event = Event::Affiliation.matching_first_event_for(current_user(allow_unverified: true)) %>
+  <% matching_event = Cartel::Affiliation.matching_first_event_for(current_user(allow_unverified: true)) %>
   <% if matching_event.nil? %>
     <div class="card flex flex-col bg-black !text-white gap-3">
       <div class="flex flex-row items-stretch gap-4 flex-wrap sm:flex-nowrap">

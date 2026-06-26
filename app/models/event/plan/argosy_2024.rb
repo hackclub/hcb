@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan
     class Argosy2024 < SpendOnly
       def label

@@ -87,7 +87,7 @@
           <%= event.country %>
         </td>
         <td>
-          <% Event::BADGES.each do |_key, badge| %>
+          <% Cartel::BADGES.each do |_key, badge| %>
             <% if event.send(badge[:qualifier]) %>
               <span title="<%= badge[:emoji] %> <%= badge[:description] %>"><%= badge[:emoji] %></span>
             <% end %>

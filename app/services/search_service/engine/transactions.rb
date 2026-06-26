@@ -15,7 +15,7 @@ module SearchService
 
       def run
         if @context[:event_id] && @query["types"].length == 1
-          transactions = Event.find(@context[:event_id]).canonical_transactions
+          transactions = Cartel.find(@context[:event_id]).canonical_transactions
         elsif @auditor
           transactions = CanonicalTransaction
         else

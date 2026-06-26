@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class ApplicationPolicy < ApplicationPolicy
     def create?
       record.user == user

@@ -14,7 +14,7 @@ class User
     private
 
     def user_stats(user, since: 1.week.ago)
-      card_ids = user.stripe_cards.includes(event: :plan).where.not(plan: { type: Event::Plan::SalaryAccount.name }).pluck(:stripe_id)
+      card_ids = user.stripe_cards.includes(event: :plan).where.not(plan: { type: Cartel::Plan::SalaryAccount.name }).pluck(:stripe_id)
 
       cpts = CanonicalPendingTransaction.unsettled.joins(:raw_pending_stripe_transaction).where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) >= ?)", card_ids, since.to_i)
       cts = CanonicalTransaction.stripe_transaction.where("(stripe_transaction->'card'->>'id' IN (?)) AND (CAST(stripe_transaction->>'created' AS BIGINT) >= ?)", card_ids, since.to_i)

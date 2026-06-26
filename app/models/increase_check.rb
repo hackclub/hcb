@@ -127,7 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :user, optional: true
 
   def payment_recipient_attributes

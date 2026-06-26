@@ -74,7 +74,7 @@ class Wire < ApplicationRecord
     %i[address_line1 address_line2 address_city address_state address_postal_code recipient_country account_number bic_code recipient_information]
   end
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :user
 
   has_one :canonical_pending_transaction
@@ -99,7 +99,7 @@ class Wire < ApplicationRecord
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
-    if !user.admin? && usd_amount_cents < Event.find(event.id).minimum_wire_amount_cents
+    if !user.admin? && usd_amount_cents < Cartel.find(event.id).minimum_wire_amount_cents
       errors.add(:amount, " must be more than or equal to #{ApplicationController.helpers.render_money event.minimum_wire_amount_cents} (USD).")
     end
   end

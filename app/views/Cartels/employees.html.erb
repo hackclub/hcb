@@ -1,0 +1,136 @@
+<% title "Contractors for #{@event.name}" %>
+<% page_md %>
+<%= render "cartels/nav", selected: :payroll %>
+
+<% if @employees.empty? && organizer_signed_in? && !params[:q].present? && !params[:filter].present? %>
+    <%= render "cartels/one_pager",
+               title: "Contractors",
+               screenshots: {
+      light: "https://cdn.hackclub.com/019c562c-4ea3-7799-8e04-951af832dca6/hcb.hackclub.com_devhacks_employees__4_.png",
+      dark: "https://cdn.hackclub.com/019c562c-4cb2-7209-b2b0-9a4b8cb68f8b/hcb.hackclub.com_devhacks_employees__5_.png",
+    },
+               hints: [
+      {
+        icon: "announcement",
+        title: "Contractors can submit invoices for approval and payment",
+      },
+      {
+        icon: "payment-transfer",
+        title: "Send payments to contractors right from this page",
+      },
+      {
+        icon: "list",
+        title: "Keep track of all contractor payments and invoices in one place",
+      },
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/invoices" target="_blank" class="underline">how we do invoices on HQ!</a></span>
+    <% end %>
+
+    <% if policy(@event.employees.build).new? %>
+      <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+        <%= inline_icon "plus" %>
+        Invite a contractor
+      <% end %>
+    <% end %>
+
+  <% end %>
+<% else %>
+<h1 class="heading flex mb-0 border-0">
+  <span class="flex-grow">Contractors</span>
+  <% if policy(@event.employees.build).new? %>
+    <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: "invite" } do %>
+      <%= inline_icon "plus" %>
+      Invite a contractor
+    <% end %>
+  <% end %>
+</h1>
+
+<% unless @event.employee_payments.submitted.blank? %>
+  <h2 class="w-full text-left mt-8 pb-0 border-none">Invoices pending review</h2>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>From</th>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @event.employee_payments.submitted.order(created_at: :desc).each do |payment| %>
+          <tr>
+            <td>
+              <%= user_mention payment.employee.user %>
+            </td>
+            <td>
+              <%= payment.title %>
+            </td>
+            <td>
+              <%= render_money payment.amount_cents %>
+            </td>
+            <td>
+              <%= format_date payment.created_at %>
+            </td>
+            <td>
+              <%= link_to "Process", "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
+              <%= render "employee/payments/modal", payment: %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+
+  <h2 class="w-full text-left mt-8 pb-0 border-none">All contractors</h2>
+<% end %>
+
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-3">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/filters/search", form: %>
+  <% end %>
+  <div class="filterbar">
+    <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["terminated", "onboarding"].include?(params[:filter]), role: "tab" %>
+    <%= link_to "Onboarding", "?filter=onboarding", class: "filterbar__item", "aria-selected": params[:filter] == "onboarding", role: "tab" %>
+    <%= link_to "Terminated", "?filter=terminated", class: "filterbar__item", "aria-selected": params[:filter] == "terminated", role: "tab" %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2">
+  <% @employees.each do |employee| %>
+    <%= link_to employee_path(employee), class: "card card--hover", data: popovers_enabled? && employee_popover_data(employee) do %>
+      <div class="card__banner card__banner--top flex <%= employee.terminated? ? "bg-muted white" : employee.onboarded? ? "bg-info white" : "bg-warning white" %>">
+        <strong class="h4 flex-grow"><%= employee.user.name %></strong>
+        <span class="block"><%= employee.aasm_state.humanize %></span>
+      </div>
+      <span class="block flex">
+        <span class="flex-grow"><%= employee.user.email %></span>
+        <% unless employee.onboarding? %>
+          <strong><%= render_money employee.payments.paid.or(employee.payments.approved).sum(:amount_cents) %> earned</strong>
+        <% end %>
+      </span>
+    <% end %>
+
+  <% end %>
+</div>
+
+<% end %>
+
+<section data-behavior="modal" role="dialog" id="invite" class="modal modal--scroll bg-snow">
+  <%= form_with(model: Employee, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
+    <%= modal_header "Invite a 1099 contractor" %>
+    <div class="card border b--info mt2 mb2 container--sm mx-auto">
+      <p class="mt0 mb0">
+        After being onboarded, this contractor will be able to submit invoices to
+        you for approval and payment. HCB will provide the contractor with a 1099 at the end of the year.
+      </p>
+    </div>
+    <%= form.text_field :email, class: "mt1", placeholder: "Enter this contractor's email", required: true %>
+    <%= form.hidden_field :event_id, value: @event.id %>
+    <div class="inline-block">
+      <%= form.submit "Send invitation", class: "mt2", disabled: @event&.demo_mode? %>
+    </div>
+  <% end %>
+</section>

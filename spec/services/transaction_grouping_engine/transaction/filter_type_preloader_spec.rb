@@ -84,7 +84,7 @@ RSpec.describe TransactionGroupingEngine::Transaction::FilterTypePreloader do
                                      hcb_code: disbursement.outgoing_hcb_code,
                                      amount_cents: -disbursement.amount)
 
-        baseline = ::EventsController.filter_transaction_type(
+        baseline = ::CartelsController.filter_transaction_type(
           type,
           settled_transactions: settled_for(event),
           pending_transactions: []
@@ -92,7 +92,7 @@ RSpec.describe TransactionGroupingEngine::Transaction::FilterTypePreloader do
 
         preloaded_settled = settled_for(event)
         described_class.new(settled_transactions: preloaded_settled, type:).run!
-        preloaded = ::EventsController.filter_transaction_type(
+        preloaded = ::CartelsController.filter_transaction_type(
           type,
           settled_transactions: preloaded_settled,
           pending_transactions: []

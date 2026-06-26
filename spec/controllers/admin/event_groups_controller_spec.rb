@@ -48,7 +48,7 @@ RSpec.describe Admin::EventGroupsController do
       expect(response).to redirect_to(admin_event_groups_path)
       expect(flash[:success]).to eq("Group created")
 
-      group = Event::Group.last
+      group = Cartel::Group.last
       expect(group.user).to eq(user)
       expect(group.name).to eq("Scrapyard")
     end
@@ -78,7 +78,7 @@ RSpec.describe Admin::EventGroupsController do
       expect(response).to redirect_to(admin_event_groups_path)
       expect(flash[:success]).to eq("Group successfully deleted")
 
-      expect(Event::Group.find_by(id: group.id)).to be_nil
+      expect(Cartel::Group.find_by(id: group.id)).to be_nil
     end
   end
 

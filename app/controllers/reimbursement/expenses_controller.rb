@@ -47,7 +47,7 @@ module Reimbursement
       authorize @expense # we authorize twice in case the reimbursement_report_id changes
 
       if expense_params[:event_id].presence
-        event = Event.find(expense_params[:event_id])
+        event = Cartel.find(expense_params[:event_id])
         report = event.reimbursement_reports.build({ user: @expense.report.user })
         authorize report, :change_event?
         ActiveRecord::Base.transaction do

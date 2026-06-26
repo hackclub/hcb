@@ -4,7 +4,7 @@
 <% title heading %>
 
 <% page_md %>
-<%= render "events/nav", selected: :announcements %>
+<%= render "cartels/nav", selected: :announcements %>
 
 <% show_blocks_callout = !@announcement.published? && @announcement.blocks.any? %>
 

@@ -4,7 +4,7 @@
 <% subtitle "From #{@event.name}" %>
 
 <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "send a wire" } %>
+  <%= render partial: "cartels/unauthorized_callout", locals: { action: "send a wire" } %>
 <% end %>
 
 <% content_for :table_of_contents do %>

@@ -58,7 +58,7 @@ class CardGrant < ApplicationRecord
   include Commentable
   include HasPaperTrailHelpers
 
-  belongs_to :event
+  belongs_to :cartel
   has_one :ledger, -> { where(primary: true) }, inverse_of: :card_grant
   after_create :create_ledger
   belongs_to :subledger, optional: true

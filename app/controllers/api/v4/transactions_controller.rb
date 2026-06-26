@@ -9,7 +9,7 @@ module Api
       skip_after_action :verify_authorized, only: [:missing_receipt]
 
       def index
-        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id]) # we don't use set_api_event here because it is passed as id in the url
+        @event = Cartel.find_by_public_id(params[:id]) || Cartel.find_by!(slug: params[:id]) # we don't use set_api_event here because it is passed as id in the url
 
         authorize @event, :show_in_v4?
 
@@ -21,7 +21,7 @@ module Api
           type: params[:type]
         ).run!
 
-        type_results = ::EventsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
+        type_results = ::CartelsController.filter_transaction_type(params[:type], settled_transactions: @settled_transactions, pending_transactions: @pending_transactions)
         @settled_transactions = type_results[:settled_transactions]
         @pending_transactions = type_results[:pending_transactions]
 

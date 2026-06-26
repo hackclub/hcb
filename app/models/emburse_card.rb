@@ -46,7 +46,7 @@ class EmburseCard < ApplicationRecord
   friendly_id :slug_text, use: :slugged
 
   belongs_to :user
-  belongs_to :event
+  belongs_to :cartel
   has_one :emburse_card_request
   has_many :emburse_transfers
   has_many :emburse_transactions

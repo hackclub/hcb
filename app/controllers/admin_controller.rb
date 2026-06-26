@@ -26,7 +26,7 @@ class AdminController < Admin::BaseController
   end
 
   def negative_events
-    @negative_events = Event.negatives
+    @negative_events = Cartel.negatives
   end
 
   def transaction
@@ -74,7 +74,7 @@ class AdminController < Admin::BaseController
   end
 
   def event_process
-    @event = Event.friendly.find(params[:id])
+    @event = Cartel.friendly.find(params[:id])
   end
 
   def event_new
@@ -149,7 +149,7 @@ class AdminController < Admin::BaseController
   end
 
   def event_toggle_approved
-    @event = Event.find(params[:id])
+    @event = Cartel.find(params[:id])
 
     state = ::EventService::ToggleApproved.new(@event).run
 
@@ -159,7 +159,7 @@ class AdminController < Admin::BaseController
   end
 
   def event_reject
-    @event = Event.find(params[:id])
+    @event = Cartel.find(params[:id])
 
     state = ::EventService::Reject.new(@event).run
 
@@ -174,7 +174,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.bank_fees
     else
@@ -197,7 +197,7 @@ class AdminController < Admin::BaseController
     @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.users
     else
@@ -340,7 +340,7 @@ class AdminController < Admin::BaseController
     relation = CanonicalTransaction.left_joins(:canonical_event_mapping)
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = relation.where("canonical_event_mappings.event_id = ?", @event.id)
     end
@@ -383,9 +383,9 @@ class AdminController < Admin::BaseController
   def event_search
     @q = params[:q].presence
     @events = if @q.present?
-                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+                Cartel.search_name(@q).order(Cartel::CUSTOM_SORT).limit(20).select(:id, :name)
               else
-                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+                Cartel.order(Cartel::CUSTOM_SORT).limit(20).select(:id, :name)
               end
     render turbo_stream: helpers.async_combobox_options(@events)
   end
@@ -408,7 +408,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.canonical_pending_transactions.includes(:canonical_pending_event_mapping)
     else
@@ -454,7 +454,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.ach_transfers.includes(:event)
     else
@@ -513,7 +513,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.reimbursement_reports.includes(:event).visible
     else
@@ -555,7 +555,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.stripe_card_personalization_designs.includes(:event)
     else
@@ -675,7 +675,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.checks.includes(lob_address: :event)
     else
@@ -747,7 +747,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
-    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+    @event = Cartel.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @paypal_transfers = PaypalTransfer.all
 
@@ -775,7 +775,7 @@ class AdminController < Admin::BaseController
     @end_date = params[:end_date].presence
     @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
-    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+    @event = Cartel.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wires = Wire.all
 
@@ -815,7 +815,7 @@ class AdminController < Admin::BaseController
     @end_date = params[:end_date].presence
     @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
-    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+    @event = Cartel.find_by(id: params[:event_id]) if params[:event_id].present?
 
     @wise_transfers = WiseTransfer.all
 
@@ -860,7 +860,7 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @include_archived = params[:include_archived] == "1" ? true : nil
 
-    @applications = Event::Application.all.includes(:user)
+    @applications = Cartel::Application.all.includes(:user)
     @applications = @applications.not_archived unless @include_archived
     @applications = @applications.search_name_or_email(@q) if @q
 
@@ -886,7 +886,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.donations.includes(:event)
     else
@@ -922,7 +922,7 @@ class AdminController < Admin::BaseController
 
     @event_id = params[:event_id].presence
 
-    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+    @event = Cartel.find_by(id: params[:event_id]) if params[:event_id].present?
 
     relation = RecurringDonation.includes(:event).where.not(stripe_status: [:incomplete, :incomplete_expired])
 
@@ -941,7 +941,7 @@ class AdminController < Admin::BaseController
 
     # Pending fees that haven't been converted to FeeRevenue yet
     # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
-    events_with_balances = Event.pending_fees_v2.map do |event|
+    events_with_balances = Cartel.pending_fees_v2.map do |event|
       { event: event, balance: event.fee_balance_v2_cents }
     end
 
@@ -967,7 +967,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.disbursements.includes(:source_event)
     else
@@ -1067,7 +1067,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.invoices
     else
@@ -1123,7 +1123,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.sponsors
     else
@@ -1150,7 +1150,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
 
     if @event_id
-      @event = Event.find(@event_id)
+      @event = Cartel.find(@event_id)
 
       relation = @event.g_suites
     else
@@ -1486,7 +1486,7 @@ class AdminController < Admin::BaseController
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @users = User.where(id: Event.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
+    @users = User.where(id: Cartel.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
 
   end
 
@@ -1497,7 +1497,7 @@ class AdminController < Admin::BaseController
     @event_id = params[:event_id].presence
     @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
 
-    @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
+    @event = Cartel.find_by(id: params[:event_id]) if params[:event_id].present?
 
     relation = Column::AccountNumber.includes(:event)
 
@@ -1641,7 +1641,7 @@ class AdminController < Admin::BaseController
   private
 
   def cache_event_metric(metric_name, &block)
-    @event = Event.friendly.find(params[:id])
+    @event = Cartel.friendly.find(params[:id])
     Rails.cache.fetch("admin_event_#{metric_name}_#{@event.id}", expires_in: 5.minutes) do
       block.call
     end
@@ -1657,7 +1657,7 @@ class AdminController < Admin::BaseController
     self.response_body = data
   end
 
-  def filtered_events(events: Event.all)
+  def filtered_events(events: Cartel.all)
     @q = params[:q].presence
     @demo_mode = params[:demo_mode].presence || "full" # full accounts only by default
     @engaged = params[:engaged] == "1" # unchecked by default
@@ -1831,7 +1831,7 @@ class AdminController < Admin::BaseController
       when :ach_transfers
         AchTransfer.pending.size
       when :negative_events
-        Event.negatives.size
+        Cartel.negatives.size
       when :fee_reimbursements
         FeeReimbursement.unprocessed.size
       when :g_suite_accounts

@@ -29,7 +29,7 @@ class Metric
       include AppWide
 
       def calculate
-        ::Event.not_omitted
+        ::Cartel.not_omitted
                .not_hidden
                .not_demo_mode
                .approved

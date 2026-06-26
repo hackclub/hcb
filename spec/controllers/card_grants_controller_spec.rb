@@ -53,7 +53,7 @@ RSpec.describe CardGrantsController do
 
     it "creates a card grant" do
       user = create(:user)
-      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      event = create(:event, :with_positive_balance, plan_type: Cartel::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
@@ -78,7 +78,7 @@ RSpec.describe CardGrantsController do
 
     it "handles validation errors" do
       user = create(:user)
-      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      event = create(:event, :with_positive_balance, plan_type: Cartel::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
@@ -101,7 +101,7 @@ RSpec.describe CardGrantsController do
 
     it "handles downstream errors" do
       user = create(:user)
-      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      event = create(:event, :with_positive_balance, plan_type: Cartel::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
@@ -126,7 +126,7 @@ RSpec.describe CardGrantsController do
   describe "topup" do
     it "tops up a card grant" do
       user = create(:user)
-      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      event = create(:event, :with_positive_balance, plan_type: Cartel::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 
@@ -162,7 +162,7 @@ RSpec.describe CardGrantsController do
 
     it "handles downstream errors" do
       user = create(:user)
-      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      event = create(:event, :with_positive_balance, plan_type: Cartel::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
 

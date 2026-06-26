@@ -6,7 +6,7 @@ module ApplicationHelper
 
   include DonationsHelper
   include EmburseCardsHelper
-  include EventsHelper
+  include CartelsHelper
   include GSuiteAccountsHelper
   include GSuitesHelper
   include HcbCodeHelper

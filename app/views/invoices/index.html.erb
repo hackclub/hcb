@@ -1,6 +1,6 @@
 <% title "Invoices for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :invoices %>
+<%= render "cartels/nav", selected: :invoices %>
 
 <% if @invoices.total_count > 0 || params[:q].present? || @has_filter || !organizer_signed_in? %>
   <h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">
@@ -55,7 +55,7 @@
         <tr>
           <% @table_columns.each do |column| %>
             <th>
-              <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
+              <%= render "cartels/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
             </th>
           <% end %>
         </tr>
@@ -84,14 +84,14 @@
   </article>
   <%= paginate @invoices %>
 <% else %>
-  <%= render "events/one_pager",
-    title: "Invoices",
-    support_article: "https://help.hcb.hackclub.com/en/articles/13370940-what-are-invoices",
-    screenshots: {
+  <%= render "cartels/one_pager",
+             title: "Invoices",
+             support_article: "https://help.hcb.hackclub.com/en/articles/13370940-what-are-invoices",
+             screenshots: {
       light: "https://user-cdn.hackclub-assets.com/019c3c6d-7bf6-7727-a408-d6e64aec72c4/hcb.hackclub.com_hcb_yXHEvYE%20(3).png",
       dark: "https://user-cdn.hackclub-assets.com/019c3c6d-8e47-7c2c-8f84-9d1171f27519/hcb.hackclub.com_hcb_yXHEvYE%20(2).png",
     },
-    hints: [
+             hints: [
       {
         icon: "send",
         title: "Request payments professionally",

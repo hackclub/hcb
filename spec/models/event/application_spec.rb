@@ -2,14 +2,14 @@
 
 require "rails_helper"
 
-RSpec.describe Event::Application, type: :model do
+RSpec.describe Cartel::Application, type: :model do
   describe "#schedule_airtable_sync" do
     let!(:application) { create(:event_application) }
 
     it "enqueues a sync job on save" do
       expect {
         application.update!(name: "Updated Name")
-      }.to have_enqueued_job(Event::ApplicationSyncToAirtableJob).with(application)
+      }.to have_enqueued_job(Cartel::ApplicationSyncToAirtableJob).with(application)
     end
 
     context "when the job runs after a save" do
@@ -29,7 +29,7 @@ RSpec.describe Event::Application, type: :model do
           application.update!(name: "Changed")
         end
 
-        syncs_performed = performed_jobs.count { |j| j[:job] == Event::ApplicationSyncToAirtableJob }
+        syncs_performed = performed_jobs.count { |j| j[:job] == Cartel::ApplicationSyncToAirtableJob }
         expect(syncs_performed).to eq(1)
       end
     end

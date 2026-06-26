@@ -9,7 +9,7 @@ module Api
 
       def create
         @source_event = @event
-        @destination_event = Event.find_by_public_id(params[:to_organization_id]) || Event.friendly.find(params[:to_organization_id])
+        @destination_event = Cartel.find_by_public_id(params[:to_organization_id]) || Cartel.friendly.find(params[:to_organization_id])
         @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
         authorize @disbursement

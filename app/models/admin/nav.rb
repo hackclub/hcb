@@ -260,19 +260,19 @@ module Admin
           make_item(
             name: "Applications (HCB)",
             path: applications_admin_index_path,
-            count: ->{ Event::Application.under_review.count },
+            count: ->{ Cartel::Application.under_review.count },
             count_type: :tasks
           ),
           make_item(
             name: "Organizations",
             path: events_admin_index_path,
-            count: ->{ Event.approved.count },
+            count: ->{ Cartel.approved.count },
             count_type: :records
           ),
           make_item(
             name: "Organization Balances",
             path: balances_admin_index_path,
-            count: ->{ Event.approved.count },
+            count: ->{ Cartel.approved.count },
             count_type: :records
           ),
           make_item(
@@ -402,7 +402,7 @@ module Admin
           make_item(
             name: "Event Groups",
             path: admin_event_groups_path,
-            count: ->{ Event::Group.count },
+            count: ->{ Cartel::Group.count },
             count_type: :records,
           ),
           make_item(

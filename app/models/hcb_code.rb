@@ -55,7 +55,7 @@ class HcbCode < ApplicationRecord
   has_one :personal_transaction, required: false
   has_one :pin, required: false
 
-  belongs_to :event, optional: true
+  belongs_to :cartel, optional: true
   belongs_to :subledger, optional: true
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
@@ -245,7 +245,7 @@ class HcbCode < ApplicationRecord
                 .compact
                 .uniq
 
-        return Event.where(id: ids) unless ids.empty?
+        return Cartel.where(id: ids) unless ids.empty?
 
         ids.concat([
           invoice.try(:event).try(:id),
@@ -263,7 +263,7 @@ class HcbCode < ApplicationRecord
         ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
         ids << EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING if reimbursement_payout_holding?
 
-        Event.where(id: ids)
+        Cartel.where(id: ids)
       end
   end
 

@@ -81,7 +81,7 @@ class StripeCard < ApplicationRecord
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
   belongs_to :last_frozen_by, class_name: "User", optional: true

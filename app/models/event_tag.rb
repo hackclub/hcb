@@ -18,7 +18,7 @@
 class EventTag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
 
-  has_and_belongs_to_many :events
+  has_and_belongs_to_many :cartels
 
   validates :name, presence: true, uniqueness: { scope: :purpose }
 

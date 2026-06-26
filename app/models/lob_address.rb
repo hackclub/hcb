@@ -33,7 +33,7 @@ class LobAddress < ApplicationRecord
   # mail checks.
 
   has_many :checks
-  belongs_to :event
+  belongs_to :cartel
 
   def address_text
     "#{address1} #{address2} - #{city}, #{state} #{zip}"

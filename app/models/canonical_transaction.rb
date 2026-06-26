@@ -94,7 +94,7 @@ class CanonicalTransaction < ApplicationRecord
       canonical_event_mapping: { event: :plan }
     ).where.not(
       event_plans: {
-        type: Event::Plan.that(:omit_stats).collect(&:name)
+        type: Cartel::Plan.that(:omit_stats).collect(&:name)
       }
     )
   }
@@ -106,7 +106,7 @@ class CanonicalTransaction < ApplicationRecord
   has_many :canonical_hashed_mappings
   has_many :hashed_transactions, through: :canonical_hashed_mappings
   has_one :canonical_event_mapping
-  has_one :event, through: :canonical_event_mapping
+  has_one :cartel, through: :canonical_event_mapping
   has_one :subledger, through: :canonical_event_mapping
   has_one :canonical_pending_settled_mapping
   has_one :canonical_pending_transaction, through: :canonical_pending_settled_mapping

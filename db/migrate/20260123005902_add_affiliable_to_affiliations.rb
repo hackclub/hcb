@@ -4,7 +4,7 @@ class AddAffiliableToAffiliations < ActiveRecord::Migration[8.0]
   def up
     add_reference :event_affiliations, :affiliable, polymorphic: true, index: { algorithm: :concurrently }
 
-    Event::Affiliation.all.each do |affiliation|
+    Cartel::Affiliation.all.each do |affiliation|
       affiliation.update!(affiliable: affiliation.event)
     end
 
@@ -13,7 +13,7 @@ class AddAffiliableToAffiliations < ActiveRecord::Migration[8.0]
   end
 
   def down
-    Event::Affiliation.all.each do |affiliation|
+    Cartel::Affiliation.all.each do |affiliation|
       affiliation.update!(event: affiliation.affiliable)
     end
 

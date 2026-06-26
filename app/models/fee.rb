@@ -27,7 +27,7 @@ class Fee < ApplicationRecord
   has_paper_trail
 
   belongs_to :canonical_event_mapping, optional: true
-  belongs_to :event
+  belongs_to :cartel
   has_one :canonical_transaction, through: :canonical_event_mapping
 
   validates :reason, presence: true

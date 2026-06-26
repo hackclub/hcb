@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
     before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
@@ -145,7 +145,7 @@ class Event
         redirect_to auth_users_path(return_to: start_applications_path(teen_led: params[:teen_led].presence), require_reload: true, purpose: "application") and return
       end
 
-      authorize(@application = Event::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
+      authorize(@application = Cartel::Application.new(user: current_user, teen_led: params[:teen_led] == "true", referral_code: params[:referral_code]))
       @application.save!
 
       redirect_to project_info_application_path(@application)
@@ -284,7 +284,7 @@ class Event
     end
 
     def record_pageview
-      if Event::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
+      if Cartel::Application.last_page_vieweds.keys.include?(action_name.to_s) && @application.user == current_user
         @application&.record_pageview(action_name.to_s)
       end
     end

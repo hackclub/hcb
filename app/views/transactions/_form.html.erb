@@ -63,7 +63,7 @@
 
       <div class="field event-select-target">
         <%= fr_form.label :event %>
-        <%= fr_form.collection_select(:event_id, Event.reorder(:name), :id, :admin_dropdown_description, include_blank: "Select one…") %>
+        <%= fr_form.collection_select(:event_id, Cartel.reorder(:name), :id, :admin_dropdown_description, include_blank: "Select one…") %>
       </div>
 
       <%= form.label :is_event_related, class: "field field--checkbox mb1" do %>

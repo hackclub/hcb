@@ -20,7 +20,7 @@ module SearchService
         type: item.class,
       }
 
-      if item.instance_of?(Event) && item.logo.attached?
+      if item.instance_of?(Cartel) && item.logo.attached?
         formatted[:image] = Rails.application.routes.url_helpers.url_for(item.logo)
       end
 
@@ -40,7 +40,7 @@ module SearchService
         formatted[:path] = "/stripe_cards/#{item.hashid}"
       end
 
-      if item.instance_of?(Event)
+      if item.instance_of?(Cartel)
         formatted[:balance] = item.balance
         formatted[:path] = "/#{item.slug}"
       end

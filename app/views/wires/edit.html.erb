@@ -1,11 +1,11 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Edit a wire" %>
-<%= render "events/nav", selected: :transfers %>
+<%= render "cartels/nav", selected: :transfers %>
 <% page_sm %>
 
  <% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "edit a wire" } %>
+  <%= render partial: "cartels/unauthorized_callout", locals: { action: "edit a wire" } %>
 <% end %>
 
 <h2 class="mt5">Edit wire to <%= @wire.recipient_name %> (#<%= @wire.id %>)</h2>

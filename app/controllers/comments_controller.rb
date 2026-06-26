@@ -27,7 +27,7 @@ class CommentsController < ApplicationController
 
   def edit
     @commentable = @comment.commentable
-    @event = @commentable.is_a?(Event) ? @commentable : @commentable.event
+    @event = @commentable.is_a?(Cartel) ? @commentable : @commentable.event
 
     authorize @comment
   end
@@ -41,7 +41,7 @@ class CommentsController < ApplicationController
       # @commentable is not guaranteed to have a #show,
       # but all commentables effectively have a #show
       # because that's the only place comments show up as a list.
-      redirect_to @comment.commentable.is_a?(Event) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable
+      redirect_to @comment.commentable.is_a?(Cartel) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable
     else
       @commentable = @comment.commentable
       render :edit, status: :unprocessable_entity
@@ -76,7 +76,7 @@ class CommentsController < ApplicationController
   end
 
   COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
-                          EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
+                          EmburseTransfer, Cartel, GSuite, HcbCode, Api::Models::CardCharge,
                           OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
                           Ledger::Item].index_by(&:to_s).freeze
 

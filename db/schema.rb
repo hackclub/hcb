@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_26_002519) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_26_003009) do
   create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
@@ -1426,7 +1426,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_002519) do
     t.index ["hcb_code_id", "tag_id"], name: "index_hcb_codes_tags_on_hcb_code_id_and_tag_id", unique: true
   end
 
-  create_table "ilegal_entities", force: :cascade do |t|
+  create_table "illegal_entities", force: :cascade do |t|
     t.string "address_city"
     t.string "address_country"
     t.string "address_line1"
@@ -1438,7 +1438,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_002519) do
     t.bigint "managing_event_id"
     t.string "tin_hash"
     t.datetime "updated_at", null: false
-    t.index ["managing_event_id"], name: "index_ilegal_entities_on_managing_event_id"
+    t.index ["managing_event_id"], name: "index_illegal_entities_on_managing_event_id"
   end
 
   create_table "increase_account_numbers", force: :cascade do |t|

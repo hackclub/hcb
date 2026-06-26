@@ -55,8 +55,8 @@
       </ul>
       <h2>Info</h2>
       <ul class="grid text-left w-100 mt0" id="info-grid">
-        <%= card_to "Organizations", events_admin_index_path, badge: Event.approved.count, subtle_badge: true %>
-        <%= card_to "Applications (HCB)", applications_admin_index_path, badge: Event::Application.under_review.count %>
+        <%= card_to "Organizations", events_admin_index_path, badge: Cartel.approved.count, subtle_badge: true %>
+        <%= card_to "Applications (HCB)", applications_admin_index_path, badge: Cartel::Application.under_review.count %>
         <%= card_to "Users", users_admin_index_path %>
         <%= card_to "Donations", donations_admin_index_path %>
         <%= card_to "Invoices", invoices_admin_index_path %>

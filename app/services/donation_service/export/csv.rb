@@ -6,7 +6,7 @@ module DonationService
   module Export
     class Csv
       def initialize(event_id:)
-        @event = Event.find(event_id)
+        @event = Cartel.find(event_id)
       end
 
       def run

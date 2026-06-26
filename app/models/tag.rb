@@ -25,7 +25,7 @@ class Tag < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :tag
 
-  belongs_to :event
+  belongs_to :cartel
   has_many :hcb_code_tags
   has_many :hcb_code_tag_suggestions, dependent: :destroy, class_name: "HcbCode::Tag::Suggestion"
   has_many :hcb_codes, through: :hcb_code_tags

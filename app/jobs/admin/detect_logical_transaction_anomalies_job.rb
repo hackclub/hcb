@@ -18,7 +18,7 @@ module Admin
       end
 
       if hcb_codes.any? || ledger_items.any?
-        AdminMailer.logical_transaction_anomalies(event: Event.find(event_id), hcb_codes: HcbCode.where(id: hcb_codes), ledger_items: Ledger::Item.where(id: ledger_items)).deliver_now
+        AdminMailer.logical_transaction_anomalies(event: Cartel.find(event_id), hcb_codes: HcbCode.where(id: hcb_codes), ledger_items: Ledger::Item.where(id: ledger_items)).deliver_now
       end
     end
 

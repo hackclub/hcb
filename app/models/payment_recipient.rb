@@ -27,7 +27,7 @@ class PaymentRecipient < ApplicationRecord
 
   default_scope { order_by_last_used }
 
-  belongs_to :event
+  belongs_to :cartel
   has_many :ach_transfers
 
   scope :order_by_last_used, -> { includes(:ach_transfers).order("ach_transfers.created_at DESC") }

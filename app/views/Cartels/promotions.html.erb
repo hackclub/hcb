@@ -1,0 +1,52 @@
+<% title "Perks for #{@event.name}" %>
+<% page_md %>
+<%= render "cartels/nav", selected: :promotions %>
+
+<h1 class="heading gap-2 mb-2 border-0">
+  Promotions &amp; perks
+</h1>
+
+<%# Perks for organizations ran by teenagers %>
+<% if @event.organized_by_teenagers? || @active_teenagers_count > 0 || @is_argosy %>
+  <%= render "events/perks/robotics_printer_raffle", event: @event, active_teenagers_count: @active_teenagers_count %>
+
+  <%= render "events/perks/premium_pins", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
+  <%= render "events/perks/premium_domains", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
+
+  <%= render "events/perks/stickerninja", perks_available: @perks_available %>
+
+  <%= render "events/perks/fee_waiver", event: @event, perks_available: @perks_available, active_teenagers_count: @active_teenagers_count %>
+
+  <%= render "events/perks/hackathons_page", event: @event, perks_available: @perks_available %>
+
+  <%= render "events/perks/domains", event: @event, perks_available: @perks_available %>
+<% end %>
+
+<%# Perks for ALL organizations %>
+<%= render "events/perks/hcb_stickers", event: @event, perks_available: @perks_available %>
+
+<%= render "events/perks/onepassword", event: @event, perks_available: @perks_available %>
+
+<%= render "events/perks/event_helper", event: @event, perks_available: @perks_available %>
+
+<details class="w-100 text-left">
+  <summary>
+    <h3 class="inline-block pb0 border-none">
+      Expired promotions
+    </h3>
+  </summary>
+
+  <%= render "events/perks/onboard", event: @event %>
+
+  <%= render "events/perks/wallets", event: @event, perks_available: @perks_available %>
+
+  <%= render "events/perks/sendy" %>
+
+  <%= render "events/perks/stickermule", event: @event, perks_available: @perks_available %>
+
+  <%= render "events/perks/github", event: @event, perks_available: @perks_available %>
+
+  <%= render "events/perks/replit" %>
+
+  <%= render "events/perks/pvsa", event: @event, perks_available: @perks_available %>
+</details>

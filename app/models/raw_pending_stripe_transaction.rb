@@ -43,7 +43,7 @@ class RawPendingStripeTransaction < ApplicationRecord
   end
 
   def likely_event
-    Event.find(likely_event_id) if likely_event_id
+    Cartel.find(likely_event_id) if likely_event_id
   end
 
   def likely_card_grant

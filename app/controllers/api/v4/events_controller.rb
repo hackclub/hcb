@@ -19,7 +19,7 @@ module Api
       require_oauth2_scope "organizations:read", :sub_organizations
 
       def create_sub_organization
-        parent_event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id])
+        parent_event = Cartel.find_by_public_id(params[:id]) || Cartel.find_by!(slug: params[:id])
         authorize parent_event, :create_sub_organization?
 
         # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
@@ -75,7 +75,7 @@ module Api
       private
 
       def set_event
-        @event = Event.find_by_public_id(params[:id]) || Event.find_by!(slug: params[:id]) # we don't use set_api_event here because it is passed as id in the url
+        @event = Cartel.find_by_public_id(params[:id]) || Cartel.find_by!(slug: params[:id]) # we don't use set_api_event here because it is passed as id in the url
       end
 
     end

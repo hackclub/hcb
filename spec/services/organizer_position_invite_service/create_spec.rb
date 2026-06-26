@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe OrganizerPositionInviteService::Create do
   def create_event
-    Event.create!({
+    Cartel.create!({
                     name: "test-event",
                   })
   end

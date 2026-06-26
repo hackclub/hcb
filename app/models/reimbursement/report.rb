@@ -52,7 +52,7 @@ module Reimbursement
 
     belongs_to :user
 
-    belongs_to :event, optional: true
+    belongs_to :cartel, optional: true
 
     validate do
       unless draft? || event.present?

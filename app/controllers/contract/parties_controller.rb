@@ -17,7 +17,7 @@ class Contract
         end
       end
 
-      if @party.signed? && !(@contract.contractable.is_a?(Event::Application) && @party.hcb?)
+      if @party.signed? && !(@contract.contractable.is_a?(Cartel::Application) && @party.hcb?)
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?
@@ -44,7 +44,7 @@ class Contract
       authorize @party
 
       if @party.signee? && @contract.signed?
-        if @contract.contractable.is_a?(Event::Application)
+        if @contract.contractable.is_a?(Cartel::Application)
           redirect_to application_path(@contract.contractable)
         elsif @contract.contractable.is_a?(OrganizerPositionInvite)
           redirect_to organizer_position_invite_path(@contract.contractable)

@@ -74,7 +74,7 @@ class Disbursement < ApplicationRecord
 
   belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
   belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :source_subledger, class_name: "Subledger", optional: true
   belongs_to :destination_subledger, class_name: "Subledger", optional: true
 

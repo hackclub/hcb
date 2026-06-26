@@ -25,7 +25,7 @@
 <% end %>
 
 <div class="hcb_code mt2">
-  <div class="hcb_code_wrapper <%= event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
+  <div class="hcb_code_wrapper <%= event.plan.is_a?(Cartel::Plan::HackClubAffiliate) ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
   <div class="receipts_wrapper_mobile">
@@ -75,7 +75,7 @@
           <p>
             <strong>Category</strong>
             <span>
-              <% Event::BADGES.each do |_key, badge| %>
+              <% Cartel::BADGES.each do |_key, badge| %>
                 <% if event.send(badge[:qualifier]) %>
                   <span title="<%= badge[:emoji] %> <%= badge[:description] %>"><%= badge[:emoji] %></span>
                 <% end %>
@@ -94,7 +94,7 @@
             <strong>Fee on revenue</strong>
             <span><%= number_to_percentage(@event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></span>
           </p>
-          <% if @event.plan.is_a?(Event::Plan::HighSchoolHackathon) %>
+          <% if @event.plan.is_a?(Cartel::Plan::HighSchoolHackathon) %>
             <p>
               <strong>
                 <a

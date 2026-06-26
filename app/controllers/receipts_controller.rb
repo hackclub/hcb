@@ -359,7 +359,7 @@ class ReceiptsController < ApplicationController
     route = Rails.application.routes.recognize_path(request.referrer)
     return unless route[:controller].classify == "Event"
 
-    @event = Event.friendly.find(route[:id]) rescue nil
+    @event = Cartel.friendly.find(route[:id]) rescue nil
   end
 
   def set_receipt

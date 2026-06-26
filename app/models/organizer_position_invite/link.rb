@@ -32,7 +32,7 @@ class OrganizerPositionInvite
 
     DEFAULT_EXPIRATION = 30.days
 
-    belongs_to :event
+    belongs_to :cartel
     belongs_to :creator, class_name: "User"
     belongs_to :deactivator, class_name: "User", optional: true
 

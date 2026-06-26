@@ -89,7 +89,7 @@ RSpec.describe User::PermissionsOverview do
       parent = nil
 
       roles.each_with_index do |role, index|
-        event = create(:event, name: "#{name_prefix} #{index + 1}", parent:, plan: Event::Plan::Standard.new)
+        event = create(:event, name: "#{name_prefix} #{index + 1}", parent:, plan: Cartel::Plan::Standard.new)
 
         unless role.nil?
           create(:organizer_position, event:, user:, role:)

@@ -20,7 +20,7 @@
 #
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class Plan
     class Standard < Plan
       def revenue_fee
@@ -32,7 +32,7 @@ class Event
       end
 
       def description
-        if self.instance_of?(Event::Plan::Standard)
+        if self.instance_of?(Cartel::Plan::Standard)
           "Has access to all standard features, used for most organizations."
         else
           "Has access to all standard features"
@@ -40,7 +40,7 @@ class Event
       end
 
       def features
-        Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
+        Cartel::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
       def receipts_required?

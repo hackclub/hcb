@@ -83,7 +83,7 @@ class AchTransfer < ApplicationRecord
 
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :processor, class_name: "User", optional: true
-  belongs_to :event
+  belongs_to :cartel
 
   validates :amount, numericality: { greater_than: 0, message: "must be greater than 0" }
 

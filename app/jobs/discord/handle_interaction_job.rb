@@ -16,7 +16,7 @@ module Discord
       @permissions = Discordrb::Permissions.new(@interaction.dig(:member, :permissions)&.to_i)
 
       @user = User.find_by(discord_id: @user_id) if @user_id
-      @current_event = Event.find_by(discord_guild_id: @guild_id) if @guild_id
+      @current_event = Cartel.find_by(discord_guild_id: @guild_id) if @guild_id
 
       return command_router if @interaction[:type] == Discordrb::Interaction::TYPES[:command]
       return component_router if @interaction[:type] == Discordrb::Interaction::TYPES[:component]

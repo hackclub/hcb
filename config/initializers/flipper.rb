@@ -41,7 +41,7 @@ Flipper::UI.configure do |config|
           actor_names[mapping.fetch(id)] = CGI.escape_html(ActionMailer::Base.email_address_with_name(email, full_name))
         end
       when "Event"
-        Event.where(id: mapping.keys).pluck(:id, :name).each do |(id, name)|
+        Cartel.where(id: mapping.keys).pluck(:id, :name).each do |(id, name)|
           actor_names[mapping.fetch(id)] = name
         end
       end

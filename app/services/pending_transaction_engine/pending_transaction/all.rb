@@ -28,7 +28,7 @@ module PendingTransactionEngine
       private
 
       def event
-        @event ||= Event.find(@event_id)
+        @event ||= Cartel.find(@event_id)
       end
 
       def canonical_pending_event_mappings

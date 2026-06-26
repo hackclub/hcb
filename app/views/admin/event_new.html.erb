@@ -22,13 +22,13 @@
     <p>
       <%= form.label :country %>
       <br>
-      <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
+      <%= form.collection_select :country, Cartel.countries_for_select, :first, :last, selected: params[:country] %>
     </p>
 
     <div class="field mb2">
       <%= form.label :plan, "Assign a plan" %>
       <br>
-      <%= form.select(:plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan]) %>
+      <%= form.select(:plan, Cartel::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan]) %>
     </div>
 
     <div class="field mb2">
@@ -58,7 +58,7 @@
 
     <p>
       <%= form.label :risk_level %>
-      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, selected: params[:risk_level] %>
+      <%= form.collection_select :risk_level, Cartel.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, selected: params[:risk_level] %>
     </p>
 
   </fieldset>

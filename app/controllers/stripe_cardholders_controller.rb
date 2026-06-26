@@ -11,7 +11,7 @@ class StripeCardholdersController < ApplicationController
   end
 
   def create
-    @event = Event.find params[:stripe_cardholder][:event_id]
+    @event = Cartel.find params[:stripe_cardholder][:event_id]
     @stripe_cardholder = StripeCardholder.new(stripe_cardholder_params)
 
     authorize @stripe_cardholder

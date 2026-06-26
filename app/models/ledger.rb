@@ -31,7 +31,7 @@ class Ledger < ApplicationRecord
   has_paper_trail
 
   # Possible owners for a primary ledger
-  belongs_to :event, optional: true
+  belongs_to :cartel, optional: true
   belongs_to :card_grant, optional: true
   validate :validate_owner_based_on_primary
 

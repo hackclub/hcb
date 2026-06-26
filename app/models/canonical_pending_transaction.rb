@@ -88,7 +88,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", optional: true
 
   has_one :canonical_pending_event_mapping
-  has_one :event, through: :canonical_pending_event_mapping
+  has_one :cartel, through: :canonical_pending_event_mapping
   has_one :subledger, through: :canonical_pending_event_mapping
   has_many :canonical_pending_settled_mappings
   has_many :canonical_transactions, through: :canonical_pending_settled_mappings
@@ -142,7 +142,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       canonical_pending_event_mapping: { event: :plan }
     ).where.not(
       event_plans: {
-        type: Event::Plan.that(:omit_stats).collect(&:name)
+        type: Cartel::Plan.that(:omit_stats).collect(&:name)
       }
     )
   }

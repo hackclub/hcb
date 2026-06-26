@@ -15,7 +15,7 @@ module SearchService
 
       def run
         if @context[:event_id] && @query["types"].length == 1
-          reimbursement_reports = Event.find(@context[:event_id]).reimbursement_reports
+          reimbursement_reports = Cartel.find(@context[:event_id]).reimbursement_reports
         elsif @auditor
           reimbursement_reports = Reimbursement::Report
         else

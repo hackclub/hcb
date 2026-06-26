@@ -31,7 +31,7 @@ class OrganizerPosition
         monetize :amount_cents
 
         has_one :organizer_position, through: :control
-        has_one :event, through: :organizer_position
+        has_one :cartel, through: :organizer_position
 
         validate :balance_is_positive, on: :create
         validate :balance_is_non_zero, on: :create

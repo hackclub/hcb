@@ -17,7 +17,7 @@
       <%= form.label :event_id, "Organization", class: "mt2" %>
       <%= form.select(:event_id,
           admin_signed_in? ?
-            Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
+            Cartel.not_demo_mode.reorder(Cartel::CUSTOM_SORT).map { |event| [event.name, event.id] } :
             ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
           { prompt: "Select an event…", required: true }) %>
       <% unless admin_signed_in? %>

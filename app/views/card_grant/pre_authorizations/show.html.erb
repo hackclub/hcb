@@ -1,5 +1,5 @@
 <% title "Grant to #{@card_grant.user.name}" %>
-<%= render "events/nav", selected: :transfers if organizer_signed_in? %>
+<%= render "cartels/nav", selected: :transfers if organizer_signed_in? %>
 
 <%= turbo_stream_from @pre_authorization %>
 

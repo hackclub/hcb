@@ -36,7 +36,7 @@ class PaypalTransfer < ApplicationRecord
   include AASM
   include Payoutable
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :user
 
   has_one :canonical_pending_transaction

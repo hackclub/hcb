@@ -4,7 +4,7 @@ class EmployeesController < ApplicationController
   include SetEvent
 
   def create
-    @event = Event.friendly.find(employee_params[:event_id])
+    @event = Cartel.friendly.find(employee_params[:event_id])
     user = User.find_or_create_by!(email: employee_params[:email])
     @employee = @event.employees.build(entity: user)
 

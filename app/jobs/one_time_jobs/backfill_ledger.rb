@@ -13,7 +13,7 @@ module OneTimeJobs
     end
 
     def backfill_event_ledgers
-      collection = Event.where.missing(:ledger)
+      collection = Cartel.where.missing(:ledger)
       puts "Backfilling Ledger on #{collection.count} Events"
 
       collection.find_each do |event|
@@ -31,7 +31,7 @@ module OneTimeJobs
     end
 
     def queue_ledger_item_jobs
-      Event.all.pluck(:id).each do |event_id|
+      Cartel.all.pluck(:id).each do |event_id|
         OneTimeJobs::BackfillLedgerEvent.perform_later(event_id)
       end
     end

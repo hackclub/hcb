@@ -1,6 +1,6 @@
 <% title "Subsidiaries of #{@event.name}" %>
 <% page_sm %>
-<%= render "events/nav", selected: :sub_organizations %>
+<%= render "cartels/nav", selected: :sub_organizations %>
 
 <% if organizer_signed_in? %>
   <%= turbo_stream_from @event, :scoped_tags %>

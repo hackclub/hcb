@@ -59,7 +59,7 @@ class Ledger
     def event_from_stripe_top_up
       return unless @ledger_item.canonical_transactions.stripe_top_up.exists?
 
-      Event.find(EventMappingEngine::EventIds::NOEVENT)
+      Cartel.find(EventMappingEngine::EventIds::NOEVENT)
     end
 
     # Interest payments should always be mapped to HACK_FOUNDATION_INTEREST
@@ -68,7 +68,7 @@ class Ledger
                     @ledger_item.canonical_transactions.likely_column_interest.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_interest.exists?
 
-      Event.find(EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
+      Cartel.find(EventMappingEngine::EventIds::HACK_FOUNDATION_INTEREST)
     end
 
     # SVB sweep transactions should always be mapped to SVB_SWEEPS
@@ -77,7 +77,7 @@ class Ledger
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
-      Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
+      Cartel.find(EventMappingEngine::EventIds::SVB_SWEEPS)
     end
 
     # If we're unable to calculate the event from the canonical transactions

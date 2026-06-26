@@ -37,7 +37,7 @@ class Document < ApplicationRecord
 
   friendly_id :slug_text, use: :slugged
 
-  belongs_to :event, optional: true
+  belongs_to :cartel, optional: true
   belongs_to :user
   belongs_to :archived_by, class_name: "User", optional: true
 

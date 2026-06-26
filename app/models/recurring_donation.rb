@@ -45,7 +45,7 @@ class RecurringDonation < ApplicationRecord
 
   has_paper_trail
 
-  belongs_to :event
+  belongs_to :cartel
   has_many :donations
 
   has_encrypted :last4

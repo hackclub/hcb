@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Event
+class Cartel
   class ScopedTagsController < ApplicationController
     include SetEvent
 
@@ -14,7 +14,7 @@ class Event
 
       if @scoped_tag.save
         if params[:subevent_id]
-          subevent = Event.find(params[:subevent_id])
+          subevent = Cartel.find(params[:subevent_id])
 
           if @scoped_tag.parent_event.subevents.include?(subevent)
             subevent.scoped_tags << @scoped_tag
@@ -79,7 +79,7 @@ class Event
     private
 
     def set_scoped_tag
-      @scoped_tag = Event::ScopedTag.find(params[:id])
+      @scoped_tag = Cartel::ScopedTag.find(params[:id])
     end
 
   end

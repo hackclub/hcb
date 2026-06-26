@@ -20,7 +20,7 @@
 #  fk_rails_...  (event_group_id => event_groups.id)
 #  fk_rails_...  (event_id => events.id)
 #
-class Event
+class Cartel
   class GroupMembership < ApplicationRecord
     belongs_to(
       :group,
@@ -28,7 +28,7 @@ class Event
       foreign_key: :event_group_id,
       inverse_of: :memberships
     )
-    belongs_to(:event)
+    belongs_to(:cartel)
 
   end
 

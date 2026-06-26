@@ -14,7 +14,7 @@ module Reimbursement
 
     # POST /reimbursement_reports
     def create
-      @event = Event.find(report_params[:event_id])
+      @event = Cartel.find(report_params[:event_id])
       user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
       @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.default_payout_method&.currency || "USD"))
 
@@ -43,7 +43,7 @@ module Reimbursement
     end
 
     def quick_expense
-      @event = Event.find(report_params[:event_id])
+      @event = Cartel.find(report_params[:event_id])
       @report = @event.reimbursement_reports.build({ user: current_user, inviter: current_user })
 
       authorize @report, :create?
@@ -293,7 +293,7 @@ module Reimbursement
     def admin_send_wise_transfer
       authorize @report
 
-      clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      clearinghouse = Cartel.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
       payout_holding.with_lock do
         unless payout_holding.settled?

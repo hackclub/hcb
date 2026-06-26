@@ -79,7 +79,7 @@ class OrganizerPositionInvite < ApplicationRecord
   # tmb@hackclub: this is the scope that the SessionHelper looks to assign un-assigned invites. we need to include canceled invites so that we can assign users to them
   scope :pending_assign, -> { where(accepted_at: nil, rejected_at: nil) }
 
-  belongs_to :event
+  belongs_to :cartel
   belongs_to :user
   belongs_to :sender, class_name: "User"
 
