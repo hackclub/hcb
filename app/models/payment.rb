@@ -71,7 +71,7 @@ class Payment < ApplicationRecord
 
   after_create do
     if payee.legal_entity.complete? && payee.legal_entity.default_payout_method.present?
-      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+      create_payment_attempt!
     elsif payee.legal_entity.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
@@ -80,13 +80,7 @@ class Payment < ApplicationRecord
   end
 
   def retry!
-    self.with_lock do
-      raise ArgumentError, "this payment was rejected" if rejected?
-      raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
-      raise ArgumentError, "there is no default payout method" if payee.legal_entity.default_payout_method.nil?
-
-      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
-    end
+    create_payment_attempt!
   end
 
   def usd_amount_cents
@@ -99,6 +93,18 @@ class Payment < ApplicationRecord
 
   def marked_no_or_lost_receipt_at
     nil
+  end
+
+  private
+
+  def create_payment_attempt!
+    self.with_lock do
+      raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
+      raise ArgumentError, "there is no default payout method" if payee.legal_entity.default_payout_method.nil?
+
+      attempts.create!(payout_method: payee.legal_entity.default_payout_method)
+    end
   end
 
 end
