@@ -49,20 +49,18 @@ class LegalEntity
       end
 
       def create_transfer(event, **attr)
-
-        wise_transfer = event.wise_transfers.build(
-          amount_cents: payout_holding.amount_cents,
-          address_line1: payout_method.address_line1,
-          address_line2: payout_method.address_line2,
-          address_city: payout_method.address_city,
-          address_state: payout_method.address_state,
-          address_postal_code: payout_method.address_postal_code,
-          recipient_country: payout_method.recipient_country,
-          currency: payout_method.currency,
-          wise_recipient_id: payout_method.wise_recipient_id,
-          recipient_information: payout_method.recipient_information
+        event.wise_transfers.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_postal_code:,
+          recipient_country:,
+          currency:,
+          wise_recipient_id:,
+          recipient_information:,
+          **attr
         )
-        return wise_transfer
       end
 
     end

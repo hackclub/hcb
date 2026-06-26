@@ -43,15 +43,11 @@ class LegalEntity
       end
 
       def create_transfer(event, **attr)
-        ach_transfer = clearinghouse.ach_transfers.build(
-          amount: payout_holding.amount_cents,
-          recipient_name: payout_holding.report.user.full_name,
-          recipient_email: payout_holding.report.user.email,
-          routing_number: payout_method.routing_number,
-          account_number: payout_method.account_number,
+        event.ach_transfers.build(
+          routing_number:,
+          account_number:,
           **attr
         )
-        return ach_transfer
       end
 
     end

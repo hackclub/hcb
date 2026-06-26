@@ -55,25 +55,22 @@ class LegalEntity
       end
 
       def create_transfer(event, **attr)
-        wire = event.wires.build(
-          amount_cents: payout_holding.amount_cents,
-          address_line1: payout_method.address_line1,
-          address_line2: payout_method.address_line2,
-          address_city: payout_method.address_city,
-          address_state: payout_method.address_state,
-          address_postal_code: payout_method.address_postal_code,
-          recipient_country: payout_method.recipient_country,
-          recipient_email: payout_holding.report.user.email,
-          recipient_name: payout_method.recipient_name.presence || payout_holding.report.user.full_name,
-          account_number: payout_method.account_number,
-          bic_code: payout_method.bic_code,
-          recipient_information: payout_method.recipient_information.merge({
-                                                                             purpose_code: Wire.reimbursement_purpose_code_for(payout_method.recipient_country),
-                                                                             remittance_info: Wire.reimbursement_remittance_info_for(payout_method.recipient_country),
-                                                                           }),
-          **attr
+        event.wires.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_postal_code:,
+          recipient_country:,
+          account_number:,
+          bic_code:,
+          recipient_information: recipient_information.merge({
+                                                               purpose_code: Wire.reimbursement_purpose_code_for(recipient_country),
+                                                               remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
+                                                             }),
+          **attr,
+          recipient_name: recipient_name.presence || attr[:recipient_name],
         )
-        return wire
       end
 
     end
