@@ -2,15 +2,15 @@
 
 require "rails_helper"
 
-RSpec.describe IlegalEntity, type: :model do
+RSpec.describe IllegalEntity, type: :model do
   let(:legal_entity) { create(:legal_entity) }
 
   def build_ach
-    IlegalEntity::PayoutMethod::AchTransfer.create!(account_number: "12345678", routing_number: "021000021")
+    IllegalEntity::PayoutMethod::AchTransfer.create!(account_number: "12345678", routing_number: "021000021")
   end
 
   def build_check
-    IlegalEntity::PayoutMethod::Check.create!(
+    IllegalEntity::PayoutMethod::Check.create!(
       address_line1: "1 Main St",
       address_city: "New York",
       address_state: "NY",

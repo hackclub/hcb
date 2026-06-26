@@ -2,15 +2,15 @@
 
 require "rails_helper"
 
-RSpec.describe IlegalEntity::PayoutMethod, type: :model do
+RSpec.describe IllegalEntity::PayoutMethod, type: :model do
   let(:legal_entity) { create(:legal_entity) }
 
   def build_ach
-    IlegalEntity::PayoutMethod::AchTransfer.create!(account_number: "12345678", routing_number: "021000021")
+    IllegalEntity::PayoutMethod::AchTransfer.create!(account_number: "12345678", routing_number: "021000021")
   end
 
   def build_check
-    IlegalEntity::PayoutMethod::Check.create!(
+    IllegalEntity::PayoutMethod::Check.create!(
       address_line1: "1 Main St",
       address_city: "New York",
       address_state: "NY",
@@ -32,7 +32,7 @@ RSpec.describe IlegalEntity::PayoutMethod, type: :model do
     end
 
     it "requires details" do
-      payout_method = IlegalEntity::PayoutMethod.new(legal_entity:)
+      payout_method = IllegalEntity::PayoutMethod.new(legal_entity:)
       expect(payout_method).not_to be_valid
       expect(payout_method.errors[:details]).to be_present
     end
@@ -42,7 +42,7 @@ RSpec.describe IlegalEntity::PayoutMethod, type: :model do
       payout_method = legal_entity.payout_methods.create!(details: ach)
 
       expect { payout_method.destroy! }
-        .to change { IlegalEntity::PayoutMethod::AchTransfer.exists?(ach.id) }.from(true).to(false)
+        .to change { IllegalEntity::PayoutMethod::AchTransfer.exists?(ach.id) }.from(true).to(false)
     end
   end
 
@@ -96,18 +96,18 @@ RSpec.describe IlegalEntity::PayoutMethod, type: :model do
       before do
         stub_const(
           "LegalEntity::PayoutMethod::UNSUPPORTED_METHODS",
-          { IlegalEntity::PayoutMethod::Check => { status_badge: "Unavailable", reason: "Checks are paused." } }
+          { IllegalEntity::PayoutMethod::Check => { status_badge: "Unavailable", reason: "Checks are paused." } }
         )
       end
 
       it "reports unsupported details" do
-        payout_method = IlegalEntity::PayoutMethod.new(legal_entity:, details: build_check)
+        payout_method = IllegalEntity::PayoutMethod.new(legal_entity:, details: build_check)
         expect(payout_method).to be_unsupported
         expect(payout_method.unsupported_details[:reason]).to eq("Checks are paused.")
       end
 
       it "is invalid" do
-        payout_method = IlegalEntity::PayoutMethod.new(legal_entity:, details: build_check)
+        payout_method = IllegalEntity::PayoutMethod.new(legal_entity:, details: build_check)
         expect(payout_method).not_to be_valid
         expect(payout_method.errors[:base].join).to include("Checks are paused.")
       end

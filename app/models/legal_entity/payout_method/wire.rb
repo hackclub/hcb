@@ -20,7 +20,7 @@
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #
-class IlegalEntity
+class IllegalEntity
   class PayoutMethod < ApplicationRecord
     class Wire < ApplicationRecord
       self.table_name = "user_payout_method_wires"

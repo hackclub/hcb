@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe IlegalEntity::PayoutMethodService::Update do
+RSpec.describe IllegalEntity::PayoutMethodService::Update do
   let(:user) { create(:user) }
 
   def valid_ach_attrs
@@ -33,12 +33,12 @@ RSpec.describe IlegalEntity::PayoutMethodService::Update do
       default = user.reload.default_payout_method
       expect(default).to be_present
       expect(default).to be_default
-      expect(default.details).to be_a(IlegalEntity::PayoutMethod::AchTransfer)
+      expect(default.details).to be_a(IllegalEntity::PayoutMethod::AchTransfer)
       expect(default.details.routing_number).to eq("021000021")
     end
 
     it "replaces the existing default and unsets the previous one" do
-      old = seed_default(IlegalEntity::PayoutMethod::Check.new(
+      old = seed_default(IllegalEntity::PayoutMethod::Check.new(
                            address_line1: "1 Main St", address_city: "New York",
                            address_state: "NY", address_postal_code: "10001"
                          ))
@@ -51,7 +51,7 @@ RSpec.describe IlegalEntity::PayoutMethodService::Update do
 
       expect(service.run).to be(true)
       expect(user.personal_legal_entity.payout_methods.where(default: true).count).to eq(1)
-      expect(user.reload.default_payout_method.details).to be_a(IlegalEntity::PayoutMethod::AchTransfer)
+      expect(user.reload.default_payout_method.details).to be_a(IllegalEntity::PayoutMethod::AchTransfer)
       expect(old.reload).not_to be_default
     end
 
@@ -97,7 +97,7 @@ RSpec.describe IlegalEntity::PayoutMethodService::Update do
     end
 
     it "blocks switching to Wise while a report is being processed" do
-      seed_default(IlegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+      seed_default(IllegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
       create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
 
       service = described_class.new(
@@ -108,11 +108,11 @@ RSpec.describe IlegalEntity::PayoutMethodService::Update do
 
       expect(service.run).to be(false)
       expect(service.error_messages.join(" ")).to match(/wise/i)
-      expect(user.reload.default_payout_method.details).to be_a(IlegalEntity::PayoutMethod::AchTransfer)
+      expect(user.reload.default_payout_method.details).to be_a(IllegalEntity::PayoutMethod::AchTransfer)
     end
 
     it "blocks any change while the current Wise payout is being processed" do
-      seed_default(IlegalEntity::PayoutMethod::WiseTransfer.new(valid_wise_attrs))
+      seed_default(IllegalEntity::PayoutMethod::WiseTransfer.new(valid_wise_attrs))
       create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
 
       service = described_class.new(
@@ -122,7 +122,7 @@ RSpec.describe IlegalEntity::PayoutMethodService::Update do
       )
 
       expect(service.run).to be(false)
-      expect(user.reload.default_payout_method.details).to be_a(IlegalEntity::PayoutMethod::WiseTransfer)
+      expect(user.reload.default_payout_method.details).to be_a(IllegalEntity::PayoutMethod::WiseTransfer)
     end
   end
 

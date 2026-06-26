@@ -14,12 +14,12 @@ module Maintenance
       end
 
       details_class = user.payout_method_type.sub(/\AUser::/, "LegalEntity::").safe_constantize
-      return unless IlegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+      return unless IllegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
 
       details = details_class.find_by(id: user.payout_method_id)
       return unless details
 
-      IlegalEntity::PayoutMethod.find_or_create_by!(legal_entity:, details:) do |payout_method|
+      IllegalEntity::PayoutMethod.find_or_create_by!(legal_entity:, details:) do |payout_method|
         payout_method.default = true
       end
     end

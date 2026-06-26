@@ -487,7 +487,7 @@ RSpec.describe User, type: :model do
     let(:user) { create(:user) }
 
     def build_ach
-      IlegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+      IllegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
     end
 
     describe "#personal_legal_entity" do
@@ -527,7 +527,7 @@ RSpec.describe User, type: :model do
 
         expect(user.default_payout_method).to eq(pm)
         expect(user.default_payout_method.details).to eq(pm.details)
-        expect(user.default_payout_method.details).to be_a(IlegalEntity::PayoutMethod::AchTransfer)
+        expect(user.default_payout_method.details).to be_a(IllegalEntity::PayoutMethod::AchTransfer)
       end
     end
 
@@ -540,7 +540,7 @@ RSpec.describe User, type: :model do
       it "is false when the default is Wise and a reimbursement is being processed" do
         user.personal_legal_entity.payout_methods.create!(
           default: true,
-          details: IlegalEntity::PayoutMethod::WiseTransfer.new(
+          details: IllegalEntity::PayoutMethod::WiseTransfer.new(
             address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
             address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
           )

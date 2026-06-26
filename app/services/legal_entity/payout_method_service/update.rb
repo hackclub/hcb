@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class IlegalEntity
+class IllegalEntity
   module PayoutMethodService
     # Builds, validates, and persists a user's default personal-legal-entity
     # payout method. Encapsulates the business rules that previously lived
@@ -53,8 +53,8 @@ class IlegalEntity
       def build_payout_method
         # Resolve the user-supplied type against the allowlist by name rather
         # than constantizing it, so arbitrary class names can never be loaded.
-        details_class = IlegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
-        pm = IlegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: true)
+        details_class = IllegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
+        pm = IllegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: true)
         pm.details = details_class.new(@details_attrs) if details_class
         pm
       end
@@ -76,8 +76,8 @@ class IlegalEntity
       end
 
       def switching_to_wise_while_processing?
-        @payout_method.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) &&
-          !@user.default_payout_method&.details.is_a?(IlegalEntity::PayoutMethod::WiseTransfer) &&
+        @payout_method.details.is_a?(IllegalEntity::PayoutMethod::WiseTransfer) &&
+          !@user.default_payout_method&.details.is_a?(IllegalEntity::PayoutMethod::WiseTransfer) &&
           @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES).any?
       end
 

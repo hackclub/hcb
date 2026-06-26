@@ -9,7 +9,7 @@ module PayrollService
         payout_method = payment.employee.user.default_payout_method&.details
 
         case payout_method
-        when IlegalEntity::PayoutMethod::Check
+        when IllegalEntity::PayoutMethod::Check
           safely do
             check = payment.employee.event.increase_checks.build(
               memo: "Payment for \"#{payment.title}\"."[0...40],
@@ -40,7 +40,7 @@ module PayrollService
 
             check.send_check! if payment.previously_paid?
           end
-        when IlegalEntity::PayoutMethod::AchTransfer
+        when IllegalEntity::PayoutMethod::AchTransfer
           safely do
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,

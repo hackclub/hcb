@@ -18,15 +18,15 @@
 #  index_legal_entity_payout_methods_on_details          (details_type,details_id) UNIQUE
 #  index_legal_entity_payout_methods_on_legal_entity_id  (legal_entity_id)
 #
-class IlegalEntity
+class IllegalEntity
   class PayoutMethod < ApplicationRecord
     has_paper_trail
 
     ALL_METHODS = [
-      IlegalEntity::PayoutMethod::AchTransfer,
-      IlegalEntity::PayoutMethod::Check,
-      IlegalEntity::PayoutMethod::Wire,
-      IlegalEntity::PayoutMethod::WiseTransfer,
+      IllegalEntity::PayoutMethod::AchTransfer,
+      IllegalEntity::PayoutMethod::Check,
+      IllegalEntity::PayoutMethod::Wire,
+      IllegalEntity::PayoutMethod::WiseTransfer,
     ].freeze
     UNSUPPORTED_METHODS = {
       # If a PayoutMethod is deprecated, add a key with the PayoutMethod's
@@ -37,7 +37,7 @@ class IlegalEntity
 
     self.table_name = "legal_entity_payout_methods"
 
-    belongs_to :ilegal_entity
+    belongs_to :illegal_entity
     belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
@@ -72,7 +72,7 @@ class IlegalEntity
     end
 
     def unset_other_defaults
-      IlegalEntity::PayoutMethod
+      IllegalEntity::PayoutMethod
         .where(legal_entity_id:)
         .excluding(self)
         .update_all(default: false)

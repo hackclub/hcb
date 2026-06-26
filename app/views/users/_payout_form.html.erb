@@ -2,7 +2,7 @@
 <% payout_method = attempted&.details || user.default_payout_method&.details %>
 <% selected_type = payout_method&.class&.name %>
 <%= form_with model: user, html: {
-      "x-data": "{ country: #{payout_method.instance_of?(IlegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null"} }"
+      "x-data": "{ country: #{payout_method.instance_of?(IllegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null"} }"
     } do |form| %>
   <% if user.full_name.blank? %>
     <div class="heading h3 pb2 bold">Firstly, we need to know your name:</div>
@@ -16,13 +16,13 @@
   <fieldset>
     <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
     <div class="field field--options mb-4" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: IlegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == IlegalEntity::PayoutMethod::AchTransfer.name %>
+      <%= render "users/payout_form/option", form:, model: IllegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == IllegalEntity::PayoutMethod::AchTransfer.name %>
 
-      <%= render "users/payout_form/option", form:, model: IlegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == IlegalEntity::PayoutMethod::Check.name %>
+      <%= render "users/payout_form/option", form:, model: IllegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == IllegalEntity::PayoutMethod::Check.name %>
 
-      <%= render "users/payout_form/option", form:, model: IlegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == IlegalEntity::PayoutMethod::WiseTransfer.name %>
+      <%= render "users/payout_form/option", form:, model: IllegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == IllegalEntity::PayoutMethod::WiseTransfer.name %>
 
-      <%= render "users/payout_form/option", form:, model: IlegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == IlegalEntity::PayoutMethod::Wire.name do %>
+      <%= render "users/payout_form/option", form:, model: IllegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == IllegalEntity::PayoutMethod::Wire.name do %>
         <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
       <% end %>
     </div>
@@ -32,8 +32,8 @@
       <%= (attempted.errors.full_messages_for(:base) + (attempted.details&.errors&.full_messages || [])).to_sentence %>.
     </p>
   <% end %>
-  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IlegalEntity::PayoutMethod::Check) %>">
-    <%= form.fields_for :payout_method, payout_method.instance_of?(IlegalEntity::PayoutMethod::Check) ? payout_method : IlegalEntity::PayoutMethod::Check.new do |form| %>
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IllegalEntity::PayoutMethod::Check) %>">
+    <%= form.fields_for :payout_method, payout_method.instance_of?(IllegalEntity::PayoutMethod::Check) ? payout_method : IllegalEntity::PayoutMethod::Check.new do |form| %>
       <%= render "application/callout",
         type: "info",
         icon: "email",
@@ -81,8 +81,8 @@
     <% end %>
   </section>
 
-  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IlegalEntity::PayoutMethod::Wire) %>">
-    <%= form.fields_for :payout_method_wire, payout_method.instance_of?(IlegalEntity::PayoutMethod::Wire) ? payout_method : IlegalEntity::PayoutMethod::Wire.new do |form| %>
+  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IllegalEntity::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method_wire, payout_method.instance_of?(IllegalEntity::PayoutMethod::Wire) ? payout_method : IllegalEntity::PayoutMethod::Wire.new do |form| %>
       <%= render "application/callout",
         type: "info",
         icon: "web",
@@ -112,8 +112,8 @@
     <% end %>
   </section>
 
-  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IlegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
-    <%= form.fields_for :payout_method_wise_transfer, payout_method.instance_of?(IlegalEntity::PayoutMethod::WiseTransfer) ? payout_method : IlegalEntity::PayoutMethod::WiseTransfer.new do |form| %>
+  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(IllegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+    <%= form.fields_for :payout_method_wise_transfer, payout_method.instance_of?(IllegalEntity::PayoutMethod::WiseTransfer) ? payout_method : IllegalEntity::PayoutMethod::WiseTransfer.new do |form| %>
       <%= render "application/callout",
         type: "info",
         icon: "wise",
@@ -132,7 +132,7 @@
 
       <%= form.hidden_field :wise_recipient_id, value: "" %>
 
-      <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: IlegalEntity::PayoutMethod::WiseTransfer } %>
+      <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, model: IllegalEntity::PayoutMethod::WiseTransfer } %>
 
       <div class="actions inline-block mt1">
         <%= form.submit "Save" %>
@@ -140,7 +140,7 @@
     <% end %>
   </section>
 
-  <% if payout_method.instance_of?(IlegalEntity::PayoutMethod::AchTransfer) %>
+  <% if payout_method.instance_of?(IllegalEntity::PayoutMethod::AchTransfer) %>
     <% errored = !payout_method.valid? %>
     <% r_no = payout_method.routing_number %>
     <% obfuscated_routing_number = "•" * [r_no.length - 4, 0].max + r_no[[-4, -1 * r_no.length].max..] %>
@@ -155,7 +155,7 @@
   <% end %>
   <section
     data-behavior="ach_transfer_payout_method_inputs"
-    class="<%= "hidden" unless payout_method.instance_of?(IlegalEntity::PayoutMethod::AchTransfer) %>"
+    class="<%= "hidden" unless payout_method.instance_of?(IllegalEntity::PayoutMethod::AchTransfer) %>"
     x-data="
     {
       routingNumber: '<%= errored ? r_no : obfuscated_routing_number %>',
@@ -173,7 +173,7 @@
         }
       }
     }">
-    <%= form.fields_for :payout_method, payout_method.instance_of?(IlegalEntity::PayoutMethod::AchTransfer) ? payout_method : IlegalEntity::PayoutMethod::AchTransfer.new do |form| %>
+    <%= form.fields_for :payout_method, payout_method.instance_of?(IllegalEntity::PayoutMethod::AchTransfer) ? payout_method : IllegalEntity::PayoutMethod::AchTransfer.new do |form| %>
       <%= render "application/callout",
         type: "info",
         icon: "payment-transfer",

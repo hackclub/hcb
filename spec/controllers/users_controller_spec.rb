@@ -150,7 +150,7 @@ RSpec.describe UsersController do
       default = user.reload.default_payout_method
       expect(default).to be_present
       expect(default).to be_default
-      expect(default.details).to be_a(IlegalEntity::PayoutMethod::AchTransfer)
+      expect(default.details).to be_a(IllegalEntity::PayoutMethod::AchTransfer)
       expect(default.details.routing_number).to eq("021000021")
     end
 
@@ -159,7 +159,7 @@ RSpec.describe UsersController do
       stub_const(
         "LegalEntity::PayoutMethod::UNSUPPORTED_METHODS",
         {
-          IlegalEntity::PayoutMethod::Check => {
+          IllegalEntity::PayoutMethod::Check => {
             status_badge: "Unavailable",
             reason:
           },
