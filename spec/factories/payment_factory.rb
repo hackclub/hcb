@@ -10,9 +10,6 @@ FactoryBot.define do
     purpose      { "Reimbursement for conference travel" }
     aasm_state   { "pending_legal_entity" }
 
-    # ---------------------------------------------------------------------------
-    # Traits for AASM states
-    # ---------------------------------------------------------------------------
     trait :pending_legal_entity do
       aasm_state { "pending_legal_entity" }
     end
@@ -38,9 +35,6 @@ FactoryBot.define do
       rejected_at { 1.hour.ago }
     end
 
-    # ---------------------------------------------------------------------------
-    # Traits for currency
-    # ---------------------------------------------------------------------------
     trait :eur do
       currency { "EUR" }
     end

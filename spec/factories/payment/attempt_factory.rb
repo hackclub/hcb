@@ -59,12 +59,7 @@ FactoryBot.define do
       association :payout_method, factory: :legal_entity_payout_method_wise
     end
   end
-  # ---------------------------------------------------------------------------
-  # Typed payout method factories
-  #
-  # These inherit from :legal_entity_payout_method (which you define separately)
-  # and override the details association with the concrete type.
-  # ---------------------------------------------------------------------------
+
   factory :legal_entity_payout_method_check, parent: :legal_entity_payout_method do
     association :details, factory: :check_payout_method_details
   end
