@@ -24,8 +24,6 @@
 #  index_payments_on_payee_id    (payee_id)
 #
 class Payment < ApplicationRecord
-  self.ignored_columns += ["payout_type", "payout_id", "failed_at"]
-
   include AASM
   include Receiptable
   has_paper_trail
