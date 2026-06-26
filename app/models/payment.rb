@@ -26,6 +26,7 @@
 class Payment < ApplicationRecord
   include AASM
   include Receiptable
+  include Commentable
   has_paper_trail
 
   belongs_to :payee
