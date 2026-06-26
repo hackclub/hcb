@@ -83,7 +83,7 @@ class Payment < ApplicationRecord
     create_payment_attempt!
   end
 
-  def usd_amount_cents
+  def estimate_usd_amount_cents
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
