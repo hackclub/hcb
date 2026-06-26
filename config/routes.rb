@@ -964,6 +964,7 @@ Rails.application.routes.draw do
     resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"
+    get "payments/new", to: "events#new_payment"
 
     get "async_balance"
     get "async_sub_organization_balance"
@@ -972,6 +973,7 @@ Rails.application.routes.draw do
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
+    get "payments"
     get "statements"
     get "statement_of_activity"
     get "promotions"
