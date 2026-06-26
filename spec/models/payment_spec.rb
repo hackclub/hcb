@@ -16,12 +16,10 @@ RSpec.describe Payment, type: :model do
 
   def stub_legal_entity(payment, complete:, payout_method:)
     legal_entity = double("LegalEntity", complete?: complete, default_payout_method: payout_method).as_null_object
-    real_payee = payment.payee
-    allow(real_payee).to receive(:legal_entity).and_return(legal_entity)
-    # Stub on the payment object itself so the stub survives with_lock's reload,
-    # which resets the association cache. Return the real payee (not a double)
-    # so that the belongs_to presence validation still passes.
-    allow(payment).to receive(:payee).and_return(real_payee)
+    # Stub directly on payment so the stub survives with_lock's reload (which
+    # resets association caches). has_one :through issues SQL, not a Ruby
+    # delegation, so stubbing payee.legal_entity won't intercept it.
+    allow(payment).to receive(:legal_entity).and_return(legal_entity)
   end
 
   describe "state machine" do
@@ -126,13 +124,7 @@ RSpec.describe Payment, type: :model do
 
     before do
       allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!)
-      # Stub payment.payee on the payment object itself, not on the payee
-      # instance. with_lock calls reload which resets the association cache,
-      # losing any stub set on the payee instance. Stubbing the method on the
-      # payment object survives reload since RSpec stores it keyed by object_id.
-      allow(payment).to receive(:payee).and_return(
-        double("payee", legal_entity: double("LegalEntity", complete?: true, default_payout_method: payout_method).as_null_object)
-      )
+      stub_legal_entity(payment, complete: true, payout_method:)
     end
 
     context "when all previous attempts have failed" do
