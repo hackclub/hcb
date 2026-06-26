@@ -23,11 +23,6 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
-    # `date` was renamed to `datetime` and dropped. Keep it ignored so a
-    # process still on older code can't select the column while this drop
-    # propagates. Safe to remove in a later cleanup.
-    self.ignored_columns += ["date"]
-
     include Hashid::Rails
     has_paper_trail
 
