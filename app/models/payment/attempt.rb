@@ -109,7 +109,7 @@ class Payment
           self.payout = check
           save!
 
-          Receipt.reupload(payment, check.local_hcb_code)
+          Receipt.reupload(old_receiptable: payment, new_receiptable: check.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::AchTransfer
         safely do
@@ -129,7 +129,7 @@ class Payment
           self.payout = ach_transfer
           save!
 
-          Receipt.reupload(payment, ach_transfer.local_hcb_code)
+          Receipt.reupload(old_receiptable: payment, new_receiptable: ach_transfer.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::Wire
         safely do
@@ -160,7 +160,7 @@ class Payment
           self.payout = wire
           save!
 
-          Receipt.reupload(wire.local_hcb_code)
+          Receipt.reupload(old_receiptable: payment, new_receiptable: wire.local_hcb_code)
         end
       when LegalEntity::PayoutMethod::WiseTransfer
         safely do
@@ -187,7 +187,7 @@ class Payment
           self.payout = wise
           save!
 
-          Receipt.reupload(wise.local_hcb_code)
+          Receipt.reupload(old_receiptable: payment, new_receiptable: wise.local_hcb_code)
         end
       else
         raise ArgumentError, "🚨⚠️ unsupported payout method!"

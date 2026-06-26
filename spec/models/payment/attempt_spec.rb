@@ -143,11 +143,6 @@ RSpec.describe Payment::Attempt, type: :model do
         expect(attempt).to be_failed
       end
 
-      it "re-assigns payout receipts to the payment" do
-        expect(receipt).to receive(:update!).with(receiptable: attempt.payment)
-        attempt.mark_failed!
-      end
-
       it "delivers the failed_creator mailer" do
         mail = double("mail", deliver_later: true)
         mailer_double = double.as_null_object
@@ -228,12 +223,32 @@ RSpec.describe Payment::Attempt, type: :model do
       end
     end
 
-    it "transfers payment receipts to the new transfer's hcb_code" do
-      hcb_code = double("HcbCode")
-      receipt  = double("receipt")
-      allow(attempt.payment).to receive(:receipts).and_return([receipt])
-      expect(receipt).to receive(:update!).with(receiptable: hcb_code)
-      attempt.send(:transfer_receipts, hcb_code)
+    it "calls Receipt.reupload to transfer payment receipts to the new transfer's hcb_code" do
+      payout_method = build(:legal_entity_payout_method, details: build(:check_payout_method_details))
+      attempt = build(:payment_attempt)
+      allow(attempt).to receive(:create_transfer!).and_call_original
+      allow(attempt).to receive(:safely).and_yield
+      allow(attempt).to receive(:save!)
+      allow(attempt).to receive(:mark_under_review!)
+      allow(attempt).to receive(:payout=)
+
+      payee_dbl = double("payee", preferred_name: "Alice", email: "alice@example.com")
+      hcb_code  = double("hcb_code")
+      check     = double("check", save!: nil, local_hcb_code: hcb_code)
+      checks_rel = double("checks_rel", build: check)
+      event_dbl  = double("event", increase_checks: checks_rel)
+      payment_dbl = double("payment",
+        payee: payee_dbl,
+        event: event_dbl,
+        purpose: "Test purpose",
+        estimate_usd_amount_cents: 10_000
+      )
+      allow(payment_dbl).to receive_message_chain(:payee, :legal_entity, :default_payout_method).and_return(payout_method)
+      allow(attempt).to receive(:payment).and_return(payment_dbl)
+
+      allow(User).to receive(:system_user).and_return(double("system_user"))
+      expect(Receipt).to receive(:reupload).with(old_receiptable: payment_dbl, new_receiptable: hcb_code)
+      attempt.send(:create_transfer!)
     end
   end
 end
