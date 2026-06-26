@@ -16,7 +16,6 @@
 # Indexes
 #
 #  index_ledger_items_on_amount_cents  (amount_cents)
-#  index_ledger_items_on_date          (date)
 #  index_ledger_items_on_datetime      (datetime)
 #  index_ledger_items_on_short_code    (short_code) UNIQUE
 #
@@ -24,9 +23,9 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
-    # `date` was renamed to `datetime`. Ignore the column so Active Record's
-    # schema cache stops referencing it. This must ship and deploy before the
-    # follow-up PR drops the column.
+    # `date` was renamed to `datetime` and dropped. Keep it ignored so a
+    # process still on older code can't select the column while this drop
+    # propagates. Safe to remove in a later cleanup.
     self.ignored_columns += ["date"]
 
     include Hashid::Rails
