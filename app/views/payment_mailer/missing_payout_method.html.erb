@@ -1,10 +1,7 @@
 <p>Hello <%= @payment.payee.preferred_name %>,</p>
 
 <% if @initial %>
-  <p>
-    <%= @payment.event.name %> has initiated a <%= @payment.amount.format(with_currency: true) %> payment
-    to you for <i>"<%= @payment.purpose %>"</i> through HCB.
-  </p>
+  <%= render partial: "initial_message", locals: { payment: @payment } %>
 <% else %>
   <p>
     Thank you for uploading your tax information for receiving your payment of <%= @payment.amount.format(with_currency: true) %>
