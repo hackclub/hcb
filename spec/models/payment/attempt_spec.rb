@@ -41,7 +41,7 @@ RSpec.describe Payment::Attempt, type: :model do
 
       it "is invalid" do
         attempt.valid?(:update)
-        expect(attempt.errors[:base]).to include(/failed or successful payment attempts cannot be updated/)
+        expect(attempt.errors[:base]).to include(/failed, successful, or rejected payment attempts cannot be updated/)
       end
     end
 
@@ -59,7 +59,7 @@ RSpec.describe Payment::Attempt, type: :model do
 
       it "is invalid" do
         attempt.valid?(:update)
-        expect(attempt.errors[:base]).to include(/failed or successful payment attempts cannot be updated/)
+        expect(attempt.errors[:base]).to include(/failed, successful, or rejected payment attempts cannot be updated/)
       end
     end
   end
