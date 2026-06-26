@@ -1,0 +1,40 @@
+<%# locals: (event:, payment:) %>
+
+<% disabled = !policy(event).create_transfer? %>
+
+<%= form_with(model: payment, url: event_payments_new_path(event_id: event.slug), local: true) do |form| %>
+  <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
+
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Payment details</h3>
+    <div class="card mb-4 flex flex-col gap-3">
+      <div class="flex justify-between items-center">
+        <%= form.label :amount, "Amount" %>
+        <div class="flex items-center">
+          <div class="input flex gap-2 items-center py-0">
+            <span class="bold muted">$</span>
+            <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :purpose, "What's this payment for?" %>
+        <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
+        <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
+      </div>
+    </div>
+  </div>
+
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Receipt</h3>
+    <div class="card mb-4">
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    </div>
+  </div>
+
+  <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+    Send payment
+    <%= inline_icon "send" %>
+  </button>
+<% end %>

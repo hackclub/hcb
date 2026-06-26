@@ -1,17 +1,6 @@
-<% title "Who do you want to pay?" %>
-<% page_full %>
-<% @no_app_shell = true %>
-<% @hide_flash = true %>
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new_payment">
+  <%= modal_header "Who do you want to pay?" %>
 
-<nav class="border-b px-6 flex items-center gap-4 fixed top-0 left-0 backdrop-blur-xl h-20 w-full z-10">
-  <%= link_to inline_icon("view-back"), event_payments_path(event_id: @event.slug), class: "pop" %>
-  <div class="min-w-0">
-    <h1 class="border-0 m-0 p-0 h2 truncate">Who do you want to pay?</h1>
-    <p class="text-sm muted m-0 truncate">From <%= @event.name %></p>
-  </div>
-</nav>
-
-<div class="max-w-lg mx-auto w-full px-4 mt-28">
   <div class="input input-group max-w-none mb-4">
     <%= inline_icon "search" %>
     <input type="text" placeholder="Search recently paid..." class="bg-transparent" />
@@ -20,43 +9,43 @@
   <div class="card p-0 overflow-hidden">
     <p class="text-xs bold muted uppercase tracking-wider px-4 pt-4 pb-2 m-0">Recently Paid</p>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <img src="<%= gravatar_url("gary+testing@hackclub.com", "GT", 1, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="GT" />
       <div>
         <p class="font-medium">Gary Testing</p>
         <p class="text-sm muted">gary+testing@hackclub.com</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <img src="<%= gravatar_url("sampoder@sampoder.com", "SP", 2, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="SP" />
       <div>
         <p class="font-medium">Sam Poder</p>
         <p class="text-sm muted">sampoder@sampoder.com</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <img src="<%= gravatar_url("leo@hackclub.com", "LW", 3, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="LW" />
       <div>
         <p class="font-medium">Leo Wilkin</p>
         <p class="text-sm muted">leo@hackclub.com</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <img src="<%= gravatar_url("priya@design.co", "PN", 4, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="PN" />
       <div>
         <p class="font-medium">Priya Nair</p>
         <p class="text-sm muted">priya@design.co</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
         <%= inline_icon "plus", size: 18 %>
       </div>
@@ -65,9 +54,9 @@
         <p class="text-sm muted">Create a new payment recipient</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
 
-    <a href="#" class="btn btn--list-item border-t rounded-none">
+    <%= link_to event_payments_new_path(event_id: event.slug), class: "btn btn--list-item border-t rounded-none" do %>
       <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
         <%= inline_icon "edit", size: 18 %>
       </div>
@@ -76,8 +65,6 @@
         <p class="text-sm muted">Enter recipient &amp; transfer details directly</p>
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
+    <% end %>
   </div>
-</div>
-
-<% parent_layout "application" %>
+</section>

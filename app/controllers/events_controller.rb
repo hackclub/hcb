@@ -817,6 +817,19 @@ class EventsController < ApplicationController
 
   def new_payment
     authorize @event
+    @payment = Payment.new
+    render layout: "transfer"
+  end
+
+  def create_payment
+    authorize @event, :new_payment?
+    @payment = Payment.new(payment_params.merge(creator: current_user))
+
+    if @payment.save
+      redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
+    else
+      render :new_payment, layout: "transfer", status: :unprocessable_entity
+    end
   end
 
   def promotions
@@ -1231,6 +1244,10 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def payment_params
+    params.require(:payment).permit(:amount, :purpose)
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
