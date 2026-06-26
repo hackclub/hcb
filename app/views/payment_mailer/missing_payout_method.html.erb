@@ -2,8 +2,8 @@
 
 <% if @initial %>
   <p>
-    <%= @payment.event.name %> has requested to send you <%= @payment.amount.format(with_currency: true) %>
-    for <i>"<%= @payment.purpose %>"</i> through HCB.
+    <%= @payment.event.name %> has initiated a <%= @payment.amount.format(with_currency: true) %> payment
+    to you for <i>"<%= @payment.purpose %>"</i> through HCB.
   </p>
 <% else %>
   <p>
