@@ -1,0 +1,20 @@
+<p>
+  Hey <%= @report.user.name %>,
+</p>
+
+<p>
+  This email is to inform you that the <%= @report.event.name %> team has
+  decided to reject your report "<em><%= link_to @report.name, @report %></em>".
+</p>
+
+<p>
+  If you have any questions, please contact <%= @report.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @report.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>
