@@ -60,6 +60,7 @@ class Check < ApplicationRecord
   belongs_to :creator, class_name: "User"
   belongs_to :lob_address
   has_one :event, through: :lob_address
+  has_one :ledger_item, as: :linked_object
 
   accepts_nested_attributes_for :lob_address
 

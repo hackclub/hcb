@@ -149,6 +149,7 @@ class Invoice < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
 
+  has_one :ledger_item, as: :linked_object
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
   validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }

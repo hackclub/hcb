@@ -40,6 +40,7 @@ module Reimbursement
     belongs_to :event
     belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout
     belongs_to :payout_holding, optional: true, foreign_key: "reimbursement_payout_holdings_id", inverse_of: :expense_payouts
+    has_one :ledger_item, as: :linked_object
 
     monetize :amount_cents
 

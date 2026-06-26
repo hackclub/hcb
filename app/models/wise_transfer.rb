@@ -64,6 +64,7 @@ class WiseTransfer < ApplicationRecord
   has_paper_trail
   include HasPaperTrailHelpers
 
+  has_one :ledger_item, as: :linked_object
   has_one :canonical_pending_transaction
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wise_transfer, required: false

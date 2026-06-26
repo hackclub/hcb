@@ -72,6 +72,7 @@ class Disbursement < ApplicationRecord
   belongs_to :fulfilled_by, class_name: "User", optional: true
   belongs_to :requested_by, class_name: "User", optional: true
 
+  has_one :ledger_item, as: :linked_object
   belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
   belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
   belongs_to :event

@@ -84,6 +84,8 @@ class Donation < ApplicationRecord
   belongs_to :recurring_donation, optional: true
   belongs_to :collected_by, class_name: "User", optional: true
 
+  has_one :ledger_item, as: :linked_object
+
   before_save :trim_utm_referrer_fields
 
   before_create :create_stripe_payment_intent, unless: -> { recurring? }

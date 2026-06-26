@@ -7,17 +7,20 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  date                         :datetime         not null
+#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  linked_object_id             :bigint
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents  (amount_cents)
-#  index_ledger_items_on_date          (date)
-#  index_ledger_items_on_short_code    (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents   (amount_cents)
+#  index_ledger_items_on_date           (date)
+#  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
+#  index_ledger_items_on_short_code     (short_code) UNIQUE
 #
 class Ledger
   class Item < ApplicationRecord
@@ -30,6 +33,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    belongs_to :linked_object, polymorphic: true, optional: true
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item

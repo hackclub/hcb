@@ -39,6 +39,7 @@ class PaypalTransfer < ApplicationRecord
   belongs_to :event
   belongs_to :user
 
+  has_one :ledger_item, as: :linked_object
   has_one :canonical_pending_transaction
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :paypal_transfer, required: false
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout

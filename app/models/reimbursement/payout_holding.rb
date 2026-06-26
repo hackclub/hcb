@@ -46,6 +46,7 @@ module Reimbursement
     belongs_to :paypal_transfer, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :wire, optional: true, inverse_of: :reimbursement_payout_holding
     belongs_to :wise_transfer, optional: true, inverse_of: :reimbursement_payout_holding
+    has_one :ledger_item, as: :linked_object
 
     after_create :set_and_create_hcb_code
     belongs_to :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode", inverse_of: :reimbursement_payout_holding, optional: true
