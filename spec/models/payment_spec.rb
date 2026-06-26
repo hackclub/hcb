@@ -16,7 +16,12 @@ RSpec.describe Payment, type: :model do
 
   def stub_legal_entity(payment, complete:, payout_method:)
     legal_entity = double("LegalEntity", complete?: complete, default_payout_method: payout_method).as_null_object
-    allow(payment.payee).to receive(:legal_entity).and_return(legal_entity)
+    real_payee = payment.payee
+    allow(real_payee).to receive(:legal_entity).and_return(legal_entity)
+    # Stub on the payment object itself so the stub survives with_lock's reload,
+    # which resets the association cache. Return the real payee (not a double)
+    # so that the belongs_to presence validation still passes.
+    allow(payment).to receive(:payee).and_return(real_payee)
   end
 
   describe "state machine" do
