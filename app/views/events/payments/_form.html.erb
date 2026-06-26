@@ -1,9 +1,34 @@
-<%# locals: (event:, payment:) %>
+<%# locals: (event:, payment:, payee: nil) %>
 
 <% disabled = !policy(event).create_transfer? %>
 
 <%= form_with(model: payment, url: event_payments_new_path(event_id: event.slug), local: true) do |form| %>
   <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
+
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Recipient</h3>
+    <details class="card mb-4 p-0 overflow-hidden" <%= "open" unless payee || params[:manual] %> x-data="{ adding: false }" @payee-picker-adding.window="adding = $event.detail">
+      <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" x-show="!adding">
+        <% if payee %>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-lg m-0"><%= payee.preferred_name %></p>
+            <p class="muted text-sm m-0"><%= payee.email %></p>
+          </div>
+        <% elsif params[:manual] %>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-lg m-0">Manual payment</p>
+            <p class="muted text-sm m-0">Recipient & payout details entered directly</p>
+          </div>
+        <% else %>
+          <p class="m-0 muted">Select a recipient</p>
+        <% end %>
+        <span class="muted ml-auto shrink-0 text-sm"><%= (payee || params[:manual]) ? "Edit" : "" %></span>
+      </summary>
+
+      <div class="menu__divider mt-0 mb-3"></div>
+      <%= render "events/payments/payee_picker", event:, show_manual: true %>
+    </details>
+  </div>
 
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Payment details</h3>

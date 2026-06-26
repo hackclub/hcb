@@ -3,8 +3,9 @@
 <% @back_url = event_payments_path(event_id: @event.slug) %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfers/step_item", number: 1, label: "Payment details" %>
-  <%= render "events/transfers/step_item", number: 2, label: "Receipt" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
+  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
+  <%= render "events/transfers/step_item", number: 3, label: "Receipt" %>
 <% end %>
 
-<%= render "events/payments/form", event: @event, payment: @payment %>
+<%= render "events/payments/form", event: @event, payment: @payment, payee: @payee %>

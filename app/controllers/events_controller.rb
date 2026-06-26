@@ -815,9 +815,39 @@ class EventsController < ApplicationController
     authorize @event
   end
 
-  def new_payment
+  def payees
+    authorize @event, :new_payment?
+    @payees = @event.payees.search(params[:q])
+    render layout: false
+  end
+
+  def create_payee
+    authorize @event, :new_payment?
+
+    user = User.find_by(email: params[:email])
+
+    unless user
+      return redirect_to event_payments_new_path(event_id: @event.slug),
+                         alert: "No HCB account found for #{params[:email]}."
+    end
+
+    legal_entity = user.personal_legal_entity || user.legal_entities.create!(entity_type: :person)
+    payee = @event.payees.find_or_initialize_by(legal_entity:)
+    payee.preferred_name = params[:name].presence || user.name
+
+    if payee.save
+      redirect_to event_payments_new_path(event_id: @event.slug, payee_id: payee.id)
+    else
+      redirect_to event_payments_new_path(event_id: @event.slug),
+                  alert: payee.errors.full_messages.to_sentence
+    end
+  end
+
+
+def new_payment
     authorize @event
     @payment = Payment.new
+    @payee = @event.payees.find_by(id: params[:payee_id])
     render layout: "transfer"
   end
 

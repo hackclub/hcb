@@ -966,6 +966,8 @@ Rails.application.routes.draw do
     get "transfers/new", to: "events#new_transfer"
     get "payments/new", to: "events#new_payment"
     post "payments/new", to: "events#create_payment"
+    get "payees", to: "events#payees"
+    post "payees", to: "events#create_payee"
 
     get "async_balance"
     get "async_sub_organization_balance"
