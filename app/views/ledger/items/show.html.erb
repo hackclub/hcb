@@ -33,7 +33,7 @@
   <% cts = 0 %>
   <% pts = 0 %>
 
-  <% [@item.canonical_transactions, @item.canonical_pending_transactions].flatten.sort_by(&:created_at).reverse.each do |transaction| %>
+  <% [@item.canonical_transactions, @item.canonical_pending_transactions].flatten.sort_by { |t| [t.date, t.created_at] }.each do |transaction| %>
     <% index = cts + pts %>
 
     <% if transaction.is_a?(CanonicalTransaction) %>
@@ -47,7 +47,7 @@
             Updated
           <% end %>
           <span class="text-sm muted">
-            <%= transaction.created_at.strftime("%b %e, %Y") %>
+            <%= transaction.date.strftime("%b %e, %Y") %>
           </span>
         </div>
 
@@ -79,7 +79,7 @@
             Updated
           <% end %>
           <span class="text-sm muted">
-            <%= transaction.created_at.strftime("%b %e, %Y") %>
+            <%= transaction.date.strftime("%b %e, %Y") %>
           </span>
         </div>
 
