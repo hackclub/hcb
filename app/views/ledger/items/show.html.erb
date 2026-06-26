@@ -1,4 +1,4 @@
-<% if @item.primary_ledger.event.present? %>
+<% if @item.primary_ledger&.event.present? %>
   <% @event = @item.primary_ledger.event %>
   <%= render "events/nav" %>
 <% end %>
