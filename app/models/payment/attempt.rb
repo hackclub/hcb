@@ -34,7 +34,7 @@ class Payment
     scope :not_failed, -> { where.not(aasm_state: "failed" ) }
 
     validate :other_attempts_failed
-    validate :failed_successful_attempts_frozen, on: :update
+    validate :terminal_states_freeze_attempt, on: :update
 
     aasm timestamps: true do
       state :pending, initial: true
@@ -212,9 +212,9 @@ class Payment
       end
     end
 
-    def failed_successful_attempts_frozen
-      if (failed? || successful?) && !aasm_state_changed?
-        errors.add(:base, "failed or successful payment attempts cannot be updated")
+    def terminal_states_freeze_attempt
+      if (failed? || successful? || rejected?) && !aasm_state_changed?
+        errors.add(:base, "failed, successful, or rejected payment attempts cannot be updated")
       end
     end
 
