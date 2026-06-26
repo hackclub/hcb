@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_24_170609) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1631,6 +1631,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_170609) do
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
   end
 
+  create_table "legal_entity_payout_methods", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "default", default: false, null: false
+    t.bigint "details_id", null: false
+    t.string "details_type", null: false
+    t.bigint "legal_entity_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details", unique: true
+    t.index ["legal_entity_id"], name: "index_le_payout_methods_one_default_per_entity", unique: true, where: "(\"default\" = true)"
+    t.index ["legal_entity_id"], name: "index_legal_entity_payout_methods_on_legal_entity_id"
+  end
+
   create_table "legal_entity_users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "legal_entity_id", null: false
@@ -1923,6 +1935,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_170609) do
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
+    t.bigint "creator_id", null: false
+    t.string "currency", null: false
     t.datetime "failed_at"
     t.bigint "payee_id", null: false
     t.bigint "payout_id"
@@ -1933,6 +1947,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_24_170609) do
     t.datetime "successful_at"
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_payments_on_creator_id"
     t.index ["payee_id"], name: "index_payments_on_payee_id"
     t.index ["payout_type", "payout_id"], name: "index_payments_on_payout"
   end

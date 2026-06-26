@@ -528,7 +528,10 @@ class AdminController < Admin::BaseController
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
-                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .where(user_id: User.joins(legal_entities: :payout_methods)
+                                                       .where(legal_entities: { entity_type: "person" })
+                                                       .where(legal_entity_payout_methods: { default: true, details_type: "LegalEntity::PayoutMethod::WiseTransfer" })
+                                                       .select(:id))
                                    .select(:id)
                                    .pluck(:id)
 

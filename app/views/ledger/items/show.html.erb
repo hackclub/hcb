@@ -1,3 +1,8 @@
+<% if @item.primary_ledger&.event.present? %>
+  <% @event = @item.primary_ledger.event %>
+  <%= render "events/nav" %>
+<% end %>
+
 <section class="details">
   <div>
     <strong>
@@ -24,6 +29,83 @@
   </div>
 </section>
 
+<section class="my-5 flex flex-col gap-3">
+  <% cts = 0 %>
+  <% pts = 0 %>
+
+  <% [@item.canonical_transactions, @item.canonical_pending_transactions].flatten.sort_by { |t| [t.date, t.created_at] }.each do |transaction| %>
+    <% index = cts + pts %>
+
+    <% if transaction.is_a?(CanonicalTransaction) %>
+      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
+        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
+          <% if index.zero? %>
+            Created
+          <% elsif cts.zero? %>
+            Settled
+          <% else %>
+            Updated
+          <% end %>
+          <span class="text-sm muted">
+            <%= transaction.date.strftime("%b %e, %Y") %>
+          </span>
+        </div>
+
+        <div class="card flex flex-grow w-full">
+          <div class="flex flex-row justify-between items-center">
+            <div class="flex flex-row justify-start items-center gap-3">
+              <%= inline_icon "transactions" %>
+              <% admin_tool("badge p-0.5 m-0", "span") do %>
+                <%= badge_for transaction.id, class: "bg-muted m-0" %>
+              <% end %>
+              <span>
+                <%= transaction.amount.format %>
+              </span>
+              <span>
+                <%= transaction.memo %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% cts += 1 %>
+    <% else %>
+      <div class="flex flex-col md:flex-row justify-start items-center gap-5">
+        <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
+          <% if index.zero? %>
+            Created
+          <% else %>
+            Updated
+          <% end %>
+          <span class="text-sm muted">
+            <%= transaction.date.strftime("%b %e, %Y") %>
+          </span>
+        </div>
+
+        <div class="card flex flex-grow w-full">
+          <div class="flex flex-row justify-between items-center">
+            <div class="flex flex-row justify-start items-center gap-3">
+              <%= inline_icon "transfers-horizontal" %>
+              <% admin_tool("badge p-0.5 m-0", "span") do %>
+                <%= badge_for transaction.id, class: "bg-muted m-0" %>
+              <% end %>
+              <span>
+                <%= transaction.amount.format %>
+              </span>
+              <span>
+                <%= transaction.memo %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% pts += 1 %>
+    <% end %>
+  <% end %>
+</section>
+
 <%= render "comments/list", comments: @item.comments %>
 <%= render "comments/form", commentable: @item %>
 
@@ -38,3 +120,16 @@
       include_spacing: true,
       turbo: true
     } %>
+
+<% admin_tool("p-2 my-3") do %>
+  <h3 class="my-2">Quickly go to</h3>
+  <% if @item.hcb_code.present? %>
+    <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
+  <% end %>
+  <% @item.canonical_transactions.each do |tx| %>
+    <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+  <% end %>
+  <% @item.canonical_pending_transactions.each do |tx| %>
+    <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+  <% end %>
+<% end %>
