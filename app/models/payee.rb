@@ -10,7 +10,7 @@
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  event_id        :bigint           not null
-#  legal_entity_id :bigint           not null
+#  legal_entity_id :bigint
 #
 # Indexes
 #
@@ -20,7 +20,7 @@
 #
 class Payee < ApplicationRecord
   belongs_to :event
-  belongs_to :legal_entity
+  belongs_to :legal_entity, optional: true
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id]
 
