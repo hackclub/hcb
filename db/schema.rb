@@ -1578,8 +1578,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.datetime "date", null: false
-    t.datetime "datetime"
+    t.datetime "date"
+    t.datetime "datetime", null: false
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.text "short_code"

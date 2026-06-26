@@ -6,8 +6,8 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
-#  date                         :datetime         not null
-#  datetime                     :datetime
+#  date                         :datetime
+#  datetime                     :datetime         not null
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  short_code                   :text
@@ -41,7 +41,7 @@ class Ledger
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
-    validates_presence_of :amount_cents, :memo, :date
+    validates_presence_of :amount_cents, :memo, :datetime
 
     monetize :amount_cents
 
