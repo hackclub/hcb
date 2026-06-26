@@ -10,7 +10,7 @@ class Payment
 
     def failed_payee
       @reason = params[:reason]
-      mail to: @recipients, subject: "We couldn't send you your payment for #{@payment.purpose} from #{@payment.event.name}"
+      mail to: @recipients, subject: "We couldn't send your payment for #{@payment.purpose} from #{@payment.event.name}"
     end
 
     private
