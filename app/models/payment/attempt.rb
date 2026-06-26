@@ -110,7 +110,7 @@ class Payment
               address_city: payout_method.details.address_city,
               address_state: payout_method.details.address_state,
               address_zip: payout_method.details.address_postal_code,
-              user: User.system_user
+              user: payment.creator
             )
 
             check.save!
@@ -130,7 +130,7 @@ class Payment
               routing_number: payout_method.details.routing_number,
               account_number: payout_method.details.account_number,
               bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-              creator: User.system_user
+              creator: payment.creator
             )
 
             ach_transfer.save!
@@ -161,7 +161,7 @@ class Payment
                                                                                          remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
                                                                                        }),
               currency:,
-              user: User.system_user
+              user: payment.creator
             )
 
             wire.save!
@@ -188,7 +188,7 @@ class Payment
               bank_name: payout_method.details.bank_name,
               recipient_information: payout_method.details.recipient_information,
               currency:,
-              user: User.system_user
+              user: payment.creator
             )
 
             wise.save!
