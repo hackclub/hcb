@@ -1,0 +1,229 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: payment_attempts
+#
+#  id               :bigint           not null, primary key
+#  aasm_state       :string           not null
+#  deleted_at       :datetime
+#  failed_at        :datetime
+#  payout_type      :string
+#  sent_at          :datetime
+#  created_at       :datetime         not null
+#  updated_at       :datetime         not null
+#  payment_id       :bigint           not null
+#  payout_id        :bigint
+#  payout_method_id :bigint           not null
+#
+# Indexes
+#
+#  index_payment_attempts_on_payment_id        (payment_id)
+#  index_payment_attempts_on_payout            (payout_type,payout_id)
+#  index_payment_attempts_on_payout_method_id  (payout_method_id)
+#
+class Payment
+  class Attempt < ApplicationRecord
+    PAYOUT_METHOD_TRANSFER_MAPPING = {
+      LegalEntity::PayoutMethod::Check        => IncreaseCheck,
+      LegalEntity::PayoutMethod::AchTransfer  => AchTransfer,
+      LegalEntity::PayoutMethod::Wire         => Wire,
+      LegalEntity::PayoutMethod::WiseTransfer => WiseTransfer
+    }.freeze
+
+    include AASM
+    acts_as_paranoid
+
+    belongs_to :payment
+    belongs_to :payout, polymorphic: true, optional: true
+    belongs_to :payout_method, class_name: "LegalEntity::PayoutMethod"
+
+    scope :not_failed, -> { where.not(aasm_state: "failed" ) }
+
+    validate :other_attempts_failed
+    validate :terminal_states_freeze_attempt, on: :update
+    validate :transfer_matches_payout_method
+
+    aasm timestamps: true do
+      state :pending, initial: true
+      state :under_review
+      state :rejected
+      state :sent
+      state :successful
+      state :failed
+
+      event :mark_under_review do
+        transitions from: :pending, to: :under_review, if: -> { payout.present? }
+        after do
+          payment.mark_under_review!
+        end
+      end
+
+      event :mark_sent do
+        transitions from: :under_review, to: :sent
+        after do
+          payment.mark_sent!
+        end
+      end
+
+      event :mark_successful do
+        transitions from: :sent, to: :successful
+        after do
+          payment.mark_successful!
+        end
+      end
+
+      event :mark_failed do
+        transitions from: :sent, to: :failed
+        after do |reason: nil|
+          Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
+          Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
+        end
+      end
+
+      event :mark_rejected do
+        transitions from: :under_review, to: :rejected
+        after do
+          payment.mark_rejected!
+        end
+      end
+    end
+
+    after_create :create_transfer!
+
+    private
+
+    def create_transfer!
+      self.with_lock do
+        payout_method = payment.legal_entity.default_payout_method
+        case payout_method.details
+        when LegalEntity::PayoutMethod::Check
+          safely do
+            check = payment.event.increase_checks.build(
+              memo: "Payment for \"#{payment.purpose}\"."[0...40],
+              amount: payment.estimate_usd_amount_cents,
+              payment_for: "Payment for \"#{payment.purpose}\".",
+              recipient_name: payment.payee.preferred_name,
+              recipient_email: payment.payee.email,
+              address_line1: payout_method.details.address_line1,
+              address_line2: payout_method.details.address_line2,
+              address_city: payout_method.details.address_city,
+              address_state: payout_method.details.address_state,
+              address_zip: payout_method.details.address_postal_code,
+              user: payment.creator
+            )
+
+            check.save!
+
+            self.payout = check
+            save!
+
+            Receipt.reupload(old_receiptable: payment, new_receiptable: check.local_hcb_code)
+          end
+        when LegalEntity::PayoutMethod::AchTransfer
+          safely do
+            ach_transfer = payment.event.ach_transfers.build(
+              amount: payment.estimate_usd_amount_cents,
+              payment_for: "Payment for \"#{payment.purpose}\".",
+              recipient_name: payment.payee.preferred_name,
+              recipient_email: payment.payee.email,
+              routing_number: payout_method.details.routing_number,
+              account_number: payout_method.details.account_number,
+              bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
+              creator: payment.creator
+            )
+
+            ach_transfer.save!
+
+            self.payout = ach_transfer
+            save!
+
+            Receipt.reupload(old_receiptable: payment, new_receiptable: ach_transfer.local_hcb_code)
+          end
+        when LegalEntity::PayoutMethod::Wire
+          safely do
+            wire = payment.event.wires.build(
+              memo: "Payment for \"#{payment.purpose}\".",
+              payment_for: "Payment for #{payment.purpose}."[0...140],
+              amount_cents: payment.amount_cents,
+              address_line1: payout_method.details.address_line1,
+              address_line2: payout_method.details.address_line2,
+              address_city: payout_method.details.address_city,
+              address_state: payout_method.details.address_state,
+              address_postal_code: payout_method.details.address_postal_code,
+              recipient_country: payout_method.details.recipient_country,
+              recipient_name: payout_method.details.recipient_name.presence || payment.payee.preferred_name,
+              recipient_email: payment.payee.email,
+              account_number: payout_method.details.account_number,
+              bic_code: payout_method.details.bic_code,
+              recipient_information: payout_method.details.recipient_information.merge({
+                                                                                         purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
+                                                                                         remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
+                                                                                       }),
+              currency:,
+              user: payment.creator
+            )
+
+            wire.save!
+
+            self.payout = wire
+            save!
+
+            Receipt.reupload(old_receiptable: payment, new_receiptable: wire.local_hcb_code)
+          end
+        when LegalEntity::PayoutMethod::WiseTransfer
+          safely do
+            wise = payment.event.wise_transfers.build(
+              memo: "Payment for \"#{payment.purpose}\"",
+              amount: payment.amount_cents,
+              payment_for: "Payment for \"#{payment.purpose}\"",
+              recipient_name: payment.payee.preferred_name,
+              recipient_email: payment.payee.email,
+              address_line1: payout_method.details.address_line1,
+              address_line2: payout_method.details.address_line2,
+              address_city: payout_method.details.address_city,
+              address_state: payout_method.details.address_state,
+              address_postal_code: payout_method.details.address_postal_code,
+              recipient_country: payout_method.details.recipient_country,
+              bank_name: payout_method.details.bank_name,
+              recipient_information: payout_method.details.recipient_information,
+              currency:,
+              user: payment.creator
+            )
+
+            wise.save!
+
+            self.payout = wise
+            save!
+
+            Receipt.reupload(old_receiptable: payment, new_receiptable: wise.local_hcb_code)
+          end
+        else
+          raise ArgumentError, "🚨⚠️ unsupported payout method!"
+        end
+
+        mark_under_review!
+      end
+    end
+
+    def other_attempts_failed
+      if Payment::Attempt.not_failed.where(payment:).excluding(self).any?
+        errors.add(:base, "all other attempts for this payment must be failed before creating a new attempt")
+      end
+    end
+
+    def terminal_states_freeze_attempt
+      if (failed? || successful? || rejected?) && !aasm_state_changed?
+        errors.add(:base, "failed, successful, or rejected payment attempts cannot be updated")
+      end
+    end
+
+    def transfer_matches_payout_method
+      if payout.present? && PAYOUT_METHOD_TRANSFER_MAPPING[payout_method.details.class] != payout.class
+        errors.add(:base, "transfer type must match payout method")
+      end
+    end
+
+  end
+
+end
