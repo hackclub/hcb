@@ -1,7 +1,7 @@
 <p>Hello <%= @payment.payee.preferred_name %>,</p>
 
 <p>
-  <%= @payment.event.name %> has requested to send you <%= render_money(@payment.amount_cents) %>
+  <%= @payment.event.name %> has requested to send you <%= @payment.amount.format(with_currency: true) %>
   for <i>"<%= @payment.purpose %>"</i> through HCB.
 </p>
 

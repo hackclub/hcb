@@ -1,7 +1,7 @@
 <p>Hello <%= @payment.payee.preferred_name %>,</p>
 
 <p>
-  We failed to send you your payment of <%= render_money(@payment.amount_cents) %>
+  We failed to send you your payment of <%= @payment.amount.format(with_currency: true) %>
   for <i>"<%= @payment.purpose %>"</i>:
 </p>
 

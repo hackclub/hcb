@@ -2,12 +2,12 @@
 
 <% if @initial %>
   <p>
-    <%= @payment.event.name %> has requested to send you <%= render_money(@payment.amount_cents) %>
+    <%= @payment.event.name %> has requested to send you <%= @payment.amount.format(with_currency: true) %>
     for <i>"<%= @payment.purpose %>"</i> through HCB.
   </p>
 <% else %>
   <p>
-    Thank you for uploading your tax information for receiving your payment of <%= render_money(@payment.amount_cents) %>
+    Thank you for uploading your tax information for receiving your payment of <%= @payment.amount.format(with_currency: true) %>
     for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB.
   </p>
 <% end %>

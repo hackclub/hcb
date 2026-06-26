@@ -1,7 +1,7 @@
 <p>Hello <%= @payment.payee.preferred_name %>,</p>
 
 <p>
-  Your payment of <%= render_money(@payment.amount_cents) %> from <%= @payment.event.name %>
+  Your payment of <%= @payment.amount.format(with_currency: true) %> from <%= @payment.event.name %>
   for <i>"<%= @payment.purpose %>"</i> is on its way!
 </p>
 
