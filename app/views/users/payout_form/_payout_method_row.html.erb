@@ -1,0 +1,69 @@
+<%# locals: (payout_method:, open: false) %>
+<% details = payout_method.details %>
+<% icon_variant = case details
+                  when LegalEntity::PayoutMethod::AchTransfer then "ach"
+                  when LegalEntity::PayoutMethod::Check then "check"
+                  when LegalEntity::PayoutMethod::WiseTransfer then "wise"
+                  when LegalEntity::PayoutMethod::Wire then "wire"
+                  end %>
+
+<div class="payout-methods__row" data-payout-methods-row>
+  <div class="flex items-center" style="gap: 14px; padding: 16px 20px;">
+    <div class="payout-methods__icon payout-methods__icon--<%= icon_variant %> flex items-center justify-center flex-shrink-0"
+         style="width: 40px; height: 40px; border-radius: 10px;">
+      <%= inline_icon payout_method.icon, size: icon_variant == "ach" ? 24 : 20 %>
+    </div>
+
+    <div class="flex-auto" style="min-width: 0;">
+      <div class="flex items-center">
+        <strong><%= payout_method.title_kind %></strong>
+        <% if payout_method.default? %>
+          <span class="badge bg-success" style="font-size: 11px;">Default</span>
+        <% end %>
+      </div>
+      <div class="muted" style="font-size: 13px; margin-top: 2px;">
+        <% case details
+           when LegalEntity::PayoutMethod::AchTransfer %>
+          Account ••••<%= details.account_number.to_s.last(4) %>
+        <% when LegalEntity::PayoutMethod::Check %>
+          <%= details.address_line1.presence || "Mailing address on file" %>
+        <% when LegalEntity::PayoutMethod::WiseTransfer %>
+          <%= [details.bank_name.presence, details.currency].compact.join(" · ") %>
+        <% when LegalEntity::PayoutMethod::Wire %>
+          <% last4 = details.account_number.to_s.last(4) %>
+          Account <%= last4.present? ? "••••#{last4}" : "on file" %>
+        <% else %>
+          <%= details&.human_kind %>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="flex items-center flex-shrink-0" style="gap: 8px;" data-pm-actions>
+      <button type="button" class="btn btn-small pm-edit" data-action="payout-methods#editRow">Edit</button>
+      <button type="button" class="btn btn-small bg-success pm-save" data-action="payout-methods#saveRow">Save</button>
+      <button type="button" class="btn btn-small pm-cancel" data-action="payout-methods#cancelRow">Cancel</button>
+    </div>
+
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="flex-shrink-0">
+      <%= pop_icon_to "more", "#", icon_size: 22,
+          class: "align-middle muted", "aria-label": "More options",
+          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+        <% unless payout_method.default? %>
+          <%= link_to set_default_payout_method_path(payout_method), class: "flex items-center", data: { turbo_method: :patch } do %>
+            <%= inline_icon "checkmark", size: 24 %>
+            Set as default
+          <% end %>
+        <% end %>
+        <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_confirm: "Remove this payout method?" } do %>
+          <%= inline_icon "delete", size: 24 %>
+          Remove
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+   <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
+    <%= render "users/payout_form/managed_form", user: current_user, editing: payout_method %>
+  </div>
+</div>

@@ -63,6 +63,10 @@ class LegalEntity
       self.class.unsupported_details(details.class)
     end
 
+    def error_messages
+      (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
+    end
+
     private
 
     def details_must_be_supported

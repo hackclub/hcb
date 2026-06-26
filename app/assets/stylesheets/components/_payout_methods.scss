@@ -1,0 +1,46 @@
+[data-pm-actions] {
+  .pm-save,
+  .pm-cancel {
+    display: none;
+  }
+
+  &.is-editing .pm-edit {
+    display: none;
+  }
+
+  &.is-editing .pm-save,
+  &.is-editing .pm-cancel {
+    display: inline-flex;
+  }
+}
+
+.payout-form--managed .actions {
+  display: none;
+}
+
+.payout-methods {
+  &__header {
+    border-bottom: 1px solid rgba(map-get($palette, smoke), 0.35);
+    border-bottom-width: 0.5px;
+  }
+
+  &__rows > &__row {
+    border-bottom: 1px solid rgba(map-get($palette, smoke), 0.35);
+    border-bottom-width: 0.5px;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  &__add {
+    border-top: 1px solid rgba(map-get($palette, smoke), 0.35);
+    border-top-width: 0.5px;
+  }
+
+  &__icon {
+    border: 0;
+    background: rgba(map-get($palette, muted), 0.125);
+    color: #fff;
+  }
+}

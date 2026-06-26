@@ -71,6 +71,9 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    resources :payout_methods, only: [:create, :update, :destroy], path: "settings/payouts/methods" do
+      member { patch :set_default }
+    end
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
