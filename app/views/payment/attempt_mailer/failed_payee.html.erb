@@ -1,8 +1,8 @@
 <p>Hello <%= @payment.payee.preferred_name %>,</p>
 
 <p>
-  We failed to send you your payment of <%= @payment.amount.format(with_currency: true) %>
-  for <i>"<%= @payment.purpose %>"</i>:
+  Your payment of <%= @payment.amount.format(with_currency: true) %> from <%= @payment.event.name %>
+  for <i>"<%= @payment.purpose %>"</i> failed to send<%= @reason.present? ? ":" : "." %>
 </p>
 
 <% if @reason.present? %>
