@@ -32,6 +32,7 @@
 <section class="my-5 flex flex-col gap-3">
   <% cts = 0 %>
   <% pts = 0 %>
+
   <% [@item.canonical_transactions, @item.canonical_pending_transactions].flatten.sort_by(&:created_at).reverse.each do |transaction| %>
     <% index = cts + pts %>
 
@@ -54,7 +55,7 @@
           <div class="flex flex-row justify-between items-center">
             <div class="flex flex-row justify-start items-center gap-3">
               <%= inline_icon "transactions" %>
-              <% admin_tool do %>
+              <% admin_tool("badge p-0.5 m-0", "span") do %>
                 <%= badge_for transaction.id, class: "bg-muted m-0" %>
               <% end %>
               <span>
@@ -70,8 +71,6 @@
 
       <% cts += 1 %>
     <% else %>
-      <% pt = transaction %>
-
       <div class="flex flex-col md:flex-row justify-start items-center gap-5">
         <div class="flex-shrink-0 flex flex-col items-start min-w-[100px] w-full md:w-auto">
           <% if index.zero? %>
@@ -88,7 +87,7 @@
           <div class="flex flex-row justify-between items-center">
             <div class="flex flex-row justify-start items-center gap-3">
               <%= inline_icon "transfers-horizontal" %>
-              <% admin_tool do %>
+              <% admin_tool("badge p-0.5 m-0", "span") do %>
                 <%= badge_for transaction.id, class: "bg-muted m-0" %>
               <% end %>
               <span>
