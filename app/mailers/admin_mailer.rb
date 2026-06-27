@@ -2,6 +2,7 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
+  before_action :set_delivery_reason
   default to: -> do
     [
       Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
@@ -115,4 +116,9 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  private
+
+  def set_delivery_reason
+    @delivery_reason = "you are an HCB admin."
+  end
 end
