@@ -6,7 +6,7 @@ class AnnouncementMailer < ApplicationMailer
   def announcement_published
     @announcement = params[:announcement]
     @event = @announcement.event
-    @delivery_reason = "are following #{@event.name}."
+    @delivery_reason = "you are following #{@event.name} on HCB."
     @unsubscribe_link = event_url(@event)
 
     mail to: params[:email], subject: "#{@announcement.title} | #{@event.name}", from: hcb_email_with_name_of(@event)
