@@ -3,18 +3,18 @@
 require "rails_helper"
 
 RSpec.describe IntegerColumnValidator do
-  INT4_MAX = 2_147_483_647
-  INT4_MIN = -2_147_483_648
+  int4_max = 2_147_483_647
+  int4_min = -2_147_483_648
 
   # Each user-settable int4 column this validator guards.
-  GUARDED = {
+  guarded = {
     Donation::Goal         => :amount_cents,
     Donation::Tier         => :amount_cents,
     Reimbursement::Report  => :maximum_amount_cents,
     Reimbursement::Expense => :amount_cents,
     CheckDeposit           => :amount_cents,
     CardGrant              => :amount_cents
-  }.freeze
+  }
 
   # Run validations and return the errors on the guarded column. The record need not be
   # otherwise valid; we only assert on the integer-range errors.
@@ -26,11 +26,11 @@ RSpec.describe IntegerColumnValidator do
 
   describe "behavior (via Donation::Goal#amount_cents)" do
     it "rejects a value too big for the column" do
-      expect(range_errors(Donation::Goal, :amount_cents, INT4_MAX + 1)).to include("is too big")
+      expect(range_errors(Donation::Goal, :amount_cents, int4_max + 1)).to include("is too big")
     end
 
     it "rejects a value too small for the column" do
-      expect(range_errors(Donation::Goal, :amount_cents, INT4_MIN - 1)).to include("is too small")
+      expect(range_errors(Donation::Goal, :amount_cents, int4_min - 1)).to include("is too small")
     end
 
     it "accepts an in-range value" do
@@ -47,7 +47,7 @@ RSpec.describe IntegerColumnValidator do
   end
 
   describe "is wired onto every user-settable int4 money column" do
-    GUARDED.each do |model, column|
+    guarded.each do |model, column|
       it "guards #{model}##{column}" do
         expect(model.validators_on(column).map(&:class)).to include(IntegerColumnValidator)
       end
