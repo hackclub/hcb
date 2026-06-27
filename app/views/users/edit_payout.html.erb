@@ -15,7 +15,7 @@
     </p>
     <%= render "application/flash", klass: "max-w-full mb3" %>
     <% if @user.can_update_payout_method? %>
-      <%= render "users/payout_form", user: @user %>
+      <%= render "users/payout_form", user: @user, attempted: @payout_method %>
     <% else %>
       <%= render "application/callout",
           type: "info",

@@ -263,6 +263,10 @@ class EventPolicy < ApplicationPolicy
     signee?
   end
 
+  def books?
+    auditor?
+  end
+
   alias hide_onboarding_message? request_call?
 
   private
