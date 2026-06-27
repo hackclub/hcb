@@ -66,6 +66,19 @@
     <%= render partial: "hcb_codes/transaction_history" %>
     <%= render partial: "hcb_codes/pending_transaction_history" %>
   <% end %>
+
+  <% admin_tool("p-2 my-3") do %>
+    <h3 class="my-2">Quickly go to</h3>
+    <% if @hcb_code.ledger_item.present? %>
+      <%= link_to "Ledger::Item #{@hcb_code.ledger_item.hashid}", ledger_item_path(@hcb_code.ledger_item), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_transactions.each do |tx| %>
+      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_pending_transactions.each do |tx| %>
+      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
+  <% end %>
 <% end %>
 
 <% if @reverse_receipt_id.present? %>
@@ -76,17 +89,4 @@
     <%= button_to "Yes", reverse_receipt_path(@reverse_receipt_id, format: :html), class: "left bg-success btn", method: :post %>
     <a href="#" class="right bg-error btn" rel="modal:close">No</a>
   </section>
-<% end %>
-
-<% admin_tool("p-2 my-3") do %>
-  <h3 class="my-2">Quickly go to</h3>
-  <% if @hcb_code.ledger_item.present? %>
-    <%= link_to "Ledger::Item #{@hcb_code.ledger_item.hashid}", ledger_item_path(@hcb_code.ledger_item), class: "btn btn--secondary" %>
-  <% end %>
-  <% @hcb_code.canonical_transactions.each do |tx| %>
-    <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
-  <% end %>
-  <% @hcb_code.canonical_pending_transactions.each do |tx| %>
-    <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
-  <% end %>
 <% end %>

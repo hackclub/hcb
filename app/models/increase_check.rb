@@ -138,6 +138,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -145,13 +146,23 @@ class IncreaseCheck < ApplicationRecord
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
     canonical_pending_transaction.decline!
-    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
-    IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
   end
 
   after_update if: -> { column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -173,6 +184,7 @@ class IncreaseCheck < ApplicationRecord
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
     end
 
@@ -181,6 +193,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt&.mark_rejected!
       end
       transitions from: :pending, to: :rejected
     end
