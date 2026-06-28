@@ -528,7 +528,10 @@ class AdminController < Admin::BaseController
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
-                                   .where(user_id: User.where(payout_method_type: "User::PayoutMethod::WiseTransfer").select(:id))
+                                   .where(user_id: User.joins(legal_entities: :payout_methods)
+                                                       .where(legal_entities: { entity_type: "person" })
+                                                       .where(legal_entity_payout_methods: { default: true, details_type: "LegalEntity::PayoutMethod::WiseTransfer" })
+                                                       .select(:id))
                                    .select(:id)
                                    .pluck(:id)
 
@@ -1761,7 +1764,7 @@ class AdminController < Admin::BaseController
   end
 
   def pending_identity_vault_verifications_task_size
-    client = Faraday.new do |c|
+    client = Faraday.new(request: { open_timeout: 5, timeout: 8 }) do |c|
       c.response :json
       c.response :raise_error
     end
@@ -1774,7 +1777,7 @@ class AdminController < Admin::BaseController
 
   def hackathons_task_size
     hackathons = Faraday
-                 .new(ssl: { verify: false }) { |c| c.response :json }
+                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
                  .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
                  .body
 
