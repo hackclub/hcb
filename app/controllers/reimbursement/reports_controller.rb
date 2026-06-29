@@ -203,8 +203,6 @@ module Reimbursement
 
         flash[:success] = {
           text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.payout_method.name}.",
-          link: settings_payouts_path,
-          link_text: "If needed, you can still edit your payout settings."
         }
       rescue => e
         flash[:error] = e.message
