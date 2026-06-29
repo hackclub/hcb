@@ -582,14 +582,6 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
-  def can_update_payout_method?
-    return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-    return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
-
-    true
-  end
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count

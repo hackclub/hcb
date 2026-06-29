@@ -60,8 +60,6 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
-  self.ignored_columns += ["demo_mode_request_meeting_at"]
-
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -110,7 +108,6 @@ class Event < ApplicationRecord
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
-  scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -340,6 +337,9 @@ class Event < ApplicationRecord
 
   has_many :ach_transfers
   has_many :payment_recipients
+  has_many :payees
+  has_many :payments, through: :payees
+
   has_many :disbursements
   has_many :incoming_disbursements, class_name: "Disbursement"
   has_many :outgoing_disbursements, class_name: "Disbursement", foreign_key: :source_event_id
