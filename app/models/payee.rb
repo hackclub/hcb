@@ -24,7 +24,7 @@ class Payee < ApplicationRecord
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
-scope :search, ->(query) {
+  scope :search, ->(query) {
     where("display_name ILIKE ?", "%#{sanitize_sql_like(query)}%") if query.present?
   }
 

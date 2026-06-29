@@ -835,7 +835,7 @@ class EventsController < ApplicationController
   end
 
 
-def new_payment
+  def new_payment
     authorize @event
     @payment = Payment.new
     @payee = @event.payees.find_by(id: params[:payee_id])
