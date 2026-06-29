@@ -4,7 +4,6 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       def index
         if params[:event_id].present?
@@ -27,8 +26,7 @@ module Api
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       def create
@@ -50,6 +48,7 @@ module Api
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
         return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
+        return render json: { error: "A verified phone number is required to issue a card." }, status: :bad_request unless current_user.phone_number_verified?
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,

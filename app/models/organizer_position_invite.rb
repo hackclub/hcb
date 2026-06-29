@@ -126,6 +126,11 @@ class OrganizerPositionInvite < ApplicationRecord
       return false
     end
 
+    if user.unverified?
+      self.errors.add(:user, "must verify their email before accepting this invite")
+      return false
+    end
+
     if pending_signature? && application_contract.nil?
       self.errors.add(:base, "requires a signed contract!")
       return false
@@ -221,11 +226,21 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
-      fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      fs_contract = Contract::FiscalSponsorship.create!(
+        contractable: self,
+        include_videos:,
+        external_template_id: event.plan.contract_docuseal_template_id,
+        prefills: {
+          "public_id"   => event.public_id,
+          "name"        => event.name,
+          "description" => event.airtable_record&.[]("Tell us about your event")
+        },
+        reissue_of:
+      )
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 

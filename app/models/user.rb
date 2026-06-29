@@ -28,9 +28,11 @@
 #  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  subscribed_to_loops_at        :datetime
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
+#  verified                      :boolean          default(FALSE), not null
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
@@ -83,7 +85,8 @@ class User < ApplicationRecord
     organizer_position_invite: 2,
     card_grant: 3,
     grant: 4,
-    application_form: 5
+    application_form: 5,
+    first_robotics_form: 6
   }
 
   has_many :logins
@@ -104,8 +107,13 @@ class User < ApplicationRecord
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
 
+  has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
+  accepts_nested_attributes_for :affiliations
+
   has_many :referral_programs, class_name: "Referral::Program", inverse_of: :creator
   has_many :referral_links, class_name: "Referral::Link", inverse_of: :creator
+
+  has_many :raffles
 
   has_many :messages, class_name: "Ahoy::Message", as: :user
 
@@ -133,8 +141,6 @@ class User < ApplicationRecord
   has_many :stripe_authorizations, through: :stripe_cards
   has_many :receipts
 
-  has_many :checks, inverse_of: :creator
-
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
@@ -146,22 +152,35 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :ach_transfers, inverse_of: :creator
+  has_many :checks, inverse_of: :creator
+  has_many :disbursements, inverse_of: :requested_by
+  has_many :increase_checks
   has_many :wise_transfers
 
+  has_many :check_deposits, inverse_of: :created_by
+  has_many :invoices, inverse_of: :creator
+
   has_one_attached :profile_picture
-  validates :profile_picture, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
+  validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
 
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
-  # a user does not actually belong to its payout method,
-  # but this is a convenient way to set up the association.
-
+  # Legacy: payout methods now live on the personal legal entity (default_payout_method).
+  # Kept only so the payout form's `fields_for :payout_method` yields payout_method_attributes params.
   belongs_to :payout_method, polymorphic: true, optional: true
-  validate :valid_payout_method
+  validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
+
+  has_many :legal_entity_users
+  has_many :legal_entities, through: :legal_entity_users
+  # has_one :through needs a singular intermediate, so hop through a person-scoped join row.
+  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
+  has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
+  has_one :default_payout_method, through: :personal_legal_entity
 
   has_encrypted :birthday, type: :date
 
@@ -169,18 +188,20 @@ class User < ApplicationRecord
 
   include HasTasks
 
-  before_update(if: :will_save_change_to_birthday?) { self.teenager = is_teenager? }
-  before_update(if: :will_save_change_to_birthday?) { self.joined_as_teenager = was_teenager_on_join? }
+  before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
-  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
+  after_create :create_legal_entity
+
+  after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
 
-  after_update :queue_sync_with_loops_job
+  after_update :queue_sync_with_loops_job, if: :verified?
 
   after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
@@ -246,7 +267,7 @@ class User < ApplicationRecord
       User::SecurityMailer.security_configuration_changed(user: self, change:).deliver_later
     end
 
-    if phone_number_previously_changed? && phone_number.present?
+    if phone_number_previously_changed? && phone_number.present? && phone_number_previously_was.present?
       User::SecurityMailer.security_configuration_changed(user: self, change: "Phone number was changed to #{phone_number}").deliver_later
     end
   end
@@ -369,7 +390,7 @@ class User < ApplicationRecord
     update!(locked_at: Time.now)
 
     # Invalidate all sessions
-    user_sessions.destroy_all
+    user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
     # Invalidate all API tokens
     api_tokens.accessible.update_all(revoked_at: Time.current)
   end
@@ -415,14 +436,9 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
-  def build_payout_method(params)
-    return unless payout_method_type
-
-    self.payout_method = payout_method_type.constantize.new(params)
-  end
-
-  def email_address_with_name
-    ActionMailer::Base.email_address_with_name(email, name)
+  def email_address_with_name(full_name: false)
+    display_name = full_name ? (self.full_name.presence || name) : name
+    ActionMailer::Base.email_address_with_name(email, display_name)
   end
 
   def hack_clubber?
@@ -449,8 +465,9 @@ class User < ApplicationRecord
   end
 
   def is_teenager?
-    # Looks like funky syntax? Well, age may be nil, so there's a safe nav in there.
-    age&.<=(18)
+    return age <= 18 if birthday.present?
+
+    first_robotics_student?
   end
 
   def is_minor?
@@ -458,7 +475,15 @@ class User < ApplicationRecord
   end
 
   def was_teenager_on_join?
-    age_on(created_at)&.<=(18)
+    return age_on(created_at || Time.current) <= 18 if birthday.present?
+
+    first_robotics_student?
+  end
+
+  FIRST_STUDENT_ROLES = %w[student_leader student_member].freeze
+
+  def first_robotics_student?
+    affiliations.any? { |a| a.is_first? && FIRST_STUDENT_ROLES.include?(a.role) }
   end
 
   def last_seen_at
@@ -483,7 +508,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    card_grants.size >= 1 && events.size == 0
+    card_grants.any? && events.none?
   end
 
   def backup_codes_enabled?
@@ -561,10 +586,14 @@ class User < ApplicationRecord
   end
 
   def can_update_payout_method?
-    return true if payout_method.nil?
-    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
-    return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
+    return true if default_payout_method&.details.nil?
+    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+
+    # Only reports still tracking the default (no payout method set on the
+    # report) would be disrupted by replacing it; reports that have their own
+    # payout method record keep it, which an update leaves intact.
+    return false if reimbursement_reports.reimbursement_requested.where(legal_entity_payout_method_id: nil).any?
+    return false if reimbursement_reports.joins(:payout_holding).where(payout_holding: { aasm_state: :pending }, reimbursement_reports: { legal_entity_payout_method_id: nil }).any?
 
     true
   end
@@ -622,11 +651,37 @@ class User < ApplicationRecord
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
+  def show_first_dashboard?
+    affiliations.where(name: "first").exists?
+  end
+
+  def redirect_to_first_dashboard?
+    show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
+  end
+
   def to_combobox_display
     "#{full_name} (Email: #{email}, ID: #{id})"
   end
 
+  def unverified?
+    !verified?
+  end
+
   private
+
+  def create_legal_entity
+    legal_entities.create!(entity_type: :person)
+  end
+
+  def auditors_must_be_verified
+    if auditor? && !verified?
+      errors.add(:verified, "must be true for auditors")
+    end
+  end
+
+  def sign_out_unverified_sessions
+    user_sessions.not_expired.unverified.update_all(signed_out_at: Time.now, expiration_at: Time.now)
+  end
 
   def accessible_events(roles:)
     event_ids = User::PermissionsOverview.new(user: self).role_by_event_id.select { |_, role| role.in?(roles) }.keys
@@ -634,7 +689,13 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
+    cardholder = stripe_cardholder
+    return unless cardholder&.stripe_id.present?
+
+    cardholder.update!(
+      stripe_email: email,
+      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+    )
   end
 
   def namae(legal: false)
@@ -681,23 +742,6 @@ class User < ApplicationRecord
     end
   end
 
-  def valid_payout_method
-    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
-      # I'm using `try` here in the slim chance that `payout_method` is some
-      # random model and doesn't include `User::PayoutMethod::Shared`.
-      if payout_method.try(:unsupported?)
-        reason = payout_method.unsupported_details[:reason]
-        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
-      else
-        errors.add(:payout_method, "is invalid. Please choose another option.")
-      end
-    end
-
-    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
-      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
-    end
-  end
-
   def second_factor_present_for_2fa
     if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
@@ -727,6 +771,21 @@ class User < ApplicationRecord
 
   def update_draft_applications
     applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def should_sync_teenager_columns?
+    new_record? || will_save_change_to_birthday? || pending_affiliation_changes?
+  end
+
+  def pending_affiliation_changes?
+    return false unless association(:affiliations).loaded?
+
+    affiliations.any? { |a| a.new_record? || a.changed? || a.marked_for_destruction? }
+  end
+
+  def sync_teenager_columns
+    self.teenager = is_teenager?
+    self.joined_as_teenager = was_teenager_on_join?
   end
 
 end

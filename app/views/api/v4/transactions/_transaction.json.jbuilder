@@ -48,5 +48,5 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.wise_transfer  { json.partial! "api/v4/transactions/wise_transfer",  wise_transfer:  hcb_code.wise_transfer                      } if hcb_code.wise_transfer?
   end
 
-  json.organization hcb_code.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
+  expand_association(json, :organization, hcb_code.event, partial: "api/v4/events/event", as: :event)
 end

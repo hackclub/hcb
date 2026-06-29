@@ -50,7 +50,7 @@
     </div>
   <% end %>
 
-  <% if organizer_signed_in? && @event.tags.size > 0 %>
+  <% if organizer_signed_in? && @event.tags.any? %>
     <div
       data-controller="menu"
       data-menu-append-to-value="turbo-frame#ledger"

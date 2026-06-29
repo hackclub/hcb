@@ -8,6 +8,7 @@ module Api
       include PublicActivity::StoreController
       include ErrorHandling
       include AdminScopeCheckable
+      include Pagination
 
       attr_reader :current_user
 
