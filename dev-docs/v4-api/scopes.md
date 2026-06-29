@@ -11,7 +11,6 @@ This document explains how OAuth 2.0 scopes work in the HCB v4 API: the permissi
 - [Overview](#overview)
 - [Two Layers of Authorization](#two-layers-of-authorization)
 - [The `restricted` Scope & Gradual Rollout](#the-restricted-scope--gradual-rollout)
-- [How Enforcement Works](#how-enforcement-works)
 - [Declaring Scope Requirements](#declaring-scope-requirements)
 - [Scope Naming Conventions](#scope-naming-conventions)
 - [Adding a New Scope](#adding-a-new-scope)
