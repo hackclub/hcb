@@ -190,6 +190,9 @@
             Submit & request review
             <% button_hint = capture do %>
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
+              <% if payout_method.present? && user == current_user %>
+                <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+              <% end %>
             <% end %>
           <% end %>
         <% elsif report.draft? %>
