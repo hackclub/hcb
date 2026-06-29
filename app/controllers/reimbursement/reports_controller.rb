@@ -191,9 +191,9 @@ module Reimbursement
       begin
         @report.mark_submitted!
 
-        comment_params = params[:comment]&.permit(:content, :admin_only, :action)
+        comment_params = params[:comment]&.permit(:content, :admin_only, :action, files: [])
 
-        unless comment_params.nil? || comment_params[:content].blank? && comment_params[:file].blank?
+        unless comment_params.nil? || comment_params[:content].blank? && comment_params[:files].blank?
           @comment = @report.comments.build(comment_params.merge(user: current_user))
           unless @comment.save
             flash[:error] = @report.errors.full_messages.to_sentence
@@ -398,9 +398,9 @@ module Reimbursement
 
       authorize @report
 
-      comment_params = params.require(:comment).permit(:content, :admin_only, :action)
+      comment_params = params.require(:comment).permit(:content, :admin_only, :action, files: [])
 
-      if comment_params[:content].blank? && comment_params[:file].blank?
+      if comment_params[:content].blank? && comment_params[:files].blank?
         flash[:success] = "We've sent this report back to #{@report.user.name} and marked it as a draft."
       else
         @comment = @report.comments.build(comment_params.merge(user: current_user))
