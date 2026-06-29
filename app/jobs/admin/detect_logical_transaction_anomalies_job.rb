@@ -4,7 +4,7 @@ module Admin
   class DetectLogicalTransactionAnomaliesJob < ApplicationJob
     queue_as :low
 
-    def perform
+    def perform(event_id: 183)
       hcb_codes = []
       HcbCode.where(event_id:).on_main_ledger.find_each do |hcb_code|
         if !(hcb_code.ledger_item.nil? && hcb_code.no_transactions?) && (hcb_code.ledger_item.nil? || hcb_code.smart_amount_cents != hcb_code.ledger_item.amount_cents)
@@ -20,10 +20,6 @@ module Admin
       if hcb_codes.any? || ledger_items.any?
         AdminMailer.logical_transaction_anomalies(event: Event.find(event_id), hcb_codes: HcbCode.where(id: hcb_codes), ledger_items: Ledger::Item.where(id: ledger_items)).deliver_now
       end
-    end
-
-    def event_id
-      183
     end
 
   end
