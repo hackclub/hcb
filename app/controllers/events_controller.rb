@@ -817,46 +817,6 @@ class EventsController < ApplicationController
     authorize @event
   end
 
-  def payees
-    authorize @event, :new_payment?
-    @payees = @event.payees.search(params[:q])
-    render layout: false
-  end
-
-  def create_payee
-    authorize @event, :new_payment?
-
-    payee = @event.payees.new(display_name: params[:name], email: params[:email])
-
-    if payee.save
-      redirect_to event_payments_new_path(event_id: @event.slug, payee_id: payee.id)
-    else
-      redirect_to event_payments_new_path(event_id: @event.slug),
-                  alert: payee.errors.full_messages.to_sentence
-    end
-  end
-
-
-  def new_payment
-    authorize @event
-    @payment = Payment.new
-    @payee = @event.payees.find_by(id: params[:payee_id])
-    render layout: "transfer"
-  end
-
-  def create_payment
-    authorize @event, :create_payment?
-
-    @payee = @event.payees.find_by(id: payment_params[:payee_id])
-    @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
-
-    if @payment.save
-      redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-    else
-      render :new_payment, layout: "transfer", status: :unprocessable_entity
-    end
-  end
-
   def promotions
     authorize @event
 
@@ -1269,10 +1229,6 @@ class EventsController < ApplicationController
   end
 
   private
-
-  def payment_params
-    params.require(:payment).permit(:amount, :purpose, :payee_id)
-  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
