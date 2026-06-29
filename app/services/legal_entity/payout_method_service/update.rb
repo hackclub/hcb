@@ -27,8 +27,6 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
-        # The method this update supersedes — captured before save, since
-        # saving the new default unsets the old one.
         replaced_method = @user.default_payout_method
 
         # autosave: true on :details saves the detail record and the payout
