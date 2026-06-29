@@ -36,11 +36,12 @@ module Api
             :maximum_amount_cents
           )
 
+          reimbursee = current_user
           @report = @event.reimbursement_reports.build(
             report_params.merge(
-              user: current_user,
+              user: reimbursee,
               inviter: current_user,
-              currency: current_user.payout_method&.currency || "USD"
+              currency: reimbursee.payout_method&.currency || "USD"
             )
           )
 
