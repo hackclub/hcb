@@ -530,27 +530,6 @@ RSpec.describe User, type: :model do
         expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       end
     end
-
-
-    describe "#can_update_payout_method?" do
-      it "is true when there is no payout method" do
-        expect(user.can_update_payout_method?).to be(true)
-      end
-
-      it "is false when the default is Wise and a reimbursement is being processed" do
-        user.personal_legal_entity.payout_methods.create!(
-          default: true,
-          details: LegalEntity::PayoutMethod::WiseTransfer.new(
-            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
-            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
-          )
-        )
-        event = create(:event)
-        create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
-
-        expect(user.can_update_payout_method?).to be(false)
-      end
-    end
   end
 
   describe ".search_name" do

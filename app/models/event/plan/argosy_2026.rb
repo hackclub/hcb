@@ -22,21 +22,27 @@
 #
 class Event
   class Plan
-    class SpendOnly < Standard
-      def revenue_fee
-        0.00
-      end
-
+    class Argosy2026 < SpendOnly
       def label
-        "spend-only"
-      end
-
-      def description
-        "All incoming money is blocked."
+        "2026 Argosy grantee spend-only"
       end
 
       def features
-        %w[cards transfers promotions google_workspace documentation reimbursements]
+        super - %w[promotions google_workspace]
+      end
+
+      def contract_docuseal_template_id
+        4637952
+      end
+
+      def default_values
+        { is_public: true }
+      end
+
+      def contract_skip_prefills
+        {
+          "Contract Signee" => ["The Project"]
+        }
       end
 
     end
