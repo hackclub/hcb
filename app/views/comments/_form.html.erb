@@ -24,15 +24,18 @@
   <div class="flex flex-row mb2 justify-between items-center">
 
     <% if @comment&.persisted? %>
-      <% if comment.file.attached? %>
+      <% if comment.has_attached_file? %>
         <div class="field mb0">
-          <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
+          <% comment.attached_files.each do |file| %>
+            <%= link_to "📎 #{file.filename}", url_for(file), target: "_blank", class: "mr2" %>
+          <% end %>
         </div>
       <% end %>
     <% else %>
       <div data-controller="file-upload">
-        <%= form.file_field :file,
-            multiple: false,
+        <%= form.file_field :files,
+            multiple: true,
+            accept: "image/*,application/pdf",
             required: false,
             data: { "file-upload-target": "input" },
             id: "comment_file_upload" %>
