@@ -1,0 +1,8 @@
+<%= turbo_stream.replace "#{@receiptable.id}_receipt_upload_form",
+      partial: "receipts/form_v3",
+      locals: { receiptable: @receiptable, enable_linking: true, upload_method: "transaction_page", include_spacing: true, turbo: true } %>
+ 
+<% if @hcb_code && !@hcb_code.stripe_refund? %>
+  <%= turbo_stream.replace "#{@ledger_instance}_stripe_card_receipts",
+        partial: "hcb_codes/stripe_card_receipts" %>
+<% end %>
