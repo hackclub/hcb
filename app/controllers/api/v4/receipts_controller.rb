@@ -4,17 +4,28 @@ module Api
   module V4
     class ReceiptsController < ApplicationController
       def index
-        @receipts = if params[:transaction_id].present?
-                      @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
-                      authorize @hcb_code, :show?
-                      @hcb_code.receipts.includes(:user)
-                    elsif params[:expense_id].present?
-                      @expense = ::Reimbursement::Expense.find_by_public_id!(params[:expense_id])
-                      authorize @expense, :show?
-                      @expense.receipts.includes(:user)
-                    else
+        receiptable_id = params[:receiptable_id] || params[:transaction_id]
+
+        unless receiptable_id.present?
+          # No receiptable specified: return the current user's receipt bin.
+          skip_authorization
+          return @receipts = Receipt.in_receipt_bin.includes(:user).where(user: current_user)
+        end
+
+        receiptable = PublicIdentifiable.find_by_public_id(receiptable_id)
+        raise ActiveRecord::RecordNotFound if receiptable.nil?
+
+        @receipts = case receiptable
+                    when HcbCode, ::Reimbursement::Expense
+                      authorize receiptable, :show?
+                      receiptable.receipts.includes(:user)
+                    when User
+                      raise Pundit::NotAuthorizedError unless receiptable == current_user
+
                       skip_authorization
-                      Receipt.in_receipt_bin.includes(:user).where(user: current_user)
+                      Receipt.in_receipt_bin.includes(:user).where(user: receiptable)
+                    else
+                      raise ActiveRecord::RecordNotFound
                     end
       end
 
@@ -37,7 +48,6 @@ module Api
         @receipt.destroy!
         render json: { message: "Receipt successfully deleted" }, status: :ok
       end
-
 
     end
   end

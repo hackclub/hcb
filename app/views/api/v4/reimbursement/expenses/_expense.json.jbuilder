@@ -6,11 +6,7 @@ object_shape(json, expense) do
   json.memo expense.memo
   json.description expense.description
   json.category expense.category
-  if expense.is_mileage?
-    json.expense_type "mileage"
-  else
-    json.expense_type expense.is_fee? ? "fee" : "standard"
-  end
+  json.expense_type expense.expense_type_name
   json.amount_cents expense.amount_cents
   json.value expense.value.to_f
   json.status expense.aasm_state

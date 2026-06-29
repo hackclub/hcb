@@ -13,12 +13,9 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
-  create_schema "google_sheets"
-
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
@@ -1364,7 +1361,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.text "secondary_hash"
     t.text "unique_bank_identifier"
     t.datetime "updated_at", null: false
-    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"

@@ -5,6 +5,7 @@
 object_shape(json, report) do
   json.name report.name
   json.status report.aasm_state
+  json.status_text report.status_text
   json.currency report.currency
   json.amount_cents report.amount_cents
   json.maximum_amount_cents report.maximum_amount_cents

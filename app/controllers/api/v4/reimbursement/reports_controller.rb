@@ -6,8 +6,6 @@ module Api
       class ReportsController < ApplicationController
         before_action :set_report, only: [:show, :update, :destroy, :submit, :draft]
 
-        include ApplicationHelper
-
         def index
           if params[:organization_id]
             @event = Event.find_by_public_id!(params[:organization_id])
@@ -16,8 +14,11 @@ module Api
             reports = reports.visible unless params[:show_hidden_reports] == "true"
             reports = reports.order(created_at: :desc)
           else
+            user = params[:user_id] ? User.find_by_public_id!(params[:user_id]) : current_user
+            raise Pundit::NotAuthorizedError unless user == current_user || current_user&.admin?
+
             skip_authorization
-            reports = current_user.reimbursement_reports.order(created_at: :desc)
+            reports = user.reimbursement_reports.order(created_at: :desc)
           end
 
           @reports = paginate_cursor(reports.to_a, &:public_id)
@@ -37,10 +38,11 @@ module Api
           )
 
           reimbursee = current_user
+          organizer = OrganizerPosition.role_at_least?(current_user, @event, :member)
           @report = @event.reimbursement_reports.build(
             report_params.merge(
               user: reimbursee,
-              inviter: current_user,
+              inviter: organizer ? current_user : nil,
               currency: reimbursee.payout_method&.currency || "USD"
             )
           )

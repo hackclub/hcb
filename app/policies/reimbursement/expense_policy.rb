@@ -3,7 +3,7 @@
 module Reimbursement
   class ExpensePolicy < ApplicationPolicy
     def show?
-      auditor || creator || reader
+      Reimbursement::ReportPolicy.new(user, record.report).show?
     end
 
     def create?

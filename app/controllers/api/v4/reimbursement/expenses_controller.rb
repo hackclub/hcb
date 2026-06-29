@@ -6,12 +6,10 @@ module Api
       class ExpensesController < ApplicationController
         before_action :set_expense, only: [:show, :update, :destroy]
 
-        include ApplicationHelper
-
         def index
           @report = ::Reimbursement::Report.find_by_public_id!(params[:report_id])
           authorize @report, :show?
-          expenses = @report.expenses.order(:expense_number)
+          expenses = @report.expenses.includes(:report).order(:expense_number)
           @expenses = paginate_cursor(expenses.to_a, &:public_id)
         end
 
@@ -70,7 +68,7 @@ module Api
         end
 
         def expense_attrs
-          params.require(:reimbursement_expense).permit(:memo, :description, :category, :type, :value)
+          params.fetch(:reimbursement_expense, {}).permit(:memo, :description, :category, :type, :value)
         end
 
       end
