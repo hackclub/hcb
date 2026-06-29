@@ -16,9 +16,9 @@ module Api
         @comment = @hcb_code.comments.build(
           content: params[:content],
           user: current_user,
-          admin_only: admin_only,
-          file: params[:file]
+          admin_only: admin_only
         )
+        Array(params[:files] || params[:file]).each { |file| @comment.files.attach(file) }
 
         authorize @comment
 
