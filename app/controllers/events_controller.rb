@@ -824,17 +824,7 @@ class EventsController < ApplicationController
   def create_payee
     authorize @event, :new_payment?
 
-    user = User.find_by(email: params[:email])
-
-    unless user
-      return redirect_to event_payments_new_path(event_id: @event.slug),
-                         alert: "No HCB account found for #{params[:email]}."
-    end
-
-    legal_entity = user.personal_legal_entity || user.legal_entities.create!(entity_type: :person)
-    payee = @event.payees.find_or_initialize_by(legal_entity:)
-    payee.display_name = params[:name].presence || user.name
-    payee.email = params[:email]
+    payee = @event.payees.new(display_name: params[:name], email: params[:email])
 
     if payee.save
       redirect_to event_payments_new_path(event_id: @event.slug, payee_id: payee.id)
