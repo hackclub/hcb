@@ -49,7 +49,7 @@ module Api
       def require_admin_scope!(level)
         unless can_admin?(level)
           skip_authorization
-          render json: { error: "invalid_auth" }, status: :unauthorized
+          render json: { error: "not_authorized" }, status: :forbidden
         end
       end
 
