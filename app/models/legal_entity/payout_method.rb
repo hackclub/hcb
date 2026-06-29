@@ -47,6 +47,8 @@ class LegalEntity
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, to: :details
 
+    delegate :create_transfer, to: :details
+
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
     end
@@ -61,10 +63,6 @@ class LegalEntity
 
     def unsupported_details
       self.class.unsupported_details(details.class)
-    end
-
-    def create_transfer(event, **attr)
-      details.create_transfer(event, **attr)
     end
 
     private
