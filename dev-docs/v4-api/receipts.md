@@ -69,7 +69,7 @@ This set is sufficient for the full workflow and grants **no ability to move mon
 
 A typical agent run:
 
-1. **Authenticate.** Obtain a `restricted` OAuth token with `receipts:write`, `ledgers:read`, and `receipts:read` (see [Authentication](./standards.md#authentication) for the token flow). All requests go to `https://hcb.hackclub.com/api/v4` with an `Authorization: Bearer hcb_<token>` header.
+1. **Authenticate.** Obtain a `restricted` OAuth token carrying `receipts:write`, `ledgers:read`, and `receipts:read`. See [Authentication](./standards.md#authentication) for the token flow and [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token) for how to register the app with these exact scopes and request them. All requests go to `https://hcb.hackclub.com/api/v4` with an `Authorization: Bearer hcb_<token>` header.
 2. **Discover transactions missing a receipt** via `GET /transactions/missing_receipt` (across all of the user's organizations in one call), or per organization via `GET /organizations/:id/transactions?filters[missing_receipts]=true`. Both require `ledgers:read`.
 3. **Match each local file to a transaction** by amount, date, and merchant. Optionally call `GET /receipts?transaction_id=…` to confirm the transaction does not already have a receipt.
 4. **Upload** with `POST /receipts`, always passing `transaction_id` (see [Create a Receipt](#create-a-receipt)).

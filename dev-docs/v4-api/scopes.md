@@ -20,7 +20,7 @@ This document explains how OAuth 2.0 scopes work in the HCB v4 API: the permissi
 
 ## Overview
 
-The v4 API uses **OAuth 2.0 scopes** (via [Doorkeeper](https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes)) to limit what a given access token is allowed to do. A scope is a string (e.g. `transactions:read`, `receipts:write`) attached to a token when an OAuth application is authorized.
+The v4 API uses **OAuth 2.0 scopes** (via [Doorkeeper](https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes)) to limit what a given access token is allowed to do. A scope is a string (e.g. `ledgers:read`, `receipts:write`) attached to a token when an OAuth application is authorized.
 
 Scopes let an application request **only the access it needs**. For example, a receipt-uploading integration can request `receipts:write` without gaining the ability to read transactions or move money.
 
@@ -57,6 +57,19 @@ Key consequences for a `restricted` token:
 
 ---
 
+## Requesting Scopes on a Token
+
+Scopes are granted to a token through the standard OAuth flow (see [Authentication in standards.md](./standards.md#authentication)); they aren't attached automatically. Two things must line up:
+
+1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only `read` / `write` / `admin:read` / `admin:write`, so the granular scopes above can be registered freely even though they aren't in that list.
+2. **The token request must ask for them.** Pass the same space-separated strings in the `scope=` parameter of the `authorize` request (URL-encoded, so spaces become `%20`).
+
+To get per-action enforcement (everything in this document), the requested scopes **must include `restricted`** alongside the granular ones. A token without `restricted` ignores every `require_oauth2_scope` declaration and falls back to legacy full access.
+
+> The `api/v4/oauth` string in the OAuth endpoint paths (and in the device-grant docs) is the **route mount prefix** — the API and its OAuth endpoints live under `/api/v4` — **not** an OAuth access scope. Do not put `api/v4/oauth` in your `scope=` list.
+
+---
+
 ### Registration (class-level)
 
 `require_oauth2_scope` is a **class method** that records, per action, which scopes are required. It is typically called right after the action it guards:
@@ -85,12 +98,12 @@ module Api
       def index
         # ...
       end
-      require_oauth2_scope "ledger:read", :index
+      require_oauth2_scope "ledgers:read", :index
 
       def show
         # ...
       end
-      require_oauth2_scope "ledger:read", :show
+      require_oauth2_scope "ledgers:read", :show
     end
   end
 end
@@ -110,7 +123,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 
 | Pattern | When to use | Examples |
 |---------|-------------|----------|
-| `<resource>:read` | Read-only access to a resource | `transactions:read`, `organizations:read` |
+| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` |
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |

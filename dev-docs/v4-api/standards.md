@@ -24,8 +24,8 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 
 ## Basics
 
-- **All requests and responses use JSON.** Always send `Content-Type: application/json` and expect `application/json` back.
-- There is no XML, form-encoded, or multipart support.
+- **Requests and responses use JSON by default.** Send `Content-Type: application/json` and expect `application/json` back.
+- Two exceptions: **file uploads** (e.g. `POST /api/v4/receipts`) use `multipart/form-data`, and the **OAuth token endpoint** accepts `application/x-www-form-urlencoded`. There is no XML support.
 
 ---
 
@@ -39,7 +39,9 @@ Authorization: Bearer hcb_<token>
 
 ### Creating an OAuth Application
 
-There are two ways to register an app in development:
+There are two ways to register an app. The examples below use the local dev host `localhost:3000`; on **production, use `https://hcb.hackclub.com`** for the same `/api/v4/oauth/...` endpoints and the application UI at `https://hcb.hackclub.com/api/v4/oauth/applications`, with a real `redirect_uri`.
+
+> To use the granular v4 scopes (e.g. `restricted receipts:write ledgers:read receipts:read`), register the application with **those** scopes instead of `read write`, and request the same strings in the authorize step. See [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token).
 
 **Option A — Web UI**
 
@@ -79,7 +81,7 @@ Save the `uid` and `secret` from the output.
    redirect_uri=http://localhost:3000/
    ```
 
-HCB also supports the `device_code` grant type for CLI tools and devices without a browser. See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) — HCB uses the scope `api/v4/oauth` instead of `oauth`.
+HCB also supports the `device_code` grant type for CLI tools and devices without a browser (useful for a headless agent). See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage). HCB mounts these endpoints under `api/v4/oauth` instead of the default `oauth` — that is a URL **path prefix**, not an OAuth access scope, so don't add `api/v4/oauth` to your requested `scope=`.
 
 ### Token Expiry & Refresh
 
