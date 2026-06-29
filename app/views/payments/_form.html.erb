@@ -10,9 +10,13 @@
         <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
           <div class="flex-1 min-w-0">
             <% if payee %>
-
-              <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
-              <p class="muted text-sm m-0"><%= payee.email %></p>
+              <div class="flex gap-3 items-center">
+                <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+                <div>
+                  <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                  <p class="muted text-sm m-0"><%= payee.email %></p>
+                </div>
+              </div>
 
             <% else %>
 
