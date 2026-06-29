@@ -21,6 +21,11 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
   end
 
   describe "#run" do
+    before do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+    end
+
     it "creates the chosen method as the user's default when none exists" do
       service = described_class.new(
         user:,
