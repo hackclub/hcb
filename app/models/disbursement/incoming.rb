@@ -64,6 +64,10 @@ class Disbursement
       "Disbursement::Incoming"
     end
 
+    def hcb_code
+      disbursement.incoming_hcb_code
+    end
+
     def event
       disbursement.destination_event
     end
