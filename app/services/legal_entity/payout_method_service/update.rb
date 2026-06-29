@@ -82,16 +82,20 @@ class LegalEntity
       def repoint_failed_and_draft_reports(replaced_method)
         return unless replaced_method
 
-        @user.reimbursement_reports
-             .joins(:payout_holding)
-             .where(reimbursement_payout_holdings: { aasm_state: :failed })
-             .where(legal_entity_payout_method_id: replaced_method.id)
-             .update(legal_entity_payout_method: @payout_method)
+        on_replaced_method = @user.reimbursement_reports.where(legal_entity_payout_method_id: replaced_method.id)
 
-        @user.reimbursement_reports
-             .where(aasm_state: :draft)
-             .where(legal_entity_payout_method_id: replaced_method.id)
-             .update(legal_entity_payout_method: @payout_method)
+        failed = on_replaced_method.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed })
+        draft = on_replaced_method.where(aasm_state: :draft)
+
+        # update! runs validations and records the change in paper_trail; each
+        # is wrapped in safely so a single report that can't be repointed is
+        # reported rather than silently skipped, without aborting the user's
+        # payout-method change or the other repoints.
+        (failed + draft).each do |report|
+          safely do
+            report.update!(legal_entity_payout_method: @payout_method)
+          end
+        end
       end
 
       def switching_to_wise_while_processing?
