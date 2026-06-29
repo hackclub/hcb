@@ -4,17 +4,7 @@ require "rails_helper"
 
 RSpec.describe Disbursement::Outgoing, type: :model do
   let(:disbursement) { create(:disbursement) }
-  let(:outgoing) { described_class.new(disbursement) }
-
-  describe "#initialize" do
-    it "accepts a Disbursement" do
-      expect(outgoing.disbursement).to eq(disbursement)
-    end
-
-    it "raises ArgumentError for non-Disbursement" do
-      expect { described_class.new("not a disbursement") }.to raise_error(ArgumentError, "Expected Disbursement")
-    end
-  end
+  let(:outgoing) { disbursement.outgoing_disbursement }
 
   describe "#hcb_code / #local_hcb_code" do
     it "returns the outgoing HCB code" do
@@ -51,7 +41,7 @@ RSpec.describe Disbursement::Outgoing, type: :model do
       let(:source_event) { create(:event) }
       let(:source_subledger) { create(:subledger, event: source_event) }
       let(:disbursement_with_subledger) { create(:disbursement, source_event:, source_subledger:) }
-      let(:outgoing_with_subledger) { described_class.new(disbursement_with_subledger) }
+      let(:outgoing_with_subledger) { disbursement_with_subledger.outgoing_disbursement }
 
       it "returns the source subledger" do
         expect(outgoing_with_subledger.subledger).to eq(source_subledger)
