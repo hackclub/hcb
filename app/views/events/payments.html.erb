@@ -31,7 +31,7 @@
     <% end %>
 
     <% if policy(@event).new_transfer? %>
-      <%= link_to event_payments_new_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
+      <%= link_to new_event_payment_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
         <%= inline_icon "payment-transfer" %>
         Send
       <% end %>
@@ -47,7 +47,7 @@
     </span>
 
     <% if policy(@event).new_payment? %>
-      <%= link_to event_payments_new_path(event_id: @event.slug), class: "btn bg-success" do %>
+      <%= link_to new_event_payment_path(event_id: @event.slug), class: "btn bg-success" do %>
         <%= inline_icon "payment-transfer" %>
         Send
       <% end %>

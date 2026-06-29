@@ -33,7 +33,7 @@
     <% end %>
   </div>
 
-  <%= form_with(model: payment, url: event_payments_new_path(event_id: event.slug), local: true) do |form| %>
+  <%= form_with(model: payment, url: new_event_payment_path(event_id: event.slug), local: true) do |form| %>
     <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
     <%= form.hidden_field :payee_id, value: payee&.id %>

@@ -9,7 +9,7 @@
   <%= turbo_frame_tag :payee_results_list do %>
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
-        <%= link_to event_payments_new_path(event_id: @event.slug, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
+        <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
           <img src="<%= gravatar_url(payee.email, payee.display_name, payee.id, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="<%= payee.display_name %>">
           <div>
             <p class="font-medium"><%= payee.display_name %></p>
