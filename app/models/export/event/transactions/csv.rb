@@ -23,10 +23,9 @@ class Export
   module Event
     module Transactions
       class Csv < Export
-        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only
-        def async?
-          event.canonical_transactions.size > 300
-        end
+        include Filterable
+
+        store_accessor :parameters, :event_id, :start_date, :end_date, :public_only, :tag_id, :user_id, :transaction_type, :direction, :minimum_amount, :maximum_amount, :missing_receipts, :category_slug, :merchant_id, :search
 
         def label
           "CSV transaction export for #{event.name}"
@@ -54,11 +53,20 @@ class Export
 
         private
 
-        def transactions
+        def fallback_transactions
           tx = event.canonical_transactions.includes(local_hcb_code: [:tags, :comments])
-          tx = tx.where("date >= ?", start_date) if start_date
-          tx = tx.where("date <= ?", end_date) if end_date
+          tx = tx.where("date >= ?", start_date) if start_date.present?
+          tx = tx.where("date <= ?", end_date) if end_date.present?
           tx.order("date desc")
+        end
+
+        def no_filters_applied?
+          # start_date and end_date are excluded because CSV already supported date
+          # ranges via the simple query path before filtered exports were added.
+          tag_id.blank? && user_id.blank? && transaction_type.blank? &&
+            direction.blank? && minimum_amount.blank? && maximum_amount.blank? &&
+            missing_receipts.blank? && category_slug.blank? && merchant_id.blank? &&
+            search.blank?
         end
 
         def event
