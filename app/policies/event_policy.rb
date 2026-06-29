@@ -167,7 +167,13 @@ class EventPolicy < ApplicationPolicy
     Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
   end
 
-  alias new_payment? new_transfer?
+  def new_payment?
+    payments? && new_transfer?
+  end
+
+  def create_payment?
+    payments? && create_transfer?
+  end
 
   def transfers_in_v4?
     show_in_v4? && transfers?
