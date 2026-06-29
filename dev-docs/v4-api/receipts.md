@@ -78,6 +78,52 @@ A typical agent run:
 
 ---
 
+## Matching Receipts to Transactions
+
+Matching (workflow step 3) compares two sources: the **receipt file**, which the agent must read or OCR itself (the API exposes no extracted amount, date, or merchant; the [receipt object](#the-receipt-object) carries only `url`, `preview_url`, `filename`, `uploader`), and the **transaction object** from the transactions API. For card charges, the fields worth matching on are:
+
+| Transaction field | Use for matching |
+|---|---|
+| `amount_cents` | Charge amount in cents. Negative for expenses; compare against the receipt total by absolute value. |
+| `date` / `card_charge.spent_at` | Settlement date and the authorization timestamp. A receipt is normally dated the purchase day, which lines up with `spent_at`. |
+| `card_charge.merchant.smart_name` / `.name` | Humanized and raw merchant name. `smart_name` is the cleaner one to compare. |
+| `memo` | Transaction memo, often merchant-derived. |
+| `card_charge.card.last4` | Last 4 of the card used. May be `null`. |
+
+Heuristics, strongest first:
+
+- **Amount must match.** Compare absolute values (`|amount_cents|` against the receipt total in cents). This is a hard filter: a different amount is a different transaction. Two caveats:
+  - **Tips/gratuity.** Restaurant charges often settle higher than the printed subtotal. Allow the charged amount to exceed the receipt total by a plausible tip for restaurants; never allow it to be lower.
+  - **Currency.** Foreign charges settle in USD while the receipt may be in another currency. If `card_charge.merchant.country` is non-US, lean on merchant and date rather than a raw amount comparison.
+- **Dates must be close.** The receipt date should fall on or shortly before `card_charge.spent_at` (authorizations settle a day or two later). A receipt dated well after the charge, or before it, is a non-match. A few days' window is reasonable; a same-day match is a strong signal.
+- **Card last4.** If the receipt prints the last 4 digits of the card, they must equal `card_charge.card.last4`. A strong corroborating signal, but `last4` can be `null` and many receipts omit it: treat a match as confirmation and a missing value as neutral, not a mismatch.
+- **Merchant name.** Fuzzy-match the receipt's merchant against `smart_name` (fall back to `merchant.name` or `memo`). Normalize case and punctuation, and strip processor prefixes and location noise (e.g. `SQ *`, `TST* `, store numbers, city/state). A clear merchant match disambiguates when several transactions share an amount and date.
+
+Combining the signals:
+
+- Require an **exact amount match plus at least one** corroborating signal (close date, merchant, or last4) before attaching.
+- If **multiple transactions** match on amount and date, disambiguate with merchant and last4. If still ambiguous, **skip and flag for a human** rather than guess: attaching to the wrong transaction is worse than leaving it unattached.
+- **Only card charges expose merchant and card data.** ACH transfers, checks, donations, and disbursements have no `card_charge` block, so fall back to amount, date, and `memo` for those (uncommon for receipt uploads).
+
+---
+
+## Request Size & Timeouts
+
+Every request is bound by a **30-second server timeout**. A call that runs longer is terminated, so keep each request small and page through results instead of asking for everything at once.
+
+- **Paginate listings.** Listing endpoints use cursor pagination. The `limit` query param sets the page size: it **defaults to 25** and is **capped at 100** (a larger value returns `400 invalid_operation`). Follow the `after` cursor to page (see [Pagination](./standards.md#pagination)).
+- **Prefer smaller pages.** When listing transactions or the Receipt Bin, request modest pages such as `?limit=25` and follow the cursor, rather than pushing `limit` to 100 on a large organization. Smaller pages return faster and stay well under the 30s ceiling.
+
+  ```bash
+  curl "https://hcb.hackclub.com/api/v4/transactions/missing_receipt?limit=25" \
+    -H "Authorization: Bearer hcb_<token>"
+  # then pass the last item's id back as ?after=txn_… for the next page
+  ```
+- **Process per page.** Match and upload as you page, rather than collecting every transaction first. This bounds memory and keeps any single request short.
+- **Uploads count too.** `POST /receipts` is also subject to the 30s timeout; a large file (up to 50 MB) over a slow link can approach it. If an upload times out you can't tell whether it landed, and uploads aren't deduped, so check with `GET /receipts?transaction_id=…` before re-uploading.
+
+---
+
 ## Endpoints
 
 All receipt routes are [shallow and top-level](./standards.md#shallow-routing).
