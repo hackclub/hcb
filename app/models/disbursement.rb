@@ -81,6 +81,10 @@ class Disbursement < ApplicationRecord
   has_one :raw_pending_incoming_disbursement_transaction
   has_one :raw_pending_outgoing_disbursement_transaction
 
+  has_one :base_disbursement, class_name: "Disbursement::Base", inverse_of: :disbursement, foreign_key: :id
+  has_one :incoming_disbursement, class_name: "Disbursement::Incoming", inverse_of: :disbursement, foreign_key: :id
+  has_one :outgoing_disbursement, class_name: "Disbursement::Outgoing", inverse_of: :disbursement, foreign_key: :id
+
   belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
   belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
 
@@ -240,9 +244,6 @@ class Disbursement < ApplicationRecord
   def incoming_hcb_code
     "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
   end
-
-  def outgoing_disbursement = Disbursement::Outgoing.new(self)
-  def incoming_disbursement = Disbursement::Incoming.new(self)
 
   # this method will be removed from disbursement, and we will have to go through IncomingDisbursement or OutgoingDisbursement
   def local_hcb_code
