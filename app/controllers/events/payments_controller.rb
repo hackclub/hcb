@@ -30,4 +30,5 @@ class Events::PaymentsController < ApplicationController
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id)
   end
+
 end

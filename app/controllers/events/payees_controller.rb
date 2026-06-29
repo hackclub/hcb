@@ -22,4 +22,5 @@ class Events::PayeesController < ApplicationController
                   alert: payee.errors.full_messages.to_sentence
     end
   end
+
 end

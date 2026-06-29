@@ -8,4 +8,5 @@ class PaymentPolicy < ApplicationPolicy
   def create?
     EventPolicy.new(user, record.event).create_payment?
   end
+
 end

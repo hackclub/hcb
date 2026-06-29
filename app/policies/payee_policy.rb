@@ -8,4 +8,5 @@ class PayeePolicy < ApplicationPolicy
   def create?
     EventPolicy.new(user, record.event).new_payment?
   end
+
 end
