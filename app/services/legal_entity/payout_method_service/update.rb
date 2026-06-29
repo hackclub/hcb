@@ -32,7 +32,7 @@ class LegalEntity
         # autosave: true on :details saves the detail record and the payout
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
-        repoint_failed_reports(replaced_method) if saved
+        repoint_failed_and_draft_reports(replaced_method) if saved
         saved
       end
 
@@ -79,12 +79,17 @@ class LegalEntity
         end
       end
 
-      def repoint_failed_reports(replaced_method)
+      def repoint_failed_and_draft_reports(replaced_method)
         return unless replaced_method
 
         @user.reimbursement_reports
              .joins(:payout_holding)
              .where(reimbursement_payout_holdings: { aasm_state: :failed })
+             .where(legal_entity_payout_method_id: replaced_method.id)
+             .update(legal_entity_payout_method: @payout_method)
+
+        @user.reimbursement_reports
+             .where(aasm_state: :draft)
              .where(legal_entity_payout_method_id: replaced_method.id)
              .update(legal_entity_payout_method: @payout_method)
       end
