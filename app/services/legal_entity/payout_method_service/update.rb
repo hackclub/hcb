@@ -86,7 +86,7 @@ class LegalEntity
              .joins(:payout_holding)
              .where(reimbursement_payout_holdings: { aasm_state: :failed })
              .where(legal_entity_payout_method_id: replaced_method.id)
-             .update_all(legal_entity_payout_method_id: @payout_method.id, updated_at: Time.current)
+             .update(legal_entity_payout_method: @payout_method)
       end
 
       def switching_to_wise_while_processing?

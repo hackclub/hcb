@@ -101,7 +101,7 @@ module Reimbursement
 
     acts_as_paranoid
 
-    before_create :snapshot_payout_method
+    before_create :set_payout_method
 
     after_create_commit do
       ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
@@ -436,7 +436,7 @@ module Reimbursement
 
     private
 
-    def snapshot_payout_method
+    def set_payout_method
       self.legal_entity_payout_method ||= user&.default_payout_method
     end
 
