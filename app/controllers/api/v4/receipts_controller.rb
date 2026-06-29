@@ -38,6 +38,7 @@ module Api
         render json: { message: "Receipt successfully deleted" }, status: :ok
       end
 
+      require_oauth2_scope "receipts:write", :destroy
 
     end
   end
