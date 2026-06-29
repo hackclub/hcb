@@ -24,6 +24,8 @@ class Payee < ApplicationRecord
   belongs_to :event
   belongs_to :legal_entity, optional: true
 
+  has_many :payments
+
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
