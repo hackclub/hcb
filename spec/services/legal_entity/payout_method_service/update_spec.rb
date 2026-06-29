@@ -103,7 +103,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
     it "blocks switching to Wise while a report tracking the default is being processed" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
-      # Legacy report with no snapshot still resolves its method from the default.
+      # Legacy report with no payout method set still resolves its method from the default.
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
       report.update_columns(legal_entity_payout_method_id: nil)
 
@@ -118,9 +118,9 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(user.reload.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
     end
 
-    it "allows switching to Wise when processing reports have their own snapshotted method" do
+    it "allows switching to Wise when processing reports have their own payout method set" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
-      # Snapshotted at creation, so it keeps ACH regardless of the new default.
+      # Set at creation, so it keeps ACH regardless of the new default.
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
       expect(report.legal_entity_payout_method).to be_present
 
@@ -238,7 +238,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(on_other.reload.legal_entity_payout_method).to eq(other_method)
     end
 
-    it "leaves healthy in-flight reports pinned to their snapshot on update" do
+    it "leaves healthy in-flight reports pinned to their own payout method on update" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
       old_pm = report.legal_entity_payout_method
@@ -254,7 +254,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
     it "blocks any change while a Wise payout tracking the default is being processed" do
       seed_default(LegalEntity::PayoutMethod::WiseTransfer.new(valid_wise_attrs))
-      # Legacy report with no snapshot still resolves its method from the default.
+      # Legacy report with no payout method set still resolves its method from the default.
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
       report.update_columns(legal_entity_payout_method_id: nil)
 

@@ -546,14 +546,14 @@ RSpec.describe User, type: :model do
           )
         )
         event = create(:event)
-        # Legacy report with no snapshot still resolves its method from the default.
+        # Legacy report with no payout method set still resolves its method from the default.
         report = create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
         report.update_columns(legal_entity_payout_method_id: nil)
 
         expect(user.can_update_payout_method?).to be(false)
       end
 
-      it "is true when the default is Wise but processing reports have their own snapshotted method" do
+      it "is true when the default is Wise but processing reports have their own payout method set" do
         user.personal_legal_entity.payout_methods.create!(
           default: true,
           details: LegalEntity::PayoutMethod::WiseTransfer.new(
@@ -562,7 +562,7 @@ RSpec.describe User, type: :model do
           )
         )
         event = create(:event)
-        # Snapshotted at creation, so an update leaves its payout method intact.
+        # Set at creation, so an update leaves its payout method intact.
         report = create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
         expect(report.legal_entity_payout_method).to be_present
 

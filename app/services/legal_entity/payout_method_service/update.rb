@@ -99,9 +99,9 @@ class LegalEntity
       end
 
       def switching_to_wise_while_processing?
-        # Only reports that still track the user's default (no snapshotted
-        # payout method) would be flipped to Wise by this change; reports with
-        # their own snapshot keep their original method and are unaffected.
+        # Only reports that still track the user's default (no payout method
+        # set on the report) would be flipped to Wise by this change; reports
+        # with their own payout method keep their original and are unaffected.
         @payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
           !@user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
           @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES, legal_entity_payout_method_id: nil).any?

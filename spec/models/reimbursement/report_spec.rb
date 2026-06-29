@@ -10,8 +10,8 @@ RSpec.describe Reimbursement::Report, type: :model do
   describe "payout method association" do
     let(:user) { create(:user) }
 
-    describe "snapshotting on create" do
-      it "snapshots the user's default payout method onto the report" do
+    describe "setting the payout method on create" do
+      it "sets the user's default payout method on the report" do
         pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
 
         report = create(:reimbursement_report, user:)
@@ -38,7 +38,7 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
 
     describe "#payout_method" do
-      it "returns the snapshotted method even after the user's default changes" do
+      it "returns the method set on the report even after the user's default changes" do
         original_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
         report = create(:reimbursement_report, user:)
 
@@ -47,7 +47,7 @@ RSpec.describe Reimbursement::Report, type: :model do
         expect(report.reload.payout_method).to eq(original_pm)
       end
 
-      it "falls back to the user's current default for legacy reports with no snapshot" do
+      it "falls back to the user's current default for legacy reports with no payout method set" do
         report = create(:reimbursement_report, user:)
         report.update_columns(legal_entity_payout_method_id: nil)
 
