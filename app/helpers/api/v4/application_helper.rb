@@ -83,7 +83,7 @@ module Api
       end
 
       def expand_pii(override_if: false)
-        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
+        yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end
 
     end
