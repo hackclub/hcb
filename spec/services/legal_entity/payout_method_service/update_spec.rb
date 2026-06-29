@@ -233,25 +233,6 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
       expect(report.reload.legal_entity_payout_method).to eq(old_pm)
     end
-
-<<<<<<< HEAD
-    it "blocks any change while a Wise payout tracking the default is being processed" do
-      seed_default(LegalEntity::PayoutMethod::WiseTransfer.new(valid_wise_attrs))
-      # Legacy report with no payout method set still resolves its method from the default.
-      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
-      report.update_columns(legal_entity_payout_method_id: nil)
-
-      service = described_class.new(
-        user:,
-        details_type: "LegalEntity::PayoutMethod::AchTransfer",
-        details_attrs: valid_ach_attrs
-      )
-
-      expect(service.run).to be(false)
-      expect(user.reload.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::WiseTransfer)
-    end
-=======
->>>>>>> 852538b21 ([LEPM] Remove unnecessary logic after backfill complete)
   end
 
   describe "#run!" do
