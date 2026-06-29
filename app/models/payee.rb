@@ -19,14 +19,13 @@
 #  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
 #
 class Payee < ApplicationRecord
+  include PgSearch::Model
+
   belongs_to :event
   belongs_to :legal_entity, optional: true
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
-  scope :search, ->(query) {
-    where("display_name ILIKE ?", "%#{sanitize_sql_like(query)}%") if query.present?
-  }
-
+  pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
 end

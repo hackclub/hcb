@@ -6,15 +6,14 @@ class Events::PayeesController < ApplicationController
   before_action :set_event
 
   def index
-    authorize @event, :new_payment?
-    @payees = @event.payees.search(params[:q])
+    authorize @event.payees.build, :index?
+    @payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
     render layout: false
   end
 
   def create
-    authorize @event, :new_payment?
-
-    payee = @event.payees.new(display_name: params[:name], email: params[:email])
+    payee = @event.payees.build(display_name: params[:name], email: params[:email])
+    authorize payee
 
     if payee.save
       redirect_to event_payments_new_path(event_id: @event.slug, payee_id: payee.id)
