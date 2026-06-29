@@ -70,7 +70,7 @@ module Api
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
-      require_oauth2_scope "ledgers:read", :show
+      require_oauth2_scope "ledgers:read", :missing_receipt
 
       def update
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
