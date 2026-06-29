@@ -330,7 +330,6 @@ class UsersController < ApplicationController
     @user.assign_attributes(user_params)
 
     payout_method_type = params.dig(:user, :payout_method_type)
-    update_payout_method = payout_method_type.present?
 
     if @user.use_two_factor_authentication_changed?
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
@@ -388,7 +387,7 @@ class UsersController < ApplicationController
     saved = ActiveRecord::Base.transaction do
       user_ok = @user.save
       payout_ok = true
-      if update_payout_method
+      if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
           user: @user,
           details_type: payout_method_type,
