@@ -585,8 +585,12 @@ class User < ApplicationRecord
   def can_update_payout_method?
     return true if default_payout_method&.details.nil?
     return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-    return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
+
+    # Only reports still tracking the default (no snapshotted payout method)
+    # would be disrupted by replacing it; snapshotted reports keep their own
+    # payout method record, which an update leaves intact.
+    return false if reimbursement_reports.reimbursement_requested.where(legal_entity_payout_method_id: nil).any?
+    return false if reimbursement_reports.joins(:payout_holding).where(payout_holding: { aasm_state: :pending }, reimbursement_reports: { legal_entity_payout_method_id: nil }).any?
 
     true
   end

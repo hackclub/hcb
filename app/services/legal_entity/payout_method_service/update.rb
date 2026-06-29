@@ -27,9 +27,15 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
+        # The method this update supersedes — captured before save, since
+        # saving the new default unsets the old one.
+        replaced_method = @user.default_payout_method
+
         # autosave: true on :details saves the detail record and the payout
         # method together, atomically, even inside the controller's transaction.
-        @payout_method.save
+        saved = @payout_method.save
+        repoint_failed_reports(replaced_method) if saved
+        saved
       end
 
       def run!
@@ -75,10 +81,23 @@ class LegalEntity
         end
       end
 
+      def repoint_failed_reports(replaced_method)
+        return unless replaced_method
+
+        @user.reimbursement_reports
+             .joins(:payout_holding)
+             .where(reimbursement_payout_holdings: { aasm_state: :failed })
+             .where(legal_entity_payout_method_id: replaced_method.id)
+             .update_all(legal_entity_payout_method_id: @payout_method.id, updated_at: Time.current)
+      end
+
       def switching_to_wise_while_processing?
+        # Only reports that still track the user's default (no snapshotted
+        # payout method) would be flipped to Wise by this change; reports with
+        # their own snapshot keep their original method and are unaffected.
         @payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
           !@user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-          @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES).any?
+          @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES, legal_entity_payout_method_id: nil).any?
       end
 
     end
