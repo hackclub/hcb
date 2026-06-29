@@ -26,6 +26,8 @@ module Api
         render "show", status: :created
       end
 
+      require_oauth2_scope "receipts:write", :create
+
       def destroy
         @receipt = Receipt.find(params[:id])
         authorize @receipt

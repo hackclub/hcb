@@ -43,6 +43,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "transactions:read", :index
+
       def show
         @hcb_code = authorize HcbCode.find_by_public_id!(params[:id])
 
@@ -53,6 +55,8 @@ module Api
           @event = @hcb_code.events.find { |e| e.users.include?(current_user) } || @hcb_code.events.first
         end
       end
+
+      require_oauth2_scope "transactions:read", :show
 
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
