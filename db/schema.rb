@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1578,13 +1578,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.datetime "date", null: false
+    t.datetime "datetime", null: false
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
-    t.index ["date"], name: "index_ledger_items_on_date"
+    t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
@@ -1626,6 +1626,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
     t.datetime "created_at", null: false
     t.string "entity_type"
     t.bigint "managing_event_id"
+    t.string "name"
     t.string "tin_hash"
     t.datetime "updated_at", null: false
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
@@ -1910,13 +1911,30 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
 
   create_table "payees", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "display_name", null: false
+    t.string "email", null: false
     t.bigint "event_id", null: false
-    t.bigint "legal_entity_id", null: false
-    t.string "preferred_name", null: false
+    t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_payees_on_event_id"
     t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
+  end
+
+  create_table "payment_attempts", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.datetime "failed_at"
+    t.bigint "payment_id", null: false
+    t.bigint "payout_id"
+    t.bigint "payout_method_id", null: false
+    t.string "payout_type"
+    t.datetime "sent_at"
+    t.datetime "updated_at", null: false
+    t.index ["payment_id"], name: "index_payment_attempts_on_payment_id"
+    t.index ["payout_method_id"], name: "index_payment_attempts_on_payout_method_id"
+    t.index ["payout_type", "payout_id"], name: "index_payment_attempts_on_payout"
   end
 
   create_table "payment_recipients", force: :cascade do |t|
@@ -1937,10 +1955,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.string "currency", null: false
-    t.datetime "failed_at"
     t.bigint "payee_id", null: false
-    t.bigint "payout_id"
-    t.string "payout_type"
     t.string "purpose", null: false
     t.datetime "rejected_at"
     t.datetime "sent_at"
@@ -1949,7 +1964,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_25_142740) do
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_payments_on_creator_id"
     t.index ["payee_id"], name: "index_payments_on_payee_id"
-    t.index ["payout_type", "payout_id"], name: "index_payments_on_payout"
   end
 
   create_table "paypal_transfers", force: :cascade do |t|
