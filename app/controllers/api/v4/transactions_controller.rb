@@ -94,6 +94,8 @@ module Api
         render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
       end
 
+      require_oauth2_scope "receipts:write", :mark_no_receipt
+
       private
 
       def filters
