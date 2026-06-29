@@ -6,16 +6,16 @@ class PaymentsController < ApplicationController
   before_action :set_event
 
   def new
-    authorize @event.payments.build
+    authorize @event, policy_class: PaymentPolicy
     @payment = Payment.new
-    @payee = @event.payees.find(params[:payee_id]) if params[:payee_id].present?
+    @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
     render layout: "transfer"
   end
 
   def create
     @payee = @event.payees.find(payment_params[:payee_id])
     @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
-    authorize @payment
+    authorize @payment, policy_class: PaymentPolicy
 
     if @payment.save
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
