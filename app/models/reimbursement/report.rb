@@ -431,7 +431,7 @@ module Reimbursement
     end
 
     def payout_method
-      legal_entity_payout_method || user&.default_payout_method
+      legal_entity_payout_method
     end
 
     private

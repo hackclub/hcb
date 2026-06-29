@@ -101,26 +101,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(user.reload.default_payout_method).to be_nil
     end
 
-    it "blocks switching to Wise while a report tracking the default is being processed" do
+    it "allows switching to Wise" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
-      # Legacy report with no payout method set still resolves its method from the default.
-      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
-      report.update_columns(legal_entity_payout_method_id: nil)
-
-      service = described_class.new(
-        user:,
-        details_type: "LegalEntity::PayoutMethod::WiseTransfer",
-        details_attrs: valid_wise_attrs
-      )
-
-      expect(service.run).to be(false)
-      expect(service.error_messages.join(" ")).to match(/wise/i)
-      expect(user.reload.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
-    end
-
-    it "allows switching to Wise when processing reports have their own payout method set" do
-      seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
-      # Set at creation, so it keeps ACH regardless of the new default.
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
       expect(report.legal_entity_payout_method).to be_present
 
@@ -252,6 +234,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(report.reload.legal_entity_payout_method).to eq(old_pm)
     end
 
+<<<<<<< HEAD
     it "blocks any change while a Wise payout tracking the default is being processed" do
       seed_default(LegalEntity::PayoutMethod::WiseTransfer.new(valid_wise_attrs))
       # Legacy report with no payout method set still resolves its method from the default.
@@ -267,6 +250,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(service.run).to be(false)
       expect(user.reload.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::WiseTransfer)
     end
+=======
+>>>>>>> 852538b21 ([LEPM] Remove unnecessary logic after backfill complete)
   end
 
   describe "#run!" do

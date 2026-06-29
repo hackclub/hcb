@@ -330,7 +330,7 @@ class UsersController < ApplicationController
     @user.assign_attributes(user_params)
 
     payout_method_type = params.dig(:user, :payout_method_type)
-    update_payout_method = payout_method_type.present? && @user.can_update_payout_method?
+    update_payout_method = payout_method_type.present?
 
     if @user.use_two_factor_authentication_changed?
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
@@ -554,8 +554,6 @@ class UsersController < ApplicationController
 
 
   def payout_method_details_params
-    return {} unless @user.can_update_payout_method?
-
     permitted =
       case params.dig(:user, :payout_method_type)
       when LegalEntity::PayoutMethod::Check.name

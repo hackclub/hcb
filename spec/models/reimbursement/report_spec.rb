@@ -46,6 +46,7 @@ RSpec.describe Reimbursement::Report, type: :model do
 
         expect(report.reload.payout_method).to eq(original_pm)
       end
+<<<<<<< HEAD
 
       it "falls back to the user's current default for legacy reports with no payout method set" do
         report = create(:reimbursement_report, user:)
@@ -55,6 +56,8 @@ RSpec.describe Reimbursement::Report, type: :model do
 
         expect(report.reload.payout_method).to eq(pm)
       end
+=======
+>>>>>>> 852538b21 ([LEPM] Remove unnecessary logic after backfill complete)
     end
   end
 end
