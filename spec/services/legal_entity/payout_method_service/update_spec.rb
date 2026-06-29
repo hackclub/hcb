@@ -159,7 +159,9 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       other_method = user.personal_legal_entity.payout_methods.create!(
         default: false,
         details: LegalEntity::PayoutMethod::Wire.new(
-          account_number: "GB29NWBK60161331926819", bic_code: "NWBKGB2L", recipient_country: 1
+          account_number: "GB29NWBK60161331926819", bic_code: "NWBKGB2L", recipient_country: 1,
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA"
         )
       )
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
