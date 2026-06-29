@@ -1,8 +1,6 @@
 <% title "Payments for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :payments %>
-<%= render "events/transfers/modal" if policy(@event).new_transfer? %>
-<%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
 <% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
   <%= render "events/one_pager",
@@ -15,7 +13,7 @@
       {
         icon: "payment-transfer",
         title: "Send money where it needs to go",
-        description: "Use transfers to pay vendors, reimburse organizers, and send funds to partners directly from your event account."
+        description: "Use payments to pay vendors, reimburse organizers, and send funds to partners directly from your event account."
       },
       {
         icon: "receipt",
@@ -33,7 +31,7 @@
     <% end %>
 
     <% if policy(@event).new_transfer? %>
-      <%= link_to event_transfers_new_path(event_id: @event.slug), class: "w-full btn bg-success", data: { behavior: "modal_trigger", modal: "send_transfer" } do %>
+      <%= link_to event_payments_new_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
         <%= inline_icon "payment-transfer" %>
         Send
       <% end %>
