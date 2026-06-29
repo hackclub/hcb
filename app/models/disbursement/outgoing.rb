@@ -50,6 +50,16 @@ class Disbursement
   class Outgoing < Disbursement::Base
     belongs_to :disbursement, class_name: "::Disbursement", inverse_of: :outgoing_disbursement, foreign_key: :id
 
+    delegate :source_event, :destination_event,
+             :source_subledger, :destination_subledger,
+             :fulfilled?, :reviewing?, :state,
+             :requested_by, :card_grant, :inter_event_transfer?,
+             :processed?, :pending?, :rejected?, :scheduled?, :may_mark_rejected?,
+             :state_text, :state_icon,
+             :special_appearance, :special_appearance_name, :special_appearance?,
+             :transferred_at, :errored?,
+             :fulfilled_by, :fee_waived?, :special_appearance_memo, to: :disbursement
+
     def self.polymorphic_name
       "Disbursement::Outgoing"
     end
