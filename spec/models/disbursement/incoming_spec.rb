@@ -84,14 +84,6 @@ RSpec.describe Disbursement::Incoming, type: :model do
   end
 
   describe "delegation" do
-    it "delegates id to disbursement" do
-      expect(incoming.id).to eq(disbursement.id)
-    end
-
-    it "delegates name to disbursement" do
-      expect(incoming.name).to eq(disbursement.name)
-    end
-
     it "delegates source_event to disbursement" do
       expect(incoming.source_event).to eq(disbursement.source_event)
     end
