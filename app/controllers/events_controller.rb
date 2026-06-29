@@ -290,7 +290,7 @@ class EventsController < ApplicationController
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || @view == "list" ? 20 : 10)
+    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
 
     if @event.parent
       ops = @event.ancestor_organizer_positions.includes(:user)
@@ -531,6 +531,21 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
+  def async_sub_organizations_graph
+    authorize @event
+    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
+      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
+      all_events.map { |e|
+        {
+          id: e.id,
+          balance_cents: e.balance_v2_cents,
+          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
+        }
+      }
+    end
+    render json: data
+  end
+
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
@@ -650,42 +665,68 @@ class EventsController < ApplicationController
       canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
     }
 
-    @ach_transfers = @ach_transfers.in_transit if params[:filter] == "in_transit"
-    @ach_transfers = @ach_transfers.deposited if params[:filter] == "deposited"
-    @ach_transfers = @ach_transfers.rejected if params[:filter] == "canceled"
+    # Support legacy filter param for backward compatibility
+    params[:status] ||= params[:filter] if params[:filter].present? && params[:status].blank?
+
+    # Apply status filter
+    @ach_transfers = @ach_transfers.in_transit if params[:status] == "in_transit"
+    @ach_transfers = @ach_transfers.deposited if params[:status] == "deposited"
+    @ach_transfers = @ach_transfers.rejected if params[:status] == "canceled"
     @ach_transfers = @ach_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @checks = @checks.in_transit_or_in_transit_and_processed if params[:filter] == "in_transit"
-    @checks = @checks.deposited if params[:filter] == "deposited"
-    @checks = @checks.canceled if params[:filter] == "canceled"
+    @checks = @checks.in_transit_or_in_transit_and_processed if params[:status] == "in_transit"
+    @checks = @checks.deposited if params[:status] == "deposited"
+    @checks = @checks.canceled if params[:status] == "canceled"
     @checks = @checks.search_recipient(params[:q]) if params[:q].present?
 
-    @increase_checks = @increase_checks.in_transit if params[:filter] == "in_transit"
-    @increase_checks = @increase_checks.deposited if params[:filter] == "deposited"
-    @increase_checks = @increase_checks.canceled if params[:filter] == "canceled"
+    @increase_checks = @increase_checks.in_transit if params[:status] == "in_transit"
+    @increase_checks = @increase_checks.deposited if params[:status] == "deposited"
+    @increase_checks = @increase_checks.canceled if params[:status] == "canceled"
     @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
 
-    @disbursements = @disbursements.reviewing_or_processing if params[:filter] == "in_transit"
-    @disbursements = @disbursements.fulfilled if params[:filter] == "deposited"
-    @disbursements = @disbursements.rejected if params[:filter] == "canceled"
+    @disbursements = @disbursements.reviewing_or_processing if params[:status] == "in_transit"
+    @disbursements = @disbursements.fulfilled if params[:status] == "deposited"
+    @disbursements = @disbursements.rejected if params[:status] == "canceled"
     @disbursements = @disbursements.search_name(params[:q]) if params[:q].present?
 
-    @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:filter] == "in_transit"
-    @paypal_transfers = @paypal_transfers.deposited if params[:filter] == "deposited"
-    @paypal_transfers = @paypal_transfers.rejected if params[:filter] == "canceled"
+    @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
+    @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
+    @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
     @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @wires = @wires.approved.or(@wires.pending) if params[:filter] == "in_transit"
-    @wires = @wires.deposited if params[:filter] == "deposited"
-    @wires = @wires.rejected if params[:filter] == "canceled"
+    @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
+    @wires = @wires.deposited if params[:status] == "deposited"
+    @wires = @wires.rejected if params[:status] == "canceled"
     @wires = @wires.search_recipient(params[:q]) if params[:q].present?
 
-    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:filter] == "in_transit"
-    @wise_transfers = @wise_transfers.deposited if params[:filter] == "deposited"
-    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:filter] == "canceled"
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
+    @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
+    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
-    @transfers = Kaminari.paginate_array((@increase_checks + @checks + @ach_transfers + @disbursements + @paypal_transfers + @wires + @wise_transfers).sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(100)
+    # Apply transfer type filter
+    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
+
+    case params[:transfer_type]
+    when "ach"
+      all_transfers = [@ach_transfers]
+    when "mailed_check"
+      all_transfers = [@increase_checks, @checks]
+    when "wise_transfer"
+      all_transfers = [@wise_transfers]
+    when "wire_transfer"
+      all_transfers = [@wires]
+    when "hcb_transfer"
+      all_transfers = [@disbursements]
+    when "paypal"
+      all_transfers = [@paypal_transfers]
+    end
+
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+
+    @filter_options = transfer_filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
   end
 
   def new_transfer
@@ -756,6 +797,7 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html do
         @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
+        @all_events = [@event] + @event.descendants.order(:name).select(:name, :parent_id, :slug, :id).to_a
       end
 
       # CSV export intentionally does not consider filters
@@ -1095,6 +1137,13 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
+  def books
+    authorize @event
+
+    @ledger = @event.ledger
+    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+  end
+
   private
 
   def process_hidden_param!(params_hash)
@@ -1141,6 +1190,8 @@ class EventsController < ApplicationController
       :point_of_contact_id,
       :slug,
       :hidden,
+      :show_top_donors,
+      :show_recent_donors,
       :donation_page_enabled,
       :donation_page_message,
       :donation_tiers_enabled,
@@ -1208,6 +1259,8 @@ class EventsController < ApplicationController
       :hidden,
       :start,
       :end,
+      :show_top_donors,
+      :show_recent_donors,
       :donation_page_enabled,
       :donation_page_message,
       :donation_tiers_enabled,
@@ -1357,6 +1410,30 @@ class EventsController < ApplicationController
 
   def set_event_follow
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+  end
+
+  def transfer_filter_options
+    transfer_types = []
+    transfer_types << "ach" if @event.ach_transfers.exists?
+    transfer_types << "mailed_check" if @event.checks.exists? || @event.increase_checks.exists?
+    transfer_types << "wise_transfer" if @event.wise_transfers.exists?
+    transfer_types << "wire_transfer" if @event.wires.exists?
+    transfer_types << "hcb_transfer" if @event.outgoing_disbursements.not_card_grant_related.exists?
+    transfer_types << "paypal" if @event.paypal_transfers.exists?
+
+    transfer_type_display = {
+      "ach"           => "ACH",
+      "mailed_check"  => "Mailed check",
+      "wise_transfer" => "Wise transfer",
+      "wire_transfer" => "Wire transfer",
+      "hcb_transfer"  => "HCB transfer",
+      "paypal"        => "PayPal"
+    }
+
+    [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] },
+      { key: "transfer_type", label: "Type", type: "select", options: transfer_types.map { |t| [transfer_type_display[t], t] } }
+    ]
   end
 
   def serialize_event(event, member:)

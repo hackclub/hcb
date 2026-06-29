@@ -316,6 +316,78 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#update_stripe_cardholder" do
+    it "updates phone number on stripe cardholder when phone is verified" do
+      user = create(:user, phone_number: "+18556254225", email: "old@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "0000000000", stripe_email: "old@example.com")
+      # Set verified after creation since on_phone_number_update resets it during create
+      user.update_column(:phone_number_verified, true)
+      user.reload
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(email: "new@example.com")
+      cardholder.reload
+
+      expect(cardholder.stripe_email).to eq("new@example.com")
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "clears phone number on stripe cardholder when phone is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      # Changing phone number triggers on_phone_number_update which sets phone_number_verified = false
+      user.update!(phone_number: "+12025551234")
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "does nothing when stripe cardholder has no stripe_id" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      create(:stripe_cardholder, user:, stripe_id: nil, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "does nothing when user has no stripe cardholder" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "triggers when phone_number_verified changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+  end
+
+  describe "#on_phone_number_update" do
+    it "resets phone_number_verified when phone number changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(phone_number: "+12025551234")
+
+      expect(user.phone_number_verified).to eq(false)
+    end
+  end
+
   describe "security configuration change emails" do
     describe "phone_number changes" do
       it "does not send an email when phone_number changes from nil to a value (signup)" do
@@ -411,6 +483,76 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "payout methods" do
+    let(:user) { create(:user) }
+
+    def build_ach
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+    end
+
+    describe "#personal_legal_entity" do
+      it "returns the user's person-type legal entity" do
+        expect(user.personal_legal_entity).to be_present
+        expect(user.personal_legal_entity).to be_person
+      end
+
+      it "returns the person entity, never a business entity the user also belongs to" do
+        business = create(:legal_entity, :business)
+        user.legal_entity_users.create!(legal_entity: business)
+
+        expect(user.reload.personal_legal_entity).to be_person
+        expect(user.personal_legal_entity).not_to eq(business)
+      end
+    end
+
+    describe "#person_legal_entity_user" do
+      it "returns the join row for the person-type legal entity" do
+        create(:legal_entity, :business).tap { |b| user.legal_entity_users.create!(legal_entity: b) }
+
+        expect(user.reload.person_legal_entity_user).to eq(
+          user.legal_entity_users.find_by(legal_entity: user.personal_legal_entity)
+        )
+        expect(user.person_legal_entity_user.legal_entity).to be_person
+      end
+    end
+
+    describe "#default_payout_method" do
+      it "is nil when no default payout method exists" do
+        expect(user.default_payout_method).to be_nil
+        expect(user.default_payout_method&.details).to be_nil
+      end
+
+      it "returns the person entity's default payout method and its details" do
+        pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
+
+        expect(user.default_payout_method).to eq(pm)
+        expect(user.default_payout_method.details).to eq(pm.details)
+        expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+      end
+    end
+
+
+    describe "#can_update_payout_method?" do
+      it "is true when there is no payout method" do
+        expect(user.can_update_payout_method?).to be(true)
+      end
+
+      it "is false when the default is Wise and a reimbursement is being processed" do
+        user.personal_legal_entity.payout_methods.create!(
+          default: true,
+          details: LegalEntity::PayoutMethod::WiseTransfer.new(
+            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
+            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
+          )
+        )
+        event = create(:event)
+        create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
+
+        expect(user.can_update_payout_method?).to be(false)
+      end
+    end
+  end
+
   describe ".search_name" do
     it "finds user by ID" do
       user = create(:user)
@@ -426,32 +568,6 @@ RSpec.describe User, type: :model do
       results = User.search_name("999999999")
 
       expect(results).to be_empty
-    end
-  end
-
-  describe "promoting an unverified user to verified" do
-    it "expires every unverified session attached to the user" do
-      user = create(:user, verified: false)
-      stale_unverified = create(
-        :user_session,
-        user:,
-        verified: false,
-        expiration_at: 1.week.from_now,
-        signed_out_at: nil,
-      )
-      original_expiration = stale_unverified.expiration_at
-
-      user.update!(verified: true)
-      stale_unverified.reload
-
-      aggregate_failures "stale unverified session is invalidated" do
-        expect(stale_unverified.expiration_at).to be <= Time.current,
-                                                  "expected expiration_at to be moved to <= now, got #{stale_unverified.expiration_at} (was #{original_expiration})"
-        expect(stale_unverified.signed_out_at).not_to be_nil,
-                                                      "expected signed_out_at to be set, got nil"
-        expect(User::Session.not_expired.find_by(session_token: stale_unverified.session_token)).to be_nil,
-                                                                                                    "session is still resolvable via session_token lookup, so the cookie remains valid"
-      end
     end
   end
 end

@@ -54,7 +54,6 @@ class Event
       airrecord["Political Activity"] = @application.political_description
       airrecord["Referral Code"] = @application.referral_code
       airrecord["HCB Status"] = @application.aasm_state.humanize unless @application.draft?
-      airrecord["Synced from HCB at"] = Time.current
       airrecord["Archived?"] = @application.archived?
 
       if @application.affiliations.any?(&:is_first?)

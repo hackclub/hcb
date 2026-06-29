@@ -28,6 +28,7 @@
 #  session_validity_preference   :integer          default(259200), not null
 #  sessions_reported             :boolean          default(FALSE), not null
 #  slug                          :string
+#  subscribed_to_loops_at        :datetime
 #  teenager                      :boolean
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
@@ -140,8 +141,6 @@ class User < ApplicationRecord
   has_many :stripe_authorizations, through: :stripe_cards
   has_many :receipts
 
-  has_many :checks, inverse_of: :creator
-
   has_many :reimbursement_reports, class_name: "Reimbursement::Report"
   has_many :reimbursement_events, -> { distinct }, through: :reimbursement_reports, source: :event
   has_many :created_reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: "invited_by_id", inverse_of: :inviter
@@ -153,23 +152,35 @@ class User < ApplicationRecord
 
   has_many :card_grants
 
+  has_many :ach_transfers, inverse_of: :creator
+  has_many :checks, inverse_of: :creator
+  has_many :disbursements, inverse_of: :requested_by
+  has_many :increase_checks
   has_many :wise_transfers
 
+  has_many :check_deposits, inverse_of: :created_by
+  has_many :invoices, inverse_of: :creator
+
   has_one_attached :profile_picture
-  validates :profile_picture, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
+  validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
 
   has_one :unverified_totp, -> { where(aasm_state: :unverified) }, class_name: "User::Totp", inverse_of: :user
   has_one :totp, -> { where(aasm_state: :verified) }, class_name: "User::Totp", inverse_of: :user
 
-  # a user does not actually belong to its payout method,
-  # but this is a convenient way to set up the association.
-
+  # Legacy: payout methods now live on the personal legal entity (default_payout_method).
+  # Kept only so the payout form's `fields_for :payout_method` yields payout_method_attributes params.
   belongs_to :payout_method, polymorphic: true, optional: true
-  validate :valid_payout_method
   validate :auditors_must_be_verified
   accepts_nested_attributes_for :payout_method
+
+  has_many :legal_entity_users
+  has_many :legal_entities, through: :legal_entity_users
+  # has_one :through needs a singular intermediate, so hop through a person-scoped join row.
+  has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
+  has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
+  has_one :default_payout_method, through: :personal_legal_entity
 
   has_encrypted :birthday, type: :date
 
@@ -183,7 +194,9 @@ class User < ApplicationRecord
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
-  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? }
+  after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
+  after_create :create_legal_entity
+
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 
   after_update_commit :send_onboarded_email, if: -> { was_onboarding? && !onboarding? }
@@ -420,14 +433,9 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
-  def build_payout_method(params)
-    return unless payout_method_type
-
-    self.payout_method = payout_method_type.constantize.new(params)
-  end
-
-  def email_address_with_name
-    ActionMailer::Base.email_address_with_name(email, name)
+  def email_address_with_name(full_name: false)
+    display_name = full_name ? (self.full_name.presence || name) : name
+    ActionMailer::Base.email_address_with_name(email, display_name)
   end
 
   def hack_clubber?
@@ -497,7 +505,7 @@ class User < ApplicationRecord
   end
 
   def only_card_grant_user?
-    card_grants.size >= 1 && events.size == 0
+    card_grants.any? && events.none?
   end
 
   def backup_codes_enabled?
@@ -575,8 +583,8 @@ class User < ApplicationRecord
   end
 
   def can_update_payout_method?
-    return true if payout_method.nil?
-    return true unless payout_method.is_a?(User::PayoutMethod::WiseTransfer)
+    return true if default_payout_method&.details.nil?
+    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
     return false if reimbursement_reports.reimbursement_requested.any?
     return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
 
@@ -654,6 +662,10 @@ class User < ApplicationRecord
 
   private
 
+  def create_legal_entity
+    legal_entities.create!(entity_type: :person)
+  end
+
   def auditors_must_be_verified
     if auditor? && !verified?
       errors.add(:verified, "must be true for auditors")
@@ -670,7 +682,13 @@ class User < ApplicationRecord
   end
 
   def update_stripe_cardholder
-    stripe_cardholder&.update!(stripe_email: email, stripe_phone_number: phone_number)
+    cardholder = stripe_cardholder
+    return unless cardholder&.stripe_id.present?
+
+    cardholder.update!(
+      stripe_email: email,
+      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+    )
   end
 
   def namae(legal: false)
@@ -714,23 +732,6 @@ class User < ApplicationRecord
       # turn all this stuff off until they reverify
       self.phone_number_verified = false
       self.use_sms_auth = false
-    end
-  end
-
-  def valid_payout_method
-    if payout_method_type_changed? && payout_method_type.present? && User::PayoutMethod::SUPPORTED_METHODS.none? { |method| payout_method.is_a?(method) }
-      # I'm using `try` here in the slim chance that `payout_method` is some
-      # random model and doesn't include `User::PayoutMethod::Shared`.
-      if payout_method.try(:unsupported?)
-        reason = payout_method.unsupported_details[:reason]
-        errors.add(:payout_method, "is invalid. #{reason} Please choose another option.")
-      else
-        errors.add(:payout_method, "is invalid. Please choose another option.")
-      end
-    end
-
-    if payout_method_type_changed? && payout_method.is_a?(User::PayoutMethod::WiseTransfer) && reimbursement_reports.where(aasm_state: %i[submitted reimbursement_requested reimbursement_approved]).any?
-      errors.add(:payout_method, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
     end
   end
 

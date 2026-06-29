@@ -34,6 +34,8 @@
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
+#  show_recent_donors                           :boolean          default(FALSE), not null
+#  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
 #  website                                      :string
@@ -58,8 +60,6 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
-  self.ignored_columns += ["demo_mode_request_meeting_at"]
-
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -108,7 +108,6 @@ class Event < ApplicationRecord
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
-  scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -419,19 +418,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
-  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
+  validates :donation_header_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
-  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
+  validates :background_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
-  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
+  validates :logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
-  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -946,7 +945,7 @@ class Event < ApplicationRecord
   end
 
   def to_combobox_display
-    "#{name} (#{id})"
+    name
   end
 
   def onboarding_scheduling_link

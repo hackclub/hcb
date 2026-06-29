@@ -5,7 +5,7 @@
 # Table name: wise_transfers
 #
 #  id                               :bigint           not null, primary key
-#  aasm_state                       :string
+#  aasm_state                       :string           not null
 #  address_city                     :string
 #  address_line1                    :string
 #  address_line2                    :string
@@ -67,6 +67,7 @@ class WiseTransfer < ApplicationRecord
   has_one :canonical_pending_transaction
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wise_transfer, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
@@ -123,6 +124,7 @@ class WiseTransfer < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
+        payment_attempt&.mark_rejected!
       end
       transitions from: [:pending, :approved], to: :rejected
     end
@@ -130,18 +132,27 @@ class WiseTransfer < ApplicationRecord
     event :mark_sent do
       after do
         canonical_pending_transaction.update(amount_cents: -usd_amount_cents)
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: [:approved], to: :sent
     end
 
     event :mark_deposited do
       transitions from: :sent, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_failed do
       transitions from: [:pending, :approved, :sent, :approved], to: :failed
       after do |reason = nil|
-        WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+        if payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
+        else
+          WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+        end
+
         update(return_reason: reason)
         canonical_pending_transaction.decline!
       end

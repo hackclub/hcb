@@ -5,7 +5,7 @@
 # Table name: reimbursement_payout_holdings
 #
 #  id                       :bigint           not null, primary key
-#  aasm_state               :string
+#  aasm_state               :string           not null
 #  amount_cents             :integer          not null
 #  hcb_code                 :string
 #  created_at               :datetime         not null
@@ -114,7 +114,12 @@ module Reimbursement
 
         mark_reversed!
 
-        canonical_pending_transaction.decline!
+        # This is the created_at of the first payout holding that had a CPT
+        if self.created_at <= DateTime.parse("2024-08-09 00:45:12.992236000 UTC +00:00")
+          canonical_pending_transaction&.decline!
+        else
+          canonical_pending_transaction.decline!
+        end
 
         # these are reversed because this is reverse!
         sender_bank_account_id = ColumnService::Accounts.id_of(book_transfer_receiving_account)

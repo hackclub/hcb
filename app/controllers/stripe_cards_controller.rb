@@ -81,7 +81,7 @@ class StripeCardsController < ApplicationController
 
     @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
-                      .page(params[:page]).per(25)
+                      .page(params[:page]).per(params[:per] || 25)
 
     if params[:frame] == "true" && turbo_frame_request?
       @frame = true
@@ -110,6 +110,7 @@ class StripeCardsController < ApplicationController
 
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Birthday is required" } if current_user.birthday.nil?
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless sc[:stripe_shipping_address_country] == "US"
+    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "A verified phone number is required to issue a card. Please verify your phone number in your settings." } unless current_user.phone_number_verified?
 
     new_card = ::StripeCardService::Create.new(
       current_user:,

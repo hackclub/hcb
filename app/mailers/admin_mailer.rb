@@ -96,4 +96,24 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  def balance_anomalies(anomalous_events:)
+    @anomalous_events = anomalous_events
+
+    mail(
+      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{anomalous_events.length} events have balance anomalies"
+    )
+  end
+
+  def logical_transaction_anomalies(event:, hcb_codes:, ledger_items:)
+    @event = event
+    @hcb_codes = hcb_codes
+    @ledger_items = ledger_items
+
+    mail(
+      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
+    )
+  end
+
 end

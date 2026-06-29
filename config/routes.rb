@@ -150,6 +150,16 @@ Rails.application.routes.draw do
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
+      get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
+      get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
+      get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
+      get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
+      get "admin_details_invoices", to: "users#admin_details_invoices"
+      get "admin_details_lob_checks", to: "users#admin_details_lob_checks"
+      get "admin_details_missing_receipts", to: "users#admin_details_missing_receipts"
+      get "admin_details_reimbursement_reports", to: "users#admin_details_reimbursement_reports"
+      get "admin_details_stripe_cards", to: "users#admin_details_stripe_cards"
       get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"
@@ -494,6 +504,9 @@ Rails.application.routes.draw do
   end
 
   resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
+    collection do
+      get :event_search
+    end
     post "mark_fulfilled"
     post "reject"
     post "cancel"
@@ -631,6 +644,7 @@ Rails.application.routes.draw do
   # Marketing landing pages. Public, server-rendered, largely static. Built so future
   # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
   get "for/funders", to: "marketing#funders", as: :funders
+  get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
   post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
@@ -925,6 +939,7 @@ Rails.application.routes.draw do
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
     get "ledger"
+    get "books"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -959,6 +974,7 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
+    get "async_sub_organizations_graph"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
