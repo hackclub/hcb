@@ -964,10 +964,9 @@ Rails.application.routes.draw do
     resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"
-    get "payments/new", to: "events/payments#new"
-    post "payments/new", to: "events/payments#create"
-    get "payees", to: "events/payees#index"
-    post "payees", to: "events/payees#create"
+
+    resources :payments, only: [:index, :create]
+    resources :payees, only: [:index, :create]
 
     get "async_balance"
     get "async_sub_organization_balance"
