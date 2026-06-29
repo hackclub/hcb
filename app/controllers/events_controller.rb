@@ -843,8 +843,10 @@ class EventsController < ApplicationController
   end
 
   def create_payment
-    authorize @event, :new_payment?
-    @payment = Payment.new(payment_params.merge(creator: current_user))
+    authorize @event, :create_payment?
+
+    @payee = @event.payees.find_by(id: payment_params[:payee_id])
+    @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
 
     if @payment.save
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
