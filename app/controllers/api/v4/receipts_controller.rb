@@ -14,6 +14,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "receipts:read", :index
+
       def create
         if params[:transaction_id].present?
           @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
