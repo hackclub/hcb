@@ -4,16 +4,12 @@ class LegalEntity
   module PayoutMethodService
     # Builds, validates, and persists a user's default personal-legal-entity
     # payout method. Encapsulates the business rules that previously lived
-    # across User#build_default_payout_method, User#valid_payout_method,
-    # User#can_update_payout_method?, and the UsersController#update transaction.
+    # across User#build_default_payout_method, User#valid_payout_method, and
+    # the UsersController#update transaction.
     #
     # On failure, #run returns false and the (unsaved) payout method, exposed
     # via #payout_method, carries the relevant errors.
     class Update
-      # Report states that count as "being processed" for the purpose of
-      # blocking a switch to Wise.
-      PROCESSING_STATES = %i[submitted reimbursement_requested reimbursement_approved].freeze
-
       attr_reader :payout_method
 
       def initialize(user:, details_type:, details_attrs: {})
@@ -43,8 +39,8 @@ class LegalEntity
       def error_messages
         return [] unless @payout_method
 
-        # Read base errors off the payout method (unsupported type, the Wise
-        # guards) and field errors off the details record. Autosave also mirrors
+        # Read base errors off the payout method (unsupported type, invalid
+        # method) and field errors off the details record. Autosave also mirrors
         # the field errors onto the parent as "details.<attr>" ("Details routing
         # number must be 9 digits"); reading the child instead keeps the clean
         # "Routing number must be 9 digits" wording without duplication.
@@ -64,18 +60,8 @@ class LegalEntity
       end
 
       def apply_business_rules
-        unless @user.can_update_payout_method?
-          @payout_method.errors.add(:base, "can't be changed while a reimbursement is being processed. Please reach out to the HCB team if you need this changed.")
-          return
-        end
-
         if @payout_method.details.nil?
           @payout_method.errors.add(:base, "is invalid. Please choose another method.")
-          return
-        end
-
-        if switching_to_wise_while_processing?
-          @payout_method.errors.add(:base, "cannot be changed to Wise transfer with reports that are being processed. Please reach out to the HCB team if you need this changed.")
         end
       end
 
@@ -94,15 +80,6 @@ class LegalEntity
             report.update!(legal_entity_payout_method: @payout_method)
           end
         end
-      end
-
-      def switching_to_wise_while_processing?
-        # Only reports that still track the user's default (no payout method
-        # set on the report) would be flipped to Wise by this change; reports
-        # with their own payout method keep their original and are unaffected.
-        @payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-          !@user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) &&
-          @user.reimbursement_reports.where(aasm_state: PROCESSING_STATES, legal_entity_payout_method_id: nil).any?
       end
 
     end
