@@ -75,7 +75,7 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     end
 
     it "does not create a ledger_item when one is already provided" do
-      existing_item = Ledger::Item.new(memo: "Existing", amount_cents: 500, date: Time.current)
+      existing_item = Ledger::Item.new(memo: "Existing", amount_cents: 500, datetime: Time.current)
       existing_item.save(validate: false)
 
       cpt = create(:canonical_pending_transaction, ledger_item: existing_item)

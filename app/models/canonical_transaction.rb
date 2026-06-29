@@ -137,7 +137,8 @@ class CanonicalTransaction < ApplicationRecord
 
   after_create_commit unless: -> { ledger_item.present? } do
     safely do
-      update(ledger_item: create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code))
+      li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+      update(ledger_item: li)
     end
   end
 

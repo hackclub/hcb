@@ -1,3 +1,9 @@
+<% unless current_user.phone_number_verified? %>
+  <%= render "application/callout", type: "warning", title: "A verified phone number is required to issue a card." do %>
+    Please <%= link_to "verify your phone number", my_settings_path, class: "info" %> before continuing.
+  <% end %>
+<% end %>
+
 <%= form_with(model: StripeCard.new, local: true) do |form| %>
   <% if @event || params[:event_id] %>
     <%= form.hidden_field :event_id, value: @event&.id || params[:event_id] %>

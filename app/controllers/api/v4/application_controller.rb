@@ -7,6 +7,7 @@ module Api
       include Pundit::Authorization
       include PublicActivity::StoreController
       include ErrorHandling
+      include Pagination
 
       attr_reader :current_user
 

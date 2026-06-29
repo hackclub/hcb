@@ -158,6 +158,55 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "teenager status" do
+    let(:first_student_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "student_leader" }
+    end
+    let(:first_coach_attrs) do
+      { name: "first", league: "frc", team_number: "1234", role: "head_coach" }
+    end
+
+    it "marks a user with no birthday but a FIRST student affiliation as a teenager" do
+      user = create(:user, affiliations_attributes: [first_student_attrs])
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "does not mark a FIRST head coach as a teenager" do
+      user = create(:user, affiliations_attributes: [first_coach_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).not_to be true
+    end
+
+    it "syncs the teenager column when a FIRST student affiliation is added later" do
+      user = create(:user)
+      expect(user.teenager).not_to be true
+
+      user.update!(affiliations_attributes: [first_student_attrs])
+
+      expect(user.reload.teenager).to be true
+      expect(user.joined_as_teenager).to be true
+    end
+
+    it "still respects the birthday-based check when there is no FIRST affiliation" do
+      user = create(:user, birthday: 16.years.ago)
+
+      expect(user).to be_is_teenager
+      expect(user.teenager).to be true
+    end
+
+    it "lets birthday take precedence over a FIRST student affiliation when both are present" do
+      user = create(:user, birthday: 30.years.ago, affiliations_attributes: [first_student_attrs])
+
+      expect(user).not_to be_is_teenager
+      expect(user.teenager).to be false
+      expect(user.joined_as_teenager).to be false
+    end
+  end
+
   describe "#locked?" do
     context "when locked" do
       it "returns" do
@@ -264,6 +313,261 @@ RSpec.describe User, type: :model do
 
       expect(user.update(use_two_factor_authentication: true)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
+    end
+  end
+
+  describe "#update_stripe_cardholder" do
+    it "updates phone number on stripe cardholder when phone is verified" do
+      user = create(:user, phone_number: "+18556254225", email: "old@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "0000000000", stripe_email: "old@example.com")
+      # Set verified after creation since on_phone_number_update resets it during create
+      user.update_column(:phone_number_verified, true)
+      user.reload
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(email: "new@example.com")
+      cardholder.reload
+
+      expect(cardholder.stripe_email).to eq("new@example.com")
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "clears phone number on stripe cardholder when phone is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      # Changing phone number triggers on_phone_number_update which sets phone_number_verified = false
+      user.update!(phone_number: "+12025551234")
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "does nothing when stripe cardholder has no stripe_id" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true, email: "test@example.com")
+      create(:stripe_cardholder, user:, stripe_id: nil, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "does nothing when user has no stripe cardholder" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(email: "new@example.com")
+    end
+
+    it "triggers when phone_number_verified changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+  end
+
+  describe "#on_phone_number_update" do
+    it "resets phone_number_verified when phone number changes" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(StripeService::Issuing::Cardholder).not_to receive(:update)
+
+      user.update!(phone_number: "+12025551234")
+
+      expect(user.phone_number_verified).to eq(false)
+    end
+  end
+
+  describe "security configuration change emails" do
+    describe "phone_number changes" do
+      it "does not send an email when phone_number changes from nil to a value (signup)" do
+        user = create(:user, phone_number: nil)
+
+        expect {
+          user.update!(phone_number: "+18556254225")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when phone_number changes from one value to another" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: "+14155550123")
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number changes from a value to nil" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(phone_number: nil)
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when phone_number is not changed" do
+        user = create(:user, phone_number: "+18556254225")
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_sms_auth changes" do
+      it "sends an email when SMS authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+        expect {
+          user.update!(use_sms_auth: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when SMS authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_sms_auth: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when use_sms_auth is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+
+    describe "use_two_factor_authentication changes" do
+      it "sends an email when two-factor authentication is enabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: true)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "sends an email when two-factor authentication is disabled" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(use_two_factor_authentication: false)
+        }.to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+
+      it "does not send an email when use_two_factor_authentication is not changed" do
+        user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        user.update!(use_sms_auth: true)
+        user.update!(use_two_factor_authentication: true)
+
+        expect {
+          user.update!(full_name: "New Name")
+        }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+  end
+
+  describe "payout methods" do
+    let(:user) { create(:user) }
+
+    def build_ach
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+    end
+
+    describe "#personal_legal_entity" do
+      it "returns the user's person-type legal entity" do
+        expect(user.personal_legal_entity).to be_present
+        expect(user.personal_legal_entity).to be_person
+      end
+
+      it "returns the person entity, never a business entity the user also belongs to" do
+        business = create(:legal_entity, :business)
+        user.legal_entity_users.create!(legal_entity: business)
+
+        expect(user.reload.personal_legal_entity).to be_person
+        expect(user.personal_legal_entity).not_to eq(business)
+      end
+    end
+
+    describe "#person_legal_entity_user" do
+      it "returns the join row for the person-type legal entity" do
+        create(:legal_entity, :business).tap { |b| user.legal_entity_users.create!(legal_entity: b) }
+
+        expect(user.reload.person_legal_entity_user).to eq(
+          user.legal_entity_users.find_by(legal_entity: user.personal_legal_entity)
+        )
+        expect(user.person_legal_entity_user.legal_entity).to be_person
+      end
+    end
+
+    describe "#default_payout_method" do
+      it "is nil when no default payout method exists" do
+        expect(user.default_payout_method).to be_nil
+        expect(user.default_payout_method&.details).to be_nil
+      end
+
+      it "returns the person entity's default payout method and its details" do
+        pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
+
+        expect(user.default_payout_method).to eq(pm)
+        expect(user.default_payout_method.details).to eq(pm.details)
+        expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+      end
+    end
+
+
+    describe "#can_update_payout_method?" do
+      it "is true when there is no payout method" do
+        expect(user.can_update_payout_method?).to be(true)
+      end
+
+      it "is false when the default is Wise and a reimbursement tracking the default is being processed" do
+        user.personal_legal_entity.payout_methods.create!(
+          default: true,
+          details: LegalEntity::PayoutMethod::WiseTransfer.new(
+            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
+            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
+          )
+        )
+        event = create(:event)
+        # Legacy report with no payout method set still resolves its method from the default.
+        report = create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
+        report.update_columns(legal_entity_payout_method_id: nil)
+
+        expect(user.can_update_payout_method?).to be(false)
+      end
+
+      it "is true when the default is Wise but processing reports have their own payout method set" do
+        user.personal_legal_entity.payout_methods.create!(
+          default: true,
+          details: LegalEntity::PayoutMethod::WiseTransfer.new(
+            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
+            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
+          )
+        )
+        event = create(:event)
+        # Set at creation, so an update leaves its payout method intact.
+        report = create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
+        expect(report.legal_entity_payout_method).to be_present
+
+        expect(user.can_update_payout_method?).to be(true)
+      end
     end
   end
 

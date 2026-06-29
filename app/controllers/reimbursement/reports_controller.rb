@@ -16,7 +16,7 @@ module Reimbursement
     def create
       @event = Event.find(report_params[:event_id])
       user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.payout_method&.currency || "USD"))
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.default_payout_method&.currency || "USD"))
 
       authorize @report
 
@@ -115,7 +115,7 @@ module Reimbursement
       authorize @report
 
       old_currency = @report.currency
-      new_currency = @report.user.payout_method.currency
+      new_currency = @report.payout_method.currency
 
       ActiveRecord::Base.transaction do
         @report.update!(currency: new_currency)
@@ -202,7 +202,7 @@ module Reimbursement
         end
 
         flash[:success] = {
-          text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.payout_method.name}.",
+          text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.payout_method.name}.",
           link: settings_payouts_path
         }
         if @report.user.can_update_payout_method?
@@ -304,19 +304,20 @@ module Reimbursement
           payout_holding.reload
           payout_holding.mark_settled!
         end
-        @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+        wise_payout_method = @report.payout_method&.details
+        wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",
-          address_line1: @report.user.payout_method.address_line1,
-          address_line2: @report.user.payout_method.address_line2,
-          address_city: @report.user.payout_method.address_city,
-          address_state: @report.user.payout_method.address_state,
-          address_postal_code: @report.user.payout_method.address_postal_code,
-          recipient_country: @report.user.payout_method.recipient_country,
+          address_line1: wise_payout_method.address_line1,
+          address_line2: wise_payout_method.address_line2,
+          address_city: wise_payout_method.address_city,
+          address_state: wise_payout_method.address_state,
+          address_postal_code: wise_payout_method.address_postal_code,
+          recipient_country: wise_payout_method.recipient_country,
           recipient_email: @report.user.email,
           recipient_name: @report.user.full_name,
-          bank_name: @report.user.payout_method.bank_name,
-          recipient_information: @report.user.payout_method.recipient_information,
+          bank_name: wise_payout_method.bank_name,
+          recipient_information: wise_payout_method.recipient_information,
           currency: @report.currency,
           user: User.system_user,
           usd_amount_cents: payout_holding.amount_cents,
@@ -451,7 +452,7 @@ module Reimbursement
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || @event&.users&.include?(current_user)
+      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
       reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params
