@@ -33,8 +33,8 @@ class Comment < ApplicationRecord
   belongs_to :commentable, polymorphic: true
   belongs_to :user
 
-  has_one_attached :file
-  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  has_many_attached :files
+  validates :files, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["files"].present? }
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content
@@ -50,7 +50,9 @@ class Comment < ApplicationRecord
   scope :admin_only, -> { where(admin_only: true) }
   scope :not_admin_only, -> { where(admin_only: false) }
   scope :edited, -> { joins(:versions).where("has_untracked_edit IS TRUE OR versions.event = 'update' OR versions.event = 'destroy'") }
-  scope :has_attached_file, -> { joins(:file_attachment) }
+  scope :has_attached_file, -> {
+    where(id: ActiveStorage::Attachment.where(record_type: "Comment", name: %w[file files]).select(:record_id))
+  }
 
   enum :action, {
     commented: 0,
@@ -72,7 +74,13 @@ class Comment < ApplicationRecord
   end
 
   def has_attached_file?
-    file.attached?
+    files.attached? || ActiveStorage::Attachment.exists?(record: self, name: "file")
+  end
+
+  def attached_files
+    legacy = ActiveStorage::Attachment.where(record: self, name: "file").includes(:blob).map(&:blob)
+    current = files.attached? ? files.blobs.to_a : []
+    legacy + current
   end
 
   def reactions_by_emoji
