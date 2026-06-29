@@ -741,7 +741,7 @@ class EventsController < ApplicationController
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
-    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025)
+    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)
   end
 
   def reimbursements
