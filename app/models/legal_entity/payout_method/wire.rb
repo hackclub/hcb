@@ -55,8 +55,6 @@ class LegalEntity
       end
 
       # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
-      # Wires are denominated in the method's own `currency` (USD); a passed-in
-      # `currency` is ignored.
       def create_transfer(event, amount:, payment_for:, recipient_email:, user:, recipient_name:, memo:, send_email_notification: false, **)
         event.wires.build(
           address_line1:,
