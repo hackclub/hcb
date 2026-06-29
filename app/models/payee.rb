@@ -30,4 +30,8 @@ class Payee < ApplicationRecord
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
+  def search_avatar
+    User.find_by(email:)
+  end
+
 end

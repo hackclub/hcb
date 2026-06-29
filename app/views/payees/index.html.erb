@@ -10,7 +10,11 @@
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
         <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
-          <img src="<%= gravatar_url(payee.email, payee.display_name, payee.id, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="<%= payee.display_name %>">
+          <% if (user = payee.search_avatar) %>
+            <%= avatar_for user, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+          <% else %>
+            <img src="<%= gravatar_url(payee.email, payee.display_name, payee.id, 80) %>" class="rounded-full w-10 h-10 shrink-0" alt="<%= payee.display_name %>">
+          <% end %>
           <div>
             <p class="font-medium"><%= payee.display_name %></p>
             <p class="text-sm muted"><%= payee.email %></p>
