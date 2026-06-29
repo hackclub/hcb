@@ -15,7 +15,7 @@ class PaymentsController < ApplicationController
   def create
     @payee = @event.payees.find(payment_params[:payee_id])
     @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
-    authorize @payment, policy_class: PaymentPolicy
+    authorize @event, policy_class: PaymentPolicy
 
     if @payment.save
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
