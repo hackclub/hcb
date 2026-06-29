@@ -48,14 +48,8 @@ class LegalEntity
         "Wise Transfer"
       end
 
-      def create_transfer(event, **attr)
-        # `WiseTransfer` stores the amount in `amount_cents`, generates its own
-        # memo, and pays out in the recipient's own configured currency, so the
-        # passed-in `memo` and `currency` are dropped.
-        amount_cents = attr.delete(:amount)
-        attr.delete(:memo)
-        attr.delete(:currency)
-
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, **)
         event.wise_transfers.build(
           address_line1:,
           address_line2:,
@@ -66,8 +60,11 @@ class LegalEntity
           currency:,
           wise_recipient_id:,
           recipient_information:,
-          amount_cents:,
-          **attr
+          amount_cents: amount,
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          user:,
         )
       end
 

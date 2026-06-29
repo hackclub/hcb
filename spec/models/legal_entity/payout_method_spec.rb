@@ -145,12 +145,10 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(ach.routing_number).to eq("021000021")
       end
 
-      it "converts the amount to USD for a foreign-currency payment" do
-        allow(MoneyService).to receive(:convert_to_usd).with(10_000, "EUR").and_return(11_500)
-
+      it "ignores :currency and passes the amount through (ACH is USD-only)" do
         ach = details.create_transfer(event, **attrs.merge(currency: "EUR"))
 
-        expect(ach.amount).to eq(11_500)
+        expect(ach.amount).to eq(10_000)
       end
     end
 

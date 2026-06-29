@@ -42,20 +42,21 @@ class LegalEntity
         "USD"
       end
 
-      def create_transfer(event, **attr)
-        # `AchTransfer` always pays out in USD (no `currency`), has no memo,
-        # tracks the sender as `creator`, and requires a `bank_name`.
-        currency = attr.delete(:currency)
-        attr[:amount] = MoneyService.convert_to_usd(attr[:amount], currency) if currency && attr[:amount]
-        attr.delete(:memo)
-        creator = attr.delete(:user) || attr.delete(:creator)
-        attr[:bank_name] ||= ColumnService.get("/institutions/#{routing_number}")["full_name"] rescue "Bank Account"
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, company_entry_description: nil, send_email_notification: false, **)
+        bank_name = ColumnService.get("/institutions/#{routing_number}")["full_name"] rescue "Bank Account"
 
         event.ach_transfers.build(
           routing_number:,
           account_number:,
-          creator:,
-          **attr
+          creator: user,
+          amount:,
+          bank_name:,
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          company_entry_description:,
+          send_email_notification:,
         )
       end
 
