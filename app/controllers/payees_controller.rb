@@ -6,7 +6,7 @@ class PayeesController < ApplicationController
   before_action :set_event
 
   def index
-    authorize @event.payees.build
+    authorize @event
     @payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
     render layout: false
   end
