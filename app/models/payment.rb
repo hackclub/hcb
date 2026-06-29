@@ -45,6 +45,7 @@ class Payment < ApplicationRecord
     state :sent
     state :successful
     state :rejected
+    state :canceled
 
     event :mark_under_review do
       transitions from: [:pending_legal_entity, :sent], to: :under_review
@@ -63,6 +64,10 @@ class Payment < ApplicationRecord
 
     event :mark_successful do
       transitions from: :sent, to: :successful
+    end
+
+    event :mark_canceled do
+      transitions from: [:under_review, :sent], to: :canceled
     end
   end
 

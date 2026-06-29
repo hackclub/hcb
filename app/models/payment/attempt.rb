@@ -87,6 +87,14 @@ class Payment
           payment.mark_rejected!
         end
       end
+
+      event :mark_canceled do
+        transitions from: [:pending, :under_review, :sent], to: :canceled, if: -> { payout.nil? || payout&.can_cancel? }
+        after do
+          payout.cancel!
+          payment.mark_canceled!
+        end
+      end
     end
 
     after_create :create_transfer!
@@ -213,8 +221,8 @@ class Payment
     end
 
     def terminal_states_freeze_attempt
-      if (failed? || successful? || rejected?) && !aasm_state_changed?
-        errors.add(:base, "failed, successful, or rejected payment attempts cannot be updated")
+      if (failed? || successful? || rejected? || canceled?) && !aasm_state_changed?
+        errors.add(:base, "failed, successful, rejected, or canceled payment attempts cannot be updated")
       end
     end
 
