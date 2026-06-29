@@ -644,10 +644,11 @@ class EventsController < ApplicationController
 
   def payments
     authorize @event
-    params[:q] ||= params[:search]
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
     @wires = @event.wires

@@ -16,7 +16,7 @@ module Events
     def create
       authorize @event, :create_payment?
 
-      @payee = @event.payees.find(payment_params[:payee_id])
+      @payee = @event.payees.find_by(id: payment_params[:payee_id])
       @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
 
       if @payment.save
