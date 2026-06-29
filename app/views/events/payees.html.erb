@@ -2,7 +2,7 @@
   <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "px-4 pb-2 pt-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
     <div class="input input-group max-w-none mt-2">
       <%= inline_icon "search" %>
-      <%= form.text_field :q, value: params[:q], placeholder: "Search...", class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced input->payee-picker#search" } %>
+      <%= form.text_field :q, value: params[:q], placeholder: "Search...", autofocus: true, class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced input->payee-picker#search" } %>
     </div>
   <% end %>
 
