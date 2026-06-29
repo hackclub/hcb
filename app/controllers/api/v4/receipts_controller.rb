@@ -14,6 +14,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "receipts:read", :index
+
       def create
         if params[:transaction_id].present?
           @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
@@ -26,6 +28,8 @@ module Api
         render "show", status: :created
       end
 
+      require_oauth2_scope "receipts:write", :create
+
       def destroy
         @receipt = Receipt.find(params[:id])
         authorize @receipt
@@ -34,6 +38,7 @@ module Api
         render json: { message: "Receipt successfully deleted" }, status: :ok
       end
 
+      require_oauth2_scope "receipts:write", :destroy
 
     end
   end

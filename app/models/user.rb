@@ -582,18 +582,6 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
-  def can_update_payout_method?
-    return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-
-    # Only reports still tracking the default (no payout method set on the
-    # report) would be disrupted by replacing it; reports that have their own
-    # payout method record keep it, which an update leaves intact.
-    return false if reimbursement_reports.reimbursement_requested.where(legal_entity_payout_method_id: nil).any?
-    return false if reimbursement_reports.joins(:payout_holding).where(payout_holding: { aasm_state: :pending }, reimbursement_reports: { legal_entity_payout_method_id: nil }).any?
-
-    true
-  end
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
