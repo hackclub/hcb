@@ -80,9 +80,7 @@ class LegalEntity
       end
 
       def repoint_failed_and_draft_reports(replaced_method)
-        return unless replaced_method
-
-        on_replaced_method = @user.reimbursement_reports.where(legal_entity_payout_method_id: replaced_method.id)
+        on_replaced_method = @user.reimbursement_reports.where(legal_entity_payout_method_id: replaced_method&.id)
 
         failed = on_replaced_method.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed })
         draft = on_replaced_method.where(aasm_state: :draft)
