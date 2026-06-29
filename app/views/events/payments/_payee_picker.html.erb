@@ -1,45 +1,43 @@
 <%# locals: (event:, show_manual: false) %>
 
-<div x-data="{ adding: false, searching: false }" x-init="$watch('adding', val => $dispatch('payee-picker-adding', val))" @payee-searching.window="searching = $event.detail.active">
-  <template x-if="!adding">
-    <div>
-      <% if event.payees.any? %>
-        <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) %>
-      <% end %>
+<div>
+  <div data-payee-picker-target="defaultPanel">
+    <% if event.payees.any? %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) %>
+    <% end %>
 
-      <button type="button" class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" @click="adding = true" x-show="!searching">
+    <button type="button" class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" data-action="payee-picker#showAdding" data-payee-picker-target="searchHidden">
+      <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+        <%= inline_icon "plus", size: 18 %>
+      </div>
+      <div class="text-left">
+        <p class="font-medium">New recipient</p>
+        <p class="text-sm muted">Create a new payment recipient</p>
+      </div>
+      <%= inline_icon "view-forward", class: "ml-auto muted" %>
+    </button>
+
+    <% if show_manual %>
+      <%= link_to event_payments_new_path(event_id: event.slug, manual: true), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top", "payee-picker-target": "searchHidden" } do %>
         <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-          <%= inline_icon "plus", size: 18 %>
+          <%= inline_icon "edit", size: 18 %>
         </div>
-        <div class="text-left">
-          <p class="font-medium">New recipient</p>
-          <p class="text-sm muted">Create a new payment recipient</p>
+        <div>
+          <p class="font-medium">Manual</p>
+          <p class="text-sm muted">Tax forms and payment details entered directly</p>
         </div>
-        <%= inline_icon "view-forward", class: "ml-auto muted" %>
-      </button>
-
-      <% if show_manual %>
-        <%= link_to event_payments_new_path(event_id: event.slug, manual: true), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" }, "x-show" => "!searching" do %>
-          <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-            <%= inline_icon "edit", size: 18 %>
-          </div>
-          <div>
-            <p class="font-medium">Manual</p>
-            <p class="text-sm muted">Tax forms and payment details entered directly</p>
-          </div>
-          <% if params[:manual] %>
-            <%= inline_icon "check-thin", class: "ml-auto success shrink-0" %>
-          <% else %>
-            <%= inline_icon "view-forward", class: "ml-auto muted" %>
-          <% end %>
+        <% if params[:manual] %>
+          <%= inline_icon "check-thin", class: "ml-auto success shrink-0" %>
+        <% else %>
+          <%= inline_icon "view-forward", class: "ml-auto muted" %>
         <% end %>
       <% end %>
-    </div>
-  </template>
+    <% end %>
+  </div>
 
-  <template x-if="adding">
-    <div class="px-4 py-3" x->
-      <button type="button" class="btn mb-3 -mt-2" @click="adding = false">
+  <div data-payee-picker-target="addingPanel" hidden>
+    <div class="px-4 py-3">
+      <button type="button" class="btn mb-3 -mt-2" data-action="payee-picker#hideAdding">
         <%= inline_icon "view-back" %>
         Back
       </button>
@@ -60,5 +58,5 @@
         </div>
       <% end %>
     </div>
-  </template>
+  </div>
 </div>
