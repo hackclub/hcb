@@ -36,6 +36,8 @@ class AnnouncementMailer < ApplicationMailer
     mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
 
+  private
+
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
