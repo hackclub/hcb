@@ -111,6 +111,10 @@ class Payment < ApplicationRecord
     return aasm_state.humanize
   end
 
+  def memo
+    "Payment to #{payee.display_name} for #{purpose}"
+  end
+
   private
 
   def create_payment_attempt!
