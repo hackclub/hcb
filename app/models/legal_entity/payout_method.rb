@@ -74,8 +74,14 @@ class LegalEntity
       (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
     end
 
+    # Reports tied to this method whose reimbursement is mid-flight, so the
+    # method can't be edited or removed.
+    def locking_reports
+      reimbursement_reports.where(aasm_state: LOCKING_REPORT_STATES)
+    end
+
     def locked_by_processing_report?
-      reimbursement_reports.where(aasm_state: LOCKING_REPORT_STATES).exists?
+      locking_reports.exists?
     end
 
     def archive!

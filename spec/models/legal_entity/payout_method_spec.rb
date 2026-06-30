@@ -140,4 +140,20 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       expect(pm.locked_by_processing_report?).to be(false)
     end
   end
+
+  describe "#locking_reports" do
+    let(:user) { create(:user) }
+    let(:pm) { user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach) }
+
+    def report_in(state)
+      create(:reimbursement_report, user:, event: create(:event), aasm_state: state, legal_entity_payout_method: pm)
+    end
+
+    it "returns only the in-flight reports using the method" do
+      locking = %i[submitted reimbursement_requested reimbursement_approved].map { |s| report_in(s) }
+      %i[draft reimbursed rejected reversed].each { |s| report_in(s) }
+
+      expect(pm.locking_reports).to match_array(locking)
+    end
+  end
 end

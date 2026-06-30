@@ -1,6 +1,6 @@
 <%# locals: (user:, attempted: nil) %>
 <% legal_entity = user.personal_legal_entity %>
-<% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(default: :desc, created_at: :asc) : [] %>
+<% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :asc) : [] %>
 <% errored = attempted && (attempted.errors.any? || attempted.details&.errors&.any?) %>
 <% create_error = errored && attempted.new_record? %>
 <% edit_error_id = errored && attempted.persisted? ? attempted.id : nil %>

@@ -1,7 +1,7 @@
 <%# locals: (report:) %>
 
 <% legal_entity = report.user.personal_legal_entity %>
-<% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(default: :desc, created_at: :asc) : [] %>
+<% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :asc) : [] %>
 <% current = report.legal_entity_payout_method %>
 
 <% short_label = lambda do |pm|
@@ -42,14 +42,14 @@
       <% methods.each do |pm| %>
         <%= link_to reimbursement_report_update_payout_method_path(report, legal_entity_payout_method_id: pm.id),
               class: "flex items-center#{" bold" if pm == current}", data: { turbo_method: :post } do %>
-          <%= inline_icon (pm == current ? "checkmark" : pm.icon), size: 24 %>
+          <%= inline_icon pm.icon, size: 24 %>
           <%= short_label.call(pm) %>
         <% end %>
       <% end %>
 
       <div class="menu__divider"></div>
       <%= link_to settings_payouts_path, class: "flex items-center" do %>
-        <%= inline_icon "plus", size: 24 %>
+        <%= inline_icon "settings", size: 24 %>
         Manage payout methods
       <% end %>
     </div>
