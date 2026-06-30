@@ -1231,8 +1231,10 @@ class AdminController < Admin::BaseController
 
     safely do
       ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
+
+      Ledger::Mapping.find_or_initialize_by(ledger_item: @canonical_transaction.ledger_item, on_primary_ledger: true).tap do |mapping|
+        mapping.ledger = ledger
+        mapping.save!
       end
     end
 
@@ -1795,8 +1797,6 @@ class AdminController < Admin::BaseController
         hackathons_task_size
       when :pending_bank_applications_airtable
         airtable_task_size :bank_applications
-      when :pending_onboard_id_airtable
-        airtable_task_size :onboard_id
       when :pending_stickers_airtable
         airtable_task_size :stickers
       when :pending_onepassword_airtable
@@ -1815,8 +1815,6 @@ class AdminController < Admin::BaseController
         airtable_task_size :feedback
       when :pending_google_workspace_waitlist_airtable
         airtable_task_size :google_workspace_waitlist
-      when :pending_boba_airtable
-        airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
@@ -1854,7 +1852,6 @@ class AdminController < Admin::BaseController
     # This method could take upwards of 10 seconds. USE IT SPARINGLY
     pending_task :pending_hackathons_airtable
     pending_task :pending_bank_applications_airtable
-    pending_task :pending_onboard_id_airtable
     pending_task :pending_stickers_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable
