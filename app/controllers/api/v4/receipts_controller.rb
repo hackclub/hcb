@@ -5,7 +5,7 @@ module Api
     class ReceiptsController < ApplicationController
       def index
         if params[:transaction_id].present?
-          @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
+          @hcb_code = HcbCode.find_by_public_id!(params[:transaction_id])
           authorize @hcb_code, :show?
           @receipts = @hcb_code.receipts.includes(:user)
         else
@@ -18,7 +18,7 @@ module Api
 
       def create
         if params[:transaction_id].present?
-          @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
+          @hcb_code = HcbCode.find_by_public_id!(params[:transaction_id])
           authorize @hcb_code, :upload?, policy_class: ReceiptablePolicy
         else
           skip_authorization
@@ -31,7 +31,7 @@ module Api
       require_oauth2_scope "receipts:write", :create
 
       def destroy
-        @receipt = Receipt.find(params[:id])
+        @receipt = Receipt.find_by_public_id!(params[:id])
         authorize @receipt
 
         @receipt.destroy!
