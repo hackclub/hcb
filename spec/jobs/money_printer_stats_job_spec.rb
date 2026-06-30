@@ -12,7 +12,9 @@ RSpec.describe MoneyPrinterStatsJob do
 
     # New engine balance: ledger item mapped onto the org's primary ledger.
     def set_new_balance(event, amount_cents)
-      item = create(:ledger_item, amount_cents:)
+      ct = create(:canonical_transaction, amount_cents:)
+      create(:canonical_event_mapping, canonical_transaction: ct, event:)
+      item = create(:ledger_item, amount_cents:, canonical_transactions: [ct])
       create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
     end
 

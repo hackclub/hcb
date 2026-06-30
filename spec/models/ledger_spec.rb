@@ -249,8 +249,10 @@ RSpec.describe Ledger, type: :model do
   end
 
   describe "#balance_cents" do
+    let(:event) { create(:event) }
+
     let(:ledger) do
-      l = Ledger.new(primary: false)
+      l = Ledger.new(primary: false, event:)
       l.save(validate: false)
       l
     end
