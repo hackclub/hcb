@@ -4,26 +4,26 @@
 #
 # Table name: tax_forms
 #
-#  id                  :bigint           not null, primary key
-#  aasm_state          :string           not null
-#  address_city        :string
-#  address_country     :string
-#  address_line1       :string
-#  address_line2       :string
-#  address_postal_code :string
-#  address_state       :string
-#  completed_at        :datetime
-#  deleted_at          :datetime
-#  external_service    :string           not null
-#  failed_at           :datetime
-#  form_type           :string
-#  sent_at             :datetime
-#  taxbandits_status   :string
-#  tin_invalid         :datetime
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  external_id         :string
-#  legal_entity_id     :bigint           not null
+#  id                             :bigint           not null, primary key
+#  aasm_state                     :string           not null
+#  address_city                   :string
+#  address_country                :string
+#  address_line1                  :string
+#  address_line2                  :string
+#  address_postal_code            :string
+#  address_state                  :string
+#  completed_at                   :datetime
+#  deleted_at                     :datetime
+#  external_service               :string           not null
+#  failed_at                      :datetime
+#  form_type                      :string
+#  sent_at                        :datetime
+#  taxbandits_status              :string
+#  taxbandits_tin_matching_status :string
+#  created_at                     :datetime         not null
+#  updated_at                     :datetime         not null
+#  external_id                    :string
+#  legal_entity_id                :bigint           not null
 #
 # Indexes
 #
