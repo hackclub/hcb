@@ -56,7 +56,8 @@
 
   <% if @payment.aasm_state == "pending_legal_entity" %>
     <%= render "application/callout", type: "info", title: "Tax information required", class: "mt-4" do %>
-      <%= @payment.payee.display_name %> has <%= 90 - (Date.today - @payment.created_at.to_date).to_i %> days to provide their tax information until this payment is canceled. We've sent an email with instructions.
+      <% days_remaining = [90 - (Date.current - @payment.created_at.to_date).to_i, 0].max %>
+      <%= @payment.payee.display_name %> has <%= days_remaining %> days to provide their tax information until this payment is canceled. We've sent an email with instructions.
     <% end %>
   <% end %>
 
