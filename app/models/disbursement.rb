@@ -75,9 +75,6 @@ class Disbursement < ApplicationRecord
   has_one :incoming_disbursement, class_name: "Disbursement::Incoming", inverse_of: :disbursement, foreign_key: :id
   has_one :outgoing_disbursement, class_name: "Disbursement::Outgoing", inverse_of: :disbursement, foreign_key: :id
 
-  belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
-  belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
-
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
 
   validates_presence_of :source_event_id,

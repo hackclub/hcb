@@ -57,36 +57,22 @@ class Disbursement
     end
 
     def amount
-      -disbursement.amount
+      -super
     end
 
     def hcb_code
       disbursement.outgoing_hcb_code
     end
 
-    def event
-      disbursement.source_event
-    end
-
-    def counterparty_event
-      disbursement.destination_event
-    end
-
-    def subledger
-      disbursement.source_subledger
-    end
-
-    def counterparty_subledger
-      disbursement.destination_subledger
-    end
-
     def counterparty
       disbursement.incoming_disbursement
     end
 
-    def transaction_category
-      disbursement.source_transaction_category
-    end
+    alias_method :event, :source_event
+    alias_method :counterparty_event, :destination_event
+    alias_method :subledger, :source_subledger
+    alias_method :counterparty_subledger, :destination_subledger
+    alias_method :transaction_category, :source_transaction_category
 
   end
 

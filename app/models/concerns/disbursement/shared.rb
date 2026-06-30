@@ -19,6 +19,9 @@ class Disbursement
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
       belongs_to :source_subledger, class_name: "Subledger", optional: true
 
+      belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
+      belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
+
       belongs_to :fulfilled_by, class_name: "User", optional: true
       belongs_to :requested_by, class_name: "User", optional: true
 

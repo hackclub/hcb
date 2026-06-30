@@ -60,29 +60,15 @@ class Disbursement
       disbursement.incoming_hcb_code
     end
 
-    def event
-      disbursement.destination_event
-    end
-
-    def counterparty_event
-      disbursement.source_event
-    end
-
-    def subledger
-      disbursement.destination_subledger
-    end
-
-    def counterparty_subledger
-      disbursement.source_subledger
-    end
-
     def counterparty
       disbursement.outgoing_disbursement
     end
 
-    def transaction_category
-      disbursement.destination_transaction_category
-    end
+    alias_method :event, :destination_event
+    alias_method :counterparty_event, :source_event
+    alias_method :subledger, :destination_subledger
+    alias_method :counterparty_subledger, :source_subledger
+    alias_method :transaction_category, :destination_transaction_category
 
     def canonical_transactions
       @canonical_transactions ||= disbursement.canonical_transactions.where("amount_cents > 0")
