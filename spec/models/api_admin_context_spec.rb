@@ -8,9 +8,10 @@ RSpec.describe ApiAdminContext do
     described_class.new(user, token)
   end
 
-  let(:admin)   { create(:user, access_level: :admin) }
-  let(:auditor) { create(:user, access_level: :auditor) }
-  let(:regular) { create(:user) }
+  let(:admin)      { create(:user, access_level: :admin) }
+  let(:superadmin) { create(:user, access_level: :superadmin) }
+  let(:auditor)    { create(:user, access_level: :auditor) }
+  let(:regular)    { create(:user) }
 
   describe "#admin?" do
     it "is true only when the user is an admin AND the token carries admin:write" do
@@ -34,9 +35,10 @@ RSpec.describe ApiAdminContext do
   end
 
   describe "#auditor?" do
-    it "is true only when the user is an auditor AND the token carries admin:read" do
+    it "is true with admin:read for every auditor-level role (auditor, admin, superadmin)" do
       expect(context_for(auditor, scopes: "admin:read").auditor?).to be(true)
       expect(context_for(admin, scopes: "admin:read").auditor?).to be(true)
+      expect(context_for(superadmin, scopes: "admin:read").auditor?).to be(true)
     end
 
     it "is false when the admin:read scope is missing (admin:write does not imply it)" do
@@ -50,9 +52,6 @@ RSpec.describe ApiAdminContext do
   end
 
   describe "#admin_override_pretend?" do
-    # Regression: delegate_missing_to must not forward this to the raw user.
-    # If it did, policies like UserPolicy#edit_admin? would grant admin powers
-    # to a token that carries no admin scope.
     it "requires the admin:read scope alongside an auditor-level role" do
       expect(context_for(admin,   scopes: "admin:read").admin_override_pretend?).to be(true)
       expect(context_for(auditor, scopes: "admin:read").admin_override_pretend?).to be(true)

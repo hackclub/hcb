@@ -19,10 +19,8 @@ class ApiAdminContext
     @user.auditor?(override_pretend: override_pretend) && @token&.scopes&.include?("admin:read")
   end
 
-  # Covers the same auditor-level roles as #auditor?, so it is gated behind the
-  # same admin:read scope. Without this override `delegate_missing_to` would
-  # forward it straight to the user and let policies (e.g. UserPolicy#edit_admin?)
-  # grant admin powers to a token that lacks any admin scope.
+  # Same auditor-level roles as #auditor?, so gated behind admin:read too.
+  # Defined explicitly (not delegated) so the scope check isn't skipped.
   def admin_override_pretend?
     @user.admin_override_pretend? && @token&.scopes&.include?("admin:read")
   end

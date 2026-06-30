@@ -3,9 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Api::V4::UsersController do
-  # `#show` is gated by `require_admin_scope!(:read)`. Admin scopes are enforced
-  # for every token (not only `restricted` ones), so these gates apply to any
-  # token regardless of the `restricted` scope.
+  # `#show` is gated by `require_admin_scope!(:read)`.
   describe "#show" do
     let(:target) { create(:user, full_name: "Target User") }
 
