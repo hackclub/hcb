@@ -616,7 +616,9 @@ Rails.application.routes.draw do
 
   resources :ledgers, only: [:show]
   scope module: :ledger, as: :ledger do
-    resources :items, path: "transactions", only: [:show]
+    resources :items, path: "transactions", only: [:show] do
+      get "hcb"
+    end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
@@ -934,6 +936,7 @@ Rails.application.routes.draw do
     get "transactions"
     get "ledger"
     get "books"
+    get "finances"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
