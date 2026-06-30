@@ -51,6 +51,7 @@ Rails.application.routes.draw do
   get "project_stats", to: "stats#project_stats"
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
+  get "money-printer", to: "money_printer#index", as: :money_printer
 
   resources :raffles, only: [:new, :create]
 
@@ -968,6 +969,11 @@ Rails.application.routes.draw do
 
     get "transfers/new", to: "events#new_transfer"
 
+    get "payments", to: "events#payments"
+
+    resources :payments, only: [:new, :create]
+    resources :payees, only: [:index, :create]
+
     get "async_balance"
     get "async_sub_organization_balance"
     get "async_sub_organizations_graph"
@@ -975,6 +981,7 @@ Rails.application.routes.draw do
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
+    get "payments"
     get "statements"
     get "statement_of_activity"
     get "promotions"
