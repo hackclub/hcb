@@ -875,6 +875,10 @@ class EventsController < ApplicationController
     @employees = @employees.search(params[:q]) if params[:q].present?
   end
 
+  def contractors
+    authorize @event
+  end
+
   def sub_organizations
     authorize @event
 
