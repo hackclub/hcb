@@ -180,7 +180,8 @@
                                     src: payment_path(d),
                                     frame_id: d.id,
                                     state_url: payment_path(d),
-                                    external_link: payment_path(d)) : nil %>
+                                    external_link: payment_path(d)
+                                  ) : nil %>
                   <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
                   <% elsif (local_hcb_code = d.try(:local_hcb_code)).present? %>
                     <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && transfer_popover_title ? popover_data(title: transfer_popover_title, src: local_hcb_code.popover_path, frame_id: local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
