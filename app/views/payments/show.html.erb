@@ -1,5 +1,6 @@
 <% title "Payment of #{render_money @payment.amount}" %>
 <% page_sm %>
+<%= render "events/nav", selected: :payments %>
 
 <%= turbo_frame_tag @payment.id, target: "_top" do %>
   <article class="hcb-code">

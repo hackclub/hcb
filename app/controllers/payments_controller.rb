@@ -8,6 +8,7 @@ class PaymentsController < ApplicationController
   def show
     @payment = Payment.find(params[:id])
     authorize @payment
+    @event = @payment.event
   end
 
   def new
