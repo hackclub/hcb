@@ -118,7 +118,7 @@ RSpec.describe HcbCode, type: :model do
         before do
           # Create CPTs for the disbursement with both events
           outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-          outgoing_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
 
           incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
@@ -165,7 +165,7 @@ RSpec.describe HcbCode, type: :model do
 
         before do
           outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-          outgoing_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
         end
 
