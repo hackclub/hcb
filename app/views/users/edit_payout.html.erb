@@ -14,10 +14,6 @@
       <% end %>
     </p>
     <%= render "application/flash", klass: "max-w-full mb3" %>
-    <% if Flipper.enabled?(:multiple_payout_methods_2026_06_26, @user) %>
-      <%= render "users/payout_methods_list", user: @user, attempted: @payout_method %>
-    <% else %>
-      <%= render "users/payout_form", user: @user, attempted: @payout_method %>
-    <% end %>
+    <%= render "users/payout_methods_list", user: @user, attempted: @payout_method %>
   </section>
 </turbo-frame>

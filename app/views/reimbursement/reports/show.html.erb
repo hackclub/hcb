@@ -243,7 +243,7 @@
   <% end %>
 <% end %>
 
-<% if Flipper.enabled?(:multiple_payout_methods_2026_06_26, @report.user) && policy(@report).update_payout_method? %>
+<% if policy(@report).update_payout_method? %>
   <%= render partial: "reimbursement/reports/payout_method_selector", locals: { report: @report } %>
 <% end %>
 

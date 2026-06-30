@@ -13,7 +13,6 @@ RSpec.describe PayoutMethodsController do
   end
 
   before do
-    Flipper.enable(:multiple_payout_methods_2026_06_26, user)
     create_session(user, verified: true)
   end
 

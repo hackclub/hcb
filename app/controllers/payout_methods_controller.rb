@@ -2,7 +2,6 @@
 
 
 class PayoutMethodsController < ApplicationController
-  before_action :require_multiple_payout_methods
   before_action :authorize_payout_edit
   before_action :set_payout_method, only: [:update, :set_default, :destroy]
   before_action :require_unlocked_method, only: [:update, :destroy]
@@ -73,15 +72,6 @@ class PayoutMethodsController < ApplicationController
   end
 
   private
-
-  # The multi-method payout UI (and these endpoints) only exist behind the
-  # flag; without it, payout methods are managed through users#update.
-  def require_multiple_payout_methods
-    return if Flipper.enabled?(:multiple_payout_methods_2026_06_26, current_user)
-
-    skip_authorization
-    redirect_to settings_payouts_path
-  end
 
   def authorize_payout_edit
     authorize current_user, :edit_payout?
