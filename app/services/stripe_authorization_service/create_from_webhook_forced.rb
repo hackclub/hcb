@@ -7,49 +7,46 @@ module StripeAuthorizationService
     end
 
     def run
-      cpt = nil
-
-      # 1. fetch remote stripe transaction
-      remote_stripe_transaction = ::Stripe::Issuing::Transaction.retrieve(
-        @stripe_transaction_id
-      )
+      t = ::Stripe::Issuing::Transaction.retrieve(@stripe_transaction_id)
 
       ActiveRecord::Base.transaction do
-        # 2. idempotent import into the db
-        rpst = ::PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction:).run
+        # 1. idempotent import into raw_stripe_transactions (settled engine)
+        rst = ::RawStripeTransaction.find_or_initialize_by(stripe_transaction_id: t[:id]).tap do |r|
+          r.stripe_transaction = t
+          r.amount_cents = t[:amount]
+          r.date_posted = Time.at(t[:created])
+          r.stripe_authorization_id = t[:authorization]
+          r.unique_bank_identifier = "STRIPEISSUING1"
+        end
+        rst.save!
 
-        # 3. idempotent canonize the newly added raw pending stripe transaction
-        cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction: rpst).run
+        # 2. idempotent hash
+        ph = ::TransactionEngine::HashedTransactionService::PrimaryHash.new(
+          unique_bank_identifier: rst.unique_bank_identifier,
+          date: rst.date_posted.strftime("%Y-%m-%d"),
+          amount_cents: rst.amount_cents,
+          memo: rst.memo.to_s.upcase
+        ).run
 
-        # 4. idempotent map to event
-        ::PendingEventMappingEngine::Map::Single::Stripe.new(canonical_pending_transaction: cpt).run
+        ht = ::HashedTransaction.find_or_initialize_by(raw_stripe_transaction_id: rst.id).tap do |h|
+          h.primary_hash = ph[0]
+          h.primary_hash_input = ph[1]
+        end
+        ht.save!
+
+        # 3. idempotent create settled canonical transaction
+        # after_create_commit on CanonicalTransaction handles event mapping automatically
+        next if ht.canonical_hashed_mapping.present?
+
+        ::CanonicalTransaction.create!(
+          date: ht.date,
+          memo: ht.memo,
+          amount_cents: ht.amount_cents,
+          canonical_hashed_mappings: [CanonicalHashedMapping.new(hashed_transaction: ht)],
+          transaction_source: rst
+        )
       end
 
-      if cpt
-        user = cpt&.stripe_card&.user
-
-        CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_approved.deliver_later
-        if user.sms_charge_notifications_enabled?
-          CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)
-        end
-
-        SuggestTagsJob.perform_later(event_id: cpt.event.id, hcb_code_id: cpt.local_hcb_code.id)
-
-        if cpt.local_hcb_code&.stripe_cash_withdrawal?
-          AdminMailer.with(hcb_code: cpt.local_hcb_code).cash_withdrawal_notification.deliver_later
-        end
-
-        spending_control = cpt.stripe_card.active_spending_control
-        if spending_control.present?
-          SpendingControlService.check_low_balance(spending_control, cpt.local_hcb_code)
-        end
-
-        if cpt&.stripe_card&.card_grant&.one_time_use
-          PaperTrail.request(whodunnit: User.system_user.id) do
-            cpt.stripe_card.freeze!(frozen_by: User.system_user)
-          end
-        end
-      end
       TopupStripeJob.perform_later
     end
 
