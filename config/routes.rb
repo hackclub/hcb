@@ -632,7 +632,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :payments, only: [:show]
+  resources :payments, only: [:show], concerns: :commentable
 
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"

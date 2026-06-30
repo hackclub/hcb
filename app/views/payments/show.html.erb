@@ -73,4 +73,7 @@
         include_spacing: true,
         turbo: true
       } %>
+
+  <%= render "comments/list", comments: @payment.all_comments, viewing_commentable: @payment %>
+  <%= render "comments/form", commentable: @payment if current_user %>
 <% end %>
