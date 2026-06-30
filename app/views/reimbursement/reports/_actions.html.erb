@@ -140,11 +140,11 @@
           <% if report.payout_holding&.failed? %>
             <% if user == current_user %>
               <% button_hint = capture do %>
-                <span class="bold">Warning:</span> your <%= report.payout_method.human_kind %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.
+                <span class="bold">Warning:</span> your <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.
               <% end %>
             <% else %>
               <% button_hint = capture do %>
-                <span class="bold">Warning:</span> <%= user.first_name %>'s <%= report.payout_method.human_kind %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
+                <span class="bold">Warning:</span> <%= user.first_name %>'s <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
               <% end %>
             <% end %>
           <% end %>
@@ -350,7 +350,7 @@
             <% else %>
               <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
-                Approve <%= payout_method.human_kind %> reimbursement
+                Approve <%= "#{payout_method.human_kind} " if payout_method %>reimbursement
               <% end %>
             <% end %>
           <% end %>
