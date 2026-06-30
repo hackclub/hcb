@@ -18,7 +18,6 @@ module OneTimeJobs
                          subledger: { card_grant: :ledger },
                          event: :ledger
                        )
-                       .where.missing(:ledger_item)
 
       hcb_codes.find_each do |hcb_code|
         safely do

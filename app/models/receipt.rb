@@ -125,7 +125,8 @@ class Receipt < ApplicationRecord
     sms_reimbursement: 19,
     employee_payment: 20,
     duplicate: 21,
-    discord_bot_modal: 22
+    discord_bot_modal: 22,
+    payment_page: 23
   }
 
   enum :textual_content_source, {
