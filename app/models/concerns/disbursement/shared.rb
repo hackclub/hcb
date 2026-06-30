@@ -22,7 +22,7 @@ class Disbursement
       belongs_to :fulfilled_by, class_name: "User", optional: true
       belongs_to :requested_by, class_name: "User", optional: true
 
-      has_one :card_grant, required: false
+      has_one :card_grant, foreign_key: :disbursement_id, inverse_of: :disbursement, required: false
 
       # AASM
       include AASM
