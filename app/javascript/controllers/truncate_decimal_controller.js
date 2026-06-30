@@ -9,6 +9,28 @@ export default class extends Controller {
     places: { type: Number, default: 2 },
   }
 
+  connect() {
+    this.onPaste = this.sanitizePaste.bind(this)
+    this.element.addEventListener('paste', this.onPaste)
+  }
+
+  disconnect() {
+    this.element.removeEventListener('paste', this.onPaste)
+  }
+
+  sanitizePaste(e) {
+    const text = (e.clipboardData || window.clipboardData)?.getData('text')
+    if (!text) return
+
+    const cleaned = text.replace(/[^0-9.]/g, '')
+    if (cleaned === text) return
+
+    e.preventDefault()
+    e.target.value = cleaned
+    e.target.dispatchEvent(new Event('input'))
+    this.truncate(e)
+  }
+
   truncate(e) {
     const split = e.target.value.split('.')
 
