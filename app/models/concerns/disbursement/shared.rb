@@ -111,14 +111,6 @@ class Disbursement
         "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
       end
 
-      def canonical_transactions
-        @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
-      end
-
-      def canonical_pending_transactions
-        @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
-      end
-
       # State methods
       def state
         if fulfilled?

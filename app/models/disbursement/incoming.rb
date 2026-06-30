@@ -71,11 +71,11 @@ class Disbursement
     alias_method :transaction_category, :destination_transaction_category
 
     def canonical_transactions
-      @canonical_transactions ||= canonical_transactions.where("amount_cents > 0")
+      @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code]).where("amount_cents > 0")
     end
 
     def canonical_pending_transactions
-      @canonical_pending_transactions ||= canonical_pending_transactions.where("amount_cents > 0")
+      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code]).where("amount_cents > 0")
     end
 
   end

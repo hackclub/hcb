@@ -175,6 +175,14 @@ class Disbursement < ApplicationRecord
     [source_event, destination_event]
   end
 
+  def canonical_transactions
+    @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
+  end
+
+  def canonical_pending_transactions
+    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
+  end
+
   def transactions_helper
     @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
   end
