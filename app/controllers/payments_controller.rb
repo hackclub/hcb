@@ -3,7 +3,12 @@
 class PaymentsController < ApplicationController
   include SetEvent
 
-  before_action :set_event
+  before_action :set_event, except: [:show]
+
+  def show
+    @payment = Payment.find(params[:id])
+    authorize @payment
+  end
 
   def new
     authorize @event, policy_class: PaymentPolicy

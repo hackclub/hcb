@@ -648,6 +648,7 @@ class EventsController < ApplicationController
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
+    @payments = @event.payments
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
     @wires = @event.wires
@@ -703,8 +704,13 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.joins(:payee).where("payees.display_name ILIKE ?", "%#{params[:q]}%") if params[:q].present?
+
     # Apply transfer type filter
-    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
+    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
 
     case params[:transfer_type]
     when "ach"
@@ -719,9 +725,11 @@ class EventsController < ApplicationController
       all_transfers = [@disbursements]
     when "paypal"
       all_transfers = [@paypal_transfers]
+    when "payment"
+      all_transfers = [@payments]
     end
 
-    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+    @payments = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
 
     @filter_options = transfer_filter_options
     helpers.validate_filter_options(@filter_options, params)

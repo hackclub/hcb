@@ -92,6 +92,21 @@ class Payment < ApplicationRecord
     nil
   end
 
+
+  def state_color
+    return "warning" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "success" if aasm_state == "successful"
+    return "error" if aasm_state == "rejected"
+
+    "muted"
+  end
+
+  def state_text
+    return "Pending contractor" if aasm_state == "pending_legal_entity"
+
+    return aasm_state.humanize
+  end
+
   private
 
   def create_payment_attempt!

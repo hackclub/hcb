@@ -1,0 +1,62 @@
+<% title "Payment of #{render_money @payment.amount}" %>
+<% page_sm %>
+
+<%= turbo_frame_tag @payment.id, target: "_top" do %>
+  <article class="hcb-code">
+    <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
+      <span class="flex items-center py-3 gap-2 flex-grow">
+        <span>
+          <span class="regular muted">Payment to</span>
+          <%= @payment.payee.display_name %>
+          <span class="regular muted">for</span>
+          <span class="regular"><%= render_money @payment.amount %></span>
+        </span>
+        <span class="badge h4 bg-<%= @payment.state_color %> nowrap order-1"><%= @payment.state_text %></span>
+      </span>
+    </h2>
+
+    <section class="hcb-code--details">
+      <div>
+        <strong>Submitted by</strong>
+        <%= user_mention @payment.creator %>
+      </div>
+      <div>
+        <strong>Initiated at</strong>
+        <%= format_datetime @payment.created_at %>
+      </div>
+    </section>
+
+    <section class="hcb-code--info">
+      <p>
+        <strong>Recipient</strong>
+        <%= @payment.payee.display_name %>
+      </p>
+      <p>
+        <strong>Email</strong>
+        <%= @payment.payee.email %>
+      </p>
+      <p>
+        <strong>Purpose</strong>
+        <%= @payment.purpose %>
+      </p>
+      <p>
+        <strong>Amount</strong>
+        <%= render_money @payment.amount %>
+      </p>
+      <p>
+        <strong>Organization</strong>
+        <%= link_to @payment.event.name, event_path(event_id: @payment.event.slug), data: { turbo_frame: "_top" } %>
+      </p>
+      <p>
+        <strong>Status</strong>
+        <%= @payment.state_text %>
+      </p>
+    </section>
+  </article>
+
+  <% if @payment.aasm_state == "pending_legal_entity" %>
+    <%= render "application/callout", type: "info", title: "Tax information required", class: "mt-4" do %>
+      <%= @payment.payee.display_name %> has <%= 90 - (Date.today - @payment.created_at.to_date).to_i %> days to provide their tax information until this payment is canceled. We've sent an email with instructions.
+    <% end %>
+  <% end %>
+<% end %>
