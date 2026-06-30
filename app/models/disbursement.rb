@@ -157,17 +157,6 @@ class Disbursement < ApplicationRecord
   # Eagerly create HcbCode object
   after_create :local_hcb_code
 
-  def outgoing_hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{id}"
-  end
-
-  # Legacy alias - use outgoing_hcb_code instead
-  alias_method :hcb_code, :outgoing_hcb_code
-
-  def incoming_hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
-  end
-
   # this method will be removed from disbursement, and we will have to go through IncomingDisbursement or OutgoingDisbursement
   def local_hcb_code
     @local_hcb_code ||= begin
@@ -184,14 +173,6 @@ class Disbursement < ApplicationRecord
 
   def events
     [source_event, destination_event]
-  end
-
-  def canonical_transactions
-    @canonical_transactions ||= CanonicalTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
-  end
-
-  def canonical_pending_transactions
-    @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: [outgoing_hcb_code, incoming_hcb_code])
   end
 
   def transactions_helper

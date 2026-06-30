@@ -9,7 +9,7 @@ class DisbursementsController < ApplicationController
     authorize @disbursement
 
     # Comments
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.outgoing_hcb_code)
   end
 
   def transfer_confirmation_letter

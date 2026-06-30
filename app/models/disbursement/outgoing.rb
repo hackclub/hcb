@@ -61,11 +61,11 @@ class Disbursement
     end
 
     def hcb_code
-      disbursement.outgoing_hcb_code
+      outgoing_hcb_code
     end
 
     def counterparty
-      disbursement.incoming_disbursement
+      disbursement.incoming_disbursement # N+1
     end
 
     alias_method :event, :source_event
@@ -73,6 +73,14 @@ class Disbursement
     alias_method :subledger, :source_subledger
     alias_method :counterparty_subledger, :destination_subledger
     alias_method :transaction_category, :source_transaction_category
+
+    def canonical_transactions
+      @canonical_transactions ||= canonical_transactions.where("amount_cents < 0")
+    end
+
+    def canonical_pending_transactions
+      @canonical_pending_transactions ||= canonical_pending_transactions.where("amount_cents < 0")
+    end
 
   end
 
