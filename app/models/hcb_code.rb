@@ -606,7 +606,7 @@ class HcbCode < ApplicationRecord
   # 1) it doesn't consider event plan
   # 2) it doesn't consider the amount of the HCB code
   #
-  # this is because these two things are expensive to compute on a HCB code.
+  # this is because these two things are expensive to compute on an HCB code.
 
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
