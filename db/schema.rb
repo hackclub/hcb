@@ -2532,7 +2532,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "taxbandits_status"
-    t.datetime "tin_invalid"
+    t.string "taxbandits_tin_matching_status"
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
   end

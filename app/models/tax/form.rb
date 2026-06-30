@@ -55,11 +55,16 @@ module Tax
       order_not_created
     ].index_with(&:itself), prefix: :taxbandits
 
+    enum :taxbandits_tin_matching_status, %w[
+      order_created
+      success
+      failed
+    ].index_with(&:itself), prefix: :taxbandits_tin_match
+
     aasm timestamps: true do
       state :pending, initial: true
       state :sent # Request sent to TaxBandits, not necessarily email sent
       state :completed
-      state :tin_invalid # TIN matching failed
       state :failed # Failed to create document / send email
     end
 
