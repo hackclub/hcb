@@ -21,7 +21,7 @@ class CardGrantMailer < ApplicationMailer
   private
 
   def set_delivery_reason
-    @delivery_reason = "received a grant from Hack Club in the form of an HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
+    @delivery_reason = "you received a grant from Hack Club in the form of an HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
   end
 
 end
