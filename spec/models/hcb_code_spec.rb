@@ -122,7 +122,7 @@ RSpec.describe HcbCode, type: :model do
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
 
           incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-          incoming_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          incoming_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: incoming_cpt, event: destination_event)
         end
 
@@ -170,7 +170,7 @@ RSpec.describe HcbCode, type: :model do
         end
 
         it "returns the first event" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
           hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.event).to eq(source_event)
