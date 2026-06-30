@@ -395,6 +395,15 @@ RSpec.describe Disbursement, type: :model do
         end
       end
     end
+
+    describe "may_mark_* delegation" do
+      %i[may_mark_approved? may_mark_in_transit? may_mark_deposited? may_mark_errored? may_mark_rejected? may_mark_scheduled?].each do |method|
+        it "delegates #{method} to disbursement" do
+          expect(outgoing.disbursement).to receive(method)
+          outgoing.public_send(method)
+        end
+      end
+    end
   end
 
   describe "helper methods" do
