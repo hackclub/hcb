@@ -31,7 +31,7 @@ module Api
       require_oauth2_scope "receipts:write", :create
 
       def destroy
-        @receipt = Receipt.find_by_public_id!(params[:id]) || Receipt.find_by_hash_id!(params[:id]) #TODO: remove hash ID after mobile app update
+        @receipt = Receipt.find_by_public_id(params[:id]) || Receipt.find_by_hash_id!(params[:id]) # TODO: remove hash ID after mobile app update
         authorize @receipt
 
         @receipt.destroy!
