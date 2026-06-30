@@ -131,7 +131,7 @@
                 <%= format_date d.created_at %>
               </td>
               <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.name %>">
-                <% if d.is_a?(Disbursement) %>
+                <% if d.is_a?(Disbursement::Outgoing) %>
                   <strong>
                     <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
                       <%= link_to d.destination_event.name, d.destination_event, style: "z-index:1;pointer-events:auto" %>
@@ -144,7 +144,7 @@
                 <% end %>
               </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate">
-                <% if d.is_a?(Disbursement) %>
+                <% if d.is_a?(Disbursement::Outgoing) %>
                   <%= d.name %>
                 <% else %>
                   <%= d.try(:payment_for) %>
@@ -167,6 +167,8 @@
                       <%= ledger_amount %>
                     </span>
                   <% end %>
+                <% when Disbursement::Outgoing %>
+                  <%= render_money(-d.amount) %>
                 <% else %>
                   <%= render_money(d.amount) %>
                 <% end %>
