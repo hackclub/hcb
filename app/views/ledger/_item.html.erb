@@ -5,6 +5,6 @@
   <td class="nowrap"><%= item.amount.format %></td>
   <td><%= item.short_code %></td>
   <td>
-    <%= link_to "View", ledger_item_path(item) %>
+    <%= link_to "View", defined?(route_to) && route_to == :hcb_code ? hcb_code_path(item) : ledger_item_path(item) %>
   </td>
 </tr>

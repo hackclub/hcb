@@ -279,6 +279,10 @@ class EventPolicy < ApplicationPolicy
     auditor?
   end
 
+  def finances?
+    Flipper.enabled?(:new_ledger_2026_06_30, record) && auditor_or_reader?
+  end
+
   alias hide_onboarding_message? request_call?
 
   private

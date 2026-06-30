@@ -1228,6 +1228,13 @@ class EventsController < ApplicationController
     @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
   end
 
+  def finances
+    authorize @event
+
+    @ledger = @event.ledger
+    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+  end
+
   private
 
   def process_hidden_param!(params_hash)
