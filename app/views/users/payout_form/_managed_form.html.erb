@@ -1,17 +1,7 @@
-<%# Payout method form used by the multi-method UI. `editing` renders an inline
-    row edit (PATCH); `creating` renders the add-method modal (POST). The legacy
-    single-method form lives in users/_payout_form. %>
 <% editing = local_assigns[:editing] %>
 <% creating = local_assigns[:creating] %>
 <% attempted = local_assigns[:attempted] %>
-<% payout_method =
-     if editing
-       editing.details
-     elsif local_assigns.key?(:attempted)
-       attempted&.details
-     else
-       user.default_payout_method&.details
-     end %>
+<% payout_method = editing ? editing.details : attempted&.details %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
