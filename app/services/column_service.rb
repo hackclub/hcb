@@ -37,6 +37,18 @@ class ColumnService
 
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
+  rescue Faraday::Error => e
+    Rails.error.report(
+      e,
+      context: {
+        url:,
+        params:,
+        idempotency_key:,
+        response_status: e.response_status,
+        response_body: e.response_body
+      }
+    )
+    raise
   end
 
   def self.transactions(from_date: 1.week.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
