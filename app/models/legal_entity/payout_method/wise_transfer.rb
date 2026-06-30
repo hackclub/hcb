@@ -66,6 +66,7 @@ class LegalEntity
           recipient_email:,
           user:,
         )
+      end
 
       def payout_summary
         ["wise transfer", ("to #{bank_name}" if bank_name.present?), ("(#{currency})" if currency.present?)].compact.join(" ")
