@@ -10,7 +10,7 @@ class Ledger
 
     def perform(event_id: nil)
       @event = event_id.present? ? Event.find(event_id) : nil
-      @ledger_items = @event&.ledger&.ledger_items || Ledger::Item.all
+      @ledger_items = @event&.ledger&.items || Ledger::Item.all
       @cts = @event&.canonical_transactions || CanonicalTransaction.all
       @cpts = @event&.canonical_pending_transactions || CanonicalPendingTransaction.all
       @anomalies = []
@@ -54,7 +54,7 @@ class Ledger
       @ledger_items.find_each do |item|
         safely do
           hcb_code = item.hcb_code
-          if hcb_code.event.ledger != item.ledger
+          if hcb_code.event.ledger != item.primary_ledger
             report_anomaly "Ledger::Item #{item.hashid} ledger does not match HcbCode #{hcb_code.hashid} event ledger"
           end
         end
