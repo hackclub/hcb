@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_30_131731) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1577,6 +1577,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
 
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
+    t.bigint "cooked_transaction_eggs_id"
+    t.string "cooked_transaction_eggs_type"
     t.datetime "created_at", null: false
     t.datetime "datetime", null: false
     t.datetime "marked_no_or_lost_receipt_at"
@@ -1584,6 +1586,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["cooked_transaction_eggs_type", "cooked_transaction_eggs_id"], name: "index_ledger_items_on_cooked_transaction_eggs"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end

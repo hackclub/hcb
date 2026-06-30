@@ -6,18 +6,21 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
+#  cooked_transaction_eggs_type :string
 #  datetime                     :datetime         not null
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  cooked_transaction_eggs_id   :bigint
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents  (amount_cents)
-#  index_ledger_items_on_datetime      (datetime)
-#  index_ledger_items_on_short_code    (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents             (amount_cents)
+#  index_ledger_items_on_cooked_transaction_eggs  (cooked_transaction_eggs_type,cooked_transaction_eggs_id)
+#  index_ledger_items_on_datetime                 (datetime)
+#  index_ledger_items_on_short_code               (short_code) UNIQUE
 #
 class Ledger
   class Item < ApplicationRecord
