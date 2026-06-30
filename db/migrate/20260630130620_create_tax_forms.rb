@@ -19,9 +19,6 @@ class CreateTaxForms < ActiveRecord::Migration[8.0]
       t.string :address_line2
       t.string :address_postal_code
       t.string :address_state
-
-      t.string :tin_hash
-      t.string :document_url
       
       t.belongs_to :legal_entity, null: false
 

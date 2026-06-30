@@ -14,13 +14,11 @@
 #  address_state       :string
 #  completed_at        :datetime
 #  deleted_at          :datetime
-#  document_url        :string
 #  external_service    :string           not null
 #  failed_at           :datetime
 #  form_type           :string
 #  sent_at             :datetime
 #  taxbandits_status   :string
-#  tin_hash            :string
 #  tin_invalid         :datetime
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null

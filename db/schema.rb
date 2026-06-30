@@ -2525,7 +2525,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
-    t.string "document_url"
     t.string "external_id"
     t.string "external_service", null: false
     t.datetime "failed_at"
@@ -2533,7 +2532,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
     t.string "taxbandits_status"
-    t.string "tin_hash"
     t.datetime "tin_invalid"
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
