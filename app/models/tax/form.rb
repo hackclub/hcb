@@ -18,10 +18,10 @@
 #  external_service    :string           not null
 #  failed_at           :datetime
 #  form_type           :string
-#  invalid_at          :datetime
 #  sent_at             :datetime
 #  taxbandits_status   :string
 #  tin_hash            :string
+#  tin_invalid         :datetime
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  external_id         :string
