@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionMailer < ApplicationMailer
-  before_action :set_delivery_reason
+  before_action { @delivery_reason = "you are the recipient of a check from #{@check.event.name}." }
 
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
@@ -57,12 +57,6 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
 
     mail to: @user.email_address_with_name,
          subject: "Purchase declined at #{@merchant}"
-  end
-
-  private
-
-  def set_delivery_reason
-    @delivery_reason = "you have made a purchase using a HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
   end
 
 end
