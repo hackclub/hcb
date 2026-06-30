@@ -564,4 +564,55 @@ RSpec.describe Disbursement, type: :model do
       end
     end
   end
+
+  describe "AASM events" do
+    let(:incoming) { disbursement.incoming_disbursement }
+    let(:outgoing) { disbursement.outgoing_disbursement }
+
+    it "Disbursement responds to all aasm event methods" do
+      %i[mark_approved! mark_in_transit! mark_deposited! mark_errored! mark_rejected! mark_scheduled!].each do |method|
+        expect(disbursement).to respond_to(method)
+      end
+    end
+
+    it "Disbursement has all aasm events defined on the class" do
+      expect(Disbursement.aasm.events.map(&:name)).to match_array(
+        %i[mark_approved mark_in_transit mark_deposited mark_errored mark_rejected mark_scheduled]
+      )
+    end
+
+    it "Disbursement::Incoming does not respond to any aasm event methods" do
+      %i[mark_approved! mark_in_transit! mark_deposited! mark_errored! mark_rejected! mark_scheduled!].each do |method|
+        expect(incoming).not_to respond_to(method)
+      end
+    end
+
+    it "Disbursement::Incoming has no aasm events defined" do
+      expect(Disbursement::Incoming.aasm.events).to be_empty
+    end
+
+    it "Disbursement::Outgoing does not respond to any aasm event methods" do
+      %i[mark_approved! mark_in_transit! mark_deposited! mark_errored! mark_rejected! mark_scheduled!].each do |method|
+        expect(outgoing).not_to respond_to(method)
+      end
+    end
+
+    it "Disbursement::Outgoing has no aasm events defined" do
+      expect(Disbursement::Outgoing.aasm.events).to be_empty
+    end
+  end
+
+  describe "AASM state definitions from Shared" do
+    it "states are defined identically on Disbursement, Disbursement::Incoming, and Disbursement::Outgoing" do
+      shared_states = %i[reviewing pending scheduled in_transit deposited rejected errored]
+      expect(Disbursement.aasm.states.map(&:name)).to match_array(shared_states)
+      expect(Disbursement::Incoming.aasm.states.map(&:name)).to match_array(shared_states)
+      expect(Disbursement::Outgoing.aasm.states.map(&:name)).to match_array(shared_states)
+    end
+
+    it "Disbursement does not redeclare states from Shared (no duplicate state entries)" do
+      state_names = Disbursement.aasm.states.map(&:name)
+      expect(state_names).to eq(state_names.uniq)
+    end
+  end
 end
