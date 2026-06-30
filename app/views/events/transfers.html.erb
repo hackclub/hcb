@@ -169,6 +169,8 @@
                       <%= ledger_amount %>
                     </span>
                   <% end %>
+                <% when Disbursement::Outgoing %>
+                  <%= render_money(-d.amount) %>
                 <% else %>
                   <%= render_money(d.amount) %>
                 <% end %>
