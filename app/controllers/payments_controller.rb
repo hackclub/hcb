@@ -19,10 +19,18 @@ class PaymentsController < ApplicationController
 
   def create
     @payee = @event.payees.find(payment_params[:payee_id])
-    @payment = Payment.new(payment_params.except(:payee_id).merge(creator: current_user, payee: @payee, currency: "USD"))
+    @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
 
     if @payment.save
+      if payment_params[:file]
+        ::ReceiptService::Create.new(
+          uploader: current_user,
+          attachments: payment_params[:file],
+          upload_method: :transfer_create_page,
+          receiptable: @payment
+        ).run!
+      end
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
     else
       render :new, layout: "transfer", status: :unprocessable_entity
@@ -32,7 +40,7 @@ class PaymentsController < ApplicationController
   private
 
   def payment_params
-    params.require(:payment).permit(:amount, :purpose, :payee_id)
+    params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
   end
 
 end

@@ -102,7 +102,7 @@ class Payment < ApplicationRecord
   end
 
   def state_text
-    return "Pending contractor" if aasm_state == "pending_legal_entity"
+    return "Pending recipient" if aasm_state == "pending_legal_entity"
 
     return aasm_state.humanize
   end
