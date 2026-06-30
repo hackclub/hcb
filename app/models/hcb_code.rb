@@ -397,6 +397,7 @@ class HcbCode < ApplicationRecord
 
   def card_grant?
     # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    # TODO: this causes card grant issuing memos to only render on one side of the disbursement
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
