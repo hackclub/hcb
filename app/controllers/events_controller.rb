@@ -166,7 +166,7 @@ class EventsController < ApplicationController
     end
   end
 
-  def ledger
+  def transactions_list
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
@@ -1221,14 +1221,7 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
-  def books
-    authorize @event
-
-    @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
-  end
-
-  def finances
+  def ledger
     authorize @event
 
     @ledger = @event.ledger

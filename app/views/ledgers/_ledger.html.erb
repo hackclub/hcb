@@ -53,7 +53,7 @@
       </tr>
     </thead>
     <tbody>
-      <%= render partial: "ledger/item", collection: items, as: :item, locals: { route_to: defined?(route_to) ? route_to : nil } %>
+      <%= render partial: "ledger/item", collection: items, as: :item %>
     </tbody>
   </table>
 

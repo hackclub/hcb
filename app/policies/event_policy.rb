@@ -31,7 +31,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
-  alias_method :ledger?, :transactions?
+  alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
@@ -275,12 +275,8 @@ class EventPolicy < ApplicationPolicy
     signee?
   end
 
-  def books?
-    auditor?
-  end
-
-  def finances?
-    Flipper.enabled?(:new_ledger_2026_06_30, record) && auditor_or_reader?
+  def ledger?
+    auditor? || (Flipper.enabled?(:new_ledger_2026_06_30, record) && reader?)
   end
 
   alias hide_onboarding_message? request_call?
