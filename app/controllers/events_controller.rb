@@ -648,7 +648,7 @@ class EventsController < ApplicationController
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
-    @payments = @event.payments
+    @payments = @event.payments.includes(:payee)
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
     @wires = @event.wires
