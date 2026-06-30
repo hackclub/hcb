@@ -10,9 +10,9 @@ class Ledger
 
     def perform(event_id: nil)
       @event = event_id.present? ? Event.find(event_id) : nil
-      @ledger_items = @event&.ledger&.items || Ledger::Item.all
-      @cts = @event&.canonical_transactions || CanonicalTransaction.all
-      @cpts = @event&.canonical_pending_transactions || CanonicalPendingTransaction.all
+      @ledger_items = (@event&.ledger&.items || Ledger::Item.all).includes(:canonical_transactions, :canonical_pending_transactions, hcb_code: [:canonical_transactions, :canonical_pending_transactions])
+      @cts = (@event&.canonical_transactions || CanonicalTransaction.all).includes(:ledger_item)
+      @cpts = (@event&.canonical_pending_transactions || CanonicalPendingTransaction.all).includes(:ledger_item)
       @anomalies = []
 
       cts_synced_with_hcb_code
