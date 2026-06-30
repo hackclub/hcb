@@ -66,6 +66,47 @@ class Disbursement < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
 
+  aasm timestamps: true, whiny_persistence: true do
+    event :mark_approved do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+        canonical_pending_transactions.update_all(fronted: true)
+      end
+      transitions from: [:reviewing, :scheduled], to: :pending
+    end
+
+    event :mark_in_transit do
+      transitions from: [:pending, :scheduled], to: :in_transit
+    end
+
+    event :mark_deposited do
+      transitions from: :in_transit, to: :deposited
+    end
+
+    event :mark_errored do
+      after do
+        canonical_pending_transactions.each { |cpt| cpt.decline! }
+      end
+      transitions from: [:pending, :in_transit], to: :errored
+    end
+
+    event :mark_rejected do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+        canonical_pending_transactions.each { |cpt| cpt.decline! }
+        create_activity(key: "disbursement.rejected", owner: fulfilled_by)
+      end
+      transitions from: [:scheduled, :reviewing, :pending], to: :rejected
+    end
+
+    event :mark_scheduled do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+      end
+      transitions from: [:pending, :reviewing, :in_review], to: :scheduled
+    end
+  end
+
   belongs_to :event
 
   has_one :raw_pending_incoming_disbursement_transaction
