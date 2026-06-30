@@ -263,9 +263,9 @@ RSpec.describe Ledger, type: :model do
       ct1 = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Transaction 1")
       ct2 = create(:canonical_transaction, amount_cents: 2500, date: Date.today, memo: "Transaction 2")
       ct3 = create(:canonical_transaction, amount_cents: -500, date: Date.today, memo: "Transaction 3")
-      cem1 = create(:canonical_event_mapping, canonical_transaction: ct1, event: ledger.event)
-      cem2 = create(:canonical_event_mapping, canonical_transaction: ct2, event: ledger.event)
-      cem3 = create(:canonical_event_mapping, canonical_transaction: ct3, event: ledger.event)
+      create(:canonical_event_mapping, canonical_transaction: ct1, event: ledger.event)
+      create(:canonical_event_mapping, canonical_transaction: ct2, event: ledger.event)
+      create(:canonical_event_mapping, canonical_transaction: ct3, event: ledger.event)
       item1 = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct1])
       item2 = create(:ledger_item, amount_cents: 2500, canonical_transactions: [ct2])
       item3 = create(:ledger_item, amount_cents: -500, canonical_transactions: [ct3])
@@ -279,7 +279,7 @@ RSpec.describe Ledger, type: :model do
 
     it "returns a Money object" do
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
-      cem = create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
+      create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
       item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
       Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: false)
 
