@@ -4,14 +4,14 @@ class CreateTaxForms < ActiveRecord::Migration[8.0]
       t.string :aasm_state, null: false
       t.datetime :sent_at
       t.datetime :completed_at
-      t.datetime :invalid_at
+      t.datetime :tin_invalid
       t.datetime :failed_at
 
       t.string :form_type
 
       t.string :external_service, null: false
       t.string :external_id
-      t.string :external_status
+      t.string :taxbandits_status
 
       t.string :address_city
       t.string :address_country

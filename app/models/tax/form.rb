@@ -16,11 +16,11 @@
 #  deleted_at          :datetime
 #  document_url        :string
 #  external_service    :string           not null
-#  external_status     :string
 #  failed_at           :datetime
 #  form_type           :string
 #  invalid_at          :datetime
 #  sent_at             :datetime
+#  taxbandits_status   :string
 #  tin_hash            :string
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
@@ -42,11 +42,26 @@ module Tax
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
 
+    # https://developer.taxbandits.com/docs/whcertificate/status/
+    enum :taxbandits_status, %w[
+      url_generated
+      order_created
+      scheduled
+      sent
+      opened
+      completed
+      awaiting_tin_certificate
+      completed_and_tin_match_inprogress
+      invalid
+      bounced
+      order_not_created
+    ].index_with(&:itself), prefix: :taxbandits
+
     aasm timestamps: true do
       state :pending, initial: true
       state :sent # Request sent to TaxBandits, not necessarily email sent
       state :completed
-      state :invalid # TIN matching failed
+      state :tin_invalid # TIN matching failed
       state :failed # Failed to create document / send email
     end
 
