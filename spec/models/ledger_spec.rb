@@ -252,7 +252,7 @@ RSpec.describe Ledger, type: :model do
     let(:event) { create(:event) }
 
     let(:ledger) do
-      l = Ledger.new(primary: false, event:)
+      l = Ledger.new(primary: true, event:)
       l.save(validate: false)
       l
     end
