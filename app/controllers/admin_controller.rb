@@ -1231,8 +1231,10 @@ class AdminController < Admin::BaseController
 
     safely do
       ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
+
+      Ledger::Mapping.find_or_initialize_by(ledger_item: @canonical_transaction.ledger_item, on_primary_ledger: true).tap do |mapping|
+        mapping.ledger = ledger
+        mapping.save!
       end
     end
 
