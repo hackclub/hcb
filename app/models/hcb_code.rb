@@ -189,7 +189,8 @@ class HcbCode < ApplicationRecord
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
-    return disbursement.amount if disbursement?
+    return outgoing_disbursement.amount if outgoing_disbursement?
+    return incoming_disbursement.amount if incoming_disbursement?
 
     if canonical_transactions.any?
       return canonical_transactions

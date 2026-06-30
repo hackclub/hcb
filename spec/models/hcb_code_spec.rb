@@ -69,6 +69,15 @@ RSpec.describe HcbCode, type: :model do
         hcb_code.outgoing_disbursement = sentinel
         expect(hcb_code.outgoing_disbursement).to equal(sentinel)
       end
+
+      it "resolves to the outgoing lens with a negative amount" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(hcb_code.outgoing_disbursement).to be_a(Disbursement::Outgoing)
+        expect(hcb_code.outgoing_disbursement.id).to eq(disbursement.id)
+        expect(hcb_code.outgoing_disbursement.amount).to eq(-disbursement.amount)
+      end
     end
 
     describe "#incoming_disbursement" do
@@ -103,6 +112,41 @@ RSpec.describe HcbCode, type: :model do
         sentinel = Object.new
         hcb_code.incoming_disbursement = sentinel
         expect(hcb_code.incoming_disbursement).to equal(sentinel)
+      end
+
+      it "resolves to the incoming lens with a positive amount" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(hcb_code.incoming_disbursement).to be_a(Disbursement::Incoming)
+        expect(hcb_code.incoming_disbursement.id).to eq(disbursement.id)
+        expect(hcb_code.incoming_disbursement.amount).to eq(disbursement.amount)
+      end
+    end
+
+    describe "#amount_cents_by_event" do
+      let(:event) { create(:event) }
+
+      it "returns the negative outgoing amount for an outgoing disbursement code" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(hcb_code.amount_cents_by_event(event)).to eq(-disbursement.amount)
+      end
+
+      it "returns the positive incoming amount for an incoming disbursement code" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(hcb_code.amount_cents_by_event(event)).to eq(disbursement.amount)
+      end
+
+      it "resolves disbursement amounts without the deprecated HcbCode#disbursement accessors" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(Rails.application.deprecators[:hcb]).not_to receive(:warn)
+        hcb_code.amount_cents_by_event(event)
       end
     end
 

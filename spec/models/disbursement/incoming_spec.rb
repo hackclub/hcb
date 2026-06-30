@@ -63,14 +63,12 @@ RSpec.describe Disbursement::Incoming, type: :model do
       expect(incoming.canonical_transactions).to include(ct)
     end
 
-    # We want this functionality in the future, but we contradict this behavior
-    # for the time being to aid in the migration
-    # it "does not include transactions with the outgoing hcb_code" do
-    #   ct = create(:canonical_transaction)
-    #   ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+    it "does not include transactions with the outgoing hcb_code" do
+      ct = create(:canonical_transaction)
+      ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
 
-    #   expect(incoming.canonical_transactions).not_to include(ct)
-    # end
+      expect(incoming.canonical_transactions).not_to include(ct)
+    end
   end
 
   describe "delegation" do
@@ -92,6 +90,43 @@ RSpec.describe Disbursement::Incoming, type: :model do
 
     it "delegates state to disbursement" do
       expect(incoming.state).to eq(disbursement.state)
+    end
+  end
+
+  describe "as a lens on the disbursement" do
+    it "is a Disbursement::Incoming backed by the same persisted row" do
+      expect(incoming).to be_a(Disbursement::Incoming)
+      expect(incoming).to be_persisted
+      expect(incoming.id).to eq(disbursement.id)
+    end
+
+    it "exposes the underlying disbursement via the reverse lens, same row" do
+      expect(incoming.disbursement).to be_a(Disbursement)
+      expect(incoming.disbursement.id).to eq(disbursement.id)
+    end
+
+    it "memoizes the lens (repeated reads return the same object)" do
+      expect(disbursement.incoming_disbursement).to equal(disbursement.incoming_disbursement)
+    end
+  end
+
+  describe ".polymorphic_name" do
+    it "is the class name, so it round-trips through polymorphic associations" do
+      expect(Disbursement::Incoming.polymorphic_name).to eq("Disbursement::Incoming")
+    end
+  end
+
+  describe "#counterparty" do
+    it "is the outgoing lens of the same transfer" do
+      expect(incoming.counterparty).to be_a(Disbursement::Outgoing)
+      expect(incoming.counterparty.id).to eq(disbursement.id)
+    end
+  end
+
+  describe "counterparty aliases" do
+    it "point at the source (sending) side" do
+      expect(incoming.counterparty_event).to eq(disbursement.source_event)
+      expect(incoming.counterparty_subledger).to eq(disbursement.source_subledger)
     end
   end
 end

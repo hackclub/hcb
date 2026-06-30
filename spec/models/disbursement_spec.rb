@@ -8,6 +8,35 @@ RSpec.describe Disbursement, type: :model do
     create(:canonical_event_mapping, canonical_transaction: ct, event: event)
   end
 
+  # Captures application SQL (ignoring schema + transaction-control statements) run
+  # inside the block, so a code path can be asserted to issue no queries.
+  def application_sql_in
+    statements = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
+      payload = ActiveSupport::Notifications::Event.new(*args).payload
+      next if payload[:name] == "SCHEMA"
+      next if payload[:sql] =~ /\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i
+
+      statements << payload[:sql]
+    end
+    yield
+    statements
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+  end
+
+  # The :with_raw_pending_transactions trait creates RAW pending transactions, which
+  # only become canonical pending transactions once the import engine runs. Transition
+  # side-effects (fronting / declining) operate on the canonical pending transactions,
+  # so create both legs directly to actually exercise them.
+  def create_canonical_pending_transactions(disbursement)
+    outgoing = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
+    outgoing.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+    incoming = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
+    incoming.update_column(:hcb_code, disbursement.incoming_hcb_code)
+    [outgoing, incoming]
+  end
+
   let(:disbursement) { create(:disbursement) }
 
   it "is valid" do
@@ -36,11 +65,12 @@ RSpec.describe Disbursement, type: :model do
           expect(disbursement.fulfilled_by).to eq(user)
         end
 
-        it "sets CPTs to fronted: true" do
+        it "fronts both legs' canonical pending transactions" do
+          cpts = create_canonical_pending_transactions(disbursement)
+
           disbursement.mark_approved!(user)
-          disbursement.canonical_pending_transactions.each do |cpt|
-            expect(cpt.reload.fronted).to be true
-          end
+
+          expect(cpts.map { |cpt| cpt.reload.fronted }).to eq([true, true])
         end
       end
 
@@ -133,11 +163,12 @@ RSpec.describe Disbursement, type: :model do
           expect(disbursement.fulfilled_by).to eq(user)
         end
 
-        it "declines CPTs" do
+        it "declines both legs' canonical pending transactions" do
+          cpts = create_canonical_pending_transactions(disbursement)
+
           disbursement.mark_rejected!(user)
-          disbursement.canonical_pending_transactions.each do |cpt|
-            expect(cpt.reload).to be_declined
-          end
+
+          expect(cpts.map { |cpt| cpt.reload.declined? }).to eq([true, true])
         end
 
         it "creates rejection activity" do
@@ -177,11 +208,12 @@ RSpec.describe Disbursement, type: :model do
           expect(disbursement).to be_errored
         end
 
-        it "declines CPTs" do
+        it "declines both legs' canonical pending transactions" do
+          cpts = create_canonical_pending_transactions(disbursement)
+
           disbursement.mark_errored!
-          disbursement.canonical_pending_transactions.each do |cpt|
-            expect(cpt.reload).to be_declined
-          end
+
+          expect(cpts.map { |cpt| cpt.reload.declined? }).to eq([true, true])
         end
       end
 
@@ -631,6 +663,298 @@ RSpec.describe Disbursement, type: :model do
     it "Disbursement does not redeclare states from Shared (no duplicate state entries)" do
       state_names = Disbursement.aasm.states.map(&:name)
       expect(state_names).to eq(state_names.uniq)
+    end
+  end
+
+  describe "incoming/outgoing lenses (becomes)" do
+    it "returns the matching subclass for each perspective" do
+      expect(disbursement.incoming_disbursement).to be_a(Disbursement::Incoming)
+      expect(disbursement.outgoing_disbursement).to be_a(Disbursement::Outgoing)
+    end
+
+    it "represents one row, so both lenses carry the disbursement's id" do
+      expect(disbursement.incoming_disbursement.id).to eq(disbursement.id)
+      expect(disbursement.outgoing_disbursement.id).to eq(disbursement.id)
+    end
+
+    describe "amount sign" do
+      it "reads positive through the incoming lens and negative through the outgoing lens" do
+        expect(disbursement.incoming_disbursement.amount).to eq(disbursement.amount)
+        expect(disbursement.outgoing_disbursement.amount).to eq(-disbursement.amount)
+      end
+
+      it "leaves the underlying column positive" do
+        expect(disbursement.amount).to be_positive
+        expect(Disbursement.where(id: disbursement.id).sum(:amount)).to eq(disbursement.amount)
+      end
+    end
+
+    it "treats the two legs as distinct records despite the shared id" do
+      incoming = disbursement.incoming_disbursement
+      outgoing = disbursement.outgoing_disbursement
+
+      expect(incoming).not_to eq(outgoing)
+      expect(incoming).not_to eq(disbursement)
+      expect([incoming, outgoing, disbursement].uniq.size).to eq(3)
+    end
+
+    it "reflects live changes to the underlying disbursement through the lens" do
+      outgoing = disbursement.outgoing_disbursement
+      disbursement.amount += 100
+
+      expect(outgoing.amount).to eq(-disbursement.amount)
+    end
+
+    describe "signed-leg transaction separation" do
+      it "routes the positive leg to the incoming lens and the negative leg to the outgoing lens" do
+        incoming_ct = create(:canonical_transaction, amount_cents: disbursement.amount)
+        incoming_ct.update_column(:hcb_code, disbursement.incoming_hcb_code)
+        outgoing_ct = create(:canonical_transaction, amount_cents: -disbursement.amount)
+        outgoing_ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+
+        expect(disbursement.incoming_disbursement.canonical_transactions).to contain_exactly(incoming_ct)
+        expect(disbursement.outgoing_disbursement.canonical_transactions).to contain_exactly(outgoing_ct)
+      end
+
+      it "scopes pending transactions to each leg's own hcb_code" do
+        incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
+        incoming_cpt.update_column(:hcb_code, disbursement.incoming_hcb_code)
+        outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
+        outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+
+        expect(disbursement.incoming_disbursement.canonical_pending_transactions).to contain_exactly(incoming_cpt)
+        expect(disbursement.outgoing_disbursement.canonical_pending_transactions).to contain_exactly(outgoing_cpt)
+      end
+    end
+
+    it "builds both lenses, the reverse, and the counterparty without extra SQL" do
+      loaded = Disbursement.find(disbursement.id)
+
+      statements = application_sql_in do
+        outgoing = loaded.outgoing_disbursement
+        incoming = loaded.incoming_disbursement
+        outgoing.disbursement
+        outgoing.counterparty
+        incoming.amount
+        outgoing.hcb_code
+      end
+
+      expect(statements).to be_empty, "expected no SQL, got:\n#{statements.join("\n")}"
+    end
+  end
+
+  describe "Event#incoming_disbursements / #outgoing_disbursements" do
+    let(:source_event) { disbursement.source_event }
+    let(:destination_event) { disbursement.destination_event }
+
+    it "surfaces the transfer as a Disbursement::Incoming on the destination event" do
+      expect(destination_event.incoming_disbursements).to all(be_a(Disbursement::Incoming))
+      expect(destination_event.incoming_disbursements.map(&:id)).to include(disbursement.id)
+    end
+
+    it "surfaces the transfer as a Disbursement::Outgoing on the source event" do
+      expect(source_event.outgoing_disbursements).to all(be_a(Disbursement::Outgoing))
+      expect(source_event.outgoing_disbursements.map(&:id)).to include(disbursement.id)
+    end
+
+    it "does not surface the transfer on the opposite sides" do
+      expect(source_event.incoming_disbursements).to be_empty
+      expect(destination_event.outgoing_disbursements).to be_empty
+    end
+
+    it "keeps the SQL sum positive even though the outgoing lens reads each amount negative" do
+      expect(source_event.outgoing_disbursements.sum(:amount)).to eq(disbursement.amount)
+      expect(source_event.outgoing_disbursements.first.amount).to eq(-disbursement.amount)
+    end
+  end
+
+  describe "may_mark_* guard delegation" do
+    # Each lens carries AASM states but no events (they were split onto Disbursement),
+    # so every transition guard must be delegated. Derive the guard list from the
+    # events themselves, so a newly added event can't silently lose its lens guard.
+    guard_methods = Disbursement.aasm.events.map { |event| :"may_#{event.name}?" }
+
+    it "derives one guard per Disbursement AASM event" do
+      expect(guard_methods).not_to be_empty
+      expect(guard_methods.size).to eq(Disbursement.aasm.events.size)
+    end
+
+    it "the lenses define no events of their own, so the guards can only be delegated" do
+      expect(Disbursement::Incoming.aasm.events).to be_empty
+      expect(Disbursement::Outgoing.aasm.events).to be_empty
+    end
+
+    %i[incoming_disbursement outgoing_disbursement].each do |lens_method|
+      context "on ##{lens_method}" do
+        guard_methods.each do |guard|
+          it "delegates #{guard} to the underlying disbursement" do
+            lens = disbursement.public_send(lens_method)
+            expect(lens).to respond_to(guard)
+            expect(lens.public_send(guard)).to eq(disbursement.public_send(guard))
+          end
+        end
+      end
+    end
+
+    context "guard values track the underlying state" do
+      # Pulled from the state machine so a newly added state is covered automatically.
+      Disbursement.aasm.states.map(&:name).each do |state|
+        it "match the disbursement when #{state}" do
+          subject = create(:disbursement, aasm_state: state.to_s)
+
+          guard_methods.each do |guard|
+            expect(subject.incoming_disbursement.public_send(guard)).to eq(subject.public_send(guard))
+            expect(subject.outgoing_disbursement.public_send(guard)).to eq(subject.public_send(guard))
+          end
+        end
+      end
+    end
+  end
+
+  describe "AASM transition guards" do
+    it "permits mark_approved only from reviewing or scheduled" do
+      expect(create(:disbursement).may_mark_approved?).to be(true) # reviewing
+      expect(create(:disbursement, :scheduled).may_mark_approved?).to be(true)
+      expect(create(:disbursement, :pending).may_mark_approved?).to be(false)
+      expect(create(:disbursement, :in_transit).may_mark_approved?).to be(false)
+      expect(create(:disbursement, :deposited).may_mark_approved?).to be(false)
+    end
+
+    it "raises on an illegal transition" do
+      expect { create(:disbursement).mark_deposited! }.to raise_error(AASM::InvalidTransition)
+    end
+  end
+
+  describe "AASM state-machine configuration" do
+    # The config and the state-stamping callback are established by the FIRST aasm
+    # block (Shared's); Disbursement's block only adds events. These guard against the
+    # config silently drifting if the blocks are rearranged again.
+    it "enables timestamps and whiny_persistence on Disbursement and both lenses" do
+      [Disbursement, Disbursement::Incoming, Disbursement::Outgoing].each do |klass|
+        config = klass.aasm.state_machine.config
+        expect(config.timestamps).to be(true), "expected #{klass} to enable timestamps"
+        expect(config.whiny_persistence).to be(true), "expected #{klass} to enable whiny_persistence"
+      end
+    end
+
+    it "raises ActiveRecord::RecordInvalid when a transition cannot be saved (whiny_persistence)" do
+      disbursement = create(:disbursement, :pending)
+      disbursement.name = nil # break a validation so the transition's save fails
+
+      expect { disbursement.mark_in_transit! }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
+  describe "AASM timestamps on transition" do
+    let(:user) { create(:user) }
+
+    it "stamps pending_at / approved_at when approved" do
+      disbursement = create(:disbursement, :with_raw_pending_transactions)
+      freeze_time do
+        disbursement.mark_approved!(user)
+        expect(disbursement.pending_at).to eq(Time.current)
+        expect(disbursement.approved_at).to eq(disbursement.pending_at)
+      end
+    end
+
+    it "stamps in_transit_at when marked in transit" do
+      disbursement = create(:disbursement, :pending)
+      freeze_time do
+        disbursement.mark_in_transit!
+        expect(disbursement.in_transit_at).to eq(Time.current)
+      end
+    end
+
+    it "stamps deposited_at when deposited" do
+      disbursement = create(:disbursement, :in_transit)
+      freeze_time do
+        disbursement.mark_deposited!
+        expect(disbursement.deposited_at).to eq(Time.current)
+      end
+    end
+
+    it "stamps rejected_at when rejected" do
+      disbursement = create(:disbursement)
+      freeze_time do
+        disbursement.mark_rejected!(user)
+        expect(disbursement.rejected_at).to eq(Time.current)
+      end
+    end
+
+    it "stamps errored_at when errored" do
+      disbursement = create(:disbursement, :pending)
+      freeze_time do
+        disbursement.mark_errored!
+        expect(disbursement.errored_at).to eq(Time.current)
+      end
+    end
+  end
+
+  describe "AASM state scopes (create_scopes)" do
+    it "generates a scope per state that filters by aasm_state" do
+      deposited = create(:disbursement, :deposited)
+
+      expect(Disbursement.deposited).to include(deposited)
+      expect(Disbursement.deposited).not_to include(disbursement) # reviewing
+      expect(Disbursement.reviewing).to include(disbursement)
+    end
+
+    it "backs the app scopes built on AASM states" do
+      deposited = create(:disbursement, :deposited)
+      in_transit = create(:disbursement, :in_transit)
+
+      expect(Disbursement.fulfilled).to include(deposited)        # fulfilled -> deposited
+      expect(Disbursement.processing).to include(in_transit)      # processing -> in_transit
+    end
+  end
+
+  describe "state display fronting branches" do
+    # state / state_text / state_icon all branch on whether the destination event can
+    # front the balance while the transfer is still processing.
+    describe "#state_icon" do
+      it "is a checkmark when fulfilled" do
+        expect(create(:disbursement, :deposited).state_icon).to eq("checkmark")
+      end
+
+      it "is a checkmark when processed (in_transit)" do
+        expect(create(:disbursement, :in_transit).state_icon).to eq("checkmark")
+      end
+
+      it "is nil when reviewing" do
+        expect(disbursement.state_icon).to be_nil
+      end
+
+      it "is a checkmark when pending and the destination event can front the balance" do
+        disbursement = create(:disbursement, :pending)
+        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
+        expect(disbursement.state_icon).to eq("checkmark")
+      end
+
+      it "is nil when pending and the destination event cannot front the balance" do
+        disbursement = create(:disbursement, :pending)
+        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
+        expect(disbursement.state_icon).to be_nil
+      end
+    end
+
+    context "while processing, when the destination event can front the balance" do
+      it "reads as a fulfilled success" do
+        disbursement = create(:disbursement, :in_transit)
+        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
+
+        expect(disbursement.state).to eq(:success)
+        expect(disbursement.state_text).to eq("fulfilled")
+      end
+    end
+
+    context "while processing, when the destination event cannot front the balance" do
+      it "reads as muted and still processing" do
+        disbursement = create(:disbursement, :in_transit)
+        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
+
+        expect(disbursement.state).to eq(:muted)
+        expect(disbursement.state_text).to eq("processing")
+      end
     end
   end
 end

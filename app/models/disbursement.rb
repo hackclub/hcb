@@ -66,7 +66,9 @@ class Disbursement < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
 
-  aasm timestamps: true, whiny_persistence: true do
+  # Events only; state-machine config (timestamps, whiny_persistence, states) lives on
+  # the first `aasm` block, in Disbursement::Shared. See the note there.
+  aasm do
     event :mark_approved do
       after do |fulfilled_by|
         update(fulfilled_by:)
@@ -103,7 +105,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
       end
-      transitions from: [:pending, :reviewing, :in_review], to: :scheduled
+      transitions from: [:pending, :reviewing], to: :scheduled
     end
   end
 

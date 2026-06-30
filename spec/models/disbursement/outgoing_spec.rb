@@ -92,4 +92,45 @@ RSpec.describe Disbursement::Outgoing, type: :model do
       expect(outgoing.state).to eq(disbursement.state)
     end
   end
+
+  describe "as a lens on the disbursement" do
+    it "is a Disbursement::Outgoing backed by the same persisted row" do
+      expect(outgoing).to be_a(Disbursement::Outgoing)
+      expect(outgoing).to be_persisted
+      expect(outgoing.id).to eq(disbursement.id)
+    end
+
+    it "exposes the underlying disbursement via the reverse lens, same row" do
+      expect(outgoing.disbursement).to be_a(Disbursement)
+      expect(outgoing.disbursement.id).to eq(disbursement.id)
+    end
+
+    it "memoizes the lens (repeated reads return the same object)" do
+      expect(disbursement.outgoing_disbursement).to equal(disbursement.outgoing_disbursement)
+    end
+  end
+
+  describe ".polymorphic_name" do
+    it "is the class name, so it round-trips through polymorphic associations" do
+      expect(Disbursement::Outgoing.polymorphic_name).to eq("Disbursement::Outgoing")
+    end
+  end
+
+  describe "#counterparty" do
+    it "is the incoming lens of the same transfer" do
+      expect(outgoing.counterparty).to be_a(Disbursement::Incoming)
+      expect(outgoing.counterparty.id).to eq(disbursement.id)
+    end
+
+    it "reads the counterparty amount as positive (the incoming leg)" do
+      expect(outgoing.counterparty.amount).to eq(disbursement.amount)
+    end
+  end
+
+  describe "counterparty aliases" do
+    it "point at the destination (receiving) side" do
+      expect(outgoing.counterparty_event).to eq(disbursement.destination_event)
+      expect(outgoing.counterparty_subledger).to eq(disbursement.destination_subledger)
+    end
+  end
 end

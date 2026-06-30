@@ -50,7 +50,11 @@ class Disbursement
 
       # AASM
       include AASM
-      aasm do
+      # State-machine config lives here, on the first `aasm` block AASM processes for
+      # each class. Init-time setup (e.g. the `timestamps` stamping callback) only runs
+      # from this first block; a reopened block just copies option values into config
+      # without re-running that setup, so options set there would silently no-op.
+      aasm timestamps: true, whiny_persistence: true do
         state :reviewing, initial: true # Being reviewed by an admin
         state :pending                  # Waiting to be processed by the TX engine
         state :scheduled                # Has been scheduled and will be sent!

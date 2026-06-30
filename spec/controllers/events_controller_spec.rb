@@ -88,4 +88,48 @@ RSpec.describe EventsController do
       )
     end
   end
+
+  describe "#transfers" do
+    render_views
+
+    it "lists outgoing disbursements as Disbursement::Outgoing and renders the recipient org" do
+      organizer = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: organizer, event:)
+
+      recipient = create(:event, name: "Receiving Organization")
+      disbursement = create(:disbursement, source_event: event, event: recipient)
+
+      create_session(organizer, verified: true)
+
+      get(:transfers, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      # The recipient-org name only renders in the `is_a?(Disbursement::Outgoing)`
+      # branch, so its presence proves @disbursements are Outgoing lenses and the
+      # branch renders the destination event.
+      expect(response.body).to include("Receiving Organization")
+    end
+  end
+
+  describe "#payments" do
+    render_views
+
+    it "lists outgoing disbursements as Disbursement::Outgoing and renders the recipient org" do
+      organizer = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: organizer, event:)
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+
+      recipient = create(:event, name: "Receiving Organization")
+      disbursement = create(:disbursement, source_event: event, event: recipient)
+
+      create_session(organizer, verified: true)
+
+      get(:payments, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Receiving Organization")
+    end
+  end
 end
