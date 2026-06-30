@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2512,6 +2512,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
     t.datetime "updated_at", null: false
     t.index ["assignee_type", "assignee_id"], name: "index_tasks_on_assignee"
     t.index ["taskable_type", "taskable_id"], name: "index_tasks_on_taskable"
+  end
+
+  create_table "tax_forms", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_id"
+    t.string "external_service", null: false
+    t.datetime "failed_at"
+    t.string "form_type"
+    t.bigint "legal_entity_id", null: false
+    t.datetime "sent_at"
+    t.string "taxbandits_status"
+    t.string "taxbandits_tin_matching_status"
+    t.datetime "updated_at", null: false
+    t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
   end
 
   create_table "tours", force: :cascade do |t|
