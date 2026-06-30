@@ -31,8 +31,8 @@ RSpec.describe Disbursement::Incoming, type: :model do
   end
 
   describe "#amount" do
-    it "returns the absolute value of the disbursement amount" do
-      expect(incoming.amount).to eq(disbursement.amount.abs)
+    it "returns the value of the disbursement amount" do
+      expect(incoming.amount).to eq(disbursement.amount)
     end
   end
 

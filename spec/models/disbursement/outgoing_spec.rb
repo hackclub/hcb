@@ -31,8 +31,8 @@ RSpec.describe Disbursement::Outgoing, type: :model do
   end
 
   describe "#amount" do
-    it "returns the negative absolute value of the disbursement amount" do
-      expect(outgoing.amount).to eq(-disbursement.amount.abs)
+    it "returns the negative value of the disbursement amount" do
+      expect(outgoing.amount).to eq(-disbursement.amount)
     end
   end
 
