@@ -251,11 +251,7 @@ RSpec.describe Ledger, type: :model do
   describe "#balance_cents" do
     let(:event) { create(:event) }
 
-    let(:ledger) do
-      l = Ledger.new(primary: true, event:)
-      l.save(validate: false)
-      l
-    end
+    let(:ledger) { event.ledger }
 
     it "returns zero when ledger has no items" do
       expect(ledger.balance_cents).to eq(0)
