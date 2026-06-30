@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
+ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2320,6 +2320,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.integer "expense_number", default: 0, null: false
     t.text "invite_message"
     t.bigint "invited_by_id"
+    t.bigint "legal_entity_payout_method_id"
     t.integer "maximum_amount_cents"
     t.text "name"
     t.datetime "reimbursed_at"
@@ -2333,6 +2334,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
+    t.index ["legal_entity_payout_method_id"], name: "index_reimbursement_reports_on_legal_entity_payout_method_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
@@ -3045,6 +3047,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"
   add_foreign_key "reimbursement_reports", "events"
+  add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "sponsors", "events"

@@ -115,7 +115,7 @@ module Reimbursement
       authorize @report
 
       old_currency = @report.currency
-      new_currency = @report.user.default_payout_method.currency
+      new_currency = @report.payout_method.currency
 
       ActiveRecord::Base.transaction do
         @report.update!(currency: new_currency)
@@ -202,12 +202,8 @@ module Reimbursement
         end
 
         flash[:success] = {
-          text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.default_payout_method.name}.",
-          link: settings_payouts_path
+          text: "Your report has been submitted for review and your payout method can no longer be changed for this report. When it's approved, you'll be reimbursed via #{@report.payout_method.name}.",
         }
-        if @report.user.can_update_payout_method?
-          flash[:success][:link_text] = "If needed, you can still edit your payout settings."
-        end
       rescue => e
         flash[:error] = e.message
       end
@@ -304,7 +300,7 @@ module Reimbursement
           payout_holding.reload
           payout_holding.mark_settled!
         end
-        wise_payout_method = @report.user.default_payout_method&.details
+        wise_payout_method = @report.payout_method&.details
         wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",

@@ -19,9 +19,19 @@
 #  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
 #
 class Payee < ApplicationRecord
+  include PgSearch::Model
+
   belongs_to :event
   belongs_to :legal_entity, optional: true
 
-  validates_uniqueness_of :legal_entity_id, scope: [:event_id]
+  has_many :payments
+
+  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
+
+  pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
+
+  def search_avatar
+    User.find_by(email:)
+  end
 
 end
