@@ -35,7 +35,7 @@ module Reimbursement
     include ApplicationHelper
     belongs_to :report, inverse_of: :expenses, foreign_key: "reimbursement_report_id", touch: true
     monetize :amount_cents, as: "amount", with_model_currency: :currency
-    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
+    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }, integer_column: true
     attribute :expense_number, :integer
     has_one :expense_payout
     has_one :event, through: :report

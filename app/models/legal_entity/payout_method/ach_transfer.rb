@@ -38,6 +38,10 @@ class LegalEntity
         "ACH Transfer"
       end
 
+      def payout_summary
+        "ACH transfer to account ending in ••••#{account_number.to_s.last(4)}"
+      end
+
       def currency
         "USD"
       end

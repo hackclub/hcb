@@ -24,10 +24,9 @@
 #  index_payments_on_payee_id    (payee_id)
 #
 class Payment < ApplicationRecord
-  self.ignored_columns += ["payout_type", "payout_id", "failed_at"]
-
   include AASM
   include Receiptable
+  include Commentable
   has_paper_trail
 
   belongs_to :payee
@@ -68,9 +67,9 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if legal_entity.complete? && legal_entity.default_payout_method.present?
+    if legal_entity&.complete? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity.complete?
+    elsif legal_entity&.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later

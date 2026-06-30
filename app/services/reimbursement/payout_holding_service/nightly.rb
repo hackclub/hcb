@@ -9,7 +9,7 @@ module Reimbursement
           payout_holding.with_lock do
             next unless payout_holding.settled?
 
-            payout_method = payout_holding.report.user.default_payout_method&.details
+            payout_method = payout_holding.report.payout_method&.details
 
             case payout_method
             when LegalEntity::PayoutMethod::Wire

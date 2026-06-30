@@ -3,6 +3,9 @@
 module Api
   module V4
     module ApplicationHelper
+      include UsersHelper # for `profile_picture_for`
+      include StripeAuthorizationsHelper
+      include AdminScopeCheckable
       include ::ApplicationHelper
 
       attr_reader :current_user, :current_token
@@ -80,7 +83,7 @@ module Api
       end
 
       def expand_pii(override_if: false)
-        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
+        yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end
 
     end

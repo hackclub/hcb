@@ -1764,7 +1764,7 @@ class AdminController < Admin::BaseController
   end
 
   def pending_identity_vault_verifications_task_size
-    client = Faraday.new do |c|
+    client = Faraday.new(request: { open_timeout: 5, timeout: 8 }) do |c|
       c.response :json
       c.response :raise_error
     end
@@ -1777,7 +1777,7 @@ class AdminController < Admin::BaseController
 
   def hackathons_task_size
     hackathons = Faraday
-                 .new(ssl: { verify: false }) { |c| c.response :json }
+                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
                  .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
                  .body
 
@@ -1795,8 +1795,6 @@ class AdminController < Admin::BaseController
         hackathons_task_size
       when :pending_bank_applications_airtable
         airtable_task_size :bank_applications
-      when :pending_onboard_id_airtable
-        airtable_task_size :onboard_id
       when :pending_stickers_airtable
         airtable_task_size :stickers
       when :pending_onepassword_airtable
@@ -1815,8 +1813,6 @@ class AdminController < Admin::BaseController
         airtable_task_size :feedback
       when :pending_google_workspace_waitlist_airtable
         airtable_task_size :google_workspace_waitlist
-      when :pending_boba_airtable
-        airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
@@ -1854,7 +1850,6 @@ class AdminController < Admin::BaseController
     # This method could take upwards of 10 seconds. USE IT SPARINGLY
     pending_task :pending_hackathons_airtable
     pending_task :pending_bank_applications_airtable
-    pending_task :pending_onboard_id_airtable
     pending_task :pending_stickers_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable

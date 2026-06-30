@@ -144,6 +144,14 @@ module EventsHelper
       available_proc: ->(event) { policy(event).transfers? }
     },
     {
+      name: "Payments",
+      path_proc: ->(event_id) { event_payments_path(event_id:) },
+      tooltip: "Send & transfer money",
+      icon: "payment-transfer",
+      symbol: :payments,
+      available_proc: ->(event) { policy(event).payments? }
+    },
+    {
       name: "Reimbursements",
       path_proc: ->(event_id) { event_reimbursements_path(event_id:) },
       async_badge_proc: ->(event) { event_reimbursements_pending_review_icon_path(event) },

@@ -52,6 +52,10 @@ class LegalEntity
         "Check"
       end
 
+      def payout_summary
+        "check mailed to #{[address_line1, address_line2].compact_blank.join(", ")}"
+      end
+
       def currency
         "USD"
       end

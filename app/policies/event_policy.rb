@@ -160,7 +160,19 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    show? && record.plan.transfers_enabled?
+    !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def payments?
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def new_payment?
+    payments? && new_transfer?
+  end
+
+  def create_payment?
+    payments? && create_transfer?
   end
 
   def transfers_in_v4?
