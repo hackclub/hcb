@@ -268,9 +268,9 @@ RSpec.describe Ledger, type: :model do
       item2 = create(:ledger_item, amount_cents: 2500, canonical_transactions: [ct2])
       item3 = create(:ledger_item, amount_cents: -500, canonical_transactions: [ct3])
 
-      Ledger::Mapping.create!(ledger: ledger, ledger_item: item1, on_primary_ledger: false)
-      Ledger::Mapping.create!(ledger: ledger, ledger_item: item2, on_primary_ledger: false)
-      Ledger::Mapping.create!(ledger: ledger, ledger_item: item3, on_primary_ledger: false)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item1, on_primary_ledger: true)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item2, on_primary_ledger: true)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item3, on_primary_ledger: true)
 
       expect(ledger.balance_cents).to eq(3000)
     end
