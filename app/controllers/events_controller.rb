@@ -8,7 +8,7 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_transaction_filters, only: [:transactions, :transactions_list]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
