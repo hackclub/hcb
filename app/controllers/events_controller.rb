@@ -1223,9 +1223,10 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
+    @per = params[:per] || 25
 
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   private
