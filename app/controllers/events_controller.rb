@@ -8,7 +8,7 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_transaction_filters, only: [:transactions, :transactions_list]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -166,7 +166,7 @@ class EventsController < ApplicationController
     end
   end
 
-  def ledger
+  def transactions_list
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
@@ -1229,11 +1229,12 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
-  def books
+  def ledger
     authorize @event
+    @per = params[:per] || 25
 
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   private
