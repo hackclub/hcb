@@ -660,9 +660,9 @@ class EventsController < ApplicationController
     @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
     # Support legacy filter param for backward compatibility
@@ -707,7 +707,7 @@ class EventsController < ApplicationController
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.joins(:payee).where("payees.display_name ILIKE ?", "%#{params[:q]}%") if params[:q].present?
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
 
     # Apply transfer type filter
     all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
@@ -729,7 +729,7 @@ class EventsController < ApplicationController
       all_transfers = [@payments]
     end
 
-    @payments = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
 
     @filter_options = transfer_filter_options
     helpers.validate_filter_options(@filter_options, params)

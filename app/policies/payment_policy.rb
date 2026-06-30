@@ -2,7 +2,9 @@
 
 class PaymentPolicy < ApplicationPolicy
   def show?
-    record.event.users.include?(user) || user&.admin?
+    return true if user&.admin? || user&.auditor?
+
+    user.present? && record.event.users.exists?(id: user.id)
   end
 
   def new?

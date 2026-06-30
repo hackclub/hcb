@@ -72,7 +72,8 @@
         enable_linking: false,
         upload_method: "payment_page",
         include_spacing: true,
-        turbo: true
+        redirect_url: payment_path(@payment),
+        turbo: false
       } %>
 
   <%= render "comments/list", comments: @payment.all_comments, viewing_commentable: @payment %>

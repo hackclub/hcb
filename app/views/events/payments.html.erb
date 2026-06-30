@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :payments %>
 
-<% if @payments.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
+<% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
   <%= render "events/one_pager",
     title: "Payments",
     screenshots: {
@@ -43,7 +43,7 @@
   <h1 class="heading border-0 mb-0">
     <span class="flex items-center">
       Payments
-      <%= badge_for @payments.total_count, class: "bg-muted" %>
+      <%= badge_for @transfers.total_count, class: "bg-muted" %>
     </span>
 
     <% if policy(@event).new_payment? %>
@@ -79,7 +79,7 @@
 
   <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
-  <% if @payments.any? %>
+  <% if @transfers.any? %>
     <article class="table-container">
       <table>
         <thead>
@@ -94,7 +94,7 @@
         </thead>
 
         <tbody>
-          <% @payments.each do |d| %>
+          <% @transfers.each do |d| %>
             <% transfer_popover_title = d.is_a?(Payment) ? "Payment of #{render_money(d.amount)}" : "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" %>
             <tr class="<%= "clickable" if organizer_signed_in? %>">
               <td class="transaction__icon">
@@ -194,7 +194,7 @@
       </table>
     </article>
 
-    <%= paginate @payments %>
+    <%= paginate @transfers %>
   <% else %>
     <%= blankslate "No payments yet" %>
   <% end %>

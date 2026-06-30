@@ -25,6 +25,8 @@
 #
 class Payment < ApplicationRecord
   include AASM
+  include Hashid::Rails
+  include PgSearch::Model
   include Receiptable
   include Commentable
   has_paper_trail
@@ -38,6 +40,8 @@ class Payment < ApplicationRecord
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
+
+  pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
