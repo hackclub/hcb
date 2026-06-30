@@ -46,7 +46,7 @@
       </p>
       <p>
         <strong>Organization</strong>
-        <%= link_to @payment.event.name, event_path(event_id: @payment.event.slug), data: { turbo_frame: "_top" } %>
+        <%= link_to @payment.event.name, event_path(@payment.event), data: { turbo_frame: "_top" } %>
       </p>
       <p>
         <strong>Status</strong>
