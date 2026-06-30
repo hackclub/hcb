@@ -420,9 +420,9 @@ RSpec.describe Disbursement, type: :model do
     describe "#canonical_transactions" do
       it "returns CTs with matching hcb_code" do
         ct1 = create(:canonical_transaction)
-        ct1.update_column(:hcb_code, disbursement.hcb_code)
+        ct1.update_column(:hcb_code, disbursement.outgoing_hcb_code)
         ct2 = create(:canonical_transaction)
-        ct2.update_column(:hcb_code, disbursement.hcb_code)
+        ct2.update_column(:hcb_code, disbursement.outgoing_hcb_code)
         create(:canonical_transaction) # unrelated CT
 
         # Clear memoization
@@ -439,16 +439,16 @@ RSpec.describe Disbursement, type: :model do
       it "returns CPTs with matching hcb_code" do
         # Create CPTs manually and set their hcb_code after creation
         cpt1 = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-        cpt1.update_column(:hcb_code, disbursement.hcb_code)
+        cpt1.update_column(:hcb_code, disbursement.outgoing_hcb_code)
         cpt2 = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-        cpt2.update_column(:hcb_code, disbursement.hcb_code)
+        cpt2.update_column(:hcb_code, disbursement.outgoing_hcb_code)
 
         # Clear memoization
         disbursement.instance_variable_set(:@canonical_pending_transactions, nil)
         cpts = disbursement.canonical_pending_transactions
         expect(cpts.count).to eq(2)
         cpts.each do |cpt|
-          expect(cpt.hcb_code).to eq(disbursement.hcb_code)
+          expect(cpt.hcb_code).to eq(disbursement.outgoing_hcb_code)
         end
       end
     end
