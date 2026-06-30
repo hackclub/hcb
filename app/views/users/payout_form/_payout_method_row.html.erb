@@ -1,6 +1,5 @@
-<%# locals: (payout_method:, open: false) %>
+<%# locals: (payout_method:, open: false, locking_reports: []) %>
 <% details = payout_method.details %>
-<% locking_reports = payout_method.locking_reports.includes(:event).to_a %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
 <% icon_variant = case details
