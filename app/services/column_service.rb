@@ -38,9 +38,17 @@ class ColumnService
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
   rescue Faraday::Error => e
-    Rails.error.report(
-      e,
-      context: {
+    # AppSignal turns the Rails error reporter's `context:` into tags, which
+    # can't hold nested hashes, so `params`/`response_body` get dropped. Attach
+    # them as custom data (which supports nesting) on the active transaction the
+    # re-raised error is reported against, and keep scalars as filterable tags.
+    Appsignal.add_tags(
+      column_url: url,
+      idempotency_key:,
+      response_status: e.response_status
+    )
+    Appsignal.add_custom_data(
+      column: {
         url:,
         params:,
         idempotency_key:,
