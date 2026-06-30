@@ -95,7 +95,7 @@
 
         <tbody>
           <% @transfers.each do |d| %>
-            <% transfer_popover_title = "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" %>
+            <% transfer_popover_title = d.is_a?(Payment) ? "Payment of #{render_money(d.amount)}" : "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" %>
             <tr class="<%= "clickable" if organizer_signed_in? %>">
               <td class="transaction__icon">
                 <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -130,7 +130,7 @@
               <td>
                 <%= format_date d.created_at %>
               </td>
-              <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.name %>">
+              <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.try(:name) || d.try(:purpose) %>">
                 <% if d.is_a?(Disbursement::Outgoing) %>
                   <strong>
                     <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
@@ -140,14 +140,14 @@
                     <% end %>
                   </strong>
                 <% else %>
-                  <%= d.name %>
+                  <%= d.try(:name) || d.payee.display_name %>
                 <% end %>
               </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate">
                 <% if d.is_a?(Disbursement::Outgoing) %>
                   <%= d.name %>
                 <% else %>
-                  <%= d.try(:payment_for) %>
+                  <%= d.try(:payment_for) || d.try(:purpose) %>
                 <% end %>
               </td>
               <td style="text-align: right;">
@@ -174,8 +174,20 @@
                 <% end %>
 
                 <% if organizer_signed_in? %>
+                  <% if d.is_a?(Payment) %>
+                    <%= link_to "", payment_path(d),
+                                  class: "stretched-link",
+                                  data: popovers_enabled? && transfer_popover_title ? popover_data(
+                                    title: transfer_popover_title,
+                                    src: payment_path(d),
+                                    frame_id: d.id,
+                                    state_url: payment_path(d),
+                                    external_link: payment_path(d)
+                                  ) : nil %>
                   <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                  <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && transfer_popover_title ? popover_data(title: transfer_popover_title, src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
+                  <% elsif (local_hcb_code = d.try(:local_hcb_code)).present? %>
+                    <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && transfer_popover_title ? popover_data(title: transfer_popover_title, src: local_hcb_code.popover_path, frame_id: local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
+                  <% end %>
                 <% end %>
               </td>
             </tr>
