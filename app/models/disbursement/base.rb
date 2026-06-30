@@ -50,7 +50,11 @@ class Disbursement
   class Base < ApplicationRecord
     self.table_name = "disbursements"
 
-    belongs_to :disbursement, class_name: "::Disbursement", inverse_of: :base_disbursement, foreign_key: :id
+    # The underlying Disbursement is the same row, so reinterpret it with `becomes`
+    # rather than re-SELECTing by id. See Disbursement::Shared.
+    def disbursement
+      @disbursement ||= becomes(::Disbursement)
+    end
 
     def canonical_transactions
       @canonical_transactions ||= CanonicalTransaction.where(hcb_code:)

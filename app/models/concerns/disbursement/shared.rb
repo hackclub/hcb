@@ -1,6 +1,27 @@
 # frozen_string_literal: true
 
 class Disbursement
+  # Disbursement::Incoming and Disbursement::Outgoing are read-only *lenses* on a
+  # single `disbursements` row, NOT STI subclasses. The table has no `type` column,
+  # so the subclass never narrows the query:
+  #   * `Disbursement::Incoming.where(...)` / `.all` / scopes return EVERY
+  #     disbursement. There is no "incoming subset": every transfer is both an
+  #     incoming leg (to its destination) and an outgoing leg (from its source)
+  #   * the incoming and outgoing legs of one transfer share the same `id`
+  #   * raw columns keep their base sense (`event_id` = destination), not the lens's
+  #     remapped `event`/`source_event`
+  # So never treat the subclass itself as a filter. Start from a disbursement you've
+  # already selected and pick the perspective explicitly:
+  #   - event.incoming_disbursements / outgoing_disbursements (scoped by event_id /
+  #     source_event_id on Event, not by the class)
+  #   - disbursement.incoming_disbursement / outgoing_disbursement (in-memory `becomes`)
+  #   - polymorphic retrieval, e.g. Ledger::Item#linked_object (finds by id + the
+  #     stored `*_type` string)
+  # A mixed collection can hold both the incoming and outgoing lens of the same
+  # transfer, and the two share the same `id` (they are the same underlying
+  # Disbursement row). So keying or de-duping by `id` alone (Set, index_by, uniq,
+  # a Hash) treats them as one, dropping a leg and representing that Disbursement
+  # only once. Key by [id, class] (or the polymorphic `*_type` + id pair) instead.
   module Shared
     extend ActiveSupport::Concern
 

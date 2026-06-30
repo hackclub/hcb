@@ -112,9 +112,11 @@ class Disbursement < ApplicationRecord
   has_one :raw_pending_incoming_disbursement_transaction
   has_one :raw_pending_outgoing_disbursement_transaction
 
-  has_one :base_disbursement, class_name: "Disbursement::Base", inverse_of: :disbursement, foreign_key: :id
-  has_one :incoming_disbursement, class_name: "Disbursement::Incoming", inverse_of: :disbursement, foreign_key: :id
-  has_one :outgoing_disbursement, class_name: "Disbursement::Outgoing", inverse_of: :disbursement, foreign_key: :id
+  # Incoming/Outgoing are the same row seen through a different lens, so reinterpret
+  # the already-loaded record with `becomes` instead of re-SELECTing it. See
+  # Disbursement::Shared for what these lenses mean.
+  def incoming_disbursement = @incoming_disbursement ||= becomes(Disbursement::Incoming)
+  def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
 

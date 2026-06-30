@@ -50,8 +50,6 @@ class Disbursement
   class Outgoing < Disbursement::Base
     include Disbursement::Shared
 
-    belongs_to :disbursement, class_name: "::Disbursement", inverse_of: :outgoing_disbursement, foreign_key: :id
-
     delegate :may_mark_approved?, :may_mark_in_transit?, :may_mark_deposited?, :may_mark_errored?, :may_mark_rejected?, :may_mark_scheduled?, to: :disbursement
 
     def self.polymorphic_name
@@ -67,7 +65,7 @@ class Disbursement
     end
 
     def counterparty
-      disbursement.incoming_disbursement # N+1
+      disbursement.incoming_disbursement
     end
 
     alias_method :event, :source_event
