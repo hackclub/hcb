@@ -27,6 +27,7 @@ class AnnouncementMailer < ApplicationMailer
   def notice
     @event = params[:event]
     @emails = @event.organizer_contact_emails(only_managers: true)
+    @delivery_reason = "you are on the team of #{@event.name} on HCB."
 
     @monthly_announcement = params[:monthly_announcement]
     @scheduled_for = Date.today.next_month.beginning_of_month
@@ -38,6 +39,8 @@ class AnnouncementMailer < ApplicationMailer
   def set_warning_variables
     @announcement = params[:announcement]
     @event = @announcement.event
+    @delivery_reason = "you are subscribed to monthly announcements for #{@event.name} on HCB."
+    @unsubscribe_link = event_url(@event)
 
     @emails = @event.organizer_contact_emails(only_managers: true)
 
