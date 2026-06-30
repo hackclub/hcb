@@ -5,6 +5,7 @@
 # Table name: legal_entity_payout_methods
 #
 #  id              :bigint           not null, primary key
+#  archived        :boolean          default(FALSE), not null
 #  default         :boolean          default(FALSE), not null
 #  details_type    :string           not null
 #  created_at      :datetime         not null
@@ -35,12 +36,18 @@ class LegalEntity
     }.freeze
     SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
+    # Lock payout method when in these states
+    LOCKING_REPORT_STATES = %w[submitted reimbursement_requested reimbursement_approved].freeze
+
     self.table_name = "legal_entity_payout_methods"
 
     belongs_to :legal_entity
     belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
+    has_many :reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: :legal_entity_payout_method_id, inverse_of: :legal_entity_payout_method, dependent: :nullify
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
+
+    scope :unarchived, -> { where(archived: false) }
 
     validate :details_must_be_supported
 
@@ -65,6 +72,14 @@ class LegalEntity
 
     def error_messages
       (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
+    end
+
+    def locked_by_processing_report?
+      reimbursement_reports.where(aasm_state: LOCKING_REPORT_STATES).exists?
+    end
+
+    def archive!
+      update!(archived: true, default: false)
     end
 
     private

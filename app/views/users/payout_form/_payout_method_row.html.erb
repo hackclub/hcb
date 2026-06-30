@@ -1,5 +1,6 @@
 <%# locals: (payout_method:, open: false) %>
 <% details = payout_method.details %>
+<% locked = payout_method.locked_by_processing_report? %>
 <% icon_variant = case details
                   when LegalEntity::PayoutMethod::AchTransfer then "ach"
                   when LegalEntity::PayoutMethod::Check then "check"
@@ -39,28 +40,36 @@
     </div>
 
     <div class="flex items-center flex-shrink-0" style="gap: 8px;" data-pm-actions>
-      <button type="button" class="btn btn-small pm-edit" data-action="payout-methods#editRow">Edit</button>
-      <button type="button" class="btn btn-small bg-success pm-save" data-action="payout-methods#saveRow">Save</button>
-      <button type="button" class="btn btn-small pm-cancel" data-action="payout-methods#cancelRow">Cancel</button>
+      <% if locked %>
+        <button type="button" class="btn btn-small tooltipped tooltipped--n flex items-center justify-center" aria-label="Can't be edited while a reimbursement using it is being processed.">
+          <%= inline_icon "private", size: 18, class: "!m-0" %>
+        </button>
+      <% else %>
+        <button type="button" class="btn btn-small pm-edit" data-action="payout-methods#editRow">Edit</button>
+        <button type="button" class="btn btn-small bg-success pm-save" data-action="payout-methods#saveRow">Save</button>
+        <button type="button" class="btn btn-small pm-cancel" data-action="payout-methods#cancelRow">Cancel</button>
+      <% end %>
     </div>
 
-    <div data-controller="menu" data-menu-placement-value="bottom-end" class="flex-shrink-0">
-      <%= pop_icon_to "more", "#", icon_size: 22,
-          class: "align-middle muted", "aria-label": "More options",
-          data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
-      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-        <% unless payout_method.default? %>
+    <% unless payout_method.default? %>
+      <div data-controller="menu" data-menu-placement-value="bottom-end" class="flex-shrink-0">
+        <%= pop_icon_to "more", "#", icon_size: 22,
+            class: "align-middle muted", "aria-label": "More options",
+            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+        <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
           <%= link_to set_default_payout_method_path(payout_method), class: "flex items-center", data: { turbo_method: :patch } do %>
             <%= inline_icon "checkmark", size: 24 %>
             Set as default
           <% end %>
-        <% end %>
-        <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_confirm: "Remove this payout method?" } do %>
-          <%= inline_icon "delete", size: 24 %>
-          Remove
-        <% end %>
+          <% unless locked %>
+            <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_confirm: "Remove this payout method?" } do %>
+              <%= inline_icon "delete", size: 24 %>
+              Remove
+            <% end %>
+          <% end %>
+        </div>
       </div>
-    </div>
+    <% end %>
   </div>
 
    <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">

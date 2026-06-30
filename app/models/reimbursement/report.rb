@@ -257,6 +257,10 @@ module Reimbursement
       !draft?
     end
 
+    def can_change_payout_method?
+      draft?
+    end
+
     def unlockable?
       submitted? || reimbursement_requested?
     end

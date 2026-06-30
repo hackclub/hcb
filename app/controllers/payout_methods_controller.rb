@@ -4,15 +4,15 @@
 class PayoutMethodsController < ApplicationController
   before_action :require_multiple_payout_methods
   before_action :authorize_payout_edit
-  before_action :require_unlocked_payout
   before_action :set_payout_method, only: [:update, :set_default, :destroy]
+  before_action :require_unlocked_method, only: [:update, :destroy]
 
   def create
     service = LegalEntity::PayoutMethodService::Update.new(
       user: current_user,
       details_type: params.dig(:user, :payout_method_type),
       details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
-      make_default: legal_entity.payout_methods.none?
+      make_default: legal_entity.payout_methods.unarchived.none?
     )
 
     if service.run
@@ -24,13 +24,19 @@ class PayoutMethodsController < ApplicationController
   end
 
   def update
-    @payout_method.details.assign_attributes(details_params_for(@payout_method.details_type))
+    service = LegalEntity::PayoutMethodService::Update.new(
+      user: current_user,
+      details_type: @payout_method.details_type,
+      details_attrs: details_params_for(@payout_method.details_type),
+      make_default: @payout_method.default?,
+      replacing: @payout_method
+    )
 
-    if @payout_method.save
+    if service.run
       flash[:success] = "Payout method updated."
       redirect_back_or_to settings_payouts_path
     else
-      render_payout_settings(@payout_method)
+      render_payout_settings(service.payout_method)
     end
   end
 
@@ -41,11 +47,25 @@ class PayoutMethodsController < ApplicationController
   end
 
   def destroy
-    was_default = @payout_method.default?
-    @payout_method.destroy!
+    # The default can't be removed directly — the user must promote another
+    # method to default first (which leaves this one removable).
+    if @payout_method.default?
+      flash[:error] = "Set another payout method as default before removing this one."
+      return redirect_back_or_to settings_payouts_path
+    end
 
-    if was_default
-      legal_entity.payout_methods.order(created_at: :desc).first&.update!(default: true)
+    # Capture the draft reports pinned to this method before archiving so we can
+    # fall them back to the default (a non-default method is being removed, so a
+    # default still exists).
+    draft_report_ids = @payout_method.reimbursement_reports.where(aasm_state: :draft).pluck(:id)
+
+    @payout_method.archive!
+
+    default = legal_entity.default_payout_method
+    if default && draft_report_ids.any?
+      Reimbursement::Report.where(id: draft_report_ids).find_each do |report|
+        report.update!(legal_entity_payout_method: default)
+      end
     end
 
     flash[:success] = "Payout method removed."
@@ -67,8 +87,15 @@ class PayoutMethodsController < ApplicationController
     authorize current_user, :edit_payout?
   end
 
-  def require_unlocked_payout
-    payout_locked!
+  # Per-method, report-aware lock: editing or removing a method is blocked only
+  # while a report using it is in-flight (submitted → approved). Adding a new
+  # method or pointing the default at a different record is always allowed and
+  # never reaches this filter.
+  def require_unlocked_method
+    return unless @payout_method&.locked_by_processing_report?
+
+    flash[:error] = "You can't change this payout method while a reimbursement is being processed."
+    redirect_back_or_to settings_payouts_path
   end
 
   def render_payout_settings(payout_method)
@@ -85,7 +112,7 @@ class PayoutMethodsController < ApplicationController
   end
 
   def set_payout_method
-    @payout_method = legal_entity&.payout_methods&.find_by(id: params[:id])
+    @payout_method = legal_entity&.payout_methods&.unarchived&.find_by(id: params[:id])
     return if @payout_method
 
     skip_authorization
@@ -114,14 +141,6 @@ class PayoutMethodsController < ApplicationController
       end
 
     permitted || {}
-  end
-
-  def payout_locked!
-    return false if current_user.can_update_payout_method?
-
-    flash[:error] = "You can't change your payout method while a payout is being processed."
-    redirect_back_or_to settings_payouts_path
-    true
   end
 
 end

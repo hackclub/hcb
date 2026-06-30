@@ -12,13 +12,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[8.0].define(version: 2026_06_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
@@ -1633,6 +1630,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_29_120100) do
   end
 
   create_table "legal_entity_payout_methods", force: :cascade do |t|
+    t.boolean "archived", default: false, null: false
     t.datetime "created_at", null: false
     t.boolean "default", default: false, null: false
     t.bigint "details_id", null: false

@@ -12,11 +12,12 @@ class LegalEntity
     class Update
       attr_reader :payout_method
 
-      def initialize(user:, details_type:, details_attrs: {}, make_default: true)
+      def initialize(user:, details_type:, details_attrs: {}, make_default: true, replacing: nil)
         @user = user
         @details_type = details_type
         @details_attrs = details_attrs || {}
         @make_default = make_default
+        @replacing = replacing
       end
 
       def run
@@ -24,12 +25,15 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
-        replaced_method = @user.default_payout_method
+        replaced_method = @replacing || @user.default_payout_method
 
         # autosave: true on :details saves the detail record and the payout
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
-        repoint_failed_and_draft_reports(replaced_method) if saved
+        if saved
+          repoint_failed_and_draft_reports(replaced_method)
+          @replacing.archive! if @replacing && @replacing != @payout_method
+        end
         saved
       end
 
