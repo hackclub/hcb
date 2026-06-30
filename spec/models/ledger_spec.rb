@@ -279,7 +279,7 @@ RSpec.describe Ledger, type: :model do
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
       create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
       item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
-      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: false)
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
 
       expect(ledger.balance).to be_a(Money)
       expect(ledger.balance.cents).to eq(1000)
