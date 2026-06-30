@@ -1,10 +1,10 @@
 # Managing Receipts with the v4 API
 
-A guide to working with **receipts** in the HCB v4 API. It covers what a receipt is and the endpoints specific to receipts.
+A reference for **receipts** in the HCB v4 API. It covers what a receipt is and the endpoints specific to receipts.
 
 > This guide only documents what is **receipt-specific**. For everything general (authentication & OAuth, object shape (`id`/`object`/`created_at`), pagination, error responses, rate limits) see [`standards.md`](./standards.md). For the scope model, see [`scopes.md`](./scopes.md).
 
-> **Handing this to an automated agent?** Also provide [`standards.md`](./standards.md) and [`scopes.md`](./scopes.md): this file does not restate how to authenticate or how the scope model works. At minimum the agent needs the base URL `https://hcb.hackclub.com/api/v4` and an `Authorization: Bearer hcb_<token>` header on every request.
+> **Building an automated receipt-upload agent?** See [`../for-agents/receipt-upload.md`](../for-agents/receipt-upload.md) for the workflow, matching heuristics, and behavioral rules. This file is the API reference that playbook links into. At minimum an agent needs the base URL `https://hcb.hackclub.com/api/v4` and an `Authorization: Bearer hcb_<token>` header on every request.
 
 ---
 
@@ -32,7 +32,7 @@ Beyond the standard [`object_shape`](./standards.md#object-shape) fields (`id`, 
 | Field | Type | Description |
 |-------|------|-------------|
 | `url` | string | URL to the original uploaded file. |
-| `preview_url` | string | URL to a generated image preview. |
+| `preview_url` | string \| null | URL to a generated image preview. `null` for files with no preview (e.g. CSV uploads) or if preview generation fails. |
 | `filename` | string | Original filename. |
 | `uploader` | object \| null | The `user` who uploaded it, or `null`. |
 
@@ -49,84 +49,17 @@ OAuth Bearer tokens as described in [Authentication](./standards.md#authenticati
 | Delete a receipt | `DELETE /api/v4/receipts/:id` | `receipts:write` |
 | Mark a transaction no/lost receipt | `POST /api/v4/transactions/:id/mark_no_receipt` | `receipts:write` |
 | Read transactions | `GET /api/v4/transactions/...` | `ledgers:read` |
-| Find transactions missing a receipt | `GET /api/v4/transactions/missing_receipt` | `ledgers:read` |
+| Find transactions missing a receipt | `GET /api/v4/user/transactions/missing_receipt` | `ledgers:read` |
 
-> ⚠️ **`receipts:write` is broad.** A single `receipts:write` scope authorizes uploading **and** deleting receipts **and** marking transactions as no/lost receipt. The scope does not distinguish them. Keeping an agent from deleting or marking receipts is therefore a matter of agent instructions, not scope boundaries (see [Best Practices](#receipt-specific-best-practices)).
+> ⚠️ **`receipts:write` is broad.** A single `receipts:write` scope authorizes uploading **and** deleting receipts **and** marking transactions as no/lost receipt. The scope does not distinguish them.
 
 > A `restricted` token is **deny-by-default**: it can only reach actions that declare a scope it holds. Scopes gate the token; [Pundit policies](#delete-a-receipt) gate the user. Both must pass.
-
-### Recommended scopes for a receipt agent
-
-An automated agent that uploads receipts from a local directory and attaches them to the right transactions should request a **`restricted`** token carrying exactly:
-
-- **`receipts:write`**: upload receipts and attach them to transactions.
-- **`ledgers:read`**: read transactions, to find the ones missing a receipt and match each local file by amount, date, and merchant.
-- **`receipts:read`**: list a transaction's existing receipts (and the Receipt Bin), so the agent can skip transactions that already have one instead of uploading duplicates.
-
-This set is sufficient for the full workflow and grants **no ability to move money**: it carries no transfer, ACH, disbursement, or card-grant scopes, and a `restricted` token is denied by default on every action it does not hold a scope for.
-
-## Workflow: Uploading a Directory of Receipts
-
-A typical agent run:
-
-1. **Authenticate.** Obtain a `restricted` OAuth token carrying `receipts:write`, `ledgers:read`, and `receipts:read`. See [Authentication](./standards.md#authentication) for the token flow and [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token) for how to register the app with these exact scopes and request them. All requests go to `https://hcb.hackclub.com/api/v4` with an `Authorization: Bearer hcb_<token>` header.
-2. **Discover transactions missing a receipt** via `GET /transactions/missing_receipt` (across all of the user's organizations in one call), or per organization via `GET /organizations/:id/transactions?filters[missing_receipts]=true`. Both require `ledgers:read`.
-3. **Match each local file to a transaction** by amount, date, and merchant. Optionally call `GET /receipts?transaction_id=…` to confirm the transaction does not already have a receipt.
-4. **Upload** with `POST /receipts`, always passing `transaction_id` (see [Create a Receipt](#create-a-receipt)).
-5. **Skip what you cannot match.** Do not upload unmatched files to the Receipt Bin; flag them for a human.
-6. **Never mark a transaction no/lost** without explicit per-transaction human authorization (see [Best Practices](#receipt-specific-best-practices)).
-
----
-
-## Matching Receipts to Transactions
-
-Matching (workflow step 3) compares two sources: the **receipt file**, which the agent must read or OCR itself (the API exposes no extracted amount, date, or merchant; the [receipt object](#the-receipt-object) carries only `url`, `preview_url`, `filename`, `uploader`), and the **transaction object** from the transactions API. For card charges, the fields worth matching on are:
-
-| Transaction field | Use for matching |
-|---|---|
-| `amount_cents` | Charge amount in cents. Negative for expenses; compare against the receipt total by absolute value. |
-| `date` / `card_charge.spent_at` | Settlement date and the authorization timestamp. A receipt is normally dated the purchase day, which lines up with `spent_at`. |
-| `card_charge.merchant.smart_name` / `.name` | Humanized and raw merchant name. `smart_name` is the cleaner one to compare. |
-| `memo` | Transaction memo, often merchant-derived. |
-| `card_charge.card.last4` | Last 4 of the card used. May be `null`. |
-
-Heuristics, strongest first:
-
-- **Amount must match.** Compare absolute values (`|amount_cents|` against the receipt total in cents). This is a hard filter: a different amount is a different transaction. Two caveats:
-  - **Tips/gratuity.** Restaurant charges often settle higher than the printed subtotal. Allow the charged amount to exceed the receipt total by a plausible tip for restaurants; never allow it to be lower.
-  - **Currency.** Foreign charges settle in USD while the receipt may be in another currency. If `card_charge.merchant.country` is non-US, lean on merchant and date rather than a raw amount comparison.
-- **Dates must be close.** The receipt date should fall on or shortly before `card_charge.spent_at` (authorizations settle a day or two later). A receipt dated well after the charge, or before it, is a non-match. A few days' window is reasonable; a same-day match is a strong signal.
-- **Card last4.** If the receipt prints the last 4 digits of the card, they must equal `card_charge.card.last4`. A strong corroborating signal, but `last4` can be `null` and many receipts omit it: treat a match as confirmation and a missing value as neutral, not a mismatch.
-- **Merchant name.** Fuzzy-match the receipt's merchant against `smart_name` (fall back to `merchant.name` or `memo`). Normalize case and punctuation, and strip processor prefixes and location noise (e.g. `SQ *`, `TST* `, store numbers, city/state). A clear merchant match disambiguates when several transactions share an amount and date.
-
-Combining the signals:
-
-- Require an **exact amount match plus at least one** corroborating signal (close date, merchant, or last4) before attaching.
-- If **multiple transactions** match on amount and date, disambiguate with merchant and last4. If still ambiguous, **skip and flag for a human** rather than guess: attaching to the wrong transaction is worse than leaving it unattached.
-- **Only card charges expose merchant and card data.** ACH transfers, checks, donations, and disbursements have no `card_charge` block, so fall back to amount, date, and `memo` for those (uncommon for receipt uploads).
-
----
-
-## Request Size & Timeouts
-
-Every request is bound by a **30-second server timeout**. A call that runs longer is terminated, so keep each request small and page through results instead of asking for everything at once.
-
-- **Paginate listings.** Listing endpoints use cursor pagination. The `limit` query param sets the page size: it **defaults to 25** and is **capped at 100** (a larger value returns `400 invalid_operation`). Follow the `after` cursor to page (see [Pagination](./standards.md#pagination)).
-- **Prefer smaller pages.** When listing transactions or the Receipt Bin, request modest pages such as `?limit=25` and follow the cursor, rather than pushing `limit` to 100 on a large organization. Smaller pages return faster and stay well under the 30s ceiling.
-
-  ```bash
-  curl "https://hcb.hackclub.com/api/v4/transactions/missing_receipt?limit=25" \
-    -H "Authorization: Bearer hcb_<token>"
-  # then pass the last item's id back as ?after=txn_… for the next page
-  ```
-- **Process per page.** Match and upload as you page, rather than collecting every transaction first. This bounds memory and keeps any single request short.
-- **Uploads count too.** `POST /receipts` is also subject to the 30s timeout; a large file (up to 50 MB) over a slow link can approach it. If an upload times out you can't tell whether it landed, and uploads aren't deduped, so check with `GET /receipts?transaction_id=…` before re-uploading.
 
 ---
 
 ## Endpoints
 
-All receipt routes are [shallow and top-level](./standards.md#shallow-routing).
+The receipt CRUD routes documented here are [shallow and top-level](./standards.md#shallow-routing). (A nested `GET /organizations/:id/transactions/:transaction_id/receipts` also exists, but prefer the shallow `GET /receipts?transaction_id=…` below.)
 
 ### Create a Receipt
 
@@ -150,7 +83,9 @@ curl -X POST https://hcb.hackclub.com/api/v4/receipts \
   -F "transaction_id=txn_abc123" -F "file=@receipt.pdf"
 ```
 
-Returns `201` with the [receipt object](#the-receipt-object). `upload_method` is set to `api` automatically; extraction and pairing run async after the response.
+Returns `201` with the [receipt object](#the-receipt-object). The upload is recorded as an `api` upload server-side (this is not part of the returned object); extraction and pairing run async after the response.
+
+> Uploads aren't deduped, and an upload can hit the [30-second timeout and size limits](./standards.md#request-size--timeouts). If one times out you can't tell whether it landed, so check with `GET /receipts?transaction_id=…` before re-uploading.
 
 ### List Receipts
 
@@ -176,12 +111,12 @@ Governed by `ReceiptPolicy#destroy?`: receipts in the Receipt Bin can be deleted
 ### Find Transactions Missing a Receipt
 
 ```
-GET /api/v4/transactions/missing_receipt
+GET /api/v4/user/transactions/missing_receipt
 ```
 
 **Required scope:** `ledgers:read`
 
-Returns the authenticated user's transactions (across their Stripe cards) still missing a receipt, newest first, [paginated](./standards.md#pagination).
+Returns the authenticated user's transactions (card charges on their own Stripe cards) still missing a receipt, newest first, [paginated](./standards.md#pagination). This is scoped to the user's own card charges, not every transaction in their organizations. To find all of an organization's transactions missing a receipt, `GET /api/v4/organizations/:id/transactions?filters[missing_receipts]=true` does the same per organization.
 
 ### Mark a Transaction as No / Lost Receipt
 
@@ -189,9 +124,11 @@ Returns the authenticated user's transactions (across their Stripe cards) still 
 POST /api/v4/transactions/:id/mark_no_receipt    # :id is a txn_… ID
 ```
 
-**Required scope:** `receipts:write` · **Last resort, human-gated** (see [Best Practices](#receipt-specific-best-practices))
+**Required scope:** `receipts:write`
 
 Removes the transaction from the missing-receipt list when no receipt exists. Requires `ReceiptablePolicy#mark_no_or_lost?` (member+). Returns `{ "message": "Transaction marked as no/lost receipt" }`.
+
+> An automated agent must never call this without explicit, per-transaction human authorization. See the playbook's [Guardrails](../for-agents/receipt-upload.md#guardrails).
 
 ---
 
@@ -203,15 +140,13 @@ There is no single endpoint that moves a receipt out of the [Receipt Bin](#the-r
 2. **Read its `url`** from the receipt object. This is a signed file URL, downloadable directly with **no `Authorization` header**.
 3. **Download the file** from that `url`. Use the `filename` field for the local name.
 4. **Upload it to the transaction** with `POST /receipts` (`receipts:write`), passing `transaction_id` and the downloaded `file`. Confirm a `201` before continuing.
-5. **Delete the original** from the Receipt Bin with `DELETE /receipts/:id` (`receipts:write`). A receipt in the Receipt Bin can be deleted by its uploader, which is the token's own user.
-
-**Scopes:** `receipts:read` + `receipts:write` (both in the [recommended agent set](#recommended-scopes-for-a-receipt-agent)); the download in step 3 needs no scope.
+5. **Delete the original** from the Receipt Bin with `DELETE /receipts/:id` (`receipts:write`). A receipt in the Receipt Bin can be deleted by its uploader.
 
 **Caveats:**
 
 - **Order matters: delete only after a `201` upload.** If you delete first, or the upload fails, the file is gone.
 - **Step 4 needs upload permission on the target organization** (`ReceiptablePolicy#upload?`, member+). If the user isn't a member of the transaction's org, the upload returns `403`; do not delete the original in that case.
-- **The result is a new receipt** (`rct_…`) with `upload_method = api` and `uploader` set to the token's user. The original's uploader and any extracted text do not carry over.
+- **The result is a new receipt** (`rct_…`) recorded as an `api` upload, with `uploader` set to the token's user. The original's uploader and any extracted text do not carry over.
 
 ---
 
@@ -223,28 +158,13 @@ The two authorization layers fail the **same way**. A scope failure (the token l
 { "error": "not_authorized" }
 ```
 
-with status `403`. **You cannot tell the two apart from the response.** Disambiguate by construction instead:
+with status `403`. **You cannot tell the two apart from the response.** Disambiguate by construction: request the right scopes up front, so any `403` on a call your scopes cover points to a token misconfiguration rather than a per-record permission failure. (For the agent workflow's handling of this, see the playbook's [Guardrails](../for-agents/receipt-upload.md#guardrails).)
 
-- **Rule out scope failure up front.** Request the [recommended scopes](#recommended-scopes-for-a-receipt-agent) before you start. If a call you know your scopes cover (e.g. `GET /transactions/missing_receipt`, which needs only `ledgers:read`) returns `403`, the token is missing a scope or `restricted` is misconfigured. Fix the token; do not retry per record.
-- **Otherwise treat a `403` as a per-record skip.** Once the token is known good, a `403` on a specific `POST /receipts` almost always means the user isn't a member of that transaction's organization (`ReceiptablePolicy#upload?`). Skip that transaction and continue; transactions in the user's own organizations still succeed.
-
-Error bodies a receipt agent will encounter (full taxonomy in [`standards.md`](./standards.md#error-responses)):
+Error bodies a receipt integration will encounter (full taxonomy in [`standards.md`](./standards.md#error-responses)):
 
 | Status | Body `error` | Meaning |
 |--------|--------------|---------|
 | `401` | `invalid_auth` | Token missing, expired, or invalid. Re-authenticate. |
 | `403` | `not_authorized` | Missing scope **or** user not permitted for this record (indistinguishable). |
-| `404` | `resource_not_found` | No record for that `txn_…` / `rct_…` id. |
+| `404` | `resource_not_found` | No record for the `rct_…` or `txn_…` id you passed. Pass ids obtained from the API (a `txn_…` from the transactions API, an `rct_…` from a receipt listing). |
 | `400` | `invalid_record` / `invalid_operation` | Bad params (e.g. unsupported file type, missing `file`). |
-
----
-
-## Receipt-Specific Best Practices
-
-(General guidance such as token refresh, rate limits, and error shapes lives in [`standards.md`](./standards.md).)
-
-- **Always pass `transaction_id`.** A receipt uploaded without one lands in the user's [Receipt Bin](#the-receipt-bin), and there is no single endpoint to attach a receipt in the Receipt Bin to a transaction afterward (only the [re-upload workaround](#linking-a-receipt-in-the-receipt-bin-to-a-transaction)). If you cannot confidently match a file to a transaction, skip it and flag it for a human rather than uploading it to the Receipt Bin.
-- **Treat extraction and pairing as async.** Extracted fields aren't available in the create response.
-- **Uploads aren't deduped.** The same file uploaded twice creates two receipts. Use `receipts:read` (`GET /receipts?transaction_id=…`) to check whether a transaction already has a receipt, and track handled `txn_…` IDs across runs.
-- **Use `missing_receipt` to discover work.** `GET /api/v4/transactions/missing_receipt` lists the user's transactions still missing a receipt across all their organizations in one call. Scoped to one organization, `GET /api/v4/organizations/:id/transactions?filters[missing_receipts]=true` does the same. Both require `ledgers:read`.
-- **Marking no/lost is a last resort, and human-gated.** Never call `mark_no_receipt` autonomously. It suppresses the missing-receipt signal before anyone has searched for the receipt, so it must require explicit, per-transaction authorization from a human who has confirmed the receipt cannot be found. The agent's `receipts:write` scope permits this call, so the boundary is behavioral, not enforced.

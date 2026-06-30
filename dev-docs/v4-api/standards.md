@@ -19,6 +19,7 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
 - [Rate Limits](#rate-limits)
+- [Request Size & Timeouts](#request-size--timeouts)
 
 ---
 
@@ -501,6 +502,21 @@ All monetary values are represented in **cents** (the smallest currency unit) as
 ## Rate Limits
 
 Requests are throttled at **1,000 requests per 5 minutes per IP address**. Requests that exceed this limit receive a `429 Too Many Requests` response.
+
+---
+
+## Request Size & Timeouts
+
+Every request is bound by a **30-second server timeout**. A call that runs longer is terminated, so keep each request small and page through results instead of asking for everything at once.
+
+- **Paginate listings.** For cursor-paginated list endpoints, the `limit` query param sets the page size: it **defaults to 25** and is **capped at 100** (a larger value returns `400 invalid_operation`). Follow the `after` cursor to page (see [Pagination](#pagination)).
+- **Prefer smaller pages.** Request modest pages such as `?limit=25` and follow the cursor, rather than pushing `limit` to 100 on a large dataset. Smaller pages return faster and stay well under the 30s ceiling.
+
+  ```
+  GET /api/v4/organizations/org_h1izp/transactions?limit=25
+  # then pass the last item's id back as ?after=txn_… for the next page
+  ```
+- **Large uploads count too.** A `multipart/form-data` upload (e.g. `POST /api/v4/receipts`, files up to 50 MB) is also subject to the 30s timeout; a large file over a slow link can approach it. If an upload times out you cannot tell from the response whether it landed.
 
 ---
 
