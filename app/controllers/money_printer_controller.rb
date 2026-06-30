@@ -12,7 +12,7 @@ class MoneyPrinterController < ApplicationController
 
     @stats = Rails.cache.read(MoneyPrinterStatsJob::CACHE_KEY)
     @warming_up = @stats.nil?
-    @reveal_identities = current_user.auditor?
+    @reveal_identities = current_user&.auditor? || false
 
     if @warming_up
       enqueue_warmup
