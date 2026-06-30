@@ -1,9 +1,9 @@
-<%# locals: (event:, show_manual: false) %>
+<%# locals: (event:, show_manual: false, destination: "payments") %>
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
     <% if event.payees.any? %>
-      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) %>
     <% end %>
 
     <a class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" data-action="payee-picker#showAdding" data-payee-picker-target="searchHidden">
@@ -18,7 +18,7 @@
     </a>
 
     <% if show_manual %>
-      <%= link_to new_event_payment_path(event_id: event.slug, manual: true), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top", "payee-picker-target": "searchHidden" } do %>
+      <%= link_to new_recipient_transfer_path(destination, event, manual: true), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top", "payee-picker-target": "searchHidden" } do %>
         <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
           <%= inline_icon "edit", size: 18 %>
         </div>
@@ -43,6 +43,7 @@
       </button>
 
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true) do |form| %>
+        <%= hidden_field_tag :destination, destination %>
         <div class="flex flex-col gap-3">
           <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
             <%= form.label :name, "Name" %>

@@ -1,5 +1,8 @@
+<% destination = params[:destination].presence || "payments" %>
+
 <%= turbo_frame_tag :payee_results do %>
   <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "px-4 pb-2 pt-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
+    <%= hidden_field_tag :destination, destination %>
     <div class="input input-group max-w-none mt-1">
       <%= inline_icon "search" %>
       <%= form.text_field :q, value: params[:q], placeholder: "Search...", autofocus: true, class: "bg-transparent", autocomplete: "off", data: { action: "input->form#submitDebounced input->payee-picker#search" } %>
@@ -9,7 +12,7 @@
   <%= turbo_frame_tag :payee_results_list do %>
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
-        <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
+        <%= link_to new_recipient_transfer_path(destination, @event, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
           <div>
             <p class="font-medium"><%= payee.display_name %></p>

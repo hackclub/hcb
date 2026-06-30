@@ -1,7 +1,9 @@
+<%# locals: (form:, disabled:, label: "Attach a receipt / invoice", hint: "Required for reimbursements / goods & services payments.") %>
+
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
-    <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>
-    <span class="muted">Required for reimbursements / goods & services payments.</span>
+    <%= form.label :file, label, class: "font-semibold" %>
+    <span class="muted"><%= hint %></span>
   </div>
 
   <div
