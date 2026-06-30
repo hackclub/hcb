@@ -18,7 +18,7 @@ class Ledger
     end
 
     def hcb
-      @item = Ledger::Item.find_by_hashid!(params[:id])
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
 
       authorize @item
 
