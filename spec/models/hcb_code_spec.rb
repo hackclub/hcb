@@ -127,7 +127,7 @@ RSpec.describe HcbCode, type: :model do
         end
 
         it "returns both source and destination events" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoinghcb_code)
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
           hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.events).to contain_exactly(source_event, destination_event)
