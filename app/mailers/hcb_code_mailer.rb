@@ -4,6 +4,7 @@ class HcbCodeMailer < ApplicationMailer
   before_action { @inbound_mail = params[:mail] }
   before_action { @reply_to = params[:reply_to] }
   before_action { @to = params[:to] || @inbound_mail&.mail&.from&.first }
+  before_actoun :set_delivery_reason
 
   default to: -> { @to },
           reply_to: -> { @reply_to },
@@ -39,6 +40,12 @@ class HcbCodeMailer < ApplicationMailer
 
   def bounce_error
     mail subject: @inbound_mail&.mail&.subject || "An unknown error occured"
+  end
+
+  private
+
+  def set_delivery_reason
+    @delivery_reason = "you tried to email a receipt to an HCB transaction-specific upload address"
   end
 
 end
