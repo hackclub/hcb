@@ -36,7 +36,8 @@
             </p>
           <% end %>
         <% end %>
-        <div class="container container--md pt2">
+        <div class="container container--md pt2 pb2 relative">
+          <%= render "events/receipt_help_icon", class: "absolute top-0 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-muted/60 bg-white text-muted shadow-sm tooltipped tooltipped--s hover:bg-slate-50" %>
 
           <% if local_assigns[:redirect_url] %>
             <%= form.hidden_field :redirect_url, value: local_assigns[:redirect_url] %>
