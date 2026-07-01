@@ -72,6 +72,36 @@ class Ledger
       write_amount_cents!
     end
 
+    def humanized_type
+      type_metadata.first
+    end
+
+    def icon
+      type_metadata.last
+    end
+
+    private
+
+    def type_metadata
+      {
+        disbursement_incoming: ["Incoming transfer", "door-enter"],
+        disbursement_outgoing: ["Outgoing transfer", "door-leave"],
+        reimbursement_expense_payout: ["Reimbursement", "reimbursement"],
+        reimbursement_payout_holding: ["Reimbursement payout holding", "reimbursement"],
+        ach_transfer: ["Outgoing ACH", "payment-transfer"],
+        bank_fee: ["Fiscal sponsorship fee", "bank-icon"],
+        check: ["Mailed check", "email"],
+        increase_check: ["Mailed check", "email"],
+        check_deposit: ["Check deposit", "cheque"],
+        donation: ["Donation", "support"],
+        fee_revenue: ["Fee revenue", "bank-icon"],
+        invoice: ["Invoice", "payment-docs"],
+        paypal_transfer: ["PayPal transfer", "paypal"],
+        wire: ["Wire", "web"],
+        wise_transfer: ["Wise transfer", "wise"],
+      }[type.to_sym] || ["Unknown", "bank-icon"]
+    end
+
   end
 
 end
