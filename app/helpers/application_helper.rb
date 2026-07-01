@@ -479,9 +479,7 @@ module ApplicationHelper
               ])
   end
 
-  # The payee picker is shared between the payment and contractor invite flows.
-  # `destination` ("payments" or "contractors") decides which "new transfer"
-  # page selecting a recipient leads to.
+  # Shared between contractors and payments
   def new_recipient_transfer_path(destination, event, **opts)
     if destination.to_s == "contractors"
       new_event_contractor_path(event_id: event.slug, **opts)
