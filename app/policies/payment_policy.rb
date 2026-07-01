@@ -3,10 +3,7 @@
 class PaymentPolicy < ApplicationPolicy
   def show?
     return true if user&.auditor?
-<<<<<<< Updated upstream
-=======
     return true if record.legal_entity&.users&.include?(user)
->>>>>>> Stashed changes
 
     user.present? && record.event.users.exists?(id: user.id)
   end

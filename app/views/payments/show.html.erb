@@ -2,7 +2,7 @@
 <% page_sm %>
 <%= render "events/nav", selected: :payments %>
 
-<%= turbo_frame_tag @payment.id, target: "_top" do %>
+<%= turbo_frame_tag "payment_#{@payment.id}", target: "_top" do %>
   <article class="hcb-code">
     <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
       <span class="flex items-center py-3 gap-2 flex-grow">
