@@ -261,6 +261,14 @@ class WiseTransfer < ApplicationRecord
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
   end
 
+  def can_cancel?
+    pending?
+  end
+
+  def cancel!
+    mark_rejected!
+  end
+
   private
 
   WISE_ID_REGEXPS = [

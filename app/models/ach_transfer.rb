@@ -270,6 +270,14 @@ class AchTransfer < ApplicationRecord
     column_id&.starts_with?("rttr")
   end
 
+  def can_cancel?
+    pending? || scheduled?
+  end
+
+  def cancel!
+    mark_rejected!
+  end
+
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
   def reverse!(reason)
     raise ArgumentError, "must have been sent" unless column_id

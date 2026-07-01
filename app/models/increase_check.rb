@@ -337,6 +337,18 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
+  def can_cancel?
+    pending? || (approved && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
+  end
+
   # https://column.com/docs/api/#check-transfer/stop
   def can_stop?
     column_issued? || column_manual_review?

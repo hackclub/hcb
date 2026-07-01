@@ -240,6 +240,14 @@ class Wire < ApplicationRecord
     save!
   end
 
+  def can_cancel?
+    pending?
+  end
+
+  def cancel!
+    mark_rejected!
+  end
+
   def column_wire_details
     return nil unless column_id.present?
 
