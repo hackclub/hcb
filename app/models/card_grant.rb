@@ -183,7 +183,8 @@ class CardGrant < ApplicationRecord
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -207,7 +208,8 @@ class CardGrant < ApplicationRecord
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -245,7 +247,8 @@ class CardGrant < ApplicationRecord
       destination_transaction_category_slug: "grants-stipends",
       category_assignment_strategy: "automatic"
     ).run
-    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)

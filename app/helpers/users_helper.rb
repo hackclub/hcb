@@ -162,6 +162,17 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
+  end
+
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil

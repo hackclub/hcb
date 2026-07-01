@@ -48,6 +48,7 @@
 class Wire < ApplicationRecord
   has_paper_trail
   include HasPaperTrailHelpers
+  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]

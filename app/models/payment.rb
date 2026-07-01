@@ -25,6 +25,8 @@
 #
 class Payment < ApplicationRecord
   include AASM
+  include Hashid::Rails
+  include PgSearch::Model
   include Receiptable
   include Commentable
   has_paper_trail
@@ -38,6 +40,8 @@ class Payment < ApplicationRecord
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
+
+  pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
@@ -72,9 +76,9 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if legal_entity.complete? && legal_entity.default_payout_method.present?
+    if legal_entity&.complete? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity.complete?
+    elsif legal_entity&.complete?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -95,6 +99,25 @@ class Payment < ApplicationRecord
 
   def marked_no_or_lost_receipt_at
     nil
+  end
+
+
+  def state_color
+    return "warning" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "success" if aasm_state == "successful"
+    return "error" if aasm_state == "rejected"
+
+    "muted"
+  end
+
+  def state_text
+    return "Pending recipient" if aasm_state == "pending_legal_entity"
+
+    return aasm_state.humanize
+  end
+
+  def memo
+    "Payment to #{payee.display_name} for #{purpose}"
   end
 
   private

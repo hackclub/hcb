@@ -7,17 +7,20 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  datetime                     :datetime         not null
+#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  linked_object_id             :bigint
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents  (amount_cents)
-#  index_ledger_items_on_datetime      (datetime)
-#  index_ledger_items_on_short_code    (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents   (amount_cents)
+#  index_ledger_items_on_datetime       (datetime)
+#  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
+#  index_ledger_items_on_short_code     (short_code) UNIQUE
 #
 class Ledger
   class Item < ApplicationRecord
@@ -30,6 +33,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    belongs_to :linked_object, polymorphic: true, optional: true
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -66,6 +70,36 @@ class Ledger
     def map!
       Ledger::Mapper.new(ledger_item: self).run
       write_amount_cents!
+    end
+
+    def humanized_type
+      type_metadata.first
+    end
+
+    def icon
+      type_metadata.last
+    end
+
+    private
+
+    def type_metadata
+      {
+        "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
+        "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
+        "Reimbursement::ExpensePayout": ["Reimbursement", "reimbursement"],
+        "Reimbursement::PayoutHolding": ["Reimbursement payout holding", "reimbursement"],
+        "AchTransfer": ["Outgoing ACH", "payment-transfer"],
+        "BankFee": ["Fiscal sponsorship fee", "bank-icon"],
+        "Check": ["Mailed check", "email"],
+        "IncreaseCheck": ["Mailed check", "email"],
+        "CheckDeposit": ["Check deposit", "cheque"],
+        "Donation": ["Donation", "support"],
+        "FeeRevenue": ["Fee revenue", "bank-icon"],
+        "Invoice": ["Invoice", "payment-docs"],
+        "PaypalTransfer": ["PayPal transfer", "paypal"],
+        "Wire": ["Wire", "web"],
+        "WiseTransfer": ["Wise transfer", "wise"],
+      }[linked_object_type&.to_sym] || ["Unknown", "bank-icon"]
     end
 
   end
