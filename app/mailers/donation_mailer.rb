@@ -16,12 +16,10 @@ class DonationMailer < ApplicationMailer
   end
 
   def first_donation_notification
-    @unsubscribe_link = settings_notifications_url
     mail to: @emails, subject: "Congrats on receiving your first donation for #{@donation.event.name}! 🎉", reply_to: @donation.email
   end
 
   def notification
-    @unsubscribe_link = settings_notifications_url
     mail to: @emails, subject: "You've received a donation for #{@donation.event.name}! 🎉", reply_to: @donation.email
   end
 

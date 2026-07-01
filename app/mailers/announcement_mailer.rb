@@ -42,7 +42,6 @@ class AnnouncementMailer < ApplicationMailer
     @announcement = params[:announcement]
     @event = @announcement.event
     @delivery_reason = "you are subscribed to monthly announcements for #{@event.name} on HCB."
-    @unsubscribe_link = event_url(@event)
 
     @emails = @event.organizer_contact_emails(only_managers: true)
 
