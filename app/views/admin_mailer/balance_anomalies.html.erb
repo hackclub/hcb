@@ -1,7 +1,7 @@
 These events have discrepancies in their balances between the old and new transaction engine:
 
-<% @anomalous_events.find_each do |event| %>
-  <h2><%= link_to event.name, event_url(event) %> (<%= event.id %>)</h2>
-  <p><%= link_to "Old transaction engine balance:", event_transactions_url(event) %> <%= event.balance_v2_cents %></p>
-  <p><%= link_to "New transaction engine balance:", ledger_url(event.ledger) %> <%= event.ledger.balance_cents %></p>
+<% @anomalous_events.each do |anomaly| %>
+  <h2><%= link_to anomaly[:name], event_url(anomaly[:slug]) %> (<%= anomaly[:id] %>)</h2>
+  <p><%= link_to "OLD balance_v2_cents:", event_transactions_url(anomaly[:slug]) %> <%= anomaly[:balance_v2_cents] %></p>
+  <p><%= link_to "NEW ledger.balance_cents (sum of ledger items):", event_ledger_url(anomaly[:slug]) %> <%= anomaly[:ledger_balance_cents] %></p>
 <% end %>

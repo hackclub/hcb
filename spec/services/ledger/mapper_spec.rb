@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Ledger::Mapper do
   let(:item) do
-    i = Ledger::Item.new(amount_cents: 1000, memo: "Test", date: Time.current)
+    i = Ledger::Item.new(amount_cents: 1000, memo: "Test", datetime: Time.current)
     i.save(validate: false)
     i
   end

@@ -329,6 +329,8 @@ class UsersController < ApplicationController
 
     @user.assign_attributes(user_params)
 
+    payout_method_type = params.dig(:user, :payout_method_type)
+
     if @user.use_two_factor_authentication_changed?
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
@@ -381,14 +383,32 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
-    if @user.save
+    payout_update = nil
+    saved = ActiveRecord::Base.transaction do
+      user_ok = @user.save
+      payout_ok = true
+      if payout_method_type.present?
+        payout_update = LegalEntity::PayoutMethodService::Update.new(
+          user: @user,
+          details_type: payout_method_type,
+          details_attrs: payout_method_details_params
+        )
+        payout_ok = payout_update.run
+      end
+      raise ActiveRecord::Rollback unless user_ok && payout_ok
+
+      true
+    end
+    @payout_method = payout_update&.payout_method
+
+    if saved
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
       if @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
         redirect_to(return_to || root_path)
       else
-        if @user.payout_method&.saved_changes? && @user == current_user
+        if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
           flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
@@ -409,8 +429,8 @@ class UsersController < ApplicationController
         return
       end
 
-      if @user.payout_method&.errors&.any?
-        flash.now[:error] = @user.payout_method.errors.full_messages.to_sentence
+      if payout_update&.error_messages&.any?
+        flash.now[:error] = payout_update.error_messages.to_sentence
         render :edit_payout, status: :unprocessable_entity
         return
       end
@@ -524,82 +544,56 @@ class UsersController < ApplicationController
       }
     end
 
-    if @user.can_update_payout_method?
-      attributes << :payout_method_type
-      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Check.name
-        attributes << {
-          payout_method_attributes: [
-            :address_line1,
-            :address_line2,
-            :address_city,
-            :address_state,
-            :address_postal_code,
-            :address_country
-          ]
-        }
-      end
-
-      if params.require(:user)[:payout_method_type] == User::PayoutMethod::Wire.name
-        attributes << {
-          payout_method_wire: [
-            :address_line1,
-            :address_line2,
-            :address_city,
-            :address_state,
-            :address_postal_code,
-            :recipient_country,
-            :recipient_name,
-            :bic_code,
-            :account_number
-          ] + Wire.recipient_information_accessors
-        }
-      end
-
-      if params.require(:user)[:payout_method_type] == User::PayoutMethod::WiseTransfer.name
-        attributes << {
-          payout_method_wise_transfer: [
-            :address_line1,
-            :address_line2,
-            :address_city,
-            :address_state,
-            :address_postal_code,
-            :recipient_country,
-            :currency,
-          ] + User::PayoutMethod::WiseTransfer.recipient_information_accessors
-        }
-      end
-
-      if params.require(:user)[:payout_method_type] == User::PayoutMethod::AchTransfer.name
-        attributes << {
-          payout_method_attributes: [
-            :account_number,
-            :routing_number
-          ]
-        }
-      end
-
-      if params.require(:user)[:payout_method_type] == User::PayoutMethod::PaypalTransfer.name
-        attributes << {
-          payout_method_attributes: [
-            :recipient_email
-          ]
-        }
-      end
-    end
-
     if superadmin_signed_in?
       attributes << :access_level
     end
 
-    p = params.require(:user).permit(attributes)
+    params.require(:user).permit(attributes)
+  end
 
-    # The Wire payout method attributes are under the `payout_method_wire` param instead of `payout_method_attributes` to prevent conflict with existing keys for other payout methods such as AchTransfer.
-    # Rails requires that DOM form inputs have unique names.
-    p[:payout_method_attributes] = p.delete(:payout_method_wire) if p[:payout_method_wire]
-    # Same thing for Wise transfer payouts
-    p[:payout_method_attributes] = p.delete(:payout_method_wise_transfer) if p[:payout_method_wise_transfer]
 
-    p
+  def payout_method_details_params
+    permitted =
+      case params.dig(:user, :payout_method_type)
+      when LegalEntity::PayoutMethod::Check.name
+        params.require(:user).permit(payout_method_attributes: [
+                                       :address_line1,
+                                       :address_line2,
+                                       :address_city,
+                                       :address_state,
+                                       :address_postal_code,
+                                       :address_country
+                                     ])[:payout_method_attributes]
+      when LegalEntity::PayoutMethod::Wire.name
+        params.require(:user).permit(payout_method_wire: [
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :recipient_country,
+          :recipient_name,
+          :bic_code,
+          :account_number
+        ] + LegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
+      when LegalEntity::PayoutMethod::WiseTransfer.name
+        params.require(:user).permit(payout_method_wise_transfer: [
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :recipient_country,
+          :currency,
+        ] + LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
+      when LegalEntity::PayoutMethod::AchTransfer.name
+        params.require(:user).permit(payout_method_attributes: [
+                                       :account_number,
+                                       :routing_number
+                                     ])[:payout_method_attributes]
+      end
+
+    permitted || {}
   end
 
 end

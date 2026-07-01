@@ -68,6 +68,8 @@ class HcbCode < ApplicationRecord
 
   before_create :generate_and_set_short_code
 
+  after_create :write_event_and_subledger_id
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -189,6 +191,8 @@ class HcbCode < ApplicationRecord
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
+    return outgoing_disbursement.amount if outgoing_disbursement?
+    return incoming_disbursement.amount if incoming_disbursement?
 
     if canonical_transactions.any?
       return canonical_transactions
@@ -396,6 +400,7 @@ class HcbCode < ApplicationRecord
 
   def card_grant?
     # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    # TODO: this causes card grant issuing memos to only render on one side of the disbursement
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
@@ -606,7 +611,7 @@ class HcbCode < ApplicationRecord
   # 1) it doesn't consider event plan
   # 2) it doesn't consider the amount of the HCB code
   #
-  # this is because these two things are expensive to compute on a HCB code.
+  # this is because these two things are expensive to compute on an HCB code.
 
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
@@ -746,7 +751,7 @@ class HcbCode < ApplicationRecord
     nil
   end
 
-  def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
+  def write_event_and_subledger_id(event = events.first, subledger = subledgers.first)
     update(event_id: event&.id, subledger_id: subledger&.id)
   end
 
