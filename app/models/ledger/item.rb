@@ -50,9 +50,9 @@ class Ledger
     def receipt_required?
       return false if amount_cents >= 0
 
-      if primary_ledger.event.present?
+      if primary_ledger&.event.present?
         return false unless primary_ledger.event.plan.receipts_required?
-      else
+      elsif primary_ledger&.card_grant.present?
         return false unless primary_ledger.card_grant.event.plan.receipts_required?
       end
 
