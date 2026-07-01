@@ -6,12 +6,14 @@ class OrganizerPositionInvite
 
     def created
       @emails = @request.link.event.organizer_contact_emails(only_managers: true)
+      @delivery_reason = "you are a manager of #{request.link.event.name}."
 
       mail to: @emails, subject: "#{@request.requester.name} has requested to join #{@request.link.event.name}"
     end
 
     def denied
       @email = @request.requester.email_address_with_name
+      @delivery_reason = "you requested to join #{@request.link.event.name} through an invite link."
 
       mail to: @email, subject: "Your request to join #{@request.link.event.name} has been denied"
     end
