@@ -75,8 +75,22 @@ module Api
       def update
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
 
-        if params.key? :memo
-          @hcb_code.update_custom_memo!(params[:memo])
+        ActiveRecord::Base.transaction do
+          if params.key? :memo
+            @hcb_code.update_custom_memo!(params[:memo])
+          end
+
+          if params.key? :tag_ids
+            tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
+
+            tags.each do |tag|
+              authorize tag, :toggle_tag?
+              raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
+            end
+
+            @hcb_code.tags = tags
+            @hcb_code.save!
+          end
         end
 
         render "show"
