@@ -31,7 +31,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
-  alias_method :ledger?, :transactions?
+  alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
@@ -160,7 +160,19 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    show? && record.plan.transfers_enabled?
+    !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def payments?
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def new_payment?
+    payments? && new_transfer?
+  end
+
+  def create_payment?
+    payments? && create_transfer?
   end
 
   def transfers_in_v4?
@@ -195,12 +207,16 @@ class EventPolicy < ApplicationPolicy
     (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
   end
 
+  alias async_sub_organizations_graph? sub_organizations?
+
   def sub_organizations_in_v4?
     auditor_or_reader? && sub_organizations?
   end
 
   def create_sub_organization?
-    admin_or_manager? && record.subevents_enabled?
+    return false unless record.subevents_enabled?
+
+    admin_or_manager? || (Flipper.enabled?(:member_subevent_creation, record) && member?)
   end
 
   def donation_overview?
@@ -212,7 +228,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def invoices?
-    show? && record.approved? && record.plan.invoices_enabled?
+    show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
   def account_number?
@@ -255,6 +271,16 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def request_call?
+    signee?
+  end
+
+  def ledger?
+    auditor? || (Flipper.enabled?(:new_ledger_2026_06_30, record) && reader?)
+  end
+
+  alias hide_onboarding_message? request_call?
+
   private
 
   def admin_or_member?
@@ -287,6 +313,10 @@ class EventPolicy < ApplicationPolicy
 
   def manager?
     OrganizerPosition.role_at_least?(user, record, :manager)
+  end
+
+  def signee?
+    OrganizerPosition.find_by(event: record, user:)&.is_signee?
   end
 
   def admin_or_manager?

@@ -15,7 +15,7 @@ RSpec.describe DisbursementsController do
       destination_event = create(:event)
       create(:organizer_position, user: sender, event: destination_event)
 
-      sign_in(sender)
+      create_session(sender, verified: true)
 
       expect do
         post(
@@ -49,7 +49,7 @@ RSpec.describe DisbursementsController do
 
       destination_event = create(:event)
 
-      sign_in(sender)
+      create_session(sender, verified: true)
 
       expect do
         post(
@@ -85,7 +85,7 @@ RSpec.describe DisbursementsController do
       admin = create(:user, :make_admin)
       disbursement = create(:disbursement)
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
@@ -114,7 +114,7 @@ RSpec.describe DisbursementsController do
         destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
       )
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
@@ -143,7 +143,7 @@ RSpec.describe DisbursementsController do
         destination_transaction_category: TransactionCategory.find_or_create_by!(slug: "fundraising"),
       )
 
-      sign_in(admin)
+      create_session(admin, verified: true)
 
       post(
         :set_transaction_categories,
@@ -161,6 +161,22 @@ RSpec.describe DisbursementsController do
       disbursement.reload
       expect(disbursement.source_transaction_category.slug).to eq("donations")
       expect(disbursement.destination_transaction_category.slug).to eq("rent")
+    end
+  end
+
+  describe "#show" do
+    it "renders and resolves the comment thread HcbCode via the outgoing hcb_code" do
+      auditor = create(:user, :make_auditor)
+      disbursement = create(:disbursement)
+
+      create_session(auditor, verified: true)
+
+      get(:show, params: { id: disbursement.id })
+
+      expect(response).to have_http_status(:ok)
+      # The show action find-or-creates the comment thread's HcbCode from the
+      # outgoing hcb_code (the legacy `hcb_code` alias was removed).
+      expect(HcbCode.exists?(hcb_code: disbursement.outgoing_hcb_code)).to be(true)
     end
   end
 end

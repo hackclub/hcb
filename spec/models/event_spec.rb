@@ -93,6 +93,40 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#ancestor_ids" do
+    it "returns ids ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestor_ids).to eq([grandchild.id, child.id, root.id])
+    end
+  end
+
+  describe "#ancestors" do
+    it "returns events ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestors.to_a).to eq([grandchild, child, root])
+    end
+  end
+
+  describe "#ancestor_organizer_positions" do
+    it "returns positions on self and all ancestors" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      op_root = create(:organizer_position, event: root)
+      op_child = create(:organizer_position, event: child)
+      op_grandchild = create(:organizer_position, event: grandchild)
+
+      expect(grandchild.ancestor_organizer_positions).to match_array([op_grandchild, op_child, op_root])
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)

@@ -28,7 +28,7 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
   json.lost_receipt hcb_code.no_or_lost_receipt?
   json.appearance hcb_code.incoming_disbursement.special_appearance_name if hcb_code.incoming_disbursement&.special_appearance?
 
-  if current_user&.auditor?
+  if can_admin?(:read)
     json._debug do
       json.hcb_code hcb_code.hcb_code
     end
@@ -48,5 +48,5 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.wise_transfer  { json.partial! "api/v4/transactions/wise_transfer",  wise_transfer:  hcb_code.wise_transfer                      } if hcb_code.wise_transfer?
   end
 
-  json.organization hcb_code.event, partial: "api/v4/events/event", as: :event if expand?(:organization)
+  expand_association(json, :organization, hcb_code.event, partial: "api/v4/events/event", as: :event)
 end

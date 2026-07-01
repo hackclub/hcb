@@ -41,7 +41,26 @@
           {
             "/": "/?*",
             "comment": "Organization homepages"
-          }
+          },
+          {
+            "/": "/referrals/*",
+            "comment": "Referrals",
+            "exclude": true
+          },
+          {
+            "/": "/from/*",
+            "exclude": true
+          },
+          {
+            "/": "/first/*",
+            "comment": "FIRST",
+            "exclude": true
+          },
+          {
+            "/": "/money-printer",
+            "comment": "Money Printer",
+            "exclude": true
+          },
         ]
       }
     ]
