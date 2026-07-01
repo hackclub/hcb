@@ -178,7 +178,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
   end
 
-  def r
+  def pending_expired?
     unsettled? && created_at < 5.days.ago
   end
 
