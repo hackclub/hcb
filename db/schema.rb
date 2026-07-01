@@ -13,6 +13,7 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
+  create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2753,9 +2754,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.boolean "verified", default: false, null: false
     t.bigint "webauthn_credential_id"
     t.index ["impersonated_by_id"], name: "index_user_sessions_on_impersonated_by_id"
-    t.index ["session_token_bidx"], name: "index_user_sessions_on_session_token_bidx"
     t.index ["user_id"], name: "index_user_sessions_on_user_id"
-    t.index ["webauthn_credential_id"], name: "index_user_sessions_on_webauthn_credential_id"
   end
 
   create_table "user_totps", force: :cascade do |t|
@@ -2816,7 +2815,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.jsonb "object"
     t.jsonb "object_changes"
     t.string "whodunnit"
-    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
   create_table "w9s", force: :cascade do |t|
