@@ -99,7 +99,7 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
-      }[linked_object_type&.to_sym] || ["Unknown", "bank-icon"]
+      }[linked_object_type&.to_sym] || ["Unknown", "cash"]
     end
 
   end
