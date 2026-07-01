@@ -1,13 +1,19 @@
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
-    <%= form.label :file, "Attach a receipt or invoice", class: "font-semibold" %>
-    <span class="muted">
-      <% if Flipper.enabled?(:payments_contractors_refresh_2026_06_26) %>
-        Required for record-keeping
-      <% else %>
-        Required for reimbursements / goods & services payments.
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <%= form.label :file, "Attach a receipt / invoice", class: "font-semibold" %>
+        <span class="muted">Required for reimbursements / goods & services payments.</span>
+      </div>
+
+      <%= link_to "https://help.hcb.hackclub.com/en/articles/15410229-what-counts-as-a-valid-receipt-and-when-is-it-due",
+          class: "inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-muted/60 bg-white text-muted shadow-sm tooltipped tooltipped--s hover:bg-slate-50",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          "aria-label" => "What counts as a valid receipt?" do %>
+        <%= inline_icon "question-mark", size: 14 %>
       <% end %>
-    </span>
+    </div>
   </div>
 
   <div
@@ -16,7 +22,7 @@
     <%= form.file_field :file,
         multiple: true,
         include_hidden: false,
-        required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26),
+        required: false,
         accept: "image/*,image/heic,.pdf",
         data: {
           "file-drop-target"   => "fileInput",
