@@ -342,8 +342,8 @@ class Event < ApplicationRecord
   has_many :payroll_contracts, through: :payees
 
   has_many :disbursements
-  has_many :incoming_disbursements, class_name: "Disbursement"
-  has_many :outgoing_disbursements, class_name: "Disbursement", foreign_key: :source_event_id
+  has_many :incoming_disbursements, class_name: "Disbursement::Incoming"
+  has_many :outgoing_disbursements, class_name: "Disbursement::Outgoing", foreign_key: :source_event_id
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations

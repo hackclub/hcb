@@ -1579,12 +1579,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_120000) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "datetime", null: false
+    t.bigint "linked_object_id"
+    t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
@@ -2523,6 +2526,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_01_120000) do
     t.datetime "updated_at", null: false
     t.index ["assignee_type", "assignee_id"], name: "index_tasks_on_assignee"
     t.index ["taskable_type", "taskable_id"], name: "index_tasks_on_taskable"
+  end
+
+  create_table "tax_forms", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_id"
+    t.string "external_service", null: false
+    t.datetime "failed_at"
+    t.string "form_type"
+    t.bigint "legal_entity_id", null: false
+    t.datetime "sent_at"
+    t.string "taxbandits_status"
+    t.string "taxbandits_tin_matching_status"
+    t.datetime "updated_at", null: false
+    t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
   end
 
   create_table "tours", force: :cascade do |t|

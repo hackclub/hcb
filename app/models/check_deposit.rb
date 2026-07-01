@@ -34,6 +34,7 @@ class CheckDeposit < ApplicationRecord
   include Hashid::Rails
   hashid_config salt: ""
 
+  include HasLedgerItem
   include PublicIdentifiable
   set_public_id_prefix :cdp
 

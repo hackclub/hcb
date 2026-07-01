@@ -70,6 +70,7 @@ class AchTransfer < ApplicationRecord
   include Payoutable
   include HasPaymentRecipient
   include Freezable
+  include HasLedgerItem
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]

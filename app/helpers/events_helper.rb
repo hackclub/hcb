@@ -158,6 +158,7 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :payments,
+      beta: true,
       available_proc: ->(event) { policy(event).payments? }
     },
     {
