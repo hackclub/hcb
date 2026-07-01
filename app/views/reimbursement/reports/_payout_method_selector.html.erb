@@ -4,23 +4,6 @@
 <% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :asc) : [] %>
 <% current = report.legal_entity_payout_method %>
 
-<% short_label = lambda do |pm|
-     details = pm.details
-     title = pm.title_kind
-     suffix = case details
-              when LegalEntity::PayoutMethod::AchTransfer
-                (last4 = details.account_number.to_s.last(4)).present? ? "••••#{last4}" : nil
-              when LegalEntity::PayoutMethod::Wire
-                title = "Wire"
-                (last4 = details.account_number.to_s.last(4)).present? ? "••••#{last4}" : nil
-              when LegalEntity::PayoutMethod::WiseTransfer
-                details.currency
-              when LegalEntity::PayoutMethod::Check
-                details.address_line1
-              end
-     suffix.present? ? "#{title} (#{suffix})" : title
-   end %>
-
 <div class="card mt-4 flex items-center justify-between" style="gap: 1rem;">
   <div style="min-width: 0;">
     <h3 class="mt-0 mb-1">Payout method</h3>
@@ -34,7 +17,7 @@
     <button type="button" class="btn bg-snow flex items-center text-left" style="gap: 8px;width:16rem"
             data-menu-target="toggle"
             data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-      <span class="flex-1 truncate"><%= current ? short_label.call(current) : "Choose…" %></span>
+      <span class="flex-1 truncate"><%= current ? current.short_label : "Choose…" %></span>
       <%= inline_icon "down-caret", size: 20 %>
     </button>
 
@@ -43,7 +26,7 @@
         <%= link_to reimbursement_report_update_payout_method_path(report, legal_entity_payout_method_id: pm.id),
               class: "flex items-center#{" bold" if pm == current}", data: { turbo_method: :post } do %>
           <%= inline_icon pm.icon, size: 24 %>
-          <%= short_label.call(pm) %>
+          <%= pm.short_label %>
         <% end %>
       <% end %>
 

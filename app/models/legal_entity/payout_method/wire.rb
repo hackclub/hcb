@@ -54,6 +54,11 @@ class LegalEntity
         "international wire to account ending in ••••#{account_number.to_s.last(4)}"
       end
 
+      def short_label
+        last4 = account_number.to_s.last(4)
+        last4.present? ? "Wire (••••#{last4})" : "Wire"
+      end
+
       def currency
         "USD"
       end

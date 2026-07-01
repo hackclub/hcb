@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe PayoutMethodsController do
+RSpec.describe LegalEntity::PayoutMethodsController do
   include SessionSupport
 
   let(:user) { create(:user) }
@@ -62,12 +62,12 @@ RSpec.describe PayoutMethodsController do
     end
   end
 
-  describe "#destroy" do
+  describe "#archive" do
     it "blocks removing a method while a report using it is in-flight" do
       pm = legal_entity.payout_methods.create!(default: true, details: ach)
       create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested, legal_entity_payout_method: pm)
 
-      delete(:destroy, params: { id: pm.id })
+      delete(:archive, params: { id: pm.id })
 
       expect(flash[:error]).to match(/being processed/i)
       expect(LegalEntity::PayoutMethod.exists?(pm.id)).to be(true)
@@ -76,7 +76,7 @@ RSpec.describe PayoutMethodsController do
     it "does not allow removing the default method" do
       default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
 
-      delete(:destroy, params: { id: default_pm.id })
+      delete(:archive, params: { id: default_pm.id })
 
       expect(flash[:error]).to match(/default/i)
       expect(default_pm.reload.archived).to be(false)
@@ -87,7 +87,7 @@ RSpec.describe PayoutMethodsController do
       legal_entity.payout_methods.create!(default: true, details: ach)
       other_pm = legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
 
-      delete(:destroy, params: { id: other_pm.id })
+      delete(:archive, params: { id: other_pm.id })
 
       expect(LegalEntity::PayoutMethod.exists?(other_pm.id)).to be(true)
       expect(other_pm.reload.archived).to be(true)
@@ -99,7 +99,7 @@ RSpec.describe PayoutMethodsController do
       other_pm = legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft, legal_entity_payout_method: other_pm)
 
-      delete(:destroy, params: { id: other_pm.id })
+      delete(:archive, params: { id: other_pm.id })
 
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
     end
@@ -108,7 +108,7 @@ RSpec.describe PayoutMethodsController do
       legal_entity.payout_methods.create!(default: true, details: ach)
       archived = legal_entity.payout_methods.create!(default: false, archived: true, details: ach(account: "99999999"))
 
-      delete(:destroy, params: { id: archived.id })
+      delete(:archive, params: { id: archived.id })
 
       expect(flash[:error]).to match(/not found/i)
     end

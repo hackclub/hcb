@@ -56,6 +56,10 @@ class LegalEntity
         "check mailed to #{[address_line1, address_line2].compact_blank.join(", ")}"
       end
 
+      def short_label
+        address_line1.present? ? "#{title_kind} (#{address_line1})" : title_kind
+      end
+
       def currency
         "USD"
       end

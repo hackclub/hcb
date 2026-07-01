@@ -67,9 +67,16 @@
             <% end %>
           <% end %>
           <% unless locked %>
-            <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_frame: "_top", turbo_confirm: "Remove this payout method?" } do %>
-              <%= inline_icon "delete", size: 24 %>
-              Remove
+            <% if payout_method.default? %>
+              <span class="flex items-center muted tooltipped tooltipped--w" aria-label="Set another payout method as default before removing this one.">
+                <%= inline_icon "delete", size: 24 %>
+                Remove
+              </span>
+            <% else %>
+              <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_frame: "_top", turbo_confirm: "Remove this payout method?" } do %>
+                <%= inline_icon "delete", size: 24 %>
+                Remove
+              <% end %>
             <% end %>
           <% end %>
         </div>

@@ -52,7 +52,7 @@ class LegalEntity
     validate :details_must_be_supported
 
     # type-specific presentation lives on the detail record
-    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, to: :details
+    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, to: :details
 
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)

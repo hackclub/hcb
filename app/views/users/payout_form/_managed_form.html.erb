@@ -12,15 +12,6 @@
 <% form_opts.merge!(url: payout_method_path(editing), method: :patch) if editing %>
 <% form_opts.merge!(url: payout_methods_path, method: :post) if creating %>
 <%= form_with(**form_opts) do |form| %>
-  <% if user.full_name.blank? %>
-    <div class="heading h3 pb2 bold">Firstly, we need to know your name:</div>
-    <div class="field">
-      <%= form.label :full_name, "Your full legal name" %>
-      <%= form.text_field :full_name, required: true, placeholder: "Fiona Hacksworth" %>
-      <span class="muted">This should match the name on your bank account and will be printed on any checks issued to you.</span>
-    </div>
-  <% end %>
-
   <% unless editing %>
     <fieldset>
       <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>

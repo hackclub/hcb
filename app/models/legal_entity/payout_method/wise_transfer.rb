@@ -52,6 +52,10 @@ class LegalEntity
         ["wise transfer", ("to #{bank_name}" if bank_name.present?), ("(#{currency})" if currency.present?)].compact.join(" ")
       end
 
+      def short_label
+        currency.present? ? "#{title_kind} (#{currency})" : title_kind
+      end
+
     end
 
   end

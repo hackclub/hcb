@@ -42,6 +42,11 @@ class LegalEntity
         "ACH transfer to account ending in ••••#{account_number.to_s.last(4)}"
       end
 
+      def short_label
+        last4 = account_number.to_s.last(4)
+        last4.present? ? "#{title_kind} (••••#{last4})" : title_kind
+      end
+
       def currency
         "USD"
       end
