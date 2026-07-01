@@ -4,6 +4,7 @@ class EventMailer < ApplicationMailer
   before_action { @event = params[:event] }
   before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
+  before_action :set_delivery_reason
 
   def monthly_donation_summary
     @donations = @event.donations.succeeded_and_not_refunded.where(created_at: Time.now.last_month.beginning_of_month..).order(:created_at)
@@ -17,7 +18,7 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @percentage = (@goal.progress_amount_cents.to_f / @goal.amount_cents) if @goal.present?
 
-    @delivery_reason = "are a member of an organization on HCB."
+    @delivery_reason = "you are on the team of #{@event.name} on HCB and have the donation summary notification option enabled."
     @unsubscribe_link = settings_notifications_url
 
     mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
@@ -32,7 +33,7 @@ class EventMailer < ApplicationMailer
 
     @total = @follows.length
 
-    @delivery_reason = "are a member of an organization on HCB."
+    @delivery_reason = "you are on the team of #{@event.name} on HCB and have the follower summary notification option enabled."
     @unsubscribe_link = settings_notifications_url
 
     mail to: @emails, subject: "#{@event.name} got #{@total} #{"follower".pluralize(@total)} this past month"
@@ -107,6 +108,10 @@ class EventMailer < ApplicationMailer
   end
 
   private
+
+  def set_delivery_reason
+    @delivery_reason = "you are a member of this organization on HCB."
+  end
 
   def set_emails
     @emails = @event.organizer_contact_emails

@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class ReimbursementMailer < ApplicationMailer
+  before_action { @delivery_reason = "you were invited to submit a reimbursement report for #{@report.event.name}." }, only: [:invitation, :reminder]
+  before_action { @delivery_reason = "you submitted a reimbursement report for #{@report.event.name}." }, except: [:invitation, :reminder, :review_requested]
+  
+  
   def invitation
     @report = params[:report]
 
@@ -27,6 +31,7 @@ class ReimbursementMailer < ApplicationMailer
 
   def review_requested
     @report = params[:report]
+    @delivery_reason = "you are a manager on #{@report.event.name}."
 
     if @report.reviewer.present?
       mail to: @report.reviewer.email_address_with_name, subject: "[Reimbursements / #{@report.event.name}] Your Review Was Requested: #{@report.name}"

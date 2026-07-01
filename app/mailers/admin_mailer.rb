@@ -114,5 +114,5 @@ class AdminMailer < ApplicationMailer
       subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
     )
   end
-
+  
 end

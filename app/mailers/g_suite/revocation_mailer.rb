@@ -4,6 +4,7 @@ class GSuite
   class RevocationMailer < ApplicationMailer
     before_action :set_g_suite_and_revocation, :set_reason, only: %i[notify_of_revocation revocation_warning revocation_one_week_warning]
     before_action :set_g_suite, only: %i[revocation_canceled]
+    before_action :set_delivery_reason
 
     default to: -> {
       emails = organization_managers
@@ -22,10 +23,12 @@ class GSuite
     def notify_of_revocation
       mail subject: "Your Google Workspace access for #{@g_suite.domain} has been revoked"
     end
-
+    
     def revocation_canceled
       mail subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
     end
+    
+    private
 
     def set_g_suite_and_revocation
       @g_suite_revocation = GSuite::Revocation.find(params[:g_suite_revocation_id])
@@ -51,6 +54,10 @@ class GSuite
 
     def organization_managers
       @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
+    end
+
+    def set_delivery_reason
+      @delivery_reason = "you are a manager of #{@g_suite.event.name}, which uses Google Workspace through HCB."
     end
 
   end

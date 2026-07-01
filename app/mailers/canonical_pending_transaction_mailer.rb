@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionMailer < ApplicationMailer
+  before_action { @delivery_reason = "you are the recipient of a check from #{@check.event.name}." }
+
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
     @user = @cpt.stripe_card.user

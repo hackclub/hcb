@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CardGrantMailer < ApplicationMailer
-  before_action :set_delivery_reason
+  before_action { @delivery_reason = "you received a grant from Hack Club in the form of an HCB Visa® Commercial card. #{stripe_issuing_disclosure}" }
 
   def card_grant_notification
     @card_grant = params[:card_grant]
@@ -16,12 +16,6 @@ class CardGrantMailer < ApplicationMailer
     @expiry_time = params[:expiry_time]
 
     mail to: @card_grant.user.email_address_with_name, subject: "[#{@card_grant.event.name}] Your #{@card_grant.amount.format} grant expires in #{@expiry_time}"
-  end
-
-  private
-
-  def set_delivery_reason
-    @delivery_reason = "received a grant from Hack Club in the form of an HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
   end
 
 end
