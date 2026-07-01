@@ -178,7 +178,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
   end
 
-  def pending_expired?
+  def r
     unsettled? && created_at < 5.days.ago
   end
 
@@ -430,6 +430,17 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def column_transaction_id
     raw_pending_column_transaction&.column_id
+  end
+
+  def transaction_source_type
+    types = %w[RawPendingBankFeeTransaction RawPendingColumnTransaction RawPendingDonationTransaction
+               RawPendingIncomingDisbursementTransaction RawPendingInvoiceTransaction
+               RawPendingOutgoingAchTransaction RawPendingOutgoingCheckTransaction
+               RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction]
+
+    types.each do |type|
+      return type if send("#{type.underscore}_id").present?
+    end
   end
 
   private

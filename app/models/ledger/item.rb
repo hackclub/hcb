@@ -80,9 +80,17 @@ class Ledger
       type_metadata.last
     end
 
+    def sign
+      return :positive if amount_cents.positive?
+      return :negative if amount_cents.negative?
+
+      :zero
+    end
+
     private
 
     def type_metadata
+      # TODO: Cache the transaction type for non-linked object ledger items
       {
         "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
         "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
@@ -99,7 +107,17 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
-      }[linked_object_type&.to_sym] || ["Unknown", "cash"]
+        "RawPendingStripeTransaction": ["Card charge", "card"],
+        "RawStripeTransaction": ["Card charge", "card"]
+      }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
+    end
+
+    def raw_pending_transaction_type
+      canonical_pending_transactions.map(&:transaction_source_type).compact.first
+    end
+
+    def raw_transaction_type
+      canonical_transactions.map(&:transaction_source_type).compact.first
     end
 
   end

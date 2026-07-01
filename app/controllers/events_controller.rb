@@ -1234,7 +1234,7 @@ class EventsController < ApplicationController
     @per = params[:per] || 25
 
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+    @items = @ledger.items.includes(:canonical_transactions, :canonical_pending_transactions).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   private
