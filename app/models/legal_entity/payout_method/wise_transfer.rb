@@ -49,7 +49,7 @@ class LegalEntity
       end
 
       # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
-      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, **)
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, bank_name: nil, **)
         event.wise_transfers.build(
           address_line1:,
           address_line2:,
@@ -65,6 +65,7 @@ class LegalEntity
           recipient_name:,
           recipient_email:,
           user:,
+          bank_name:
         )
       end
 
