@@ -167,7 +167,27 @@ class UsersController < ApplicationController
 
     @legal_entities = @user.legal_entities
     @legal_entity = @legal_entities.find_by(id: session[:pay_legal_entity_id]) || @user.personal_legal_entity
-    @payments = @legal_entity.payments.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.order(created_at: :desc)
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
   end
 
   def edit_featurepreviews

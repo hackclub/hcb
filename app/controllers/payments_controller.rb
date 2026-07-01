@@ -38,12 +38,6 @@ class PaymentsController < ApplicationController
     end
   end
 
-  def show
-    @payment = @event.payments.find(params[:id])
-    @frame = params[:frame].present?
-    authorize @payment
-  end
-
   private
 
   def payment_params

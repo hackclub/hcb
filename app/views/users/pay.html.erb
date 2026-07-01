@@ -4,11 +4,10 @@
 
 <% entity_label = ->(le) { le.name.presence || (le.person? ? "Personal" : "Business") } %>
 
-<h1 class="heading">
+<h1 class="heading flex-col sm:flex-row border-0 mb-0">
   <span>
     Pay
   </span>
-
   <% if @legal_entities.many? %>
     <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
       <button type="button" class="btn" style="gap: 6px;"
@@ -27,9 +26,48 @@
       </div>
     </div>
   <% end %>
+
+  <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
+    <% if @payout_method.present? %>
+      <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
+        <%= inline_icon @payout_method.icon %>
+        Payout settings
+      <% end %>
+    <% else %>
+      <%= link_to settings_payouts_path, class: "!ml-0 btn" do %>
+        <%= inline_icon "bank-account" %>
+        Configure payouts
+      <% end %>
+    <% end %>
+  </div>
 </h1>
 
 <%= render "application/flash", klass: "max-w-full mb3" %>
+
+<div class="statset mb-4">
+  <div class="stat">
+    <span class="stat__label">Total</span>
+    <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
+  </div>
+  <div class="stat stat--small">
+    <span class="stat__label">On the way</span>
+    <span class="stat__value"><%= render_money_amount @stats[:in_transit] %></span>
+  </div>
+  <div class="stat stat--small">
+    <span class="stat__label">Canceled</span>
+    <span class="stat__value"><%= render_money_amount @stats[:canceled] %></span>
+  </div>
+</div>
+
+<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+    <%= render "events/filters/search", form: %>
+  <% end %>
+
+  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+</div>
+
+<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @payments.any? %>
   <article class="table-container">
@@ -61,7 +99,7 @@
             <td>
               <%= render_money payment.amount_cents %>
 
-              <% if !payout.present? && policy(payout.local_hcb_code).show? %>
+              <% if payout.present? && policy(payout.local_hcb_code).show? %>
                 <%= link_to "", hcb_code_url(payout.hcb_code), class: "stretched-link", data: popovers_enabled? ? hcb_code_popover_data(payout.local_hcb_code) : nil %>
               <% else %>
                 <%= link_to "", event_payment_path(event_id: payment.event.slug, id: payment.id), class: "stretched-link", data: popovers_enabled? ? payment_popover_data(payment) : nil %>
@@ -72,6 +110,8 @@
       </tbody>
     </table>
   </article>
+
+  <%= paginate @payments %>
 <% else %>
   <p class="muted">No payments yet.</p>
 <% end %>
