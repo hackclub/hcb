@@ -189,6 +189,8 @@ class HcbCode < ApplicationRecord
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
+    return outgoing_disbursement.amount if outgoing_disbursement?
+    return incoming_disbursement.amount if incoming_disbursement?
 
     if canonical_transactions.any?
       return canonical_transactions
@@ -396,6 +398,7 @@ class HcbCode < ApplicationRecord
 
   def card_grant?
     # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    # TODO: this causes card grant issuing memos to only render on one side of the disbursement
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
