@@ -1,0 +1,44 @@
+<% title "AI Blazer Queries" %>
+
+<div class="card mb3">
+  <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+    <p class="m-0">Browse Blazer queries generated from AI prompts.</p>
+    <div class="ml-auto flex gap-2">
+      <%= link_to "Create query", new_admin_ai_blazer_query_path, class: "btn bg-accent" %>
+      <%= link_to "Open Blazer", blazer_path, class: "btn" %>
+    </div>
+  </div>
+</div>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @queries, entry_name: "AI Blazer queries" %>
+  </div>
+  <%= paginate @queries %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Prompt</th>
+      <th>Creator</th>
+      <th>Updated</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @queries.each do |query| %>
+      <% prompt = Blazer::AiQuery.extract_prompt(query.statement) %>
+      <tr>
+        <td><%= query.name %></td>
+        <td><%= prompt.presence || "—" %></td>
+        <td><%= query.creator&.full_name || "Unknown" %></td>
+        <td><%= local_time_ago query.updated_at %></td>
+        <td><%= link_to "View", admin_ai_blazer_query_path(query) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @queries %>

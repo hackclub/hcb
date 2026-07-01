@@ -334,6 +334,12 @@ module Admin
             count_type: :records
           ),
           make_item(
+            name: "AI Blazer Queries",
+            path: admin_ai_blazer_queries_path,
+            count: ->{ Blazer::AiQuery.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Flipper",
             path: flipper_path,
             count: ->{ Flipper.features.count },
