@@ -78,6 +78,15 @@ module EventsHelper
       available_proc: ->(event) { policy(event).transactions? }
     },
     {
+      name: "Ledger",
+      path_proc: ->(event_id) { event_ledger_path(event_id:) },
+      tooltip: "Preview the new ledger",
+      icon: "card-list",
+      symbol: :ledger,
+      available_proc: ->(event) { policy(event).ledger? },
+      beta: true
+    },
+    {
       name: "Account numbers",
       path_proc: ->(event_id) { account_number_event_path(id: event_id) },
       tooltip: "View account numbers",
@@ -149,6 +158,7 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :payments,
+      beta: true,
       available_proc: ->(event) { policy(event).payments? }
     },
     {
@@ -327,7 +337,7 @@ module EventsHelper
     end
   end
 
-  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
+  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, beta: false, **options)
     icon_tag = icon.present? ? inline_icon(icon, size: 32) : nil
     badge_tag = async_badge.present? ? turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }) : nil
 
@@ -341,6 +351,7 @@ module EventsHelper
     children = []
     children << icon_wrapper if icon_wrapper
     children << tag.span(name, class: "dock__item-label")
+    children << tag.span("BETA", class: "badge bg-info text-xs ml-3") if beta
     children = safe_join(children)
 
     if admin && !auditor_signed_in?

@@ -401,13 +401,16 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   content: '';
   border-radius: 0.5rem;
   border: 2px dotted rgba(map-get($palette, warning), 0.3);
+  inset: 0px;
+  &:not(td) {
+    top: -2.5px;
+    right: -2.5px;
+    bottom: -2.5px;
+    left: -2.5px;
+  }
   background: rgba(map-get($palette, pending), 0.08);
   position: absolute;
-  top: -2.5px;
-  right: -2.5px;
-  bottom: -2.5px;
   pointer-events: none;
-  left: -2.5px;
 }
 
 .dev-tools {
