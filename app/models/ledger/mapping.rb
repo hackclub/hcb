@@ -42,6 +42,10 @@ class Ledger
     validates :ledger_item_id, uniqueness: { conditions: -> { where(on_primary_ledger: true) }, message: "is already mapped on a primary ledger" }, if: :on_primary_ledger?
     validate :on_primary_ledger_matches_ledger_primary
 
+    after_commit do
+      ledger_item.write_amount_cents!
+    end
+
     private
 
     def on_primary_ledger_matches_ledger_primary

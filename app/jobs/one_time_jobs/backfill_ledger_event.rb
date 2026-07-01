@@ -18,7 +18,6 @@ module OneTimeJobs
                          subledger: { card_grant: :ledger },
                          event: :ledger
                        )
-                       .where.missing(:ledger_item)
 
       hcb_codes.find_each do |hcb_code|
         safely do
@@ -46,6 +45,7 @@ module OneTimeJobs
           item.reload
           item.write_amount_cents!
           hcb_code.update!(ledger_item: item)
+          item.update!(linked_object: hcb_code.linked_object) unless hcb_code.linked_object.nil?
         end
       end
     end

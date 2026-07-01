@@ -1,0 +1,78 @@
+<%# locals: (event:, payment:, payee: nil) %>
+
+<% disabled = !policy(event).create_transfer? %>
+
+<div data-controller="payee-picker">
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Recipient</h3>
+    <% if payee || params[:manual] %>
+      <details class="card mb-4 p-0 overflow-hidden" data-payee-picker-target="details">
+        <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
+          <div class="flex-1 min-w-0">
+            <% if payee %>
+              <div class="flex gap-3 items-center">
+                <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+                <div>
+                  <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                  <p class="muted text-sm m-0"><%= payee.email %></p>
+                </div>
+              </div>
+
+            <% else %>
+
+              <p class="font-bold text-lg m-0">Manual payment</p>
+              <p class="muted text-sm m-0">Recipient & payout details entered directly</p>
+
+            <% end %>
+          </div>
+          <span class="muted ml-auto shrink-0 text-sm">Edit</span>
+        </summary>
+        <div class="menu__divider my-0"></div>
+        <%= render "payments/payee_picker", event:, show_manual: true %>
+      </details>
+    <% else %>
+      <div class="card mb-4 p-0 overflow-hidden">
+        <%= render "payments/payee_picker", event:, show_manual: true %>
+      </div>
+    <% end %>
+  </div>
+
+  <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
+    <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
+
+    <%= form.hidden_field :payee_id, value: payee&.id %>
+
+    <div data-scroll-seek-target="section">
+      <h3 class="mb-2">Payment details</h3>
+      <div class="card mb-4 flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <%= form.label :amount, "Amount" %>
+          <div class="flex items-center">
+            <div class="input flex gap-2 items-center py-0">
+              <span class="bold muted">$</span>
+              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <%= form.label :purpose, "What's this payment for?" %>
+          <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
+          <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
+        </div>
+      </div>
+    </div>
+
+    <div data-scroll-seek-target="section">
+      <h3 class="mb-2">Receipt</h3>
+      <div class="card mb-4">
+        <%= render "events/transfers/attach_receipt", form:, disabled: %>
+      </div>
+    </div>
+
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Send payment
+      <%= inline_icon "send" %>
+    </button>
+  <% end %>
+</div>

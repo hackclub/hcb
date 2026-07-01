@@ -281,8 +281,11 @@ class User < ApplicationRecord
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def auditor?
-    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def auditor?(override_pretend: false)
+    has_auditor_role = ["auditor", "admin", "superadmin"].include?(self.access_level)
+    return has_auditor_role if override_pretend
+
+    has_auditor_role && !self.pretend_is_not_admin
   end
 
   # admin? by default, takes into account an admin user's preference
@@ -582,18 +585,6 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
-  def can_update_payout_method?
-    return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-
-    # Only reports still tracking the default (no payout method set on the
-    # report) would be disrupted by replacing it; reports that have their own
-    # payout method record keep it, which an update leaves intact.
-    return false if reimbursement_reports.reimbursement_requested.where(legal_entity_payout_method_id: nil).any?
-    return false if reimbursement_reports.joins(:payout_holding).where(payout_holding: { aasm_state: :pending }, reimbursement_reports: { legal_entity_payout_method_id: nil }).any?
-
-    true
-  end
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
