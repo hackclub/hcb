@@ -91,7 +91,7 @@ class Payment
       event :mark_canceled do
         transitions from: [:pending, :under_review, :sent], to: :canceled, if: -> { payout.nil? || payout&.can_cancel? }
         after do
-          payout.cancel!
+          payout&.cancel!
           payment.mark_canceled!
         end
       end
