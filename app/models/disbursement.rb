@@ -47,10 +47,7 @@
 #  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement < ApplicationRecord
-  include PgSearch::Model
-  pg_search_scope :search_name, against: [:name]
-
-  include AASM
+  include Disbursement::Shared
 
   include Freezable
   include Commentable
@@ -69,23 +66,59 @@ class Disbursement < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :xfr # Transfer
 
-  belongs_to :fulfilled_by, class_name: "User", optional: true
-  belongs_to :requested_by, class_name: "User", optional: true
+  # Events only; state-machine config (timestamps, whiny_persistence, states) lives on
+  # the first `aasm` block, in Disbursement::Shared. See the note there.
+  aasm do
+    event :mark_approved do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+        canonical_pending_transactions.update_all(fronted: true)
+      end
+      transitions from: [:reviewing, :scheduled], to: :pending
+    end
 
-  has_one :ledger_item, as: :linked_object
-  belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
-  belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
+    event :mark_in_transit do
+      transitions from: [:pending, :scheduled], to: :in_transit
+    end
+
+    event :mark_deposited do
+      transitions from: :in_transit, to: :deposited
+    end
+
+    event :mark_errored do
+      after do
+        canonical_pending_transactions.each { |cpt| cpt.decline! }
+      end
+      transitions from: [:pending, :in_transit], to: :errored
+    end
+
+    event :mark_rejected do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+        canonical_pending_transactions.each { |cpt| cpt.decline! }
+        create_activity(key: "disbursement.rejected", owner: fulfilled_by)
+      end
+      transitions from: [:scheduled, :reviewing, :pending], to: :rejected
+    end
+
+    event :mark_scheduled do
+      after do |fulfilled_by|
+        update(fulfilled_by:)
+      end
+      transitions from: [:pending, :reviewing], to: :scheduled
+    end
+  end
+
   belongs_to :event
-  belongs_to :source_subledger, class_name: "Subledger", optional: true
-  belongs_to :destination_subledger, class_name: "Subledger", optional: true
 
   has_one :raw_pending_incoming_disbursement_transaction
   has_one :raw_pending_outgoing_disbursement_transaction
 
-  belongs_to(:source_transaction_category, class_name: "TransactionCategory", optional: true)
-  belongs_to(:destination_transaction_category, class_name: "TransactionCategory", optional: true)
-
-  has_one :card_grant, required: false
+  # Incoming/Outgoing are the same row seen through a different lens, so reinterpret
+  # the already-loaded record with `becomes` instead of re-SELECTing it. See
+  # Disbursement::Shared for what these lenses mean.
+  def incoming_disbursement = @incoming_disbursement ||= becomes(Disbursement::Incoming)
+  def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
 
@@ -100,12 +133,8 @@ class Disbursement < ApplicationRecord
   validate :scheduled_on_must_be_in_the_future, on: :create
 
   scope :processing, -> { in_transit }
-  scope :fulfilled, -> { deposited }
-  scope :reviewing_or_processing, -> { where(aasm_state: [:reviewing, :pending, :in_transit]) }
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
   scope :not_scheduled, -> { where(scheduled_on: nil) }
-
-  scope :not_card_grant_related, -> { left_joins(source_subledger: :card_grant, destination_subledger: :card_grant).where("card_grants.id IS NULL AND card_grants_subledgers.id IS NULL") }
 
   SPECIAL_APPEARANCES = {
     hackathon_grant: {
@@ -148,56 +177,6 @@ class Disbursement < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.destination_event }, event_id: proc { |controller, record| record.source_event.id }, only: [:create]
 
-  aasm timestamps: true, whiny_persistence: true do
-    state :reviewing, initial: true # Being reviewed by an admin
-    state :pending                  # Waiting to be processed by the TX engine
-    state :scheduled                # Has been scheduled and will be sent!
-    state :in_transit               # Transfer started on remote bank
-    state :deposited                # Transfer completed!
-    state :rejected                 # Rejected by admin
-    state :errored                  # oh no! an error!
-
-    event :mark_approved do
-      after do |fulfilled_by|
-        update(fulfilled_by:)
-        canonical_pending_transactions.update_all(fronted: true)
-      end
-      transitions from: [:reviewing, :scheduled], to: :pending
-    end
-
-    event :mark_in_transit do
-      transitions from: [:pending, :scheduled], to: :in_transit
-    end
-
-    event :mark_deposited do
-      transitions from: :in_transit, to: :deposited
-    end
-
-    event :mark_errored do
-      after do
-        canonical_pending_transactions.each { |cpt| cpt.decline! }
-      end
-      transitions from: [:pending, :in_transit], to: :errored
-    end
-
-    event :mark_rejected do
-      after do |fulfilled_by|
-        update(fulfilled_by:)
-        canonical_pending_transactions.each { |cpt| cpt.decline! }
-        create_activity(key: "disbursement.rejected", owner: fulfilled_by)
-      end
-      transitions from: [:scheduled, :reviewing, :pending], to: :rejected
-    end
-
-    event :mark_scheduled do
-      after do |fulfilled_by|
-        update(fulfilled_by:)
-      end
-      transitions from: [:pending, :reviewing, :in_review], to: :scheduled
-    end
-
-  end
-
   def approve_by_admin(user)
     # Don't check admin transfer limits for card grants. This method is also
     # used to auto-approve card grants; even ones NOT sent by admins.
@@ -222,28 +201,6 @@ class Disbursement < ApplicationRecord
 
   # Eagerly create HcbCode object
   after_create :local_hcb_code
-
-  alias_attribute :approved_at, :pending_at
-
-  # Returns the perceived time of the transfer to an event with fronting enabled
-  def transferred_at
-    # `approved_at` isn't set on some old disbursements, so fall back to `in_transit_at`.
-    approved_at || in_transit_at
-  end
-
-  def outgoing_hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}-#{id}"
-  end
-
-  # Legacy alias - use outgoing_hcb_code instead
-  alias_method :hcb_code, :outgoing_hcb_code
-
-  def incoming_hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}-#{id}"
-  end
-
-  def outgoing_disbursement = Disbursement::Outgoing.new(self)
-  def incoming_disbursement = Disbursement::Incoming.new(self)
 
   # this method will be removed from disbursement, and we will have to go through IncomingDisbursement or OutgoingDisbursement
   def local_hcb_code
@@ -275,18 +232,6 @@ class Disbursement < ApplicationRecord
     @transactions_helper ||= Disbursement::TransactionsHelper.new(self)
   end
 
-  def processed?
-    in_transit? || deposited?
-  end
-
-  def fulfilled?
-    deposited?
-  end
-
-  def inter_event_transfer?
-    !source_subledger_id && !destination_subledger_id
-  end
-
   def filter_data
     {
       exists: true,
@@ -297,30 +242,6 @@ class Disbursement < ApplicationRecord
       rejected: rejected?,
     }
   end
-
-  def state
-    if fulfilled?
-      :success
-    elsif processed? || pending?
-      if destination_event.can_front_balance?
-        :success
-      else
-        :muted
-      end
-    elsif rejected?
-      :error
-    elsif scheduled?
-      :info
-    elsif errored?
-      :error
-    elsif reviewing?
-      :muted
-    else
-      :info
-    end
-  end
-
-  alias_method :status, :state
 
   def v3_api_state
     state_text.underscore
@@ -338,66 +259,12 @@ class Disbursement < ApplicationRecord
     end
   end
 
-  def state_text
-    if fulfilled?
-      "fulfilled"
-    elsif processed? || pending?
-      if destination_event.can_front_balance?
-        "fulfilled"
-      else
-        "processing"
-      end
-    elsif rejected? && approved_at.present? # Disbursements that were approved, then rejected
-      "canceled"
-    elsif rejected?
-      "rejected"
-    elsif scheduled?
-      "scheduled"
-    elsif errored?
-      "errored"
-    elsif reviewing?
-      "pending"
-    else
-      "pending"
-    end
-  end
-
-  def state_icon
-    "checkmark" if fulfilled? || processed? || (pending? && destination_event.can_front_balance?)
-  end
-
   def admin_dropdown_description
     "#{ApplicationController.helpers.render_money amount} for #{name} to #{event.name}"
   end
 
   def transaction_memo
     "HCB-#{local_hcb_code.short_code}"
-  end
-
-  def special_appearance_name
-    return nil if canonical_pending_transactions.with_custom_memo.any? || canonical_transactions.with_custom_memo.any?
-
-    SPECIAL_APPEARANCES.each do |key, value|
-      return key if value[:qualifier].call(self)
-    end
-
-    nil
-  end
-
-  def special_appearance
-    SPECIAL_APPEARANCES[special_appearance_name]
-  end
-
-  def special_appearance?
-    !special_appearance_name.nil?
-  end
-
-  def special_appearance_memo
-    special_appearance&.[](:memo)
-  end
-
-  def fee_waived?
-    !should_charge_fee?
   end
 
   private
