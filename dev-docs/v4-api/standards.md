@@ -19,13 +19,14 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
 - [Rate Limits](#rate-limits)
+- [Request Size & Timeouts](#request-size--timeouts)
 
 ---
 
 ## Basics
 
-- **All requests and responses use JSON.** Always send `Content-Type: application/json` and expect `application/json` back.
-- There is no XML, form-encoded, or multipart support.
+- **Requests and responses use JSON by default.** Send `Content-Type: application/json` and expect `application/json` back.
+- Two exceptions: **file uploads** (e.g. `POST /api/v4/receipts`) use `multipart/form-data`, and the **OAuth token endpoint** accepts `application/x-www-form-urlencoded`. There is no XML support.
 
 ---
 
@@ -39,7 +40,9 @@ Authorization: Bearer hcb_<token>
 
 ### Creating an OAuth Application
 
-There are two ways to register an app in development:
+There are two ways to register an app. The examples below use the local dev host `localhost:3000`; on **production, use `https://hcb.hackclub.com`** for the same `/api/v4/oauth/...` endpoints and the application UI at `https://hcb.hackclub.com/api/v4/oauth/applications`, with a real `redirect_uri`.
+
+> To use the granular v4 scopes (e.g. `restricted receipts:write ledgers:read receipts:read`), register the application with **those** scopes instead of `read write`, and request the same strings in the authorize step. See [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token).
 
 **Option A — Web UI**
 
@@ -79,7 +82,7 @@ Save the `uid` and `secret` from the output.
    redirect_uri=http://localhost:3000/
    ```
 
-HCB also supports the `device_code` grant type for CLI tools and devices without a browser. See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) — HCB uses the scope `api/v4/oauth` instead of `oauth`.
+HCB also supports the `device_code` grant type for CLI tools and devices without a browser (useful for a headless agent). See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage). HCB mounts these endpoints under `api/v4/oauth` instead of the default `oauth` — that is a URL **path prefix**, not an OAuth access scope, so don't add `api/v4/oauth` to your requested `scope=`.
 
 ### Token Expiry & Refresh
 
@@ -307,9 +310,39 @@ GET /api/v4/cards/crd_x9f3k?expand=user,organization
   }
   ``` 
 
+### Implementation
+
+Use `expand_association` in jbuilder partials for any field that references a related object by ID. It handles both cases automatically:
+
+```ruby
+expand_association(json, :organization, ach_transfer.event,
+                   partial: "api/v4/events/event", as: :event)
+
+expand_association(json, :sender, ach_transfer.creator,
+                   partial: "api/v4/users/user", as: :user)
+```
+
+- When `:organization` is **not** in `expand`, renders `"organization_id": "org_h1izp"`.
+- When `:organization` **is** in `expand`, renders the full object under `"organization": { ... }`.
+- If the record is `nil`, renders `null` in both cases.
+- Associations must have a `public_id` method.
+
+For non-association expansions — computed fields, structured data, or arrays — use `expand?` directly since there is no `_id` fallback:
+
+```ruby
+json.balance_cents event.balance_available if expand?(:balance_cents)
+
+if expand?(:shipping_address)
+  json.shipping_address do
+    # ...
+  end
+end
+```
+
 ### Guidelines
 
-- Use the `expand?(:symbol)` helper in jbuilder views to conditionally render expanded objects.
+- Use `expand_association` for any field that is a reference to another API object.
+- Use `expand?(:symbol)` directly for computed fields, structured data, or arrays that have no `_id` equivalent.
 - Certain contexts auto-expand relevant objects for convenience (e.g. listing cards under an organization auto-expands `user`). Document these per-endpoint.
 - Avoid deep expansion chains (e.g. `expand=organization.users.cards`). One level is sufficient.
 - Each endpoint should document which fields are expandable.
@@ -472,6 +505,21 @@ Requests are throttled at **1,000 requests per 5 minutes per IP address**. Reque
 
 ---
 
+## Request Size & Timeouts
+
+Every request is bound by a **30-second server timeout**. A call that runs longer is terminated, so keep each request small and page through results instead of asking for everything at once.
+
+- **Paginate listings.** For cursor-paginated list endpoints, the `limit` query param sets the page size: it **defaults to 25** and is **capped at 100** (a larger value returns `400 invalid_operation`). Follow the `after` cursor to page (see [Pagination](#pagination)).
+- **Prefer smaller pages.** Request modest pages such as `?limit=25` and follow the cursor, rather than pushing `limit` to 100 on a large dataset. Smaller pages return faster and stay well under the 30s ceiling.
+
+  ```
+  GET /api/v4/organizations/org_h1izp/transactions?limit=25
+  # then pass the last item's id back as ?after=txn_… for the next page
+  ```
+- **Large uploads count too.** A `multipart/form-data` upload (e.g. `POST /api/v4/receipts`, files up to 50 MB) is also subject to the 30s timeout; a large file over a slow link can approach it. If an upload times out you cannot tell from the response whether it landed.
+
+---
+
 ## Checklist for New Endpoints
 
 Before opening a PR that adds or modifies a V4 API endpoint, verify:
@@ -481,6 +529,8 @@ Before opening a PR that adds or modifies a V4 API endpoint, verify:
 - [ ] Routing is shallow (max one level of nesting)
 - [ ] List endpoints return the pagination envelope (`total_count`, `has_more`, `data`)
 - [ ] No arrays of API objects are embedded in a response (use a scoped index endpoint instead)
+- [ ] Association fields use `expand_association` (never a bare `if expand?` with a manual `_id` fallback)
+- [ ] Non-association expansions (computed fields, arrays) use `expand?` directly
 - [ ] Related objects use `expand` and are not auto-included without reason
 - [ ] The model's canonical partial is used (not inlined fields)
 - [ ] Every partial declares strict locals (`# locals: (<resource>:)`)

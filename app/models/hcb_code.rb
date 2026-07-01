@@ -16,8 +16,10 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_hcb_code    (hcb_code) UNIQUE
-#  index_hcb_codes_on_short_code  (short_code) UNIQUE
+#  index_hcb_codes_on_event_id        (event_id)
+#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
+#  index_hcb_codes_on_short_code      (short_code) UNIQUE
 #
 # Foreign Keys
 #
@@ -66,6 +68,8 @@ class HcbCode < ApplicationRecord
 
   before_create :generate_and_set_short_code
 
+  after_create :write_event_and_subledger_id
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -107,6 +111,15 @@ class HcbCode < ApplicationRecord
 
   def date
     @date ||= ct.try(:date) || pt.try(:date)
+  end
+
+  def datetime
+    @datetime ||=
+      pt.try(:raw_pending_stripe_transaction).try { |rpst| rpst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      pt.try(:created_at) ||
+      ct.try(:raw_stripe_transaction).try { |rst| rst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      ct.try(:raw_column_transaction).try { |rct| rct.column_transaction["effective_at"]&.then { |t| Time.parse(t) } } ||
+      ct.try(:created_at)
   end
 
   def has_pending_expired?
@@ -178,6 +191,8 @@ class HcbCode < ApplicationRecord
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
+    return outgoing_disbursement.amount if outgoing_disbursement?
+    return incoming_disbursement.amount if incoming_disbursement?
 
     if canonical_transactions.any?
       return canonical_transactions
@@ -372,7 +387,7 @@ class HcbCode < ApplicationRecord
   def disbursement?
     Rails.application.deprecators[:hcb].warn("HcbCode#disbursement? accessed")
 
-    return [::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE, ::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE].include?(hcb_i1)
+    outgoing_disbursement? || incoming_disbursement?
   end
 
   def outgoing_disbursement?
@@ -385,6 +400,7 @@ class HcbCode < ApplicationRecord
 
   def card_grant?
     # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    # TODO: this causes card grant issuing memos to only render on one side of the disbursement
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
@@ -467,6 +483,16 @@ class HcbCode < ApplicationRecord
     return @outgoing_disbursement if defined?(@outgoing_disbursement)
 
     @outgoing_disbursement = Disbursement.find_by(id: hcb_i2)&.outgoing_disbursement
+  end
+
+  # Overrides shared_commentable? in Commentable concern to avoid
+  # unnecessary database read
+  def shared_commentable?
+    outgoing_disbursement? || incoming_disbursement?
+  end
+
+  def shared_commentable
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
   def card_grant
@@ -585,7 +611,7 @@ class HcbCode < ApplicationRecord
   # 1) it doesn't consider event plan
   # 2) it doesn't consider the amount of the HCB code
   #
-  # this is because these two things are expensive to compute on a HCB code.
+  # this is because these two things are expensive to compute on an HCB code.
 
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
@@ -725,7 +751,7 @@ class HcbCode < ApplicationRecord
     nil
   end
 
-  def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
+  def write_event_and_subledger_id(event = events.first, subledger = subledgers.first)
     update(event_id: event&.id, subledger_id: subledger&.id)
   end
 

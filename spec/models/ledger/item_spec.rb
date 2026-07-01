@@ -34,7 +34,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -51,7 +51,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -68,7 +68,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -90,21 +90,21 @@ RSpec.describe Ledger::Item, type: :model do
 
   describe "validations" do
     it "requires amount_cents" do
-      item = Ledger::Item.new(memo: "Test", date: Time.current)
+      item = Ledger::Item.new(memo: "Test", datetime: Time.current)
       expect(item).not_to be_valid
       expect(item.errors[:amount_cents]).to include("can't be blank")
     end
 
     it "requires memo" do
-      item = Ledger::Item.new(amount_cents: 1000, date: Time.current)
+      item = Ledger::Item.new(amount_cents: 1000, datetime: Time.current)
       expect(item).not_to be_valid
       expect(item.errors[:memo]).to include("can't be blank")
     end
 
-    it "requires date" do
+    it "requires datetime" do
       item = Ledger::Item.new(amount_cents: 1000, memo: "Test")
       expect(item).not_to be_valid
-      expect(item.errors[:date]).to include("can't be blank")
+      expect(item.errors[:datetime]).to include("can't be blank")
     end
 
     describe "primary_ledger association" do
@@ -112,7 +112,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         expect(item).to be_valid
         expect(item.primary_ledger).to be_nil
@@ -130,7 +130,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -155,7 +155,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save!
 
@@ -179,7 +179,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -201,7 +201,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -235,7 +235,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -274,7 +274,7 @@ RSpec.describe Ledger::Item, type: :model do
         item = Ledger::Item.new(
           amount_cents: 1000,
           memo: "Test",
-          date: Time.current
+          datetime: Time.current
         )
         item.save(validate: false)
 
@@ -301,7 +301,7 @@ RSpec.describe Ledger::Item, type: :model do
 
   describe "#calculate_amount_cents" do
     let(:item) do
-      i = Ledger::Item.new(amount_cents: 0, memo: "Test", date: Time.current)
+      i = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
       i.save(validate: false)
       i
     end
@@ -320,7 +320,7 @@ RSpec.describe Ledger::Item, type: :model do
 
   describe "#write_amount_cents!" do
     it "updates amount_cents from calculate_amount_cents" do
-      item = Ledger::Item.new(amount_cents: 999, memo: "Test", date: Time.current)
+      item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)
       item.save(validate: false)
 
       create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)

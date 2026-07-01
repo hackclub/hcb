@@ -48,12 +48,36 @@
 
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
-  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>
+  <% if @hcb_code.shared_commentable? %>
+    <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
+    <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+      <p class="muted">
+        <%= link_to counterparty_hcb_code do %>
+          View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
+        <% end %>
+      </p>
+    <% end %>
+  <% end %>
   <%= render "comments/form", commentable: @hcb_code %>
 
   <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>
     <%= render partial: "hcb_codes/pending_transaction_history" %>
+  <% end %>
+
+  <% admin_tool("p-2 my-3") do %>
+    <h3 class="my-2">Quickly go to</h3>
+    <% if @hcb_code.ledger_item.present? %>
+      <%= link_to "Ledger::Item #{@hcb_code.ledger_item.hashid}", ledger_item_path(@hcb_code.ledger_item), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_transactions.each do |tx| %>
+      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_pending_transactions.each do |tx| %>
+      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
   <% end %>
 <% end %>
 

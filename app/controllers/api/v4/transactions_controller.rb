@@ -4,7 +4,6 @@ module Api
   module V4
     class TransactionsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:update, :memo_suggestions]
       skip_after_action :verify_authorized, only: [:missing_receipt]
@@ -27,7 +26,8 @@ module Api
         @pending_transactions = type_results[:pending_transactions]
 
         @total_count = @pending_transactions.count + @settled_transactions.count
-        @transactions = paginate_transactions(@pending_transactions + @settled_transactions)
+        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code if params[:after].present?
+        @transactions = paginate_cursor(@pending_transactions + @settled_transactions) { |tx| tx.hcb_code == cursor_hcb_code ? params[:after] : nil }
 
         if @transactions.any?
           page_settled = @transactions.select { |tx| tx.is_a?(CanonicalTransactionGrouped) }
@@ -43,6 +43,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "ledgers:read", :index
+
       def show
         @hcb_code = authorize HcbCode.find_by_public_id!(params[:id])
 
@@ -54,6 +56,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "ledgers:read", :show
+
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
         user_hcb_codes = HcbCode.where(id: user_hcb_code_ids)
@@ -63,15 +67,30 @@ module Api
 
         @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
+
+      require_oauth2_scope "ledgers:read", :missing_receipt
 
       def update
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
 
-        if params.key? :memo
-          @hcb_code.update_custom_memo!(params[:memo])
+        ActiveRecord::Base.transaction do
+          if params.key? :memo
+            @hcb_code.update_custom_memo!(params[:memo])
+          end
+
+          if params.key? :tag_ids
+            tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
+
+            tags.each do |tag|
+              authorize tag, :toggle_tag?
+              raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
+            end
+
+            @hcb_code.tags = tags
+            @hcb_code.save!
+          end
         end
 
         render "show"
@@ -91,25 +110,9 @@ module Api
         render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
       end
 
+      require_oauth2_scope "receipts:write", :mark_no_receipt
+
       private
-
-      def paginate_transactions(transactions)
-        limit = params[:limit]&.to_i || 25
-        start_index = if params[:after]
-                        cursor_hcb_code = HcbCode.find_by_public_id(params[:after])&.hcb_code
-                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless cursor_hcb_code
-
-                        index = transactions.index { |tx| tx.hcb_code == cursor_hcb_code }
-                        return render json: { error: "bad_request", messages: ["invalid cursor"] }, status: :bad_request unless index
-
-                        index + 1
-                      else
-                        0
-                      end
-        @has_more = transactions.length > start_index + limit
-
-        transactions.slice(start_index, limit)
-      end
 
       def filters
         filter_params = params.fetch(:filters, {}).permit(
@@ -131,7 +134,7 @@ module Api
         return {
           event_id: @event.id,
           search: filter_params[:search].presence,
-          tag_id: filter_params[:tag_id].presence,
+          tag_id: filter_params[:tag_id].present? ? Tag.find_by_public_id(filter_params[:tag_id])&.id : nil,
           expenses: filter_params[:expenses].presence,
           revenue: filter_params[:revenue].presence,
           minimum_amount: filter_params[:minimum_amount].presence ? Money.from_amount(filter_params[:minimum_amount].to_f) : nil,

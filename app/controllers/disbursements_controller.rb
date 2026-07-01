@@ -9,7 +9,7 @@ class DisbursementsController < ApplicationController
     authorize @disbursement
 
     # Comments
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.outgoing_hcb_code)
   end
 
   def transfer_confirmation_letter
@@ -47,24 +47,62 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-
-    @allowed_source_events = if admin_signed_in?
-                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                             else
-                               current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                             end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if admin_signed_in?
-                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                                  elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-                                    Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
-                                  else
-                                    current_user.manageable_events.not_hidden.filter_demo_mode(false)
-                                  end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-
     authorize @disbursement
     render layout: "transfer"
+  end
+
+  def event_search
+    authorize Disbursement.new
+    q = params[:q].presence
+    # Indicates whether we're searching for source or destination organizations
+    sending = params[:sending] == "true"
+
+    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+    @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
+
+    base = if admin_signed_in?
+             Event.select(:name, :id, :demo_mode, :slug, :can_front_balance).reorder(Event::CUSTOM_SORT).includes(:plan)
+           elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
+             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
+           else
+             current_user.manageable_events.not_hidden.filter_demo_mode(false)
+           end
+
+    # Apply fuzzy search if query present
+    if q.present?
+      sql = "name ILIKE :name OR slug ILIKE :slug"
+      sql += " OR CAST(id AS TEXT) ILIKE :id" if admin_signed_in?
+      base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
+    end
+
+    # Sort by user's event preference in SQL, keeping the relation's existing
+    # order as a tiebreaker, then limit before loading records into Ruby.
+    order_clauses = []
+    if user_event_ids.any?
+      ids = user_event_ids.map(&:to_i).join(", ")
+      order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
+    end
+    order_clauses.concat(base.order_values)
+    order_clauses << Arel.sql("events.id ASC")
+
+    events = base.reorder(*order_clauses).limit(25).to_a
+
+    options = events.map do |e|
+      disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
+      disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
+
+
+      right = disabled_message || helpers.render_money_short(e.balance_available)
+      attrs = disabled_message ? { data: { disabled_option: "" } } : {}
+      name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
+      content = helpers.content_tag(:div, class: "flex flex-col w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
+        helpers.content_tag(:span, name_label, style: "white-space:normal") + helpers.content_tag(:span, right, class: "text-sm muted")
+      end
+      { value: e.public_id, display: e.name, content: content }
+    end
+
+    render turbo_stream: helpers.async_combobox_options(options)
   end
 
   def create
