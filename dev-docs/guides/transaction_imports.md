@@ -8,7 +8,7 @@ After a [`RawColumnTransaction`](https://github.com/hackclub/hcb/blob/main/app/m
 
 Each type of transfer has a different HCB code. HCB “calculates” the correct HCB code for a transfer in [`TransactionGroupingEngine::Calculate::HcbCode`](https://github.com/hackclub/hcb/blob/main/app/services/transaction_grouping_engine/calculate/hcb_code.rb) and then writes that HCB code to the [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s `hcb_code` column inside of `CanonicalTransaction#write_hcb_code`.
 
-If this is an account number transaction of some other “unknown” transfer type that has came from Column, it will be give an HCB code starting with “HCB-000”. There won’t be a linked object in these cases.
+If this is an account number transaction of some other “unknown” transfer type that has come from Column, it will be given an HCB code starting with “HCB-000”. There won’t be a linked object in these cases.
 
 [`TransactionGroupingEngine::Calculate::HcbCode`](https://github.com/hackclub/hcb/blob/main/app/services/transaction_grouping_engine/calculate/hcb_code.rb) depends on `CanonicalTransaction#linked_object`, which is determined in [`TransactionEngine::SyntaxSugarService::LinkedObject`](https://github.com/hackclub/hcb/blob/main/app/services/transaction_engine/syntax_sugar_service/linked_object.rb).
 
@@ -62,7 +62,7 @@ Incoming fee reimbursements (refunding people for the credit card fees Stripe de
 
 ### HCB Short Codes (Reimbursements, Invoices, Fees, Stripe Fee Reimbursements and Donations)
 
-HCB short codes are a bit like dark magic. Essentially, if a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s `memo` contains a “short code” (`/HCB-\w{5}/`, eg `HCB-ABCDE`), we can use that to uniquely map it to an HCB code. Critically, this is different from an HCB code’s hash ID which you see in URLs. an HCB code’s short code is generated before create in `HcbCode#generate_and_set_short_code`.
+HCB short codes are a bit like dark magic. Essentially, if a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s `memo` contains a “short code” (`/HCB-\w{5}/`, eg `HCB-ABCDE`), we can use that to uniquely map it to an HCB code. Critically, this is different from an HCB code’s hash ID which you see in URLs. An HCB code’s short code is generated before creation in `HcbCode#generate_and_set_short_code`.
 
 The logic for this mapping is in [`EventMappingEngine::Map::HcbCodes::Short`](https://github.com/hackclub/hcb/blob/main/app/services/event_mapping_engine/map/hcb_codes/short.rb). It handles setting the [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s `hcb_code` and mapping it to an event (as well as a subledger, if needed). The event and subledger are determined by the HCB code’s pre-linked [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s and/or [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s.
 
