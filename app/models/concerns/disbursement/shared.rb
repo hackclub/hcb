@@ -26,6 +26,7 @@ class Disbursement
     extend ActiveSupport::Concern
 
     included do
+      include HasLedgerItem
       include PgSearch::Model
       pg_search_scope :search_name, against: [:name]
 

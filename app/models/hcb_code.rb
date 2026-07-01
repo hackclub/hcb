@@ -595,6 +595,17 @@ class HcbCode < ApplicationRecord
     canonical_transactions.last
   end
 
+  def linked_object
+    invoice || donation ||
+      ach_transfer || wire ||
+      paypal_transfer || wise_transfer ||
+      check || increase_check ||
+      check_deposit || outgoing_disbursement ||
+      incoming_disbursement || bank_fee ||
+      fee_revenue || reimbursement_expense_payout ||
+      reimbursement_payout_holding
+  end
+
   # The `:receipt_required` scope determines the type of
   # transaction based on its HCB Code, for reference:
   # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)

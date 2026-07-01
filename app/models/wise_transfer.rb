@@ -50,6 +50,7 @@ class WiseTransfer < ApplicationRecord
 
   include AASM
   include Freezable
+  include HasLedgerItem
 
   include HasWiseRecipient
 
