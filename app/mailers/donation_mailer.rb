@@ -36,7 +36,7 @@ class DonationMailer < ApplicationMailer
 
   def set_emails
     @emails = @donation.event.organizer_contact_emails
-    @delivery_reason = "you are on the team of #{donation.event.name} on HCB."
+    @delivery_reason = "you are on the team of #{@donation.event.name} on HCB."
   end
 
 end
