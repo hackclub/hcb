@@ -59,6 +59,7 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include HasPaymentRecipient
+  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -134,7 +135,6 @@ class IncreaseCheck < ApplicationRecord
     %i[address_line1 address_line2 address_city address_state address_zip]
   end
 
-  has_one :ledger_item, as: :linked_object
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false

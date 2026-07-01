@@ -70,6 +70,7 @@ class AchTransfer < ApplicationRecord
   include Payoutable
   include HasPaymentRecipient
   include Freezable
+  include HasLedgerItem
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -124,7 +125,6 @@ class AchTransfer < ApplicationRecord
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
-  has_one :ledger_item, as: :linked_object
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
 

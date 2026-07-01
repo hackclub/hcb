@@ -68,6 +68,7 @@ class Donation < ApplicationRecord
   include AASM
   include Freezable
   include UsersHelper
+  include HasLedgerItem
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -83,8 +84,6 @@ class Donation < ApplicationRecord
   belongs_to :payout, class_name: "DonationPayout", optional: true
   belongs_to :recurring_donation, optional: true
   belongs_to :collected_by, class_name: "User", optional: true
-
-  has_one :ledger_item, as: :linked_object
 
   before_save :trim_utm_referrer_fields
 

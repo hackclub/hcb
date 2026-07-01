@@ -27,6 +27,7 @@ class BankFee < ApplicationRecord
 
   include AASM
   include HasBookTransfer
+  include HasLedgerItem
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -34,7 +35,6 @@ class BankFee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :bfe
 
-  has_one :ledger_item, as: :linked_object
   belongs_to :event
   belongs_to :fee_revenue, optional: true
 

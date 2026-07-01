@@ -26,6 +26,7 @@ class Disbursement
     extend ActiveSupport::Concern
 
     included do
+      include HasLedgerItem
       include PgSearch::Model
       pg_search_scope :search_name, against: [:name]
 
@@ -47,8 +48,6 @@ class Disbursement
       belongs_to :requested_by, class_name: "User", optional: true
 
       has_one :card_grant, foreign_key: :disbursement_id, inverse_of: :disbursement, required: false
-
-      has_one :ledger_item, as: :linked_object
 
       # AASM
       include AASM
