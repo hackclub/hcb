@@ -38,6 +38,7 @@ class Payment < ApplicationRecord
   has_one :legal_entity, through: :payee
   has_many :attempts, class_name: "Payment::Attempt"
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :current_attempt, -> { not_failed }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
 
@@ -71,7 +72,10 @@ class Payment < ApplicationRecord
     end
 
     event :mark_canceled do
-      transitions from: [:under_review, :sent], to: :canceled
+      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled
+      after do
+        current_attempt&.mark_canceled!
+      end
     end
   end
 

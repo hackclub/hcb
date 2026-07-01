@@ -51,6 +51,7 @@ class Payment
       state :sent
       state :successful
       state :failed
+      state :canceled
 
       event :mark_under_review do
         transitions from: :pending, to: :under_review, if: -> { payout.present? }
@@ -92,7 +93,6 @@ class Payment
         transitions from: [:pending, :under_review, :sent], to: :canceled, if: -> { payout.nil? || payout&.can_cancel? }
         after do
           payout&.cancel!
-          payment.mark_canceled!
         end
       end
     end
