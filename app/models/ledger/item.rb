@@ -84,22 +84,22 @@ class Ledger
 
     def type_metadata
       {
-        disbursement_incoming: ["Incoming transfer", "door-enter"],
-        disbursement_outgoing: ["Outgoing transfer", "door-leave"],
-        reimbursement_expense_payout: ["Reimbursement", "reimbursement"],
-        reimbursement_payout_holding: ["Reimbursement payout holding", "reimbursement"],
-        ach_transfer: ["Outgoing ACH", "payment-transfer"],
-        bank_fee: ["Fiscal sponsorship fee", "bank-icon"],
-        check: ["Mailed check", "email"],
-        increase_check: ["Mailed check", "email"],
-        check_deposit: ["Check deposit", "cheque"],
-        donation: ["Donation", "support"],
-        fee_revenue: ["Fee revenue", "bank-icon"],
-        invoice: ["Invoice", "payment-docs"],
-        paypal_transfer: ["PayPal transfer", "paypal"],
-        wire: ["Wire", "web"],
-        wise_transfer: ["Wise transfer", "wise"],
-      }[linked_object_type&.to_sym] || ["Unknown", "bank-icon"]
+        "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
+        "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
+        "Reimbursement::ExpensePayout": ["Reimbursement", "reimbursement"],
+        "Reimbursement::PayoutHolding": ["Reimbursement payout holding", "reimbursement"],
+        "AchTransfer": ["Outgoing ACH", "payment-transfer"],
+        "BankFee": ["Fiscal sponsorship fee", "bank-icon"],
+        "Check": ["Mailed check", "email"],
+        "IncreaseCheck": ["Mailed check", "email"],
+        "CheckDeposit": ["Check deposit", "cheque"],
+        "Donation": ["Donation", "support"],
+        "FeeRevenue": ["Fee revenue", "bank-icon"],
+        "Invoice": ["Invoice", "payment-docs"],
+        "PaypalTransfer": ["PayPal transfer", "paypal"],
+        "Wire": ["Wire", "web"],
+        "WiseTransfer": ["Wise transfer", "wise"],
+      }[linked_object_type] || ["Unknown", "bank-icon"]
     end
 
   end
