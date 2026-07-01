@@ -11,6 +11,7 @@ class LegalEntity
 
       service = LegalEntity::PayoutMethodService::Update.new(
         user: current_user,
+        legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
         make_default: legal_entity.payout_methods.unarchived.none?
@@ -29,6 +30,7 @@ class LegalEntity
 
       service = LegalEntity::PayoutMethodService::Update.new(
         user: current_user,
+        legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
         make_default: @payout_method.default?,
@@ -96,6 +98,8 @@ class LegalEntity
     def render_error_payout_settings(payout_method)
       @user = current_user
       @payout_method = payout_method
+      @legal_entities = current_user.legal_entities
+      @legal_entity = payout_method.legal_entity || legal_entity
       flash.now[:error] = payout_method.error_messages.to_sentence
 
       # `edit_payout` lives under `users/`, but this controller isn't namespaced
@@ -104,12 +108,19 @@ class LegalEntity
       render template: "users/edit_payout", status: :unprocessable_entity
     end
 
+    # The legal entity being managed: derived from the target method when acting
+    # on an existing one, otherwise the entity picked via the switcher (scoped to
+    # entities the user belongs to), falling back to their personal entity.
     def legal_entity
-      current_user&.personal_legal_entity
+      @legal_entity ||= @payout_method&.legal_entity ||
+                        current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
+                        current_user&.personal_legal_entity
     end
 
     def set_payout_method
-      @payout_method = legal_entity&.payout_methods&.unarchived&.find_by(id: params[:id])
+      @payout_method = LegalEntity::PayoutMethod.unarchived
+                                                .where(legal_entity: current_user&.legal_entities)
+                                                .find_by(id: params[:id])
       return if @payout_method
 
       skip_authorization

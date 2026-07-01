@@ -151,6 +151,10 @@ class UsersController < ApplicationController
 
   def edit_payout
     authorize @user
+
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:payout_legal_entity_id]) || @user.personal_legal_entity
+    session[:payout_legal_entity_id] = @legal_entity.id
   end
 
   def pay
@@ -417,6 +421,11 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
+    if payout_method_type.present?
+      @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
+      session[:payout_legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
+    end
+
     payout_update = nil
     saved = ActiveRecord::Base.transaction do
       user_ok = @user.save
@@ -424,6 +433,7 @@ class UsersController < ApplicationController
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
           user: @user,
+          legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
         )
@@ -465,6 +475,7 @@ class UsersController < ApplicationController
 
       if payout_update&.error_messages&.any?
         flash.now[:error] = payout_update.error_messages.to_sentence
+        @legal_entities = @user.legal_entities
         render :edit_payout, status: :unprocessable_entity
         return
       end
