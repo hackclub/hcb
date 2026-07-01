@@ -8,8 +8,8 @@ module OneTimeJobs
       event = Event.find(event_id)
       ledger_items = event.ledger_items
 
-      ledger_items.find_each do |li|
-        li.update!(linked_object: li.hcb_code.linked_object) unless li.hcb_code.linked_object.nil?
+      ledger_items.find_each do |item|
+        item.update!(linked_object: item.hcb_code.linked_object) unless item.hcb_code.linked_object.nil?
       end
     end
 
