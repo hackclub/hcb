@@ -23,7 +23,6 @@ class GSuite
     def notify_of_revocation
       mail subject: "Your Google Workspace access for #{@g_suite.domain} has been revoked"
     end
-    
     def revocation_canceled
       mail subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
     end
