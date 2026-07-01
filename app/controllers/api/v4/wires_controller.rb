@@ -5,28 +5,20 @@ module Api
     class WiresController < ApplicationController
       include SetEvent
 
-      before_action :set_api_event, only: [:create]
+      before_action :set_api_event, only: [:index, :create]
+
+      def index
+        authorize @event, :transfers_in_v4?
+        @wires = paginate_cursor(@event.wires.order(created_at: :desc).to_a, &:public_id)
+      end
+
+      def show
+        @wire = authorize Wire.find_by_public_id!(params[:id])
+
+        render :show, status: :ok
+      end
 
       def create
-        wire_params = params.require(:wire).permit(
-          :memo,
-          :amount_cents,
-          :currency,
-          :payment_for,
-          :recipient_name,
-          :recipient_email,
-          :account_number,
-          :bic_code,
-          :recipient_country,
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :send_email_notification,
-          :file,
-          *Wire.recipient_information_accessors
-        )
         @wire = @event.wires.build(wire_params.merge(user: current_user))
 
         authorize @wire
@@ -52,6 +44,30 @@ module Api
         end
 
         render :show, status: :created
+      end
+
+      private
+
+      def wire_params
+        params.require(:wire).permit(
+          :memo,
+          :amount_cents,
+          :currency,
+          :payment_for,
+          :recipient_name,
+          :recipient_email,
+          :account_number,
+          :bic_code,
+          :recipient_country,
+          :address_line1,
+          :address_line2,
+          :address_city,
+          :address_state,
+          :address_postal_code,
+          :send_email_notification,
+          :file,
+          *Wire.recipient_information_accessors
+        )
       end
 
     end
