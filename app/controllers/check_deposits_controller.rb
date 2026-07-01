@@ -36,6 +36,7 @@ class CheckDepositsController < ApplicationController
     check_deposit.canonical_pending_transaction.update(fronted: !check_deposit.canonical_pending_transaction.fronted)
 
     redirect_to url_for(check_deposit.local_hcb_code), flash: { success: check_deposit.canonical_pending_transaction.fronted ? "This check deposit is fronted!" : "This check deposit is de-fronted!" }
+  end
 
   private
 
