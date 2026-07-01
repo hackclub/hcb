@@ -98,7 +98,7 @@ RSpec.describe EventsController do
       create(:organizer_position, user: organizer, event:)
 
       recipient = create(:event, name: "Receiving Organization")
-      disbursement = create(:disbursement, source_event: event, event: recipient)
+      create(:disbursement, source_event: event, event: recipient)
 
       create_session(organizer, verified: true)
 
@@ -122,7 +122,7 @@ RSpec.describe EventsController do
       Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
 
       recipient = create(:event, name: "Receiving Organization")
-      disbursement = create(:disbursement, source_event: event, event: recipient)
+      create(:disbursement, source_event: event, event: recipient)
 
       create_session(organizer, verified: true)
 
