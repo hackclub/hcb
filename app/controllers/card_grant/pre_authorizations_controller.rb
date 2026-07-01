@@ -26,6 +26,25 @@ class CardGrant
       redirect_to card_grant_pre_authorizations_path(@card_grant)
     end
 
+    def organizer_request_resubmit
+      authorize @pre_authorization
+
+      # Create a comment on the card grant if feedback was provided
+      if params[:feedback].present?
+        comment = @card_grant.comments.build(
+          content: params[:feedback],
+          user: current_user,
+          action: :changes_requested
+        )
+        comment.save!
+      end
+
+      @pre_authorization.mark_resubmit_requested!
+
+      flash[:success] = "Pre-authorization sent back for resubmission"
+      redirect_to card_grant_pre_authorizations_path(@card_grant)
+    end
+
     def update
       authorize @pre_authorization
 
