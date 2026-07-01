@@ -6,6 +6,7 @@ class AccountNumberMailer < ApplicationMailer
 
   def insufficent_balance
     @delivery_reason = "your organization has direct debits enabled."
+    
     mail subject: "A direct debit for #{@event.name} was reversed due to an insufficent balance"
   end
 
