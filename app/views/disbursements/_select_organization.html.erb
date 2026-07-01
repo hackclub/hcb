@@ -13,5 +13,5 @@
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
-  <%= form.combobox field_name.to_sym, search_path, value: default_value, placeholder: "Select one...", disabled: disabled, class: "!max-w-full" %>
+  <%= form.combobox field_name.to_sym, search_path, value: default_value, placeholder: "Select one...", disabled: disabled, required: true, class: "!max-w-full", data: { hw_combobox_strict_value: true } %>
 </div>

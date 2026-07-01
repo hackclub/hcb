@@ -106,11 +106,14 @@ class DisbursementsController < ApplicationController
   end
 
   def create
-    @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
-    @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
+    @source_event = resolve_transfer_event(disbursement_params[:source_event_id])
+    @destination_event = resolve_transfer_event(disbursement_params[:event_id])
     @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
 
     authorize @disbursement
+
+    raise ArgumentError, "You must select an organization to send from." if @source_event.nil?
+    raise ArgumentError, "You must select an organization to send to." if @destination_event.nil?
 
     if admin_signed_in? && disbursement_params["scheduled_on(1i)"].present?
       scheduled_on = Date.new(disbursement_params["scheduled_on(1i)"].to_i,
@@ -255,6 +258,17 @@ class DisbursementsController < ApplicationController
   end
 
   private
+
+  # Resolve a transfer's source/destination event from its submitted id. Both
+  # fields are resolved the same way so blank input produces a friendly "you must
+  # select an organization" error (see #create) rather than a nil dereference or a
+  # raised RecordNotFound. A blank id returns nil; a present id is looked up by
+  # public_id, falling back to a friendly slug.
+  def resolve_transfer_event(id)
+    return nil if id.blank?
+
+    Event.find_by_public_id(id) || Event.friendly.find(id)
+  end
 
   # Only allow a trusted parameter "white list" through.
   def disbursement_params

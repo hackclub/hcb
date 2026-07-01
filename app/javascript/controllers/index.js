@@ -5,7 +5,7 @@ import { Application } from '@hotwired/stimulus'
 import { definitionsFromContext } from '@hotwired/stimulus-webpack-helpers'
 import { installErrorHandler } from '@appsignal/stimulus'
 import { appsignal } from '../appsignal'
-import HwComboboxController from '@josefarias/hotwire_combobox'
+import StrictHwComboboxController from './strict_hw_combobox'
 
 const application = Application.start()
 
@@ -13,4 +13,4 @@ installErrorHandler(appsignal, application)
 
 const context = require.context('.', true, /_controller\.js$/)
 application.load(definitionsFromContext(context))
-application.register('hw-combobox', HwComboboxController)
+application.register('hw-combobox', StrictHwComboboxController)

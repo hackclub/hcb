@@ -2,7 +2,7 @@
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}", data: { controller: "disbursement-form", action: "submit->disbursement-form#onSubmit hw-combobox:selection->disbursement-form#reset input->disbursement-form#reset" } }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section">
@@ -26,6 +26,8 @@
         <%= inline_icon "view-forward", class: "mt-[30px]" %>
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, label: "To", source_event: source_event } %>
       </div>
+
+      <p id="disbursement_form_error" data-disbursement-form-target="error" class="error mb-2" role="alert" hidden></p>
 
       <div class="flex items-center justify-between">
         <%= form.label :amount, "Amount" %>

@@ -78,6 +78,56 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("donations")
       expect(disbursement.destination_transaction_category.slug).to eq("fundraising")
     end
+
+    it "redirects with an error when the source organization is blank" do
+      sender = create(:user)
+      destination_event = create(:event)
+      create(:organizer_position, user: sender, event: destination_event)
+
+      create_session(sender, verified: true)
+
+      expect do
+        post(
+          :create,
+          params: {
+            disbursement: {
+              name: "Boba Drops",
+              source_event_id: "",
+              event_id: destination_event.public_id,
+              amount: "123.45"
+            }
+          }
+        )
+      end.not_to change(Disbursement, :count)
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to eq("You must select an organization to send from.")
+    end
+
+    it "redirects with a friendly error when the destination organization is blank" do
+      sender = create(:user)
+      source_event = create(:event, :with_positive_balance)
+      create(:organizer_position, user: sender, event: source_event)
+
+      create_session(sender, verified: true)
+
+      expect do
+        post(
+          :create,
+          params: {
+            disbursement: {
+              name: "Boba Drops",
+              source_event_id: source_event.public_id,
+              event_id: "",
+              amount: "123.45"
+            }
+          }
+        )
+      end.not_to change(Disbursement, :count)
+
+      expect(response).to have_http_status(:redirect)
+      expect(flash[:error]).to eq("You must select an organization to send to.")
+    end
   end
 
   describe "#set_transaction_categories" do
@@ -161,6 +211,44 @@ RSpec.describe DisbursementsController do
       disbursement.reload
       expect(disbursement.source_transaction_category.slug).to eq("donations")
       expect(disbursement.destination_transaction_category.slug).to eq("rent")
+    end
+  end
+
+  describe "#new" do
+    it "renders the source and destination organization comboboxes as required" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:new)
+
+      expect(response).to have_http_status(:ok)
+
+      html = Nokogiri::HTML(response.body)
+      source_combobox = html.at_css("input#disbursement_source_event_id[role='combobox']")
+      destination_combobox = html.at_css("input#disbursement_event_id[role='combobox']")
+
+      expect(source_combobox).to be_present
+      expect(destination_combobox).to be_present
+      expect(source_combobox["required"]).to be_present
+      expect(destination_combobox["required"]).to be_present
+    end
+
+    it "opts the organization comboboxes into strict selection" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:new)
+
+      expect(response).to have_http_status(:ok)
+
+      html = Nokogiri::HTML(response.body)
+      source_fieldset = html.at_css("fieldset[data-async-id='disbursement_source_event_id']")
+      destination_fieldset = html.at_css("fieldset[data-async-id='disbursement_event_id']")
+
+      expect(source_fieldset).to be_present
+      expect(destination_fieldset).to be_present
+      expect(source_fieldset["data-hw-combobox-strict-value"]).to eq("true")
+      expect(destination_fieldset["data-hw-combobox-strict-value"]).to eq("true")
     end
   end
 
