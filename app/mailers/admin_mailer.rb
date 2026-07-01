@@ -2,7 +2,6 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  before_action :set_delivery_reason
   default to: -> do
     [
       Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
