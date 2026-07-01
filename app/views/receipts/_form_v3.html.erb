@@ -36,7 +36,14 @@
             </p>
           <% end %>
         <% end %>
-        <div class="container container--md pt2">
+        <div class="container container--md pt2 pb2 relative">
+          <%= link_to "https://help.hcb.hackclub.com/en/articles/15410229-what-counts-as-a-valid-receipt-and-when-is-it-due",
+              class: "absolute top-0 right-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-muted/60 bg-white text-muted shadow-sm tooltipped tooltipped--s hover:bg-slate-50",
+              target: "_blank",
+              rel: "noopener noreferrer",
+              "aria-label" => "What counts as a valid receipt?" do %>
+            <%= inline_icon "question-mark", size: 14 %>
+          <% end %>
 
           <% if local_assigns[:redirect_url] %>
             <%= form.hidden_field :redirect_url, value: local_assigns[:redirect_url] %>
