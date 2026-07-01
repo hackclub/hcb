@@ -11,7 +11,7 @@ class AchTransferMailer < ApplicationMailer
   def notify_failed
     @ach_transfer = params[:ach_transfer]
     @reason = params[:reason]
-    @delivery_reason = "you initiated an ACH transfer."
+    @delivery_reason = "you initiated an ACH transfer from #{@ach_transfer.event.name}."
 
     mail subject: "[HCB] ACH transfer to #{@ach_transfer.recipient_name} failed to send", to: @ach_transfer.creator.email
   end
