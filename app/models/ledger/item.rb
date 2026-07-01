@@ -48,7 +48,15 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
-      false
+      return false if amount_cents >= 0
+
+      if primary_ledger.event.present?
+        return false unless primary_ledger.event.plan.receipts_required?
+      else
+        return false unless primary_ledger.card_grant.event.plan.receipts_required?
+      end
+
+      true
     end
 
     def calculate_amount_cents
