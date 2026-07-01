@@ -4,7 +4,7 @@
 #
 # Table name: hcb_codes
 #
-#  id                           :bigint           not null, prim`a`ry key
+#  id                           :bigint           not null, primary key
 #  hcb_code                     :text             not null
 #  marked_no_or_lost_receipt_at :datetime
 #  short_code                   :text
