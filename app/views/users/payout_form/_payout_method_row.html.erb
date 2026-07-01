@@ -2,18 +2,12 @@
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
-<% icon_variant = case details
-                  when LegalEntity::PayoutMethod::AchTransfer then "ach"
-                  when LegalEntity::PayoutMethod::Check then "check"
-                  when LegalEntity::PayoutMethod::WiseTransfer then "wise"
-                  when LegalEntity::PayoutMethod::Wire then "wire"
-                  end %>
 
 <div class="payout-methods__row" data-payout-methods-row>
   <div class="flex items-center" style="gap: 14px; padding: 16px 20px;">
-    <div class="payout-methods__icon payout-methods__icon--<%= icon_variant %> flex items-center justify-center flex-shrink-0"
+    <div class="payout-methods__icon flex items-center justify-center flex-shrink-0"
          style="width: 40px; height: 40px; border-radius: 10px;">
-      <%= inline_icon payout_method.icon, size: icon_variant == "ach" ? 24 : 20 %>
+      <%= inline_icon payout_method.icon, size: details.is_a?(LegalEntity::PayoutMethod::AchTransfer) ? 24 : 20 %>
     </div>
 
     <div class="flex-auto" style="min-width: 0;">
@@ -24,19 +18,7 @@
         <% end %>
       </div>
       <div class="muted" style="font-size: 13px; margin-top: 2px;">
-        <% case details
-           when LegalEntity::PayoutMethod::AchTransfer %>
-          Account ••••<%= details.account_number.to_s.last(4) %>
-        <% when LegalEntity::PayoutMethod::Check %>
-          <%= details.address_line1.presence || "Mailing address on file" %>
-        <% when LegalEntity::PayoutMethod::WiseTransfer %>
-          <%= [details.bank_name.presence, details.currency].compact.join(" · ") %>
-        <% when LegalEntity::PayoutMethod::Wire %>
-          <% last4 = details.account_number.to_s.last(4) %>
-          Account <%= last4.present? ? "••••#{last4}" : "on file" %>
-        <% else %>
-          <%= details&.human_kind %>
-        <% end %>
+        <%= payout_method.short_label %>
       </div>
     </div>
 
@@ -73,7 +55,7 @@
                 Remove
               </span>
             <% else %>
-              <%= link_to payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :delete, turbo_frame: "_top", turbo_confirm: "Remove this payout method?" } do %>
+              <%= link_to archive_payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :patch, turbo_frame: "_top", turbo_confirm: "Remove this payout method?" } do %>
                 <%= inline_icon "delete", size: 24 %>
                 Remove
               <% end %>

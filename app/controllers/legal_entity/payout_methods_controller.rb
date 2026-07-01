@@ -126,11 +126,11 @@ class LegalEntity
         when LegalEntity::PayoutMethod::Wire.name
           [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
            :recipient_country, :recipient_name, :bic_code, :account_number] +
-            LegalEntity::PayoutMethod::Wire.recipient_information_accessors
+          LegalEntity::PayoutMethod::Wire.recipient_information_accessors
         when LegalEntity::PayoutMethod::WiseTransfer.name
           [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
            :recipient_country, :currency] +
-            LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors
+          LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors
         end
       return {} unless attributes
 
