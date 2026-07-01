@@ -4,7 +4,7 @@ class HcbCodeMailer < ApplicationMailer
   before_action { @inbound_mail = params[:mail] }
   before_action { @reply_to = params[:reply_to] }
   before_action { @to = params[:to] || @inbound_mail&.mail&.from&.first }
-  before_actoun :set_delivery_reason
+  before_action :set_delivery_reason
 
   default to: -> { @to },
           reply_to: -> { @reply_to },
