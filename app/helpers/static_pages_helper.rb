@@ -38,12 +38,6 @@ module StaticPagesHelper
 
   def airtable_info
     {
-      onboard_id: {
-        id: "app4Bs8Tjwvk5qcD4",
-        table: "Verifications%20-%20Depreciated",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/app4Bs8Tjwvk5qcD4/tblVZwB8QMUSDAd41/viwJ15CT6VHCZ0UZ4"
-      },
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
@@ -109,12 +103,6 @@ module StaticPagesHelper
         table: "Users",
         query: { filterByFormula: "{Verification Status}='Unknown'" },
         destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
-      },
-      boba: {
-        id: "app05mIKwNPO2l1vT",
-        table: "Event%20Codes",
-        query: { filterByFormula: "Status='Under Review'" },
-        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
       },
       marketing_shipment_request: {
         id: "appK53aN0fz3sgJ4w",

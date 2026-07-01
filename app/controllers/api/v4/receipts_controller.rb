@@ -29,9 +29,11 @@ module Api
                     end
       end
 
+      require_oauth2_scope "receipts:read", :index
+
       def create
         if params[:transaction_id].present?
-          @hcb_code = HcbCode.find_by_public_id(params[:transaction_id])
+          @hcb_code = HcbCode.find_by_public_id!(params[:transaction_id])
           authorize @hcb_code, :upload?, policy_class: ReceiptablePolicy
         else
           skip_authorization
@@ -41,13 +43,17 @@ module Api
         render "show", status: :created
       end
 
+      require_oauth2_scope "receipts:write", :create
+
       def destroy
-        @receipt = Receipt.find(params[:id])
+        @receipt = Receipt.find_by_public_id(params[:id]) || Receipt.find_by_hashid!(params[:id]) # TODO: remove hash ID after mobile app update
         authorize @receipt
 
         @receipt.destroy!
         render json: { message: "Receipt successfully deleted" }, status: :ok
       end
+
+      require_oauth2_scope "receipts:write", :destroy
 
     end
   end
