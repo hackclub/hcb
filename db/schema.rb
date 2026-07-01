@@ -2767,7 +2767,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_user_totps_on_user_id"
-    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -2817,6 +2816,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.jsonb "object"
     t.jsonb "object_changes"
     t.string "whodunnit"
+    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
   create_table "w9s", force: :cascade do |t|
