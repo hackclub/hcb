@@ -48,6 +48,8 @@ class Disbursement
 
       has_one :card_grant, foreign_key: :disbursement_id, inverse_of: :disbursement, required: false
 
+      has_one :ledger_item, as: :linked_object
+
       # AASM
       include AASM
       # State-machine config lives here, on the first `aasm` block AASM processes for
