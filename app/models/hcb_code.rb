@@ -4,7 +4,7 @@
 #
 # Table name: hcb_codes
 #
-#  id                           :bigint           not null, primary key
+#  id                           :bigint           not null, prim`a`ry key
 #  hcb_code                     :text             not null
 #  marked_no_or_lost_receipt_at :datetime
 #  short_code                   :text
@@ -67,6 +67,8 @@ class HcbCode < ApplicationRecord
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
 
   before_create :generate_and_set_short_code
+
+  after_create :write_event_and_subledger_id
 
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
