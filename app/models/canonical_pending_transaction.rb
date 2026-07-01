@@ -432,6 +432,17 @@ class CanonicalPendingTransaction < ApplicationRecord
     raw_pending_column_transaction&.column_id
   end
 
+  def transaction_source_type
+    types = %w[RawPendingBankFeeTransaction RawPendingColumnTransaction RawPendingDonationTransaction
+               RawPendingIncomingDisbursementTransaction RawPendingInvoiceTransaction
+               RawPendingOutgoingAchTransaction RawPendingOutgoingCheckTransaction
+               RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction]
+
+    types.each do |type|
+      return type if send("#{type.underscore}_id").present?
+    end
+  end
+
   private
 
   def write_hcb_code
