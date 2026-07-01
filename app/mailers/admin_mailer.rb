@@ -115,10 +115,5 @@ class AdminMailer < ApplicationMailer
       subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
     )
   end
-
-  private
-
-  def set_delivery_reason
-    @delivery_reason = "you are an HCB admin."
-  end
+  
 end
