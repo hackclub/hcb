@@ -18,6 +18,7 @@ class UsersController < ApplicationController
                                                :receipt_report,
                                                :edit_featurepreviews,
                                                :edit_security,
+                                               :pay,
                                                :edit_notifications,
                                                :edit_admin,
                                                :toggle_sms_auth,
@@ -26,7 +27,7 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
   before_action :set_user, only: [
     :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
-    :edit_security, :edit_notifications, :edit_integrations,
+    :edit_security, :pay, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
@@ -154,6 +155,19 @@ class UsersController < ApplicationController
     @legal_entities = @user.legal_entities
     @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
     session[:legal_entity_id] = @legal_entity.id
+  end
+
+  def pay
+    authorize @user
+
+    if params[:legal_entity_id].present?
+      session[:pay_legal_entity_id] = params[:legal_entity_id]
+      return redirect_to my_pay_path
+    end
+
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: session[:pay_legal_entity_id]) || @user.personal_legal_entity
+    @payments = @legal_entity.payments.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def edit_featurepreviews

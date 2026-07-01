@@ -1,0 +1,68 @@
+<% title "Pay" %>
+<% page_md %>
+<%= render "users/nav", selected: :pay %>
+
+<% entity_label = ->(le) { le.name.presence || (le.person? ? "Personal" : "Business") } %>
+
+<h1 class="heading">
+  <span>
+    Pay
+  </span>
+
+  <% if @legal_entities.many? %>
+    <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
+      <button type="button" class="btn" style="gap: 6px;"
+              data-menu-target="toggle"
+              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        <%= entity_label.call(@legal_entity) %>
+        <%= inline_icon "down-caret", size: 20 %>
+      </button>
+      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+        <% @legal_entities.each do |le| %>
+          <%= link_to my_pay_path(legal_entity_id: le.id), class: "flex items-center#{" bold" if le == @legal_entity}" do %>
+            <%= inline_icon(le.person? ? "person" : "bank-account", size: 24) %>
+            <%= entity_label.call(le) %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</h1>
+
+<%= render "application/flash", klass: "max-w-full mb3" %>
+
+<% if @payments.any? %>
+  <article class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Event</th>
+          <th>For</th>
+          <th>Amount</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @payments.each do |payment| %>
+          <% state_color = { "pending_legal_entity" => "muted", "under_review" => "info", "sent" => "info", "successful" => "success", "rejected" => "error" }[payment.aasm_state] %>
+          <tr>
+            <td>
+              <span class="ml0 badge bg-<%= state_color %>">
+                <%= payment.aasm_state.humanize %>
+              </span>
+            </td>
+            <td><%= payment.event.name %></td>
+            <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
+              <%= payment.purpose %>
+            </td>
+            <td><%= render_money payment.amount_cents %></td>
+            <td><%= format_date payment.created_at %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% else %>
+  <p class="muted">No payments yet.</p>
+<% end %>
