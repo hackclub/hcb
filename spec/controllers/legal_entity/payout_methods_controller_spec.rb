@@ -22,7 +22,7 @@ RSpec.describe LegalEntity::PayoutMethodsController do
         post(:create, params: {
                user: {
                  payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
-                 payout_method_attributes: { account_number: "12345678", routing_number: "021000021" }
+                 payout_method_ach_transfer: { account_number: "12345678", routing_number: "021000021" }
                }
              })
       end.to change { legal_entity.reload.payout_methods.count }.by(1)
@@ -35,7 +35,7 @@ RSpec.describe LegalEntity::PayoutMethodsController do
 
       patch(:update, params: {
               id: pm.id,
-              user: { payout_method_attributes: { account_number: "99999999", routing_number: "021000021" } }
+              user: { payout_method_ach_transfer: { account_number: "99999999", routing_number: "021000021" } }
             })
 
       # Old record is archived (not destroyed) and disappears from the active list.
@@ -53,7 +53,7 @@ RSpec.describe LegalEntity::PayoutMethodsController do
 
       patch(:update, params: {
               id: pm.id,
-              user: { payout_method_attributes: { account_number: "99999999", routing_number: "021000021" } }
+              user: { payout_method_ach_transfer: { account_number: "99999999", routing_number: "021000021" } }
             })
 
       expect(flash[:error]).to match(/being processed/i)

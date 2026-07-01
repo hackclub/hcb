@@ -117,28 +117,25 @@ class LegalEntity
     end
 
     def details_params_for(type_name)
-      root = params.require(:user)
-      permitted =
+      attributes =
         case type_name
         when LegalEntity::PayoutMethod::Check.name
-          root.permit(payout_method_attributes: [:address_line1, :address_line2, :address_city,
-                                                 :address_state, :address_postal_code, :address_country])[:payout_method_attributes]
+          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
         when LegalEntity::PayoutMethod::AchTransfer.name
-          root.permit(payout_method_attributes: [:account_number, :routing_number])[:payout_method_attributes]
+          [:account_number, :routing_number]
         when LegalEntity::PayoutMethod::Wire.name
-          # Field names mirror the fields_for groups in users/payout_form/_managed_form,
-          # which predate this controller and use per-type names instead of a shared one.
-          root.permit(payout_method_wire: [:address_line1, :address_line2, :address_city, :address_state,
-                                           :address_postal_code, :recipient_country, :recipient_name,
-                                           :bic_code, :account_number] +
-                                          LegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
+          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+           :recipient_country, :recipient_name, :bic_code, :account_number] +
+            LegalEntity::PayoutMethod::Wire.recipient_information_accessors
         when LegalEntity::PayoutMethod::WiseTransfer.name
-          root.permit(payout_method_wise_transfer: [:address_line1, :address_line2, :address_city, :address_state,
-                                                    :address_postal_code, :recipient_country, :currency] +
-                                                   LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
+          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+           :recipient_country, :currency] +
+            LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors
         end
+      return {} unless attributes
 
-      permitted || {}
+      key = :"payout_method_#{type_name.demodulize.underscore}"
+      params.require(:user).permit(key => attributes)[key] || {}
     end
 
   end

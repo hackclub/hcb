@@ -30,7 +30,7 @@
   <% end %>
 
   <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
-    <%= form.fields_for :payout_method, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
+    <%= form.fields_for :payout_method_check, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
       <p class="muted mt-2 mb-5">
         Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
       </p>
@@ -148,7 +148,7 @@
         }
       }
     }">
-    <%= form.fields_for :payout_method, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
+    <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
       <p class="muted mt-2 mb-5">
         ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
       </p>
