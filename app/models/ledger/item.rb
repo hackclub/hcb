@@ -107,6 +107,7 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
+        "StripeServiceFee": ["Stripe service fee", "cash"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
       }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
