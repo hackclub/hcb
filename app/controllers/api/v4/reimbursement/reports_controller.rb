@@ -31,7 +31,7 @@ module Api
         def create
           @event = Event.find_by_public_id!(params.dig(:reimbursement_report, :organization_id))
 
-          report_params = params.require(:reimbursement_report).permit(
+          report_params = params.fetch(:reimbursement_report, {}).permit(
             :name,
             :invite_message,
             :maximum_amount_cents
