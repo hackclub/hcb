@@ -98,7 +98,7 @@ class LegalEntity
     def render_error_payout_settings(payout_method)
       @user = current_user
       @payout_method = payout_method
-      @legal_entities = current_user.legal_entities
+      @legal_entities = current_user.legal_entities if payments_contractors_refresh?
       @legal_entity = payout_method.legal_entity || legal_entity
       flash.now[:error] = payout_method.error_messages.to_sentence
 
@@ -108,10 +108,9 @@ class LegalEntity
       render template: "users/edit_payout", status: :unprocessable_entity
     end
 
-    # The legal entity being managed: derived from the target method when acting
-    # on an existing one, otherwise the entity picked via the switcher (scoped to
-    # entities the user belongs to), falling back to their personal entity.
     def legal_entity
+      return @legal_entity ||= current_user&.personal_legal_entity unless payments_contractors_refresh?
+
       @legal_entity ||= @payout_method&.legal_entity ||
                         current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
                         current_user&.personal_legal_entity
