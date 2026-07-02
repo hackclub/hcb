@@ -254,7 +254,8 @@ module ApplicationHelper
   end
 
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.".html_safe
+    message = "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.<br/><small>HCB is operated by The Hack Foundation (d.b.a. Hack Club), a 501(c)(3) nonprofit with EIN 81-2908499.</small>"
+    content_tag :span, message.html_safe
   end
 
   def help_email
