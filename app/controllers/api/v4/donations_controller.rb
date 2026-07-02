@@ -4,10 +4,25 @@ module Api
   module V4
     class DonationsController < ApplicationController
       include SetEvent
+      include ApplicationHelper
 
-      before_action :set_api_event, only: [:create]
+      before_action :set_api_event, only: [:index, :create]
       before_action :set_donation, only: [:payment_intent]
       before_action :require_trusted_oauth_app!, only: [:create, :payment_intent]
+
+      def index
+        authorize @event, :show_in_v4?
+
+        donations = @event.donations.not_pending.order(created_at: :desc)
+
+        donations = donations.filter_by_visible_state(params[:status]) if params[:status].present?
+
+        @donations = paginate_cursor(donations.to_a, &:public_id)
+
+        if expand?(:stats)
+          @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
+        end
+      end
 
       def create
         amount = params[:amount_cents]

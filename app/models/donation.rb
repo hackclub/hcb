@@ -66,6 +66,9 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_mapping(in_transit: :deposited)
+
   include Freezable
   include UsersHelper
   include HasLedgerItem
