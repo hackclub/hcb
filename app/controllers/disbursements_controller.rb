@@ -89,6 +89,7 @@ class DisbursementsController < ApplicationController
     events = base.reorder(*order_clauses).limit(25).to_a
 
     options = events.map do |e|
+      disabled_message = nil
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
