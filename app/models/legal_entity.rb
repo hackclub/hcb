@@ -4,19 +4,14 @@
 #
 # Table name: legal_entities
 #
-#  id                  :bigint           not null, primary key
-#  address_city        :string
-#  address_country     :string
-#  address_line1       :string
-#  address_line2       :string
-#  address_postal_code :string
-#  address_state       :string
-#  entity_type         :string
-#  name                :string
-#  tin_hash            :string
-#  created_at          :datetime         not null
-#  updated_at          :datetime         not null
-#  managing_event_id   :bigint
+#  id                :bigint           not null, primary key
+#  banned_reason     :string
+#  entity_type       :string
+#  name              :string
+#  tin_hash          :string
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  managing_event_id :bigint
 #
 # Indexes
 #
