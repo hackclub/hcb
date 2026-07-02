@@ -50,7 +50,7 @@ class Ledger
     def receipt_required?
       return false if amount_cents >= 0
 
-      return false unless primary_ledger.receipt_required?
+      return false unless primary_ledger&.receipt_required?
 
       true
     end
