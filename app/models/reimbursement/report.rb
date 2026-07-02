@@ -348,6 +348,21 @@ module Reimbursement
       payout_method.present? && currency != payout_method.currency
     end
 
+    def convert_report_currency!(new_currency)
+      old_currency = @report.currency
+
+      ActiveRecord::Base.transaction do
+        @report.update!(currency: new_currency)
+
+        @report.expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
+      end
+    end
+
     def exceeds_maximum_amount?
       maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
