@@ -67,4 +67,14 @@ module PopoverHelper
       external_link: employee_path(employee)
     )
   end
+
+  def payment_popover_data(payment)
+    popover_data(
+      title: "Payment to #{payment.payee.display_name}",
+      src: payment.popover_path,
+      frame_id: "payment_#{payment.id}",
+      state_url: event_payment_path(event_id: payment.event.slug, id: payment.id),
+      external_link: event_payment_path(event_id: payment.event.slug, id: payment.id)
+    )
+  end
 end

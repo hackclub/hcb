@@ -84,6 +84,14 @@ class Payment < ApplicationRecord
     create_payment_attempt!
   end
 
+  def payout
+    attempts.order(created_at: :desc).find { |attempt| attempt.payout.present? }&.payout
+  end
+
+  def popover_path
+    Rails.application.routes.url_helpers.event_payment_path(event_id: event.slug, id:, frame: true)
+  end
+
   def estimate_usd_amount_cents
     MoneyService.convert_to_usd(amount_cents, currency)
   end

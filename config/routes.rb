@@ -84,6 +84,7 @@ Rails.application.routes.draw do
     get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
+    get "pay", to: "users#pay", as: :my_pay
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -153,6 +154,7 @@ Rails.application.routes.draw do
       get "payouts", to: "users#edit_payout"
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
+      get "pay", to: "users#pay"
       get "notifications", to: "users#edit_notifications"
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
@@ -979,7 +981,7 @@ Rails.application.routes.draw do
 
     get "payments", to: "events#payments"
 
-    resources :payments, only: [:new, :create]
+    resources :payments, only: [:new, :create, :show]
     resources :payees, only: [:index, :create]
 
     get "async_balance"

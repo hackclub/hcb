@@ -18,6 +18,7 @@ class UsersController < ApplicationController
                                                :receipt_report,
                                                :edit_featurepreviews,
                                                :edit_security,
+                                               :pay,
                                                :edit_notifications,
                                                :edit_admin,
                                                :toggle_sms_auth,
@@ -26,7 +27,7 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
   before_action :set_user, only: [
     :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
-    :edit_security, :edit_notifications, :edit_integrations,
+    :edit_security, :pay, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
@@ -150,6 +151,50 @@ class UsersController < ApplicationController
 
   def edit_payout
     authorize @user
+
+    unless payments_contractors_refresh?
+      @legal_entity = @user.personal_legal_entity
+      return
+    end
+
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:payout_legal_entity_id]) || @user.personal_legal_entity
+    session[:payout_legal_entity_id] = @legal_entity.id
+  end
+
+  def pay
+    authorize @user
+
+    return head :not_found unless payments_contractors_refresh?
+
+    if params[:legal_entity_id].present?
+      session[:pay_legal_entity_id] = params[:legal_entity_id]
+      return redirect_to my_pay_path
+    end
+
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: session[:pay_legal_entity_id]) || @user.personal_legal_entity
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.order(created_at: :desc)
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
   end
 
   def edit_featurepreviews
@@ -383,6 +428,11 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
+    if payout_method_type.present? && payments_contractors_refresh?
+      @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
+      session[:payout_legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
+    end
+
     payout_update = nil
     saved = ActiveRecord::Base.transaction do
       user_ok = @user.save
@@ -390,6 +440,7 @@ class UsersController < ApplicationController
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
           user: @user,
+          legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
         )
@@ -431,6 +482,8 @@ class UsersController < ApplicationController
 
       if payout_update&.error_messages&.any?
         flash.now[:error] = payout_update.error_messages.to_sentence
+        @legal_entity ||= @user.personal_legal_entity
+        @legal_entities = @user.legal_entities if payments_contractors_refresh?
         render :edit_payout, status: :unprocessable_entity
         return
       end

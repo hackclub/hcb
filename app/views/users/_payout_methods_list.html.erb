@@ -1,5 +1,4 @@
-<%# locals: (user:, attempted: nil) %>
-<% legal_entity = user.personal_legal_entity %>
+<%# locals: (user:, legal_entity:, attempted: nil) %>
 <% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :asc) : [] %>
 <% locking_by_method = methods.any? ?
      Reimbursement::Report
@@ -44,7 +43,7 @@
     data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
     <%= modal_header "Add method" %>
     <div style="padding: 0 20px 20px;">
-      <%= render "users/payout_form/managed_form", user:, creating: true, attempted: (create_error ? attempted : nil) %>
+      <%= render "users/payout_form/managed_form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
     </div>
   </section>
 </div>

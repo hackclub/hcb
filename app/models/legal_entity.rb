@@ -33,6 +33,9 @@ class LegalEntity < ApplicationRecord
   has_many :legal_entity_users
   has_many :users, through: :legal_entity_users
 
+  has_many :payees
+  has_many :payments, through: :payees
+
   has_many :payout_methods, class_name: "LegalEntity::PayoutMethod"
   # At most one default per entity is enforced by a partial unique index.
   has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
