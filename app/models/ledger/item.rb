@@ -73,7 +73,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required?
+      amount_cents < 0 && primary_ledger&.receipt_required? && transaction_type != "Disbursement::Outgoing"
     end
 
     def refresh!
@@ -102,7 +102,7 @@ class Ledger
     end
 
     def author
-      case linked_object_type || raw_pending_transaction_type || raw_transaction_type
+      case transaction_type
       when "AchTransfer"
         linked_object&.creator
       when "CheckDeposit"
@@ -139,6 +139,11 @@ class Ledger
 
     private
 
+    # TODO: replace usages of this with linked_object_type once all LOs are created
+    def transaction_type
+      linked_object_type || raw_pending_transaction_type || raw_transaction_type
+    end
+
     def type_metadata
       # TODO: Cache the transaction type for non-linked object ledger items
       {
@@ -160,7 +165,7 @@ class Ledger
         "StripeServiceFee": ["Stripe service fee", "cash"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
-      }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
+      }[transaction_type&.to_sym] || ["Bank account transaction", "cash"]
     end
 
     def raw_pending_transaction_type
