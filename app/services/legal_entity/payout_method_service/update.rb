@@ -74,7 +74,7 @@ class LegalEntity
         # payout-method change or the other repoints.
         (failed + draft).each do |report|
           safely do
-            report.convert_report_currency!(@payout_method.currency)
+            report.convert_report_currency!(@payout_method.currency) if report.currency != @payout_method.currency
             report.update!(legal_entity_payout_method: @payout_method)
           end
         end
