@@ -120,6 +120,23 @@
   <% end %>
 </section>
 
+<%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+<% admin_tool_if @item.receipt_optional? do %>
+  <%= begin receipt_upload_form_config = {
+        receiptable: @item,
+        enable_linking: true,
+        upload_method: "transaction_page",
+        include_spacing: true,
+        turbo: true
+      }
+            receipt_upload_form_config[:restricted_dropzone] = false
+            receipt_upload_form_config[:inline_linking] = false
+            receipt_upload_form_config[:show_receipt_button] = true
+            receipt_upload_form_config[:show_author_img] = true
+            render partial: "receipts/form_v3", locals: receipt_upload_form_config
+      end %>
+<% end %>
+
 <%= render "comments/list", comments: @item.comments %>
 <%= render "comments/form", commentable: @item %>
 

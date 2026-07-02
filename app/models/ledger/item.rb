@@ -51,8 +51,13 @@ class Ledger
     after_create :refresh!
     after_touch :refresh!
 
+    # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
       self[:receipt_required]
+    end
+
+    def receipt_optional?
+      !receipt_required?
     end
 
     def calculate_amount_cents
