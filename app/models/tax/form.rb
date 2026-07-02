@@ -66,6 +66,63 @@ module Tax
       state :sent # Request sent to TaxBandits, not necessarily email sent
       state :completed
       state :failed # Failed to create document / send email
+
+      event :mark_sent do
+        transitions from: :pending, to: :sent
+      end
+
+      event :mark_completed do
+        transitions from: :sent, to: :completed
+      end
+
+      event :mark_failed do
+        transitions from: :sent, to: :failed
+      end
+    end
+
+    def send!
+      raise ArgumentError, "can only send tax forms when pending" unless pending?
+
+      send_using_taxbandits! unless sent_with_manual?
+
+      mark_sent!
+    end
+
+    def self.taxbandits_client
+      @taxbandits_client || begin
+        Faraday.new(url: Rails.env.development ? "https://testapi.taxbandits.com/v1.7.3/" : "https://api.taxbandits.com/v1.7.3/") do |faraday|
+          faraday.response :json
+          faraday.response :raise_error
+          faraday.adapter Faraday.default_adapter
+          faraday.headers["X-Auth-Token"] = Tax::Form.taxbandits_access_token
+          faraday.headers["Content-Type"] = "application/json"
+        end
+      end
+    end
+
+    def self.taxbandits_access_token
+      Rails.cache.fetch("taxbandits_access_token", expires_in: 50.minutes) do
+        payload = {
+          iss: Credentials.fetch(:TAXBANDITS, :CLIENT_ID),
+          sub: Credentials.fetch(:TAXBANDITS, :CLIENT_ID),
+          aud: Credentials.fetch(:TAXBANDITS, :USER_TOKEN),
+          iat: Time.now.to_i
+        }
+
+        JWT.encode(payload, Credentials.fetch(:TAXBANDITS, :CLIENT_SECRET), "HS256")
+
+        oauth_response = Faraday.get(Rails.env.development ? "https://testoauth.expressauth.net/v2/tbsauth" : "https://oauth.expressauth.net/v2/tbsauth") do |req|
+          req.headers["Authentication"] => signature
+        end
+
+        oauth_response["AccessToken"]
+      end
+    end
+
+    private
+
+    def send_using_taxbandits!
+      # POST
     end
 
   end
