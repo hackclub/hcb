@@ -26,7 +26,7 @@
         description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place."
       }
     ] do %>
-    <% if policy(@event).new_payment? %>
+    <% if policy(@event).new_contractor? %>
       <%= link_to new_event_contractor_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
         <%= inline_icon "send" %>
         Send
@@ -40,7 +40,7 @@
       <%= badge_for @contractors.length, class: "bg-muted" %>
     </span>
 
-    <% if policy(@event).new_payment? %>
+    <% if policy(@event).new_contractor? %>
       <%= link_to new_event_contractor_path(event_id: @event.slug), class: "btn bg-success" do %>
         <%= inline_icon "send" %>
         Send

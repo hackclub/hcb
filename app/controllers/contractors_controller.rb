@@ -6,14 +6,14 @@ class ContractorsController < ApplicationController
   before_action :set_event
 
   def new
-    authorize @event
+    authorize @event, policy_class: ContractorPolicy
     @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
     render layout: "transfer"
   end
 
   def create
     @payee = @event.payees.find(contractor_params[:payee_id])
-    authorize @event
+    authorize @event, policy_class: ContractorPolicy
 
     @contract = @payee.payroll_contracts.build(
       hourly_rate_cents: (contractor_params[:rate].to_d * 100).to_i,

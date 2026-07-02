@@ -171,6 +171,14 @@ class EventPolicy < ApplicationPolicy
     Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show?
   end
 
+  def new_contractor?
+    contractors? && new_transfer?
+  end
+
+  def create_contractor?
+    contractors? && create_transfer?
+  end
+
   def new_payment?
     payments? && new_transfer?
   end
