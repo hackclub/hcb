@@ -72,7 +72,7 @@ class LegalEntity
       if default && draft_report.any?
         draft_report.find_each do |report|
           report.update!(legal_entity_payout_method: default)
-          report.convert_report_currency!(@payout_method.currency) if report.mismatched_currency?
+          report.convert_report_currency!(default.currency) if report.mismatched_currency?
         end
       end
 
