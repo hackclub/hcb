@@ -33,6 +33,8 @@ class Payee < ApplicationRecord
 
   after_update do
     if legal_entity_previously_changed?(from: nil)
+      # We don't automatically send tax forms to individual LEs on creation
+      legal_entity.send_tax_form! if legal_entity.tax_forms.none?
       payments.pending_legal_entity.each(&:on_legal_entity_assigned)
     end
   end
