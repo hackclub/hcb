@@ -73,6 +73,9 @@ module Tax
 
       event :mark_completed do
         transitions from: :sent, to: :completed
+        after do
+          legal_entity.payments.each(&:on_tax_form_completed)
+        end
       end
 
       event :mark_failed do

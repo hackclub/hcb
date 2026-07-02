@@ -85,13 +85,19 @@ class Payment < ApplicationRecord
   end
 
   def on_legal_entity_assigned
-    if legal_entity.complete?
-      if legal_entity.default_payout_method.present?
-        create_payment_attempt!
-      else
-        PaymentMailer.with(payment: self, initial: false).missing_payout_method.deliver_later
-      end
+    on_legal_entity_complete if legal_entity.complete?
+  end
+
+  def on_legal_entity_complete
+    if legal_entity.default_payout_method.present?
+      create_payment_attempt!
+    else
+      PaymentMailer.with(payment: self, initial: false).missing_payout_method.deliver_later
     end
+  end
+
+  def on_default_payout_method_created
+    create_payment_attempt! if legal_entity.complete?
   end
 
   def receipt_required?
