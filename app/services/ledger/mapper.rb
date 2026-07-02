@@ -10,8 +10,9 @@ class Ledger
 
     def run
       return if @ledger_item.primary_mapping&.mapped_by_human?
+      return if (ledger = calculate_ledger).nil?
 
-      Ledger::Mapping.map_primary!(ledger: calculate_ledger, ledger_item: @ledger_item, mapped_by: SYSTEM)
+      Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: SYSTEM)
     end
 
     private
