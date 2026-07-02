@@ -115,7 +115,7 @@ class Ledger
         linked_object&.collected_by if linked_object&.in_person?
       when "WiseTransfer"
         linked_object&.user
-      when "RawPendingStripetransaction"
+      when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
         stripe_cardholder&.user
