@@ -47,7 +47,7 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :map!
+    # after_create :map!
 
     def receipt_required?
       amount_cents < 0 && primary_ledger&.receipt_required?
