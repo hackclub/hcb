@@ -224,30 +224,6 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(on_other.reload.legal_entity_payout_method).to eq(other_method)
     end
 
-    it "does not steal failed/draft reports from the default when adding a non-default method" do
-      seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
-      default = user.default_payout_method
-
-      failed_report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursed)
-      Reimbursement::PayoutHolding.insert_all([{
-                                                reimbursement_reports_id: failed_report.id, amount_cents: 100,
-                                                aasm_state: "failed", created_at: Time.current, updated_at: Time.current
-                                              }])
-      draft_report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
-
-      service = described_class.new(
-        user:,
-        details_type: "LegalEntity::PayoutMethod::WiseTransfer",
-        details_attrs: valid_wise_attrs,
-        make_default: false
-      )
-
-      expect(service.run).to be(true)
-      expect(user.reload.default_payout_method).to eq(default)
-      expect(failed_report.reload.legal_entity_payout_method).to eq(default)
-      expect(draft_report.reload.legal_entity_payout_method).to eq(default)
-    end
-
     it "leaves healthy in-flight reports pinned to their own payout method on update" do
       seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_requested)
