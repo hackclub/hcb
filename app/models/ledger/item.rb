@@ -99,6 +99,8 @@ class Ledger
       case linked_object_type || raw_pending_transaction_type || raw_transaction_type
       when "AchTransfer"
         linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
       when "Check"
         linked_object&.creator
       when "IncreaseCheck"
@@ -113,6 +115,8 @@ class Ledger
         linked_object&.user
       when "Donation"
         linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
       when "WiseTransfer"
         linked_object&.user
       when "RawPendingStripeTransaction"
