@@ -6,6 +6,8 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
+#  calculated_memo              :text
+#  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime

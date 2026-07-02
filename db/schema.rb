@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_144454) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1577,7 +1577,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
 
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
+    t.text "calculated_memo"
     t.datetime "created_at", null: false
+    t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
     t.string "linked_object_type"
