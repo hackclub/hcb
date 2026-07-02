@@ -15,7 +15,7 @@ RSpec.describe Payment, type: :model do
   end
 
   def stub_legal_entity(payment, complete:, payout_method:)
-    legal_entity = double("LegalEntity", complete?: complete, default_payout_method: payout_method).as_null_object
+    legal_entity = double("LegalEntity", payable?: complete, default_payout_method: payout_method).as_null_object
     # Stub directly on payment so the stub survives with_lock's reload (which
     # resets association caches). has_one :through issues SQL, not a Ruby
     # delegation, so stubbing payee.legal_entity won't intercept it.
@@ -106,6 +106,76 @@ RSpec.describe Payment, type: :model do
         allow(PaymentMailer).to receive_message_chain(:with, :missing_tax_information).and_return(mail)
         create_payment_with_legal_entity(complete: false, payout_method: nil)
         expect(mail).to have_received(:deliver_later)
+      end
+    end
+  end
+
+  describe "Tax::Form integration" do
+    # Full-stack: real DB objects, no doubles. Verifies that marking a tax form
+    # completed triggers the correct payment-processing path.
+
+    # :person avoids the LegalEntity after_create :send_tax_form! hook (which
+    # hits an external API for business entities).
+    let(:legal_entity) { create(:legal_entity, :person) }
+    let(:payee)        { create(:payee, legal_entity:) }
+
+    # Form is in :sent state with TIN matching already verified — payable? will
+    # pass once the form transitions to :completed.
+    let!(:tax_form) do
+      legal_entity.tax_forms.create!(
+        external_service: :taxbandits,
+        aasm_state: "sent",
+        taxbandits_tin_matching_status: "success"
+      )
+    end
+
+    # The payment's after_create sees an unpayable entity (form is :sent, not
+    # :completed) and would send the missing_tax_information mailer. Suppress it
+    # globally; individual tests override when asserting specific mailer calls.
+    before { allow(PaymentMailer).to receive(:with).and_return(double.as_null_object) }
+
+    let!(:payment) { create(:payment, payee:) }
+
+    context "when the tax form is completed and the entity becomes payable" do
+      context "with a default payout method" do
+        let!(:payout_method) { create(:legal_entity_payout_method, legal_entity:, default: true) }
+
+        before { allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!) }
+
+        it "creates a payment attempt" do
+          expect { tax_form.mark_completed! }.to change { payment.attempts.reload.count }.by(1)
+        end
+
+        it "uses the default payout method for the attempt" do
+          tax_form.mark_completed!
+          expect(payment.attempts.reload.last.payout_method).to eq payout_method
+        end
+      end
+
+      context "without a default payout method" do
+        it "sends the missing_payout_method mailer" do
+          mail = double("mail", deliver_later: true)
+          allow(PaymentMailer).to receive_message_chain(:with, :missing_payout_method).and_return(mail)
+          tax_form.mark_completed!
+          expect(mail).to have_received(:deliver_later)
+        end
+
+        it "does not create a payment attempt" do
+          expect { tax_form.mark_completed! }.not_to(change { payment.attempts.count })
+        end
+      end
+    end
+
+    context "when the tax form is completed but the entity is not payable (TIN banned)" do
+      before { legal_entity.update!(banned_reason: "confirmed fraud") }
+
+      it "does not create any payment attempt" do
+        expect { tax_form.mark_completed! }.not_to(change { payment.attempts.count })
+      end
+
+      it "does not send any payment-related mailer" do
+        expect(PaymentMailer).not_to receive(:with)
+        tax_form.mark_completed!
       end
     end
   end

@@ -896,6 +896,15 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payees, only: [] do
+    member do
+      get "choose_legal_entity"
+      post "set_legal_entity"
+    end
+  end
+
+  resources :legal_entity, only: [:show]
+
   scope module: :event do
     get "apply", to: "applications#apply"
 
