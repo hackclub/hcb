@@ -4,7 +4,7 @@ class User
   class SendCardLockingNotificationJob < ApplicationJob
     queue_as :low
     def perform(user:, event:)
-      if event.plan.receipts_required?
+      if event.plan.receipt_required?
         ::UserService::SendCardLockingNotification.new(user:).run
       end
     end

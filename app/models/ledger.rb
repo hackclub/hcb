@@ -44,6 +44,10 @@ class Ledger < ApplicationRecord
     event&.can_front_balance? || false
   end
 
+  def receipt_required?
+    event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
+  end
+
   private
 
   def validate_owner_based_on_primary

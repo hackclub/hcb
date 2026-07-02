@@ -644,7 +644,7 @@ class HcbCode < ApplicationRecord
 
     return false if amount_cents >= 0
 
-    return false unless event&.plan&.receipts_required?
+    return false unless event&.plan&.receipt_required?
 
     return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
