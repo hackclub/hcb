@@ -27,16 +27,31 @@ export default class extends Controller {
     // Restore any preselected value (e.g. when editing or prefilled).
     if (this.selectedValue) {
       this.selectedLabel = this.labelValue
+      this.selectedOption = {
+        value: this.selectedValue,
+        label: this.labelValue,
+      }
       this.inputTarget.value = this.labelValue
       this.hiddenTarget.value = this.selectedValue
     } else {
       this.selectedLabel = ''
+      this.selectedOption = null
     }
   }
 
   onFocus() {
     if (this.inputTarget.disabled) return
-    this.search(this.query)
+    // With an untouched selection, just show that one option (selected). The
+    // full list loads once the user starts typing.
+    if (this.query === this.selectedLabel && this.selectedOption) {
+      this.inputTarget.select()
+      this.options = [this.selectedOption]
+      this.activeIndex = 0
+      this.render()
+      this.show()
+    } else {
+      this.search(this.query)
+    }
   }
 
   onInput(e) {
@@ -117,7 +132,7 @@ export default class extends Controller {
     }
     if (token !== this.searchToken) return // a newer search superseded us
 
-    this.options = options
+    this.options = this.withSelected(options)
     this.activeIndex = -1
     this.render()
     this.show()
@@ -165,11 +180,20 @@ export default class extends Controller {
     this.highlight()
   }
 
+  // Keep the committed selection in the option list so it's shown (and marked)
+  // when the list re-opens, even if the current results don't include it.
+  withSelected(options) {
+    if (!this.selectedValue || !this.selectedOption) return options
+    if (options.some(o => o.value === this.selectedValue)) return options
+    return [this.selectedOption, ...options]
+  }
+
   commit(option) {
     if (!option || option.disabled) return
     this.selectedValue = option.value
     this.labelValue = option.label
     this.selectedLabel = option.label
+    this.selectedOption = option
     this.hiddenTarget.value = option.value
     this.inputTarget.value = option.label
     this.hide()
@@ -196,6 +220,7 @@ export default class extends Controller {
   clear() {
     this.selectedValue = ''
     this.selectedLabel = ''
+    this.selectedOption = null
     this.inputTarget.value = ''
     this.hiddenTarget.value = ''
   }
@@ -213,9 +238,11 @@ export default class extends Controller {
       .map((o, i) => {
         const disabled = o.disabled ? ' aria-disabled="true"' : ''
         const dim = o.disabled ? ' opacity-50' : ''
+        const selected =
+          o.value === this.selectedValue ? ' hw-combobox__option--selected' : ''
         return `
           <li role="option" data-index="${i}"${disabled}
-              class="hw-combobox__option"
+              class="hw-combobox__option${selected}"
               data-action="mousedown->combobox#onOptionClick">
             <div class="flex flex-col w-full${dim}">
               <span style="white-space:normal">${escape(o.label)}</span>
@@ -224,6 +251,12 @@ export default class extends Controller {
           </li>`
       })
       .join('')
+
+    // Put the keyboard cursor on the current selection so it's visible.
+    const selIdx = this.options.findIndex(
+      o => o.value === this.selectedValue && !o.disabled
+    )
+    if (selIdx >= 0) this.activeIndex = selIdx
     this.highlight()
   }
 
