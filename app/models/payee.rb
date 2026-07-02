@@ -32,7 +32,7 @@ class Payee < ApplicationRecord
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
   after_update do
-    if legal_entity_previously_changed?(from: nil)
+    if legal_entity_id_previously_changed?(from: nil)
       # We don't automatically send tax forms to individual LEs on creation
       legal_entity.send_tax_form! if legal_entity.tax_forms.none?
       payments.pending_legal_entity.each(&:on_legal_entity_assigned)
