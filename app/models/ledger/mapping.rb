@@ -53,6 +53,7 @@ class Ledger
       # Mapping to a new primary ledger will _remove_ any existing primary mapping.
       # It always attempts to reuse the existing primary mapping to preserve a paper trail.
       raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
       mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
 
       Ledger::Mapping.find_or_initialize_by(ledger_item:, on_primary_ledger: true).tap do |mapping|
@@ -66,6 +67,7 @@ class Ledger
       # Mapping to a non-primary ledger will always idempotently create the mapping.
       # This will never delete or override a mapping to a non-primary (or primary) ledger.
       raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
       mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
 
       Ledger::Mapping.find_or_initialize_by(ledger:, ledger_item:, on_primary_ledger: false).tap do |mapping|
