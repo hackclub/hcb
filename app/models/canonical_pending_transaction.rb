@@ -159,7 +159,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   attr_writer :stripe_cardholder
 
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
   after_create_commit unless: -> { ledger_item.present? } do
     safely do

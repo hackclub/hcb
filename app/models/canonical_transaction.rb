@@ -122,7 +122,7 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
   before_create do
     self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
