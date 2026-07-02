@@ -15,7 +15,7 @@ RSpec.describe Payment, type: :model do
   end
 
   def stub_legal_entity(payment, complete:, payout_method:)
-    legal_entity = double("LegalEntity", complete?: complete, default_payout_method: payout_method).as_null_object
+    legal_entity = double("LegalEntity", payable?: complete, default_payout_method: payout_method).as_null_object
     # Stub directly on payment so the stub survives with_lock's reload (which
     # resets association caches). has_one :through issues SQL, not a Ruby
     # delegation, so stubbing payee.legal_entity won't intercept it.
