@@ -693,13 +693,6 @@ Rails.application.routes.draw do
           resources :events, path: "organizations", only: [:index]
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index]
-          resources :organizer_position_invites, path: "invitations", only: [:index, :show] do
-            member do
-              post "accept"
-              post "reject"
-            end
-          end
-
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
           get :intercom_token, to: "intercom#token"
@@ -714,7 +707,6 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
-          resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
@@ -745,6 +737,13 @@ Rails.application.routes.draw do
         resources :transactions, only: [:show] do
           member do
             post "mark_no_receipt"
+          end
+        end
+
+        resources :organizer_position_invites, path: "invitations", only: [:index, :show, :create, :destroy] do
+          member do
+            post "accept"
+            post "reject"
           end
         end
 
