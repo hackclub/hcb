@@ -15,7 +15,11 @@
     <%= item.short_code %>
   <% end %>
   <td>
-    <%= avatar_for item.author, class: "align-middle author", cached: true if item.author.present? %>
+    <% if item.author.present? %>
+      <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
+        <%= avatar_for item.author, class: "align-middle author", cached: true %>
+      </div>
+    <% end %>
   </td>
   <td>
     <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
