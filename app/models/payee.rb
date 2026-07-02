@@ -25,6 +25,7 @@ class Payee < ApplicationRecord
   belongs_to :legal_entity, optional: true
 
   has_many :payments
+  has_many :payroll_contracts
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
@@ -32,6 +33,10 @@ class Payee < ApplicationRecord
 
   def search_avatar
     User.find_by(email:)
+  end
+
+  def total_paid_cents
+    payments.where(aasm_state: "successful").sum(:amount_cents)
   end
 
 end

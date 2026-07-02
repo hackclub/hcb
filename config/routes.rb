@@ -980,6 +980,7 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
+    resources :contractors, only: [:new, :create, :show]
     resources :payees, only: [:index, :create]
 
     get "async_balance"
@@ -995,6 +996,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "contractors"
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview

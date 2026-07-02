@@ -1,0 +1,72 @@
+<%# locals: (event:, payee: nil) %>
+
+<% disabled = !policy(event).create_transfer? %>
+
+<%= content_for :sidebar_footer do %>
+  <%= render "application/callout", type: "info", title: "About contractor payments", class: "mt-2" do %>
+    <ul class="m-0 pl-8">
+      <li>Contractor agreements require HCB ops review before processing.</li>
+      <li>The contractor will need to sign the contract and complete W-9/W-8BEN tax forms.</li>
+    </ul>
+  <% end %>
+<% end %>
+
+<div data-controller="payee-picker">
+  <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
+        manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
+
+  <%= form_with(url: event_contractors_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
+    <%= form.hidden_field :payee_id, value: payee&.id %>
+
+    <div data-scroll-seek-target="section">
+      <h3 class="mb-2">Contract details</h3>
+      <div class="card mb-4 flex flex-col gap-3">
+        <div class="flex justify-between items-center">
+          <div>
+            <%= form.label :rate, "Rate" %>
+            <span class="muted block">Hourly rate for this contractor</span>
+          </div>
+          <div class="input flex gap-2 items-center py-0">
+            <span class="bold muted">$</span>
+            <%= form.number_field :rate, placeholder: "85.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <span class="bold muted">/hr</span>
+          </div>
+        </div>
+
+        <div class="menu__divider my-0"></div>
+
+        <div class="flex justify-between items-center">
+          <div>
+            <%= form.label :starts_on, "Duration" %>
+            <span class="muted block">Contract start and end dates</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <%= form.date_field :starts_on, required: true, disabled: %>
+            <span class="muted">to</span>
+            <%= form.date_field :ends_on, required: true, disabled: %>
+          </div>
+        </div>
+
+        <div class="menu__divider my-0"></div>
+
+        <div class="flex justify-between items-center">
+          <div>
+            <%= form.label :purpose, "Purpose" %>
+            <span class="muted block">Describe the scope of work</span>
+          </div>
+          <%= form.text_field :purpose, placeholder: "e.g. Engineering work for Q3 2026", required: true, disabled: %>
+        </div>
+
+        <div class="menu__divider my-0"></div>
+
+        <%= render "events/transfers/attach_receipt", form:, disabled:,
+              label: "Attachment (optional)", hint: "Attach a statement of work or agreement" %>
+      </div>
+    </div>
+
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+      Invite contractor
+      <%= inline_icon "send" %>
+    </button>
+  <% end %>
+</div>

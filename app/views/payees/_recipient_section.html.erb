@@ -1,0 +1,35 @@
+<%# locals: (event:, payee: nil, destination: "payments", manual_title: "Manual payment", manual_subtitle: "Recipient & payout details entered directly") %>
+
+<div data-scroll-seek-target="section">
+  <h3 class="mb-2">Recipient</h3>
+  <% if payee || params[:manual] %>
+    <details class="card mb-4 p-0 overflow-hidden" data-payee-picker-target="details">
+      <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
+        <div class="flex-1 min-w-0">
+          <% if payee %>
+            <div class="flex gap-3 items-center">
+              <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+              <div>
+                <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                <p class="muted text-sm m-0"><%= payee.email %></p>
+              </div>
+            </div>
+
+          <% else %>
+
+            <p class="font-bold text-lg m-0"><%= manual_title %></p>
+            <p class="muted text-sm m-0"><%= manual_subtitle %></p>
+
+          <% end %>
+        </div>
+        <span class="muted ml-auto shrink-0 text-sm">Edit</span>
+      </summary>
+      <div class="menu__divider my-0"></div>
+      <%= render "payments/payee_picker", event:, show_manual: true, destination: %>
+    </details>
+  <% else %>
+    <div class="card mb-4 p-0 overflow-hidden">
+      <%= render "payments/payee_picker", event:, show_manual: true, destination: %>
+    </div>
+  <% end %>
+</div>
