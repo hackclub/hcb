@@ -68,6 +68,7 @@ class Donation < ApplicationRecord
   include AASM
   include Freezable
   include UsersHelper
+  include HasLedgerItem
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id

@@ -1,11 +1,26 @@
-<tr>
-  <td><%= item.hashid %></td>
+<tr class="transaction transaction--<%= item.sign %>">
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
+      <%= inline_icon item.icon, size: 32 %>
+    </div>
+  </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td><%= truncate(item.memo, length: 80) %></td>
-  <td class="nowrap"><%= item.amount.format %></td>
+  <td><%= truncate(item.memo, length: 50) %></td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <%= item.amount.format %>
+    </span>
+  </td>
   <% admin_tool("", "td") do %>
     <%= item.short_code %>
   <% end %>
+  <td>
+    <% if item.author.present? %>
+      <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
+        <%= avatar_for item.author, class: "align-middle author", cached: true %>
+      </div>
+    <% end %>
+  </td>
   <td>
     <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
   </td>

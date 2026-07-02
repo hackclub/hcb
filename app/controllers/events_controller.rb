@@ -648,20 +648,21 @@ class EventsController < ApplicationController
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
-    @ach_transfers = @event.ach_transfers
+    @payments = @event.payments.includes(:payee)
+    @ach_transfers = @event.ach_transfers.where(payment_attempt: nil)
     @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires
-    @wise_transfers = @event.wise_transfers
+    @wires = @event.wires.where(payment_attempt: nil)
+    @wise_transfers = @event.wise_transfers.where(payment_attempt: nil)
     @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks
+    @increase_checks = @event.increase_checks.where(payment_attempt: nil)
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
     @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
     # Support legacy filter param for backward compatibility
@@ -703,8 +704,13 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+
     # Apply transfer type filter
-    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
+    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
 
     case params[:transfer_type]
     when "ach"
@@ -719,6 +725,8 @@ class EventsController < ApplicationController
       all_transfers = [@disbursements]
     when "paypal"
       all_transfers = [@paypal_transfers]
+    when "payment"
+      all_transfers = [@payments]
     end
 
     @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
@@ -1226,7 +1234,7 @@ class EventsController < ApplicationController
     @per = params[:per] || 25
 
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+    @items = @ledger.items.includes(:canonical_transactions, :canonical_pending_transactions, :linked_object).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   private

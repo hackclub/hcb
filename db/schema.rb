@@ -1579,12 +1579,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_30_130620) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "datetime", null: false
+    t.bigint "linked_object_id"
+    t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 

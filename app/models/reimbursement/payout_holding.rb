@@ -30,6 +30,7 @@ module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
+    include HasLedgerItem
 
     include Hashid::Rails
     hashid_config salt: ""
