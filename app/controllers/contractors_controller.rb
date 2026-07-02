@@ -5,6 +5,13 @@ class ContractorsController < ApplicationController
 
   before_action :set_event
 
+  def show
+    @contract = @event.payroll_contracts.find(params[:id])
+    authorize @event, policy_class: ContractorPolicy
+    @frame = params[:frame].present?
+    @payments = @contract.payee.payments.order(created_at: :desc)
+  end
+
   def new
     authorize @event, policy_class: ContractorPolicy
     @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
