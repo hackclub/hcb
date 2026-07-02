@@ -349,12 +349,12 @@ module Reimbursement
     end
 
     def convert_report_currency!(new_currency)
-      old_currency = @report.currency
+      old_currency = currency
 
       ActiveRecord::Base.transaction do
-        @report.update!(currency: new_currency)
+        update!(currency: new_currency)
 
-        @report.expenses.each do |expense|
+        expenses.each do |expense|
           fractional = Money.from_amount(expense.value, old_currency).cents
           full = Money.from_cents(fractional, new_currency).amount
 
