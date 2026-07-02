@@ -30,21 +30,59 @@
       <%= form_errors invoice %>
       <%= form_errors sponsor %>
       <div data-tabs-target="tab" id="sponsor">
-        <div class="field">
-          <select
-            data-invoice-form-target="selectSponsor"
-            data-action="change->invoice-form#selectSponsor"
-            name="invoice[sponsor_id]"
-            id="invoice_sponsor_id"
-            class="max-w-full"
-            <%= "disabled hidden" if @event.sponsors.empty? %>>
-            <option value="default" selected disabled>Select…</option>
-            <option value="">+⠀New sponsor…</option>
-            <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
-              <option value="<%= sponsor.id %>" data-json="<%= sponsor.to_json %>"><%= sponsor.name %></option>
-            <% end %>
-          </select>
-        </div>
+        <% unless @event.sponsors.empty? %>
+          <div class="field relative" data-invoice-form-target="sponsorDropdownContainer">
+            <button
+              type="button"
+              data-invoice-form-target="sponsorDropdownTrigger"
+              data-action="click->invoice-form#toggleSponsorDropdown"
+              class="input max-w-full w-full text-left flex items-center justify-between gap-2">
+              <span data-invoice-form-target="sponsorDropdownLabel">Select…</span>
+              <%= inline_icon "view-more", size: 16, class: "flex-shrink-0 opacity-50" %>
+            </button>
+            <div
+              data-invoice-form-target="sponsorDropdownMenu"
+              class="hidden absolute z-50 w-full bg-white dark:bg-darker border border-gray-200 dark:border-neutral-700 rounded-lg shadow-lg mt-1 overflow-hidden">
+              <button
+                type="button"
+                class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors text-sm"
+                data-action="click->invoice-form#chooseSponsorOption"
+                data-value=""
+                data-name="+&nbsp;&nbsp;New sponsor…">
+                +&nbsp;&nbsp;New sponsor…
+              </button>
+              <hr class="border-gray-200 dark:border-neutral-700 my-0" />
+              <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
+                <div
+                  id="sponsor-option-<%= sponsor.id %>"
+                  class="flex items-center group hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+                  data-invoice-form-target="sponsorOptionRow">
+                  <button
+                    type="button"
+                    class="flex-1 text-left px-4 py-2 text-sm truncate"
+                    data-action="click->invoice-form#chooseSponsorOption"
+                    data-value="<%= sponsor.id %>"
+                    data-json="<%= sponsor.to_json %>"
+                    data-name="<%= sponsor.name %>">
+                    <%= sponsor.name %>
+                  </button>
+                  <% if policy(sponsor).destroy? %>
+                    <button
+                      type="button"
+                      title="Delete <%= sponsor.name %>"
+                      class="px-3 py-2 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                      data-action="click->invoice-form#deleteSponsor"
+                      data-sponsor-id="<%= sponsor.id %>"
+                      data-sponsor-name="<%= sponsor.name %>"
+                      data-sponsor-path="<%= sponsor_path(sponsor) %>">
+                      <%= inline_icon "view-close", size: 14 %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
         <details
           id="sponsor-collapsible"
           data-invoice-form-target="sponsorCollapsible">
