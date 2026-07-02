@@ -903,6 +903,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :legal_entity, only: [:show]
+
   scope module: :event do
     get "apply", to: "applications#apply"
 
