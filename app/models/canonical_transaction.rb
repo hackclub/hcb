@@ -144,12 +144,12 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.write_amount_cents!
+    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
   end
 
   after_create :write_hcb_code

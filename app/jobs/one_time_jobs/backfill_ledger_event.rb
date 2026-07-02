@@ -43,7 +43,7 @@ module OneTimeJobs
           hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
 
           item.reload
-          item.write_amount_cents!
+          item.refresh!
           hcb_code.update!(ledger_item: item)
           item.update!(linked_object: hcb_code.linked_object) unless hcb_code.linked_object.nil?
         end

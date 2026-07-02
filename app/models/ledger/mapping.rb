@@ -43,7 +43,7 @@ class Ledger
     validate :on_primary_ledger_matches_ledger_primary
 
     after_commit do
-      ledger_item.write_amount_cents!
+      ledger_item.refresh!
     end
 
     private

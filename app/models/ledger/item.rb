@@ -48,6 +48,9 @@ class Ledger
 
     monetize :amount_cents
 
+    after_create :refresh!
+    after_touch :refresh!
+
     def receipt_required?
       self[:receipt_required]
     end
@@ -68,13 +71,14 @@ class Ledger
       amount_cents
     end
 
-    def write_amount_cents!
+    def refresh!
       update(amount_cents: calculate_amount_cents)
+      update(receipt_required: calculate_receipt_required)
     end
 
     def map!
       Ledger::Mapper.new(ledger_item: self).run
-      write_amount_cents!
+      refresh!
     end
 
     def humanized_type
