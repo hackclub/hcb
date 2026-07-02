@@ -11,7 +11,7 @@
 <% association_name = field_name.to_s.sub(/_id$/, "") %>
 <% selected_event = form.object.try(association_name) %>
 <% default_value = selected_event&.public_id %>
-<% default_label = selected_event&.name %>
+<% default_label = selected_event && admin_signed_in? ? "#{selected_event.name} (#{selected_event.id})" : selected_event&.name %>
 
 <div class="field flex-1">
   <%= form.label field_name, label %>
