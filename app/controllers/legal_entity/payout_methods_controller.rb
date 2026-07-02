@@ -104,7 +104,7 @@ class LegalEntity
     end
 
     def legal_entity
-      current_user.personal_legal_entity
+      current_user&.personal_legal_entity
     end
 
     def set_payout_method
