@@ -21,7 +21,7 @@ class LegalEntity
     private
 
     def owns_legal_entity?
-      record.legal_entity == user.personal_legal_entity
+      user.legal_entities.include?(record.legal_entity)
     end
 
   end

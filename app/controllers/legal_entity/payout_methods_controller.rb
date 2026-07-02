@@ -62,15 +62,15 @@ class LegalEntity
       end
 
       # Capture the draft reports pinned to this method before archiving so we can
-      # fall them back to the default (a non-default method is being removed, so a
-      # default still exists).
-      draft_report_ids = @payout_method.reimbursement_reports.where(aasm_state: :draft).pluck(:id)
+      # fall them back to the new default (a non-default method is being removed,
+      # so a default still exists).
+      draft_report = @payout_method.reimbursement_reports.where(aasm_state: :draft)
 
       @payout_method.archive!
 
       default = legal_entity.default_payout_method
       if default && draft_report_ids.any?
-        Reimbursement::Report.where(id: draft_report_ids).find_each do |report|
+        draft_report.find_each do |report|
           report.update!(legal_entity_payout_method: default)
         end
       end
