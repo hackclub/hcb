@@ -57,7 +57,7 @@ class LegalEntity
       # The default can't be removed directly — the user must promote another
       # method to default first (which leaves this one removable).
       if @payout_method.default?
-        flash[:error] = "Set another payout method as default before removing this one."
+        flash[:error] = "Set another payout method as your default before removing this one."
         return redirect_back_or_to settings_payouts_path
       end
 
