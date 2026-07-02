@@ -45,13 +45,7 @@ class Ledger < ApplicationRecord
   end
 
   def receipt_required?
-    if event.present?
-      return false unless event.plan.rececipt_required?
-    elsif card_grant.present?
-      return false unless card_grant.event.plan.rececipt_required?
-    end
-
-    true
+    event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
   end
 
   private
