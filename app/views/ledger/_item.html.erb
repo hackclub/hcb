@@ -15,6 +15,9 @@
     <%= item.short_code %>
   <% end %>
   <td>
+    <%= avatar_for item.author, class: "align-middle author", cached: true %>
+  </td>
+  <td>
     <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
   </td>
 </tr>
