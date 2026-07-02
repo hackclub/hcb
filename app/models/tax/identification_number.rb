@@ -14,7 +14,7 @@ module Tax
       payment_sum >= Tax::REPORTING_THRESHOLD_1099
     end
 
-    def not_banned?
+    def banned?
       legal_entities.any?(&:banned?)
     end
 

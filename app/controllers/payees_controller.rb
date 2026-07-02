@@ -34,6 +34,12 @@ class PayeesController < ApplicationController
     authorize @payee
 
     le = current_user.legal_entities.find(params[:legal_entity_id])
+    if le.tin_banned?
+      flash[:error] = "This legal entity is banned."
+      redirect_back_or_to choose_legal_entity_payee_path(@payee)
+      return
+    end
+
     @payee.update!(legal_entity: le)
 
     flash[:success] = "Legal entity successfully assigned"
