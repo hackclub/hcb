@@ -48,13 +48,6 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
-      return false if amount_cents >= 0
-
-      return false unless primary_ledger&.receipt_required?
-
-      true
-
-    def receipt_required?
       amount_cents < 0 && primary_ledger&.receipt_required?
     end
 
