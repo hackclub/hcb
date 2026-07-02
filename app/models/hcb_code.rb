@@ -608,10 +608,10 @@ class HcbCode < ApplicationRecord
 
   # The `:receipt_required` scope determines the type of
   # transaction based on its HCB Code, for reference:
-  # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)
+  # HCB-300: ACH Transfers (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
   # HCB-310: Wires
   # HCB-350: PayPal Transfers
-  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
+  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
   # HCB-600: Stripe card charges (always required)
   # HCB-601: Stripe force captures (always required)
   # @sampoder
@@ -628,9 +628,9 @@ class HcbCode < ApplicationRecord
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-310%' AND canonical_pending_declined_mappings.id IS NULL)
               ")
@@ -645,9 +645,6 @@ class HcbCode < ApplicationRecord
     return false if amount_cents >= 0
 
     return false unless event&.plan&.receipts_required?
-
-    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
-    return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
 
     return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 

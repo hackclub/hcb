@@ -92,7 +92,7 @@
               <%= report.payout_holding&.failed? || report.payout_method.present? ? "Edit" : "Add" %> payout information
               <% button_hint = capture do %>
                 <% if report.mismatched_currency? %>
-                  <span class="bold warning">Warning</span>: your report is is in <%= report.currency %>, but your payouts are configured for <%= report.payout_method.currency %>.
+                  <span class="bold warning">Warning</span>: your report is in <%= report.currency %>, but your payouts are configured for <%= report.payout_method.currency %>. Update your payout settings or switch the report currency to match.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
                   <% if report.payout_method.present? && report.payout_method.unsupported? %>
@@ -104,12 +104,12 @@
               <% end %>
             <% end %>
           <% elsif report.mismatched_currency? %>
-            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %>'s payout information is configured for a different currency.">
               <div class="btn bg-info disabled whitespace-nowrap">
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
-                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= report.payout_method.currency %>.
+                  <span class="bold warning">Warning</span>: this report is in <%= report.currency %>, but the user's payouts are configured for <%= report.payout_method.currency %>. Please contact them to update their payout settings or switch your report currency.
                 <% end %>
               </div>
             </div>

@@ -48,7 +48,15 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
-      false
+      return false if amount_cents >= 0
+
+      if primary_ledger&.event.present?
+        return false unless primary_ledger.event.plan.receipts_required?
+      elsif primary_ledger&.card_grant.present?
+        return false unless primary_ledger.card_grant.event.plan.receipts_required?
+      end
+
+      true
     end
 
     def calculate_amount_cents
@@ -87,6 +95,42 @@ class Ledger
       :zero
     end
 
+    def author
+      case linked_object_type || raw_pending_transaction_type || raw_transaction_type
+      when "AchTransfer"
+        linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
+      when "Check"
+        linked_object&.creator
+      when "IncreaseCheck"
+        linked_object&.user
+      when "Disbursement::Outgoing"
+        linked_object&.requested_by
+      when "Disbursement::Incoming"
+        linked_object&.requested_by
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.report&.user
+      when "PaypalTransfer"
+        linked_object&.user
+      when "Donation"
+        linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
+      when "WiseTransfer"
+        linked_object&.user
+      when "RawPendingStripeTransaction"
+        stripe_cardholder&.user
+      when "RawStripeTransaction"
+        stripe_cardholder&.user
+      end
+    end
+
+    # TODO: get rid of this method once CardCharge is created as an LO
+    def stripe_cardholder
+      canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
+    end
+
     private
 
     def type_metadata
@@ -107,6 +151,7 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
+        "StripeServiceFee": ["Stripe service fee", "cash"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
       }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
