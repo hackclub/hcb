@@ -1,5 +1,5 @@
 <% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
-<% payout_method = report.user.default_payout_method&.details %>
+<% payout_method = report.payout_method&.details %>
 
 <div id="action-wrapper" class="mt-5">
   <% button_hint = "" %>
@@ -79,24 +79,24 @@
         <div style="flex-grow: 1;" class="flex sm:justify-end">
           <%= link_to reimbursement_report_update_currency_path(report), method: :post, class: "btn bg-secondary" do %>
             <%= inline_icon "transactions" %>
-            Switch to <%= user.default_payout_method&.currency %>
+            Switch to <%= report.payout_method&.currency %>
           <% end %>
         </div>
       <% end %>
 
       <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
-        <% if !user.default_payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (user.default_payout_method.present? && user.default_payout_method.unsupported?) || report.mismatched_currency? %>
+        <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
               <%= inline_icon "profile" %>
-              <%= report.payout_holding&.failed? || user.default_payout_method.present? ? "Edit" : "Add" %> payout information
+              <%= report.payout_holding&.failed? || report.payout_method.present? ? "Edit" : "Add" %> payout information
               <% button_hint = capture do %>
                 <% if report.mismatched_currency? %>
-                  <span class="bold warning">Warning</span>: your report is is in <%= report.currency %>, but your payouts are configured for <%= user.default_payout_method.currency %>.
+                  <span class="bold warning">Warning</span>: your report is in <%= report.currency %>, but your payouts are configured for <%= report.payout_method.currency %>. Update your payout settings or switch the report currency to match.
                 <% else %>
                   <span class="bold">Your next step:</span> before you can be reimbursed, you need to
-                  <% if user.default_payout_method.present? && user.default_payout_method.unsupported? %>
-                    update your payout information. <%= user.default_payout_method.unsupported_details[:reason] %>
+                  <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                    update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                   <% else %>
                     provide HCB your payout information.
                   <% end %>
@@ -104,12 +104,12 @@
               <% end %>
             <% end %>
           <% elsif report.mismatched_currency? %>
-            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
+            <div class="tooltipped tooltipped--n" aria-label="<%= user.name %>'s payout information is configured for a different currency.">
               <div class="btn bg-info disabled whitespace-nowrap">
                 <%= inline_icon "send" %>
                 Submit & request review
                 <% button_hint = capture do %>
-                  <span class="bold warning">Warning</span>: this report is is in <%= report.currency %>, but the user's payouts are configured for <%= user.default_payout_method.currency %>.
+                  <span class="bold warning">Warning</span>: this report is in <%= report.currency %>, but the user's payouts are configured for <%= report.payout_method.currency %>. Please contact them to update their payout settings or switch their report currency.
                 <% end %>
               </div>
             </div>
@@ -119,14 +119,14 @@
               <%= report.payout_holding&.failed? ? "Edit" : "Add" %> <%= user.first_name %>'s payout information
               <% button_hint = capture do %>
                 <span class="bold">Status:</span> before <%= user.first_name %> can be reimbursed, they need to
-                <% if user.default_payout_method.present? && user.default_payout_method.unsupported? %>
-                  update your payout information. <%= user.default_payout_method.unsupported_details[:reason] %>
+                <% if report.payout_method.present? && report.payout_method.unsupported? %>
+                  update your payout information. <%= report.payout_method.unsupported_details[:reason] %>
                 <% else %>
                   add their payout information.
                 <% end %>
               <% end %>
             <% end %>
-          <% elsif !user.default_payout_method.present? %>
+          <% elsif !report.payout_method.present? %>
             <div class="tooltipped tooltipped--n" aria-label="<%= user.name %> is missing payout information.">
               <div class="btn bg-info disabled whitespace-nowrap">
                 <%= inline_icon "send" %>
@@ -140,11 +140,11 @@
           <% if report.payout_holding&.failed? %>
             <% if user == current_user %>
               <% button_hint = capture do %>
-                <span class="bold">Warning:</span> your <%= user.default_payout_method.human_kind %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.
+                <span class="bold">Warning:</span> your <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please edit your payout settings and HCB will retry the payment.
               <% end %>
             <% else %>
               <% button_hint = capture do %>
-                <span class="bold">Warning:</span> <%= user.first_name %>'s <%= user.default_payout_method.human_kind %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
+                <span class="bold">Warning:</span> <%= user.first_name %>'s <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
               <% end %>
             <% end %>
           <% end %>
@@ -190,6 +190,9 @@
             Submit & request review
             <% button_hint = capture do %>
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
+              <% if payout_method.present? && user == current_user %>
+                <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+              <% end %>
             <% end %>
           <% end %>
         <% elsif report.draft? %>
@@ -198,6 +201,9 @@
             Submit & request review
             <% button_hint = capture do %>
               <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
+              <% if payout_method.present? && user == current_user %>
+                <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+              <% end %>
             <% end %>
           </button>
         <% elsif report.submitted? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && policy(report).request_reimbursement? %>
@@ -344,7 +350,7 @@
             <% else %>
               <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
-                Approve <%= payout_method.human_kind %> reimbursement
+                Approve <%= "#{payout_method.human_kind} " if payout_method %>reimbursement
               <% end %>
             <% end %>
           <% end %>
@@ -396,7 +402,7 @@
           <%= button_hint %>
         </div>
       <% end %>
-      <% if report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
+      <% if report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
         <div class="card mt-2">
           <%= turbo_frame_tag :wise_transfer_breakdown, loading: :lazy, src: reimbursement_report_wise_transfer_breakdown_path(report) do %>
             Fetching latest estimate...

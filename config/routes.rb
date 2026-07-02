@@ -51,6 +51,7 @@ Rails.application.routes.draw do
   get "project_stats", to: "stats#project_stats"
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
+  get "money-printer", to: "money_printer#index", as: :money_printer
 
   resources :raffles, only: [:new, :create]
 
@@ -71,6 +72,12 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
+      member do
+        patch :set_default
+        patch :archive
+      end
+    end
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
@@ -595,6 +602,7 @@ Rails.application.routes.draw do
       post "reject"
       post "submit"
       post "update_currency"
+      post "update_payout_method"
       post "draft"
       get "wise_transfer_quote"
       get "wise_transfer_breakdown"
@@ -615,7 +623,9 @@ Rails.application.routes.draw do
 
   resources :ledgers, only: [:show]
   scope module: :ledger, as: :ledger do
-    resources :items, path: "transactions", only: [:show]
+    resources :items, path: "transactions", only: [:show] do
+      get "hcb"
+    end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
@@ -630,6 +640,8 @@ Rails.application.routes.draw do
       get "stub"
     end
   end
+
+  resources :payments, only: [:show], concerns: :commentable
 
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
@@ -931,8 +943,8 @@ Rails.application.routes.draw do
 
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
+    get "transactions_list"
     get "ledger"
-    get "books"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -965,6 +977,11 @@ Rails.application.routes.draw do
 
     get "transfers/new", to: "events#new_transfer"
 
+    get "payments", to: "events#payments"
+
+    resources :payments, only: [:new, :create]
+    resources :payees, only: [:index, :create]
+
     get "async_balance"
     get "async_sub_organization_balance"
     get "async_sub_organizations_graph"
@@ -972,6 +989,7 @@ Rails.application.routes.draw do
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
+    get "payments"
     get "statements"
     get "statement_of_activity"
     get "promotions"

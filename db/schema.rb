@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1579,12 +1579,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.datetime "datetime", null: false
+    t.bigint "linked_object_id"
+    t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.boolean "receipt_required"
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
 
@@ -1633,6 +1637,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
   end
 
   create_table "legal_entity_payout_methods", force: :cascade do |t|
+    t.boolean "archived", default: false, null: false
     t.datetime "created_at", null: false
     t.boolean "default", default: false, null: false
     t.bigint "details_id", null: false
@@ -2320,6 +2325,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.integer "expense_number", default: 0, null: false
     t.text "invite_message"
     t.bigint "invited_by_id"
+    t.bigint "legal_entity_payout_method_id"
     t.integer "maximum_amount_cents"
     t.text "name"
     t.datetime "reimbursed_at"
@@ -2333,6 +2339,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.index ["card_grant_id"], name: "index_reimbursement_reports_on_card_grant_id"
     t.index ["event_id"], name: "index_reimbursement_reports_on_event_id"
     t.index ["invited_by_id"], name: "index_reimbursement_reports_on_invited_by_id"
+    t.index ["legal_entity_payout_method_id"], name: "index_reimbursement_reports_on_legal_entity_payout_method_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
@@ -2510,6 +2517,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
     t.datetime "updated_at", null: false
     t.index ["assignee_type", "assignee_id"], name: "index_tasks_on_assignee"
     t.index ["taskable_type", "taskable_id"], name: "index_tasks_on_taskable"
+  end
+
+  create_table "tax_forms", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.string "address_city"
+    t.string "address_country"
+    t.string "address_line1"
+    t.string "address_line2"
+    t.string "address_postal_code"
+    t.string "address_state"
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.string "external_id"
+    t.string "external_service", null: false
+    t.datetime "failed_at"
+    t.string "form_type"
+    t.bigint "legal_entity_id", null: false
+    t.datetime "sent_at"
+    t.string "taxbandits_status"
+    t.string "taxbandits_tin_matching_status"
+    t.datetime "updated_at", null: false
+    t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
   end
 
   create_table "tours", force: :cascade do |t|
@@ -3045,6 +3075,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_26_192306) do
   add_foreign_key "reimbursement_expenses", "reimbursement_reports"
   add_foreign_key "reimbursement_expenses", "users", column: "approved_by_id"
   add_foreign_key "reimbursement_reports", "events"
+  add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "sponsors", "events"

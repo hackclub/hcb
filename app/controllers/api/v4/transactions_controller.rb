@@ -43,6 +43,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "ledgers:read", :index
+
       def show
         @hcb_code = authorize HcbCode.find_by_public_id!(params[:id])
 
@@ -53,6 +55,8 @@ module Api
           @event = @hcb_code.events.find { |e| e.users.include?(current_user) } || @hcb_code.events.first
         end
       end
+
+      require_oauth2_scope "ledgers:read", :show
 
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
@@ -66,11 +70,27 @@ module Api
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
+      require_oauth2_scope "ledgers:read", :missing_receipt
+
       def update
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
 
-        if params.key? :memo
-          @hcb_code.update_custom_memo!(params[:memo])
+        ActiveRecord::Base.transaction do
+          if params.key? :memo
+            @hcb_code.update_custom_memo!(params[:memo])
+          end
+
+          if params.key? :tag_ids
+            tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
+
+            tags.each do |tag|
+              authorize tag, :toggle_tag?
+              raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
+            end
+
+            @hcb_code.tags = tags
+            @hcb_code.save!
+          end
         end
 
         render "show"
@@ -89,6 +109,8 @@ module Api
         @hcb_code.no_or_lost_receipt!
         render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
       end
+
+      require_oauth2_scope "receipts:write", :mark_no_receipt
 
       private
 

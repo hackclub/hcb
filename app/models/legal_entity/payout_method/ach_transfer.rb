@@ -38,6 +38,20 @@ class LegalEntity
         "ACH Transfer"
       end
 
+      def payout_summary
+        "ACH transfer to account ending in ••••#{account_number.to_s.last(4)}"
+      end
+
+      def short_label
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
+        last4.present? ? "#{title_kind} (••••#{last4})" : title_kind
+      end
+
+      def detail_summary
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
+        last4.present? ? "Account ••••#{last4}" : "Bank account"
+      end
+
       def currency
         "USD"
       end

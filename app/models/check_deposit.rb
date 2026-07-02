@@ -34,6 +34,7 @@ class CheckDeposit < ApplicationRecord
   include Hashid::Rails
   hashid_config salt: ""
 
+  include HasLedgerItem
   include PublicIdentifiable
   set_public_id_prefix :cdp
 
@@ -80,7 +81,7 @@ class CheckDeposit < ApplicationRecord
   validates :front, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["front"].present? }
   validates :back, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["back"].present? }
 
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true, integer_column: true
   validates :front, attached: true, content_type: [:png, :jpeg], on: :create
   validates :back, attached: true, content_type: [:png, :jpeg], on: :create
   validates_uniqueness_of :column_id, allow_nil: true

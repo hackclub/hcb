@@ -39,21 +39,27 @@
 </div>
 
 <% if items.any? %>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Date</th>
-        <th>Memo</th>
-        <th>Amount</th>
-        <th>Short Code</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <%= render partial: "ledger/item", collection: items, as: :item %>
-    </tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th><%# icon %></th>
+          <th>Date</th>
+          <th>Memo</th>
+          <th><%# receipt count %></th>
+          <th class="text-right">Amount</th>
+          <% admin_tool("", "th") do %>
+            Short Code
+          <% end %>
+          <th><%# user avatar %></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= render partial: "ledger/item", collection: items, as: :item %>
+      </tbody>
+    </table>
+  </div>
 
   <%= paginate items %>
 <% else %>

@@ -9,23 +9,10 @@
       When a <%= link_to "reimbursement report of yours", my_reimbursements_path, data: { turbo_frame: "_top" } %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time.
       <% if @user.reimbursement_reports.pending.any? %>
         <p>
-          Changes made here will apply to all non-reimbursed reports of yours, including your <%= @user.reimbursement_reports.pending.count %> pending reports.
+          Changes made here will apply to all non-reimbursed reports of yours, including your <%= pluralize(@user.reimbursement_reports.pending.count, "pending report") %>.
         </p>
       <% end %>
     </p>
-    <%= render "application/flash", klass: "max-w-full mb3" %>
-    <% if @user.can_update_payout_method? %>
-      <%= render "users/payout_form", user: @user, attempted: @payout_method %>
-    <% else %>
-      <%= render "application/callout",
-          type: "info",
-          title: "Changing your payout method is currently disabled." do %>
-      We are currently processing a payout to you using Wise. At this time, you can not update your payout method.
-      <strong>Something wrong?</strong> <%= help_message %>
-      <% end %>
-      <% admin_tool do %>
-        <%= render "payout_form", user: @user %>
-      <% end %>
-    <% end %>
+    <%= render "users/payout_methods_list", user: @user, attempted: @payout_method %>
   </section>
 </turbo-frame>
