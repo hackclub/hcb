@@ -61,13 +61,15 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    items << {
-      name: "Pay",
-      path: my_pay_path,
-      icon: "payment",
-      tooltip: "See payments made to you",
-      selected: selected == :pay
-    }
+    if payments_contractors_refresh?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
 
     if current_user&.jobs&.any? # Deprecated
       items << {

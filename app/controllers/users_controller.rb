@@ -152,6 +152,11 @@ class UsersController < ApplicationController
   def edit_payout
     authorize @user
 
+    unless payments_contractors_refresh?
+      @legal_entity = @user.personal_legal_entity
+      return
+    end
+
     @legal_entities = @user.legal_entities
     @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:payout_legal_entity_id]) || @user.personal_legal_entity
     session[:payout_legal_entity_id] = @legal_entity.id
@@ -159,6 +164,8 @@ class UsersController < ApplicationController
 
   def pay
     authorize @user
+
+    return head :not_found unless payments_contractors_refresh?
 
     if params[:legal_entity_id].present?
       session[:pay_legal_entity_id] = params[:legal_entity_id]
@@ -421,7 +428,7 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
-    if payout_method_type.present?
+    if payout_method_type.present? && payments_contractors_refresh?
       @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
       session[:payout_legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
     end
@@ -475,7 +482,8 @@ class UsersController < ApplicationController
 
       if payout_update&.error_messages&.any?
         flash.now[:error] = payout_update.error_messages.to_sentence
-        @legal_entities = @user.legal_entities
+        @legal_entity ||= @user.personal_legal_entity
+        @legal_entities = @user.legal_entities if payments_contractors_refresh?
         render :edit_payout, status: :unprocessable_entity
         return
       end

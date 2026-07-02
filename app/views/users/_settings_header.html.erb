@@ -6,9 +6,9 @@
   Settings
 </span>
 <h1 class="mt-0">
-<div class="flex flex-col gap-2">
-  <%= active.humanize %>
-  <% if legal_entities&.many? %>
+<% if legal_entities&.many? %>
+  <div class="flex flex-col gap-2">
+    <%= active.humanize %>
     <% entity_label = ->(le) { le.name.presence || (le.person? ? "Personal" : "Business") } %>
     <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
       <a type="button" class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
@@ -26,6 +26,8 @@
         <% end %>
       </div>
     </div>
-  <% end %>
-  <div>
+  </div>
+<% else %>
+  <%= active.humanize %>
+<% end %>
 </h1>
