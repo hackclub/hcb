@@ -91,6 +91,11 @@ module Tax
       mark_sent!
     end
 
+    def usable?
+      # TODO - handle OFAC
+      completed? && taxbandits_tin_match_failed?
+    end
+
     def self.taxbandits_client
       @taxbandits_client || begin
         Faraday.new(url: Rails.env.development ? "https://testapi.taxbandits.com/v1.7.3/" : "https://api.taxbandits.com/v1.7.3/") do |faraday|

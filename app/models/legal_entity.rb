@@ -23,7 +23,7 @@
 #  index_legal_entities_on_managing_event_id  (managing_event_id)
 #
 class LegalEntity < ApplicationRecord
-  REQUIRED_COLUMNS = %w[address_city address_country address_line1 address_postal_code address_state entity_type tin_hash].freeze
+  self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   # Some legal entities will be managed by events,
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true
@@ -34,6 +34,7 @@ class LegalEntity < ApplicationRecord
   has_many :users, through: :legal_entity_users
 
   has_many :tax_forms, class_name: "Tax::Form"
+  has_one :latest_tax_form, -> { tax_forms.order(completed_at: :desc, created_at: :desc).first }, inverse_of: :legal_entity, class_name: "Tax::Form"
 
   has_many :payees
   has_many :payments, through: :payees
@@ -44,16 +45,23 @@ class LegalEntity < ApplicationRecord
 
   after_create :send_tax_form!, if: -> { business? }
 
-  def complete?
-    # Bypass until tax form is implemented
-    # REQUIRED_COLUMNS.all? { |col| self[col].present? }
+  delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
-    true
+  def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:)
+
+  def payable?
+    latest_tax_form.usable? &&
+      tax_identification_number.predicted_to_be_over_theshold? &&
+      tax_identification_number.not_banned?
   end
 
   def send_tax_form!
     form = tax_forms.create!(external_service: :taxbandits)
     form.send!
+  end
+
+  def banned?
+    banned_reason.present?
   end
 
 end
