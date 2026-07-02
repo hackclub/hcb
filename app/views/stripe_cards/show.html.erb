@@ -1,4 +1,4 @@
-<% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user.name}, #{(@event || @card.event).name})" : "Inactive card" %>
+<% title @card.initially_activated ? "Card #{@card.last_four} (#{@card.user&.name}, #{(@event || @card.event).name})" : "Inactive card" %>
 <%= render "events/nav", selected: :cards unless @frame %>
 
 <%= turbo_frame_tag "stripe_card_#{@card.public_id}" do %>
