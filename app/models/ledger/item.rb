@@ -55,10 +55,6 @@ class Ledger
       self[:receipt_required]
     end
 
-    def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required?
-    end
-
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
       amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
@@ -69,6 +65,10 @@ class Ledger
       end
 
       amount_cents
+    end
+
+    def calculate_receipt_required
+      amount_cents < 0 && primary_ledger&.receipt_required?
     end
 
     def refresh!
