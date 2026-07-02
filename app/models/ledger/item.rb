@@ -77,6 +77,13 @@ class Ledger
     end
 
     def refresh!
+      # `after_create :refresh!` runs before any ledger mappings exist, which
+      # memoizes `primary_ledger` as nil on this instance. Reset the association
+      # caches so refresh! always recomputes from current database state (e.g.
+      # after a mapping is created).
+      association(:primary_mapping).reset
+      association(:primary_ledger).reset
+
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
     end
