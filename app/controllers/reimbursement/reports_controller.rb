@@ -114,23 +114,34 @@ module Reimbursement
     def update_currency
       authorize @report
 
-      old_currency = @report.currency
       new_currency = @report.payout_method.currency
 
-      ActiveRecord::Base.transaction do
-        @report.update!(currency: new_currency)
-
-        @report.expenses.each do |expense|
-          fractional = Money.from_amount(expense.value, old_currency).cents
-          full = Money.from_cents(fractional, new_currency).amount
-
-          expense.update!(value: full)
-        end
-      end
+      convert_report_currency!(new_currency)
 
       flash[:success] = "Report successfully updated to #{new_currency}."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
+    end
+
+    def update_payout_method
+      authorize @report
+
+      begin
+        new_method = @report.user.personal_legal_entity.payout_methods.unarchived.find(params[:legal_entity_payout_method_id])
+
+        ActiveRecord::Base.transaction do
+          @report.update!(legal_entity_payout_method: new_method)
+          convert_report_currency!(new_method.currency) if @report.mismatched_currency?
+        end
+
+        flash[:success] = "Payout method saved."
+      rescue ActiveRecord::RecordNotFound
+        flash[:error] = "Payout method not found."
+      rescue ActiveRecord::RecordInvalid => e
+        flash[:error] = e.message
+      end
+
+      redirect_to @report
     end
 
     def convert_to_wise_transfer
@@ -433,6 +444,21 @@ module Reimbursement
     end
 
     private
+
+    def convert_report_currency!(new_currency)
+      old_currency = @report.currency
+
+      ActiveRecord::Base.transaction do
+        @report.update!(currency: new_currency)
+
+        @report.expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
+      end
+    end
 
     def set_report_user_and_event
       @report = Reimbursement::Report.find(params[:report_id] || params[:id])

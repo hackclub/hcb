@@ -11,7 +11,7 @@
     <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
       <% if @payout_method.present? %>
         <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
-          <%= inline_icon @payout_method.icon %>
+          <%= inline_icon "bank-account" %>
           Payout settings
         <% end %>
       <% else %>

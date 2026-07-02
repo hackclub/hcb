@@ -79,6 +79,10 @@ module Reimbursement
       (admin || manager || creator) && open && record.mismatched_currency?
     end
 
+    def update_payout_method?
+      (admin || manager || creator) && record.can_change_payout_method?
+    end
+
     def admin_approve?
       admin && open
     end

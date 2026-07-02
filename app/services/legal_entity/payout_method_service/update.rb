@@ -12,10 +12,12 @@ class LegalEntity
     class Update
       attr_reader :payout_method
 
-      def initialize(user:, details_type:, details_attrs: {})
+      def initialize(user:, details_type:, details_attrs: {}, make_default: true, replacing: nil)
         @user = user
         @details_type = details_type
         @details_attrs = details_attrs || {}
+        @make_default = make_default
+        @replacing = replacing
       end
 
       def run
@@ -23,12 +25,15 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
-        replaced_method = @user.default_payout_method
+        replaced_method = @replacing
 
         # autosave: true on :details saves the detail record and the payout
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
-        repoint_failed_and_draft_reports(replaced_method) if saved
+        if saved
+          repoint_failed_and_draft_reports(replaced_method) if @replacing || @make_default
+          @replacing.archive! if @replacing && @replacing != @payout_method
+        end
         saved
       end
 
@@ -37,15 +42,7 @@ class LegalEntity
       end
 
       def error_messages
-        return [] unless @payout_method
-
-        # Read base errors off the payout method (unsupported type, invalid
-        # method) and field errors off the details record. Autosave also mirrors
-        # the field errors onto the parent as "details.<attr>" ("Details routing
-        # number must be 9 digits"); reading the child instead keeps the clean
-        # "Routing number must be 9 digits" wording without duplication.
-        (@payout_method.errors.full_messages_for(:base) +
-          (@payout_method.details&.errors&.full_messages || [])).uniq
+        @payout_method&.error_messages || []
       end
 
       private
@@ -54,7 +51,7 @@ class LegalEntity
         # Resolve the user-supplied type against the allowlist by name rather
         # than constantizing it, so arbitrary class names can never be loaded.
         details_class = LegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
-        pm = LegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: true)
+        pm = LegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: @make_default)
         pm.details = details_class.new(@details_attrs) if details_class
         pm
       end
