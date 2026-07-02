@@ -35,6 +35,6 @@
       <div class="hw-combobox__handle"></div>
     </div>
     <%= form.hidden_field field_name.to_sym, value: default_value, data: { combobox_target: "hidden" } %>
-    <ul role="listbox" class="hw-combobox__listbox" data-combobox-target="listbox" hidden></ul>
+    <ul id="<%= "#{field_name}_combobox_listbox" %>" role="listbox" class="hw-combobox__listbox" data-combobox-target="listbox" hidden></ul
   </div>
 </div>
