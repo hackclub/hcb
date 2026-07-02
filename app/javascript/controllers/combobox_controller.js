@@ -69,7 +69,7 @@ export default class extends Controller {
         }
         break
       case 'Tab':
-        this.commitOrRevert()
+        this.finalize()
         break
     }
   }
@@ -78,7 +78,7 @@ export default class extends Controller {
     // Delay so a click on an option registers before we tear down.
     setTimeout(() => {
       if (!this.element.contains(document.activeElement)) {
-        this.commitOrRevert()
+        this.finalize()
         this.hide()
       }
     }, 150)
@@ -102,6 +102,8 @@ export default class extends Controller {
 
   async search(query) {
     const token = ++this.searchToken
+    this.renderLoading()
+    this.show()
     let options = []
     try {
       const res = await fetch(this.buildUrl(query), {
@@ -110,6 +112,7 @@ export default class extends Controller {
       })
       if (res.ok) options = await res.json()
     } catch {
+      if (token === this.searchToken) this.hide()
       return
     }
     if (token !== this.searchToken) return // a newer search superseded us
@@ -172,19 +175,37 @@ export default class extends Controller {
     this.hide()
   }
 
-  // Keep the field valid: accept an exact match, otherwise revert to the last
-  // committed selection.
-  commitOrRevert() {
-    const val = this.query.toLowerCase()
+  // Resolve the field to a valid state when focus leaves:
+  //  - an exact match is committed,
+  //  - an untouched committed selection is left as-is,
+  //  - anything else (e.g. edited/backspaced text) is cleared.
+  finalize() {
+    const current = this.query
+    if (current === '') return this.clear()
+
     const match = (this.options || []).find(
-      o => !o.disabled && o.label.toLowerCase() === val
+      o => !o.disabled && o.label.toLowerCase() === current.toLowerCase()
     )
-    if (match) {
-      this.commit(match)
-    } else {
-      this.inputTarget.value = this.selectedLabel || ''
-      this.hiddenTarget.value = this.selectedValue || ''
-    }
+    if (match) return this.commit(match)
+
+    if (current === this.selectedLabel) return // unchanged selection, keep it
+
+    this.clear()
+  }
+
+  clear() {
+    this.selectedValue = ''
+    this.selectedLabel = ''
+    this.inputTarget.value = ''
+    this.hiddenTarget.value = ''
+  }
+
+  renderLoading() {
+    this.activeIndex = -1
+    this.listboxTarget.innerHTML = `
+      <li role="option" aria-disabled="true" class="hw-combobox__option">
+        <span class="text-sm muted">Loading…</span>
+      </li>`
   }
 
   render() {
