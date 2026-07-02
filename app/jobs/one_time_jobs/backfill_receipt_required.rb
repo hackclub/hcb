@@ -8,7 +8,7 @@ module OneTimeJobs
       ledger_items = event_id.nil? ? Ledger::Item.all : Event.find(event_id).ledger_items
 
       ledger_items.find_each do |item|
-        item.update!(linked_object: item.hcb_code.linked_object) unless item.hcb_code.linked_object.nil?
+        item.update!(receipt_required: item.calculate_receipt_required)
       end
     end
 
