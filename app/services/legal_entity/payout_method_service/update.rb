@@ -74,7 +74,7 @@ class LegalEntity
         # payout-method change or the other repoints.
         (failed + draft).each do |report|
           safely do
-            report.update!(legal_entity_payout_method: @payout_method)
+            report.update!(legal_entity_payout_method: @payout_method, currency: @payout_method.details.currency)
           end
         end
       end
