@@ -127,7 +127,7 @@ class Ledger
 
     # TODO: get rid of this method once CardCharge is created as an LO
     def stripe_cardholder
-      pt.try(:stripe_cardholder) || ct.try(:stripe_cardholder)
+      canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
     end
 
     private
