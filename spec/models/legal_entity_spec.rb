@@ -40,4 +40,38 @@ RSpec.describe LegalEntity, type: :model do
       expect(legal_entity.default_payout_method).to be_nil
     end
   end
+
+  describe "address_country" do
+    it "is valid when blank" do
+      expect(build(:legal_entity, address_country: nil)).to be_valid
+    end
+
+    it "accepts a recognized ISO 3166-1 alpha-2 code" do
+      expect(build(:legal_entity, address_country: "CA")).to be_valid
+    end
+
+    it "rejects an unrecognized country code" do
+      entity = build(:legal_entity, address_country: "ZZ")
+      expect(entity).not_to be_valid
+      expect(entity.errors[:address_country]).to be_present
+    end
+
+    it "normalizes a lowercase code to uppercase" do
+      entity = build(:legal_entity, address_country: "us")
+      entity.valid?
+      expect(entity.address_country).to eq("US")
+    end
+
+    it "normalizes surrounding whitespace" do
+      entity = build(:legal_entity, address_country: "  gb  ")
+      entity.valid?
+      expect(entity.address_country).to eq("GB")
+    end
+
+    it "normalizes a blank string to nil" do
+      entity = build(:legal_entity, address_country: "   ")
+      entity.valid?
+      expect(entity.address_country).to be_nil
+    end
+  end
 end
