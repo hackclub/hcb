@@ -39,7 +39,7 @@ class Event
         false
       end
 
-      def receipts_required?
+      def rececipt_required?
         false
       end
 
