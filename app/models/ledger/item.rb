@@ -54,9 +54,9 @@ class Ledger
 
       true
 
-  def receipt_required?
-    amount_cents < 0 && primary_ledger&.receipt_required?
-  end
+    def receipt_required?
+      amount_cents < 0 && primary_ledger&.receipt_required?
+    end
 
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
