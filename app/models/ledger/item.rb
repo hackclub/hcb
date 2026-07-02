@@ -10,6 +10,7 @@
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  receipt_required             :boolean
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -47,8 +48,16 @@ class Ledger
 
     monetize :amount_cents
 
+    after_create :refresh!
+    after_touch :refresh!
+
+    # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
-      amount_cents < 0 && primary_ledger&.receipt_required?
+      self[:receipt_required]
+    end
+
+    def receipt_optional?
+      !receipt_required?
     end
 
     def calculate_amount_cents
@@ -63,13 +72,25 @@ class Ledger
       amount_cents
     end
 
-    def write_amount_cents!
+    def calculate_receipt_required
+      amount_cents < 0 && primary_ledger&.receipt_required? && transaction_type != "Disbursement::Outgoing"
+    end
+
+    def refresh!
+      # `after_create :refresh!` runs before any ledger mappings exist, which
+      # memoizes `primary_ledger` as nil on this instance. Reset the association
+      # caches so refresh! always recomputes from current database state (e.g.
+      # after a mapping is created).
+      association(:primary_mapping).reset
+      association(:primary_ledger).reset
+
       update(amount_cents: calculate_amount_cents)
+      update(receipt_required: calculate_receipt_required)
     end
 
     def map!
       Ledger::Mapper.new(ledger_item: self).run
-      write_amount_cents!
+      refresh!
     end
 
     def humanized_type
@@ -88,7 +109,7 @@ class Ledger
     end
 
     def author
-      case linked_object_type || raw_pending_transaction_type || raw_transaction_type
+      case transaction_type
       when "AchTransfer"
         linked_object&.creator
       when "CheckDeposit"
@@ -125,6 +146,11 @@ class Ledger
 
     private
 
+    # TODO: replace usages of this with linked_object_type once all LOs are created
+    def transaction_type
+      linked_object_type || raw_pending_transaction_type || raw_transaction_type
+    end
+
     def type_metadata
       # TODO: Cache the transaction type for non-linked object ledger items
       {
@@ -146,7 +172,7 @@ class Ledger
         "StripeServiceFee": ["Stripe service fee", "cash"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
-      }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
+      }[transaction_type&.to_sym] || ["Bank account transaction", "cash"]
     end
 
     def raw_pending_transaction_type

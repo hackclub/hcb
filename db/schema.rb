@@ -1583,6 +1583,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_185412) do
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.boolean "receipt_required"
     t.text "short_code"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"

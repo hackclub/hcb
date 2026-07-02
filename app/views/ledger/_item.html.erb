@@ -5,7 +5,12 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td><%= truncate(item.memo, length: 50) %></td>
+  <td class="transaction__memo">
+    <%= truncate(item.memo, length: 50) %>
+  </td>
+  <td>
+    <%= list_badge_for item.receipts.size, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+  </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
       <%= item.amount.format %>
