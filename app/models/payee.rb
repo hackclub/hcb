@@ -31,6 +31,12 @@ class Payee < ApplicationRecord
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
+  after_update do
+    if legal_entity_previously_changed?(from: nil)
+      payments.pending_legal_entity.each(&:on_legal_entity_assigned)
+    end
+  end
+
   def search_avatar
     User.find_by(email:)
   end
