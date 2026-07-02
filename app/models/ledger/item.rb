@@ -10,6 +10,7 @@
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  receipt_required             :boolean
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -48,6 +49,10 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
+      self[:receipt_required]
+    end
+
+    def calculate_receipt_required
       amount_cents < 0 && primary_ledger&.receipt_required?
     end
 
