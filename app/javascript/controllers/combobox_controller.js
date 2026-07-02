@@ -210,6 +210,7 @@ export default class extends Controller {
     this.listboxTarget.querySelectorAll('[role="option"]').forEach((li, i) => {
       const active = i === this.activeIndex
       li.classList.toggle('hw-combobox__option--navigated', active)
+      li.setAttribute('aria-selected', active ? 'true' : 'false')
       if (active) li.scrollIntoView({ block: 'nearest' })
     })
   }
