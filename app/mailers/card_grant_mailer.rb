@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CardGrantMailer < ApplicationMailer
+  before_action { @delivery_reason = "you received a grant from Hack Club in the form of an HCB Visa® Commercial card. #{stripe_issuing_disclosure}" }
+
   def card_grant_notification
     @card_grant = params[:card_grant]
     @custom_invite_message = @card_grant.invite_message
