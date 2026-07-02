@@ -80,7 +80,7 @@ module Reimbursement
     end
 
     def update_payout_method?
-      (admin || manager || creator) && record.can_change_payout_method?
+      (admin || creator) && record.can_change_payout_method?
     end
 
     def admin_approve?
