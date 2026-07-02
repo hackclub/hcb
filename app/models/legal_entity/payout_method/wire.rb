@@ -55,12 +55,12 @@ class LegalEntity
       end
 
       def short_label
-        last4 = account_number.to_s.last(4)
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
         last4.present? ? "Wire (••••#{last4})" : "Wire"
       end
 
       def detail_summary
-        last4 = account_number.to_s.last(4)
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
         last4.present? ? "Account ••••#{last4}" : "Wire transfer"
       end
 

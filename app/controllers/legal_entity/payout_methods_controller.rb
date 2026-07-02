@@ -86,7 +86,7 @@ class LegalEntity
     # method or pointing the default at a different record is always allowed and
     # never reaches this filter.
     def require_unlocked_method
-      return unless @payout_method&.locked_by_processing_report?
+      return unless @payout_method&.locked_by_processing_reimbursement_report?
 
       flash[:error] = "You can't change this payout method while a reimbursement is being processed."
       redirect_back_or_to settings_payouts_path

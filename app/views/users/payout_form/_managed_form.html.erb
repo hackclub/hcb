@@ -1,6 +1,4 @@
-<% editing = local_assigns[:editing] %>
-<% creating = local_assigns[:creating] %>
-<% attempted = local_assigns[:attempted] %>
+<%# locals: (user:, editing: nil, creating: nil, attempted: nil) %>
 <% payout_method = editing ? editing.details : attempted&.details %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>

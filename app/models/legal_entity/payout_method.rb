@@ -44,6 +44,7 @@ class LegalEntity
     belongs_to :legal_entity
     belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
     has_many :reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: :legal_entity_payout_method_id, inverse_of: :legal_entity_payout_method, dependent: :nullify
+    has_many :locked_reimbursement_reports, -> { where(aasm_state: LOCKING_REPORT_STATES) }, class_name: "Reimbursement::Report", foreign_key: :legal_entity_payout_method_id, inverse_of: :legal_entity_payout_method
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
 
@@ -74,14 +75,8 @@ class LegalEntity
       (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
     end
 
-    # Reports tied to this method whose reimbursement is mid-flight, so the
-    # method can't be edited or removed.
-    def locking_reports
-      reimbursement_reports.where(aasm_state: LOCKING_REPORT_STATES)
-    end
-
-    def locked_by_processing_report?
-      locking_reports.exists?
+    def locked_by_processing_reimbursement_report?
+      locked_reimbursement_reports.any?
     end
 
     def archive!
