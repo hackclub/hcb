@@ -51,8 +51,8 @@ class LegalEntity < ApplicationRecord
 
   def payable?
     latest_tax_form.usable? &&
-      tax_identification_number.predicted_to_be_over_theshold? &&
-      tax_identification_number.not_banned?
+      (latest_tax_form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_theshold?) &&
+      !tax_identification_number.not_banned?
   end
 
   def send_tax_form!

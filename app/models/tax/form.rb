@@ -93,7 +93,7 @@ module Tax
 
     def usable?
       # TODO - handle OFAC
-      completed? && taxbandits_tin_match_failed?
+      completed? && !taxbandits_tin_match_failed?
     end
 
     def self.taxbandits_client
