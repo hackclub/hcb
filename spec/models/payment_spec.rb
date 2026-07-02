@@ -161,7 +161,7 @@ RSpec.describe Payment, type: :model do
         end
 
         it "does not create a payment attempt" do
-          expect { tax_form.mark_completed! }.not_to change { payment.attempts.count }
+          expect { tax_form.mark_completed! }.not_to(change { payment.attempts.count })
         end
       end
     end
@@ -170,7 +170,7 @@ RSpec.describe Payment, type: :model do
       before { legal_entity.update!(banned_reason: "confirmed fraud") }
 
       it "does not create any payment attempt" do
-        expect { tax_form.mark_completed! }.not_to change { payment.attempts.count }
+        expect { tax_form.mark_completed! }.not_to(change { payment.attempts.count })
       end
 
       it "does not send any payment-related mailer" do
