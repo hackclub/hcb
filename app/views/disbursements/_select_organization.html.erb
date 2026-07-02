@@ -28,6 +28,7 @@
              autocomplete="off"
              aria-autocomplete="both"
              aria-expanded="false"
+             aria-controls="<%= "#{field_name}_combobox_listbox" %>"
              <%= "disabled" if disabled %>
              data-combobox-target="input"
              data-action="input->combobox#onInput focus->combobox#onFocus keydown->combobox#onKeydown blur->combobox#onBlur">
