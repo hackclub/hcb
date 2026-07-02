@@ -128,7 +128,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       service = described_class.new(
         user:,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
-        details_attrs: valid_ach_attrs
+        details_attrs: valid_ach_attrs,
+        replacing: old_pm
       )
 
       expect(service.run).to be(true)
@@ -164,7 +165,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       described_class.new(
         user:,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
-        details_attrs: valid_ach_attrs
+        details_attrs: valid_ach_attrs,
+        replacing: replaced_default
       ).run
 
       new_default = user.reload.default_payout_method
@@ -181,7 +183,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       service = described_class.new(
         user:,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
-        details_attrs: valid_ach_attrs
+        details_attrs: valid_ach_attrs,
+        replacing: old_pm
       )
 
       expect(service.run).to be(true)
@@ -211,7 +214,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       described_class.new(
         user:,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
-        details_attrs: valid_ach_attrs
+        details_attrs: valid_ach_attrs,
+        replacing: replaced_default
       ).run
 
       new_default = user.reload.default_payout_method
@@ -232,6 +236,69 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       ).run
 
       expect(report.reload.legal_entity_payout_method).to eq(old_pm)
+    end
+  end
+
+  describe "editing with `replacing:`" do
+    before do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+    end
+
+    it "creates a new record and archives the one being replaced (never mutates or destroys)" do
+      old = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+
+      service = described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: { account_number: "99999999", routing_number: "021000021" },
+        make_default: old.default?,
+        replacing: old
+      )
+
+      expect(service.run).to be(true)
+
+      # The old record is archived (kept for audit / report snapshots), not destroyed.
+      expect(LegalEntity::PayoutMethod.exists?(old.id)).to be(true)
+      expect(old.reload.archived).to be(true)
+      expect(old).not_to be_default
+
+      new_pm = user.reload.default_payout_method
+      expect(new_pm).not_to eq(old)
+      expect(new_pm).not_to be_archived
+      expect(new_pm.details.account_number).to eq("99999999")
+    end
+
+    it "keeps the new record as default when the replaced one was default" do
+      old = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+
+      described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs,
+        make_default: old.default?,
+        replacing: old
+      ).run
+
+      expect(user.personal_legal_entity.payout_methods.where(default: true).count).to eq(1)
+      expect(user.reload.default_payout_method).to be_default
+    end
+
+    it "repoints a draft report from the replaced method to the new one" do
+      old = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expect(report.legal_entity_payout_method).to eq(old)
+
+      described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs,
+        make_default: old.default?,
+        replacing: old
+      ).run
+
+      new_pm = user.reload.default_payout_method
+      expect(report.reload.legal_entity_payout_method).to eq(new_pm)
     end
   end
 

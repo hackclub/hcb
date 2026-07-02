@@ -48,7 +48,7 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
-      false
+      amount_cents < 0 && primary_ledger&.receipt_required?
     end
 
     def calculate_amount_cents
@@ -80,9 +80,53 @@ class Ledger
       type_metadata.last
     end
 
+    def sign
+      return :positive if amount_cents.positive?
+      return :negative if amount_cents.negative?
+
+      :zero
+    end
+
+    def author
+      case linked_object_type || raw_pending_transaction_type || raw_transaction_type
+      when "AchTransfer"
+        linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
+      when "Check"
+        linked_object&.creator
+      when "IncreaseCheck"
+        linked_object&.user
+      when "Disbursement::Outgoing"
+        linked_object&.requested_by
+      when "Disbursement::Incoming"
+        linked_object&.requested_by
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.report&.user
+      when "PaypalTransfer"
+        linked_object&.user
+      when "Donation"
+        linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
+      when "WiseTransfer"
+        linked_object&.user
+      when "RawPendingStripeTransaction"
+        stripe_cardholder&.user
+      when "RawStripeTransaction"
+        stripe_cardholder&.user
+      end
+    end
+
+    # TODO: get rid of this method once CardCharge is created as an LO
+    def stripe_cardholder
+      canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
+    end
+
     private
 
     def type_metadata
+      # TODO: Cache the transaction type for non-linked object ledger items
       {
         "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
         "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
@@ -99,7 +143,18 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
-      }[linked_object_type&.to_sym] || ["Unknown", "cash"]
+        "StripeServiceFee": ["Stripe service fee", "cash"],
+        "RawPendingStripeTransaction": ["Card charge", "card"],
+        "RawStripeTransaction": ["Card charge", "card"]
+      }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
+    end
+
+    def raw_pending_transaction_type
+      canonical_pending_transactions.map(&:transaction_source_type).compact.first
+    end
+
+    def raw_transaction_type
+      canonical_transactions.map(&:transaction_source_type).compact.first
     end
 
   end
