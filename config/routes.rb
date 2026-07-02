@@ -72,6 +72,12 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
+      member do
+        patch :set_default
+        patch :archive
+      end
+    end
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
@@ -596,6 +602,7 @@ Rails.application.routes.draw do
       post "reject"
       post "submit"
       post "update_currency"
+      post "update_payout_method"
       post "draft"
       get "wise_transfer_quote"
       get "wise_transfer_breakdown"

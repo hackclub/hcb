@@ -1637,6 +1637,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_185412) do
   end
 
   create_table "legal_entity_payout_methods", force: :cascade do |t|
+    t.boolean "archived", default: false, null: false
     t.datetime "created_at", null: false
     t.boolean "default", default: false, null: false
     t.bigint "details_id", null: false

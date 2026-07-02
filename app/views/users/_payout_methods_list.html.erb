@@ -1,0 +1,50 @@
+<%# locals: (user:, attempted: nil) %>
+<% legal_entity = user.personal_legal_entity %>
+<% methods = legal_entity ? legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :asc) : [] %>
+<% locking_by_method = methods.any? ?
+     Reimbursement::Report
+       .where(legal_entity_payout_method_id: methods.map(&:id), aasm_state: LegalEntity::PayoutMethod::LOCKING_REPORT_STATES)
+       .includes(:event)
+       .group_by(&:legal_entity_payout_method_id) : {} %>
+<% errored = attempted && (attempted.errors.any? || attempted.details&.errors&.any?) %>
+<% create_error = errored && attempted.new_record? %>
+<% edit_error_id = errored && attempted.persisted? ? attempted.id : nil %>
+
+<div class="payout-methods" data-controller="payout-methods">
+  <div class="card p0 overflow-hidden">
+    <div class="payout-methods__header flex items-center justify-between" style="padding: 14px 20px;">
+      <strong>Payout methods</strong>
+      <button type="button" class="btn btn-small bg-success" data-behavior="modal_trigger" data-modal="add_payout_method_modal">
+        <%= inline_icon "plus", size: 16 %>
+        Add method
+      </button>
+    </div>
+
+    <% if methods.any? %>
+      <div class="payout-methods__rows">
+        <% methods.each do |pm| %>
+          <% errored_row = edit_error_id == pm.id %>
+          <%= render "users/payout_form/payout_method_row", payout_method: (errored_row ? attempted : pm), open: errored_row, locking_reports: locking_by_method[pm.id] || [] %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="muted center" style="padding: 32px 20px; font-size: 13px;">
+        No payout methods yet — add one so you can be reimbursed.
+      </div>
+    <% end %>
+
+  </div>
+
+  <section
+    id="add_payout_method_modal"
+    class="modal modal--scroll bg-snow py"
+    data-behavior="modal"
+    role="dialog"
+    data-controller="turbo-frame-modal"
+    data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+    <%= modal_header "Add method" %>
+    <div style="padding: 0 20px 20px;">
+      <%= render "users/payout_form/managed_form", user:, creating: true, attempted: (create_error ? attempted : nil) %>
+    </div>
+  </section>
+</div>
