@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OneTimeJobs
-  class BackfillLinkedObject < ApplicationJob
+  class BackfillReceiptRequired < ApplicationJob
     queue_as :metrics
 
     def perform(event_id: nil)
