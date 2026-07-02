@@ -301,7 +301,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       remapped = nil
       expect {
         remapped = Ledger::Mapping.map_primary!(ledger: other_ledger, ledger_item:, mapped_by: user)
-      }.not_to change { Ledger::Mapping.count }
+      }.not_to(change { Ledger::Mapping.count })
 
       expect(remapped.id).to eq(original.id)
       expect(remapped.ledger).to eq(other_ledger)
@@ -364,7 +364,7 @@ RSpec.describe Ledger::Mapping, type: :model do
       repeated = nil
       expect {
         repeated = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
-      }.not_to change { Ledger::Mapping.count }
+      }.not_to(change { Ledger::Mapping.count })
 
       expect(repeated.id).to eq(original.id)
     end
