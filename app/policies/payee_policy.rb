@@ -9,4 +9,12 @@ class PayeePolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).new_payment?
   end
 
+  def choose_legal_entity?
+    user.auditor? || user.email == record.email
+  end
+
+  def set_legal_entity?
+    user.admin? || user.email == record.email
+  end
+
 end

@@ -3,7 +3,8 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event
+  before_action :set_event, only: [:index, :create]
+  before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   def index
     authorize @event
@@ -21,6 +22,33 @@ class PayeesController < ApplicationController
       redirect_to new_event_payment_path(event_id: @event.slug),
                   alert: payee.errors.full_messages.to_sentence
     end
+  end
+
+  def choose_legal_entity
+    authorize @payee
+
+    @legal_entities = current_user.legal_entities
+  end
+
+  def set_legal_entity
+    authorize @payee
+
+    le = current_user.legal_entities.find(params[:legal_entity_id])
+    @payee.update!(legal_entity: le)
+
+    flash[:success] = "Legal entity successfully assigned"
+
+    if le.complete?
+      redirect_to settings_payouts_path
+    else
+      redirect_to legal_entity_tax_form_path(le)
+    end
+  end
+
+  private
+
+  def set_payee
+    @payee = Payee.find_by_hashid!(params[:id])
   end
 
 end

@@ -20,6 +20,7 @@
 #
 class Payee < ApplicationRecord
   include PgSearch::Model
+  include Hashid::Rails
 
   belongs_to :event
   belongs_to :legal_entity, optional: true
