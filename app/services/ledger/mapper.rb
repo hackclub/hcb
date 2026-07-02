@@ -2,22 +2,16 @@
 
 class Ledger
   class Mapper
+    SYSTEM = :__system__
+
     def initialize(ledger_item:)
       @ledger_item = ledger_item
     end
 
     def run
-      if card_grant = calculate_card_grant
-        ledger = Ledger.find_or_create_by!(primary: true, card_grant:)
-      elsif event = calculate_event
-        ledger = Ledger.find_or_create_by!(primary: true, event:)
-      else
-        return nil
-      end
+      return if @ledger_item.primary_mapping&.mapped_by_human?
 
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
-      end
+      Ledger::Mapping.map_primary!(ledger: calculate_ledger, ledger_item: @ledger_item, mapped_by: SYSTEM)
     end
 
     private
@@ -28,6 +22,14 @@ class Ledger
         event_from_interest ||
         event_from_svb_sweep ||
         event_from_canonical_pending_transactions
+    end
+
+    def calculate_ledger
+      if card_grant = calculate_card_grant
+        Ledger.find_or_create_by!(primary: true, card_grant:)
+      elsif event = calculate_event
+        Ledger.find_or_create_by!(primary: true, event:)
+      end
     end
 
     # Transactions sent to an organisation's unique Column account number.
