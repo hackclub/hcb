@@ -20,7 +20,7 @@
       For additional security, e<% else %>E<% end %>nter the code from your authenticator app:
   </p>
 
-  <%= form_tag complete_login_path(@login) do %>
+  <%= form_tag complete_login_path(@login), data: { turbo: false } do %>
     <% if Flipper.enabled?(:otp_single_input, @login.user) %>
       <%= text_field_tag(
             :code,
