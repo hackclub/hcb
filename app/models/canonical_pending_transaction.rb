@@ -436,11 +436,15 @@ class CanonicalPendingTransaction < ApplicationRecord
     types = %w[RawPendingBankFeeTransaction RawPendingColumnTransaction RawPendingDonationTransaction
                RawPendingIncomingDisbursementTransaction RawPendingInvoiceTransaction
                RawPendingOutgoingAchTransaction RawPendingOutgoingCheckTransaction
-               RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction]
+               RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction
+               ReimbursementExpensePayout ReimbursementPayoutHolding CheckDeposit
+               IncreaseCheck PaypalTransfer Wire WiseTransfer]
 
     types.each do |type|
       return type if send("#{type.underscore}_id").present?
     end
+
+    nil
   end
 
   private

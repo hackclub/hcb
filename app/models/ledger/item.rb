@@ -48,7 +48,15 @@ class Ledger
     monetize :amount_cents
 
     def receipt_required?
-      false
+      return false if amount_cents >= 0
+
+      if primary_ledger&.event.present?
+        return false unless primary_ledger.event.plan.receipts_required?
+      elsif primary_ledger&.card_grant.present?
+        return false unless primary_ledger.card_grant.event.plan.receipts_required?
+      end
+
+      true
     end
 
     def calculate_amount_cents
@@ -139,6 +147,7 @@ class Ledger
         "PaypalTransfer": ["PayPal transfer", "paypal"],
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
+        "StripeServiceFee": ["Stripe service fee", "cash"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
       }[(linked_object_type || raw_pending_transaction_type || raw_transaction_type)&.to_sym] || ["Bank account transaction", "cash"]
