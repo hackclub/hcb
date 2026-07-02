@@ -114,7 +114,7 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
     end
   end
 
-  describe "#locked_by_processing_report?" do
+  describe "#locked_by_processing_reimbursement_report?" do
     let(:user) { create(:user) }
 
     def method_with_report_in(state)
@@ -125,23 +125,23 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
 
     it "is locked while a report using it is in-flight" do
       %i[submitted reimbursement_requested reimbursement_approved].each do |state|
-        expect(method_with_report_in(state).locked_by_processing_report?).to be(true), "expected locked for #{state}"
+        expect(method_with_report_in(state).locked_by_processing_reimbursement_report?).to be(true), "expected locked for #{state}"
       end
     end
 
     it "is unlocked while the report is a draft or finished" do
       %i[draft reimbursed rejected reversed].each do |state|
-        expect(method_with_report_in(state).locked_by_processing_report?).to be(false), "expected unlocked for #{state}"
+        expect(method_with_report_in(state).locked_by_processing_reimbursement_report?).to be(false), "expected unlocked for #{state}"
       end
     end
 
     it "is unlocked when no report uses it" do
       pm = user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach)
-      expect(pm.locked_by_processing_report?).to be(false)
+      expect(pm.locked_by_processing_reimbursement_report?).to be(false)
     end
   end
 
-  describe "#locking_reports" do
+  describe "#locked_reimbursement_reports" do
     let(:user) { create(:user) }
     let(:pm) { user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach) }
 
@@ -153,7 +153,7 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       locking = %i[submitted reimbursement_requested reimbursement_approved].map { |s| report_in(s) }
       %i[draft reimbursed rejected reversed].each { |s| report_in(s) }
 
-      expect(pm.locking_reports).to match_array(locking)
+      expect(pm.locked_reimbursement_reports).to match_array(locking)
     end
   end
 end

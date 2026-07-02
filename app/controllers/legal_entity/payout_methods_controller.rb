@@ -69,7 +69,7 @@ class LegalEntity
       @payout_method.archive!
 
       default = legal_entity.default_payout_method
-      if default && draft_report_ids.any?
+      if default && draft_report.any?
         draft_report.find_each do |report|
           report.update!(legal_entity_payout_method: default)
         end
