@@ -17,6 +17,7 @@ class EventsController < ApplicationController
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
+  before_action :set_donations, only: [:donation_overview, :donations, :recurring_donations]
 
   # GET /events
   def index
@@ -608,38 +609,14 @@ class EventsController < ApplicationController
 
   def donation_overview
     authorize @event
+  end
 
-    # The search query name was historically `search`. It has since been renamed
-    # to `q`. This following line retains backwards compatibility.
-    params[:q] ||= params[:search]
+  def donations
+    authorize @event
+  end
 
-    relation = @event.donations.not_pending.includes(:recurring_donation)
-
-    @stats = {
-      deposited: relation.succeeded_and_not_refunded.sum(:amount),
-    }
-
-    @all_donations = relation.succeeded_and_not_refunded
-
-    if params[:filter] == "refunded"
-      relation = relation.refunded
-    else
-      relation = relation.succeeded_and_not_refunded
-    end
-
-    relation = relation.search_name(params[:q]) if params[:q].present?
-
-    page = (params[:page] || 1).to_i
-    per_page = (params[:per] || DONATIONS_PER_PAGE).to_i
-
-    @all_donations = relation.order(created_at: :desc)
-
-    @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
-
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
-
-    @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
-
+  def recurring_donations
+    authorize @event
   end
 
   def payments
@@ -1238,6 +1215,39 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def set_donations
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    relation = @event.donations.not_pending.includes(:recurring_donation)
+
+    @stats = {
+      deposited: relation.succeeded_and_not_refunded.sum(:amount),
+    }
+
+    @all_donations = relation.succeeded_and_not_refunded
+
+    if params[:filter] == "refunded"
+      relation = relation.refunded
+    else
+      relation = relation.succeeded_and_not_refunded
+    end
+
+    relation = relation.search_name(params[:q]) if params[:q].present?
+
+    page = (params[:page] || 1).to_i
+    per_page = (params[:per] || DONATIONS_PER_PAGE).to_i
+
+    @all_donations = relation.order(created_at: :desc)
+
+    @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
+
+    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+
+    @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
