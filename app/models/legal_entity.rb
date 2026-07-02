@@ -34,7 +34,7 @@ class LegalEntity < ApplicationRecord
   has_many :users, through: :legal_entity_users
 
   has_many :tax_forms, class_name: "Tax::Form"
-  has_one :latest_tax_form, -> { tax_forms.order(completed_at: :desc, created_at: :desc).first }, inverse_of: :legal_entity, class_name: "Tax::Form"
+  has_one :latest_tax_form, -> { order(completed_at: :desc, created_at: :desc).first }, inverse_of: :legal_entity, class_name: "Tax::Form"
 
   has_many :payees
   has_many :payments, through: :payees
