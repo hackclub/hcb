@@ -10,7 +10,7 @@ class PayeePolicy < ApplicationPolicy
   end
 
   def choose_legal_entity?
-    record.legal_entity.nil? && (user.auditor? || user.email == record.email)
+    user.auditor? || user.email == record.email
   end
 
   def set_legal_entity?

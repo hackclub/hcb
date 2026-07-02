@@ -10,7 +10,7 @@ module Tax
       @legal_entities ||= LegalEntity.where(tin_hash: @tin_hash)
     end
 
-    def predicted_to_be_over_theshold?
+    def predicted_to_be_over_threshold?
       payment_sum >= Tax::REPORTING_THRESHOLD_1099
     end
 

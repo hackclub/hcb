@@ -27,6 +27,11 @@ class PayeesController < ApplicationController
   def choose_legal_entity
     authorize @payee
 
+    if @payee.legal_entity.present?
+      redirect_to legal_entity_tax_form_path(@payee.legal_entity)
+      return
+    end
+
     @legal_entities = current_user.legal_entities
   end
 
@@ -44,7 +49,7 @@ class PayeesController < ApplicationController
 
     flash[:success] = "Legal entity successfully assigned"
 
-    if le.complete?
+    if le.payable?
       redirect_to settings_payouts_path
     else
       redirect_to legal_entity_tax_form_path(le)

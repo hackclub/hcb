@@ -71,9 +71,9 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if legal_entity&.complete? && legal_entity.default_payout_method.present?
+    if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity&.complete?
+    elsif legal_entity&.payable?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -89,10 +89,10 @@ class Payment < ApplicationRecord
   end
 
   def on_legal_entity_assigned
-    on_legal_entity_complete if legal_entity.complete?
+    on_legal_entity_payable if legal_entity.payable?
   end
 
-  def on_legal_entity_complete
+  def on_legal_entity_payable
     if legal_entity.default_payout_method.present?
       create_payment_attempt!
     else
@@ -101,7 +101,7 @@ class Payment < ApplicationRecord
   end
 
   def on_default_payout_method_created
-    create_payment_attempt! if legal_entity.complete?
+    create_payment_attempt! if legal_entity.payable?
   end
 
   def receipt_required?

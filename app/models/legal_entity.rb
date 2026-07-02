@@ -50,8 +50,8 @@ class LegalEntity < ApplicationRecord
   def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:)
 
   def payable?
-    latest_tax_form.usable? &&
-      (latest_tax_form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_theshold?) &&
+    latest_tax_form.completed? &&
+      (latest_tax_form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
       !tin_banned?
   end
 

@@ -74,7 +74,7 @@ module Tax
       event :mark_completed do
         transitions from: :sent, to: :completed
         after do
-          legal_entity.payments.each(&:on_tax_form_completed)
+          legal_entity.payments.each(&:on_tax_form_payable) if legal_entity.payable?
         end
       end
 
@@ -89,11 +89,6 @@ module Tax
       send_using_taxbandits! unless sent_with_manual?
 
       mark_sent!
-    end
-
-    def usable?
-      # TODO - handle OFAC
-      completed? && !taxbandits_tin_match_failed?
     end
 
     def self.taxbandits_client
