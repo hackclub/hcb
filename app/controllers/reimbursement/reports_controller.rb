@@ -344,7 +344,11 @@ module Reimbursement
         @report.expenses.each do |expense|
           expense.mark_approved!
         end
-        flash[:success] = "All expenses have been approved; the report creator will be notified."
+
+        @report.mark_reimbursement_requested! if @report.submitted?
+
+        flash[:success] = "All expenses have been approved, the HCB team will review the report for reimbursement."
+
       rescue => e
         flash[:error] = e.message
       end
