@@ -660,7 +660,7 @@ class User < ApplicationRecord
   private
 
   def create_legal_entity
-    legal_entities.create!(entity_type: :person)
+    legal_entities.create!(entity_type: :person, name: full_name)
   end
 
   def auditors_must_be_verified
