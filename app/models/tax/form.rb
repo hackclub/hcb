@@ -112,10 +112,10 @@ module Tax
           iat: Time.now.to_i
         }
 
-        JWT.encode(payload, Credentials.fetch(:TAXBANDITS, :CLIENT_SECRET), "HS256")
+        signature = JWT.encode(payload, Credentials.fetch(:TAXBANDITS, :CLIENT_SECRET), "HS256")
 
         oauth_response = Faraday.get(Rails.env.development ? "https://testoauth.expressauth.net/v2/tbsauth" : "https://oauth.expressauth.net/v2/tbsauth") do |req|
-          req.headers["Authentication"] => signature
+          req.headers["Authentication"] = signature
         end
 
         oauth_response["AccessToken"]
