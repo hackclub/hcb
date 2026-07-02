@@ -58,6 +58,32 @@ class LegalEntity
         "USD"
       end
 
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_email:, user:, recipient_name:, memo:, send_email_notification: false, **)
+        event.wires.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_postal_code:,
+          recipient_country:,
+          account_number:,
+          bic_code:,
+          recipient_information: recipient_information.merge({
+                                                               purpose_code: Wire.reimbursement_purpose_code_for(recipient_country),
+                                                               remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
+                                                             }),
+          amount_cents: amount,
+          recipient_name: self.recipient_name.presence || recipient_name,
+          recipient_email:,
+          payment_for: payment_for&.slice(0...140),
+          memo:,
+          user:,
+          currency:,
+          send_email_notification:,
+        )
+      end
+
     end
 
   end
