@@ -59,6 +59,11 @@ class LegalEntity
         last4.present? ? "Wire (••••#{last4})" : "Wire"
       end
 
+      def detail_summary
+        last4 = account_number.to_s.last(4)
+        last4.present? ? "Account ••••#{last4}" : "Wire transfer"
+      end
+
       def currency
         "USD"
       end

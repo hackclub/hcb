@@ -60,6 +60,10 @@ class LegalEntity
         address_line1.present? ? "#{title_kind} (#{address_line1})" : title_kind
       end
 
+      def detail_summary
+        address_line1
+      end
+
       def currency
         "USD"
       end

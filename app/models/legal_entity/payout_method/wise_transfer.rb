@@ -56,6 +56,18 @@ class LegalEntity
         currency.present? ? "#{title_kind} (#{currency})" : title_kind
       end
 
+      def detail_summary
+        if bank_name.present? && currency.present?
+          "#{bank_name} (#{currency})"
+        elsif bank_name.present?
+          bank_name
+        elsif currency.present?
+          "Wise transfer (#{currency})"
+        else
+          "Wise transfer"
+        end
+      end
+
     end
 
   end
