@@ -74,7 +74,7 @@ module Tax
       event :mark_completed do
         transitions from: :sent, to: :completed
         after do
-          legal_entity.payments.each(&:on_tax_form_payable) if legal_entity.payable?
+          legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
         end
       end
 
