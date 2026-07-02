@@ -165,6 +165,7 @@ export default class extends Controller {
   commit(option) {
     if (!option || option.disabled) return
     this.selectedValue = option.value
+    this.labelValue = option.label
     this.selectedLabel = option.label
     this.hiddenTarget.value = option.value
     this.inputTarget.value = option.label
