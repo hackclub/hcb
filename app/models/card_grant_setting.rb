@@ -16,6 +16,7 @@
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
 #  support_message                   :string
+#  support_slack_url                 :string
 #  support_url                       :string
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
