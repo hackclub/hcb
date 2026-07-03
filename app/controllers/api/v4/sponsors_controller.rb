@@ -12,10 +12,14 @@ module Api
         @sponsors = @event.sponsors.order(created_at: :desc)
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         @sponsor = Sponsor.find_by_public_id!(params[:id])
         authorize @sponsor
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         authorize @event

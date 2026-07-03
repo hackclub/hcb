@@ -14,12 +14,16 @@ module Api
         render :index, status: :ok
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         @check_deposit = CheckDeposit.find_by_public_id!(params[:id])
         authorize @check_deposit
 
         render :show, status: :ok
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         check_deposit_params = params.permit(:front, :back, :amount_cents).merge(created_by: current_user)

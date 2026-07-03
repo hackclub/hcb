@@ -16,9 +16,13 @@ module Api
         end
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
       end
+
+      require_oauth2_scope "read", :show
 
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
@@ -28,6 +32,8 @@ module Api
 
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
+
+      require_oauth2_scope "read", :transactions
 
       def create
         event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
@@ -127,6 +133,8 @@ module Api
 
         @designs += StripeCard::PersonalizationDesign.unlisted.available if can_admin?(:read)
       end
+
+      require_oauth2_scope "read", :card_designs
 
       def freeze
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])

@@ -7,8 +7,15 @@ module Api
       skip_after_action :verify_authorized, only: [:index]
 
       def index
-        @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+        @events =
+          if can_admin?(:read)
+            Event.not_hidden.includes(:users).order(created_at: :desc)
+          else
+            current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
+          end
       end
+
+      require_oauth2_scope "organizations:read", :index
 
       def sub_organizations
         authorize @event, :sub_organizations_in_v4?

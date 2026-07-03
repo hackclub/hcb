@@ -102,6 +102,8 @@ module Api
         @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
       end
 
+      require_oauth2_scope "ledgers:read", :memo_suggestions
+
       def mark_no_receipt
         @hcb_code = HcbCode.find_by_public_id!(params[:id])
         authorize @hcb_code, :mark_no_or_lost?, policy_class: ReceiptablePolicy

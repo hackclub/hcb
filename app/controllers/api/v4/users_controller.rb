@@ -11,6 +11,8 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "read", :me
+
       def revoke
         @current_token.update(revoked_at: Time.now)
         render json: {
@@ -51,6 +53,8 @@ module Api
 
         render json: icons.compact_blank
       end
+
+      require_oauth2_scope "read", :available_icons
 
     end
   end

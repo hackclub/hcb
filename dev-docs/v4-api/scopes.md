@@ -123,6 +123,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 
 | Pattern | When to use | Examples |
 |---------|-------------|----------|
+| `read` | Coarse read-only access for GET endpoints that do not have a narrower resource scope | current user profile, cards, tags |
 | `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` |
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
@@ -131,7 +132,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 Guidelines:
 
 - `read` and `write` are **independent** — granting `:write` does not imply `:read`. Declare each where needed.
-- Prefer the `<resource>:<action>` shape. Reach for a bare capability scope only when the access doesn't correspond to CRUD on a single resource.
+- Prefer the `<resource>:<action>` shape. Use coarse `read` for existing GET endpoints that do not yet have a useful resource-specific scope. Reach for a bare capability scope only when the access doesn't correspond to CRUD on a single resource.
 
 ---
 

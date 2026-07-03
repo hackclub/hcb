@@ -8,6 +8,8 @@ module Api
         @comments = policy_scope(@hcb_code.comments).includes(:user).order(created_at: :asc)
       end
 
+      require_oauth2_scope "read", :index
+
       def create
         @hcb_code = HcbCode.find_by_public_id!(params[:transaction_id])
 

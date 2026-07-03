@@ -464,7 +464,13 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 | `admin:read`   | Grants read-only access to admin-level data (e.g. all organizations, internal fields). |
 | `admin:write`  | Grants the ability to perform write actions reserved for admins.     |
 
-`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed. 
+`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed.
+
+A true read-only admin token should include `restricted` plus the read scopes it needs, for example:
+
+```text
+restricted read admin:read organizations:read ledgers:read receipts:read user_lookup event_followers
+```
 
 ### Implementation Notes
 

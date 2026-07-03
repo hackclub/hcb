@@ -11,10 +11,14 @@ module Api
         @invoices = authorize(@event.invoices.order(created_at: :desc))
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         @invoice = Invoice.find_by_public_id!(params[:id])
         authorize @invoice
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         authorize @event, :create?, policy_class: InvoicePolicy

@@ -19,6 +19,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "read", :index
+
       def create
         sent_by = current_user
 
@@ -76,6 +78,8 @@ module Api
         authorize @card_grant
       end
 
+      require_oauth2_scope "read", :show
+
       def topup
         authorize @card_grant
 
@@ -120,6 +124,8 @@ module Api
 
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
+
+      require_oauth2_scope "read", :transactions
 
       private
 

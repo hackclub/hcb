@@ -13,9 +13,13 @@ module Api
         @tags = @event.tags.order(created_at: :desc)
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         authorize @tag
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         @tag = @event.tags.build(params.permit(:label, :color, :emoji))

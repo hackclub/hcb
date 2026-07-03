@@ -12,9 +12,13 @@ module Api
         @checks = @event.increase_checks.order(created_at: :desc)
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         @check = authorize IncreaseCheck.find_by_public_id!(params[:id])
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         check_params = params.require(:check).permit(

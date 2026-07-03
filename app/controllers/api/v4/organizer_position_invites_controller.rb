@@ -19,9 +19,13 @@ module Api
         end
       end
 
+      require_oauth2_scope "read", :index
+
       def show
         authorize @invitation
       end
+
+      require_oauth2_scope "read", :show
 
       def create
         authorize @event, :can_invite_user?
