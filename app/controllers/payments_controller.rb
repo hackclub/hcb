@@ -22,13 +22,17 @@ class PaymentsController < ApplicationController
     @payee = @event.payees.find(payment_params[:payee_id])
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
-    @legal_entity = LegalEntity.create(managing_event_id: @event.id, entity_type: :business, name: @payee.display_name)
 
+    manual = params[:manual] == "true"
 
     ActiveRecord::Base.transaction do
-      if params[:manual]
       @payment.save!
-      @payout_method = build_payout_method
+
+      if manual
+        @legal_entity = LegalEntity.create!(managing_event_id: @event.id, entity_type: :business, name: @payee.display_name)
+        @payout_method = build_payout_method
+      end
+
       if payment_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,
@@ -37,13 +41,12 @@ class PaymentsController < ApplicationController
           receiptable: @payment
         ).run!
       end
-      redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-
-    rescue ActiveRecord::RecordInvalid => e
-      flash.now[:error] = e.message
-      render :new, layout: "transfer", status: :unprocessable_entity
     end
 
+    redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
+  rescue ActiveRecord::RecordInvalid => e
+    flash.now[:error] = e.message
+    render :new, layout: "transfer", status: :unprocessable_entity
   end
 
   private
