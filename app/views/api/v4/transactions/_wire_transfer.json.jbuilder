@@ -3,20 +3,22 @@
 # locals: (json:, wire_transfer:)
 
 object_shape(json, wire_transfer) do
+  json.organization_id wire_transfer.event.public_id
+  json.amount_cents wire_transfer.amount_cents
+  json.currency wire_transfer.currency
+  json.state wire_transfer.aasm_state
+  json.memo wire_transfer.memo
+  json.payment_for wire_transfer.payment_for
+
   json.recipient_name wire_transfer.recipient_name
   json.recipient_email wire_transfer.recipient_email
   json.recipient_country wire_transfer.recipient_country
 
-  json.payment_for wire_transfer.payment_for
-  json.currency wire_transfer.currency
-  json.amount_cents wire_transfer.amount_cents
-  json.usd_amount_cents wire_transfer.usd_amount_cents if wire_transfer.usd_amount_cents.present?
-  json.state wire_transfer.aasm_state
-  json.organization_id wire_transfer.event_id
-
-  json.return_reason wire_transfer.return_reason if wire_transfer.return_reason.present?
-
-  json.approved_at wire_transfer.approved_at if wire_transfer.approved_at.present?
+  json.address_line1 wire_transfer.address_line1
+  json.address_line2 wire_transfer.address_line2
+  json.address_city wire_transfer.address_city
+  json.address_state wire_transfer.address_state
+  json.address_postal_code wire_transfer.address_postal_code
 
   json.sender do
     if wire_transfer.user.present?
