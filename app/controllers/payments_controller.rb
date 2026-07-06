@@ -23,9 +23,10 @@ class PaymentsController < ApplicationController
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
 
-    @payout_method = build_payout_method
 
-    if @payment.save
+    ActiveRecord::Base.transaction do
+      @payment.save!
+      @payout_method = build_payout_method
       if payment_params[:file]
         ::ReceiptService::Create.new(
           uploader: current_user,
@@ -35,12 +36,29 @@ class PaymentsController < ApplicationController
         ).run!
       end
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-    else
-      render :new, layout: "transfer", status: :unprocessable_entity
+
+      rescue ActiveRecord::RecordInvalid => e
+        flash.now[:error] = e.message
+        render :new, layout: "transfer", status: :unprocessable_entity
+    end
+
     end
   end
 
   private
+
+  def build_payout_method
+    type, details = payout_method_params.values_at(:type, :details)
+    return if type.blank?
+
+    service = LegalEntity::PayoutMethodService::Update.new(
+      user: current_user,
+      details_type: type,
+      details_attrs: details
+    )
+    service.run!
+    service.payout_method
+  end
 
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
