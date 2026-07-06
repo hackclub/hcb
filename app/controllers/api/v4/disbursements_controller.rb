@@ -26,6 +26,8 @@ module Api
         render :show, status: :created, location: api_v4_transaction_path(@disbursement)
       end
 
+      require_oauth2_scope "disbursements:write", :create
+
     end
   end
 end
