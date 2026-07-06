@@ -37,9 +37,9 @@ class PaymentsController < ApplicationController
       end
       redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
 
-      rescue ActiveRecord::RecordInvalid => e
-        flash.now[:error] = e.message
-        render :new, layout: "transfer", status: :unprocessable_entity
+    rescue ActiveRecord::RecordInvalid => e
+      flash.now[:error] = e.message
+      render :new, layout: "transfer", status: :unprocessable_entity
     end
 
   end
