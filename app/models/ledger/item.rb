@@ -81,14 +81,24 @@ class Ledger
 
     def calculate_system_memo
       case transaction_type
+      when "Invoice"
+        "Invoice to #{linked_object.smart_memo}".strip
+      when "Donation"
+        "Donation from #{linked_object.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
       when "AchTransfer"
         "ACH to #{linked_object.smart_memo}".strip
-      when "CheckDeposit"
-        "Check deposit"
+      when "Wire"
+        "Wire to #{linked_object.recipient_name}".strip
+      when "PaypalTransfer"
+        "PayPal to #{linked_object.recipient_name}".strip
+      when "WiseTransfer"
+        "Wise to #{linked_object.recipient_name}".strip
       when "Check"
         "Check to #{linked_object.smart_memo}".strip
       when "IncreaseCheck"
         "Check to #{linked_object.recipient_name}".strip
+      when "CheckDeposit"
+        "Check deposit"
       when "Disbursement::Outgoing"
         if linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}".strip
@@ -103,18 +113,22 @@ class Ledger
         end
       when "Disbursement::Incoming"
         "Transfer from #{linked_object.source_event.name}".strip
+      when "StripeServiceFee"
+        linked_object.stripe_description
+      when "BankFee"
+        if linked_object.amount_cents.negative? && linked_object.fee_revenue.present?
+          return "Fiscal sponsorship fee for #{linked_object.fee_revenue.start.strftime("%-m/%-d")} to #{linked_object.fee_revenue.end.strftime("%-m/%-d")}"
+        elsif linked_object.amount_cents.negative?
+          return "Fiscal sponsorship"
+        else
+          return "Fiscal sponsorship fee credit"
+        end
+      when "FeeRevenue"
+        "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
         linked_object.expense.memo
-      when "PaypalTransfer"
-        "PayPal to #{linked_object.recipient_name}".strip
-      when "Donation"
-        "Donation from #{linked_object.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
-      when "Wire"
-        "Wire to #{linked_object.recipient_name}".strip
-      when "WiseTransfer"
-        "Wise transfer to #{linked_object.recipient_name}".strip
       when "RawPendingStripeTransaction"
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"] || "Card charge at unknown merchant"
       when "RawStripeTransaction"
