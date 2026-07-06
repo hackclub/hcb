@@ -132,6 +132,8 @@ class Ledger
         linked_object&.user
       when "WiseTransfer"
         linked_object&.user
+      when "StripeCardCharge"
+        stripe_cardholder&.user
       when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
@@ -170,6 +172,7 @@ class Ledger
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
         "StripeServiceFee": ["Stripe service fee", "cash"],
+        "StripeCardCharge": ["Card charge", "card"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
       }[transaction_type&.to_sym] || ["Bank account transaction", "cash"]

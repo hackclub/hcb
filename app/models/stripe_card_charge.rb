@@ -25,6 +25,24 @@ class StripeCardCharge < ApplicationRecord
   belongs_to :raw_pending_stripe_transaction, optional: true
   has_and_belongs_to_many :raw_stripe_transactions
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+
+  def stripe_card
+    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
+  end
+
+  def stripe_cardholder
+    stripe_card&.stripe_cardholder
+  end
+
+  def merchant_data
+    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_data")
+  end
+
+  def merchant_currency
+    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
+  end
+
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was
   # first seen as an authorization or as a settled transaction.
   def self.matching_stripe_authorization_id(stripe_authorization_id)
