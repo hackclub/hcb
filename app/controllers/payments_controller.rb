@@ -22,9 +22,11 @@ class PaymentsController < ApplicationController
     @payee = @event.payees.find(payment_params[:payee_id])
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
+    @legal_entity = LegalEntity.create(managing_event_id: @event.id, entity_type: :business, name: @payee.display_name)
 
 
     ActiveRecord::Base.transaction do
+      if params[:manual]
       @payment.save!
       @payout_method = build_payout_method
       if payment_params[:file]
