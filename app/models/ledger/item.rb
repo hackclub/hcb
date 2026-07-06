@@ -80,6 +80,11 @@ class Ledger
     end
 
     def calculate_system_memo
+      # Ledger items created from a raw transaction (e.g. by
+      # CanonicalPendingTransaction's after_create) may not have a linked
+      # object yet. Return nil so refresh! keeps the existing memo.
+      return nil if linked_object.nil? && !["CheckDeposit", "RawPendingStripeTransaction", "RawStripeTransaction"].include?(transaction_type)
+
       case transaction_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}".strip
@@ -139,10 +144,10 @@ class Ledger
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
         linked_object.expense.memo
-      when "RawPendingStripeTransaction"
-        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"] || "Card charge at unknown merchant"
-      when "RawStripeTransaction"
-        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"] || "Card charge at unknown merchant"
+      when "RawPendingStripeTransaction", "RawStripeTransaction"
+        network_id = stripe_merchant&.dig("network_id")
+        merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
+        merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
       end
     end
 
@@ -157,7 +162,9 @@ class Ledger
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
       update(system_memo: calculate_system_memo)
-      update(memo: custom_memo || system_memo)
+      # Fall back to the existing memo — memo has a presence validation, so
+      # blanking it out would silently fail the update.
+      update(memo: custom_memo.presence || system_memo.presence || memo)
     end
 
     def map!
@@ -184,27 +191,27 @@ class Ledger
     def author
       case transaction_type
       when "AchTransfer"
-        linked_object.creator
+        linked_object&.creator
       when "CheckDeposit"
-        linked_object.created_by
+        linked_object&.created_by
       when "Check"
-        linked_object.creator
+        linked_object&.creator
       when "IncreaseCheck"
-        linked_object.user
+        linked_object&.user
       when "Disbursement::Outgoing"
-        linked_object.requested_by
+        linked_object&.requested_by
       when "Disbursement::Incoming"
-        linked_object.requested_by
+        linked_object&.requested_by
       when "Reimbursement::ExpensePayout"
-        linked_object.expense.report.user
+        linked_object&.expense&.report&.user
       when "PaypalTransfer"
-        linked_object.user
+        linked_object&.user
       when "Donation"
-        linked_object.collected_by if linked_object.in_person?
+        linked_object&.collected_by if linked_object&.in_person?
       when "Wire"
-        linked_object.user
+        linked_object&.user
       when "WiseTransfer"
-        linked_object.user
+        linked_object&.user
       when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
@@ -219,7 +226,7 @@ class Ledger
 
     # TODO: get rid of this method once CardCharge is created as an LO
     def stripe_merchant
-      canonical_pending_transactions.first.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || canonical_transactions.first.transaction_source&.stripe_transaction&.[]("merchant_data")
+      canonical_pending_transactions.first&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || canonical_transactions.first&.transaction_source&.stripe_transaction&.[]("merchant_data")
     end
 
     private
