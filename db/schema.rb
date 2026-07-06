@@ -1578,6 +1578,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
+    t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
     t.string "linked_object_type"
@@ -1585,6 +1586,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
     t.text "memo", null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
