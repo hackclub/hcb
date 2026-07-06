@@ -446,6 +446,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
+  create_table "card_charges", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "raw_pending_stripe_transaction_id"
+    t.datetime "updated_at", null: false
+    t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
+  end
+
+  create_table "card_charges_raw_stripe_transactions", id: false, force: :cascade do |t|
+    t.bigint "card_charge_id", null: false
+    t.bigint "raw_stripe_transaction_id", null: false
+    t.index ["card_charge_id"], name: "index_card_charges_rsts_on_card_charge_id"
+    t.index ["raw_stripe_transaction_id"], name: "index_card_charges_rsts_on_raw_stripe_transaction_id", unique: true
+  end
+
   create_table "card_grant_pre_authorizations", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.bigint "card_grant_id", null: false
@@ -2175,13 +2189,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
     t.index ["stripe_authorization_id"], name: "index_raw_stripe_transactions_on_stripe_authorization_id"
   end
 
-  create_table "raw_stripe_transactions_stripe_card_charges", id: false, force: :cascade do |t|
-    t.bigint "raw_stripe_transaction_id", null: false
-    t.bigint "stripe_card_charge_id", null: false
-    t.index ["raw_stripe_transaction_id"], name: "idx_on_raw_stripe_transaction_id_9aa31d8510", unique: true
-    t.index ["stripe_card_charge_id"], name: "idx_on_stripe_card_charge_id_86e891ad61"
-  end
-
   create_table "receipts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.boolean "data_extracted", default: false, null: false
@@ -2385,13 +2392,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
     t.integer "stripe_status"
     t.datetime "updated_at", null: false
     t.index ["stripe_card_id"], name: "index_stripe_authorizations_on_stripe_card_id"
-  end
-
-  create_table "stripe_card_charges", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.bigint "raw_pending_stripe_transaction_id"
-    t.datetime "updated_at", null: false
-    t.index ["raw_pending_stripe_transaction_id"], name: "index_stripe_card_charges_on_raw_pending_stripe_transaction_id", unique: true
   end
 
   create_table "stripe_card_personalization_designs", force: :cascade do |t|
@@ -2950,6 +2950,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
   add_foreign_key "canonical_pending_transactions", "ledger_items"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
   add_foreign_key "canonical_transactions", "ledger_items"
+  add_foreign_key "card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
+  add_foreign_key "card_charges_raw_stripe_transactions", "card_charges", on_delete: :cascade
+  add_foreign_key "card_charges_raw_stripe_transactions", "raw_stripe_transactions", on_delete: :cascade
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
@@ -3079,8 +3082,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
-  add_foreign_key "raw_stripe_transactions_stripe_card_charges", "raw_stripe_transactions", on_delete: :cascade
-  add_foreign_key "raw_stripe_transactions_stripe_card_charges", "stripe_card_charges", on_delete: :cascade
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_links"
@@ -3099,7 +3100,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
-  add_foreign_key "stripe_card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
   add_foreign_key "stripe_card_personalization_designs", "events"
   add_foreign_key "stripe_cardholders", "users"
   add_foreign_key "stripe_cards", "events"
