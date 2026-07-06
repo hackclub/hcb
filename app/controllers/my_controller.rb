@@ -162,7 +162,7 @@ class MyController < ApplicationController
     return head :not_found unless Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
 
     if params[:legal_entity_id].present?
-      session[:payout_legal_entity_id] = params[:legal_entity_id]
+      session[:legal_entity_id] = params[:legal_entity_id]
       return redirect_to my_pay_path
     end
 
