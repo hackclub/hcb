@@ -2,32 +2,31 @@
 <% page_md %>
 <%= render "users/nav", selected: :pay %>
 
-<% entity_label = ->(le) { le.name.presence || (le.person? ? "Personal" : "Business") } %>
-
 <h1 class="heading flex-col sm:flex-row border-0 mb-0">
-    <div class="flex flex-col gap-2 flex-wrap">
-  <span>
-    Pay
-  </span>
-  <% if @legal_entities.many? %>
-    <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
-      <a type="button" class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
-              data-menu-target="toggle"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-        <%= entity_label.call(@legal_entity) %>
-        <%= inline_icon "down-caret", size: 20 %>
-              </a>
-      <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-        <% @legal_entities.each do |le| %>
-          <%= link_to my_pay_path(legal_entity_id: le.id), class: "flex items-center#{" bold" if le == @legal_entity}" do %>
-            <%= inline_icon(le.person? ? "person" : "bank-account", size: 24) %>
-            <%= entity_label.call(le) %>
+  <div class="flex flex-row items-baseline gap-5 flex-wrap">
+    <span>
+      Pay
+    </span>
+
+    <% if @legal_entities.many? %>
+      <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
+        <div class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
+                data-menu-target="toggle"
+                data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+          <%= @legal_entity.display_name %>
+          <%= inline_icon "down-caret", size: 20 %>
+                </div>
+        <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+          <% @legal_entities.each do |le| %>
+            <%= link_to my_pay_path(legal_entity_id: le.id), class: "flex items-center#{" bold" if le == @legal_entity}" do %>
+              <%= inline_icon(le.person? ? "person" : "bank-account", size: 24) %>
+              <%= le.display_name %>
+            <% end %>
           <% end %>
-        <% end %>
+        </div>
       </div>
-    </div>
-  <% end %>
-    </div>
+    <% end %>
+  </div>
   <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
     <% if @payout_method.present? %>
       <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
