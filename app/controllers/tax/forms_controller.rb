@@ -14,6 +14,7 @@ module Tax
       authorize @legal_entity, policy_class: Tax::FormPolicy
 
       tax_form = @legal_entity.tax_forms.create!(external_service: :taxbandits)
+      tax_form.send!
 
       redirect_to tax_form_path(tax_form)
     end
