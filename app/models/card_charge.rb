@@ -2,7 +2,7 @@
 
 # == Schema Information
 #
-# Table name: stripe_card_charges
+# Table name: card_charges
 #
 #  id                                :bigint           not null, primary key
 #  created_at                        :datetime         not null
@@ -11,7 +11,7 @@
 #
 # Indexes
 #
-#  index_stripe_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
+#  index_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -21,7 +21,7 @@
 # RawPendingStripeTransaction's `stripe_transaction_id` and a
 # RawStripeTransaction's `stripe_authorization_id` both hold the Stripe
 # authorization ID (iauth_...).
-class StripeCardCharge < ApplicationRecord
+class CardCharge < ApplicationRecord
   belongs_to :raw_pending_stripe_transaction, optional: true
   has_and_belongs_to_many :raw_stripe_transactions
 
@@ -55,7 +55,7 @@ class StripeCardCharge < ApplicationRecord
   end
 
   def self.link_raw_pending_stripe_transaction!(raw_pending_stripe_transaction)
-    existing = raw_pending_stripe_transaction.stripe_card_charge ||
+    existing = raw_pending_stripe_transaction.card_charge ||
                matching_stripe_authorization_id(raw_pending_stripe_transaction.stripe_transaction_id)
 
     if existing
@@ -69,7 +69,7 @@ class StripeCardCharge < ApplicationRecord
   end
 
   def self.link_raw_stripe_transaction!(raw_stripe_transaction)
-    existing = raw_stripe_transaction.stripe_card_charge
+    existing = raw_stripe_transaction.card_charge
     return existing if existing
 
     # Force captures have no authorization, so they get a charge of their own.

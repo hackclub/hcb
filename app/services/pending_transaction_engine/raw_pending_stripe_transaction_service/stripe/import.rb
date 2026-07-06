@@ -23,8 +23,8 @@ module PendingTransactionEngine
 
           # upsert_all skips callbacks, so link charges for newly inserted rows
           RawPendingStripeTransaction.where(stripe_transaction_id: authorizations.map { |a| a[:id] })
-                                     .where.missing(:stripe_card_charge)
-                                     .find_each(&:link_stripe_card_charge!)
+                                     .where.missing(:card_charge)
+                                     .find_each(&:link_card_charge!)
 
           nil
         end

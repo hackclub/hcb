@@ -22,9 +22,9 @@
 class RawStripeTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source
-  has_and_belongs_to_many :stripe_card_charges
+  has_and_belongs_to_many :card_charges
 
-  after_create :link_stripe_card_charge!
+  after_create :link_card_charge!
 
   def memo
     @memo ||= stripe_transaction.dig("merchant_data", "name")
@@ -52,12 +52,16 @@ class RawStripeTransaction < ApplicationRecord
 
   # The join table enforces at most one charge per transaction, so the HABTM
   # association (required for the model-less join table) is singular in practice.
-  def stripe_card_charge
-    stripe_card_charges.first
+  def card_charge
+    card_charges.first
   end
 
-  def link_stripe_card_charge!
-    StripeCardCharge.link_raw_stripe_transaction!(self)
+  def link_card_charge!
+    CardCharge.link_raw_stripe_transaction!(self)
+  end
+
+  def stripe_card
+    @stripe_card ||= StripeCard.find_by(stripe_id: stripe_card_id)
   end
 
   private
