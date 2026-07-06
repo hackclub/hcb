@@ -16,7 +16,7 @@ class PayeesController < ApplicationController
     authorize payee
 
     if payee.save
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id)
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id, manual: params[:manual])
     else
       redirect_to new_event_payment_path(event_id: @event.slug),
                   alert: payee.errors.full_messages.to_sentence

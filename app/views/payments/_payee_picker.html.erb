@@ -35,6 +35,13 @@
             <%= form.label :email, "Email" %>
             <%= form.email_field :email, placeholder: "orpheus@hackclub.com", required: true %>
           </div>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <%= check_box_tag :manual, "true", false, class: "!w-auto" %>
+            <span>
+              <span class="font-medium block">Send manually</span>
+              <span class="text-sm muted">Enter this recipient's tax forms and payout details yourself</span>
+            </span>
+          </label>
           <button type="submit" class="btn bg-blue w-full gap-2">
             Continue <%= inline_icon "view-forward" %>
           </button>
