@@ -19,21 +19,23 @@ class PaymentsController < ApplicationController
   end
 
   def create
-    @payee = @event.payees.find(payment_params[:payee_id])
-    @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
 
     manual = params[:manual] == "true"
 
     ActiveRecord::Base.transaction do
-      @payment.save!
-
       if manual
-        @legal_entity = LegalEntity.create!(managing_event_id: @event.id, entity_type: :business, name: @payee.display_name)
-        @payout_method = build_payout_method
+        @legal_entity = LegalEntity.create!(managing_event: @event, entity_type: :business, name: params[:payee_name])
+        @payee = Payee.create!(display_name: params[:payee_name], email: params[:payee_email], event: @event, legal_entity: @legal_entity)
+        build_payout_method
+      else
+        @payee = @event.payees.find(payment_params[:payee_id])
       end
 
-      if payment_params[:file]
+      @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
+      @payment.save!
+
+      if payment_params[:file].present?
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: payment_params[:file],
@@ -55,13 +57,13 @@ class PaymentsController < ApplicationController
     type, details = payout_method_params.values_at(:type, :details)
     return if type.blank?
 
-    service = LegalEntity::PayoutMethodService::Update.new(
+    LegalEntity::PayoutMethodService::Update.new(
       user: current_user,
+      legal_entity: @legal_entity,
       details_type: type,
-      details_attrs: details
-    )
-    service.run!
-    service.payout_method
+      details_attrs: details,
+      make_default: true
+    ).run!
   end
 
   def payment_params
@@ -77,4 +79,5 @@ class PaymentsController < ApplicationController
     details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
     { type: type_name, details: }
   end
+
 end
