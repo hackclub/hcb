@@ -121,6 +121,7 @@ class Ledger
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
       update(system_memo: calculate_system_memo)
+      update(memo: custom_memo || system_memo)
     end
 
     def map!
