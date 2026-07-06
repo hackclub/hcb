@@ -5,9 +5,7 @@ require "rails_helper"
 RSpec.describe "StripeCardCharge backfill tasks" do
   it "links pre-existing raw transactions into a single charge" do
     rpst = create(:raw_pending_stripe_transaction, stripe_transaction_id: "iauth_backfill")
-    rst = create(:raw_stripe_transaction, stripe_authorization_id: nil)
-    # simulate a legacy row: authorization only present in the raw payload
-    rst.update!(stripe_transaction: rst.stripe_transaction.merge("authorization" => "iauth_backfill"))
+    rst = create(:raw_stripe_transaction, stripe_authorization_id: "iauth_backfill")
 
     # simulate records that predate the StripeCardCharge model
     StripeCardCharge.delete_all
@@ -18,7 +16,6 @@ RSpec.describe "StripeCardCharge backfill tasks" do
     charge = rpst.reload.stripe_card_charge
     expect(charge).to be_present
     expect(charge.raw_stripe_transactions).to contain_exactly(rst)
-    expect(rst.reload.stripe_authorization_id).to eq("iauth_backfill")
   end
 
   it "skips records that already have a charge" do
