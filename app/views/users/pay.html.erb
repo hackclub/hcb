@@ -102,7 +102,7 @@
               <% if payout.present? && policy(payout.local_hcb_code).show? %>
                 <%= link_to "", hcb_code_url(payout.hcb_code), class: "stretched-link", data: popovers_enabled? ? hcb_code_popover_data(payout.local_hcb_code) : nil %>
               <% else %>
-                <%= link_to "", payment_path(id: payment.id), class: "stretched-link", data: popovers_enabled? ? payment_popover_data(payment) : nil %>
+                <%= link_to "", payment_path(payment), class: "stretched-link", data: popovers_enabled? ? payment_popover_data(payment) : nil %>
               <% end %>
             </td>
           </tr>

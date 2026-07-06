@@ -89,7 +89,7 @@ class Payment < ApplicationRecord
   end
 
   def popover_path
-    Rails.application.routes.url_helpers.event_payment_path(event_id: event.slug, id:, frame: true)
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
   end
 
   def estimate_usd_amount_cents
