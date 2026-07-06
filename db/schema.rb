@@ -1584,7 +1584,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
-    t.text "original_memo"
     t.boolean "receipt_required"
     t.text "short_code"
     t.text "system_memo"

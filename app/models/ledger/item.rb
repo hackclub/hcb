@@ -11,7 +11,6 @@
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
-#  original_memo                :text
 #  receipt_required             :boolean
 #  short_code                   :text
 #  system_memo                  :text
