@@ -150,8 +150,6 @@ class User < ApplicationRecord
   has_many :jobs, as: :entity, class_name: "Employee"
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
 
-  has_many :payments_received, through: :legal_entities, source: :payments
-
   has_many :card_grants
 
   has_many :ach_transfers, inverse_of: :creator
@@ -183,6 +181,8 @@ class User < ApplicationRecord
   has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
+
+  has_many :payments_received, through: :legal_entities, source: :payments
 
   has_encrypted :birthday, type: :date
 
