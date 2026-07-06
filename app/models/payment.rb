@@ -42,6 +42,8 @@ class Payment < ApplicationRecord
   monetize :amount_cents, with_model_currency: :currency
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
+  scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent

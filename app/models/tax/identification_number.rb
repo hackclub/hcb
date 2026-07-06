@@ -11,7 +11,7 @@ module Tax
     end
 
     def predicted_to_be_over_threshold?
-      payment_sum >= Tax::REPORTING_THRESHOLD_1099
+      payments_sum >= Tax::REPORTING_THRESHOLD_1099
     end
 
     def banned?
@@ -19,9 +19,9 @@ module Tax
     end
 
     def payments
-      p = Payments.where(legal_entity: legal_entities)
-      successful = p.successful_or_sent.where("date_trunc('year', sent_at) = ?", Tax.year)
-      successful.or(p.pending)
+      p = Payment.joins(:payee).where(payee: { legal_entity: legal_entities })
+      successful = p.successful_or_sent.where("date_trunc('year', sent_at) = ?", "#{Tax.year}-01-01")
+      successful.or(p.pending_or_under_review)
     end
 
     def payments_sum
