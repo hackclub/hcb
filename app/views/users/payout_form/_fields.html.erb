@@ -1,10 +1,10 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false) %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?") %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
 <% unless editing %>
   <fieldset>
-    <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
+    <legend class="heading h3 pb2 bold"><%= title %></legend>
     <div class="field field--options mb-4" style="max-width: none;">
       <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
 
