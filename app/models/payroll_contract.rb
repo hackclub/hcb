@@ -32,8 +32,15 @@ class PayrollContract < ApplicationRecord
 
   monetize :hourly_rate_cents
 
+  # A contract may run for at most one year and may not be scheduled to start
+  # more than six months out from today.
+  MAX_DURATION = 1.year
+  MAX_START_LEAD_TIME = 6.months
+
   validates :starts_on, :ends_on, :purpose, presence: true
   validate :ends_on_after_starts_on
+  validate :duration_within_limit
+  validate :starts_on_within_lead_time
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
@@ -81,6 +88,18 @@ class PayrollContract < ApplicationRecord
     return if starts_on.blank? || ends_on.blank?
 
     errors.add(:ends_on, "must be after the start date") if ends_on < starts_on
+  end
+
+  def duration_within_limit
+    return if starts_on.blank? || ends_on.blank?
+
+    errors.add(:ends_on, "can't be more than one year after the start date") if ends_on > starts_on + MAX_DURATION
+  end
+
+  def starts_on_within_lead_time
+    return if starts_on.blank?
+
+    errors.add(:starts_on, "can't be more than six months from today") if starts_on > Date.current + MAX_START_LEAD_TIME
   end
 
 end

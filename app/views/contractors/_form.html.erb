@@ -38,10 +38,11 @@
         <div class="flex justify-between items-center">
           <div>
             <%= form.label :starts_on, "Duration" %>
-            <span class="muted block">Contract start and end dates</span>
+            <span class="muted block">Up to one year, starting within six months</span>
           </div>
           <div class="flex items-center gap-2">
-            <%= form.date_field :starts_on, required: true, disabled: %>
+            <%= form.date_field :starts_on, required: true, disabled:,
+                  max: (Date.current + PayrollContract::MAX_START_LEAD_TIME).iso8601 %>
             <span class="muted">to</span>
             <%= form.date_field :ends_on, required: true, disabled: %>
           </div>
