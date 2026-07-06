@@ -159,6 +159,7 @@ class Ledger
       type_metadata.first
     end
 
+    # TODO: add support for card charge icons
     def icon
       type_metadata.last
     end
