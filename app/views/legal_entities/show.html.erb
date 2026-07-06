@@ -5,9 +5,18 @@
 <% if @legal_entity.latest_tax_form&.completed? %>
   <% if @legal_entity.payable? %>
     <p>
-      You're all set! <%= @legal_entity.person? ? "you" : (@legal_entity.name.presence || "Business") %>
+      You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
       can receive payments from any organization on HCB.
+
+      <% if @legal_entity.default_payout_method.nil? %>
+        Next, configure your default payout method.
+      <% else %>
+        If you'd like, review your default payout method.
+      <% end %>
     </p>
+
+    <%= link_to "Payout settings", settings_payouts_path, class: "btn" %>
+
   <% elsif @legal_entity.tin_banned? %>
     <p>
       <%= @legal_entity.person? ? "You have" : "#{(@legal_entity.name.presence || "Business")} has" %>
