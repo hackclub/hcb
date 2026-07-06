@@ -103,6 +103,8 @@ class Ledger
         end
       when "Disbursement::Incoming"
         "Transfer from #{linked_object&.source_event&.name}".strip
+      when "Reimbursement::PayoutHolding"
+        "Payout holding for reimbursement report #{linked_object&.report&.hashid}"
       when "Reimbursement::ExpensePayout"
         linked_object&.expense&.memo
       when "PaypalTransfer"
