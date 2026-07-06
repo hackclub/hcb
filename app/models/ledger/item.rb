@@ -82,39 +82,39 @@ class Ledger
     def calculate_system_memo
       case transaction_type
       when "AchTransfer"
-        "ACH to #{linked_object&.smart_memo}".strip
+        "ACH to #{linked_object.smart_memo}".strip
       when "CheckDeposit"
         "Check deposit"
       when "Check"
-        "Check to #{linked_object&.smart_memo}".strip
+        "Check to #{linked_object.smart_memo}".strip
       when "IncreaseCheck"
-        "Check to #{linked_object&.recipient_name}".strip
+        "Check to #{linked_object.recipient_name}".strip
       when "Disbursement::Outgoing"
-        if linked_object&.card_grant.present?
-          "Grant to #{linked_object&.card_grant&.user&.name}".strip
-        elsif linked_object&.destination_subledger.present?
-          "Topup of grant to #{linked_object&.card_grant&.user&.name}".strip
-        elsif linked_object&.source_subledger.present? && linked_object&.source_subledger&.card_grant&.active?
-          "Withdrawal from grant to #{linked_object&.card_grant&.user&.name}".strip
-        elsif linked_object&.source_subledger.present? && !linked_object&.source_subledger&.card_grant&.active?
-          "Return of funds from #{linked_object&.source_subledger&.card_grant&.expired? ? "expired" : "canceled"} grant to #{linked_object&.card_grant&.user&.name}".strip
+        if linked_object.card_grant.present?
+          "Grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.destination_subledger.present?
+          "Topup of grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
+          "Withdrawal from grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}".strip
         else
-          "Transfer to #{linked_object&.destination_event&.name}".strip
+          "Transfer to #{linked_object.destination_event.name}".strip
         end
       when "Disbursement::Incoming"
-        "Transfer from #{linked_object&.source_event&.name}".strip
+        "Transfer from #{linked_object.source_event.name}".strip
       when "Reimbursement::PayoutHolding"
-        "Payout holding for reimbursement report #{linked_object&.report&.hashid}"
+        "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
-        linked_object&.expense&.memo
+        linked_object.expense.memo
       when "PaypalTransfer"
-        "PayPal to #{linked_object&.recipient_name}".strip
+        "PayPal to #{linked_object.recipient_name}".strip
       when "Donation"
-        "Donation from #{linked_object&.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
+        "Donation from #{linked_object.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
       when "Wire"
-        "Wire to #{linked_object&.recipient_name}".strip
+        "Wire to #{linked_object.recipient_name}".strip
       when "WiseTransfer"
-        "Wise transfer to #{linked_object&.recipient_name}".strip
+        "Wise transfer to #{linked_object.recipient_name}".strip
       when "RawPendingStripeTransaction"
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"] || "Card charge at unknown merchant"
       when "RawStripeTransaction"
@@ -159,27 +159,27 @@ class Ledger
     def author
       case transaction_type
       when "AchTransfer"
-        linked_object&.creator
+        linked_object.creator
       when "CheckDeposit"
-        linked_object&.created_by
+        linked_object.created_by
       when "Check"
-        linked_object&.creator
+        linked_object.creator
       when "IncreaseCheck"
-        linked_object&.user
+        linked_object.user
       when "Disbursement::Outgoing"
-        linked_object&.requested_by
+        linked_object.requested_by
       when "Disbursement::Incoming"
-        linked_object&.requested_by
+        linked_object.requested_by
       when "Reimbursement::ExpensePayout"
-        linked_object&.expense&.report&.user
+        linked_object.expense.report.user
       when "PaypalTransfer"
-        linked_object&.user
+        linked_object.user
       when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
+        linked_object.collected_by if linked_object.in_person?
       when "Wire"
-        linked_object&.user
+        linked_object.user
       when "WiseTransfer"
-        linked_object&.user
+        linked_object.user
       when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
