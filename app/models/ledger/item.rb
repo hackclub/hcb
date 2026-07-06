@@ -78,6 +78,37 @@ class Ledger
       amount_cents < 0 && primary_ledger&.receipt_required? && transaction_type != "Disbursement::Outgoing"
     end
 
+    def calculate_calculated_memo
+      case transaction_type
+      when "AchTransfer"
+        "ACH to #{linked_object&.smart_memo}".strip
+      when "CheckDeposit"
+        "Check deposit"
+      when "Check"
+        "Check to #{linked_object&.smart_memo}".strip
+      when "IncreaseCheck"
+        "Check to #{linked_object&.recipient_name}".strip
+      when "Disbursement::Outgoing"
+        "Transfer to #{linked_object&.destination_event}".strip
+      when "Disbursement::Incoming"
+        "Transfer from #{linked_object&.source_event}".strip
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.memo
+      when "PaypalTransfer"
+        "PayPal to #{linked_object&.recipient_name}".strip
+      when "Donation"
+        "Donation from #{linked_object&.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
+      when "Wire"
+        "Wire to #{linked_object&.recipient_name}".strip
+      when "WiseTransfer"
+        "Wise transfer to #{linked_object&.recipient_name}".strip
+      when "RawPendingStripeTransaction"
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+      when "RawStripeTransaction"
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+      end
+    end
+
     def refresh!
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
@@ -88,6 +119,7 @@ class Ledger
 
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
+      update(calculated_memo: calculate_calculated_memo)
     end
 
     def map!
@@ -144,6 +176,11 @@ class Ledger
     # TODO: get rid of this method once CardCharge is created as an LO
     def stripe_cardholder
       canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
+    end
+
+    # TODO: get rid of this method once CardCharge is created as an LO
+    def stripe_merchant
+      canonical_pending_transactions.first.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || canonical_transactions.first.transaction_source&.stripe_transaction&.[]("merchant_data")
     end
 
     private
