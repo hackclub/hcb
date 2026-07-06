@@ -6,14 +6,15 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
-#  calculated_memo              :text
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  original_memo                :text
 #  receipt_required             :boolean
 #  short_code                   :text
+#  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #  linked_object_id             :bigint
@@ -78,7 +79,7 @@ class Ledger
       amount_cents < 0 && primary_ledger&.receipt_required? && transaction_type != "Disbursement::Outgoing"
     end
 
-    def calculate_calculated_memo
+    def calculate_system_memo
       case transaction_type
       when "AchTransfer"
         "ACH to #{linked_object&.smart_memo}".strip
@@ -119,7 +120,7 @@ class Ledger
 
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
-      update(calculated_memo: calculate_calculated_memo)
+      update(system_memo: calculate_system_memo)
     end
 
     def map!
