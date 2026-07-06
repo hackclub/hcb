@@ -1,1 +1,19 @@
 <% title "Tax info for #{@legal_entity.name}" %>
+
+<h1>Tax info for <%= @legal_entity.name %></h1>
+
+<% if @legal_entity.latest_tax_form.completed? %>
+  <% if @legal_entity.payable? %>
+    <p>You're all set! <%= le.person? ? "you" : (le.name.presence || "Business") %> can receive payments from any organization on HCB.</p>
+  <% elsif @legal_entity.tin_banned? %>
+    <p><%= le.person? ? "You have" : "#{(le.name.presence || "Business")} has" %> been banned from receiving payments from organizations on HCB.</p>
+  <% else %>
+    <p>Your submission for <%= le.person? ? "your" : "#{(le.name.presence || "Business")}'s" %> tax information is invalid.</p>
+
+    <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: le.id }, class: "btn" %>
+  <% end %>
+<% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed?  %>
+  <p>Before <%= le.person? ? "you" : (le.name.presence || "Business") %> can receive any payments, we'll need your tax information.</p>
+
+  <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: le.id }, class: "btn" %>
+<% end %>

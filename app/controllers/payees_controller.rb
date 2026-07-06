@@ -28,7 +28,12 @@ class PayeesController < ApplicationController
     authorize @payee
 
     if @payee.legal_entity.present?
-      redirect_to legal_entity_path(@payee.legal_entity)
+      if @payee.legal_entity.payable?
+        redirect_to settings_payouts_path
+      else
+        redirect_to legal_entity_path(@payee.legal_entity)
+      end
+
       return
     end
 
