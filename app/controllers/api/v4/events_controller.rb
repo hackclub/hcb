@@ -6,6 +6,8 @@ module Api
       before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
+      require_oauth2_scope "organizations:read", :index
+
       def index
         @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
       end
