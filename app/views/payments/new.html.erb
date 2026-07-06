@@ -5,7 +5,12 @@
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
   <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
-  <%= render "events/transfers/step_item", number: 3, label: "Receipt" %>
+  <% if params[:manual] %>
+    <%= render "events/transfers/step_item", number: 3, label: "Payout settings" %>
+    <%= render "events/transfers/step_item", number: 4, label: "Receipt" %>
+  <% else %>
+    <%= render "events/transfers/step_item", number: 3, label: "Receipt" %>
+  <% end %>
 <% end %>
 
 <%= render "payments/form", event: @event, payment: @payment, payee: @payee %>
