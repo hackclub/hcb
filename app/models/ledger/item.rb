@@ -10,7 +10,7 @@
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
-#  memo                         :text             not null
+#  memo                         :text
 #  original_memo                :text
 #  receipt_required             :boolean
 #  short_code                   :text
