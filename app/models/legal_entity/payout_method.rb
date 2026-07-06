@@ -55,6 +55,10 @@ class LegalEntity
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
 
+    def self.details_class_for(type_name)
+      ALL_METHODS.find { |klass| klass.name == type_name }
+    end
+
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
     end

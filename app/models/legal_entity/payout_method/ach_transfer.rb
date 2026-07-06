@@ -18,6 +18,10 @@ class LegalEntity
       validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }
       validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }
 
+      def self.permitted_attributes
+        [:account_number, :routing_number]
+      end
+
       def kind
         "ach_transfer"
       end

@@ -32,6 +32,10 @@ class LegalEntity
         end
       end
 
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
+      end
+
       def kind
         "check"
       end
