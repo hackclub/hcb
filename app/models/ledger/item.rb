@@ -86,46 +86,46 @@ class Ledger
 
       case transaction_type
       when "Invoice"
-        "Invoice to #{linked_object.smart_memo}".strip
+        "Invoice to #{linked_object.smart_memo}"
       when "Donation"
-        "Donation from #{linked_object.smart_memo}".strip # removed the logic for refunded donations b/c we dont want memo to change frequently
+        "Donation from #{linked_object.smart_memo}" # removed the logic for refunded donations b/c we dont want memo to change frequently
       when "AchTransfer"
-        "ACH to #{linked_object.smart_memo}".strip
+        "ACH to #{linked_object.smart_memo}"
       when "Wire"
-        "Wire to #{linked_object.recipient_name}".strip
+        "Wire to #{linked_object.recipient_name}"
       when "PaypalTransfer"
-        "PayPal to #{linked_object.recipient_name}".strip
+        "PayPal to #{linked_object.recipient_name}"
       when "WiseTransfer"
-        "Wise to #{linked_object.recipient_name}".strip
+        "Wise to #{linked_object.recipient_name}"
       when "Check"
-        "Check to #{linked_object.smart_memo}".strip
+        "Check to #{linked_object.smart_memo}"
       when "IncreaseCheck"
-        "Check to #{linked_object.recipient_name}".strip
+        "Check to #{linked_object.recipient_name}"
       when "CheckDeposit"
         "Check deposit"
       when "Disbursement::Outgoing"
         if linked_object.card_grant.present?
-          "Grant to #{linked_object.card_grant.user.name}".strip
+          "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}".strip
+          "Topup of grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}".strip
+          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}".strip
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         else
-          "Transfer to #{linked_object.destination_event.name}".strip
+          "Transfer to #{linked_object.destination_event.name}"
         end
       when "Disbursement::Incoming"
         if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}".strip
+          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}".strip
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.card_grant.present?
-          "Grant to #{linked_object.card_grant.user.name}".strip
+          "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}".strip
+          "Topup of grant to #{linked_object.card_grant.user.name}"
         else
-          "Transfer from #{linked_object.source_event.name}".strip
+          "Transfer from #{linked_object.source_event.name}"
         end
       when "StripeServiceFee"
         linked_object.stripe_description
@@ -147,7 +147,7 @@ class Ledger
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
-      end
+      end.strip
     end
 
     def refresh!
@@ -161,9 +161,7 @@ class Ledger
       update(amount_cents: calculate_amount_cents)
       update(receipt_required: calculate_receipt_required)
       update(system_memo: calculate_system_memo)
-      # Fall back to the existing memo — memo has a presence validation, so
-      # blanking it out would silently fail the update.
-      update(memo: custom_memo.presence || system_memo.presence || memo)
+      update(memo: custom_memo || system_memo)
     end
 
     def map!
