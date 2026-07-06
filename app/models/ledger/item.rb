@@ -104,7 +104,7 @@ class Ledger
       when "WiseTransfer"
         "Wise transfer to #{linked_object&.recipient_name}".strip
       when "RawPendingStripeTransaction"
-        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
+        YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"] || ""
       when "RawStripeTransaction"
         YellowPages::Merchant.lookup(network_id: stripe_merchant["network_id"]).name || stripe_merchant["name"]
       end
