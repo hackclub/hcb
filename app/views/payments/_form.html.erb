@@ -1,38 +1,31 @@
 <%# locals: (event:, payment:, payee: nil) %>
 
 <% disabled = !policy(event).create_transfer? %>
+<% manual = params[:manual] == "true" %>
 
-<div data-controller="payee-picker">
+<div data-controller="payee-picker payout-toggle">
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient</h3>
-    <% if payee || params[:manual] %>
+    <% if payee %>
       <details class="card mb-4 p-0 overflow-hidden" data-payee-picker-target="details">
         <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
           <div class="flex-1 min-w-0">
-            <% if payee %>
-              <div class="flex gap-3 items-center">
-                <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
-                <div>
-                  <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
-                  <p class="muted text-sm m-0"><%= payee.email %></p>
-                </div>
+            <div class="flex gap-3 items-center">
+              <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+              <div>
+                <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                <p class="muted text-sm m-0"><%= payee.email %></p>
               </div>
-
-            <% else %>
-
-              <p class="font-bold text-lg m-0">Manual payment</p>
-              <p class="muted text-sm m-0">Recipient & payout details entered directly</p>
-
-            <% end %>
+            </div>
           </div>
           <span class="muted ml-auto shrink-0 text-sm">Edit</span>
         </summary>
         <div class="menu__divider my-0"></div>
-        <%= render "payments/payee_picker", event:, show_manual: true %>
+        <%= render "payments/payee_picker", event: %>
       </details>
     <% else %>
       <div class="card mb-4 p-0 overflow-hidden">
-        <%= render "payments/payee_picker", event:, show_manual: true %>
+        <%= render "payments/payee_picker", event: %>
       </div>
     <% end %>
   </div>
@@ -61,16 +54,32 @@
           <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
         </div>
       </div>
+
+      <div class="card mb-4 flex flex-col gap-3">
+        <label>Who's paying?</label>
+        <label class="flex items-center gap-3 cursor-pointer">
+          <%= radio_button_tag "manual", "false", !manual, disabled:, data: { action: "payout-toggle#toggle" }, class: "!w-auto !m-0" %>
+          <span>
+            <span class="font-medium block">Contractor</span>
+            <span class="text-sm muted">The recipient submits their own tax forms and payout details</span>
+          </span>
+        </label>
+        <label class="flex items-center gap-3 cursor-pointer">
+          <%= radio_button_tag "manual", "true", manual, disabled:, data: { action: "payout-toggle#toggle" }, class: "!w-auto !m-0" %>
+          <span>
+            <span class="font-medium block">Manual</span>
+            <span class="text-sm muted">Tax forms and payout details entered directly</span>
+          </span>
+        </label>
+      </div>
     </div>
 
-    <% if params[:manual] %>
-        <div data-scroll-seek-target="section">
-        <h3 class="mb-2">Payout settings</h3>
-        <div class="card mb-4 flex flex-col gap-3">
-            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "How would you like to be paid?" %>
-        </div>
-        </div>
-    <% end %>
+    <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+      <h3 class="mb-2">Payout settings</h3>
+      <div class="card mb-4 flex flex-col gap-3">
+        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "How would you like to be paid?" %>
+      </div>
+    </div>
 
     <div data-scroll-seek-target="section">
       <h3 class="mb-2">Receipt</h3>
