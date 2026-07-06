@@ -39,7 +39,7 @@
   <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
 <% else %>
   <p>
-    Finish filling <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
+    Finish filling in <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
     tax information before you can receive payments from organizations on HCB.
   </p>
 
