@@ -131,25 +131,11 @@ class LegalEntity
     end
 
     def details_params_for(type_name)
-      attributes =
-        case type_name
-        when LegalEntity::PayoutMethod::Check.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
-        when LegalEntity::PayoutMethod::AchTransfer.name
-          [:account_number, :routing_number]
-        when LegalEntity::PayoutMethod::Wire.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
-           :recipient_country, :recipient_name, :bic_code, :account_number] +
-          LegalEntity::PayoutMethod::Wire.recipient_information_accessors
-        when LegalEntity::PayoutMethod::WiseTransfer.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
-           :recipient_country, :currency] +
-          LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors
-        end
-      return {} unless attributes
+      details_class = LegalEntity::PayoutMethod.details_class_for(type_name)
+      return {} unless details_class
 
-      key = :"payout_method_#{type_name.demodulize.underscore}"
-      params.require(:user).permit(key => attributes)[key] || {}
+      key = :"payout_method_#{details_class.name.demodulize.underscore}"
+      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
     end
 
   end

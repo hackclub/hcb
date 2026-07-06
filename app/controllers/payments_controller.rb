@@ -23,6 +23,8 @@ class PaymentsController < ApplicationController
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
 
+    @payout_method = build_payout_method
+
     if @payment.save
       if payment_params[:file]
         ::ReceiptService::Create.new(
@@ -42,6 +44,16 @@ class PaymentsController < ApplicationController
 
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
+  end
+
+  def payout_method_params
+    type_name = params.dig(:user, :payout_method_type).presence
+    details_class = LegalEntity::PayoutMethod.details_class_for(type_name)
+    return { type: nil, details: {} } unless details_class
+
+    key = :"payout_method_#{details_class.name.demodulize.underscore}"
+    details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+    { type: type_name, details: }
   end
 
 end

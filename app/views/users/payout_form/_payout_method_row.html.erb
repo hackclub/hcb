@@ -86,7 +86,7 @@
     </section>
   <% else %>
     <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
-      <%= render "users/payout_form/managed_form", user: current_user, editing: payout_method %>
+      <%= render "users/payout_form/form", user: current_user, editing: payout_method %>
     </div>
   <% end %>
 </div>
