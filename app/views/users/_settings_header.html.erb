@@ -7,21 +7,21 @@
 </span>
 <h1 class="mt-0">
 <% if legal_entities&.many? %>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-row gap-5 items-baseline">
     <%= active.humanize %>
-    <% entity_label = ->(le) { le.name.presence || (le.person? ? "Personal" : "Business") } %>
+
     <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
       <a type="button" class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
               data-menu-target="toggle"
               data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-        <%= entity_label.call(legal_entity) %>
+        <%= @legal_entity.display_name %>
         <%= inline_icon "down-caret", size: 20 %>
       </a>
       <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
         <% legal_entities.each do |le| %>
           <%= link_to url_for(legal_entity_id: le.id), class: "flex items-center#{" bold" if le == legal_entity}" do %>
             <%= inline_icon(le.person? ? "person" : "bank-account", size: 24) %>
-            <%= entity_label.call(le) %>
+            <%= le.display_name %>
           <% end %>
         <% end %>
       </div>

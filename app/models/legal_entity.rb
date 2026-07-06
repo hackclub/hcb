@@ -47,4 +47,8 @@ class LegalEntity < ApplicationRecord
     true
   end
 
+  def display_name
+    person? ? "Personal" : (name.presence || "Business")
+  end
+
 end
