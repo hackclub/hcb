@@ -150,6 +150,8 @@ class User < ApplicationRecord
   has_many :jobs, as: :entity, class_name: "Employee"
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
 
+  has_many :payments, foreign_key: :creator_id, inverse_of: :creator
+
   has_many :card_grants
 
   has_many :ach_transfers, inverse_of: :creator
