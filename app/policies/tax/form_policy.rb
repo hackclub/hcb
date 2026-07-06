@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Tax
-  class Form < ApplicationPolicy
+  class FormPolicy < ApplicationPolicy
     def show?
       user.auditor? || record.legal_entity.users.include?(user)
     end

@@ -32,6 +32,7 @@
 module Tax
   class Form < ApplicationRecord
     include AASM
+    include Hashid::Rails
     acts_as_paranoid
     has_paper_trail
 
