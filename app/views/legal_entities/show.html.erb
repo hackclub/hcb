@@ -19,18 +19,18 @@
 
   <% elsif @legal_entity.tin_banned? %>
     <p>
-      <%= @legal_entity.person? ? "You have" : "#{(@legal_entity.name.presence || "Business")} has" %>
+      <%= @legal_entity.person? ? "You have" : "#{@legal_entity.name.presence || "Business"} has" %>
       been banned from receiving payments from organizations on HCB.
     </p>
   <% else %>
     <p>
-      Your submission for <%= @legal_entity.person? ? "your" : "#{(@legal_entity.name.presence || "Business")}'s" %>
+      Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
       tax information is invalid.
     </p>
 
     <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
-<% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed?  %>
+<% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
   <p>
     Before <%= @legal_entity.person? ? "you" : (@legal_entity.name.presence || "Business") %>
     can receive any payments, we'll need your tax information.
@@ -39,7 +39,7 @@
   <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
 <% else %>
   <p>
-    Finish filling <%= @legal_entity.person? ? "your" : "#{(@legal_entity.name.presence || "Business")}'s" %>
+    Finish filling <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
     tax information before you can receive payments from organizations on HCB.
   </p>
 
