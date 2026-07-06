@@ -1,41 +1,37 @@
-<% payout_method = user.default_payout_method&.details %>
+<%# locals: (user:, editing: nil, creating: nil, attempted: nil) %>
+<% payout_method = editing ? editing.details : attempted&.details %>
 <% selected_type = payout_method&.class&.name %>
-<%= form_with model: user, html: {
-      "x-data": "{ country: #{payout_method.instance_of?(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null"} }"
-    } do |form| %>
-  <% if user.full_name.blank? %>
-    <div class="heading h3 pb2 bold">Firstly, we need to know your name:</div>
-    <div class="field">
-      <%= form.label :full_name, "Your full legal name" %>
-      <%= form.text_field :full_name, required: true, placeholder: "Fiona Hacksworth" %>
-      <span class="muted">This should match the name on your bank account and will be printed on any checks issued to you.</span>
-    </div>
+<% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
+<% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
+<% country_init = pm_is.call(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null" %>
+<% form_class = "no-error-styling" %>
+<% form_class += " payout-form--managed" if editing %>
+<% form_opts = { model: user, data: { turbo_frame: "_top" }, html: { "x-data": "{ country: #{country_init} }", class: form_class } } %>
+<% form_opts.merge!(url: payout_method_path(editing), method: :patch) if editing %>
+<% form_opts.merge!(url: payout_methods_path, method: :post) if creating %>
+<%= form_with(**form_opts) do |form| %>
+  <% unless editing %>
+    <fieldset>
+      <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
+      <div class="field field--options mb-4" style="max-width: none;">
+        <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
+
+        <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
+
+        <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
+
+        <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
+          <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+        <% end %>
+      </div>
+    </fieldset>
   <% end %>
 
-  <fieldset>
-    <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
-    <div class="field field--options mb-4" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
-
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
-
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
-
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-      <% end %>
-    </div>
-  </fieldset>
-  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::Check) %>">
-    <%= form.fields_for :payout_method, payout_method.instance_of?(LegalEntity::PayoutMethod::Check) ? payout_method : LegalEntity::PayoutMethod::Check.new do |form| %>
-      <%= render "application/callout",
-        type: "info",
-        icon: "email",
-        title: "Important information about mailed checks",
-        class: "mt-2 mb-5",
-        footer: :questions do %>
+  <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
+    <%= form.fields_for :payout_method_check, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
+      <p class="muted mt-2 mb-5">
         Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
-      <% end %>
+      </p>
 
       <div class="field">
         <%= form.label :address_line1, "Street address" %>
@@ -75,16 +71,11 @@
     <% end %>
   </section>
 
-  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::Wire) %>">
-    <%= form.fields_for :payout_method_wire, payout_method.instance_of?(LegalEntity::PayoutMethod::Wire) ? payout_method : LegalEntity::PayoutMethod::Wire.new do |form| %>
-      <%= render "application/callout",
-        type: "info",
-        icon: "web",
-        title: "Important information about Wire reimbursements",
-        class: "mt-2 mb-5",
-        footer: :questions do %>
+  <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Wire) %>">
+    <%= form.fields_for :payout_method_wire, detail_for.call(LegalEntity::PayoutMethod::Wire) do |form| %>
+      <p class="muted mt-2 mb-5">
         International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
-      <% end %>
+      </p>
 
       <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: false } %>
 
@@ -106,16 +97,12 @@
     <% end %>
   </section>
 
-  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
-    <%= form.fields_for :payout_method_wise_transfer, payout_method.instance_of?(LegalEntity::PayoutMethod::WiseTransfer) ? payout_method : LegalEntity::PayoutMethod::WiseTransfer.new do |form| %>
-      <%= render "application/callout",
-        type: "info",
-        icon: "wise",
-        title: "Important information about Wise reimbursements",
-        class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-2 mb-5",
-        footer: link_to("Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise") do %>
+  <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+    <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
+      <p class="muted mt-2 mb-5">
         We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
-      <% end %>
+        <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %>
+      </p>
 
       <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: false } %>
 
@@ -134,27 +121,19 @@
     <% end %>
   </section>
 
-  <% if payout_method.instance_of?(LegalEntity::PayoutMethod::AchTransfer) %>
-    <% errored = !payout_method.valid? %>
-    <% r_no = payout_method.routing_number %>
-    <% obfuscated_routing_number = "•" * [r_no.length - 4, 0].max + r_no[[-4, -1 * r_no.length].max..] %>
-    <% a_no = payout_method.account_number %>
-    <% obfuscated_account_number = "•" * [a_no.length - 4, 0].max + a_no[[-4, -1 * a_no.length].max..] %>
-  <% else %>
-    <% errored = false %>
-    <% r_no = "" %>
-    <% obfuscated_routing_number = "" %>
-    <% a_no = "" %>
-    <% obfuscated_account_number = "" %>
-  <% end %>
+  <% ach = pm_is.call(LegalEntity::PayoutMethod::AchTransfer) ? payout_method : nil %>
+  <% ach_errored = ach&.invalid? || false %>
+  <% mask = ->(value) { value = value.to_s; "•" * [value.length - 4, 0].max + value[[-4, -value.length].max..] } %>
+  <% routing_display = ach_errored ? ach.routing_number : mask.call(ach&.routing_number) %>
+  <% account_display = ach_errored ? ach.account_number : mask.call(ach&.account_number) %>
   <section
     data-behavior="ach_transfer_payout_method_inputs"
-    class="<%= "hidden" unless payout_method.instance_of?(LegalEntity::PayoutMethod::AchTransfer) %>"
+    class="<%= "hidden" unless ach %>"
     x-data="
     {
-      routingNumber: '<%= errored ? r_no : obfuscated_routing_number %>',
-      accountNumber: '<%= errored ? a_no : obfuscated_account_number %>',
-      editing: <%= errored %>,
+      routingNumber: '<%= routing_display %>',
+      accountNumber: '<%= account_display %>',
+      editing: <%= ach_errored %>,
       toggle() {
         if(!this.editing) {
           this.routingNumber = '';
@@ -162,20 +141,15 @@
           this.editing = true;
         } else if (this.routingNumber == '' && this.accountNumber == '') {
           this.editing = false;
-          this.routingNumber = '<%= errored ? "" : obfuscated_routing_number %>';
-          this.accountNumber = '<%= errored ? "" : obfuscated_account_number %>';
+          this.routingNumber = '<%= ach_errored ? "" : routing_display %>';
+          this.accountNumber = '<%= ach_errored ? "" : account_display %>';
         }
       }
     }">
-    <%= form.fields_for :payout_method, payout_method.instance_of?(LegalEntity::PayoutMethod::AchTransfer) ? payout_method : LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
-      <%= render "application/callout",
-        type: "info",
-        icon: "payment-transfer",
-        title: "Important information about ACH transfers",
-        class: "mt-2 mb-5",
-        footer: :questions do %>
+    <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
+      <p class="muted mt-2 mb-5">
         ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
-      <% end %>
+      </p>
 
       <div
         class="field"
@@ -209,7 +183,4 @@
       </div>
     <% end %>
   </section>
-  <% if defined?(report) %>
-    <%= form.hidden_field :report_id, value: report.id %>
-  <% end %>
 <% end %>
