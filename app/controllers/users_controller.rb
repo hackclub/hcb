@@ -152,8 +152,8 @@ class UsersController < ApplicationController
     authorize @user
 
     @legal_entities = @user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:payout_legal_entity_id]) || @user.personal_legal_entity
-    session[:payout_legal_entity_id] = @legal_entity.id
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
   end
 
   def edit_featurepreviews
@@ -389,7 +389,7 @@ class UsersController < ApplicationController
 
     if payout_method_type.present?
       @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
-      session[:payout_legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
+      session[:legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
     end
 
     payout_update = nil

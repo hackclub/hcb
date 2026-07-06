@@ -167,7 +167,7 @@ class MyController < ApplicationController
     end
 
     @legal_entities = current_user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: session[:payout_legal_entity_id]) || current_user.personal_legal_entity
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
     @payout_method = @legal_entity.default_payout_method
 
     all_payments = @legal_entity.payments
