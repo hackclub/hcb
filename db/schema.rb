@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_06_150841) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1583,7 +1583,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_06_150841) do
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
-    t.text "memo"
+    t.text "memo", null: false
     t.text "original_memo"
     t.boolean "receipt_required"
     t.text "short_code"
