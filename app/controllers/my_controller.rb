@@ -179,10 +179,7 @@ class MyController < ApplicationController
     }
 
     @payments = all_payments.order(created_at: :desc)
-    if params[:q].present?
-      query = "%#{Payment.sanitize_sql_like(params[:q])}%"
-      @payments = @payments.joins(payee: :event).where("events.name ILIKE :q OR payments.purpose ILIKE :q", q: query)
-    end
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
