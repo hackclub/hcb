@@ -41,6 +41,10 @@
   &__icon {
     border: 0;
     background: rgba(map-get($palette, muted), 0.125);
-    color: #fff;
+    color: map-get($palette, black);
+
+    [data-dark='true'] & {
+      color: #fff;
+    }
   }
 }
