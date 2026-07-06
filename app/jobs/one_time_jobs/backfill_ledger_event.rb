@@ -30,6 +30,7 @@ module OneTimeJobs
 
           item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
             li.amount_cents = hcb_code.amount_cents
+            li.memo = ""
             li.datetime = hcb_code.date || hcb_code.created_at
             li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
           end

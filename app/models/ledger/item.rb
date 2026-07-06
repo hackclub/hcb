@@ -90,9 +90,9 @@ class Ledger
       when "IncreaseCheck"
         "Check to #{linked_object&.recipient_name}".strip
       when "Disbursement::Outgoing"
-        "Transfer to #{linked_object&.destination_event}".strip
+        "Transfer to #{linked_object&.destination_event&.name}".strip
       when "Disbursement::Incoming"
-        "Transfer from #{linked_object&.source_event}".strip
+        "Transfer from #{linked_object&.source_event&.name}".strip
       when "Reimbursement::ExpensePayout"
         linked_object&.expense&.memo
       when "PaypalTransfer"
