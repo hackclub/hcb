@@ -48,6 +48,9 @@ class Ledger
 
     validates_presence_of :amount_cents, :memo, :datetime
 
+    normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
+    normalizes :custom_memo, with: ->(custom_memo) { custom_memo.strip.presence }
+
     monetize :amount_cents
 
     after_create :refresh!
@@ -147,7 +150,7 @@ class Ledger
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
-      end.strip
+      end
     end
 
     def refresh!
@@ -161,7 +164,7 @@ class Ledger
       self.amount_cents = calculate_amount_cents
       self.receipt_required = calculate_receipt_required
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo
+      self.memo = self.custom_memo || self.system_memo || "Transaction"
 
       save!
     end
