@@ -48,6 +48,7 @@ class Ledger
 
     validates_presence_of :amount_cents, :memo, :datetime
 
+    normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
     normalizes :custom_memo, with: ->(custom_memo) { custom_memo.strip.presence }
 
