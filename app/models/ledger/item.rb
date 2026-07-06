@@ -90,7 +90,13 @@ class Ledger
       when "IncreaseCheck"
         "Check to #{linked_object&.recipient_name}".strip
       when "Disbursement::Outgoing"
-        "Transfer to #{linked_object&.destination_event&.name}".strip
+        if disbursement.card_grant.present?
+          "Grant to #{linked_object&.card_grant&.user&.name}".strip
+        elsif disbursement.destination_subledger.present?
+          "Topup of grant to #{linked_object&.card_grant&.user&.name}".strip
+        else
+          "Transfer to #{linked_object&.destination_event&.name}".strip
+        end
       when "Disbursement::Incoming"
         "Transfer from #{linked_object&.source_event&.name}".strip
       when "Reimbursement::ExpensePayout"
