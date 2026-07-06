@@ -112,7 +112,17 @@ class Ledger
           "Transfer to #{linked_object.destination_event.name}".strip
         end
       when "Disbursement::Incoming"
-        "Transfer from #{linked_object.source_event.name}".strip
+        if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
+          "Withdrawal from grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.card_grant.present?
+          "Grant to #{linked_object.card_grant.user.name}".strip
+        elsif linked_object.destination_subledger.present?
+          "Topup of grant to #{linked_object.card_grant.user.name}".strip
+        else
+          "Transfer from #{linked_object.source_event.name}".strip
+        end
       when "StripeServiceFee"
         linked_object.stripe_description
       when "BankFee"
