@@ -158,10 +158,12 @@ class Ledger
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
-      update(amount_cents: calculate_amount_cents)
-      update(receipt_required: calculate_receipt_required)
-      update(system_memo: calculate_system_memo)
-      update(memo: custom_memo || system_memo)
+      self.amount_cents = calculate_amount_cents
+      self.receipt_required = calculate_receipt_required
+      self.system_memo = calculate_system_memo
+      self.memo = self.custom_memo || self.system_memo
+
+      save!
     end
 
     def map!
