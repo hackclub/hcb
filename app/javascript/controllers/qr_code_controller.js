@@ -22,8 +22,12 @@ export default class extends Controller {
       ? this.downloadButtonTarget
       : null
     const active = this.element.querySelector('qr-code.\\!block')
-    if (!active || typeof window.html2canvas !== 'function') return
+    if (!active) return
 
+    if (typeof window.html2canvas !== 'function') {
+      if (button) button.innerText = 'Download unavailable'
+      return
+    }
     if (button) button.innerText = 'Downloading...'
 
     window
