@@ -42,7 +42,6 @@ class PaymentsController < ApplicationController
         render :new, layout: "transfer", status: :unprocessable_entity
     end
 
-    end
   end
 
   private
@@ -73,5 +72,4 @@ class PaymentsController < ApplicationController
     details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
     { type: type_name, details: }
   end
-
 end
