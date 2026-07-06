@@ -1,8 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Connects to data-controller="qr-code"
-// Handles switching the icon shown in the center of the donation QR code
-// and downloading the active QR code as an image.
 export default class extends Controller {
   static targets = ['downloadButton']
 
@@ -21,7 +18,9 @@ export default class extends Controller {
   }
 
   download() {
-    const button = this.hasDownloadButtonTarget ? this.downloadButtonTarget : null
+    const button = this.hasDownloadButtonTarget
+      ? this.downloadButtonTarget
+      : null
     const active = this.element.querySelector('qr-code.\\!block')
     if (!active || typeof window.html2canvas !== 'function') return
 
