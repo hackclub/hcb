@@ -6,12 +6,12 @@ module Api
       skip_after_action :verify_authorized, only: [:available_icons, :revoke]
       before_action -> { require_admin_scope!(:read) }, only: [:show, :by_email]
 
-      require_oauth2_scope "users:read", :me
-
       def me
         @user = authorize current_user, :show?
         render :show
       end
+
+      require_oauth2_scope "users:read", :me
 
       def revoke
         @current_token.update(revoked_at: Time.now)
@@ -22,12 +22,12 @@ module Api
         }
       end
 
-      require_oauth2_scope "users:read", :show
-
       def show
         @user = User.find_by_public_id!(params[:id])
         authorize @user
       end
+
+      require_oauth2_scope "users:read", :show
 
       def by_email
         @user = User.find_by!(email: params[:email])
