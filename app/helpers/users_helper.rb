@@ -61,7 +61,7 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if payments_contractors_refresh?
+    if Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
       items << {
         name: "Pay",
         path: my_pay_path,

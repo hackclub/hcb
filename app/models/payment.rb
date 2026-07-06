@@ -85,7 +85,7 @@ class Payment < ApplicationRecord
   end
 
   def payout
-    attempts.order(created_at: :desc).find { |attempt| attempt.payout.present? }&.payout
+    attempts.order(created_at: :desc).first&.payout
   end
 
   def popover_path

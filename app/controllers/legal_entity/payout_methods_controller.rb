@@ -98,7 +98,7 @@ class LegalEntity
     def render_error_payout_settings(payout_method)
       @user = current_user
       @payout_method = payout_method
-      @legal_entities = current_user.legal_entities if payments_contractors_refresh?
+      @legal_entities = current_user.legal_entities
       @legal_entity = payout_method.legal_entity || legal_entity
       flash.now[:error] = payout_method.error_messages.to_sentence
 
@@ -109,19 +109,13 @@ class LegalEntity
     end
 
     def legal_entity
-      return @legal_entity ||= current_user&.personal_legal_entity unless payments_contractors_refresh?
-
       @legal_entity ||= @payout_method&.legal_entity ||
                         current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
                         current_user&.personal_legal_entity
     end
 
     def set_payout_method
-      scope = if payments_contractors_refresh?
-                LegalEntity::PayoutMethod.unarchived.where(legal_entity: current_user&.legal_entities)
-              else
-                LegalEntity::PayoutMethod.unarchived.where(legal_entity: current_user&.personal_legal_entity)
-              end
+      scope = LegalEntity::PayoutMethod.unarchived.where(legal_entity: current_user&.legal_entities)
       @payout_method = scope.find_by(id: params[:id])
       return if @payout_method
 
