@@ -16,11 +16,15 @@
 #
 # Indexes
 #
-#  index_raw_stripe_transactions_on_card_id_text  ((((stripe_transaction -> 'card'::text) ->> 'id'::text))) USING hash
+#  index_raw_stripe_transactions_on_card_id_text             ((((stripe_transaction -> 'card'::text) ->> 'id'::text))) USING hash
+#  index_raw_stripe_transactions_on_stripe_authorization_id  (stripe_authorization_id)
 #
 class RawStripeTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source
+  has_and_belongs_to_many :stripe_card_charges
+
+  after_create :link_stripe_card_charge!
 
   def memo
     @memo ||= stripe_transaction.dig("merchant_data", "name")
@@ -44,6 +48,16 @@ class RawStripeTransaction < ApplicationRecord
 
   def refund?
     stripe_transaction["type"] == "refund"
+  end
+
+  # The join table enforces at most one charge per transaction, so the HABTM
+  # association (required for the model-less join table) is singular in practice.
+  def stripe_card_charge
+    stripe_card_charges.first
+  end
+
+  def link_stripe_card_charge!
+    StripeCardCharge.link_raw_stripe_transaction!(self)
   end
 
   private

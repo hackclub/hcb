@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_06_120134) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2170,6 +2170,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.string "unique_bank_identifier", null: false
     t.datetime "updated_at", null: false
     t.index "(((stripe_transaction -> 'card'::text) ->> 'id'::text))", name: "index_raw_stripe_transactions_on_card_id_text", using: :hash
+    t.index ["stripe_authorization_id"], name: "index_raw_stripe_transactions_on_stripe_authorization_id"
+  end
+
+  create_table "raw_stripe_transactions_stripe_card_charges", id: false, force: :cascade do |t|
+    t.bigint "raw_stripe_transaction_id", null: false
+    t.bigint "stripe_card_charge_id", null: false
+    t.index ["raw_stripe_transaction_id"], name: "idx_on_raw_stripe_transaction_id_9aa31d8510", unique: true
+    t.index ["stripe_card_charge_id"], name: "idx_on_stripe_card_charge_id_86e891ad61"
   end
 
   create_table "receipts", force: :cascade do |t|
@@ -2375,6 +2383,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.integer "stripe_status"
     t.datetime "updated_at", null: false
     t.index ["stripe_card_id"], name: "index_stripe_authorizations_on_stripe_card_id"
+  end
+
+  create_table "stripe_card_charges", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "raw_pending_stripe_transaction_id"
+    t.datetime "updated_at", null: false
+    t.index ["raw_pending_stripe_transaction_id"], name: "index_stripe_card_charges_on_raw_pending_stripe_transaction_id", unique: true
   end
 
   create_table "stripe_card_personalization_designs", force: :cascade do |t|
@@ -3062,6 +3077,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
+  add_foreign_key "raw_stripe_transactions_stripe_card_charges", "raw_stripe_transactions", on_delete: :cascade
+  add_foreign_key "raw_stripe_transactions_stripe_card_charges", "stripe_card_charges", on_delete: :cascade
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_links"
@@ -3080,6 +3097,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
+  add_foreign_key "stripe_card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
   add_foreign_key "stripe_card_personalization_designs", "events"
   add_foreign_key "stripe_cardholders", "users"
   add_foreign_key "stripe_cards", "events"

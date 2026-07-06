@@ -23,9 +23,12 @@ class RawPendingStripeTransaction < ApplicationRecord
   monetize :amount_cents
 
   has_one :canonical_pending_transaction
+  has_one :stripe_card_charge
 
   scope :reversed, -> { where("stripe_transaction->>'status' = 'reversed'") }
   scope :pending, -> { where("stripe_transaction->>'status' = 'pending'") }
+
+  after_create :link_stripe_card_charge!
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record.stripe_card&.user || User.system_user }, event_id: proc { |controller, record| record.stripe_card&.event&.id }, recipient: proc { |controller, record| record.stripe_card&.user }, only: [:create]
@@ -60,6 +63,10 @@ class RawPendingStripeTransaction < ApplicationRecord
 
   def authorization_method
     stripe_transaction["authorization_method"].humanize.downcase
+  end
+
+  def link_stripe_card_charge!
+    StripeCardCharge.link_raw_pending_stripe_transaction!(self)
   end
 
   private
