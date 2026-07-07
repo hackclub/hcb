@@ -10,6 +10,7 @@ export default class extends Controller {
     'defaultBanner',
     'manualBanner',
     'enableButton',
+    'undoButton',
     'editPanel',
     'summaryPanel',
     'summaryText',
@@ -22,6 +23,7 @@ export default class extends Controller {
     this.defaultBannerTarget.hidden = true
     this.manualBannerTarget.hidden = false
     this.enableButtonTarget.hidden = true
+    this.undoButtonTarget.hidden = false
 
     this.dispatch('changed')
   }
@@ -32,6 +34,7 @@ export default class extends Controller {
     this.defaultBannerTarget.hidden = false
     this.manualBannerTarget.hidden = true
     this.enableButtonTarget.hidden = false
+    this.undoButtonTarget.hidden = true
 
     this.dispatch('changed')
   }
