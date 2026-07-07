@@ -167,7 +167,7 @@ class Ledger
       self.amount_cents = calculate_amount_cents
       self.receipt_required = calculate_receipt_required
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first.memo || self.canonical_pending_transactions.first.memo || "Transaction"
+      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
 
       save!
     end
