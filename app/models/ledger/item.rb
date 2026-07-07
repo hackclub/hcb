@@ -177,11 +177,14 @@ class Ledger
 
     def update_custom_memo!(memo)
       # TODO: remove CT and CPT updates because they are HCB code specific
-      if hcb_code.present?
-        hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-        hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+      ActiveRecord::Base.transaction do
+        if hcb_code.present?
+          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+        end
+        ledger_item.update!(custom_memo: memo)
       end
-      ledger_item.update!(custom_memo: memo)
+
       item.refresh!
     end
 
