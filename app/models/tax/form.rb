@@ -97,6 +97,13 @@ module Tax
 
     def taxbandits_submission
       taxbandits_client.get("WhCertificate/Get?PayeeRef=#{hashid}").body
+    rescue Faraday::ResourceNotFound, Faraday::BadRequestError
+      # TaxBandits will respond with 400 or 404 if the submission is not yet complete
+      nil
+    end
+
+    def sync_with_taxbandits
+      mark_completed! if taxbandits_submission.present?
     end
 
     private
@@ -141,7 +148,8 @@ module Tax
             "PayeeRef"      => hashid,
             "Name"          => legal_entity.name,
             "IsTINMatching" => true
-          }
+          },
+          "CustomizationId": Credentials.fetch(:TAXBANDITS, :CUSTOMIZATION_ID)
         }.to_json
       end
 
