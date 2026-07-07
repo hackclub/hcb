@@ -16,7 +16,7 @@
       <%= link_to "Create one", event_cards_new_path(event_id: @event.slug) %> first.</p>
   </div>
 <% else %>
-  <%= form_with url: simulate_transaction_event_path(@event), method: :post, local: true do |form| %>
+  <%= form_with url: event_simulate_transaction_path(@event), method: :post, local: true do |form| %>
     <div class="field">
       <%= form.label :stripe_card_id, "Card" %>
       <%= form.select :stripe_card_id,

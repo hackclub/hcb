@@ -29,7 +29,7 @@
           <% end %>
         <% end %>
         <% unless Rails.env.production? %>
-          <%= link_to "Simulate transaction", simulate_transaction_event_path(@event), class: "btn bg-info" %>
+          <%= link_to "Simulate transaction", event_simulate_transaction_path(@event), class: "btn bg-info" %>
         <% end %>
       </div>
     </h1>

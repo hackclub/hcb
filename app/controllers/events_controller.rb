@@ -538,7 +538,7 @@ class EventsController < ApplicationController
     amount_cents = (params[:amount].to_f * 100).round
 
     if amount_cents <= 0
-      return redirect_to simulate_transaction_event_path(@event), flash: { error: "Enter an amount greater than $0." }
+      return redirect_to event_simulate_transaction_path(@event), flash: { error: "Enter an amount greater than $0." }
     end
 
     merchant = YellowPagesMerchants.find_by_network_id(params[:merchant_network_id])
@@ -565,7 +565,7 @@ class EventsController < ApplicationController
 
     redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card.name} at #{merchant_data[:name]}." }
   rescue Stripe::StripeError => e
-    redirect_to simulate_transaction_event_path(@event), flash: { error: "Stripe error: #{e.message}" }
+    redirect_to event_simulate_transaction_path(@event), flash: { error: "Stripe error: #{e.message}" }
   end
 
   def async_balance
