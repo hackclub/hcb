@@ -22,7 +22,8 @@
 class RawStripeTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source
-  has_and_belongs_to_many :card_charges
+  has_one :card_charge_raw_stripe_transaction
+  has_one :card_charge, through: :card_charge_raw_stripe_transaction
 
   after_create :link_card_charge!
 
@@ -48,12 +49,6 @@ class RawStripeTransaction < ApplicationRecord
 
   def refund?
     stripe_transaction["type"] == "refund"
-  end
-
-  # The join table enforces at most one charge per transaction, so the HABTM
-  # association (required for the model-less join table) is singular in practice.
-  def card_charge
-    card_charges.first
   end
 
   def link_card_charge!

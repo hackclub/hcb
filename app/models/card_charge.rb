@@ -23,7 +23,8 @@
 # authorization ID (iauth_...).
 class CardCharge < ApplicationRecord
   belongs_to :raw_pending_stripe_transaction, optional: true
-  has_and_belongs_to_many :raw_stripe_transactions
+  has_many :card_charge_raw_stripe_transactions, dependent: :destroy
+  has_many :raw_stripe_transactions, through: :card_charge_raw_stripe_transactions
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 

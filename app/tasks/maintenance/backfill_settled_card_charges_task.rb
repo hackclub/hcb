@@ -5,7 +5,7 @@ module Maintenance
   # model existed. Run BackfillPendingCardChargesTask first.
   class BackfillSettledCardChargesTask < MaintenanceTasks::Task
     def collection
-      RawStripeTransaction.where.missing(:card_charges)
+      RawStripeTransaction.where.missing(:card_charge)
     end
 
     def process(raw_stripe_transaction)

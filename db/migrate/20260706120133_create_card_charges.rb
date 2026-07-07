@@ -8,11 +8,11 @@ class CreateCardCharges < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    create_join_table :card_charges, :raw_stripe_transactions do |t|
-      t.index :raw_stripe_transaction_id, unique: true, name: "index_card_charges_rsts_on_raw_stripe_transaction_id"
-      t.index :card_charge_id, name: "index_card_charges_rsts_on_card_charge_id"
-      t.foreign_key :raw_stripe_transactions, on_delete: :cascade
-      t.foreign_key :card_charges, on_delete: :cascade
+    create_table :card_charge_raw_stripe_transactions do |t|
+      t.references :card_charge, null: false, foreign_key: { on_delete: :cascade }
+      t.references :raw_stripe_transaction, null: false, index: { unique: true, name: "index_card_charge_rsts_on_raw_stripe_transaction_id" }, foreign_key: { on_delete: :cascade }
+
+      t.timestamps
     end
   end
 
