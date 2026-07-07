@@ -563,7 +563,8 @@ class EventsController < ApplicationController
 
     ::StripeAuthorizationService::CreateFromWebhook.new(stripe_transaction_id: authorization.id).run
 
-    redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card.name} at #{merchant_data[:name]}." }
+    card_label = card.name.presence || "card ending in #{card.last4}"
+    redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card_label} at #{merchant_data[:name]}." }
   rescue Stripe::StripeError => e
     redirect_to event_simulate_transaction_path(@event), flash: { error: "Stripe error: #{e.message}" }
   end
