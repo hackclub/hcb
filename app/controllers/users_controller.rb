@@ -176,7 +176,7 @@ class UsersController < ApplicationController
     @legal_entity = @legal_entities.find_by(id: session[:pay_legal_entity_id]) || @user.personal_legal_entity
     @payout_method = @legal_entity.default_payout_method
 
-    all_payments = @legal_entity.payments
+    all_payments = @legal_entity.payments.includes(payee: :event, attempts: :payout)
 
     @stats = {
       deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
