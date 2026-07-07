@@ -263,7 +263,7 @@ class Event
     end
 
     def contract_notify_hcb?
-      !teen_led? || contract.reissue?
+      !teen_led? || !!contract&.reissue?
     end
 
     def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)
@@ -295,8 +295,9 @@ class Event
       #
       # Sign HCB first so that signing the remaining parties doesn't trigger the
       # "all non-HCB parties signed" notification/reminders to HCB (see
-      # Contract#on_party_signed).
-      [fs_contract.party(:hcb), *fs_contract.parties.not_hcb].compact.each do |party|
+      # Contract#on_party_signed). Reload so the HCB party created in Contract's
+      # after_create callback is included.
+      fs_contract.parties.reload.sort_by { |party| party.hcb? ? 0 : 1 }.each do |party|
         party.mark_signed! unless party.signed?
       end
 
