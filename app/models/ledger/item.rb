@@ -159,6 +159,8 @@ class Ledger
       # memoizes `primary_ledger` as nil on this instance. Reset the association
       # caches so refresh! always recomputes from current database state (e.g.
       # after a mapping is created).
+      map!
+
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
@@ -172,7 +174,6 @@ class Ledger
 
     def map!
       Ledger::Mapper.new(ledger_item: self).run
-      refresh!
     end
 
     def humanized_type
