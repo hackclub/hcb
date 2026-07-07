@@ -72,12 +72,19 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
+      member do
+        patch :set_default
+        patch :archive
+      end
+    end
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
     get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
+    get "pay", to: "my#pay", as: :my_pay
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -596,6 +603,7 @@ Rails.application.routes.draw do
       post "reject"
       post "submit"
       post "update_currency"
+      post "update_payout_method"
       post "draft"
       get "wise_transfer_quote"
       get "wise_transfer_breakdown"
@@ -781,6 +789,7 @@ Rails.application.routes.draw do
         resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :wires, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
 
         resources :comments, only: [:index, :create]

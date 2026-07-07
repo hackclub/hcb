@@ -649,12 +649,12 @@ class EventsController < ApplicationController
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     @payments = @event.payments.includes(:payee)
-    @ach_transfers = @event.ach_transfers
+    @ach_transfers = @event.ach_transfers.where(payment_attempt: nil)
     @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires
-    @wise_transfers = @event.wise_transfers
+    @wires = @event.wires.where(payment_attempt: nil)
+    @wise_transfers = @event.wise_transfers.where(payment_attempt: nil)
     @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks
+    @increase_checks = @event.increase_checks.where(payment_attempt: nil)
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
     @disbursements = @disbursements.not_card_grant_related
@@ -1234,7 +1234,9 @@ class EventsController < ApplicationController
     @per = params[:per] || 25
 
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+    @items = @ledger.items.includes(:canonical_transactions, :canonical_pending_transactions, :linked_object).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+  rescue Pundit::NotAuthorizedError
+    return head :not_found
   end
 
   private

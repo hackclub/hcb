@@ -243,6 +243,10 @@
   <% end %>
 <% end %>
 
+<% if policy(@report).update_payout_method? %>
+  <%= render partial: "reimbursement/reports/payout_method_selector", locals: { report: @report } %>
+<% end %>
+
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
 <% admin_tool("mt-4 p-3") do %>
