@@ -42,6 +42,7 @@ class Payment < ApplicationRecord
   monetize :amount_cents, with_model_currency: :currency
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
@@ -89,7 +90,7 @@ class Payment < ApplicationRecord
   end
 
   def popover_path
-    Rails.application.routes.url_helpers.event_payment_path(event_id: event.slug, id:, frame: true)
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
   end
 
   def estimate_usd_amount_cents

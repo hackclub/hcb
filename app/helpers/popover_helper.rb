@@ -73,8 +73,8 @@ module PopoverHelper
       title: "Payment to #{payment.payee.display_name}",
       src: payment.popover_path,
       frame_id: "payment_#{payment.id}",
-      state_url: event_payment_path(event_id: payment.event.slug, id: payment.id),
-      external_link: event_payment_path(event_id: payment.event.slug, id: payment.id)
+      state_url: payment_path(payment),
+      external_link: payment_path(payment)
     )
   end
 end

@@ -110,7 +110,6 @@ class LegalEntity
 
     def legal_entity
       return @legal_entity ||= current_user&.personal_legal_entity unless payments_contractors_refresh?
-
       @legal_entity ||= @payout_method&.legal_entity ||
                         current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
                         current_user&.personal_legal_entity
