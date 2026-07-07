@@ -38,13 +38,45 @@ class Ledger
 
     belongs_to :mapped_by, class_name: "User", optional: true
 
+    scope :mapped_by_human, -> { where.not(mapped_by: nil) }
+    scope :mapped_by_system, -> { where(mapped_by: nil) }
+
     validates :ledger_item_id, uniqueness: { scope: :ledger_id, message: "is already mapped to this ledger" }
     validates :ledger_item_id, uniqueness: { conditions: -> { where(on_primary_ledger: true) }, message: "is already mapped on a primary ledger" }, if: :on_primary_ledger?
     validate :on_primary_ledger_matches_ledger_primary
 
     after_commit do
-      ledger_item.write_amount_cents!
+      ledger_item.refresh!
     end
+
+    def self.map_primary!(ledger:, ledger_item:, mapped_by:)
+      # Mapping to a new primary ledger will _remove_ any existing primary mapping.
+      # It always attempts to reuse the existing primary mapping to preserve a paper trail.
+      raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
+      mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
+
+      Ledger::Mapping.find_or_initialize_by(ledger_item:, on_primary_ledger: true).tap do |mapping|
+        mapping.ledger = ledger
+        mapping.mapped_by = mapped_by
+        mapping.save!
+      end
+    end
+
+    def self.map_non_primary!(ledger:, ledger_item:, mapped_by:)
+      # Mapping to a non-primary ledger will always idempotently create the mapping.
+      # This will never delete or override a mapping to a non-primary (or primary) ledger.
+      raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
+      mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
+
+      Ledger::Mapping.find_or_initialize_by(ledger:, ledger_item:, on_primary_ledger: false).tap do |mapping|
+        mapping.mapped_by = mapped_by
+        mapping.save!
+      end
+    end
+
+    def mapped_by_human? = mapped_by.present?
 
     private
 

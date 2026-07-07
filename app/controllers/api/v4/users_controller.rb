@@ -11,6 +11,8 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "users:read", :me
+
       def revoke
         @current_token.update(revoked_at: Time.now)
         render json: {
@@ -24,6 +26,8 @@ module Api
         @user = User.find_by_public_id!(params[:id])
         authorize @user
       end
+
+      require_oauth2_scope "users:read", :show
 
       def by_email
         @user = User.find_by!(email: params[:email])

@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Ledger::Item, type: :model do
+  include DonationSupport
+
   describe "associations" do
     it "has many ledger_mappings" do
       item = Ledger::Item.new
@@ -318,17 +320,78 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "#write_amount_cents!" do
-    it "updates amount_cents from calculate_amount_cents" do
+  describe "#refresh!" do
+    it "updates amount_cents from calculate_amount_cents and updates receipt_required from calculate_receipt_required" do
+      # The primary ledger's plan requires receipts, so a negative amount makes
+      # the item's receipt_required.
+      primary_ledger = create(:event).ledger
+
       item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)
       item.save(validate: false)
 
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
       create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
 
-      item.write_amount_cents!
+      item.refresh!
       item.reload
 
       expect(item.amount_cents).to eq(-500)
+      expect(item.receipt_required).to eq(true)
+    end
+
+    it "overrides the system memo with the custom memo in the memo column" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      # Without a custom memo, the memo column falls back to the system memo
+      expect(item.system_memo).to eq("Donation from #{donation.smart_memo}")
+      expect(item.memo).to eq(item.system_memo)
+
+      item.update!(custom_memo: "Custom memo")
+      item.refresh!
+      item.reload
+
+      expect(item.system_memo).to eq("Donation from #{donation.smart_memo}")
+      expect(item.memo).to eq("Custom memo")
+    end
+
+    it "normalizes a blank custom memo to nil so the memo falls back to the system memo" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.update!(custom_memo: "  ")
+      item.refresh!
+      item.reload
+
+      expect(item.custom_memo).to be_nil
+      expect(item.memo).to eq(item.system_memo)
+
+      item.update!(custom_memo: "  Custom memo  ")
+      expect(item.custom_memo).to eq("Custom memo")
     end
   end
 end
