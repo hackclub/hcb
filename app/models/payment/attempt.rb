@@ -38,6 +38,8 @@ class Payment
     belongs_to :payout, polymorphic: true, optional: true
     belongs_to :payout_method, class_name: "LegalEntity::PayoutMethod"
 
+    has_one :legal_entity, through: :payment
+
     scope :not_failed, -> { where.not(aasm_state: "failed" ) }
 
     validate :other_attempts_failed
@@ -96,7 +98,7 @@ class Payment
 
     def create_transfer!
       self.with_lock do
-        payout_method = payment.legal_entity.default_payout_method
+        payout_method = legal_entity.default_payout_method
         case payout_method.details
         when LegalEntity::PayoutMethod::Check
           safely do
@@ -226,8 +228,8 @@ class Payment
     end
 
     def legal_entity_payable
-      unless payment.legal_entity.payable?
-        errors.add(:payment, "must be for a payable legal entity")
+      unless legal_entity.payable?
+        errors.add(:legal_entity, "must be payable")
       end
     end
 
