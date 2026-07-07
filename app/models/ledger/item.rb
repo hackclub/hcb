@@ -178,10 +178,10 @@ class Ledger
           hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
           hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
         end
-        ledger_item.update!(custom_memo: memo)
+        update!(custom_memo: memo)
       end
 
-      item.refresh!
+      refresh!
     end
 
     def map!
