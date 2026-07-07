@@ -148,9 +148,9 @@ class Ledger
       when "Reimbursement::ExpensePayout"
         linked_object.expense.memo
       when "CardCharge"
-        network_id = card_charge.merchant_data&.dig("network_id")
+        network_id = linked_object.merchant_data&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
-        merchant_name || card_charge.merchant_data&.dig("name") || "Card charge"
+        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge"
       when "RawPendingStripeTransaction", "RawStripeTransaction"
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
