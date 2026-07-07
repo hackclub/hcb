@@ -103,7 +103,7 @@ module Tax
     end
 
     def sync_with_taxbandits
-      mark_completed! if taxbandits_submission.present?
+      mark_completed! if may_mark_completed? && taxbandits_submission.present?
     end
 
     private

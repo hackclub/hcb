@@ -2,11 +2,18 @@
 
 module Tax
   class FormsController < ApplicationController
-    def show
-      @form = Tax::Form.find_by_hashid(params[:id])
-      @legal_entity = @form.legal_entity
+    before_action :set_form, only: [:show, :sync]
 
+    def show
       authorize @form
+
+      @form.sync_with_taxbandits
+
+      if @form.completed?
+        flash[:success] = "This form has been completed"
+        redirect_to settings_payouts_path
+        return
+      end
     end
 
     def create
@@ -17,6 +24,26 @@ module Tax
       tax_form.send!
 
       redirect_to tax_form_path(tax_form)
+    end
+
+    def sync
+      authorize @form
+
+      @form.sync_with_taxbandits
+
+      if @form.completed?
+        redirect_to settings_payouts_path
+      else
+        flash[:error] = "Complete the form before continuing"
+        redirect_back_or_to tax_form_path(@form)
+      end
+    end
+
+    private
+
+    def set_form
+      @form = Tax::Form.find_by_hashid(params[:id])
+      @legal_entity = @form.legal_entity
     end
 
   end
