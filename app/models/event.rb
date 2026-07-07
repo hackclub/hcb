@@ -787,10 +787,6 @@ class Event < ApplicationRecord
     !engaged?
   end
 
-  def frozen?
-    Flipper.enabled?(:frozen, self)
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
