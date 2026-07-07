@@ -88,7 +88,14 @@ module Tax
     def send!
       raise ArgumentError, "can only send tax forms when pending" unless pending? && external_id.blank?
 
-      send_using_taxbandits! unless sent_with_manual?
+      case external_service
+      when :tax_bandits
+        send_using_taxbandits!
+      when :manual
+        Rails.logger.info("[Tax::Form] NO-OP: skipping because the external service is 'manual'.")
+      else
+        raise ArgumentError, "Unable to send tax form using unknown external service (#{external_service})"
+      end
 
       mark_sent!
     end
