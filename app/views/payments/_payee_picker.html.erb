@@ -26,20 +26,21 @@
         Back
       </button>
 
-      <%# The recipient's name/email live in this contractor form but are also
-          associated (via form:) so they submit here on the contractor path. On the
-          manual path they're mirrored into the payment form by manual-payee. %>
+      <%# The recipient's name/email/type live in this form (associated via form:) and
+          submit to PayeesController on Continue. On the manual path this also creates a
+          managed legal entity, then the page reloads with ?payee_id= selected. %>
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
+        <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
       <% end %>
 
-      <div class="flex flex-col gap-3" data-manual-payee-target="editPanel">
+      <div class="flex flex-col gap-3">
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :name, "Name" %>
-          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { action: "input->manual-payee#sync", "manual-payee-target": "nameInput" } %>
+          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { action: "input->manual-payee#sync", "manual-payee-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>
@@ -50,7 +51,8 @@
                                    ["A business or organization", "business"]
                                  ], params[:payee_entity_type]),
               required: true,
-              data: { action: "change->manual-payee#sync", "manual-payee-target": "entityTypeInput" } %>
+              form: "new-payee-form",
+              data: { "manual-payee-target": "entityTypeInput" } %>
         </div>
 
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
@@ -74,14 +76,6 @@
           <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
             I'll have the recipient fill this out instead
           </button>
-        </div>
-
-        <div class="flex items-center justify-between gap-2 py-2" data-manual-payee-target="summaryPanel" hidden>
-          <div class="min-w-0">
-            <p class="font-medium m-0 truncate" data-manual-payee-target="summaryName"></p>
-            <p class="text-sm muted m-0 truncate" data-manual-payee-target="summaryEmail"></p>
-          </div>
-          <a class="muted text-sm cursor-pointer shrink-0" data-action="manual-payee#edit">Edit</a>
         </div>
       </div>
     </div>

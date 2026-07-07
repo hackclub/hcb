@@ -35,9 +35,6 @@
 
     <%= form.hidden_field :payee_id, value: payee&.id %>
     <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
-    <%= hidden_field_tag "payee_name", params[:payee_name], data: { "manual-payee-target": "payeeNameField" } %>
-    <%= hidden_field_tag "payee_email", params[:payee_email], data: { "manual-payee-target": "payeeEmailField" } %>
-    <%= hidden_field_tag "payee_entity_type", params[:payee_entity_type], data: { "manual-payee-target": "payeeEntityTypeField" } %>
 
     <div id="payment-details" data-scroll-seek-target="section">
       <h3 class="mb-2">Payment details</h3>
@@ -47,7 +44,7 @@
           <div class="flex items-center">
             <div class="input flex gap-2 items-center py-0">
               <span class="bold muted">$</span>
-              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto", data: { "manual-payee-target": "nextFocus" } %>
+              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
             </div>
           </div>
         </div>

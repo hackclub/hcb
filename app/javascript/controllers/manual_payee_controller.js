@@ -7,18 +7,11 @@ export default class extends Controller {
     'entityTypeInput',
     'manualOnly',
     'manualField',
-    'payeeNameField',
-    'payeeEmailField',
-    'payeeEntityTypeField',
+    'payeeFormManualField',
     'defaultBanner',
     'manualBanner',
     'enableButton',
     'undoButton',
-    'editPanel',
-    'summaryPanel',
-    'summaryName',
-    'summaryEmail',
-    'nextFocus',
   ]
 
   connect() {
@@ -27,7 +20,6 @@ export default class extends Controller {
 
   enable() {
     this.manualFieldTarget.value = 'true'
-    this.sync()
     this.renderMode()
     this.dispatch('changed')
   }
@@ -43,44 +35,19 @@ export default class extends Controller {
   }
 
   continue() {
-    if (!this.manual) {
-      document.getElementById('new-payee-form').requestSubmit()
-      return
-    }
-
     if (!this.nameInputTarget.reportValidity()) return
     if (!this.emailInputTarget.reportValidity()) return
-    if (!this.entityTypeInputTarget.reportValidity()) return
+    if (this.manual && !this.entityTypeInputTarget.reportValidity()) return
 
-    this.sync()
-    this.updateSummary()
-
-    this.editPanelTarget.hidden = true
-    if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = false
-
-    const paymentDetails = document.getElementById('payment-details')
-    if (paymentDetails) {
-      const top =
-        paymentDetails.getBoundingClientRect().top + window.scrollY - 100
-      window.scrollTo({ top, behavior: 'smooth' })
-    }
-
-    this.nextFocusTarget.focus({ preventScroll: true })
-  }
-
-  sync() {
-    this.payeeNameFieldTarget.value = this.nameInputTarget.value
-    this.payeeEmailFieldTarget.value = this.emailInputTarget.value
-    this.payeeEntityTypeFieldTarget.value = this.entityTypeInputTarget.value
-    this.updateSummary()
-  }
-
-  edit() {
-    this.editPanelTarget.hidden = false
-    if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = true
+    // Submits to PayeesController, which creates the payee (and, on the manual
+    // path, a managed legal entity) then reloads the page with ?payee_id= set.
+    document.getElementById('new-payee-form').requestSubmit()
   }
 
   renderMode() {
+    if (this.hasPayeeFormManualFieldTarget) {
+      this.payeeFormManualFieldTarget.value = this.manual ? 'true' : 'false'
+    }
     this.defaultBannerTarget.hidden = this.manual
     this.manualBannerTarget.hidden = !this.manual
     this.enableButtonTarget.hidden = this.manual
@@ -88,10 +55,5 @@ export default class extends Controller {
     this.manualOnlyTargets.forEach(target => {
       target.hidden = !this.manual
     })
-  }
-
-  updateSummary() {
-    this.summaryNameTarget.textContent = this.nameInputTarget.value
-    this.summaryEmailTarget.textContent = this.emailInputTarget.value
   }
 }

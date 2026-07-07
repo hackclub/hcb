@@ -3,8 +3,6 @@
 class PaymentsController < ApplicationController
   include SetEvent
 
-  class InvalidManualPayeeEntityType < StandardError; end
-
   before_action :set_event, except: [:show]
 
   def show
@@ -23,20 +21,13 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
-    manual = params[:manual] == "true"
-
     ActiveRecord::Base.transaction do
-      if manual
-        @legal_entity = LegalEntity.create!(
-          managing_event: @event,
-          entity_type: manual_payee_entity_type,
-          name: params[:payee_name]
-        )
-        @payee = Payee.create!(display_name: params[:payee_name], email: params[:payee_email], event: @event, legal_entity: @legal_entity)
-        build_payout_method
-      else
-        @payee = @event.payees.find(payment_params[:payee_id])
-      end
+      @payee = @event.payees.find(payment_params[:payee_id])
+      @legal_entity = @payee.legal_entity
+
+      # On the manual path the payee has a managed legal entity (created on the
+      # recipient step); the payout method the organizer entered is saved here.
+      build_payout_method if @legal_entity
 
       @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
       @payment.save!
@@ -52,7 +43,7 @@ class PaymentsController < ApplicationController
     end
 
     redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-  rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
+  rescue ActiveRecord::RecordInvalid => e
     flash.now[:error] = e.message
     render :new, layout: "transfer", status: :unprocessable_entity
   end
@@ -84,13 +75,6 @@ class PaymentsController < ApplicationController
     key = :"payout_method_#{details_class.name.demodulize.underscore}"
     details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
     { type: type_name, details: }
-  end
-
-  def manual_payee_entity_type
-    entity_type = params[:payee_entity_type].presence
-    return entity_type if LegalEntity.entity_types.key?(entity_type)
-
-    raise InvalidManualPayeeEntityType, "Select whether the recipient is an individual or a business."
   end
 
 end
