@@ -45,23 +45,16 @@ class CardCharge < ApplicationRecord
 
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was
   # first seen as an authorization or as a settled transaction.
-  def self.matching_stripe_authorization_id(stripe_authorization_id)
+  def self.find_by_stripe_authorization_id(stripe_authorization_id)
     return nil if stripe_authorization_id.blank?
 
-    joins(:raw_pending_stripe_transaction)
-      .find_by(raw_pending_stripe_transactions: { stripe_transaction_id: stripe_authorization_id }) ||
-      joins(:raw_stripe_transactions)
-        .find_by(raw_stripe_transactions: { stripe_authorization_id: })
+    RawPendingStripeTransaction.find_by(stripe_transaction_id: stripe_authorization_id)&.card_charge || RawStripeTransaction.find_by(stripe_authorization_id: stripe_authorization_id)&.card_charge
   end
 
   def self.link_raw_pending_stripe_transaction!(raw_pending_stripe_transaction)
-    existing = raw_pending_stripe_transaction.card_charge ||
-               matching_stripe_authorization_id(raw_pending_stripe_transaction.stripe_transaction_id)
-
-    if existing
-      # A settled transaction can arrive before its authorization (e.g. during
-      # backfills); the authorization claims the charge it left behind.
+    if existing = find_by_stripe_authorization_id(raw_pending_stripe_transaction.stripe_transaction_id)
       existing.update!(raw_pending_stripe_transaction:) if existing.raw_pending_stripe_transaction_id.nil?
+
       existing
     else
       create!(raw_pending_stripe_transaction:)
@@ -70,12 +63,12 @@ class CardCharge < ApplicationRecord
 
   def self.link_raw_stripe_transaction!(raw_stripe_transaction)
     existing = raw_stripe_transaction.card_charge
-    return existing if existing
+    return existing if existing.present?
 
-    # Force captures have no authorization, so they get a charge of their own.
-    charge = matching_stripe_authorization_id(raw_stripe_transaction.stripe_authorization_id)
-    if charge
+    if charge = find_by_stripe_authorization_id(raw_stripe_transaction.stripe_authorization_id)
       charge.raw_stripe_transactions << raw_stripe_transaction
+      charge.raw_stripe_transactions.uniq!
+
       charge
     else
       create!(raw_stripe_transactions: [raw_stripe_transaction])
