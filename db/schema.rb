@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_185412) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2531,12 +2531,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_185412) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
+    t.string "document_url"
     t.string "external_id"
     t.string "external_service", null: false
     t.datetime "failed_at"
     t.string "form_type"
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
+    t.string "signing_url"
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.datetime "updated_at", null: false

@@ -14,15 +14,16 @@
 #  address_state                  :string
 #  completed_at                   :datetime
 #  deleted_at                     :datetime
+#  document_url                   :string
 #  external_service               :string           not null
 #  failed_at                      :datetime
 #  form_type                      :string
 #  sent_at                        :datetime
+#  signing_url                    :string
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
-#  external_id                    :string
 #  legal_entity_id                :bigint           not null
 #
 # Indexes
@@ -31,6 +32,8 @@
 #
 module Tax
   class Form < ApplicationRecord
+    self.ignored_columns += ["external_id"]
+
     include AASM
     include Hashid::Rails
     acts_as_paranoid
@@ -92,19 +95,25 @@ module Tax
       mark_sent!
     end
 
-    def self.taxbandits_client
+    def taxbandits_submission
+      taxbandits_client.get("WhCertificate/Get?PayeeRef=#{hashid}").body
+    end
+
+    private
+
+    def taxbandits_client
       @taxbandits_client || begin
-        Faraday.new(url: Rails.env.development ? "https://testapi.taxbandits.com/v1.7.3/" : "https://api.taxbandits.com/v1.7.3/") do |faraday|
+        Faraday.new(url: Rails.env.development? ? "https://testapi.taxbandits.com/v1.7.3/" : "https://api.taxbandits.com/v1.7.3/") do |faraday|
           faraday.response :json
           faraday.response :raise_error
           faraday.adapter Faraday.default_adapter
-          faraday.headers["X-Auth-Token"] = Tax::Form.taxbandits_access_token
+          faraday.headers["Authorization"] = "Bearer #{taxbandits_access_token}"
           faraday.headers["Content-Type"] = "application/json"
         end
       end
     end
 
-    def self.taxbandits_access_token
+    def taxbandits_access_token
       Rails.cache.fetch("taxbandits_access_token", expires_in: 50.minutes) do
         payload = {
           iss: Credentials.fetch(:TAXBANDITS, :CLIENT_ID),
@@ -115,18 +124,28 @@ module Tax
 
         signature = JWT.encode(payload, Credentials.fetch(:TAXBANDITS, :CLIENT_SECRET), "HS256")
 
-        oauth_response = Faraday.get(Rails.env.development ? "https://testoauth.expressauth.net/v2/tbsauth" : "https://oauth.expressauth.net/v2/tbsauth") do |req|
-          req.headers["Authentication"] = signature
-        end
+        oauth_response = Faraday.new(url: Rails.env.development? ? "https://testoauth.expressauth.net" : "https://oauth.expressauth.net") do |conn|
+          conn.response :json
+          conn.headers["Authentication"] = signature
+          conn.adapter Faraday.default_adapter
+        end.get("/v2/tbsauth")
 
-        oauth_response["AccessToken"]
+        oauth_response.body["AccessToken"]
       end
     end
 
-    private
-
     def send_using_taxbandits!
-      # POST
+      response = taxbandits_client.post("WhCertificate/RequestByUrl") do |req|
+        req.body = {
+          "Recipient" => {
+            "PayeeRef"      => hashid,
+            "Name"          => legal_entity.name,
+            "IsTINMatching" => true
+          }
+        }.to_json
+      end
+
+      update!(external_service: :taxbandits, signing_url: response.body["Url"])
     end
 
   end
