@@ -4,6 +4,8 @@
 
 <iframe
   src="<%= @form.signing_url %>"
-  class="border-0 relative h-[75vh] w-[50vw] rounded-md"
+  class="border-0 relative min-h-[75vh] w-full rounded-md"
 >
 </iframe>
+
+<%= link_to "Done", settings_payouts_path, class: "btn w-full mt-5" %>
