@@ -548,8 +548,11 @@ class EventsController < ApplicationController
                       { name: params[:merchant_name].presence || "Simulated Merchant" }
                     end
 
-    # Create a test-mode authorization on Stripe, then import it onto the pending
-    # ledger exactly as the real `issuing_authorization.created` webhook would.
+    # Create a test-mode authorization on Stripe. Stripe then fires the same
+    # `issuing_authorization.created` webhook a real card swipe would, which the
+    # app imports onto the ledger via StripeAuthorization::CreateFromWebhookJob.
+    # We intentionally don't import it here — doing so races with the webhook and
+    # double-books the transaction.
     authorization = StripeService::Issuing::Authorization::TestHelpers.create(
       amount: amount_cents,
       card: card.stripe_id,
@@ -561,10 +564,8 @@ class EventsController < ApplicationController
       StripeService::Issuing::Authorization::TestHelpers.capture(authorization.id, capture_amount: amount_cents)
     end
 
-    ::StripeAuthorizationService::CreateFromWebhook.new(stripe_transaction_id: authorization.id).run
-
     card_label = card.name.presence || "card ending in #{card.last4}"
-    redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card_label} at #{merchant_data[:name]}." }
+    redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card_label} at #{merchant_data[:name]}. It'll appear on the ledger momentarily." }
   rescue Stripe::StripeError => e
     redirect_to event_simulate_transaction_path(@event), flash: { error: "Stripe error: #{e.message}" }
   end
