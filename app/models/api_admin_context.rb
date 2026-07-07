@@ -49,8 +49,6 @@ class ApiAdminContext
 
   private
 
-  # The blanket "admin:<level>" scope always satisfies any resource; a
-  # resource-specific "admin.<resource>:<level>" scope satisfies only that resource.
   def has_admin_scope?(level, resource)
     scopes = @token&.scopes || []
     scopes.include?("admin:#{level}") || (resource.present? && scopes.include?("admin.#{resource}:#{level}"))
