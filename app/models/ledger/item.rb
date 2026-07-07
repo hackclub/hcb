@@ -18,6 +18,13 @@
 #  updated_at                   :datetime         not null
 #  linked_object_id             :bigint
 #
+# Indexes
+#
+#  index_ledger_items_on_amount_cents   (amount_cents)
+#  index_ledger_items_on_datetime       (datetime)
+#  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
+#  index_ledger_items_on_short_code     (short_code) UNIQUE
+#
 class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
