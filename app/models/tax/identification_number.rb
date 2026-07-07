@@ -15,7 +15,7 @@ module Tax
     end
 
     def banned?
-      legal_entities.any?(&:banned?)
+      legal_entities.any? { |le| le.banned_reason.present? }
     end
 
     def payments

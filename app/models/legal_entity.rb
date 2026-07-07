@@ -57,10 +57,6 @@ class LegalEntity < ApplicationRecord
     form.send!
   end
 
-  def banned?
-    banned_reason.present?
-  end
-
   def tin_banned?
     tax_identification_number.banned?
   end
