@@ -67,5 +67,21 @@ RSpec.describe MyController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("No payments yet.")
     end
+
+    it "preserves the selected legal entity in payout settings links" do
+      user = sign_in_verified
+      legal_entity = create(:legal_entity, :business, name: "Hack Club HQ")
+      create(:legal_entity_user, user:, legal_entity:)
+
+      get :pay, params: { legal_entity_id: legal_entity.id }
+
+      expect(response).to redirect_to(my_pay_path)
+      expect(session[:legal_entity_id]).to eq(legal_entity.id.to_s)
+
+      get :pay
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(settings_payouts_path(legal_entity_id: legal_entity.id))
+    end
   end
 end

@@ -16,6 +16,8 @@
   </div>
 </nav>
 
+<% manual_payment = controller_name == "payments" && params[:manual] == "true" %>
+
 <div
   class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full mt-40 md:mt-20 gap-5"
   data-controller="scroll-seek <%= "check-preview" if @check.present? %>"
@@ -37,7 +39,7 @@
   <div class="flex-1 md:pt-3 sm:mb-24">
     <%= yield %>
     <p class="muted mt-3 text-center text-sm">
-      Your transfer will be reviewed on the next business day <% if @payee %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
+      Your transfer will be reviewed on the next business day <% if @payee && !manual_payment %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
     </p>
   </div>
 </div>

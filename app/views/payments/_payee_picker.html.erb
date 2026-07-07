@@ -1,4 +1,5 @@
 <%# locals: (event:) %>
+<% manual = params[:manual] == "true" %>
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
@@ -40,7 +41,7 @@
           <%= label_tag :email, "Email" %>
           <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { action: "input->manual-payee#sync", "manual-payee-target": "emailInput" } %>
         </div>
-        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>
           <%= select_tag :payee_entity_type,
               options_for_select([
@@ -52,36 +53,37 @@
               data: { action: "change->manual-payee#sync", "manual-payee-target": "entityTypeInput" } %>
         </div>
 
-        <div data-manual-payee-target="defaultBanner">
+        <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
           <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
-            They'll be asked to submit their tax information and configure their payout method before the payment is released.
+            They'll be asked to submit their tax information and configure their payout method before receiving the payment.
           <% end %>
         </div>
 
-        <div data-manual-payee-target="manualBanner" hidden>
+        <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
           <%= render "application/callout", type: "warning", icon: "important", title: "Manual entry selected", class: "mt-0 mb-0" do %>
             You'll need to provide payout details and tax info below. Only use this if the recipient can't submit their own.
           <% end %>
         </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-2 py-2" data-manual-payee-target="summaryPanel" hidden>
-        <div class="min-w-0">
-          <p class="font-medium m-0">Manual recipient</p>
-          <p class="text-sm muted m-0 truncate" data-manual-payee-target="summaryText"></p>
+ 
+          <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
+            Continue <%= inline_icon "view-forward" %>
+          </button>
+          <button type="button" class="btn bg-smoke dark:bg-darkless w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
+            I want to submit tax and payout information on behalf of the recipient
+          </button>
+          <button type="button" class="btn bg-smoke dark:bg-darkless w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
+            I'll have the recipient fill this out instead
+          </button>
         </div>
-        <a class="muted text-sm cursor-pointer shrink-0" data-action="manual-payee#edit">Edit</a>
-      </div>
 
-      <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
-        Continue <%= inline_icon "view-forward" %>
-      </button>
-      <button type="button" class="btn shadow-none bg-muted btn-text w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable">
-        I want to submit tax and payout information on behalf of the recipient
-      </button>
-      <button type="button" class="btn shadow-none bg-muted btn-text w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" hidden>
-        I'll have the recipient fill this out instead
-      </button>
+        <div class="flex items-center justify-between gap-2 py-2" data-manual-payee-target="summaryPanel" hidden>
+          <div class="min-w-0">
+            <p class="font-medium m-0 truncate" data-manual-payee-target="summaryName"></p>
+            <p class="text-sm muted m-0 truncate" data-manual-payee-target="summaryEmail"></p>
+          </div>
+          <a class="muted text-sm cursor-pointer shrink-0" data-action="manual-payee#edit">Edit</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>

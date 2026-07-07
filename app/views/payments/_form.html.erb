@@ -47,7 +47,7 @@
           <div class="flex items-center">
             <div class="input flex gap-2 items-center py-0">
               <span class="bold muted">$</span>
-              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto", data: { "manual-payee-target": "nextFocus" } %>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@
     </div>
 
     <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-      <h3 class="mb-2">Payout settings</h3>
+      <h3 class="mb-2">Payout method</h3>
       <div class="card mb-4 flex flex-col gap-3">
         <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "Select a payout method" %>
       </div>

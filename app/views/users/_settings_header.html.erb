@@ -12,12 +12,12 @@
       <%= active.humanize %>
 
       <div data-controller="menu" data-menu-placement-value="bottom-start" class="inline-block">
-        <a type="button" class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer"
+        <button type="button" class="text-white text-base flex items-center -mt-1 gap-0.5 opacity-75 font-[500] cursor-pointer bg-transparent border-0 p-0"
                 data-menu-target="toggle"
                 data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
           <%= entity_label.call(legal_entity) %>
           <%= inline_icon "down-caret", size: 20 %>
-        </a>
+        </button>
         <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
           <% legal_entities.each do |le| %>
             <%= link_to url_for(legal_entity_id: le.id), class: "flex items-center#{' bold' if le == legal_entity}" do %>

@@ -5,6 +5,7 @@ export default class extends Controller {
     'nameInput',
     'emailInput',
     'entityTypeInput',
+    'manualOnly',
     'manualField',
     'payeeNameField',
     'payeeEmailField',
@@ -15,29 +16,25 @@ export default class extends Controller {
     'undoButton',
     'editPanel',
     'summaryPanel',
-    'summaryText',
+    'summaryName',
+    'summaryEmail',
+    'nextFocus',
   ]
+
+  connect() {
+    this.renderMode()
+  }
 
   enable() {
     this.manualFieldTarget.value = 'true'
     this.sync()
-
-    this.defaultBannerTarget.hidden = true
-    this.manualBannerTarget.hidden = false
-    this.enableButtonTarget.hidden = true
-    this.undoButtonTarget.hidden = false
-
+    this.renderMode()
     this.dispatch('changed')
   }
 
   undo() {
     this.manualFieldTarget.value = 'false'
-
-    this.defaultBannerTarget.hidden = false
-    this.manualBannerTarget.hidden = true
-    this.enableButtonTarget.hidden = false
-    this.undoButtonTarget.hidden = true
-
+    this.renderMode()
     this.dispatch('changed')
   }
 
@@ -56,26 +53,44 @@ export default class extends Controller {
     if (!this.entityTypeInputTarget.reportValidity()) return
 
     this.sync()
+    this.updateSummary()
 
-    if (this.hasSummaryTextTarget) {
-      this.summaryTextTarget.textContent = `${this.nameInputTarget.value} · ${this.emailInputTarget.value}`
-    }
     this.editPanelTarget.hidden = true
     if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = false
 
-    document
-      .getElementById('payment-details')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const paymentDetails = document.getElementById('payment-details')
+    if (paymentDetails) {
+      const top = paymentDetails.getBoundingClientRect().top + window.scrollY - 100
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+
+    this.nextFocusTarget.focus({ preventScroll: true })
   }
 
   sync() {
     this.payeeNameFieldTarget.value = this.nameInputTarget.value
     this.payeeEmailFieldTarget.value = this.emailInputTarget.value
     this.payeeEntityTypeFieldTarget.value = this.entityTypeInputTarget.value
+    this.updateSummary()
   }
 
   edit() {
     this.editPanelTarget.hidden = false
     if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = true
+  }
+
+  renderMode() {
+    this.defaultBannerTarget.hidden = this.manual
+    this.manualBannerTarget.hidden = !this.manual
+    this.enableButtonTarget.hidden = this.manual
+    this.undoButtonTarget.hidden = !this.manual
+    this.manualOnlyTargets.forEach(target => {
+      target.hidden = !this.manual
+    })
+  }
+
+  updateSummary() {
+    this.summaryNameTarget.textContent = this.nameInputTarget.value
+    this.summaryEmailTarget.textContent = this.emailInputTarget.value
   }
 }
