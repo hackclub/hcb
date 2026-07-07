@@ -1,4 +1,4 @@
-<%# locals: (user:, editing: nil, creating: nil, attempted: nil) %>
+<%# locals: (user:, legal_entity: nil, editing: nil, creating: nil, attempted: nil) %>
 <% payout_method = editing ? editing.details : attempted&.details %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
@@ -10,6 +10,9 @@
 <% form_opts.merge!(url: payout_method_path(editing), method: :patch) if editing %>
 <% form_opts.merge!(url: payout_methods_path, method: :post) if creating %>
 <%= form_with(**form_opts) do |form| %>
+  <% if creating && legal_entity %>
+    <%= hidden_field_tag :legal_entity_id, legal_entity.id %>
+  <% end %>
   <% unless editing %>
     <fieldset>
       <legend class="heading h3 pb2 bold">How would you like to be reimbursed?</legend>
