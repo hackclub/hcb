@@ -21,6 +21,9 @@ class LegalEntity < ApplicationRecord
   self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   include Hashid::Rails
 
+  include PublicIdentifiable
+  set_public_id_prefix :len
+
   # Some legal entities will be managed by events,
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true

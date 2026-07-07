@@ -34,6 +34,9 @@ module Tax
   class Form < ApplicationRecord
     include AASM
     include Hashid::Rails
+    include PublicIdentifiable
+
+    set_public_id_prefix :tfm
     acts_as_paranoid
     has_paper_trail
 
@@ -63,6 +66,10 @@ module Tax
       failed
     ].index_with(&:itself), prefix: :taxbandits_tin_match
 
+    after_update if: -> { taxbandits_status_previously_changed?(to: [:completed, :completed_and_tin_match_inprogress]) } do
+      mark_completed!
+    end
+
     aasm timestamps: true do
       state :pending, initial: true
       state :sent # Request sent to TaxBandits, not necessarily email sent
@@ -89,9 +96,9 @@ module Tax
       raise ArgumentError, "can only send tax forms when pending" unless pending? && external_id.blank?
 
       case external_service
-      when :tax_bandits
+      when "taxbandits"
         send_using_taxbandits!
-      when :manual
+      when "manual"
         Rails.logger.info("[Tax::Form] NO-OP: skipping because the external service is 'manual'.")
       else
         raise ArgumentError, "Unable to send tax form using unknown external service (#{external_service})"
@@ -101,14 +108,19 @@ module Tax
     end
 
     def taxbandits_submission
-      taxbandits_client.get("WhCertificate/Get?PayeeRef=#{hashid}").body
-    rescue Faraday::ResourceNotFound, Faraday::BadRequestError
-      # TaxBandits will respond with 400 or 404 if the submission is not yet complete
-      nil
+      submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{legal_entity.public_id}").body
+
+      submissions["WhcertificateRecords"].find { |s| s["SubmissionId"] == external_id }
     end
 
     def sync_with_taxbandits
-      mark_completed! if may_mark_completed? && taxbandits_submission.present?
+      responses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{legal_entity.public_id}").body
+      response = responses["Status"].find { |r| r["SubmissionId"] == external_id }
+
+      update!(
+        taxbandits_status: response["FormStatus"].downcase,
+        taxbandits_tin_matching_status: response["TINMatching"]&.[]("Status")&.downcase
+      )
     end
 
     private
@@ -150,7 +162,7 @@ module Tax
       response = taxbandits_client.post("WhCertificate/RequestByUrl") do |req|
         req.body = {
           "Recipient" => {
-            "PayeeRef"      => hashid,
+            "PayeeRef"      => legal_entity.public_id,
             "Name"          => legal_entity.name,
             "IsTINMatching" => true
           },
@@ -159,6 +171,7 @@ module Tax
       end
 
       update!(external_service: :taxbandits, signing_url: response.body["Url"], external_id: response.body["SubmissionId"])
+      sync_with_taxbandits
     end
 
   end
