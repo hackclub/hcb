@@ -40,9 +40,6 @@ export default class extends Controller {
     return this.manualFieldTarget.value === 'true'
   }
 
-  // On the contractor path, submit the new-recipient form (creates the payee
-  // server-side and redirects). On the manual path, stay on the page: reveal the
-  // payout/tax sections and continue to payment details.
   continue() {
     if (!this.manual) {
       document.getElementById('new-payee-form').requestSubmit()
@@ -65,8 +62,6 @@ export default class extends Controller {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Mirror the recipient inputs into the payment form's hidden fields so a manual
-  // submission carries the name/email even though they live in a separate form.
   sync() {
     this.payeeNameFieldTarget.value = this.nameInputTarget.value
     this.payeeEmailFieldTarget.value = this.emailInputTarget.value
