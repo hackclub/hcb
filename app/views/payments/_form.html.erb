@@ -3,7 +3,7 @@
 <% disabled = !policy(event).create_transfer? %>
 <% manual = params[:manual] == "true" %>
 
-<div data-controller="payee-picker">
+<div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient</h3>
     <% if payee %>
@@ -34,9 +34,11 @@
     <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
     <%= form.hidden_field :payee_id, value: payee&.id %>
-    <%= hidden_field_tag :manual, manual %>
+    <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
+    <%= hidden_field_tag "payee_name", params[:payee_name], data: { "manual-payee-target": "payeeNameField" } %>
+    <%= hidden_field_tag "payee_email", params[:payee_email], data: { "manual-payee-target": "payeeEmailField" } %>
 
-    <div data-scroll-seek-target="section">
+    <div id="payment-details" data-scroll-seek-target="section">
       <h3 class="mb-2">Payment details</h3>
       <div class="card mb-4 flex flex-col gap-3">
         <div class="flex justify-between items-center">
@@ -55,17 +57,19 @@
           <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
         </div>
       </div>
-
     </div>
 
-    <% if manual %>
-      <div data-scroll-seek-target="section">
-        <h3 class="mb-2">Payout settings</h3>
-        <div class="card mb-4 flex flex-col gap-3">
-          <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "How would you like to be paid?" %>
-        </div>
+    <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+      <h3 class="mb-2">Payout settings</h3>
+      <div class="card mb-4 flex flex-col gap-3">
+        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "Select a payout method" %>
       </div>
-    <% end %>
+    </div>
+
+    <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+      <h3 class="mb-2">Tax information</h3>
+      <div class="card mb-4 p-20"></div>
+    </div>
 
     <div data-scroll-seek-target="section">
       <h3 class="mb-2">Receipt</h3>

@@ -25,28 +25,50 @@
         Back
       </button>
 
-      <%= form_with(url: event_payees_path(event_id: event.slug), local: true) do |form| %>
-        <div class="flex flex-col gap-3">
-          <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-            <%= form.label :name, "Name" %>
-            <%= form.text_field :name, placeholder: "Orpheus", required: true %>
-          </div>
-          <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-            <%= form.label :email, "Email" %>
-            <%= form.email_field :email, placeholder: "orpheus@hackclub.com", required: true %>
-          </div>
-          <label class="flex items-start gap-3 cursor-pointer">
-            <%= check_box_tag :manual, "true", false, class: "!w-auto" %>
-            <span>
-              <span class="font-medium block">Send manually</span>
-              <span class="text-sm muted">Enter this recipient's tax forms and payout details yourself</span>
-            </span>
-          </label>
-          <button type="submit" class="btn bg-blue w-full gap-2">
-            Continue <%= inline_icon "view-forward" %>
-          </button>
-        </div>
+      <%# The recipient's name/email live in this contractor form but are also
+          associated (via form:) so they submit here on the contractor path. On the
+          manual path they're mirrored into the payment form by manual-payee. %>
+      <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
       <% end %>
+
+      <div class="flex flex-col gap-3" data-manual-payee-target="editPanel">
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+          <%= label_tag :name, "Name" %>
+          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { action: "input->manual-payee#sync", "manual-payee-target": "nameInput" } %>
+        </div>
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+          <%= label_tag :email, "Email" %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { action: "input->manual-payee#sync", "manual-payee-target": "emailInput" } %>
+        </div>
+
+        <div data-manual-payee-target="defaultBanner">
+          <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
+            They'll be asked to submit their tax information and configure their payout method before the payment is released.
+          <% end %>
+        </div>
+
+        <div data-manual-payee-target="manualBanner" hidden>
+          <%= render "application/callout", type: "warning", icon: "important", title: "Manual entry selected", class: "mt-0 mb-0" do %>
+            You'll need to provide payout details and tax info below. Only use this if the recipient can't submit their own.
+            <a class="bold cursor-pointer" data-action="manual-payee#undo">Undo</a>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 py-2" data-manual-payee-target="summaryPanel" hidden>
+        <div class="min-w-0">
+          <p class="font-medium m-0">Manual recipient</p>
+          <p class="text-sm muted m-0 truncate" data-manual-payee-target="summaryText"></p>
+        </div>
+        <a class="muted text-sm cursor-pointer shrink-0" data-action="manual-payee#edit">Edit</a>
+      </div>
+
+      <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
+        Continue <%= inline_icon "view-forward" %>
+      </button>
+      <button type="button" class="btn shadow-none bg-muted btn-text w-full text-sm mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable">
+        I want to fill in tax and payout information manually
+      </button>
     </div>
   </div>
 </div>
