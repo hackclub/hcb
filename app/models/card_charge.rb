@@ -66,8 +66,7 @@ class CardCharge < ApplicationRecord
     return existing if existing.present?
 
     if charge = find_by_stripe_authorization_id(raw_stripe_transaction.stripe_authorization_id)
-      charge.raw_stripe_transactions << raw_stripe_transaction
-      charge.raw_stripe_transactions.uniq!
+      charge.raw_stripe_transactions << raw_stripe_transaction unless charge.raw_stripe_transactions.include?(raw_stripe_transaction)
 
       charge
     else
