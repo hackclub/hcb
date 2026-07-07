@@ -1,7 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Toggles the manual-only sections (Payout settings, Tax information) and their
-// sidebar steps based on whether a manual payout is selected in the payment details.
 export default class extends Controller {
   static targets = ['section']
 
