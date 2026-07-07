@@ -14,7 +14,6 @@
 #  address_state                  :string
 #  completed_at                   :datetime
 #  deleted_at                     :datetime
-#  document_url                   :string
 #  external_service               :string           not null
 #  failed_at                      :datetime
 #  form_type                      :string
@@ -24,6 +23,7 @@
 #  taxbandits_tin_matching_status :string
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
+#  external_id                    :string
 #  legal_entity_id                :bigint           not null
 #
 # Indexes
@@ -32,8 +32,6 @@
 #
 module Tax
   class Form < ApplicationRecord
-    self.ignored_columns += ["external_id"]
-
     include AASM
     include Hashid::Rails
     acts_as_paranoid
@@ -153,7 +151,7 @@ module Tax
         }.to_json
       end
 
-      update!(external_service: :taxbandits, signing_url: response.body["Url"])
+      update!(external_service: :taxbandits, signing_url: response.body["Url"], external_id: response.body["SubmissionId"])
     end
 
   end

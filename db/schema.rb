@@ -2533,7 +2533,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
-    t.string "document_url"
     t.string "external_id"
     t.string "external_service", null: false
     t.datetime "failed_at"
