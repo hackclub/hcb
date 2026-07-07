@@ -291,13 +291,14 @@ class Event
 
       # No DocuSeal: immediately mark every party (including HCB) as signed so the
       # contract is fully signed on creation. The only remaining step is for an
-      # admin to activate the event.
+      # admin to approve and activate the event.
       #
-      # Sign HCB first so that signing the remaining parties doesn't trigger the
-      # "all non-HCB parties signed" notification/reminders to HCB (see
-      # Contract#on_party_signed). Reload so the HCB party created in Contract's
+      # Sign HCB last (matching the normal flow where the applicant signs first),
+      # so that signing the non-HCB parties advances the application to
+      # under_review via on_contract_party_signed, then HCB's signature marks the
+      # contract fully signed. Reload so the HCB party created in Contract's
       # after_create callback is included.
-      fs_contract.parties.reload.sort_by { |party| party.hcb? ? 0 : 1 }.each do |party|
+      fs_contract.parties.reload.sort_by { |party| party.hcb? ? 1 : 0 }.each do |party|
         party.mark_signed! unless party.signed?
       end
 
