@@ -58,7 +58,7 @@ class CardCharge < ApplicationRecord
   end
 
   def self.link_raw_pending_stripe_transaction!(raw_pending_stripe_transaction)
-    if existing = find_by_stripe_authorization_id(raw_pending_stripe_transaction.stripe_transaction_id)
+    if existing = raw_pending_stripe_transaction.card_charge || find_by_stripe_authorization_id(raw_pending_stripe_transaction.stripe_transaction_id)
       existing.update!(raw_pending_stripe_transaction:) if existing.raw_pending_stripe_transaction_id.nil?
 
       existing
