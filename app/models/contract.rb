@@ -192,12 +192,12 @@ class Contract < ApplicationRecord
   end
 
   def docuseal_submission_url
-    "https://docuseal.com/submissions/#{external_id}"
+    "https://insanity.emmameowss.zip/submissions/#{external_id}"
   end
 
   # Adding this back temporarily while we work on fixing missing parties
   def signee_docuseal_url
-    "https://docuseal.co/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
+    "https://insanity.emmameowss.zip/s/#{docuseal_document["submitters"].select { |s| s["role"] == "Contract Signee" }[0]["slug"]}"
   end
 
   def create_document!
@@ -231,7 +231,7 @@ class Contract < ApplicationRecord
 
   def docuseal_client
     @docuseal_client || begin
-      Faraday.new(url: "https://api.docuseal.co/") do |faraday|
+      Faraday.new(url: "https://insanity.emmameowss.zip/api/") do |faraday|
         faraday.response :json
         faraday.response :raise_error
         faraday.adapter Faraday.default_adapter
@@ -242,7 +242,7 @@ class Contract < ApplicationRecord
   end
 
   def send_using_docuseal!
-    response = docuseal_client.post("/submissions") do |req|
+    response = docuseal_client.post("submissions") do |req|
       req.body = payload.to_json
     end
 
@@ -262,7 +262,7 @@ class Contract < ApplicationRecord
   end
 
   def archive_on_docuseal!
-    docuseal_client.delete("/submissions/#{external_id}")
+    docuseal_client.delete("submissions/#{external_id}")
   end
 
   def one_non_void_contract

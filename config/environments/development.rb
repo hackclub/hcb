@@ -85,7 +85,16 @@ Rails.application.configure do
 
 
   # SMTP config
-  config.action_mailer.delivery_method = :letter_opener_web
+ config.action_mailer.delivery_method = :smtp
+config.action_mailer.smtp_settings = {
+  address:              ENV["SMTP_ADDRESS"],
+  port:                 587,
+  user_name:            ENV["SMTP_USERNAME"],
+  password:             ENV["SMTP_PASSWORD"],
+  authentication:       :login,
+  enable_starttls_auto: true
+}
+config.action_mailer.raise_delivery_errors = true
 
   # Bullet for finding N+1s
   config.after_initialize do

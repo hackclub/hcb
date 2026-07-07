@@ -84,7 +84,7 @@ class Event
       end
 
       def contract_docuseal_template_id
-        487784
+        1
       end
 
       def contract_skip_prefills

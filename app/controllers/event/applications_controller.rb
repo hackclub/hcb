@@ -5,6 +5,7 @@ class Event
     before_action :set_application, except: [:apply, :new, :create, :index]
     before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
     before_action :prevent_access_if_archived, only: [:project_info, :personal_info, :review, :videos, :agreement]
+    before_action :applications_closed, only: [:apply, :new, :create]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -270,6 +271,10 @@ class Event
     end
 
     private
+
+    def applications_closed
+      redirect_to root_path, flash: { error: "applications are broken please ping me (emma) to get an organization" }
+    end
 
     def set_application
       @application = Application.find(params[:id])

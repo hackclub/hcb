@@ -3,9 +3,9 @@
 class ApplicationMailer < ActionMailer::Base
   self.delivery_job = MailDeliveryJob
 
-  OPERATIONS_EMAIL = "hcb@hackclub.com"
+  OPERATIONS_EMAIL = "hcb@emmameowss.zip"
 
-  DOMAIN = Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com"
+  DOMAIN = "emmameowss.zip"
   default from: "HCB <hcb@#{DOMAIN}>"
   layout "mailer/default"
 

@@ -70,7 +70,7 @@ class Contract
     end
 
     def docuseal_signature_url
-      "https://docuseal.co/s/#{external_id}"
+      "https://insanity.emmameowss.zip/s/#{external_id}"
     end
 
     def docuseal_role
