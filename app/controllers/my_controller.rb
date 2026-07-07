@@ -176,7 +176,7 @@ class MyController < ApplicationController
       canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
-    @payments = all_payments.order(created_at: :desc)
+    @payments = all_payments.includes(:event, attempts: :payout).order(created_at: :desc)
     @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
