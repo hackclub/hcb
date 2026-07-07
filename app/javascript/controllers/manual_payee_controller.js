@@ -4,9 +4,11 @@ export default class extends Controller {
   static targets = [
     'nameInput',
     'emailInput',
+    'entityTypeInput',
     'manualField',
     'payeeNameField',
     'payeeEmailField',
+    'payeeEntityTypeField',
     'defaultBanner',
     'manualBanner',
     'enableButton',
@@ -51,6 +53,7 @@ export default class extends Controller {
 
     if (!this.nameInputTarget.reportValidity()) return
     if (!this.emailInputTarget.reportValidity()) return
+    if (!this.entityTypeInputTarget.reportValidity()) return
 
     this.sync()
 
@@ -68,6 +71,7 @@ export default class extends Controller {
   sync() {
     this.payeeNameFieldTarget.value = this.nameInputTarget.value
     this.payeeEmailFieldTarget.value = this.emailInputTarget.value
+    this.payeeEntityTypeFieldTarget.value = this.entityTypeInputTarget.value
   }
 
   edit() {

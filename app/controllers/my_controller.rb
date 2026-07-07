@@ -159,8 +159,6 @@ class MyController < ApplicationController
   end
 
   def pay
-    return head :not_found unless current_user.payments_received.exists?
-
     if params[:legal_entity_id].present?
       session[:legal_entity_id] = params[:legal_entity_id]
       return redirect_to my_pay_path

@@ -1,4 +1,4 @@
-<%# locals: (payout_method:, open: false, locking_reports: []) %>
+<%# locals: (user:, payout_method:, open: false, locking_reports: []) %>
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
@@ -86,7 +86,7 @@
     </section>
   <% else %>
     <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
-      <%= render "users/payout_form/form", user: current_user, editing: payout_method %>
+      <%= render "users/payout_form/form", user:, editing: payout_method %>
     </div>
   <% end %>
 </div>

@@ -21,6 +21,21 @@ RSpec.describe MyController do
     user_session
   end
 
+  def sign_in_verified(user = create(:user))
+    user_session = User::Session.create!(
+      user:,
+      verified: true,
+      session_token: SecureRandom.urlsafe_base64,
+      expiration_at: 7.days.from_now,
+    )
+    cookies.encrypted[:session_token] = {
+      value: user_session.session_token,
+      expires: User::Session::MAX_SESSION_DURATION.from_now,
+      httponly: true,
+    }
+    user
+  end
+
   describe "GET #cards" do
     it "renders for an unverified user" do
       sign_in_unverified
@@ -40,6 +55,17 @@ RSpec.describe MyController do
       expect(response.status).to eq(200)
       expect(response.body).to include("Verify your email")
       expect(response.body).not_to include("To review")
+    end
+  end
+
+  describe "GET #pay" do
+    it "renders even when the user has not received any payments" do
+      sign_in_verified
+
+      get :pay
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No payments yet.")
     end
   end
 end

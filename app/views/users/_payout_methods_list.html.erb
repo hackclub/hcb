@@ -23,7 +23,7 @@
       <div class="payout-methods__rows">
         <% methods.each do |pm| %>
           <% errored_row = edit_error_id == pm.id %>
-          <%= render "users/payout_form/payout_method_row", payout_method: (errored_row ? attempted : pm), open: errored_row, locking_reports: locking_by_method[pm.id] || [] %>
+          <%= render "users/payout_form/payout_method_row", user:, payout_method: (errored_row ? attempted : pm), open: errored_row, locking_reports: locking_by_method[pm.id] || [] %>
         <% end %>
       </div>
     <% else %>

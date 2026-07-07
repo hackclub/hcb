@@ -3,6 +3,8 @@
 class PaymentsController < ApplicationController
   include SetEvent
 
+  class InvalidManualPayeeEntityType < StandardError; end
+
   before_action :set_event, except: [:show]
 
   def show
@@ -25,7 +27,11 @@ class PaymentsController < ApplicationController
 
     ActiveRecord::Base.transaction do
       if manual
-        @legal_entity = LegalEntity.create!(managing_event: @event, entity_type: :business, name: params[:payee_name])
+        @legal_entity = LegalEntity.create!(
+          managing_event: @event,
+          entity_type: manual_payee_entity_type,
+          name: params[:payee_name]
+        )
         @payee = Payee.create!(display_name: params[:payee_name], email: params[:payee_email], event: @event, legal_entity: @legal_entity)
         build_payout_method
       else
@@ -46,7 +52,7 @@ class PaymentsController < ApplicationController
     end
 
     redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-  rescue ActiveRecord::RecordInvalid => e
+  rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
     flash.now[:error] = e.message
     render :new, layout: "transfer", status: :unprocessable_entity
   end
@@ -78,6 +84,13 @@ class PaymentsController < ApplicationController
     key = :"payout_method_#{details_class.name.demodulize.underscore}"
     details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
     { type: type_name, details: }
+  end
+
+  def manual_payee_entity_type
+    entity_type = params[:payee_entity_type].presence
+    return entity_type if LegalEntity.entity_types.key?(entity_type)
+
+    raise InvalidManualPayeeEntityType, "Select whether the recipient is an individual or a business."
   end
 
 end

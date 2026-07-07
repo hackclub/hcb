@@ -37,6 +37,7 @@
     <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
     <%= hidden_field_tag "payee_name", params[:payee_name], data: { "manual-payee-target": "payeeNameField" } %>
     <%= hidden_field_tag "payee_email", params[:payee_email], data: { "manual-payee-target": "payeeEmailField" } %>
+    <%= hidden_field_tag "payee_entity_type", params[:payee_entity_type], data: { "manual-payee-target": "payeeEntityTypeField" } %>
 
     <div id="payment-details" data-scroll-seek-target="section">
       <h3 class="mb-2">Payment details</h3>
