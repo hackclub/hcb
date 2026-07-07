@@ -53,6 +53,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
+  def pay?
+    user.auditor? || record == user
+  end
+
   def edit_notifications?
     user.auditor? || record == user
   end

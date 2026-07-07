@@ -120,9 +120,9 @@ class Ledger
         if linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}"
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
           "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         else
@@ -130,13 +130,13 @@ class Ledger
         end
       when "Disbursement::Incoming"
         if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
           "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}"
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
         else
           "Transfer from #{linked_object.source_event.name}"
         end
@@ -160,9 +160,14 @@ class Ledger
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
+      else
+        self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo
       end
     end
 
+    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
+    # refresh! should not update any non-caching columns
     def refresh!
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
@@ -174,10 +179,24 @@ class Ledger
       self.amount_cents = calculate_amount_cents
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
+      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
       self.memo = self.custom_memo || self.system_memo || "Transaction"
 
       save!
+    end
+
+    def update_custom_memo!(memo)
+      # TODO: remove CT and CPT updates because they are HCB code specific
+      ActiveRecord::Base.transaction do
+        if hcb_code.present?
+          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+        end
+        ledger_item.update!(custom_memo: memo)
+      end
+
+      item.refresh!
     end
 
     def map!
