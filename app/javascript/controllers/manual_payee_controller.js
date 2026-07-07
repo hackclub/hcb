@@ -1,0 +1,79 @@
+import { Controller } from '@hotwired/stimulus'
+
+export default class extends Controller {
+  static targets = [
+    'nameInput',
+    'emailInput',
+    'manualField',
+    'payeeNameField',
+    'payeeEmailField',
+    'defaultBanner',
+    'manualBanner',
+    'enableButton',
+    'editPanel',
+    'summaryPanel',
+    'summaryText',
+  ]
+
+  enable() {
+    this.manualFieldTarget.value = 'true'
+    this.sync()
+
+    this.defaultBannerTarget.hidden = true
+    this.manualBannerTarget.hidden = false
+    this.enableButtonTarget.hidden = true
+
+    this.dispatch('changed')
+  }
+
+  undo() {
+    this.manualFieldTarget.value = 'false'
+
+    this.defaultBannerTarget.hidden = false
+    this.manualBannerTarget.hidden = true
+    this.enableButtonTarget.hidden = false
+
+    this.dispatch('changed')
+  }
+
+  get manual() {
+    return this.manualFieldTarget.value === 'true'
+  }
+
+  // On the contractor path, submit the new-recipient form (creates the payee
+  // server-side and redirects). On the manual path, stay on the page: reveal the
+  // payout/tax sections and continue to payment details.
+  continue() {
+    if (!this.manual) {
+      document.getElementById('new-payee-form').requestSubmit()
+      return
+    }
+
+    if (!this.nameInputTarget.reportValidity()) return
+    if (!this.emailInputTarget.reportValidity()) return
+
+    this.sync()
+
+    if (this.hasSummaryTextTarget) {
+      this.summaryTextTarget.textContent = `${this.nameInputTarget.value} · ${this.emailInputTarget.value}`
+    }
+    this.editPanelTarget.hidden = true
+    if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = false
+
+    document
+      .getElementById('payment-details')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Mirror the recipient inputs into the payment form's hidden fields so a manual
+  // submission carries the name/email even though they live in a separate form.
+  sync() {
+    this.payeeNameFieldTarget.value = this.nameInputTarget.value
+    this.payeeEmailFieldTarget.value = this.emailInputTarget.value
+  }
+
+  edit() {
+    this.editPanelTarget.hidden = false
+    if (this.hasSummaryPanelTarget) this.summaryPanelTarget.hidden = true
+  }
+}
