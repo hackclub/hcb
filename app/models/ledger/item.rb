@@ -238,8 +238,6 @@ class Ledger
         linked_object&.user
       when "WiseTransfer"
         linked_object&.user
-      when "CardCharge"
-        stripe_cardholder&.user
       when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
