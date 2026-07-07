@@ -2,7 +2,7 @@
 <% subtitle "From #{@event.name}" %>
 <% @back_url = event_payments_path(event_id: @event.slug) %>
 
-<% manual = params[:manual] == "true" %>
+<% manual = @payee&.managed? %>
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
   <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>

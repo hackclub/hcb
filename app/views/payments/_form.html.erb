@@ -1,7 +1,7 @@
 <%# locals: (event:, payment:, payee: nil) %>
 
 <% disabled = !policy(event).create_transfer? %>
-<% manual = params[:manual] == "true" %>
+<% manual = payee&.managed? %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">

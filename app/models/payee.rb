@@ -34,4 +34,8 @@ class Payee < ApplicationRecord
     User.find_by(email:)
   end
 
+  def managed?
+    legal_entity&.managing_event_id.present?
+  end
+
 end

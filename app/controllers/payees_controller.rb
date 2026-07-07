@@ -30,11 +30,10 @@ class PayeesController < ApplicationController
 
       payee.save!
 
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id, manual: params[:manual])
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id)
     end
   rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
-    redirect_to new_event_payment_path(event_id: @event.slug, manual: params[:manual]),
-                alert: e.message
+    redirect_to new_event_payment_path(event_id: @event.slug), alert: e.message
   end
 
   private

@@ -1,5 +1,7 @@
 <%# locals: (event:) %>
-<% manual = params[:manual] == "true" %>
+<%# The picker always opens in contractor mode; the manual-payee controller
+    toggles to the manual path client-side via the enable/undo buttons. %>
+<% manual = false %>
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
