@@ -86,7 +86,6 @@ class LegalEntity
     #   send_email_notification:   Boolean — default false
     #   company_entry_description: String  — ACH only
     delegate :create_transfer, to: :details
->>>>>>> origin/main
 
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
