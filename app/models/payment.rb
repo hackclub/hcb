@@ -42,6 +42,8 @@ class Payment < ApplicationRecord
   monetize :amount_cents, with_model_currency: :currency
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
+
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
   scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
@@ -84,6 +86,14 @@ class Payment < ApplicationRecord
 
   def retry!
     create_payment_attempt!
+  end
+
+  def payout
+    attempts.order(created_at: :desc).first&.payout
+  end
+
+  def popover_path
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
   end
 
   def estimate_usd_amount_cents

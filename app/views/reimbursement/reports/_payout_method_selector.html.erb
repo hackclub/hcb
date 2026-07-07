@@ -31,7 +31,7 @@
       <% end %>
 
       <div class="menu__divider"></div>
-      <%= link_to settings_payouts_path, class: "flex items-center" do %>
+      <%= link_to settings_payouts_path(legal_entity_id: legal_entity&.id), class: "flex items-center" do %>
         <%= inline_icon "settings", size: 24 %>
         Manage payout methods
       <% end %>

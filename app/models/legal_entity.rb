@@ -65,4 +65,8 @@ class LegalEntity < ApplicationRecord
     tax_identification_number.banned?
   end
 
+  def display_name
+    person? ? "Personal" : (name.presence || "Business")
+  end
+
 end
