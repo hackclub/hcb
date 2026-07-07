@@ -84,13 +84,16 @@ Rails.application.configure do
   config.action_mailer.show_previews = true
 
 
-  # Use Sidekiq so background jobs behave like production: mailers using
-  # `.deliver_later` and jobs scheduled with `set(wait: ...)` (grants,
-  # application reminders, etc.) enqueue properly. The `:inline` adapter
-  # cannot schedule future jobs and raises NotImplementedError on
-  # `enqueue_at`. Requires Redis to be reachable and a Sidekiq worker
-  # running (`bundle exec sidekiq`).
-  config.active_job.queue_adapter = :sidekiq
+  # Run background jobs in-process via the built-in `:async` adapter so dev
+  # doesn't require Redis or a separate Sidekiq worker. Jobs execute on a
+  # thread pool within the web process, and unlike `:inline` it supports
+  # scheduled jobs (`.deliver_later`, `set(wait: ...)` for grants, card
+  # locking, reminders, etc.). Jobs are held in memory, so anything still
+  # queued is lost on restart — acceptable for local development.
+  #
+  # Set QUEUE_ADAPTER=sidekiq to mirror production (requires Redis + a
+  # running `bundle exec sidekiq`).
+  config.active_job.queue_adapter = ENV.fetch("QUEUE_ADAPTER", "async").to_sym
 
   # SMTP config
  config.action_mailer.delivery_method = :smtp
