@@ -86,7 +86,7 @@ module Tax
     end
 
     def send!
-      raise ArgumentError, "can only send tax forms when pending" unless pending?
+      raise ArgumentError, "can only send tax forms when pending" unless pending? && external_id.blank?
 
       send_using_taxbandits! unless sent_with_manual?
 
