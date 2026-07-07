@@ -154,6 +154,7 @@ Rails.application.routes.draw do
       get "payouts", to: "users#edit_payout"
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
+      get "pay", to: "users#pay"
       get "notifications", to: "users#edit_notifications"
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
