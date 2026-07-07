@@ -67,13 +67,20 @@ class CardCharge < ApplicationRecord
     existing = raw_stripe_transaction.card_charge
     return existing if existing.present?
 
-    if charge = find_by_stripe_authorization_id(raw_stripe_transaction.stripe_authorization_id)
-      charge.raw_stripe_transactions << raw_stripe_transaction unless charge.raw_stripe_transactions.include?(raw_stripe_transaction)
+    charge = if charge = find_by_stripe_authorization_id(raw_stripe_transaction.stripe_authorization_id)
+               charge.raw_stripe_transactions << raw_stripe_transaction unless charge.raw_stripe_transactions.include?(raw_stripe_transaction)
 
-      charge
-    else
-      create!(raw_stripe_transactions: [raw_stripe_transaction])
-    end
+               charge
+             else
+               create!(raw_stripe_transactions: [raw_stripe_transaction])
+             end
+
+    # Reading card_charge above caches nil on the has_one :through, and
+    # creating the join record from the charge's side doesn't write it back.
+    raw_stripe_transaction.association(:card_charge_raw_stripe_transaction).reset
+    raw_stripe_transaction.association(:card_charge).reset
+
+    charge
   end
 
 end
