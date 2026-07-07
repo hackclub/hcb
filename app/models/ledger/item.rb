@@ -171,7 +171,7 @@ class Ledger
     end
 
     def update_custom_memo!(memo)
-      ledger_item.update!(memo:, custom_memo: memo)
+      ledger_item.update!(memo:, custom_memo: memo) # what happens here if custom memo is nil?
     end
 
     def map!
