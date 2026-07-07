@@ -48,7 +48,7 @@
         <td><%= disbursement.created_at.strftime("%Y-%m-%d") %></td>
         <td>
           <%= link_to disbursement_path(disbursement) do %>
-            <%= disbursement.source_event.name.upcase %>: <%= disbursement.name %>
+            <%= disbursement.source_event&.name&.upcase %>: <%= disbursement.name %>
           <% end %>
         </td>
         <td><%= render_money_amount(disbursement.amount) %></td>
