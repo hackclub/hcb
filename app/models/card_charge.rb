@@ -49,12 +49,8 @@ class CardCharge < ApplicationRecord
   def self.find_by_stripe_authorization_id(stripe_authorization_id)
     return nil if stripe_authorization_id.blank?
 
-    rpst = joins(:raw_pending_stripe_transaction)
-           .where(raw_pending_stripe_transactions: { stripe_transaction_id: stripe_authorization_id })
-    rst = joins(:raw_stripe_transactions)
-          .where(raw_stripe_transactions: { stripe_authorization_id: })
-
-    rpst.or(rst).first
+    joins(:raw_pending_stripe_transaction).find_by(raw_pending_stripe_transactions: { stripe_transaction_id: stripe_authorization_id }) ||
+      joins(:raw_stripe_transactions).find_by(raw_stripe_transactions: { stripe_authorization_id: })
   end
 
   def self.link_raw_pending_stripe_transaction!(raw_pending_stripe_transaction)
