@@ -405,7 +405,7 @@ class Event
     end
 
     def airtable_record
-      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
+      app = ApplicationsTable.all(filter: "RECORD_ID() = \"#{airtable_record_id}\"").first if airtable_record_id.present?
       app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
     end
 
