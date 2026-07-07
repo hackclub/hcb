@@ -56,12 +56,6 @@
     <% end %>
     <% if Rails.env.development? %>
       <div class="menu__divider" data-label="Development"></div>
-      <a
-        href="/letter_opener"
-        target="_blank"
-        class="menu__action dev-tools border-none">
-        <%= "Open LetterOpener (#{LetterOpenerWeb::Letter.search.count})" %>
-      </a>
       <p class="text-xs muted mt-2 mb-0">
         <% if Build.commit_hash.present? %>
           Build <em><%= Build.commit_name %></em>
