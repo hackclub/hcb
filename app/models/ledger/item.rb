@@ -176,7 +176,8 @@ class Ledger
         hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
         hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
       end
-      ledger_item.update!(memo:, custom_memo: memo) # what happens here if custom memo is nil?
+      ledger_item.update!(custom_memo: memo)
+      item.refresh!
     end
 
     def map!
