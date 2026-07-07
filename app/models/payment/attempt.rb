@@ -43,6 +43,7 @@ class Payment
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
     validate :transfer_matches_payout_method
+    validate :legal_entity_payable, on: :create
 
     aasm timestamps: true do
       state :pending, initial: true
@@ -221,6 +222,12 @@ class Payment
     def transfer_matches_payout_method
       if payout.present? && PAYOUT_METHOD_TRANSFER_MAPPING[payout_method.details.class] != payout.class
         errors.add(:base, "transfer type must match payout method")
+      end
+    end
+
+    def legal_entity_payable
+      unless payment.legal_entity.payable?
+        errors.add(:payment, "must be for a payable legal entity")
       end
     end
 
