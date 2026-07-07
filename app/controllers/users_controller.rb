@@ -18,7 +18,6 @@ class UsersController < ApplicationController
                                                :receipt_report,
                                                :edit_featurepreviews,
                                                :edit_security,
-                                               :pay,
                                                :edit_notifications,
                                                :edit_admin,
                                                :toggle_sms_auth,
@@ -27,7 +26,7 @@ class UsersController < ApplicationController
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
   before_action :set_user, only: [
     :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
-    :edit_security, :pay, :edit_notifications, :edit_integrations,
+    :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
