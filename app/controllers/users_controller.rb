@@ -18,7 +18,6 @@ class UsersController < ApplicationController
                                                :receipt_report,
                                                :edit_featurepreviews,
                                                :edit_security,
-                                               :pay,
                                                :edit_notifications,
                                                :edit_admin,
                                                :toggle_sms_auth,
@@ -388,7 +387,7 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
-    if payout_method_type.present? && @user.payments_received.exists?
+    if payout_method_type.present?
       @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
       session[:legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
     end
