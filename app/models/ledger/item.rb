@@ -156,8 +156,9 @@ class Ledger
       end
     end
 
-    # refresh! should always be called after any non-cached aspect of a ledger item changes (e.g. remapped or custom memo changes).
-    # refresh! will update all cached aspect of a ledger item after this non-cached change occurs.
+    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
+    # refresh! should not update any non-caching columns
     def refresh!
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
