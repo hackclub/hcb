@@ -96,110 +96,28 @@ class Payment
     def create_transfer!
       self.with_lock do
         payout_method = payment.legal_entity.default_payout_method
-        case payout_method.details
-        when LegalEntity::PayoutMethod::Check
-          safely do
-            check = payment.event.increase_checks.build(
-              memo: "Payment for \"#{payment.purpose}\"."[0...40],
-              amount: payment.estimate_usd_amount_cents,
-              payment_for: "Payment for \"#{payment.purpose}\".",
-              recipient_name: payment.payee.display_name,
-              recipient_email: payment.payee.email,
-              address_line1: payout_method.details.address_line1,
-              address_line2: payout_method.details.address_line2,
-              address_city: payout_method.details.address_city,
-              address_state: payout_method.details.address_state,
-              address_zip: payout_method.details.address_postal_code,
-              user: payment.creator
-            )
-
-            check.save!
-
-            self.payout = check
-            save!
-
-            Receipt.reupload(old_receiptable: payment, new_receiptable: check.local_hcb_code)
-          end
-        when LegalEntity::PayoutMethod::AchTransfer
-          safely do
-            ach_transfer = payment.event.ach_transfers.build(
-              amount: payment.estimate_usd_amount_cents,
-              payment_for: "Payment for \"#{payment.purpose}\".",
-              recipient_name: payment.payee.display_name,
-              recipient_email: payment.payee.email,
-              routing_number: payout_method.details.routing_number,
-              account_number: payout_method.details.account_number,
-              bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-              creator: payment.creator
-            )
-
-            ach_transfer.save!
-
-            self.payout = ach_transfer
-            save!
-
-            Receipt.reupload(old_receiptable: payment, new_receiptable: ach_transfer.local_hcb_code)
-          end
-        when LegalEntity::PayoutMethod::Wire
-          safely do
-            wire = payment.event.wires.build(
-              memo: "Payment for \"#{payment.purpose}\".",
-              payment_for: "Payment for #{payment.purpose}."[0...140],
-              amount_cents: payment.amount_cents,
-              address_line1: payout_method.details.address_line1,
-              address_line2: payout_method.details.address_line2,
-              address_city: payout_method.details.address_city,
-              address_state: payout_method.details.address_state,
-              address_postal_code: payout_method.details.address_postal_code,
-              recipient_country: payout_method.details.recipient_country,
-              recipient_name: payout_method.details.recipient_name.presence || payment.payee.display_name,
-              recipient_email: payment.payee.email,
-              account_number: payout_method.details.account_number,
-              bic_code: payout_method.details.bic_code,
-              recipient_information: payout_method.details.recipient_information.merge({
-                                                                                         purpose_code: Wire.payment_payment.purpose_code_for(payout_method.details.recipient_country),
-                                                                                         remittance_info: Wire.payment_remittance_info_for(payout_method.details.recipient_country),
-                                                                                       }),
-              currency:,
-              user: payment.creator
-            )
-
-            wire.save!
-
-            self.payout = wire
-            save!
-
-            Receipt.reupload(old_receiptable: payment, new_receiptable: wire.local_hcb_code)
-          end
-        when LegalEntity::PayoutMethod::WiseTransfer
-          safely do
-            wise = payment.event.wise_transfers.build(
-              memo: "Payment for \"#{payment.purpose}\"",
-              amount: payment.amount_cents,
-              payment_for: "Payment for \"#{payment.purpose}\"",
-              recipient_name: payment.payee.display_name,
-              recipient_email: payment.payee.email,
-              address_line1: payout_method.details.address_line1,
-              address_line2: payout_method.details.address_line2,
-              address_city: payout_method.details.address_city,
-              address_state: payout_method.details.address_state,
-              address_postal_code: payout_method.details.address_postal_code,
-              recipient_country: payout_method.details.recipient_country,
-              bank_name: payout_method.details.bank_name,
-              recipient_information: payout_method.details.recipient_information,
-              currency:,
-              user: payment.creator
-            )
-
-            wise.save!
-
-            self.payout = wise
-            save!
-
-            Receipt.reupload(old_receiptable: payment, new_receiptable: wise.local_hcb_code)
-          end
-        else
+        unless PAYOUT_METHOD_TRANSFER_MAPPING.key?(payout_method.details.class)
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
+        end
+
+        safely do
+          transfer = payout_method.create_transfer(
+            payment.event,
+            amount: payment.amount_cents,
+            memo: "Payment for \"#{payment.purpose}\".",
+            payment_for: "Payment for \"#{payment.purpose}\".",
+            recipient_name: payment.payee.display_name,
+            recipient_email: payment.payee.email,
+            currency: payment.currency,
+            user: payment.creator,
+          )
+
+          transfer.save!
+
+          self.payout = transfer
+          save!
+
+          Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
         end
 
         mark_under_review!
