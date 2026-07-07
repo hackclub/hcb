@@ -3,7 +3,7 @@
 class PaymentPolicy < ApplicationPolicy
   def show?
     return true if user&.auditor?
-    return true if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, user) && record.legal_entity&.users&.exists?(id: user.id)
+    return true if record.legal_entity&.users&.exists?(id: user.id)
 
     user.present? && record.event.users.exists?(id: user.id)
   end
