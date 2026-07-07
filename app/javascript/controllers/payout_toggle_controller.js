@@ -24,7 +24,11 @@ export default class extends Controller {
   }
 
   get manualSelected() {
-    const field = this.element.querySelector('input[name="manual"]')
+    // Read the payment form's manual field specifically — the payee picker
+    // renders its own input[name="manual"] (always "false") earlier in the DOM.
+    const field = this.element.querySelector(
+      '[data-manual-payee-target="manualField"]'
+    )
     return field?.value === 'true'
   }
 

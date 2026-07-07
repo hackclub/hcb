@@ -51,30 +51,20 @@ class PaymentsController < ApplicationController
   private
 
   def build_payout_method
-    type, details = payout_method_params.values_at(:type, :details)
-    return if type.blank?
+    type = params.dig(:user, :payout_method_type).presence
+    return unless LegalEntity::PayoutMethod.details_class_for(type)
 
     LegalEntity::PayoutMethodService::Update.new(
       user: current_user,
       legal_entity: @legal_entity,
       details_type: type,
-      details_attrs: details,
+      details_attrs: LegalEntity::PayoutMethod.details_params_from(params, type),
       make_default: true
     ).run!
   end
 
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
-  end
-
-  def payout_method_params
-    type_name = params.dig(:user, :payout_method_type).presence
-    details_class = LegalEntity::PayoutMethod.details_class_for(type_name)
-    return { type: nil, details: {} } unless details_class
-
-    key = :"payout_method_#{details_class.name.demodulize.underscore}"
-    details = params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
-    { type: type_name, details: }
   end
 
 end

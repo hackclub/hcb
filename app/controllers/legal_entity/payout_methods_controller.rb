@@ -125,11 +125,7 @@ class LegalEntity
     end
 
     def details_params_for(type_name)
-      details_class = LegalEntity::PayoutMethod.details_class_for(type_name)
-      return {} unless details_class
-
-      key = :"payout_method_#{details_class.name.demodulize.underscore}"
-      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+      LegalEntity::PayoutMethod.details_params_from(params, type_name)
     end
 
   end
