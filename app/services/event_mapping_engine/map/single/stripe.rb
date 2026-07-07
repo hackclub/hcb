@@ -11,6 +11,7 @@ module EventMappingEngine
         def run
           return if @canonical_transaction.canonical_event_mapping.present?
           return unless @canonical_transaction.likely_stripe_card_transaction?
+          return unless @canonical_transaction.raw_stripe_transaction.likely_event_id
 
           @canonical_transaction.create_canonical_event_mapping!(
             event_id: @canonical_transaction.raw_stripe_transaction.likely_event_id,
