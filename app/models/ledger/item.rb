@@ -154,6 +154,8 @@ class Ledger
       end
     end
 
+    # refresh! should always be called after any non-cached aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspect of a ledger item after this non-cached change occurs.
     def refresh!
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
@@ -165,7 +167,7 @@ class Ledger
       self.amount_cents = calculate_amount_cents
       self.receipt_required = calculate_receipt_required
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || "Transaction"
+      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first.memo || self.canonical_pending_transactions.first.memo || "Transaction"
 
       save!
     end
