@@ -84,6 +84,12 @@ Rails.application.configure do
   config.action_mailer.show_previews = true
 
 
+  # Run background jobs inline in development so that mailers using
+  # `.deliver_later` (grants, invites, etc.) actually deliver via SMTP.
+  # Without this there's no worker processing the queue, so only mailers
+  # that call `.deliver_now` (e.g. login codes) would send.
+  config.active_job.queue_adapter = :inline
+
   # SMTP config
  config.action_mailer.delivery_method = :smtp
 config.action_mailer.smtp_settings = {
