@@ -280,7 +280,8 @@ RSpec.describe Payment::Attempt, type: :model do
                            payee: payee_dbl,
                            event: event_dbl,
                            purpose: "Test purpose",
-                           estimate_usd_amount_cents: 10_000,
+                           amount_cents: 10_000,
+                           currency: "USD",
                            creator: double("creator"))
       allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_dbl)
