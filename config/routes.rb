@@ -963,6 +963,8 @@ Rails.application.routes.draw do
     get "emburse_cards", to: "events#emburse_card_overview", as: :emburse_cards_overview
     get "cards", to: "events#card_overview", as: :cards_overview
     get "cards/new", to: "stripe_cards#new"
+    get "simulate_transaction", to: "events#simulate_transaction", as: :simulate_transaction
+    post "simulate_transaction", to: "events#create_simulated_transaction"
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed

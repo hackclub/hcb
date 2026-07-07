@@ -517,6 +517,57 @@ class EventsController < ApplicationController
     authorize @event
   end
 
+  # Developer/testing tool: simulate a card transaction using Stripe's test
+  # helpers. Only available when Stripe is in test mode (i.e. not production).
+  def simulate_transaction
+    authorize @event, :card_overview?
+
+    ensure_simulation_available!
+
+    @stripe_cards = @event.stripe_cards.where.not(stripe_id: nil)
+                          .includes(:user).order("stripe_status asc, created_at desc")
+    @merchants = YellowPagesMerchants.all
+  end
+
+  def create_simulated_transaction
+    authorize @event, :card_overview?
+
+    ensure_simulation_available!
+
+    card = @event.stripe_cards.where.not(stripe_id: nil).find(params[:stripe_card_id])
+    amount_cents = (params[:amount].to_f * 100).round
+
+    if amount_cents <= 0
+      return redirect_to simulate_transaction_event_path(@event), flash: { error: "Enter an amount greater than $0." }
+    end
+
+    merchant = YellowPagesMerchants.find_by_network_id(params[:merchant_network_id])
+    merchant_data = if merchant
+                      { network_id: merchant.network_id, name: merchant.name }
+                    else
+                      { name: params[:merchant_name].presence || "Simulated Merchant" }
+                    end
+
+    # Create a test-mode authorization on Stripe, then import it onto the pending
+    # ledger exactly as the real `issuing_authorization.created` webhook would.
+    authorization = StripeService::Issuing::Authorization::TestHelpers.create(
+      amount: amount_cents,
+      card: card.stripe_id,
+      currency: "usd",
+      merchant_data:
+    )
+
+    if params[:settle] == "1"
+      StripeService::Issuing::Authorization::TestHelpers.capture(authorization.id, capture_amount: amount_cents)
+    end
+
+    ::StripeAuthorizationService::CreateFromWebhook.new(stripe_transaction_id: authorization.id).run
+
+    redirect_to event_transactions_path(@event), flash: { success: "Simulated a #{helpers.render_money amount_cents} transaction on #{card.name} at #{merchant_data[:name]}." }
+  rescue Stripe::StripeError => e
+    redirect_to simulate_transaction_event_path(@event), flash: { error: "Stripe error: #{e.message}" }
+  end
+
   def async_balance
     authorize @event
 
@@ -1240,6 +1291,14 @@ class EventsController < ApplicationController
   end
 
   private
+
+  # The transaction simulator relies on Stripe's test helpers, which only exist
+  # in test mode. Block it entirely in production.
+  def ensure_simulation_available!
+    unless StripeService.mode == :test
+      redirect_to event_path(@event), flash: { error: "Transaction simulation is only available in test mode." }
+    end
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?

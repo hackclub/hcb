@@ -1,0 +1,55 @@
+<% title "Simulate a transaction" %>
+<% page_sm %>
+<%= render "events/nav" %>
+
+<h1>Simulate a transaction</h1>
+
+<div class="card bg-info mb-4">
+  <p class="my-0">
+    <strong>This creates a Stripe authorization on the selected card.</strong>
+  </p>
+</div>
+
+<% if @stripe_cards.none? %>
+  <div class="card">
+    <p class="my-0">This organization doesn't have any issued Stripe cards yet.
+      <%= link_to "Create one", event_cards_new_path(event_id: @event.slug) %> first.</p>
+  </div>
+<% else %>
+  <%= form_with url: simulate_transaction_event_path(@event), method: :post, local: true do |form| %>
+    <div class="field">
+      <%= form.label :stripe_card_id, "Card" %>
+      <%= form.select :stripe_card_id,
+            @stripe_cards.map { |card|
+              ["#{card.name} •••• #{card.last4} (#{card.user&.name} · #{card.status_text})", card.id]
+            },
+            { include_blank: false },
+            required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :amount, "Amount (USD)" %>
+      <%= form.number_field :amount, step: "0.01", min: "0.01", placeholder: "10.00", required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :merchant_network_id, "Merchant" %>
+      <%= form.select :merchant_network_id,
+            @merchants.map { |merchant| [merchant.name, merchant.network_id] },
+            { include_blank: "— Custom merchant (enter name below) —" } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :merchant_name, "Custom merchant name" %>
+      <p class="h5 muted mt-0 mb-1">Only used when no merchant is selected above.</p>
+      <%= form.text_field :merchant_name, placeholder: "Simulated Merchant" %>
+    </div>
+
+    <div class="field field--checkbox">
+      <%= form.check_box :settle %>
+      <%= form.label :settle, "Settle immediately (capture the authorization)" %>
+    </div>
+
+    <%= form.submit "Simulate transaction", class: "btn" %>
+  <% end %>
+<% end %>
