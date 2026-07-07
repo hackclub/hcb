@@ -83,11 +83,6 @@ class Ledger
     end
 
     def calculate_system_memo
-      # Ledger items created from a raw transaction (e.g. by
-      # CanonicalPendingTransaction's after_create) may not have a linked
-      # object yet. Return nil so refresh! keeps the existing memo.
-      return nil if linked_object.nil? && !["CheckDeposit", "RawPendingStripeTransaction", "RawStripeTransaction"].include?(transaction_type)
-
       case transaction_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
