@@ -280,6 +280,7 @@ class Event
         fs_contract = Contract::FiscalSponsorship.create!(
           contractable: self,
           include_videos: false,
+          external_service: :manual, # bypass DocuSeal entirely
           external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
           prefills: { "public_id" => public_id, "name" => name, "description" => description },
           reissue_of:
@@ -288,8 +289,16 @@ class Event
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
-      fs_contract.party(:cosigner)&.notify unless reissue_of.present?
+      # No DocuSeal: immediately mark every party (including HCB) as signed so the
+      # contract is fully signed on creation. The only remaining step is for an
+      # admin to activate the event.
+      #
+      # Sign HCB first so that signing the remaining parties doesn't trigger the
+      # "all non-HCB parties signed" notification/reminders to HCB (see
+      # Contract#on_party_signed).
+      [fs_contract.party(:hcb), *fs_contract.parties.not_hcb].compact.each do |party|
+        party.mark_signed! unless party.signed?
+      end
 
       set_airtable_status("Documents sent") if reissue_of.present?
 
@@ -333,8 +342,10 @@ class Event
     end
 
     def activate_event!(risk_level:, tags: [], point_of_contact: nil)
-      contract.party(:hcb).sync_with_docuseal
-      contract.reload
+      if contract.sent_with_docuseal?
+        contract.party(:hcb).sync_with_docuseal
+        contract.reload
+      end
       raise "Contract must be signed before activation" unless contract.signed?
 
       self.with_lock do
@@ -349,7 +360,7 @@ class Event
           event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
           risk_level:
         )
-        contract.create_document!
+        contract.create_document! if contract.sent_with_docuseal?
 
         service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
         invite = service.model
