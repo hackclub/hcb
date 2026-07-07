@@ -1,5 +1,20 @@
 # frozen_string_literal: true
 
+# Cache flag reads through Rails.cache (shared Redis in prod/staging) instead of
+# hitting Postgres on every check. All writes go through Flipper, which busts the
+# cache immediately, so the TTL is only a backstop against a lost invalidation.
+# We intentionally don't preload: several flags carry thousands of actor gates, so
+# loading every gate per request would cost more than the per-flag reads it saves.
+Flipper.configure do |config|
+  config.adapter do
+    Flipper::Adapters::ActiveSupportCacheStore.new(
+      Flipper::Adapters::ActiveRecord.new,
+      Rails.cache,
+      12.hours
+    )
+  end
+end
+
 Rails.application.configure do
   # @msw Disable preloading for feature-flags to save on db queries b/c we
   # aren't running many betas at the time of writing. If Flipper is used
