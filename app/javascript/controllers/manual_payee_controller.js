@@ -60,7 +60,8 @@ export default class extends Controller {
 
     const paymentDetails = document.getElementById('payment-details')
     if (paymentDetails) {
-      const top = paymentDetails.getBoundingClientRect().top + window.scrollY - 100
+      const top =
+        paymentDetails.getBoundingClientRect().top + window.scrollY - 100
       window.scrollTo({ top, behavior: 'smooth' })
     }
 
