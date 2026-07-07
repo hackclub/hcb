@@ -11,11 +11,11 @@ RSpec.describe Payment, type: :model do
     # callbacks don't interfere with unrelated tests. Tests that assert mailer
     # behaviour override this stub in the test body.
     allow(PaymentMailer).to receive(:with).and_return(double.as_null_object)
-    stub_legal_entity(payment, complete: false, payout_method: nil)
+    stub_legal_entity(payment, payable: false, payout_method: nil)
   end
 
-  def stub_legal_entity(payment, complete:, payout_method:)
-    legal_entity = double("LegalEntity", payable?: complete, default_payout_method: payout_method).as_null_object
+  def stub_legal_entity(payment, payable:, payout_method:)
+    legal_entity = double("LegalEntity", payable?: payable, default_payout_method: payout_method).as_null_object
     # Stub directly on payment so the stub survives with_lock's reload (which
     # resets association caches). has_one :through issues SQL, not a Ruby
     # delegation, so stubbing payee.legal_entity won't intercept it.
@@ -55,56 +55,57 @@ RSpec.describe Payment, type: :model do
   describe "after_create" do
     let(:payee) { create(:payee) }
 
-    def create_payment_with_legal_entity(complete:, payout_method:)
+    def create_payment_with_legal_entity(payable:, payout_method:)
       payment = build(:payment, payee:)
-      stub_legal_entity(payment, complete:, payout_method:)
+      stub_legal_entity(payment, payable:, payout_method:)
       payment.save!
       payment
     end
 
-    context "when the legal entity is complete and has a default payout method" do
+    context "when the legal entity is payable and has a default payout method" do
       let(:payout_method) { create(:legal_entity_payout_method) }
 
       before do
         allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!)
+        allow_any_instance_of(Payment::Attempt).to receive(:legal_entity_payable)
       end
 
       it "creates a Payment::Attempt with that payout method" do
-        payment = create_payment_with_legal_entity(complete: true, payout_method:)
+        payment = create_payment_with_legal_entity(payable: true, payout_method:)
         expect(payment.attempts.count).to eq 1
         expect(payment.attempts.first.payout_method).to eq payout_method
       end
 
       it "does not send any mailer" do
         expect(PaymentMailer).not_to receive(:with)
-        create_payment_with_legal_entity(complete: true, payout_method:)
+        create_payment_with_legal_entity(payable: true, payout_method:)
       end
     end
 
-    context "when the legal entity is complete but has no default payout method" do
+    context "when the legal entity is payable but has no default payout method" do
       it "does not create any attempt" do
-        payment = create_payment_with_legal_entity(complete: true, payout_method: nil)
+        payment = create_payment_with_legal_entity(payable: true, payout_method: nil)
         expect(payment.attempts).to be_empty
       end
 
       it "delivers the missing_payout_method mailer" do
         mail = double("mail", deliver_later: true)
         allow(PaymentMailer).to receive_message_chain(:with, :missing_payout_method).and_return(mail)
-        create_payment_with_legal_entity(complete: true, payout_method: nil)
+        create_payment_with_legal_entity(payable: true, payout_method: nil)
         expect(mail).to have_received(:deliver_later)
       end
     end
 
-    context "when the legal entity is not complete" do
+    context "when the legal entity is not payable" do
       it "does not create any attempt" do
-        payment = create_payment_with_legal_entity(complete: false, payout_method: nil)
+        payment = create_payment_with_legal_entity(payable: false, payout_method: nil)
         expect(payment.attempts).to be_empty
       end
 
       it "delivers the missing_tax_information mailer" do
         mail = double("mail", deliver_later: true)
         allow(PaymentMailer).to receive_message_chain(:with, :missing_tax_information).and_return(mail)
-        create_payment_with_legal_entity(complete: false, payout_method: nil)
+        create_payment_with_legal_entity(payable: false, payout_method: nil)
         expect(mail).to have_received(:deliver_later)
       end
     end
@@ -184,17 +185,18 @@ RSpec.describe Payment, type: :model do
     let(:payout_method) { create(:legal_entity_payout_method) }
     let(:payment) do
       p = build(:payment, payee: create(:payee))
-      # Save with complete: false so after_create sends a mailer (suppressed by
+      # Save with payable: false so after_create sends a mailer (suppressed by
       # the outer before) rather than creating an attempt that would conflict
       # with the factory-created attempts set up in each context.
-      stub_legal_entity(p, complete: false, payout_method: nil)
+      stub_legal_entity(p, payable: false, payout_method: nil)
       p.save!
       p
     end
 
     before do
       allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!)
-      stub_legal_entity(payment, complete: true, payout_method:)
+      allow_any_instance_of(Payment::Attempt).to receive(:legal_entity_payable)
+      stub_legal_entity(payment, payable: true, payout_method:)
     end
 
     context "when all previous attempts have failed" do
@@ -234,7 +236,7 @@ RSpec.describe Payment, type: :model do
     context "when there is no default payout method" do
       before do
         create(:payment_attempt, payment:, aasm_state: "failed")
-        stub_legal_entity(payment, complete: true, payout_method: nil)
+        stub_legal_entity(payment, payable: true, payout_method: nil)
       end
 
       it "raises ArgumentError" do
