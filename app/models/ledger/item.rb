@@ -111,9 +111,9 @@ class Ledger
         if linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}"
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
           "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         else
@@ -121,13 +121,13 @@ class Ledger
         end
       when "Disbursement::Incoming"
         if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.card_grant.user.name}"
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
           "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.card_grant.user.name}"
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
         else
           "Transfer from #{linked_object.source_event.name}"
         end

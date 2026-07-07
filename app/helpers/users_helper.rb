@@ -61,7 +61,7 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if payments_contractors_refresh?
+    if current_user&.payments_received&.any?
       items << {
         name: "Pay",
         path: my_pay_path,

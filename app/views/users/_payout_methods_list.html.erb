@@ -43,7 +43,7 @@
     data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
     <%= modal_header "Add method" %>
     <div style="padding: 0 20px 20px;">
-      <%= render "users/payout_form/form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
+      <%= render "users/payout_form/managed_form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
     </div>
   </section>
 </div>
