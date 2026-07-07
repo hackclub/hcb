@@ -16,10 +16,6 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
 
-  helper_method def payments_contractors_refresh?
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, current_user)
-  end
-
   # Ensure users are signed in. Create one-off exceptions to this on routes
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user

@@ -152,7 +152,7 @@ class UsersController < ApplicationController
   def edit_payout
     authorize @user
 
-    unless payments_contractors_refresh?
+    unless @user.payments_received.exists?
       @legal_entity = @user.personal_legal_entity
       return
     end
@@ -165,7 +165,7 @@ class UsersController < ApplicationController
   def pay
     authorize @user
 
-    return head :not_found unless payments_contractors_refresh?
+    return head :not_found unless @user.payments_received.exists?
 
     if params[:legal_entity_id].present?
       session[:pay_legal_entity_id] = params[:legal_entity_id]
@@ -428,7 +428,7 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
-    if payout_method_type.present? && payments_contractors_refresh?
+    if payout_method_type.present? && @user.payments_received.exists?
       @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
       session[:legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
     end
