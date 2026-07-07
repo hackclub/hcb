@@ -171,6 +171,9 @@ class Ledger
     end
 
     def update_custom_memo!(memo)
+      # TODO: remove CT and CPT updates because they are HCB code specific
+      canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+      canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
       ledger_item.update!(memo:, custom_memo: memo) # what happens here if custom memo is nil?
     end
 
