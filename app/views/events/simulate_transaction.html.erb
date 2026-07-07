@@ -23,7 +23,7 @@
             @stripe_cards.map { |card|
               ["#{card.name} •••• #{card.last4} (#{card.user&.name} · #{card.status_text})", card.id]
             },
-            { include_blank: false },
+            {},
             required: true %>
     </div>
 
