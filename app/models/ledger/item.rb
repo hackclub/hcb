@@ -54,8 +54,9 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :refresh!
-    after_touch :refresh!
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
