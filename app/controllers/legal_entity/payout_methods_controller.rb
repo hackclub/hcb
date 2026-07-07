@@ -109,7 +109,6 @@ class LegalEntity
     end
 
     def legal_entity
-
       @legal_entity ||= @payout_method&.legal_entity ||
                         current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
                         current_user&.personal_legal_entity
