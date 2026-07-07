@@ -764,6 +764,10 @@ class HcbCode < ApplicationRecord
   end
 
   def update_custom_memo!(memo)
+    if ledger_item.present?
+      ledger_item.update_custom_memo!(memo)
+      return
+    end
     canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
     canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end
