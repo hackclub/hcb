@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_181541) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1584,12 +1584,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["id"], name: "index_ledger_items_on_id", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
