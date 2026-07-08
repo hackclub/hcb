@@ -24,13 +24,6 @@
 #  user_id                  :bigint
 #  webauthn_credential_id   :bigint
 #
-# Indexes
-#
-#  index_user_sessions_on_impersonated_by_id      (impersonated_by_id)
-#  index_user_sessions_on_session_token_bidx      (session_token_bidx)
-#  index_user_sessions_on_user_id                 (user_id)
-#  index_user_sessions_on_webauthn_credential_id  (webauthn_credential_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (impersonated_by_id => users.id)

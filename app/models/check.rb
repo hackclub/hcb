@@ -26,11 +26,6 @@
 #  lob_address_id         :bigint
 #  lob_id                 :string
 #
-# Indexes
-#
-#  index_checks_on_creator_id      (creator_id)
-#  index_checks_on_lob_address_id  (lob_address_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)

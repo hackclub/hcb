@@ -43,21 +43,6 @@
 #  plaid_category_id              :text
 #  plaid_id                       :text
 #
-# Indexes
-#
-#  index_transactions_on_ach_transfer_id       (ach_transfer_id)
-#  index_transactions_on_bank_account_id       (bank_account_id)
-#  index_transactions_on_check_id              (check_id)
-#  index_transactions_on_deleted_at            (deleted_at)
-#  index_transactions_on_disbursement_id       (disbursement_id)
-#  index_transactions_on_donation_payout_id    (donation_payout_id)
-#  index_transactions_on_emburse_transfer_id   (emburse_transfer_id)
-#  index_transactions_on_fee_reimbursement_id  (fee_reimbursement_id)
-#  index_transactions_on_fee_relationship_id   (fee_relationship_id)
-#  index_transactions_on_invoice_payout_id     (invoice_payout_id)
-#  index_transactions_on_plaid_id              (plaid_id) UNIQUE
-#  index_transactions_on_slug                  (slug) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (ach_transfer_id => ach_transfers.id)

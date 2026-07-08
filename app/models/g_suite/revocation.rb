@@ -15,10 +15,6 @@
 #  updated_at           :datetime         not null
 #  g_suite_id           :bigint           not null
 #
-# Indexes
-#
-#  index_g_suite_revocations_on_g_suite_id  (g_suite_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (g_suite_id => g_suites.id)

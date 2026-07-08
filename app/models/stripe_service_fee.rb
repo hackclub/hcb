@@ -12,11 +12,6 @@
 #  stripe_balance_transaction_id :string           not null
 #  stripe_topup_id               :bigint
 #
-# Indexes
-#
-#  index_stripe_service_fees_on_stripe_balance_transaction_id  (stripe_balance_transaction_id) UNIQUE
-#  index_stripe_service_fees_on_stripe_topup_id                (stripe_topup_id)
-#
 class StripeServiceFee < ApplicationRecord
   belongs_to :stripe_topup, optional: true
 

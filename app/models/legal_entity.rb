@@ -18,10 +18,6 @@
 #  updated_at          :datetime         not null
 #  managing_event_id   :bigint
 #
-# Indexes
-#
-#  index_legal_entities_on_managing_event_id  (managing_event_id)
-#
 class LegalEntity < ApplicationRecord
   REQUIRED_COLUMNS = %w[address_city address_country address_line1 address_postal_code address_state entity_type tin_hash].freeze
   # Some legal entities will be managed by events,

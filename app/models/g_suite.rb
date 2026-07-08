@@ -19,11 +19,6 @@
 #  event_id             :bigint
 #  remote_org_unit_id   :text
 #
-# Indexes
-#
-#  index_g_suites_on_created_by_id  (created_by_id)
-#  index_g_suites_on_event_id       (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (created_by_id => users.id)

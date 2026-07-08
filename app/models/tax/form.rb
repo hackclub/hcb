@@ -25,10 +25,6 @@
 #  external_id                    :string
 #  legal_entity_id                :bigint           not null
 #
-# Indexes
-#
-#  index_tax_forms_on_legal_entity_id  (legal_entity_id)
-#
 module Tax
   class Form < ApplicationRecord
     include AASM

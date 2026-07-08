@@ -13,10 +13,6 @@
 #  updated_at           :datetime         not null
 #  stripe_id            :string
 #
-# Indexes
-#
-#  index_stripe_topups_on_stripe_id  (stripe_id) UNIQUE
-#
 class StripeTopup < ApplicationRecord
   after_create_commit unless: -> { stripe_id.present? } do
     topup = StripeService::Topup.create(

@@ -16,11 +16,6 @@
 #  external_id    :string
 #  user_id        :bigint
 #
-# Indexes
-#
-#  index_contract_parties_on_contract_id  (contract_id)
-#  index_contract_parties_on_user_id      (user_id)
-#
 class Contract
   class Party < ApplicationRecord
     include AASM

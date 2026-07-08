@@ -18,7 +18,6 @@
 #  index_canonical_event_mappings_on_event_id                  (event_id)
 #  index_canonical_event_mappings_on_subledger_id              (subledger_id)
 #  index_canonical_event_mappings_on_user_id                   (user_id)
-#  index_cem_event_id_canonical_transaction_id_uniqueness      (event_id,canonical_transaction_id) UNIQUE
 #
 # Foreign Keys
 #

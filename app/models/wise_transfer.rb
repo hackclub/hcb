@@ -32,11 +32,6 @@
 #  wise_id                          :text
 #  wise_recipient_id                :text
 #
-# Indexes
-#
-#  index_wise_transfers_on_event_id  (event_id)
-#  index_wise_transfers_on_user_id   (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

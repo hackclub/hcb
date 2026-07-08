@@ -16,10 +16,6 @@
 #  increase_route_id       :text
 #  increase_transaction_id :text
 #
-# Indexes
-#
-#  index_raw_increase_transactions_on_increase_transaction_id  (increase_transaction_id) UNIQUE
-#
 class RawIncreaseTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source

@@ -28,15 +28,6 @@
 #  subledger_id               :bigint
 #  user_id                    :bigint           not null
 #
-# Indexes
-#
-#  index_card_grants_on_disbursement_id  (disbursement_id) UNIQUE
-#  index_card_grants_on_event_id         (event_id)
-#  index_card_grants_on_sent_by_id       (sent_by_id)
-#  index_card_grants_on_stripe_card_id   (stripe_card_id) UNIQUE
-#  index_card_grants_on_subledger_id     (subledger_id) UNIQUE
-#  index_card_grants_on_user_id          (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

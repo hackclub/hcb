@@ -19,10 +19,6 @@
 #  updated_at                    :datetime         not null
 #  card_grant_id                 :bigint           not null
 #
-# Indexes
-#
-#  index_card_grant_pre_authorizations_on_card_grant_id  (card_grant_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (card_grant_id => card_grants.id)

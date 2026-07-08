@@ -14,8 +14,7 @@
 #
 # Indexes
 #
-#  idx_on_categorizable_type_categorizable_id_f3e1245d19           (categorizable_type,categorizable_id) UNIQUE
-#  index_transaction_category_mappings_on_transaction_category_id  (transaction_category_id)
+#  idx_on_categorizable_type_categorizable_id_f3e1245d19  (categorizable_type,categorizable_id) UNIQUE
 #
 # Foreign Keys
 #

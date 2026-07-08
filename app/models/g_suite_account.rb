@@ -17,11 +17,6 @@
 #  creator_id                  :bigint
 #  g_suite_id                  :bigint
 #
-# Indexes
-#
-#  index_g_suite_accounts_on_creator_id  (creator_id)
-#  index_g_suite_accounts_on_g_suite_id  (g_suite_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)

@@ -11,9 +11,7 @@
 #
 # Indexes
 #
-#  idx_on_event_scoped_tag_id_event_id_4b716d1ac0         (event_scoped_tag_id,event_id) UNIQUE
-#  index_event_scoped_tags_events_on_event_id             (event_id)
-#  index_event_scoped_tags_events_on_event_scoped_tag_id  (event_scoped_tag_id)
+#  idx_on_event_scoped_tag_id_event_id_4b716d1ac0  (event_scoped_tag_id,event_id) UNIQUE
 #
 # Foreign Keys
 #

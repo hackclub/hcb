@@ -13,12 +13,6 @@
 #  referring_raffle_id :bigint
 #  user_id             :bigint           not null
 #
-# Indexes
-#
-#  index_raffles_on_program_and_user_id  (program,user_id) UNIQUE
-#  index_raffles_on_referring_raffle_id  (referring_raffle_id)
-#  index_raffles_on_ticket_number        (ticket_number) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (referring_raffle_id => raffles.id)

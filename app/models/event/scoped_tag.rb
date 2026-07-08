@@ -10,10 +10,6 @@
 #  updated_at      :datetime         not null
 #  parent_event_id :bigint           not null
 #
-# Indexes
-#
-#  index_event_scoped_tags_on_parent_event_id  (parent_event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (parent_event_id => events.id)

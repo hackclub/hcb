@@ -14,10 +14,6 @@
 #  event_id    :bigint           not null
 #  gusto_id    :string
 #
-# Indexes
-#
-#  index_employees_on_event_id  (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

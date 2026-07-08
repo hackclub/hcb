@@ -9,10 +9,6 @@
 #  hcb_code_id :bigint           not null, primary key
 #  tag_id      :bigint           not null, primary key
 #
-# Indexes
-#
-#  index_hcb_codes_tags_on_hcb_code_id_and_tag_id  (hcb_code_id,tag_id) UNIQUE
-#
 class HcbCodeTag < ApplicationRecord
   self.table_name = "hcb_codes_tags"
   self.primary_key = [:hcb_code_id, :tag_id]

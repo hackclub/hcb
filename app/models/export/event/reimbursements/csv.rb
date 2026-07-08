@@ -11,10 +11,6 @@
 #  updated_at      :datetime         not null
 #  requested_by_id :bigint
 #
-# Indexes
-#
-#  index_exports_on_requested_by_id  (requested_by_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (requested_by_id => users.id)

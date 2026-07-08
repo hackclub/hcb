@@ -12,13 +12,6 @@
 #  user_id             :bigint
 #  user_session_id     :bigint
 #
-# Indexes
-#
-#  index_referral_attributions_on_referral_link_id     (referral_link_id)
-#  index_referral_attributions_on_referral_program_id  (referral_program_id)
-#  index_referral_attributions_on_user_id              (user_id)
-#  index_referral_attributions_on_user_session_id      (user_session_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (referral_link_id => referral_links.id)

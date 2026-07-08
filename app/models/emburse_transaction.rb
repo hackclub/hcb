@@ -36,15 +36,8 @@
 #  emburse_id                   :string
 #  event_id                     :bigint
 #
-# Indexes
-#
-#  index_emburse_transactions_on_deleted_at       (deleted_at)
-#  index_emburse_transactions_on_emburse_card_id  (emburse_card_id)
-#  index_emburse_transactions_on_event_id         (event_id)
-#
 # Foreign Keys
 #
-#  fk_rails_...  (emburse_card_id => emburse_cards.id)
 #  fk_rails_...  (event_id => events.id)
 #
 class EmburseTransaction < ApplicationRecord

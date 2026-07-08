@@ -15,9 +15,7 @@
 #
 # Indexes
 #
-#  index_organizer_position_invite_links_on_creator_id      (creator_id)
-#  index_organizer_position_invite_links_on_deactivator_id  (deactivator_id)
-#  index_organizer_position_invite_links_on_event_id        (event_id)
+#  index_organizer_position_invite_links_on_event_id  (event_id)
 #
 # Foreign Keys
 #

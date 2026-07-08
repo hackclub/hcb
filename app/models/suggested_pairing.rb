@@ -14,12 +14,6 @@
 #  hcb_code_id :bigint           not null
 #  receipt_id  :bigint           not null
 #
-# Indexes
-#
-#  index_suggested_pairings_on_hcb_code_id                 (hcb_code_id)
-#  index_suggested_pairings_on_receipt_id                  (receipt_id)
-#  index_suggested_pairings_on_receipt_id_and_hcb_code_id  (receipt_id,hcb_code_id) UNIQUE
-#
 class SuggestedPairing < ApplicationRecord
   belongs_to :receipt
   belongs_to :hcb_code

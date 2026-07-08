@@ -39,12 +39,6 @@
 #  payout_method_id              :bigint
 #  webauthn_id                   :string
 #
-# Indexes
-#
-#  index_users_on_discord_id  (discord_id) UNIQUE
-#  index_users_on_email       (email) UNIQUE
-#  index_users_on_slug        (slug) UNIQUE
-#
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 

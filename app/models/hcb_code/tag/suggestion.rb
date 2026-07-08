@@ -11,11 +11,6 @@
 #  hcb_code_id :bigint           not null
 #  tag_id      :bigint           not null
 #
-# Indexes
-#
-#  index_hcb_code_tag_suggestions_on_hcb_code_id  (hcb_code_id)
-#  index_hcb_code_tag_suggestions_on_tag_id       (tag_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (hcb_code_id => hcb_codes.id)

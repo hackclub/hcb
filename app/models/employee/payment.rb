@@ -19,11 +19,6 @@
 #  payout_id      :bigint
 #  reviewed_by_id :bigint
 #
-# Indexes
-#
-#  index_employee_payments_on_employee_id     (employee_id)
-#  index_employee_payments_on_reviewed_by_id  (reviewed_by_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (employee_id => employees.id)

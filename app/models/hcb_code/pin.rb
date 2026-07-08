@@ -10,11 +10,6 @@
 #  event_id    :bigint
 #  hcb_code_id :bigint
 #
-# Indexes
-#
-#  index_hcb_code_pins_on_event_id     (event_id)
-#  index_hcb_code_pins_on_hcb_code_id  (hcb_code_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

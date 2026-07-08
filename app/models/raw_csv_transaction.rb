@@ -14,10 +14,6 @@
 #  updated_at             :datetime         not null
 #  csv_transaction_id     :text
 #
-# Indexes
-#
-#  index_raw_csv_transactions_on_csv_transaction_id  (csv_transaction_id) UNIQUE
-#
 class RawCsvTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source

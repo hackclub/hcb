@@ -19,13 +19,6 @@
 #  updated_by_id                  :bigint
 #  user_id                        :bigint           not null
 #
-# Indexes
-#
-#  index_user_email_updates_on_authorization_token_bidx  (authorization_token_bidx)
-#  index_user_email_updates_on_updated_by_id             (updated_by_id)
-#  index_user_email_updates_on_user_id                   (user_id)
-#  index_user_email_updates_on_verification_token_bidx   (verification_token_bidx)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (updated_by_id => users.id)

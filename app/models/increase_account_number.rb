@@ -13,10 +13,6 @@
 #  increase_account_number_id :string
 #  increase_limit_id          :string
 #
-# Indexes
-#
-#  index_increase_account_numbers_on_event_id  (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

@@ -37,15 +37,6 @@
 #  stripe_id                             :text
 #  subledger_id                          :bigint
 #
-# Indexes
-#
-#  index_stripe_cards_on_event_id              (event_id)
-#  index_stripe_cards_on_last_frozen_by_id     (last_frozen_by_id)
-#  index_stripe_cards_on_replacement_for_id    (replacement_for_id)
-#  index_stripe_cards_on_stripe_cardholder_id  (stripe_cardholder_id)
-#  index_stripe_cards_on_stripe_id             (stripe_id) UNIQUE
-#  index_stripe_cards_on_subledger_id          (subledger_id) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

@@ -48,13 +48,6 @@
 #  parent_id                                    :bigint
 #  point_of_contact_id                          :bigint
 #
-# Indexes
-#
-#  index_events_on_discord_channel_id   (discord_channel_id) UNIQUE
-#  index_events_on_discord_guild_id     (discord_guild_id) UNIQUE
-#  index_events_on_parent_id            (parent_id)
-#  index_events_on_point_of_contact_id  (point_of_contact_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (point_of_contact_id => users.id)

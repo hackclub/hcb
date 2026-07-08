@@ -12,10 +12,6 @@
 #  updated_at      :datetime         not null
 #  disbursement_id :bigint
 #
-# Indexes
-#
-#  index_rpidts_on_disbursement_id  (disbursement_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (disbursement_id => disbursements.id)

@@ -15,11 +15,6 @@
 #  assignee_id   :bigint           not null
 #  taskable_id   :bigint           not null
 #
-# Indexes
-#
-#  index_tasks_on_assignee  (assignee_type,assignee_id)
-#  index_tasks_on_taskable  (taskable_type,taskable_id)
-#
 class Task
   module Receiptable
     class Upload < Task

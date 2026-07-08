@@ -14,12 +14,6 @@
 #  reimbursement_expenses_id        :bigint           not null
 #  reimbursement_payout_holdings_id :bigint
 #
-# Indexes
-#
-#  index_expense_payouts_on_expense_payout_holdings_id  (reimbursement_payout_holdings_id)
-#  index_expense_payouts_on_expenses_id                 (reimbursement_expenses_id)
-#  index_reimbursement_expense_payouts_on_event_id      (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

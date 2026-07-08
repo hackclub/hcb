@@ -14,11 +14,6 @@
 #  canonical_event_mapping_id :bigint
 #  event_id                   :bigint
 #
-# Indexes
-#
-#  index_fees_on_canonical_event_mapping_id  (canonical_event_mapping_id)
-#  index_fees_on_event_id                    (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (canonical_event_mapping_id => canonical_event_mappings.id)

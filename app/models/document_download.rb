@@ -13,11 +13,6 @@
 #  document_id :bigint
 #  user_id     :bigint
 #
-# Indexes
-#
-#  index_document_downloads_on_document_id  (document_id)
-#  index_document_downloads_on_user_id      (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (document_id => documents.id)

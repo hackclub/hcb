@@ -19,14 +19,6 @@
 #  raw_plaid_transaction_id           :bigint
 #  raw_stripe_transaction_id          :bigint
 #
-# Indexes
-#
-#  index_hashed_transactions_on_duplicate_of_hashed_transaction_id  (duplicate_of_hashed_transaction_id)
-#  index_hashed_transactions_on_raw_csv_transaction_id              (raw_csv_transaction_id)
-#  index_hashed_transactions_on_raw_increase_transaction_id         (raw_increase_transaction_id)
-#  index_hashed_transactions_on_raw_plaid_transaction_id            (raw_plaid_transaction_id)
-#  index_hashed_transactions_on_raw_stripe_transaction_id           (raw_stripe_transaction_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (raw_plaid_transaction_id => raw_plaid_transactions.id)

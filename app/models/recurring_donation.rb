@@ -26,12 +26,6 @@
 #  stripe_payment_intent_id            :text
 #  stripe_subscription_id              :text
 #
-# Indexes
-#
-#  index_recurring_donations_on_event_id                (event_id)
-#  index_recurring_donations_on_stripe_subscription_id  (stripe_subscription_id) UNIQUE
-#  index_recurring_donations_on_url_hash                (url_hash) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

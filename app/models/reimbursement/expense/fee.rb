@@ -20,11 +20,6 @@
 #  approved_by_id          :bigint
 #  reimbursement_report_id :bigint           not null
 #
-# Indexes
-#
-#  index_reimbursement_expenses_on_approved_by_id           (approved_by_id)
-#  index_reimbursement_expenses_on_reimbursement_report_id  (reimbursement_report_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (approved_by_id => users.id)

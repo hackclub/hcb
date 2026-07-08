@@ -43,13 +43,6 @@
 #  recurring_donation_id                :bigint
 #  stripe_payment_intent_id             :string
 #
-# Indexes
-#
-#  index_donations_on_event_id               (event_id)
-#  index_donations_on_fee_reimbursement_id   (fee_reimbursement_id)
-#  index_donations_on_payout_id              (payout_id)
-#  index_donations_on_recurring_donation_id  (recurring_donation_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

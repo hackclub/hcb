@@ -11,12 +11,6 @@
 #  invoice_id  :bigint
 #  reporter_id :bigint
 #
-# Indexes
-#
-#  index_hcb_code_personal_transactions_on_hcb_code_id  (hcb_code_id) UNIQUE
-#  index_hcb_code_personal_transactions_on_invoice_id   (invoice_id)
-#  index_hcb_code_personal_transactions_on_reporter_id  (reporter_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (hcb_code_id => hcb_codes.id)

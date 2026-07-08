@@ -17,10 +17,6 @@
 #  stripe_id                 :string
 #  stripe_physical_bundle_id :string
 #
-# Indexes
-#
-#  index_stripe_card_personalization_designs_on_event_id  (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

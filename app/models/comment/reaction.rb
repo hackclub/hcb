@@ -12,13 +12,6 @@
 #  comment_id :bigint           not null
 #  reactor_id :bigint           not null
 #
-# Indexes
-#
-#  index_comment_reactions_on_comment_id  (comment_id)
-#  index_comment_reactions_on_deleted_at  (deleted_at)
-#  index_comment_reactions_on_emoji       (emoji)
-#  index_comment_reactions_on_reactor_id  (reactor_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (comment_id => comments.id)

@@ -13,10 +13,6 @@
 #  entity_id      :bigint           not null
 #  uploaded_by_id :bigint
 #
-# Indexes
-#
-#  index_w9s_on_uploaded_by_id  (uploaded_by_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (uploaded_by_id => users.id)

@@ -71,6 +71,9 @@
       "gift_card_novelty_and_souvenir_shops"
     ]
   },
+  "grants": {
+    "label": "Grants"
+  },
   "grants-stipends": {
     "label": "Grants / stipends"
   },
@@ -155,6 +158,9 @@
   },
   "payroll-payroll-taxes": {
     "label": "Payroll / Payroll taxes"
+  },
+  "prizes": {
+    "label": "Prizes"
   },
   "professional-fees-contractors": {
     "label": "Professional fees (contractors)",
@@ -355,6 +361,9 @@
       "computers_peripherals_and_software",
       "direct_marketing_subscription"
     ]
+  },
+  "stipends": {
+    "label": "Stipends"
   },
   "stripe-fee-reimbursements": {
     "hq_only": true,

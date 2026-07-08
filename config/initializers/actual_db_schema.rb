@@ -10,7 +10,7 @@
 if defined?(ActualDbSchema) # The ActualDbSchema gem is only loaded in development
   ActualDbSchema.configure do |config|
     # Enable the gem.
-    config.enabled = Rails.env.development?
+    config.enabled = false
 
     # Disable automatic rollback of phantom migrations.
     # config.auto_rollback_disabled = true

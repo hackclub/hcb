@@ -12,12 +12,6 @@
 #  creator_id :bigint           not null
 #  program_id :bigint           not null
 #
-# Indexes
-#
-#  index_referral_links_on_creator_id  (creator_id)
-#  index_referral_links_on_program_id  (program_id)
-#  index_referral_links_on_slug        (slug) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)

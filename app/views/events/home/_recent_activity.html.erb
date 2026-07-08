@@ -21,7 +21,7 @@
         </p>
       <% else %>
         <ul class="list-reset comments w-100 pb-2 px-4 pt-0 flex-1 my-0">
-          <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
+          <%# render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
         </ul>
       <% end %>
     </div>

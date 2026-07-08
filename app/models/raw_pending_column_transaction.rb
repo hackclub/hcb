@@ -14,10 +14,6 @@
 #  updated_at         :datetime         not null
 #  column_id          :string           not null
 #
-# Indexes
-#
-#  index_raw_pending_column_transactions_on_column_id  (column_id) UNIQUE
-#
 class RawPendingColumnTransaction < ApplicationRecord
   has_one :canonical_pending_transaction
 

@@ -17,13 +17,6 @@
 #  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
 #
-# Indexes
-#
-#  index_canonical_transactions_on_date                (date)
-#  index_canonical_transactions_on_hcb_code            (hcb_code)
-#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
-#  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id)

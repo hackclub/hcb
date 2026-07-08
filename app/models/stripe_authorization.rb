@@ -17,10 +17,6 @@
 #  stripe_card_id               :bigint           not null
 #  stripe_id                    :text
 #
-# Indexes
-#
-#  index_stripe_authorizations_on_stripe_card_id  (stripe_card_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (stripe_card_id => stripe_cards.id)

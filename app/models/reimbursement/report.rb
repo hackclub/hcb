@@ -27,15 +27,6 @@
 #  reviewer_id                   :bigint
 #  user_id                       :bigint           not null
 #
-# Indexes
-#
-#  index_reimbursement_reports_on_card_grant_id                  (card_grant_id)
-#  index_reimbursement_reports_on_event_id                       (event_id)
-#  index_reimbursement_reports_on_invited_by_id                  (invited_by_id)
-#  index_reimbursement_reports_on_legal_entity_payout_method_id  (legal_entity_payout_method_id)
-#  index_reimbursement_reports_on_reviewer_id                    (reviewer_id)
-#  index_reimbursement_reports_on_user_id                        (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

@@ -13,10 +13,6 @@
 #  updated_at    :datetime         not null
 #  tourable_id   :bigint           not null
 #
-# Indexes
-#
-#  index_tours_on_tourable  (tourable_type,tourable_id)
-#
 class Tour < ApplicationRecord
   default_scope { where(active: true) }
 

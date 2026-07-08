@@ -12,11 +12,6 @@
 #  updated_at       :datetime         not null
 #  stripe_topup_id  :bigint
 #
-# Indexes
-#
-#  index_fee_reimbursements_on_stripe_topup_id   (stripe_topup_id)
-#  index_fee_reimbursements_on_transaction_memo  (transaction_memo) UNIQUE
-#
 class FeeReimbursement < ApplicationRecord
   has_paper_trail
 

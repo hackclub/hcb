@@ -18,12 +18,6 @@
 #  organizer_position_id                        :bigint           not null
 #  submitted_by_id                              :bigint           not null
 #
-# Indexes
-#
-#  index_organizer_deletion_requests_on_organizer_position_id     (organizer_position_id)
-#  index_organizer_position_deletion_requests_on_closed_by_id     (closed_by_id)
-#  index_organizer_position_deletion_requests_on_submitted_by_id  (submitted_by_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (closed_by_id => users.id)

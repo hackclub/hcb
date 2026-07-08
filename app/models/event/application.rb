@@ -45,11 +45,6 @@
 #  event_id                     :bigint
 #  user_id                      :bigint           not null
 #
-# Indexes
-#
-#  index_event_applications_on_event_id  (event_id)
-#  index_event_applications_on_user_id   (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

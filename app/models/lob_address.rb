@@ -18,10 +18,6 @@
 #  event_id    :bigint
 #  lob_id      :string
 #
-# Indexes
-#
-#  index_lob_addresses_on_event_id  (event_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

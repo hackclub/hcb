@@ -12,10 +12,6 @@
 #  updated_at      :datetime         not null
 #  user_id         :bigint
 #
-# Indexes
-#
-#  index_user_seen_at_histories_on_user_id  (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (user_id => users.id)

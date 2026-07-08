@@ -12,10 +12,6 @@
 #  updated_at :datetime         not null
 #  event_id   :bigint           not null
 #
-# Indexes
-#
-#  index_tags_on_event_id  (event_id)
-#
 class Tag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
 

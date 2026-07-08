@@ -17,15 +17,6 @@
 #  wire_id                  :bigint
 #  wise_transfer_id         :bigint
 #
-# Indexes
-#
-#  index_reimbursement_payout_holdings_on_ach_transfer_id           (ach_transfer_id)
-#  index_reimbursement_payout_holdings_on_increase_check_id         (increase_check_id)
-#  index_reimbursement_payout_holdings_on_paypal_transfer_id        (paypal_transfer_id)
-#  index_reimbursement_payout_holdings_on_reimbursement_reports_id  (reimbursement_reports_id)
-#  index_reimbursement_payout_holdings_on_wire_id                   (wire_id)
-#  index_reimbursement_payout_holdings_on_wise_transfer_id          (wise_transfer_id)
-#
 module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM

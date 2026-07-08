@@ -17,13 +17,6 @@
 #  event_id       :bigint
 #  user_id        :bigint
 #
-# Indexes
-#
-#  index_documents_on_archived_by_id  (archived_by_id)
-#  index_documents_on_event_id        (event_id)
-#  index_documents_on_slug            (slug) UNIQUE
-#  index_documents_on_user_id         (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (archived_by_id => users.id)

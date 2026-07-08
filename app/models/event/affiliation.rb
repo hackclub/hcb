@@ -12,10 +12,6 @@
 #  updated_at      :datetime         not null
 #  affiliable_id   :bigint           not null
 #
-# Indexes
-#
-#  index_event_affiliations_on_affiliable  (affiliable_type,affiliable_id)
-#
 class Event
   class Affiliation < ApplicationRecord
     include Hashid::Rails

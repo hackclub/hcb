@@ -12,11 +12,6 @@
 #  discord_guild_id   :string           not null
 #  discord_message_id :string           not null
 #
-# Indexes
-#
-#  index_discord_messages_on_activity_id         (activity_id)
-#  index_discord_messages_on_discord_message_id  (discord_message_id) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (activity_id => activities.id)

@@ -20,14 +20,6 @@
 #  request_id                  :string           not null
 #  user_id                     :bigint           not null
 #
-# Indexes
-#
-#  index_governance_request_contexts_on_authentication_session  (authentication_session_type,authentication_session_id)
-#  index_governance_request_contexts_on_impersonator_id         (impersonator_id)
-#  index_governance_request_contexts_on_ip_address              (ip_address)
-#  index_governance_request_contexts_on_request_id              (request_id) UNIQUE
-#  index_governance_request_contexts_on_user_id                 (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (impersonator_id => users.id)

@@ -16,12 +16,6 @@
 #  user_id                  :bigint           not null
 #  user_session_id          :bigint
 #
-# Indexes
-#
-#  index_logins_on_referral_link_id  (referral_link_id)
-#  index_logins_on_user_id           (user_id)
-#  index_logins_on_user_session_id   (user_session_id)
-#
 class Login < ApplicationRecord
   include AASM
 

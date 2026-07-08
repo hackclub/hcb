@@ -25,12 +25,6 @@
 #  stripe_destination_id                 :text
 #  stripe_payout_id                      :text
 #
-# Indexes
-#
-#  index_donation_payouts_on_failure_stripe_balance_transaction_id  (failure_stripe_balance_transaction_id) UNIQUE
-#  index_donation_payouts_on_stripe_balance_transaction_id          (stripe_balance_transaction_id) UNIQUE
-#  index_donation_payouts_on_stripe_payout_id                       (stripe_payout_id) UNIQUE
-#
 class DonationPayout < ApplicationRecord
   has_paper_trail
   include StripePayoutable

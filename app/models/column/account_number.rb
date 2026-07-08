@@ -15,11 +15,6 @@
 #  column_id                 :text
 #  event_id                  :bigint           not null
 #
-# Indexes
-#
-#  index_column_account_numbers_on_account_number_bidx  (account_number_bidx) UNIQUE
-#  index_column_account_numbers_on_event_id             (event_id) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

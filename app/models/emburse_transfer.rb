@@ -17,17 +17,9 @@
 #  event_id               :bigint
 #  fulfilled_by_id        :bigint
 #
-# Indexes
-#
-#  index_emburse_transfers_on_creator_id       (creator_id)
-#  index_emburse_transfers_on_emburse_card_id  (emburse_card_id)
-#  index_emburse_transfers_on_event_id         (event_id)
-#  index_emburse_transfers_on_fulfilled_by_id  (fulfilled_by_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (creator_id => users.id)
-#  fk_rails_...  (emburse_card_id => emburse_cards.id)
 #  fk_rails_...  (event_id => events.id)
 #  fk_rails_...  (fulfilled_by_id => users.id)
 #

@@ -33,13 +33,6 @@
 #  payment_recipient_id      :bigint
 #  user_id                   :bigint           not null
 #
-# Indexes
-#
-#  index_wires_on_column_id             (column_id) UNIQUE
-#  index_wires_on_event_id              (event_id)
-#  index_wires_on_payment_recipient_id  (payment_recipient_id)
-#  index_wires_on_user_id               (user_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)

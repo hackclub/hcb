@@ -10,10 +10,6 @@
 #  updated_at         :datetime         not null
 #  g_suite_account_id :bigint           not null
 #
-# Indexes
-#
-#  index_g_suite_aliases_on_g_suite_account_id  (g_suite_account_id)
-#
 # Foreign Keys
 #
 #  fk_rails_...  (g_suite_account_id => g_suite_accounts.id)

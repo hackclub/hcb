@@ -9,10 +9,6 @@
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
-# Indexes
-#
-#  index_transaction_categories_on_slug  (slug) UNIQUE
-#
 class TransactionCategory < ApplicationRecord
   has_many(:transaction_category_mappings, inverse_of: :category)
   has_many(

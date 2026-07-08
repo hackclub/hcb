@@ -23,10 +23,8 @@
 #
 # Indexes
 #
-#  idx_on_governance_admin_transfer_limit_id_3dfaba4d9a           (governance_admin_transfer_limit_id)
-#  idx_on_governance_request_context_id_bec1adb1c2                (governance_request_context_id)
-#  index_governance_admin_transfer_approval_attempts_on_transfer  (transfer_type,transfer_id)
-#  index_governance_admin_transfer_approval_attempts_on_user_id   (user_id)
+#  idx_on_governance_admin_transfer_limit_id_3dfaba4d9a  (governance_admin_transfer_limit_id)
+#  idx_on_governance_request_context_id_bec1adb1c2       (governance_request_context_id)
 #
 # Foreign Keys
 #

@@ -10,11 +10,6 @@
 #  event_group_id :bigint           not null
 #  event_id       :bigint           not null
 #
-# Indexes
-#
-#  index_event_group_memberships_on_event_group_id               (event_group_id)
-#  index_event_group_memberships_on_event_id_and_event_group_id  (event_id,event_group_id) UNIQUE
-#
 # Foreign Keys
 #
 #  fk_rails_...  (event_group_id => event_groups.id)

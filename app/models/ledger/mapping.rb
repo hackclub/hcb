@@ -12,20 +12,11 @@
 #  ledger_item_id    :bigint           not null
 #  mapped_by_id      :bigint
 #
-# Indexes
-#
-#  index_ledger_mappings_on_ledger_and_item      (ledger_id,ledger_item_id) UNIQUE
-#  index_ledger_mappings_on_ledger_id            (ledger_id)
-#  index_ledger_mappings_on_ledger_item_id       (ledger_item_id)
-#  index_ledger_mappings_on_mapped_by_id         (mapped_by_id)
-#  index_ledger_mappings_unique_item_on_primary  (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
-#
 # Foreign Keys
 #
-#  fk_ledger_mappings_primary_match  ([ledger_id, on_primary_ledger] => ledgers[id, primary])
-#  fk_rails_...                      (ledger_id => ledgers.id)
-#  fk_rails_...                      (ledger_item_id => ledger_items.id)
-#  fk_rails_...                      (mapped_by_id => users.id)
+#  fk_rails_...  (ledger_id => ledgers.id)
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
+#  fk_rails_...  (mapped_by_id => users.id)
 #
 class Ledger
   class Mapping < ApplicationRecord

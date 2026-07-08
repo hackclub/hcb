@@ -10,11 +10,6 @@
 #  legal_entity_id :bigint           not null
 #  user_id         :bigint           not null
 #
-# Indexes
-#
-#  index_legal_entity_users_on_legal_entity_id  (legal_entity_id)
-#  index_legal_entity_users_on_user_id          (user_id)
-#
 class LegalEntityUser < ApplicationRecord
   belongs_to :legal_entity
   belongs_to :user

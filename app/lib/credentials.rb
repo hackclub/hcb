@@ -18,16 +18,16 @@ module Credentials
   end
 
   def self.load
-    secrets = Doppler.fetch_secrets
-    return unless secrets
+    # secrets = Doppler.fetch_secrets
+    # return unless secrets
 
-    # Load the secrets into ENV
-    results = load_secrets(secrets)
+    # # Load the secrets into ENV
+    # results = load_secrets(secrets)
 
-    # Report on which secretes were loaded and which were skipped
-    loaded, skipped = results.partition { |_k, v| v }.map(&:to_h).map(&:keys)
-    puts "Loaded: #{loaded.inspect}"
-    puts "Skipped: #{skipped.inspect}"
+    # # Report on which secretes were loaded and which were skipped
+    # loaded, skipped = results.partition { |_k, v| v }.map(&:to_h).map(&:keys)
+    # puts "Loaded: #{loaded.inspect}"
+    # puts "Skipped: #{skipped.inspect}"
   end
 
   # loads secrets into ENV so long as the variable doesn't already exist
