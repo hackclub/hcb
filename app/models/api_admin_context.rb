@@ -20,12 +20,6 @@ class ApiAdminContext
     @user.admin?(override_pretend: override_pretend) && has_admin_scope?(:write, resource, record)
   end
 
-  # In the v4 API we ignore the "pretend not to be admin" preference.
-  #
-  # `resource`, if given, also accepts a resource-scoped admin grant (see
-  # ResourceGrant) in place of the blanket "admin:read" scope, e.g.
-  # resource: "comments". `record`, if also given, further requires that
-  # grant to cover this specific object.
   def auditor?(override_pretend: true, resource: nil, record: nil)
     @user.auditor?(override_pretend: override_pretend) && has_admin_scope?(:read, resource, record)
   end

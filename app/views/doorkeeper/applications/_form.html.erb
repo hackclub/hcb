@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <% known_scopes, custom_scopes = DoorkeeperScopeCatalog.split(application.scopes_string) %>
+  <% known_scopes, custom_scopes = Doorkeeper::Application.split_scopes(application.scopes_string) %>
   <div class="form-group row">
     <%= f.label :scopes, class: 'col-sm-2 col-form-label font-weight-bold' %>
     <div class="col-sm-10">
@@ -127,7 +127,7 @@
 
       <% grants_by_type = application.persisted? ? application.resource_grants.group_by(&:resource_type) : {} %>
 
-      <% DoorkeeperScopeCatalog.groups.each do |group| %>
+      <% Doorkeeper::Application.scope_groups.each do |group| %>
         <div class="scope-category">
           <h4 class="scope-category-title"><%= group[:name] %></h4>
           <% group[:scopes].each do |scope| %>
@@ -182,13 +182,13 @@
       </div>
 
       <% if application.persisted? %>
-        <% cataloged_resources = DoorkeeperScopeCatalog.groups.flat_map { |g| g[:scopes].filter_map { |s| s[:value].split(":", 2).first if s[:value].include?(":") } }.uniq %>
+        <% cataloged_resources = Doorkeeper::Application.scope_groups.flat_map { |g| g[:scopes].filter_map { |s| s[:value].split(":", 2).first if s[:value].include?(":") } }.uniq %>
         <%
           # A grant only has its own row above if a scope exists for that exact
           # (resource_type, access_level) pair - e.g. "card_grants" only has a
           # "write" scope, so a "card_grants" "read" grant has nowhere else to
           # show and belongs here, not silently hidden.
-          cataloged_pairs = DoorkeeperScopeCatalog.groups.flat_map do |g|
+          cataloged_pairs = Doorkeeper::Application.scope_groups.flat_map do |g|
             g[:scopes].filter_map do |s|
               resource, level = s[:value].split(":", 2)
               [resource, level] if level && resource != "admin"
