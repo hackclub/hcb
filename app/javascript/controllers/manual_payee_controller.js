@@ -56,5 +56,8 @@ export default class extends Controller {
     this.manualOnlyTargets.forEach(target => {
       target.hidden = !this.manual
     })
+    if (this.hasEntityTypeInputTarget) {
+      this.entityTypeInputTarget.required = this.manual
+    }
   }
 }
