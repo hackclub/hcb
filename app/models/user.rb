@@ -747,6 +747,12 @@ class User < ApplicationRecord
   end
 
   def on_phone_number_update
+    # on account creation, automatically mark the phone number as verified
+    if new_record?
+      self.phone_number_verified = true if phone_number.present?
+      return
+    end
+
     # if we previously have a phone number and the phone number is not null
     if phone_number_changed?
       # turn all this stuff off until they reverify
