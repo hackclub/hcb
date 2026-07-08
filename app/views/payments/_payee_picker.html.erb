@@ -48,7 +48,7 @@
           <%= label_tag :payee_entity_type, "Recipient type" %>
           <%= select_tag :payee_entity_type,
               options_for_select([
-                                   ["Select whether they're an individual or a business", ""],
+                                   ["Select type", ""],
                                    ["An individual", "person"],
                                    ["A business or organization", "business"]
                                  ], params[:payee_entity_type]),
