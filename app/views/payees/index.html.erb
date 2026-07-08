@@ -14,7 +14,8 @@
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
           <div>
             <p class="font-medium"><%= payee.display_name %></p>
-            <p class="text-sm muted"><%= payee.email %></p>
+            <% legal_name = payee.legal_entity&.name.presence %>
+            <p class="text-sm muted"><%= "#{legal_name} • " if legal_name %><%= payee.email %></p>
           </div>
           <% if payee.managed? %>
             <span class="badge bg-muted ml-auto shrink-0">Managed</span>
