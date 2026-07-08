@@ -16,14 +16,20 @@
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  author_id                    :bigint
 #  linked_object_id             :bigint
 #
 # Indexes
 #
 #  index_ledger_items_on_amount_cents   (amount_cents)
+#  index_ledger_items_on_author_id      (author_id)
 #  index_ledger_items_on_datetime       (datetime)
 #  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
 #  index_ledger_items_on_short_code     (short_code) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (author_id => users.id)
 #
 class Ledger
   class Item < ApplicationRecord
@@ -37,6 +43,7 @@ class Ledger
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true
+    belongs_to :author, class_name: "User", optional: true
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -157,6 +164,37 @@ class Ledger
       end
     end
 
+    def calculate_author
+      case transaction_type
+      when "AchTransfer"
+        linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
+      when "Check"
+        linked_object&.creator
+      when "IncreaseCheck"
+        linked_object&.user
+      when "Disbursement::Outgoing"
+        linked_object&.requested_by
+      when "Disbursement::Incoming"
+        linked_object&.requested_by
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.report&.user
+      when "PaypalTransfer"
+        linked_object&.user
+      when "Donation"
+        linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
+      when "WiseTransfer"
+        linked_object&.user
+      when "RawPendingStripeTransaction"
+        stripe_cardholder&.user
+      when "RawStripeTransaction"
+        stripe_cardholder&.user
+      end
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
@@ -169,6 +207,7 @@ class Ledger
       association(:primary_ledger).reset
 
       self.amount_cents = calculate_amount_cents
+      self.author = calculate_author
       self.receipt_required = calculate_receipt_required
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
@@ -209,37 +248,6 @@ class Ledger
       return :negative if amount_cents.negative?
 
       :zero
-    end
-
-    def author
-      case transaction_type
-      when "AchTransfer"
-        linked_object&.creator
-      when "CheckDeposit"
-        linked_object&.created_by
-      when "Check"
-        linked_object&.creator
-      when "IncreaseCheck"
-        linked_object&.user
-      when "Disbursement::Outgoing"
-        linked_object&.requested_by
-      when "Disbursement::Incoming"
-        linked_object&.requested_by
-      when "Reimbursement::ExpensePayout"
-        linked_object&.expense&.report&.user
-      when "PaypalTransfer"
-        linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
-      when "Wire"
-        linked_object&.user
-      when "WiseTransfer"
-        linked_object&.user
-      when "RawPendingStripeTransaction"
-        stripe_cardholder&.user
-      when "RawStripeTransaction"
-        stripe_cardholder&.user
-      end
     end
 
     # TODO: get rid of this method once CardCharge is created as an LO
@@ -284,11 +292,11 @@ class Ledger
     end
 
     def raw_pending_transaction_type
-      canonical_pending_transactions.map(&:transaction_source_type).compact.first
+      @raw_pending_transaction_type ||= canonical_pending_transactions.map(&:transaction_source_type).compact.first
     end
 
     def raw_transaction_type
-      canonical_transactions.map(&:transaction_source_type).compact.first
+      @raw_transaction_type ||= canonical_transactions.map(&:transaction_source_type).compact.first
     end
 
   end
