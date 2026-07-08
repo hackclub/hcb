@@ -52,6 +52,7 @@ export default class extends Controller {
     this.manualBannerTarget.hidden = !this.manual
     this.enableButtonTarget.hidden = this.manual
     this.undoButtonTarget.hidden = !this.manual
+    this.entityTypeInputTarget.required = this.manual
     this.manualOnlyTargets.forEach(target => {
       target.hidden = !this.manual
     })
