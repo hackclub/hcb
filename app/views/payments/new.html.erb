@@ -13,25 +13,22 @@
   </div>
 <% end %>
 
-<% if @payee %>
-  <% recent_payments = @payee.payments.order(created_at: :desc).limit(5) %>
-  <% if recent_payments.any? %>
-    <% content_for :sidebar_footer do %>
-      <div class="mt-6">
-        <h4 class="muted eyebrow">Recent payments to <%= @payee.display_name %></h4>
-        <div class="card p-0 overflow-hidden bg-transparent">
-          <% recent_payments.each do |payment| %>
-            <%= link_to payment_path(payment), target: "_blank", rel: "noopener", class: "flex items-center gap-3 px-4 py-3 no-underline" do %>
-              <div class="flex-1 min-w-0">
-                <p class="font-medium text-sm m-0 truncate"><%= payment.purpose.presence || "Payment" %></p>
-                <p class="muted text-xs m-0 mt-0.5"><%= payment.created_at.strftime("%b %-d, %Y") %></p>
-              </div>
-              <span class="tabular-nums font-medium text-sm shrink-0"><%= render_money payment.amount_cents %></span>
-            <% end %>
+<% if @recent_payments&.any? %>
+  <% content_for :sidebar_footer do %>
+    <div class="mt-6">
+      <h4 class="muted eyebrow">Recent payments to <%= @payee.display_name %></h4>
+      <div class="card p-0 overflow-hidden bg-transparent">
+        <% @recent_payments.each do |payment| %>
+          <%= link_to payment_path(payment), target: "_blank", rel: "noopener", class: "flex items-center gap-3 px-4 py-3 no-underline" do %>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm m-0 truncate"><%= payment.purpose.presence || "Payment" %></p>
+              <p class="muted text-xs m-0 mt-0.5"><%= payment.created_at.strftime("%b %-d, %Y") %></p>
+            </div>
+            <span class="tabular-nums font-medium text-sm shrink-0"><%= render_money payment.amount_cents %></span>
           <% end %>
-        </div>
+        <% end %>
       </div>
-    <% end %>
+    </div>
   <% end %>
 <% end %>
 

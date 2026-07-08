@@ -16,6 +16,7 @@ class PaymentsController < ApplicationController
     authorize @event, policy_class: PaymentPolicy
     @payment = Payment.new
     @payee = @event.payees.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"
   end
 
