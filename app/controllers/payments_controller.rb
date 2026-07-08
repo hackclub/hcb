@@ -14,7 +14,7 @@ class PaymentsController < ApplicationController
   def new
     authorize @event, policy_class: PaymentPolicy
     @payment = Payment.new
-    @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
+    @payee = @event.payees.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
     render layout: "transfer"
   end
 
@@ -22,14 +22,14 @@ class PaymentsController < ApplicationController
     authorize @event, policy_class: PaymentPolicy
 
     if payment_params[:file].blank?
-      @payee = @event.payees.find_by(id: payment_params[:payee_id])
+      @payee = @event.payees.find_by_public_id(payment_params[:payee_id])
       @payment = Payment.new(payment_params.except(:payee_id, :file))
       flash.now[:error] = "Please attach a receipt or invoice for this payment."
       return render :new, layout: "transfer", status: :unprocessable_entity
     end
 
     ActiveRecord::Base.transaction do
-      @payee = @event.payees.find(payment_params[:payee_id])
+      @payee = @event.payees.find_by_public_id!(payment_params[:payee_id])
       @legal_entity = @payee.legal_entity
 
       # On the manual path the payee has a managed legal entity (created on the

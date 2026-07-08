@@ -21,6 +21,12 @@
 class Payee < ApplicationRecord
   include PgSearch::Model
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
+  include PublicIdentifiable
+  set_public_id_prefix :pye
+
   belongs_to :event
   belongs_to :legal_entity, optional: true
 

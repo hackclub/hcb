@@ -12,7 +12,7 @@ class PayeesController < ApplicationController
     payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
     payees = payees.order(created_at: :desc).limit(15).to_a
 
-    selected = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
+    selected = @event.payees.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees].compact.uniq
 
     render layout: false
@@ -35,7 +35,7 @@ class PayeesController < ApplicationController
 
       payee.save!
 
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id)
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
     end
   rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
     redirect_to new_event_payment_path(event_id: @event.slug), alert: e.message

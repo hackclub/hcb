@@ -10,7 +10,7 @@
   <%= turbo_frame_tag :payee_results_list do %>
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
-        <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
+        <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top" } do %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
           <div>
             <p class="font-medium"><%= payee.display_name %></p>
@@ -19,7 +19,7 @@
           <% if payee.managed? %>
             <span class="badge bg-muted ml-auto shrink-0">Managed</span>
           <% end %>
-          <% if params[:payee_id].to_s == payee.id.to_s %>
+          <% if params[:payee_id].to_s == payee.public_id %>
             <%= inline_icon "check-thin", class: "success shrink-0 #{'ml-auto' unless payee.managed?}" %>
           <% end %>
         <% end %>
