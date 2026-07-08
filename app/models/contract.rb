@@ -159,7 +159,20 @@ class Contract < ApplicationRecord
     missing_roles = required_roles.select { |role| existing_roles.exclude? role }
     raise ArgumentError, "contract missing required roles: #{missing_roles.join ", "}" unless missing_roles.empty?
 
-    send_using_docuseal! unless sent_with_manual?
+    unless sent_with_manual?
+      begin
+        send_using_docuseal!
+      rescue Faraday::Error => e
+        # DocuSeal is unavailable (e.g. 522). For sub-organization creation we
+        # don't want the whole flow to crash, so skip DocuSeal and mark the
+        # contract as signed. For any other contract we re-raise as before.
+        raise unless event&.parent.present?
+
+        Rails.error.report(e, handled: true)
+        mark_signed!
+        return
+      end
+    end
 
     mark_sent!(reissue_signee_message, reissue_cosigner_message)
   end
