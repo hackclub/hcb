@@ -1,9 +1,5 @@
 # frozen_string_literal: true
 
-# Manages Doorkeeper::Application::ResourceGrantTemplate rows - the default
-# object-scope grants copied onto every token minted for an application (see
-# after_successful_strategy_response in config/initializers/doorkeeper.rb).
-# Admin-only, same gate as Doorkeeper's own application management UI.
 module Doorkeeper
   class ApplicationResourceGrantTemplatesController < ::ApplicationController
     before_action :require_admin!

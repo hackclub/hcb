@@ -1,9 +1,0 @@
-<div class="border-bottom mb-4">
-  <h1><%= t('doorkeeper.authorizations.error.title') %></h1>
-</div>
-
-<main role="main">
-  <pre>
-    <%= (local_assigns[:error_response] ? error_response : @pre_auth.error_response).body[:error_description] %>
-  </pre>
-</main>
