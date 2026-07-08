@@ -10,7 +10,7 @@
 <% end %>
 
 <p>
-  In order to process this payment, please <%= link_to "configure your payout method on HCB", settings_payouts_url %>.
+  In order to process this payment, please <%= link_to "configure your payout method on HCB", legal_entity_url(@payment.legal_entity) %>.
 </p>
 
 <p>
