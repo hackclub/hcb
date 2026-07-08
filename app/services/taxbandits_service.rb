@@ -24,7 +24,8 @@ class TaxbanditsService
 
   def self.get_status(payee_id:, submission_id:)
     responses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{payee_id}").body
-    response = responses["Status"].find { |r| r["SubmissionId"] == submission_id }
+
+    responses["Status"].find { |r| r["SubmissionId"] == submission_id }
   end
 
   def self.taxbandits_client
