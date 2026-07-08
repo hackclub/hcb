@@ -38,14 +38,12 @@ class PaymentsController < ApplicationController
 
       @payment.save!
 
-      if payment_params[:file].present?
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: payment_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @payment
-        ).run!
-      end
+      ::ReceiptService::Create.new(
+        uploader: current_user,
+        attachments: payment_params[:file],
+        upload_method: :transfer_create_page,
+        receiptable: @payment
+      ).run!
     end
 
     flash[:success] = "Payment submitted for review"

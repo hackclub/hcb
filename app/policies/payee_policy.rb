@@ -12,7 +12,6 @@ class PayeePolicy < ApplicationPolicy
   def update?
     manager? || (member? && !payment_sent?)
   end
-  alias_method :edit?, :update?
 
   def edit_details?
     manager?

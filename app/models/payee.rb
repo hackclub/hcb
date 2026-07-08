@@ -38,7 +38,6 @@ class Payee < ApplicationRecord
 
   validate :managed_legal_entity_constraints
 
-  scope :archived, -> { where.not(archived_at: nil) }
   scope :not_archived, -> { where(archived_at: nil) }
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
@@ -49,10 +48,6 @@ class Payee < ApplicationRecord
 
   def managed?
     legal_entity&.managing_event_id.present?
-  end
-
-  def archived?
-    archived_at.present?
   end
 
   def archivable?
