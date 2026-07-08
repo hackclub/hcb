@@ -37,6 +37,21 @@ module Api
         current_user && ApiAdminContext.new(current_user, current_token)
       end
 
+      def authorize(record, query = nil, policy_class: nil)
+        authorized_record = super
+        enforce_object_scope!(authorized_record)
+        authorized_record
+      end
+
+      def enforce_object_scope!(record)
+        return unless current_token
+
+        access_level = request.get? || request.head? ? "read" : "write"
+        resource_type = record.class.api_resource_type
+
+        raise Pundit::NotAuthorizedError unless current_token.permits_object?(access_level, resource_type, record)
+      end
+
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
         unless @current_token&.accessible?
@@ -46,8 +61,8 @@ module Api
         @current_user = current_token&.user
       end
 
-      def require_admin_scope!(level)
-        unless can_admin?(level)
+      def require_admin_scope!(level, resource: nil, record: nil)
+        unless can_admin?(level, resource:, record:)
           skip_authorization
           render json: { error: "not_authorized" }, status: :forbidden
         end

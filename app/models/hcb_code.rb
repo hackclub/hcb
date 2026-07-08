@@ -26,6 +26,8 @@
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
 #
 class HcbCode < ApplicationRecord
+  api_resource_type "ledgers"
+
   has_paper_trail
 
   include Hashid::Rails

@@ -372,7 +372,14 @@ Doorkeeper.configure do
   # end
 
   after_successful_strategy_response do |_request, response|
-    response.token&.update_column(:ip_address, Current.request_ip)
+    token = response.token
+    next unless token
+
+    token.update_column(:ip_address, Current.request_ip)
+
+    token.application&.resource_grant_templates&.find_each do |template|
+      token.resource_grants.create!(template.attributes.slice("resource_type", "access_level", "scope_root_type", "scope_root_id"))
+    end
   end
 
   # Hook into Authorization flow in order to implement Single Sign Out

@@ -67,6 +67,54 @@ RSpec.describe ApiAdminContext do
     end
   end
 
+  describe "resource-scoped admin grants" do
+    let(:event) { create(:event) }
+    let(:other_event) { create(:event) }
+    # HcbCode's after_create callback derives event_id from canonical
+    # transaction mappings and overwrites what's passed at creation.
+    def hcb_code_for(evt)
+      create(:hcb_code).tap { |hc| hc.update_column(:event_id, evt.id) }
+    end
+
+    let(:comment) { create(:comment, commentable: hcb_code_for(event)) }
+
+    def context_with_grant(user, access_level:, **grant_attrs)
+      token = create(:api_token, user:, scopes: "")
+      token.resource_grants.create!(resource_type: "comments", access_level: access_level.to_s, **grant_attrs)
+      described_class.new(user, token)
+    end
+
+    it "grants capability for just that resource type, with no blanket admin scope" do
+      context = context_with_grant(admin, access_level: :write)
+      expect(context.admin?(resource: "comments")).to be(true)
+      expect(context.admin?).to be(false)
+    end
+
+    it "does not grant capability for a different resource type" do
+      context = context_with_grant(auditor, access_level: :read)
+      expect(context.auditor?(resource: "receipts")).to be(false)
+    end
+
+    it "requires the matching access level" do
+      context = context_with_grant(admin, access_level: :read)
+      expect(context.admin?(resource: "comments")).to be(false)
+    end
+
+    it "further restricts to a specific record when a scope root is set" do
+      context = context_with_grant(auditor, access_level: :read, scope_root_type: "Event", scope_root_id: event.id)
+
+      expect(context.auditor?(resource: "comments", record: comment)).to be(true)
+
+      other_comment = create(:comment, commentable: hcb_code_for(other_event))
+      expect(context.auditor?(resource: "comments", record: other_comment)).to be(false)
+    end
+
+    it "still requires the underlying role even with a satisfied grant" do
+      context = context_with_grant(regular, access_level: :write)
+      expect(context.admin?(resource: "comments")).to be(false)
+    end
+  end
+
   describe "a nil token" do
     it "fails closed for every admin predicate" do
       context = described_class.new(admin, nil)

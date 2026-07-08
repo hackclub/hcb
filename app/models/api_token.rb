@@ -53,10 +53,39 @@ class ApiToken < ApplicationRecord
   self.ignored_columns += ["refresh_token"]
 
   belongs_to :user
+  has_many :resource_grants, class_name: "ApiToken::ResourceGrant", dependent: :destroy
 
   def self.generate(options = {})
     token_size = options.delete(:size) || SIZE
     PREFIX + SecureRandom.urlsafe_base64(token_size)
+  end
+
+  # Grants narrowing this token's access to `resource_type` at `access_level`
+  # (e.g. "comments" / "read"). Empty when the token is unrestricted for that
+  # resource type + level.
+  def resource_grants_for(access_level, resource_type)
+    resource_grants.where(access_level: access_level.to_s, resource_type: resource_type.to_s)
+  end
+
+  # True if the token carries any grants for `resource_type` at
+  # `access_level` at all. For general resource scopes this means "should a
+  # list query be filtered" (false = unrestricted). For admin resource-type
+  # scopes this doubles as the capability check itself (see ApiAdminContext).
+  def has_grants_for?(access_level, resource_type)
+    resource_grants_for(access_level, resource_type).exists?
+  end
+
+  # True if this token may touch `record` at `access_level`, considering only
+  # object-scope grants (independent of whether the token's scope strings
+  # grant it `resource_type:access_level` capability at all - callers must
+  # check that separately).
+  def permits_object?(access_level, resource_type, record)
+    grants = resource_grants_for(access_level, resource_type).to_a
+    return true if grants.empty?
+    return true if grants.any? { |grant| grant.scope_root_type.nil? }
+
+    roots = record.api_scope_roots
+    grants.any? { |grant| roots[grant.scope_root_type] == grant.scope_root_id }
   end
 
   def abbreviated = "#{token[..7]}...#{token[-3..]}"

@@ -14,6 +14,8 @@ This document explains how OAuth 2.0 scopes work in the HCB v4 API: the permissi
 - [Declaring Scope Requirements](#declaring-scope-requirements)
 - [Scope Naming Conventions](#scope-naming-conventions)
 - [Adding a New Scope](#adding-a-new-scope)
+- [Field Scopes](#field-scopes)
+- [Object Scopes](#object-scopes)
 - [Admin Scopes](#admin-scopes)
 
 ---
@@ -36,6 +38,16 @@ Every v4 API request passes through **two independent checks**. Both must pass.
 2. **OAuth scope enforcement** (`require_oauth2_scope`) — answers *"is this token permitted to perform this kind of action?"* Based on the scopes granted to the token, independent of who the user is.
 
 A token can fail the scope check even when the user would otherwise be authorized, and vice versa. **Scopes restrict tokens; policies restrict users.**
+
+Everything in this document ultimately answers one of three questions about a request:
+
+| Question | Mechanism |
+|---|---|
+| Can this token call this **action**? | `require_oauth2_scope` (this section and the next few) |
+| Can this token see this **field**? | Inline capability check in the jbuilder view - see [Field Scopes](#field-scopes) |
+| Which **objects** can this token touch within an action it's otherwise allowed to call? | Pundit, narrowed by the token's own grants - see [Object Scopes](#object-scopes) |
+
+The first two share the same scope-string vocabulary and are checked the same way (a flat membership test against the token's granted scopes). The third is a Pundit-layer concern: it never changes what an action can do, only which rows it can do it to, and it applies automatically wherever `authorize`/`policy_scope` already run - no separate opt-in.
 
 ---
 
@@ -152,6 +164,78 @@ To gate an action behind a new scope:
 
 ---
 
+## Field Scopes
+
+Some fields inside a response should only be visible to certain tokens, without gating the whole action behind a scope. There's no separate DSL for this - it's the same capability check used for [admin scopes](#admin-scopes), just called inline from the jbuilder partial instead of a `before_action`:
+
+```ruby
+# app/views/api/v4/transactions/_transaction.json.jbuilder
+if can_admin?(:read)
+  json._debug do
+    json.hcb_code hcb_code.hcb_code
+  end
+end
+```
+
+`can_admin?(level, resource:, record:)` is the same method `require_admin_scope!` uses at the action layer (see [Admin Scopes](#admin-scopes)) - pass `resource:` (and `record:`, once it's loaded) to narrow a field to a resource-scoped admin grant instead of the blanket scope. Prefer this over ad hoc `current_token.scopes.include?("...")` checks, which bypass the role check and the object-scope layer entirely.
+
+---
+
+## Object Scopes
+
+Action and field scopes answer *"can this token do this kind of thing at all?"* Object scopes answer a different question: *"which specific rows can it do it to?"* This is enforced through Pundit, not through scope strings, and it composes with whatever action/field scopes already apply - it never grants access on its own for non-admin resources, only narrows it.
+
+### How grants work
+
+A token's object access is recorded as `ApiToken::ResourceGrant` rows (`resource_type`, `access_level`, and optionally a `scope_root_type`/`scope_root_id` pair). A token with **no grants** for a given `(resource_type, access_level)` is fully unrestricted for that resource - this is the default for every token today, so adding this mechanism changes nothing until grants actually exist.
+
+Two grant shapes:
+
+| Shape | Meaning | Example |
+|---|---|---|
+| No scope root | Every record of this resource type (only meaningful for [admin grants](#admin-scopes) - a no-op otherwise, since a general capability scope already grants the whole type) | "all `comments`, read" |
+| `scope_root_type` + `scope_root_id` set | Every record whose `#api_scope_roots` includes this root | "all `comments` under Event #42" |
+
+`scope_root_type` is one of `User` or `Event` - a token can be scoped to a specific organization or to one user's own data.
+
+`scope_root_type` is one of `User` or `Event` - a token can be scoped to a specific organization or to one user's own data. Most models resolve their roots automatically from their own `event_id`/`user_id` columns (see `ApiObjectScopable`); models that only reach their event/user through a polymorphic association (`Comment`, `Receipt`) declare `#api_scope_roots` explicitly.
+
+### Enforcement
+
+Object scopes are enforced automatically wherever the existing Pundit calls already run - there's no separate opt-in per controller:
+
+- **Single-record actions** (`show`, `update`, `destroy`, ...) - `authorize @record` (overridden in `Api::V4::ApplicationController`) checks the token's grants for `@record.class.api_resource_type` right after Pundit's own check passes.
+- **List actions** - `policy_scope(relation)` applies the same grants as a `.where(id: ...)` filter, via `ApplicationPolicy::Scope#resolve`. Policies with custom list logic (e.g. `CommentPolicy::Scope`) override `#visible_scope` instead of `#resolve`, so the grant filter still applies on top.
+
+Read and write grants are independent, matching the `:read`/`:write` scope convention - the read access-level is derived from the HTTP verb (`GET`/`HEAD` = read, everything else = write).
+
+### Declaring resource types
+
+`api_resource_type` defaults to the pluralized class name (`Comment` → `"comments"`). Override it when a scope name spans multiple classes, matching whatever `require_oauth2_scope` already uses for that resource, e.g.:
+
+```ruby
+class Disbursement < ApplicationRecord
+  api_resource_type "transfers"
+  # ...
+```
+
+---
+
 ## Admin Scopes
 
 See [Admin Access in standards.md](./standards.md#admin-access) for the full treatment.
+
+A token can gain admin capability three ways, from broadest to narrowest:
+
+1. **Blanket scope** - `admin:read` / `admin:write`. Full admin data access, no grants needed.
+2. **Resource-scoped grant, no further narrowing** - an `ApiToken::ResourceGrant` with `resource_type: "comments"`, `access_level: "read"`, and neither a root nor a `resource_id`. This *is* the capability (unlike a general resource scope, there's no `comments:read`-style admin string to hold instead) - it replaces what would otherwise be a separate `admin.<resource>:<level>` scope string with the same [object-scope](#object-scopes) mechanism every other resource uses.
+3. **Resource-scoped grant, narrowed to a root or record** - same as above, but also restricted to one organization/user/record via `scope_root_type`/`scope_root_id` or `resource_id`.
+
+`can_admin?(level, resource:, record:)` and `require_admin_scope!(level, resource:, record:)` both accept `resource:` and `record:` to check either of the narrower forms. Pick the call site based on what's being gated:
+
+| Gating... | Use |
+|---|---|
+| A whole action | `require_admin_scope!(level, resource:)` in a `before_action` |
+| An extra field on an object already loaded | `can_admin?(level, resource:, record:)` in the jbuilder partial |
+
+Only reach for a resource-scoped or object-scoped admin grant when an endpoint needs access narrower than "all admin data" - most endpoints should keep using the blanket scopes.

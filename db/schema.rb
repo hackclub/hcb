@@ -12,13 +12,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
-  enable_extension "pg_stat_statements"
 
   create_table "ach_transfers", force: :cascade do |t|
     t.string "aasm_state", null: false
@@ -214,6 +211,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
+  end
+
+  create_table "api_token_resource_grants", force: :cascade do |t|
+    t.string "access_level", null: false
+    t.bigint "api_token_id", null: false
+    t.datetime "created_at", null: false
+    t.string "resource_type", null: false
+    t.bigint "scope_root_id"
+    t.string "scope_root_type"
+    t.datetime "updated_at", null: false
+    t.index ["api_token_id", "resource_type", "access_level"], name: "index_api_token_resource_grants_on_token_and_type_and_level"
+    t.index ["api_token_id"], name: "index_api_token_resource_grants_on_api_token_id"
+    t.index ["scope_root_type", "scope_root_id"], name: "idx_on_scope_root_type_scope_root_id_c858ad0f72"
   end
 
   create_table "api_tokens", force: :cascade do |t|
@@ -843,6 +853,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.index ["recurring_donation_id"], name: "index_donations_on_recurring_donation_id"
   end
 
+  create_table "doorkeeper_application_resource_grant_templates", force: :cascade do |t|
+    t.string "access_level", null: false
+    t.bigint "application_id", null: false
+    t.datetime "created_at", null: false
+    t.string "resource_type", null: false
+    t.bigint "scope_root_id"
+    t.string "scope_root_type"
+    t.datetime "updated_at", null: false
+    t.index ["application_id"], name: "idx_on_application_id_6a05b5aba9"
+  end
+
   create_table "emburse_card_requests", force: :cascade do |t|
     t.datetime "accepted_at", precision: nil
     t.datetime "canceled_at", precision: nil
@@ -1364,7 +1385,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.text "secondary_hash"
     t.text "unique_bank_identifier"
     t.datetime "updated_at", null: false
-    t.index ["duplicate_of_hashed_transaction_id"], name: "index_hashed_transactions_on_duplicate_of_hashed_transaction_id"
+    t.index ["duplicate_of_hashed_transaction_id"], name: "idx_on_duplicate_of_hashed_transaction_id_6a29e8a078"
     t.index ["raw_csv_transaction_id"], name: "index_hashed_transactions_on_raw_csv_transaction_id"
     t.index ["raw_increase_transaction_id"], name: "index_hashed_transactions_on_raw_increase_transaction_id"
     t.index ["raw_plaid_transaction_id"], name: "index_hashed_transactions_on_raw_plaid_transaction_id"
@@ -2921,6 +2942,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
+  add_foreign_key "api_token_resource_grants", "api_tokens"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
@@ -2966,6 +2988,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
+  add_foreign_key "doorkeeper_application_resource_grant_templates", "oauth_applications", column: "application_id"
   add_foreign_key "emburse_card_requests", "emburse_cards"
   add_foreign_key "emburse_card_requests", "events"
   add_foreign_key "emburse_card_requests", "users", column: "creator_id"

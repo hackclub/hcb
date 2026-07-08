@@ -47,6 +47,8 @@
 #  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
 #
 class Disbursement < ApplicationRecord
+  api_resource_type "transfers"
+
   include Disbursement::Shared
 
   include Freezable

@@ -464,7 +464,9 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 | `admin:read`   | Grants read-only access to admin-level data (e.g. all organizations, internal fields). |
 | `admin:write`  | Grants the ability to perform write actions reserved for admins.     |
 
-`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed. 
+`admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed.
+
+A token can also be issued a **resource-scoped admin grant** instead of the blanket scope above, narrowing admin access to one resource type (e.g. only `"comments"`), and optionally further down to specific organizations, users, or individual records. This is the same object-scoping mechanism available to any resource, not just admin ones - see [Object Scopes](./scopes.md#object-scopes) for the mechanism and [Admin Scopes](./scopes.md#admin-scopes) for how it composes with `admin:read`/`admin:write`.
 
 ### Implementation Notes
 

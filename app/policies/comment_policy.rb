@@ -2,7 +2,7 @@
 
 class CommentPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
-    def resolve
+    def visible_scope
       if user.auditor?
         scope.all
       else
