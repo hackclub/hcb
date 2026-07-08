@@ -29,12 +29,12 @@
   </div>
   <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
     <% if @payout_method.present? %>
-      <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
+      <%= link_to settings_payouts_path(legal_entity_id: @legal_entity.id), class: "!ml-0 btn bg-info" do %>
         <%= inline_icon @payout_method.icon %>
         Payout settings
       <% end %>
     <% else %>
-      <%= link_to settings_payouts_path, class: "!ml-0 btn" do %>
+      <%= link_to settings_payouts_path(legal_entity_id: @legal_entity.id), class: "!ml-0 btn" do %>
         <%= inline_icon "bank-account" %>
         Configure payouts
       <% end %>

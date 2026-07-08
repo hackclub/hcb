@@ -30,6 +30,12 @@ class LegalEntity
 
       include HasWireRecipient
 
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+         :recipient_country, :recipient_name, :bic_code, :account_number] +
+          recipient_information_accessors
+      end
+
       def kind
         "international_wire"
       end

@@ -45,9 +45,18 @@ class LegalEntity < ApplicationRecord
 
   after_create :send_tax_form!, if: -> { business? }
 
+  scope :managed, -> { where.not(managing_event_id: nil) }
+  scope :unmanaged, -> { where(managing_event_id: nil) }
+
+  validate :managing_event_cannot_change, on: :update
+
   delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
   def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:)
+
+  def managed?
+    managing_event_id.present?
+  end
 
   def payable?
     latest_tax_form&.completed? &&
@@ -66,6 +75,14 @@ class LegalEntity < ApplicationRecord
 
   def display_name
     person? ? "Personal" : (name.presence || "Business")
+  end
+
+  private
+
+  def managing_event_cannot_change
+    if managing_event_id_changed?
+      errors.add(:managing_event_id, "cannot change once a legal entity is created")
+    end
   end
 
 end

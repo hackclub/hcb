@@ -36,7 +36,7 @@ class Payment < ApplicationRecord
 
   has_one :event, through: :payee
   has_one :legal_entity, through: :payee
-  has_many :attempts, class_name: "Payment::Attempt"
+  has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
@@ -89,7 +89,7 @@ class Payment < ApplicationRecord
   end
 
   def payout
-    attempts.order(created_at: :desc).first&.payout
+    attempts.first&.payout
   end
 
   def popover_path

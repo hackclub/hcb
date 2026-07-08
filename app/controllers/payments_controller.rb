@@ -19,12 +19,20 @@ class PaymentsController < ApplicationController
   end
 
   def create
-    @payee = @event.payees.find(payment_params[:payee_id])
-    @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
     authorize @event, policy_class: PaymentPolicy
 
-    if @payment.save
-      if payment_params[:file]
+    ActiveRecord::Base.transaction do
+      @payee = @event.payees.find(payment_params[:payee_id])
+      @legal_entity = @payee.legal_entity
+
+      # On the manual path the payee has a managed legal entity (created on the
+      # recipient step); the payout method the organizer entered is saved here.
+      build_payout_method if @legal_entity&.managed?
+
+      @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
+      @payment.save!
+
+      if payment_params[:file].present?
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments: payment_params[:file],
@@ -32,13 +40,28 @@ class PaymentsController < ApplicationController
           receiptable: @payment
         ).run!
       end
-      redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
-    else
-      render :new, layout: "transfer", status: :unprocessable_entity
     end
+
+    redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
+  rescue ActiveRecord::RecordInvalid => e
+    flash.now[:error] = e.message
+    render :new, layout: "transfer", status: :unprocessable_entity
   end
 
   private
+
+  def build_payout_method
+    type = params.dig(:user, :payout_method_type).presence
+    return unless LegalEntity::PayoutMethod.details_class_for(type)
+
+    LegalEntity::PayoutMethodService::Update.new(
+      user: current_user,
+      legal_entity: @legal_entity,
+      details_type: type,
+      details_attrs: LegalEntity::PayoutMethod.details_params_from(params, type),
+      make_default: true
+    ).run!
+  end
 
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
