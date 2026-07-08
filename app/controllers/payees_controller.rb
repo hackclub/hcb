@@ -9,7 +9,8 @@ class PayeesController < ApplicationController
 
   def index
     authorize @event
-    @payees = (params[:q].present? ? @event.payees.search(params[:q]) : @event.payees).limit(15)
+    payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
+    @payees = payees.order(created_at: :desc).limit(15)
     render layout: false
   end
 
