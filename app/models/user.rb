@@ -8,8 +8,8 @@
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
 #  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default("email_and_sms"), not null
-#  comment_notifications         :integer          default("all_threads"), not null
+#  charge_notifications          :integer          default("nothing"), not null
+#  comment_notifications         :integer          default("no_threads"), not null
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
