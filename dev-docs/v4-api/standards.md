@@ -466,7 +466,7 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 
 `admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed.
 
-A token can also be issued a **resource-scoped admin grant** instead of the blanket scope above, narrowing admin access to one resource type (e.g. only `"comments"`), and optionally further down to specific organizations, users, or individual records. This is the same object-scoping mechanism available to any resource, not just admin ones - see [Object Scopes](./scopes.md#object-scopes) for the mechanism and [Admin Scopes](./scopes.md#admin-scopes) for how it composes with `admin:read`/`admin:write`.
+Admin access can also be narrowed to one resource type instead of the blanket scopes above - either by requesting a **resource-limited admin scope** (`admin.<resource>:<level>`, e.g. `admin.organizations:read`) through the normal OAuth flow, or by issuing the token a **resource-scoped admin grant** server-side, which can additionally narrow down to specific organizations, users, or individual records. Both forms are honored everywhere the blanket scopes are, including inside Pundit policies. See [Admin Scopes](./scopes.md#admin-scopes) for the full treatment and [Object Scopes](./scopes.md#object-scopes) for the grant mechanism.
 
 ### Implementation Notes
 

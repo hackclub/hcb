@@ -69,12 +69,16 @@ class ApiToken < ApplicationRecord
   end
 
   def permits_object?(access_level, resource_type, record)
-    grants = resource_grants_for(access_level, resource_type).to_a
-    return true if grants.empty?
-    return true if grants.any? { |grant| grant.scope_root_type.nil? }
+    grants = resource_grants_for(access_level, resource_type)
+    grants.empty? || grants.any? { |grant| grant.covers?(record) }
+  end
 
-    roots = record.api_scope_roots
-    grants.any? { |grant| roots[grant.scope_root_type] == grant.scope_root_id }
+  # Called after Doorkeeper mints a token, so grants configured on the OAuth
+  # application carry over to every token it issues.
+  def copy_resource_grants_from_application!
+    application&.resource_grants&.find_each do |template|
+      resource_grants.create!(template.slice(:resource_type, :access_level, :scope_root_type, :scope_root_id))
+    end
   end
 
   def abbreviated = "#{token[..7]}...#{token[-3..]}"

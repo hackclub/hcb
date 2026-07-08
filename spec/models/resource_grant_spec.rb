@@ -11,7 +11,7 @@ RSpec.describe ResourceGrant do
   # rather than duplicating the whole suite per model.
   {
     "ApiToken" => -> { create(:api_token) },
-    "Doorkeeper::Application" => -> { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted") },
+    "OauthApplication" => -> { OauthApplication.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted") },
   }.each do |label, owner_factory|
     context "owned by #{label}" do
       let(:owner) { instance_exec(&owner_factory) }

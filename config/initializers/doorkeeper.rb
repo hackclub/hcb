@@ -12,6 +12,7 @@ Doorkeeper.configure do
 
   access_token_class "::ApiToken"
   access_token_generator "::ApiToken"
+  application_class "::OauthApplication"
 
   access_token_expires_in 2.hours
 
@@ -372,14 +373,8 @@ Doorkeeper.configure do
   # end
 
   after_successful_strategy_response do |_request, response|
-    token = response.token
-    next unless token
-
-    token.update_column(:ip_address, Current.request_ip)
-
-    token.application&.resource_grants&.find_each do |template|
-      token.resource_grants.create!(template.attributes.slice("resource_type", "access_level", "scope_root_type", "scope_root_id"))
-    end
+    response.token&.update_column(:ip_address, Current.request_ip)
+    response.token&.copy_resource_grants_from_application!
   end
 
   # Hook into Authorization flow in order to implement Single Sign Out

@@ -3,8 +3,10 @@
 class ApplicationPolicy
   attr_reader :user, :record
 
+  # ApiAdminContext#for_record binds the record being authorized, so bare
+  # user.admin?/user.auditor? calls honor resource-limited admin access.
   def initialize(user, record)
-    @user = user
+    @user = user.respond_to?(:for_record) ? user.for_record(record) : user
     @record = record
   end
 
@@ -44,7 +46,7 @@ class ApplicationPolicy
     attr_reader :user, :scope
 
     def initialize(user, scope)
-      @user = user
+      @user = user.respond_to?(:for_record) ? user.for_record(scope) : user
       @scope = scope
     end
 
@@ -62,18 +64,11 @@ class ApplicationPolicy
       token = user.respond_to?(:token) ? user.token : nil
       return relation if token.nil?
 
-      resource_type = relation.klass.api_resource_type
-      grants = token.resource_grants_for(:read, resource_type).to_a
-      return relation if grants.empty?
-      return relation if grants.any? { |grant| grant.scope_root_type.nil? }
+      relation = relation.all
+      grants = token.resource_grants_for(:read, relation.klass.api_resource_type).to_a
+      return relation if grants.empty? || grants.any? { |grant| grant.scope_root_type.nil? }
 
-      root_pairs = grants.map { |grant| [grant.scope_root_type, grant.scope_root_id] }
-
-      matching_ids = relation.select do |record|
-        root_pairs.any? { |type, id| record.api_scope_roots[type] == id }
-      end.map(&:id)
-
-      relation.where(id: matching_ids)
+      relation.where(id: relation.select { |record| grants.any? { |grant| grant.covers?(record) } }.map(&:id))
     end
 
   end

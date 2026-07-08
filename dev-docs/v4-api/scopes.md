@@ -139,6 +139,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |
+| `admin.<resource>:read` / `admin.<resource>:write` | Admin-level access limited to one resource type (see [Admin Scopes](#admin-scopes)) | `admin.organizations:read`, `admin.comments:write` |
 
 Guidelines:
 
@@ -223,17 +224,24 @@ class Disbursement < ApplicationRecord
 
 See [Admin Access in standards.md](./standards.md#admin-access) for the full treatment.
 
-A token can gain admin capability three ways, from broadest to narrowest:
+A token can gain admin capability four ways, from broadest to narrowest:
 
 1. **Blanket scope** - `admin:read` / `admin:write`. Full admin data access, no grants needed.
-2. **Resource-scoped grant, no further narrowing** - a `ResourceGrant` with `resource_type: "comments"`, `access_level: "read"`, and no scope root. This *is* the capability (unlike a general resource scope, there's no `comments:read`-style admin string to hold instead) - it replaces what would otherwise be a separate `admin.<resource>:<level>` scope string with the same [object-scope](#object-scopes) mechanism every other resource uses.
-3. **Resource-scoped grant, narrowed to a root** - same as above, but also restricted to one organization/user via `scope_root_type`/`scope_root_id`.
+2. **Resource-limited scope** - `admin.<resource>:<level>`, e.g. `admin.organizations:read`. Same capability as the blanket scope, limited to one resource type. The `<resource>` string is the model's `api_resource_type` (see [Object Scopes](#object-scopes)), which matches the resource part of the corresponding `require_oauth2_scope` string (`organizations`, `ledgers`, `comments`, ...). Requested through the normal OAuth `scope=` parameter like any other scope.
+3. **Resource-scoped grant, no further narrowing** - a `ResourceGrant` with `resource_type: "comments"`, `access_level: "read"`, and no scope root. Equivalent to holding `admin.comments:read`, but issued server-side as a grant row rather than requested as a scope string.
+4. **Resource-scoped grant, narrowed to a root** - same as above, but also restricted to one organization/user via `scope_root_type`/`scope_root_id`. (A token holding an `admin.<resource>:<level>` scope *and* narrowing grants for that resource gets the intersection: the capability comes from the scope, the grants restrict which rows it covers.)
 
-`can_admin?(level, resource:, record:)` and `require_admin_scope!(level, resource:, record:)` both accept `resource:` and `record:` to check either of the narrower forms. Pick the call site based on what's being gated:
+In all four forms, admin capability still requires the underlying user to actually hold the role (`auditor?` for read, `admin?` for write) - scopes and grants only ever *limit* what an admin's token can do, they never elevate a non-admin.
+
+### Where they're checked
+
+`can_admin?(level, resource:, record:)` and `require_admin_scope!(level, resource:, record:)` both accept `resource:` and `record:` to check the narrower forms. Pick the call site based on what's being gated:
 
 | Gating... | Use |
 |---|---|
 | A whole action | `require_admin_scope!(level, resource:)` in a `before_action` |
 | An extra field on an object already loaded | `can_admin?(level, resource:, record:)` in the jbuilder partial |
 
-Only reach for a resource-scoped or object-scoped admin grant when an endpoint needs access narrower than "all admin data" - most endpoints should keep using the blanket scopes.
+**Pundit policies get this for free.** `ApplicationPolicy` binds the record (or relation) being authorized into the `ApiAdminContext` used as `pundit_user`, so a bare `user.admin?` / `user.auditor?` inside any policy automatically accepts a resource-limited scope or grant matching that record's resource type - e.g. a token with `admin.organizations:read` passes `user.auditor?` inside `EventPolicy`, but not inside `UserPolicy`. Policies authorizing non-resource targets (symbols, arrays) fall back to blanket-scope-only behavior.
+
+Only reach for a resource-limited scope or grant when an app needs access narrower than "all admin data" - most endpoints should keep using the blanket scopes.

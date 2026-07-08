@@ -57,10 +57,7 @@ class Receipt < ApplicationRecord
   alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
-  def api_scope_roots
-    event = receiptable.respond_to?(:event) ? receiptable.event : nil
-    { "Event" => event&.id, "User" => user_id }.compact
-  end
+  api_scope_roots_through :receiptable
 
   has_many :suggested_pairings, dependent: :destroy
   has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings

@@ -115,7 +115,7 @@ class UsersController < ApplicationController
   end
 
   def revoke_oauth_application
-    Doorkeeper::Application.revoke_tokens_and_grants_for(params[:id], current_user)
+    OauthApplication.revoke_tokens_and_grants_for(params[:id], current_user)
     redirect_back_or_to security_user_path(current_user)
   end
 

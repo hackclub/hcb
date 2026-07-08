@@ -18,7 +18,7 @@ RSpec.describe Api::V4::DonationsController do
       event = create(:event)
       create(:organizer_position, user:, event:)
 
-      trusted_app = Doorkeeper::Application.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true)
+      trusted_app = OauthApplication.create!(name: "Trusted App", redirect_uri: "https://hcb.hackclub.com", trusted: true)
       token = create(:api_token, user:, application: trusted_app)
       request.headers["Authorization"] = "Bearer #{token.token}"
 

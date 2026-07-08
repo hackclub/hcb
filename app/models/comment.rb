@@ -33,10 +33,7 @@ class Comment < ApplicationRecord
   belongs_to :commentable, polymorphic: true
   belongs_to :user
 
-  def api_scope_roots
-    event = commentable.respond_to?(:event) ? commentable.event : nil
-    { "Event" => event&.id, "User" => user_id }.compact
-  end
+  api_scope_roots_through :commentable
 
   has_one_attached :file
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }

@@ -24,7 +24,7 @@ RSpec.describe Doorkeeper::ApplicationsController do
 
   describe "#edit" do
     it "pre-checks scopes the application already has" do
-      application = Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted receipts:read some_future_scope")
+      application = OauthApplication.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted receipts:read some_future_scope")
 
       get :edit, params: { id: application.id }
 

@@ -6,7 +6,7 @@ RSpec.describe Doorkeeper::ApplicationResourceGrantsController do
   include SessionSupport
   render_views
 
-  let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted comments:read") }
+  let(:application) { OauthApplication.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted comments:read") }
 
   describe "#index" do
     it "is forbidden for a non-admin" do

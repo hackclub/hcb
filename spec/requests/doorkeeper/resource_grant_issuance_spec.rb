@@ -6,7 +6,7 @@ RSpec.describe "minting a token copies an application's resource grants" do
   it "creates matching ResourceGrant rows on the issued token" do
     user = create(:user)
 
-    application = Doorkeeper::Application.create!(
+    application = OauthApplication.create!(
       name: "Test App",
       redirect_uri: "https://example.com/callback",
       scopes: "restricted comments:read",

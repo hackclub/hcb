@@ -23,14 +23,19 @@
 class ResourceGrant < ApplicationRecord
   ACCESS_LEVELS = %w[read write].freeze
   SCOPE_ROOT_TYPES = %w[User Event].freeze
-  OWNER_TYPES = %w[ApiToken Doorkeeper::Application].freeze
+  OWNER_TYPES = %w[ApiToken OauthApplication].freeze
 
   belongs_to :owner, polymorphic: true
 
+  validates :owner_type, inclusion: { in: OWNER_TYPES }
   validates :resource_type, presence: true
   validates :access_level, inclusion: { in: ACCESS_LEVELS }
   validates :scope_root_type, inclusion: { in: SCOPE_ROOT_TYPES }, allow_nil: true
   validate :scope_root_type_and_id_are_set_together
+
+  def covers?(record)
+    scope_root_type.nil? || record.api_scope_roots[scope_root_type] == scope_root_id
+  end
 
   private
 
