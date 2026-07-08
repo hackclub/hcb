@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_134154) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -3030,7 +3030,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_134154) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
-  add_foreign_key "ledger_items", "users", column: "author_id", validate: false
+  add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
