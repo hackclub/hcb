@@ -56,8 +56,9 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :refresh!
-    after_touch :refresh!
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
 
     scope :receipt_missing, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
@@ -193,10 +194,10 @@ class Ledger
           hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
           hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
         end
-        ledger_item.update!(custom_memo: memo)
+        update!(custom_memo: memo)
       end
 
-      item.refresh!
+      refresh!
     end
 
     def map!
