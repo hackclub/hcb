@@ -64,8 +64,8 @@
         </div>
 
         <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
-          <%= render "application/callout", type: "warning", icon: "important", title: "Manual entry selected", class: "mt-0 mb-0" do %>
-            You'll need to provide payout details and tax info below. Only use this if the recipient can't submit their own.
+          <%= render "application/callout", type: "warning", icon: "important", title: "Tax and payment info required", class: "mt-0 mb-0" do %>
+            We'll ask for this soon. Only use this if the recipient can't submit their own.
           <% end %>
         </div>
 
