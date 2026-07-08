@@ -54,8 +54,9 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :refresh!
-    after_touch :refresh!
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
@@ -151,8 +152,6 @@ class Ledger
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
-      else
-        self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo
       end
     end
 
@@ -171,7 +170,7 @@ class Ledger
       self.receipt_required = calculate_receipt_required
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || "Transaction"
+      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
 
       save!
     end
