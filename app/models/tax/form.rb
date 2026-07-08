@@ -108,14 +108,11 @@ module Tax
     end
 
     def taxbandits_submission
-      submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{legal_entity.public_id}").body
-
-      submissions["WhcertificateRecords"].find { |s| s["SubmissionId"] == external_id }
+      TaxbanditsService.get_submission(payee_id: legal_entity.public_id, submission_id: external_id)
     end
 
     def sync_with_taxbandits
-      responses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{legal_entity.public_id}").body
-      response = responses["Status"].find { |r| r["SubmissionId"] == external_id }
+      response = TaxbanditsService.get_status(payee_id: legal_entity.public_id, submission_id: external_id)
 
       update!(
         taxbandits_status: response["FormStatus"].downcase,
@@ -125,52 +122,10 @@ module Tax
 
     private
 
-    def taxbandits_client
-      @taxbandits_client || begin
-        Faraday.new(url: Rails.env.development? ? "https://testapi.taxbandits.com/v1.7.3/" : "https://api.taxbandits.com/v1.7.3/") do |faraday|
-          faraday.response :json
-          faraday.response :raise_error
-          faraday.adapter Faraday.default_adapter
-          faraday.headers["Authorization"] = "Bearer #{taxbandits_access_token}"
-          faraday.headers["Content-Type"] = "application/json"
-        end
-      end
-    end
-
-    def taxbandits_access_token
-      Rails.cache.fetch("taxbandits_access_token", expires_in: 50.minutes) do
-        payload = {
-          iss: Credentials.fetch(:TAXBANDITS, :CLIENT_ID),
-          sub: Credentials.fetch(:TAXBANDITS, :CLIENT_ID),
-          aud: Credentials.fetch(:TAXBANDITS, :USER_TOKEN),
-          iat: Time.now.to_i
-        }
-
-        signature = JWT.encode(payload, Credentials.fetch(:TAXBANDITS, :CLIENT_SECRET), "HS256")
-
-        oauth_response = Faraday.new(url: Rails.env.development? ? "https://testoauth.expressauth.net" : "https://oauth.expressauth.net") do |conn|
-          conn.response :json
-          conn.headers["Authentication"] = signature
-          conn.adapter Faraday.default_adapter
-        end.get("/v2/tbsauth")
-
-        oauth_response.body["AccessToken"]
-      end
-    end
-
     def send_using_taxbandits!
-      response = taxbandits_client.post("WhCertificate/RequestByUrl") do |req|
-        req.body = {
-          "Recipient" => {
-            "PayeeRef"      => legal_entity.public_id,
-            "Name"          => legal_entity.name,
-            "IsTINMatching" => true
-          },
-          "CustomizationId": Credentials.fetch(:TAXBANDITS, :CUSTOMIZATION_ID)
-        }.to_json
-      end
+      response = TaxbanditsService.create_whcertificate(id: legal_entity.public_id, name: legal_entity.name)
 
-      update!(external_service: :taxbandits, signing_url: response.body["Url"], external_id: response.body["SubmissionId"])
+      update!(external_service: :taxbandits, signing_url: response["Url"], external_id: response["SubmissionId"])
       sync_with_taxbandits
     end
 
