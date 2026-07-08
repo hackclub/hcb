@@ -22,7 +22,6 @@
 #
 class Payee < ApplicationRecord
   include PgSearch::Model
-  include Hashid::Rails
 
   include Hashid::Rails
   hashid_config salt: ""

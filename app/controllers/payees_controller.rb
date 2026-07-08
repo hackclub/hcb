@@ -3,7 +3,7 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create]
+  before_action :set_event, only: [:index, :create, :update, :destroy]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
