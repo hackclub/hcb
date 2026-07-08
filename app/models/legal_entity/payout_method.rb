@@ -55,6 +55,21 @@ class LegalEntity
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
 
+    def self.details_class_for(type_name)
+      ALL_METHODS.find { |klass| klass.name == type_name }
+    end
+
+    # Permits and returns the type-specific detail attributes for `type_name`
+    # out of `params[:user][:payout_method_<kind>]`. Returns {} for an unknown
+    # or missing type.
+    def self.details_params_from(params, type_name)
+      details_class = details_class_for(type_name)
+      return {} unless details_class
+
+      key = :"payout_method_#{details_class.name.demodulize.underscore}"
+      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+    end
+
     # Shared contract for `create_transfer(event, **attrs)` across every payout
     # method. Each detail class pulls only the attributes its transfer type
     # supports.

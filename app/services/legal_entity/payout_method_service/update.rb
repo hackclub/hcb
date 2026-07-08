@@ -50,9 +50,7 @@ class LegalEntity
       private
 
       def build_payout_method
-        # Resolve the user-supplied type against the allowlist by name rather
-        # than constantizing it, so arbitrary class names can never be loaded.
-        details_class = LegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
+        details_class = LegalEntity::PayoutMethod.details_class_for(@details_type)
         pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default)
         pm.details = details_class.new(@details_attrs) if details_class
         pm
