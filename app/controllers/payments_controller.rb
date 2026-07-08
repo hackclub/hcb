@@ -62,6 +62,7 @@ class PaymentsController < ApplicationController
 
     details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
 
+    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
     return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
 
     LegalEntity::PayoutMethodService::Update.new(
