@@ -20,7 +20,7 @@
       <div class="mt-6">
         <h4 class="muted eyebrow">Recent payments to <%= @payee.display_name %></h4>
         <div class="card p-0 overflow-hidden bg-transparent">
-          <% recent_payments.each_with_index do |payment, index| %>
+          <% recent_payments.each do |payment| %>
             <%= link_to payment_path(payment), target: "_blank", rel: "noopener", class: "flex items-center gap-3 px-4 py-3 no-underline" do %>
               <div class="flex-1 min-w-0">
                 <p class="font-medium text-sm m-0 truncate"><%= payment.purpose.presence || "Payment" %></p>

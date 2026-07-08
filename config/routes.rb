@@ -982,7 +982,7 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payees, only: [:index, :create]
+    resources :payees, only: [:index, :create, :update, :destroy]
 
     get "async_balance"
     get "async_sub_organization_balance"

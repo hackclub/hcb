@@ -6,7 +6,9 @@
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
     <% if event.payees.any? %>
-      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) do %>
+        <%= render "application/loading_container", klass: "py-8" %>
+      <% end %>
     <% end %>
 
     <a class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" data-action="payee-picker#showAdding" data-payee-picker-target="searchHidden">

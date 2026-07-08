@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_150000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1917,12 +1917,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   end
 
   create_table "payees", force: :cascade do |t|
+    t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
+    t.index ["archived_at"], name: "index_payees_on_archived_at"
     t.index ["event_id"], name: "index_payees_on_event_id"
     t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"

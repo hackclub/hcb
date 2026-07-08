@@ -9,10 +9,12 @@ class PayeesController < ApplicationController
 
   def index
     authorize @event
-    payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
+    # Archived recipients are hidden everywhere, including search results.
+    scope = @event.payees.not_archived.includes(:legal_entity, :payments)
+    payees = params[:q].present? ? scope.search(params[:q]) : scope
     payees = payees.order(created_at: :desc).limit(15).to_a
 
-    selected = @event.payees.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    selected = @event.payees.not_archived.includes(:legal_entity, :payments).find_by_public_id(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees].compact.uniq
 
     render layout: false
@@ -38,10 +40,40 @@ class PayeesController < ApplicationController
       redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
     end
   rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
-    redirect_to new_event_payment_path(event_id: @event.slug), alert: e.message
+    flash[:error] = e.message
+    redirect_to new_event_payment_path(event_id: @event.slug)
+  end
+
+  def update
+    payee = @event.payees.find_by_public_id!(params[:id])
+    authorize payee
+
+    if payee.update(payee_params(payee))
+      flash[:success] = "Recipient updated."
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
+    else
+      flash[:error] = payee.errors.full_messages.to_sentence
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id, edit_payee: true)
+    end
+  end
+
+  def destroy
+    payee = @event.payees.find_by_public_id!(params[:id])
+    authorize payee
+
+    payee.archive!
+
+    flash[:success] = "Recipient archived."
+    redirect_to new_event_payment_path(event_id: @event.slug)
   end
 
   private
+
+  # Managers may edit every field; other organizers are limited to the email.
+  def payee_params(payee)
+    permitted = policy(payee).edit_details? ? [:display_name, :email] : [:email]
+    params.require(:payee).permit(*permitted)
+  end
 
   def manual_payee_entity_type
     entity_type = params[:payee_entity_type].presence

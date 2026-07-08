@@ -1,5 +1,9 @@
 <%# locals: (event:, payment:, payee: nil) %>
 
+<% if payee && params[:edit_payee].present? && policy(payee).update? %>
+  <%= render "payments/edit_payee", event:, payee: %>
+<% else %>
+
 <% disabled = !policy(event).create_transfer? %>
 <% manual = payee&.managed? %>
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
@@ -25,7 +29,12 @@
               </div>
             </div>
           </div>
-          <%= link_to "Edit", new_event_payment_path(event_id: event.slug), class: "btn ml-auto shrink-0 text-sm", data: { turbo_frame: "_top" } %>
+          <div class="flex items-center gap-2 ml-auto shrink-0">
+            <% if policy(payee).update? %>
+              <%= link_to "Edit", new_event_payment_path(event_id: event.slug, payee_id: payee.public_id, edit_payee: true, selected: true), class: "btn text-sm", data: { turbo_frame: "_top" } %>
+            <% end %>
+            <%= pop_icon_to "down-caret", new_event_payment_path(event_id: event.slug), data: { turbo_frame: "_top" } %>
+          </div>
         </div>
 
       <% else %>
@@ -111,3 +120,4 @@
     <% end %>
   </div>
 </div>
+<% end %>

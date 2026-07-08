@@ -5,6 +5,7 @@
 # Table name: payees
 #
 #  id              :bigint           not null, primary key
+#  archived_at     :datetime
 #  display_name    :string           not null
 #  email           :string           not null
 #  created_at      :datetime         not null
@@ -14,6 +15,7 @@
 #
 # Indexes
 #
+#  index_payees_on_archived_at                   (archived_at)
 #  index_payees_on_event_id                      (event_id)
 #  index_payees_on_legal_entity_id               (legal_entity_id)
 #  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
@@ -36,6 +38,9 @@ class Payee < ApplicationRecord
 
   validate :managed_legal_entity_constraints
 
+  scope :archived, -> { where.not(archived_at: nil) }
+  scope :not_archived, -> { where(archived_at: nil) }
+
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
   def search_avatar
@@ -44,6 +49,18 @@ class Payee < ApplicationRecord
 
   def managed?
     legal_entity&.managing_event_id.present?
+  end
+
+  def archived?
+    archived_at.present?
+  end
+
+  def archivable?
+    payments.none?
+  end
+
+  def archive!
+    update!(archived_at: Time.current)
   end
 
   private
