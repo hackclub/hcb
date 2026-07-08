@@ -1,6 +1,5 @@
 <%# locals: (event:, payee:) %>
 
-<% can_edit_details = policy(payee).edit_details? %>
 <% cancel_path = params[:selected].present? ? new_event_payment_path(event_id: event.slug, payee_id: payee.public_id) : new_event_payment_path(event_id: event.slug) %>
 
 <div data-scroll-seek-target="section">
@@ -10,7 +9,7 @@
       <div class="flex flex-col gap-3">
         <div>
           <%= form.label :display_name, "Name" %>
-          <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true, disabled: !can_edit_details %>
+          <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true, disabled: !policy(payee).edit_details %>
         </div>
         <div>
           <%= form.label :email, "Email" %>
@@ -18,7 +17,7 @@
         </div>
       </div>
 
-      <% unless can_edit_details %>
+      <% unless policy(payee).edit_details %>
         <p class="muted text-sm mt-2 mb-0">You can update this recipient's email until their first payment is sent. Ask a manager to change other details.</p>
       <% end %>
 
