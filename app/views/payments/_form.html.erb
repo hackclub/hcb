@@ -31,6 +31,7 @@
     <% end %>
   </div>
 
+  <div class="<%= 'hidden' unless payee %>">
   <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
     <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
@@ -82,4 +83,5 @@
       <%= inline_icon "send" %>
     </button>
   <% end %>
+  </div>
 </div>

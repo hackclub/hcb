@@ -5,10 +5,12 @@
 <% manual = @payee&.managed? %>
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
-  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
-  <%= render "events/transfers/step_item", number: 3, label: "Payout method", hidden: !manual, data: { "payout-step": "" } %>
-  <%= render "events/transfers/step_item", number: 4, label: "Tax information", hidden: !manual, data: { "payout-step": "" } %>
-  <%= render "events/transfers/step_item", number: manual ? 5 : 3, label: "Receipt" %>
+  <div class="contents <%= "visibility-hidden" if @payee.nil? %>">
+    <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
+    <%= render "events/transfers/step_item", number: 3, label: "Payout method", hidden: !manual, data: { "payout-step": "" } %>
+    <%= render "events/transfers/step_item", number: 4, label: "Tax information", hidden: !manual, data: { "payout-step": "" } %>
+    <%= render "events/transfers/step_item", number: manual ? 5 : 3, label: "Receipt" %>
+  </div>
 <% end %>
 
 <%= render "payments/form", event: @event, payment: @payment, payee: @payee %>
