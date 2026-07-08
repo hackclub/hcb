@@ -2,6 +2,7 @@
 
 <% disabled = !policy(event).create_transfer? %>
 <% manual = payee&.managed? %>
+<% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
@@ -60,7 +61,7 @@
     <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
       <h3 class="mb-2">Payout method</h3>
       <div class="card mb-4 flex flex-col gap-3">
-        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, title: "Select a payout method" %>
+        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
       </div>
     </div>
 
