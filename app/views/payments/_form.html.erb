@@ -66,9 +66,30 @@
 
     <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
       <h3 class="mb-2">Payout method</h3>
-      <div class="card mb-4 flex flex-col gap-3">
-        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
-      </div>
+      <% if existing_payout_method %>
+        <details class="card mb-4 p-0 overflow-hidden">
+          <summary class="flex items-center gap-3 px-5 py-4 cursor-pointer list-none select-none">
+            <div class="payout-methods__icon flex items-center justify-center shrink-0" style="width: 40px; height: 40px; border-radius: 10px;">
+              <%= inline_icon existing_payout_method.icon, size: 20 %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <strong><%= existing_payout_method.title_kind %></strong>
+              </div>
+              <p class="muted text-sm m-0"><%= existing_payout_method.detail_summary %></p>
+            </div>
+            <span class="muted ml-auto shrink-0 text-sm">Edit</span>
+          </summary>
+          <div class="menu__divider my-0"></div>
+          <div class="p-5">
+            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+          </div>
+        </details>
+      <% else %>
+        <div class="card mb-4 flex flex-col gap-3">
+          <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+        </div>
+      <% end %>
     </div>
 
     <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
