@@ -9,7 +9,6 @@ class PayeesController < ApplicationController
 
   def index
     authorize @event
-    # Archived recipients are hidden everywhere, including search results.
     scope = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? scope.search(params[:q]) : scope
     payees = payees.order(created_at: :desc).limit(15).to_a
