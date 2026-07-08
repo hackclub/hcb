@@ -234,9 +234,9 @@ class User < ApplicationRecord
 
   validates :discord_id, uniqueness: { message: "is already linked to another user. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
-  enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }
+  enum :comment_notifications, { all_threads: 0, my_threads: 1, no_threads: 2 }, default: :no_threads
 
-  enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications
+  enum :charge_notifications, { email_and_sms: 0, email: 1, sms: 2, nothing: 3 }, prefix: :charge_notifications, default: :nothing
 
   comma do
     id
@@ -496,12 +496,35 @@ class User < ApplicationRecord
     user_sessions.not_impersonated.maximum(:created_at)
   end
 
+  # Transaction comment notifications and card charge notifications are
+  # permanently disabled and cannot be enabled by users. These overrides
+  # ensure they stay off regardless of the value stored in the database.
+  def comment_notifications
+    "no_threads"
+  end
+
+  def all_threads?
+    false
+  end
+
+  def my_threads?
+    false
+  end
+
+  def no_threads?
+    true
+  end
+
+  def charge_notifications
+    "nothing"
+  end
+
   def email_charge_notifications_enabled?
-    charge_notifications_email? || charge_notifications_email_and_sms?
+    false
   end
 
   def sms_charge_notifications_enabled?
-    charge_notifications_sms? || charge_notifications_email_and_sms?
+    false
   end
 
   def queue_sync_with_loops_job

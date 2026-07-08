@@ -537,8 +537,8 @@ class UsersController < ApplicationController
       :use_sms_auth,
       :use_two_factor_authentication,
       # notifications
-      :comment_notifications,
-      :charge_notifications,
+      # comment_notifications and charge_notifications are permanently
+      # disabled and intentionally not permitted here.
       :monthly_donation_summary,
       :monthly_follower_summary
     ]

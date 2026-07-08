@@ -13,17 +13,17 @@
           Get an email when someone comments on a transaction or reimbursement report.
         </p>
         <div class="field field--options field--green trio">
-          <%= form.radio_button :comment_notifications, :all_threads, disabled: %>
+          <%= form.radio_button :comment_notifications, :all_threads, disabled: true %>
           <%= form.label :comment_notifications, value: :all_threads do %>
             <%= inline_icon "notification", size: 28 %>
             <strong>All transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :my_threads, disabled: %>
+          <%= form.radio_button :comment_notifications, :my_threads, disabled: true %>
           <%= form.label :comment_notifications, value: :my_threads do %>
             <%= inline_icon "person", size: 32 %>
             <strong>My transactions</strong>
           <% end %>
-          <%= form.radio_button :comment_notifications, :no_threads, disabled: %>
+          <%= form.radio_button :comment_notifications, :no_threads, checked: true, disabled: true %>
           <%= form.label :comment_notifications, value: :no_threads do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>
@@ -36,22 +36,22 @@
           Get a notification when there’s a charge on any of your cards.
         </p>
         <div class="field field--options max-w-3xl grid grid--narrow">
-          <%= form.radio_button :charge_notifications, :email_and_sms, disabled: %>
+          <%= form.radio_button :charge_notifications, :email_and_sms, disabled: true %>
           <%= form.label :charge_notifications, value: :email_and_sms do %>
             <%= inline_icon "announcement", size: 28 %>
             <strong>Email & SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :email, disabled: %>
+          <%= form.radio_button :charge_notifications, :email, disabled: true %>
           <%= form.label :charge_notifications, value: :email do %>
             <%= inline_icon "email", size: 28 %>
             <strong>Email</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :sms, disabled: %>
+          <%= form.radio_button :charge_notifications, :sms, disabled: true %>
           <%= form.label :charge_notifications, value: :sms do %>
             <%= inline_icon "message", size: 28 %>
             <strong>SMS</strong>
           <% end %>
-          <%= form.radio_button :charge_notifications, :nothing, disabled: %>
+          <%= form.radio_button :charge_notifications, :nothing, checked: true, disabled: true %>
           <%= form.label :charge_notifications, value: :nothing do %>
             <%= inline_icon "forbidden", size: 28 %>
             <strong>None</strong>

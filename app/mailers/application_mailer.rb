@@ -13,6 +13,14 @@ class ApplicationMailer < ActionMailer::Base
   helper :application
   helper :logo
 
+  # Only login code and donation receipt emails are allowed to be delivered.
+  # Every other email is suppressed (see the `mail` override below). Entries
+  # are matched as "MailerClass#action".
+  ALLOWED_MAILER_ACTIONS = [
+    "LoginCodeMailer#send_code",    # login codes
+    "DonationMailer#donor_receipt", # donation receipts
+  ].freeze
+
   def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt
     # to deliver an email without recipients. Occasionally
@@ -48,6 +56,14 @@ class ApplicationMailer < ActionMailer::Base
 
   def mail(...)
     super(...).tap do |msg|
+      # Suppress every email that isn't an explicitly allowed login code or
+      # donation receipt by clearing its recipients, which causes
+      # `deliver_mail` to short-circuit before delivery.
+      unless ALLOWED_MAILER_ACTIONS.include?("#{self.class.name}##{action_name}")
+        msg.to = msg.cc = msg.bcc = []
+        next
+      end
+
       new_to = (msg.to || []) - self.class.earmuffed_recipients
       new_cc = (msg.cc || []) - self.class.earmuffed_recipients
       new_bcc = (msg.bcc || []) - self.class.earmuffed_recipients
