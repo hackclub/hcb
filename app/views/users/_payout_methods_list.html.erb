@@ -23,7 +23,7 @@
       <div class="payout-methods__rows">
         <% methods.each do |pm| %>
           <% errored_row = edit_error_id == pm.id %>
-          <%= render "users/payout_form/payout_method_row", payout_method: (errored_row ? attempted : pm), open: errored_row, locking_reports: locking_by_method[pm.id] || [] %>
+          <%= render "users/payout_form/payout_method_row", user:, payout_method: (errored_row ? attempted : pm), open: errored_row, locking_reports: locking_by_method[pm.id] || [] %>
         <% end %>
       </div>
     <% else %>
@@ -43,7 +43,7 @@
     data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
     <%= modal_header "Add method" %>
     <div style="padding: 0 20px 20px;">
-      <%= render "users/payout_form/managed_form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
+      <%= render "users/payout_form/form", user:, legal_entity:, creating: true, attempted: (create_error ? attempted : nil) %>
     </div>
   </section>
 </div>
