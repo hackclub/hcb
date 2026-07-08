@@ -171,6 +171,7 @@ class Ledger
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || linked_object.merchant_data&.dig("name") || "Card charge"
       when "RawPendingStripeTransaction", "RawStripeTransaction"
+        # TODO: Remove this once RPSTs and RSTs are migrated to CardCharges
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
