@@ -50,6 +50,12 @@ class LegalEntity
 
     validate :details_must_be_supported
 
+    after_create do
+      if default? && other_methods.none?
+        legal_entity.payments.pending_legal_entity.each(&:on_default_payout_method_created)
+      end
+    end
+
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
 
@@ -121,11 +127,12 @@ class LegalEntity
       end
     end
 
+    def other_methods
+      LegalEntity::PayoutMethod.where(legal_entity_id:).excluding(self)
+    end
+
     def unset_other_defaults
-      LegalEntity::PayoutMethod
-        .where(legal_entity_id:)
-        .excluding(self)
-        .update_all(default: false)
+      other_methods.update_all(default: false)
     end
 
   end

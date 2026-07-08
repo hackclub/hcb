@@ -20,6 +20,7 @@
 #
 class Payee < ApplicationRecord
   include PgSearch::Model
+  include Hashid::Rails
 
   belongs_to :event
   belongs_to :legal_entity, optional: true
@@ -31,6 +32,12 @@ class Payee < ApplicationRecord
   validate :managed_legal_entity_constraints
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
+
+  after_update do
+    if legal_entity_id_previously_changed?(from: nil)
+      payments.pending_legal_entity.each(&:on_legal_entity_assigned)
+    end
+  end
 
   def search_avatar
     User.find_by(email:)

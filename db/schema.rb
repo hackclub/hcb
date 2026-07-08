@@ -1474,6 +1474,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
     t.string "address_line2"
     t.string "address_postal_code"
     t.string "address_state"
+    t.string "banned_reason"
     t.datetime "created_at", null: false
     t.string "entity_type"
     t.bigint "managing_event_id"
@@ -2288,6 +2289,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
     t.string "form_type"
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
+    t.string "signing_url"
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.datetime "updated_at", null: false
