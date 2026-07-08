@@ -2,8 +2,8 @@
 
 require "rails_helper"
 
-RSpec.describe "minting a token copies an application's resource grant templates" do
-  it "creates matching ApiToken::ResourceGrant rows on the issued token" do
+RSpec.describe "minting a token copies an application's resource grants" do
+  it "creates matching ResourceGrant rows on the issued token" do
     user = create(:user)
 
     application = Doorkeeper::Application.create!(
@@ -12,8 +12,8 @@ RSpec.describe "minting a token copies an application's resource grant templates
       scopes: "restricted comments:read",
       confidential: true,
     )
-    application.resource_grant_templates.create!(resource_type: "comments", access_level: "read", scope_root_type: "Event", scope_root_id: 42)
-    application.resource_grant_templates.create!(resource_type: "receipts", access_level: "write")
+    application.resource_grants.create!(resource_type: "comments", access_level: "read", scope_root_type: "Event", scope_root_id: 42)
+    application.resource_grants.create!(resource_type: "receipts", access_level: "write")
 
     # Redeeming a code via /token only needs client credentials, not a login
     # session - so we can skip the /authorize step (which does need one) and

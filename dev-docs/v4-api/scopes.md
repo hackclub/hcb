@@ -226,8 +226,8 @@ See [Admin Access in standards.md](./standards.md#admin-access) for the full tre
 A token can gain admin capability three ways, from broadest to narrowest:
 
 1. **Blanket scope** - `admin:read` / `admin:write`. Full admin data access, no grants needed.
-2. **Resource-scoped grant, no further narrowing** - an `ApiToken::ResourceGrant` with `resource_type: "comments"`, `access_level: "read"`, and neither a root nor a `resource_id`. This *is* the capability (unlike a general resource scope, there's no `comments:read`-style admin string to hold instead) - it replaces what would otherwise be a separate `admin.<resource>:<level>` scope string with the same [object-scope](#object-scopes) mechanism every other resource uses.
-3. **Resource-scoped grant, narrowed to a root or record** - same as above, but also restricted to one organization/user/record via `scope_root_type`/`scope_root_id` or `resource_id`.
+2. **Resource-scoped grant, no further narrowing** - a `ResourceGrant` with `resource_type: "comments"`, `access_level: "read"`, and no scope root. This *is* the capability (unlike a general resource scope, there's no `comments:read`-style admin string to hold instead) - it replaces what would otherwise be a separate `admin.<resource>:<level>` scope string with the same [object-scope](#object-scopes) mechanism every other resource uses.
+3. **Resource-scoped grant, narrowed to a root** - same as above, but also restricted to one organization/user via `scope_root_type`/`scope_root_id`.
 
 `can_admin?(level, resource:, record:)` and `require_admin_scope!(level, resource:, record:)` both accept `resource:` and `record:` to check either of the narrower forms. Pick the call site based on what's being gated:
 
