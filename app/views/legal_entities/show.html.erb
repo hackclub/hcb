@@ -8,12 +8,10 @@
       <p>
         You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
         can now receive payments from any organization on HCB.
-        
         <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
           Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
           approved by HCB, we'll send <%= under_review_count == 1 ? "it" : "them" %> using your default payout method.
         <% end %>
-        
         If you'd like, review your payout methods.
       </p>
 
