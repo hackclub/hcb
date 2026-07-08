@@ -52,11 +52,6 @@ class ApplicationPolicy
       apply_object_grants(visible_scope)
     end
 
-    # Subclasses with custom role-based visibility should override this
-    # instead of #resolve, so object-scope grants (see
-    # ApiToken::ResourceGrant) are applied uniformly on top regardless of the
-    # subclass's own logic. No-op for non-API pundit_users (e.g. the web
-    # app's plain User) since they don't carry a token.
     def visible_scope
       scope
     end

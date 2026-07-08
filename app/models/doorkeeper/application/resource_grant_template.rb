@@ -21,9 +21,6 @@
 #
 #  fk_rails_...  (application_id => oauth_applications.id)
 #
-# Copied onto every token minted for `application` (see
-# after_successful_strategy_response in config/initializers/doorkeeper.rb) as
-# a real ApiToken::ResourceGrant. See ResourceGrantable for the grant shape.
 class Doorkeeper::Application::ResourceGrantTemplate < ApplicationRecord
   self.table_name = "doorkeeper_application_resource_grant_templates"
 

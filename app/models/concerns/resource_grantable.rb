@@ -1,15 +1,5 @@
 # frozen_string_literal: true
 
-# Shared shape for a "grant" of resource access, used by both:
-#   - ApiToken::ResourceGrant: a live grant on an issued token.
-#   - Doorkeeper::Application::ResourceGrantTemplate: a template copied onto
-#     every token minted for an application (see the
-#     after_successful_strategy_response hook in config/initializers/doorkeeper.rb).
-#
-# Two shapes - see ApiToken::ResourceGrant for the full explanation of what
-# each means at enforcement time:
-#   - scope_root unset: the whole resource type.
-#   - scope_root_type + scope_root_id set: everything under that root.
 module ResourceGrantable
   extend ActiveSupport::Concern
 
