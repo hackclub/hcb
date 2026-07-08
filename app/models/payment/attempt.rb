@@ -38,11 +38,14 @@ class Payment
     belongs_to :payout, polymorphic: true, optional: true
     belongs_to :payout_method, class_name: "LegalEntity::PayoutMethod"
 
+    has_one :legal_entity, through: :payment
+
     scope :not_failed, -> { where.not(aasm_state: "failed" ) }
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
     validate :transfer_matches_payout_method
+    validate :legal_entity_payable, on: :create
 
     aasm timestamps: true do
       state :pending, initial: true
@@ -95,7 +98,7 @@ class Payment
 
     def create_transfer!
       self.with_lock do
-        payout_method = payment.legal_entity.default_payout_method
+        payout_method = legal_entity.default_payout_method
         unless PAYOUT_METHOD_TRANSFER_MAPPING.key?(payout_method.details.class)
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
         end
@@ -139,6 +142,12 @@ class Payment
     def transfer_matches_payout_method
       if payout.present? && PAYOUT_METHOD_TRANSFER_MAPPING[payout_method.details.class] != payout.class
         errors.add(:base, "transfer type must match payout method")
+      end
+    end
+
+    def legal_entity_payable
+      unless legal_entity.payable?
+        errors.add(:legal_entity, "must be payable")
       end
     end
 
