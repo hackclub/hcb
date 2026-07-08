@@ -17,16 +17,16 @@
   <% recent_payments = @payee.payments.order(created_at: :desc).limit(5) %>
   <% if recent_payments.any? %>
     <% content_for :sidebar_footer do %>
-      <div class="mt-4">
-        <h4 class="muted text-sm mb-2 px-1">Recent payments to <%= @payee.display_name %></h4>
+      <div class="mt-6">
+        <h4 class="muted eyebrow">Recent payments to <%= @payee.display_name %></h4>
         <div class="card p-0 overflow-hidden">
           <% recent_payments.each_with_index do |payment, index| %>
-            <%= link_to payment_path(payment), class: "flex items-center gap-2 px-4 py-3 #{'border-t' unless index.zero?}", data: { turbo_frame: "_top" } do %>
+            <%= link_to payment_path(payment), target: "_blank", rel: "noopener", class: "flex items-center gap-3 px-4 py-3 no-underline" do %>
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-sm m-0 truncate"><%= payment.purpose %></p>
-                <p class="muted text-xs m-0"><%= payment.created_at.to_fs(:date) %></p>
+                <p class="font-medium text-sm m-0 truncate"><%= payment.purpose.presence || "Payment" %></p>
+                <p class="muted text-xs m-0 mt-0.5"><%= payment.created_at.strftime("%b %-d, %Y") %></p>
               </div>
-              <span class="font-medium text-sm shrink-0"><%= render_money payment.amount_cents %></span>
+              <span class="tabular-nums font-medium text-sm shrink-0"><%= render_money payment.amount_cents %></span>
             <% end %>
           <% end %>
         </div>
