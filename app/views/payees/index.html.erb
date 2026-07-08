@@ -10,8 +10,6 @@
   <%= turbo_frame_tag :payee_results_list do %>
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
-        <% can_edit = policy(payee).update? %>
-        <% can_delete = policy(payee).destroy? %>
         <div class="btn btn--list-item border-t rounded-none relative">
           <%= link_to "", new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
@@ -27,19 +25,19 @@
             <%= inline_icon "check-thin", class: "success shrink-0" %>
           <% end %>
 
-          <% if can_edit || can_delete %>
+          <% if policy(payee).update? || policy(payee).destroy? %>
             <div data-controller="menu" data-menu-placement-value="bottom-end" class="shrink-0 relative" style="z-index: 1">
               <%= pop_icon_to "more", "#",
                     class: "align-middle muted", "aria-label": "Recipient options",
                     data: { turbo: false, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
               <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-                <% if can_edit %>
+                <% if policy(payee).update? %>
                   <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>
                     <%= inline_icon "edit", size: 24 %>
                     Edit recipient
                   <% end %>
                 <% end %>
-                <% if can_delete %>
+                <% if policy(payee).destroy? %>
                   <%= link_to event_payee_path(event_id: @event.slug, id: payee.public_id), class: "flex items-center", data: { turbo_method: :delete, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
                     <%= inline_icon "delete", size: 24 %>
                     Archive recipient
