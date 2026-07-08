@@ -114,10 +114,12 @@ module Tax
     def sync_with_taxbandits
       response = TaxbanditsService.get_status(payee_id: legal_entity.public_id, submission_id: external_id)
 
-      update!(
-        taxbandits_status: response["FormStatus"].downcase,
-        taxbandits_tin_matching_status: response["TINMatching"]&.[]("Status")&.downcase
-      )
+      if response.present?
+        update!(
+          taxbandits_status: response["FormStatus"].downcase,
+          taxbandits_tin_matching_status: response["TINMatching"]&.[]("Status")&.downcase
+        )
+      end
     end
 
     private
