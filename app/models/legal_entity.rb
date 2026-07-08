@@ -40,6 +40,9 @@ class LegalEntity < ApplicationRecord
   # At most one default per entity is enforced by a partial unique index.
   has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
 
+  scope :managed, -> { where.not(managing_event_id: nil) }
+  scope :unmanaged, -> { where(managing_event_id: nil) }
+
   validate :managing_event_cannot_change, on: :update
 
   def managed?
