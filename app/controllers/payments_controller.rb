@@ -21,6 +21,13 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
+    if payment_params[:file].blank?
+      @payee = @event.payees.find_by(id: payment_params[:payee_id])
+      @payment = Payment.new(payment_params.except(:payee_id, :file))
+      flash.now[:error] = "Please attach a receipt or invoice for this payment."
+      return render :new, layout: "transfer", status: :unprocessable_entity
+    end
+
     ActiveRecord::Base.transaction do
       @payee = @event.payees.find(payment_params[:payee_id])
       @legal_entity = @payee.legal_entity
