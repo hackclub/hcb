@@ -36,80 +36,53 @@ module StaticPagesHelper
     airtable_info[task_name][:destination]
   end
 
+  # Every admin task card points at a single Airtable base, configured via the
+  # AIRTABLE_BASE env var. Run `node scripts/setup_airtable_base.mjs` to create
+  # the tables below in that base; it writes their ids to config/airtable_tables.json,
+  # which is used to deep-link the card destinations.
   def airtable_info
+    base = Credentials.fetch(:AIRTABLE_BASE)
     {
-      bank_applications: {
-        id: "apppALh5FEOKkhjLR",
-        table: "Events",
-        query: { filterByFormula: "OR(Status='⭐️ New Application', Status='Applied - Approved', Status='Applied - Need Rejection')" },
-        destination: "https://airtable.com/tblctmRFEeluG4do7/viwGhv19cV1ZRj61a"
-      },
-      stickers: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Bank%20Stickers",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblyhkntth4OyQxiO/viwHcxhOKMZnPXUUU"
-      },
-      domains: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Domains",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl22cXd3Bo9uo0wp/viwcnZyoctJTFGVY2"
-      },
-      onepassword: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "1Password",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblcHEZyos3V9DoeI/viwSapKZ8C4ByBuqT"
-      },
-      pvsa: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "PVSA%20Order",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbl4ffIbyaEa2fIYW/viw2OPTziXEqOpaLA"
-      },
-      theeventhelper: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Event%20Insurance",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblWlQxkf6L7mEjC4/viwzbku7oWsw5GFEa"
-      },
-      wire_transfers: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Wire%20Transfers",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tbloFbH16HI7t3mfG/viwzgt8VLHOC82m8n"
-      },
-      disputed_transactions: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Disputed%20Transactions",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/appEzv7w2IBMoxxHe/tblTqbwz5AUkzOcVb"
-      },
-      feedback: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Feedback",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/tblOmqLjWtJZWXn4O/viwuk2j4xsKJo5EqA"
-      },
-      google_workspace_waitlist: {
-        id: "appEzv7w2IBMoxxHe",
-        table: "Google%20Workspace%20Waitlist",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/appEzv7w2IBMoxxHe/tbl9CkfZHKZYrXf1T/viwgfJvrrD9Jn9VLj"
-      },
-      you_ship_we_ship: {
-        id: "appre1xwKlj49p0d4",
-        table: "Users",
-        query: { filterByFormula: "{Verification Status}='Unknown'" },
-        destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
-      },
-      marketing_shipment_request: {
-        id: "appK53aN0fz3sgJ4w",
-        table: "tblvSJMqoXnQyN7co",
-        destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
-      }
+      bank_applications: airtable_task(base, :bank_applications, table: "Events",
+                                       query: { filterByFormula: "OR(Status='⭐️ New Application', Status='Applied - Approved', Status='Applied - Need Rejection')" }),
+      stickers: airtable_task(base, :stickers, table: "Bank%20Stickers",
+                              query: { filterByFormula: "Status='Pending'" }),
+      domains: airtable_task(base, :domains, table: "Domains",
+                             query: { filterByFormula: "Status='Pending'" }),
+      onepassword: airtable_task(base, :onepassword, table: "1Password",
+                                 query: { filterByFormula: "Status='Pending'" }),
+      pvsa: airtable_task(base, :pvsa, table: "PVSA%20Order",
+                          query: { filterByFormula: "Status='Pending'" }),
+      theeventhelper: airtable_task(base, :theeventhelper, table: "Event%20Insurance",
+                                    query: { filterByFormula: "Status='Pending'" }),
+      wire_transfers: airtable_task(base, :wire_transfers, table: "Wire%20Transfers",
+                                    query: { filterByFormula: "Status='Pending'" }),
+      disputed_transactions: airtable_task(base, :disputed_transactions, table: "Disputed%20Transactions",
+                                           query: { filterByFormula: "Status='Pending'" }),
+      feedback: airtable_task(base, :feedback, table: "Feedback",
+                              query: { filterByFormula: "Status='Pending'" }),
+      google_workspace_waitlist: airtable_task(base, :google_workspace_waitlist, table: "Google%20Workspace%20Waitlist",
+                                               query: { filterByFormula: "Status='Pending'" }),
+      you_ship_we_ship: airtable_task(base, :you_ship_we_ship, table: "Users",
+                                      query: { filterByFormula: "{Verification Status}='Unknown'" }),
+      marketing_shipment_request: airtable_task(base, :marketing_shipment_request, table: "Warehouse%20SKUs")
     }
+  end
+
+  # Builds a task entry pointing at the configured base. The destination deep-links
+  # to the specific table when its id is known (see config/airtable_tables.json),
+  # otherwise it opens the base itself.
+  def airtable_task(base, key, table:, query: {})
+    table_id = airtable_table_ids[key.to_s]
+    destination = table_id ? "https://airtable.com/#{base}/#{table_id}" : "https://airtable.com/#{base}"
+    { id: base, table:, query:, destination: }
+  end
+
+  def airtable_table_ids
+    @airtable_table_ids ||= begin
+      path = Rails.root.join("config/airtable_tables.json")
+      path.exist? ? JSON.parse(path.read) : {}
+    end
   end
 
   def render_permissions(permissions, depth = 0)
