@@ -693,7 +693,7 @@ Rails.application.routes.draw do
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 
   scope "api/v4/oauth/applications/:application_id", as: "oauth_application" do
-    resources :resource_grant_templates, controller: "doorkeeper/application_resource_grant_templates", only: [:create, :destroy]
+    resources :resource_grants, controller: "doorkeeper/application_resource_grants", only: [:create, :destroy]
   end
 
   namespace :api do

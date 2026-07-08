@@ -53,7 +53,7 @@ class ApiToken < ApplicationRecord
   self.ignored_columns += ["refresh_token"]
 
   belongs_to :user
-  has_many :resource_grants, class_name: "ApiToken::ResourceGrant", dependent: :destroy
+  has_many :resource_grants, as: :owner, dependent: :destroy
 
   def self.generate(options = {})
     token_size = options.delete(:size) || SIZE

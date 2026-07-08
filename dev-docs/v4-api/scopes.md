@@ -187,7 +187,7 @@ Action and field scopes answer *"can this token do this kind of thing at all?"* 
 
 ### How grants work
 
-A token's object access is recorded as `ApiToken::ResourceGrant` rows (`resource_type`, `access_level`, and optionally a `scope_root_type`/`scope_root_id` pair). A token with **no grants** for a given `(resource_type, access_level)` is fully unrestricted for that resource - this is the default for every token today, so adding this mechanism changes nothing until grants actually exist.
+Object access is recorded as `ResourceGrant` rows (`resource_type`, `access_level`, and optionally a `scope_root_type`/`scope_root_id` pair). A grant's `owner` is polymorphic - either an `ApiToken` (a live grant enforced on that token) or a `Doorkeeper::Application` (a template copied onto every token minted for that application - see `after_successful_strategy_response` in `config/initializers/doorkeeper.rb`). A token with **no grants** for a given `(resource_type, access_level)` is fully unrestricted for that resource - this is the default for every token today, so adding this mechanism changes nothing until grants actually exist.
 
 Two grant shapes:
 
@@ -195,8 +195,6 @@ Two grant shapes:
 |---|---|---|
 | No scope root | Every record of this resource type (only meaningful for [admin grants](#admin-scopes) - a no-op otherwise, since a general capability scope already grants the whole type) | "all `comments`, read" |
 | `scope_root_type` + `scope_root_id` set | Every record whose `#api_scope_roots` includes this root | "all `comments` under Event #42" |
-
-`scope_root_type` is one of `User` or `Event` - a token can be scoped to a specific organization or to one user's own data.
 
 `scope_root_type` is one of `User` or `Event` - a token can be scoped to a specific organization or to one user's own data. Most models resolve their roots automatically from their own `event_id`/`user_id` columns (see `ApiObjectScopable`); models that only reach their event/user through a polymorphic association (`Comment`, `Receipt`) declare `#api_scope_roots` explicitly.
 

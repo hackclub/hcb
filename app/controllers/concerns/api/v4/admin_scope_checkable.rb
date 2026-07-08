@@ -17,7 +17,7 @@ module Api
       # Pass `resource` to also accept a resource-scoped admin grant (e.g.
       # resource: "comments") in place of the blanket admin scope, and
       # `record` to further require that grant to cover this specific object
-      # (see ApiToken::ResourceGrant).
+      # (see ResourceGrant).
       def can_admin?(level, resource: nil, record: nil)
         return false unless current_user
 

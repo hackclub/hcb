@@ -125,14 +125,14 @@
         }
       </style>
 
-      <% templates_by_type = application.persisted? ? application.resource_grant_templates.group_by(&:resource_type) : {} %>
+      <% grants_by_type = application.persisted? ? application.resource_grants.group_by(&:resource_type) : {} %>
 
       <% DoorkeeperScopeCatalog.groups.each do |group| %>
         <div class="scope-category">
           <h4 class="scope-category-title"><%= group[:name] %></h4>
           <% group[:scopes].each do |scope| %>
             <% resource, level = scope[:value].split(":", 2) %>
-            <% grants_for_scope = level && resource != "admin" ? (templates_by_type[resource] || []).select { |t| t.access_level == level } : [] %>
+            <% grants_for_scope = level && resource != "admin" ? (grants_by_type[resource] || []).select { |g| g.access_level == level } : [] %>
             <div class="scope-row">
               <label class="scope-row-main">
                 <input type="checkbox" class="scope-picker-checkbox" data-scope="<%= scope[:value] %>" <%= "checked" if known_scopes.include?(scope[:value]) %>>
@@ -148,22 +148,22 @@
                   <div class="scope-restrict-body">
                     <% if grants_for_scope.any? %>
                       <div class="chips">
-                        <% grants_for_scope.each do |template| %>
+                        <% grants_for_scope.each do |grant| %>
                           <span class="chip">
-                            <%= template.scope_root_type ? "#{template.scope_root_type} ##{template.scope_root_id}" : "whole type" %>
-                            <button type="button" class="chip-remove grant-remove-btn" data-url="<%= oauth_application_resource_grant_template_path(application, template) %>" aria-label="Remove">&times;</button>
+                            <%= grant.scope_root_type ? "#{grant.scope_root_type} ##{grant.scope_root_id}" : "whole type" %>
+                            <button type="button" class="chip-remove grant-remove-btn" data-url="<%= oauth_application_resource_grant_path(application, grant) %>" aria-label="Remove">&times;</button>
                           </span>
                         <% end %>
                       </div>
                     <% end %>
-                    <div class="inline-grant-form grant-add-form" data-url="<%= oauth_application_resource_grant_templates_path(application) %>">
-                      <input type="hidden" name="resource_grant_template[resource_type]" value="<%= resource %>">
-                      <input type="hidden" name="resource_grant_template[access_level]" value="<%= level %>">
-                      <select name="resource_grant_template[scope_root_type]" class="form-control">
+                    <div class="inline-grant-form grant-add-form" data-url="<%= oauth_application_resource_grants_path(application) %>">
+                      <input type="hidden" name="resource_grant[resource_type]" value="<%= resource %>">
+                      <input type="hidden" name="resource_grant[access_level]" value="<%= level %>">
+                      <select name="resource_grant[scope_root_type]" class="form-control">
                         <option value="Event">Organization #</option>
                         <option value="User">User #</option>
                       </select>
-                      <input type="number" name="resource_grant_template[scope_root_id]" class="form-control" placeholder="ID" style="width: 5rem;" data-required="true">
+                      <input type="number" name="resource_grant[scope_root_id]" class="form-control" placeholder="ID" style="width: 5rem;" data-required="true">
                       <button type="button" class="btn btn-sm btn-secondary grant-add-btn">Add</button>
                     </div>
                     <span class="text-secondary">Leaving this empty means <code><%= scope[:value] %></code> applies everywhere.</span>
@@ -194,9 +194,9 @@
               [resource, level] if level && resource != "admin"
             end
           end
-          other_templates = application.resource_grant_templates
-                                        .reject { |t| cataloged_pairs.include?([t.resource_type, t.access_level]) }
-                                        .group_by(&:resource_type)
+          other_grants = application.resource_grants
+                                     .reject { |g| cataloged_pairs.include?([g.resource_type, g.access_level]) }
+                                     .group_by(&:resource_type)
         %>
         <details class="mt-3">
           <summary class="font-weight-bold">Advanced: admin-scoped or uncatalogued resource grants</summary>
@@ -206,23 +206,23 @@
             yet (e.g. <code>comments</code>).
           </p>
 
-          <% if other_templates.any? %>
+          <% if other_grants.any? %>
             <table class="table">
               <thead><tr><th>Resource type</th><th>Access level</th><th>Scope root</th><th></th></tr></thead>
               <tbody>
-                <% other_templates.each do |resource_type, templates| %>
-                  <% templates.each do |template| %>
+                <% other_grants.each do |resource_type, grants| %>
+                  <% grants.each do |grant| %>
                     <tr>
                       <td><code><%= resource_type %></code></td>
-                      <td><%= template.access_level %></td>
+                      <td><%= grant.access_level %></td>
                       <td>
-                        <% if template.scope_root_type %>
-                          <%= template.scope_root_type %> #<%= template.scope_root_id %>
+                        <% if grant.scope_root_type %>
+                          <%= grant.scope_root_type %> #<%= grant.scope_root_id %>
                         <% else %>
                           <span class="text-muted">whole type</span>
                         <% end %>
                       </td>
-                      <td><button type="button" class="btn btn-sm btn-danger grant-remove-btn" data-url="<%= oauth_application_resource_grant_template_path(application, template) %>">Remove</button></td>
+                      <td><button type="button" class="btn btn-sm btn-danger grant-remove-btn" data-url="<%= oauth_application_resource_grant_path(application, grant) %>">Remove</button></td>
                     </tr>
                   <% end %>
                 <% end %>
@@ -230,10 +230,10 @@
             </table>
           <% end %>
 
-          <div class="grant-add-form" data-url="<%= oauth_application_resource_grant_templates_path(application) %>" style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
+          <div class="grant-add-form" data-url="<%= oauth_application_resource_grants_path(application) %>" style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
             <div>
               <label class="d-block">Resource type</label>
-              <input type="text" name="resource_grant_template[resource_type]" list="known_resource_types" class="form-control" placeholder="e.g. comments" data-required="true">
+              <input type="text" name="resource_grant[resource_type]" list="known_resource_types" class="form-control" placeholder="e.g. comments" data-required="true">
               <datalist id="known_resource_types">
                 <% (cataloged_resources + ["comments"]).uniq.sort.each do |resource| %>
                   <option value="<%= resource %>">
@@ -242,14 +242,14 @@
             </div>
             <div>
               <label class="d-block">Access level</label>
-              <select name="resource_grant_template[access_level]" class="form-control">
+              <select name="resource_grant[access_level]" class="form-control">
                 <option value="read">read</option>
                 <option value="write">write</option>
               </select>
             </div>
             <div>
               <label class="d-block">Scope root type</label>
-              <select name="resource_grant_template[scope_root_type]" class="form-control">
+              <select name="resource_grant[scope_root_type]" class="form-control">
                 <option value="">(none - whole type)</option>
                 <option value="Event">Event (organization)</option>
                 <option value="User">User</option>
@@ -257,7 +257,7 @@
             </div>
             <div>
               <label class="d-block">Scope root ID</label>
-              <input type="number" name="resource_grant_template[scope_root_id]" class="form-control" placeholder="e.g. 42">
+              <input type="number" name="resource_grant[scope_root_id]" class="form-control" placeholder="e.g. 42">
             </div>
             <div>
               <button type="button" class="btn btn-primary grant-add-btn">Add grant</button>

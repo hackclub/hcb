@@ -13,7 +13,7 @@ class ApiAdminContext
   # In the v4 API we ignore the "pretend not to be admin" preference.
   #
   # `resource`, if given, also accepts a resource-scoped admin grant (see
-  # ApiToken::ResourceGrant) in place of the blanket "admin:write" scope, e.g.
+  # ResourceGrant) in place of the blanket "admin:write" scope, e.g.
   # resource: "comments". `record`, if also given, further requires that
   # grant to cover this specific object.
   def admin?(override_pretend: true, resource: nil, record: nil)
@@ -23,7 +23,7 @@ class ApiAdminContext
   # In the v4 API we ignore the "pretend not to be admin" preference.
   #
   # `resource`, if given, also accepts a resource-scoped admin grant (see
-  # ApiToken::ResourceGrant) in place of the blanket "admin:read" scope, e.g.
+  # ResourceGrant) in place of the blanket "admin:read" scope, e.g.
   # resource: "comments". `record`, if also given, further requires that
   # grant to cover this specific object.
   def auditor?(override_pretend: true, resource: nil, record: nil)

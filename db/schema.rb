@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_153141) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -213,19 +213,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_announcements_on_author_id"
     t.index ["event_id"], name: "index_announcements_on_event_id"
-  end
-
-  create_table "api_token_resource_grants", force: :cascade do |t|
-    t.string "access_level", null: false
-    t.bigint "api_token_id", null: false
-    t.datetime "created_at", null: false
-    t.string "resource_type", null: false
-    t.bigint "scope_root_id"
-    t.string "scope_root_type"
-    t.datetime "updated_at", null: false
-    t.index ["api_token_id", "resource_type", "access_level"], name: "index_api_token_resource_grants_on_token_and_type_and_level"
-    t.index ["api_token_id"], name: "index_api_token_resource_grants_on_api_token_id"
-    t.index ["scope_root_type", "scope_root_id"], name: "idx_on_scope_root_type_scope_root_id_c858ad0f72"
   end
 
   create_table "api_tokens", force: :cascade do |t|
@@ -853,17 +840,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
     t.index ["fee_reimbursement_id"], name: "index_donations_on_fee_reimbursement_id"
     t.index ["payout_id"], name: "index_donations_on_payout_id"
     t.index ["recurring_donation_id"], name: "index_donations_on_recurring_donation_id"
-  end
-
-  create_table "doorkeeper_application_resource_grant_templates", force: :cascade do |t|
-    t.string "access_level", null: false
-    t.bigint "application_id", null: false
-    t.datetime "created_at", null: false
-    t.string "resource_type", null: false
-    t.bigint "scope_root_id"
-    t.string "scope_root_type"
-    t.datetime "updated_at", null: false
-    t.index ["application_id"], name: "idx_on_application_id_6a05b5aba9"
   end
 
   create_table "emburse_card_requests", force: :cascade do |t|
@@ -2369,6 +2345,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
+  create_table "resource_grants", force: :cascade do |t|
+    t.string "access_level", null: false
+    t.datetime "created_at", null: false
+    t.bigint "owner_id", null: false
+    t.string "owner_type", null: false
+    t.string "resource_type", null: false
+    t.bigint "scope_root_id"
+    t.string "scope_root_type"
+    t.datetime "updated_at", null: false
+    t.index ["owner_type", "owner_id", "resource_type"], name: "index_resource_grants_on_owner_and_resource_type"
+    t.index ["owner_type", "owner_id"], name: "index_resource_grants_on_owner"
+    t.index ["scope_root_type", "scope_root_id"], name: "index_resource_grants_on_scope_root_type_and_scope_root_id"
+  end
+
   create_table "sponsors", force: :cascade do |t|
     t.text "address_city"
     t.text "address_country", default: "US"
@@ -2944,7 +2934,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
   add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
   add_foreign_key "announcements", "users", column: "author_id"
-  add_foreign_key "api_token_resource_grants", "api_tokens"
   add_foreign_key "api_tokens", "users"
   add_foreign_key "bank_fees", "events"
   add_foreign_key "canonical_event_mappings", "canonical_transactions"
@@ -2990,7 +2979,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_103701) do
   add_foreign_key "donations", "donation_payouts", column: "payout_id"
   add_foreign_key "donations", "events"
   add_foreign_key "donations", "fee_reimbursements"
-  add_foreign_key "doorkeeper_application_resource_grant_templates", "oauth_applications", column: "application_id"
   add_foreign_key "emburse_card_requests", "emburse_cards"
   add_foreign_key "emburse_card_requests", "events"
   add_foreign_key "emburse_card_requests", "users", column: "creator_id"
