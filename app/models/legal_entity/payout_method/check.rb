@@ -68,6 +68,24 @@ class LegalEntity
         "USD"
       end
 
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, memo:, send_email_notification: false, **)
+        event.increase_checks.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_zip: address_postal_code,
+          amount:,
+          memo: memo&.slice(0...40),
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          user:,
+          send_email_notification:,
+        )
+      end
+
     end
 
   end

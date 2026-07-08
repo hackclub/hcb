@@ -54,8 +54,9 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :refresh!
-    after_touch :refresh!
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
@@ -154,6 +155,9 @@ class Ledger
       end
     end
 
+    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
+    # refresh! should not update any non-caching columns
     def refresh!
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
@@ -164,10 +168,24 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.receipt_required = calculate_receipt_required
+      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || "Transaction"
+      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
 
       save!
+    end
+
+    def update_custom_memo!(memo)
+      # TODO: remove CT and CPT updates because they are HCB code specific
+      ActiveRecord::Base.transaction do
+        if hcb_code.present?
+          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+        end
+        update!(custom_memo: memo)
+      end
+
+      refresh!
     end
 
     def map!
