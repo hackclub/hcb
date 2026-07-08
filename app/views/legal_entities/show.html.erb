@@ -1,21 +1,23 @@
-<% title "Tax information for #{@legal_entity.name}" %>
+<% title "Payment information for #{@legal_entity.name}" %>
 
-<h1>Tax information for <%= @legal_entity.name %></h1>
+<h1>Payment information for <%= @legal_entity.name %></h1>
 
 <% if @legal_entity.latest_tax_form&.completed? %>
   <% if @legal_entity.payable? %>
-    <p>
-      You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
-      can receive payments from any organization on HCB.
+    <% if @legal_entity.default_payout_method.present? %>
+      <p>
+        You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
+        can now receive payments from any organization on HCB. If you'd like, review your payout methods.
+      </p>
 
-      <% if @legal_entity.default_payout_method.nil? %>
-        Next, configure your default payout method.
-      <% else %>
-        If you'd like, review your default payout method.
-      <% end %>
-    </p>
+      <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
+    <% else %>
+      <p>
+        You're almost there - just add your default payout method below!
+      </p>
+    <% end %>
 
-    <%= link_to "Payout settings", settings_payouts_path, class: "btn" %>
+    <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
 
   <% elsif @legal_entity.tin_banned? %>
     <p>

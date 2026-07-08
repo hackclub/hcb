@@ -4,7 +4,7 @@
   <%= render partial: "initial_message", locals: { payment: @payment } %>
 <% else %>
   <p>
-    You're one step closer to receiving your payment of <%= @payment.amount.format(with_currency: true) %>
+    We're almost ready to send your payment of <%= @payment.amount.format(with_currency: true) %>
     for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB!
   </p>
 <% end %>

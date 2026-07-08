@@ -78,7 +78,7 @@
 
   <ul class="grid grid--wide mb-12 pb-2">
     <% current_user.pending_payments_received.each do |payment| %>
-      <%= link_to choose_legal_entity_payee_path(payment.payee) do %>
+      <%= link_to payment.pending_legal_entity? ? choose_legal_entity_payee_path(payment.payee) : payment_path(payment) do %>
         <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
           <span>
             <%= status_badge "info" %>
