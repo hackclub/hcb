@@ -10,7 +10,11 @@ class PayeesController < ApplicationController
   def index
     authorize @event
     payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
-    @payees = payees.order(created_at: :desc).limit(15)
+    payees = payees.order(created_at: :desc).limit(15).to_a
+
+    selected = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
+    @payees = [selected, *payees].compact.uniq
+
     render layout: false
   end
 
