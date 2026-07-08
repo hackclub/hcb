@@ -1591,7 +1591,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_181541) do
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
-    t.index ["id"], name: "index_ledger_items_on_id", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
+    t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end

@@ -21,11 +21,11 @@
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents   (amount_cents)
-#  index_ledger_items_on_datetime       (datetime)
-#  index_ledger_items_on_id             (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
-#  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
-#  index_ledger_items_on_short_code     (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents     (amount_cents)
+#  index_ledger_items_on_datetime         (datetime)
+#  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
+#  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
+#  index_ledger_items_on_short_code       (short_code) UNIQUE
 #
 class Ledger
   class Item < ApplicationRecord
