@@ -1,6 +1,6 @@
-<% title "Tax info for #{@legal_entity.name}" %>
+<% title "Tax information for #{@legal_entity.name}" %>
 
-<h1>Tax info for <%= @legal_entity.name %></h1>
+<h1>Tax information for <%= @legal_entity.name %></h1>
 
 <% if @legal_entity.latest_tax_form&.completed? %>
   <% if @legal_entity.payable? %>
@@ -33,7 +33,9 @@
 <% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
   <p>
     Before <%= @legal_entity.person? ? "you" : (@legal_entity.name.presence || "Business") %>
-    can receive any payments, we'll need your tax information.
+    can receive any payments, we'll need your tax information. This information is stored
+    securely and used to send you tax forms at the end of the year if your total payments
+    exceed IRS reporting requirements.
   </p>
 
   <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>

@@ -658,6 +658,14 @@ class User < ApplicationRecord
     !verified?
   end
 
+  def pending_payments_received
+    payments_received.pending_legal_entity + unassociated_payments_received
+  end
+
+  def unassociated_payments_received
+    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
+  end
+
   private
 
   def create_legal_entity

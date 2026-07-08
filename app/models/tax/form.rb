@@ -66,8 +66,11 @@ module Tax
       failed
     ].index_with(&:itself), prefix: :taxbandits_tin_match
 
-    after_update if: -> { taxbandits_status_previously_changed?(to: [:completed, :completed_and_tin_match_inprogress]) } do
-      mark_completed!
+    after_update if: -> {
+      taxbandits_status_previously_changed?(to: :completed) ||
+        taxbandits_status_previously_changed?(to: :completed_and_tin_match_inprogress)
+    } do
+      mark_completed! if may_mark_completed?
     end
 
     aasm timestamps: true do

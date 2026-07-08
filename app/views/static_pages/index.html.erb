@@ -73,6 +73,23 @@
   </div>
 <% end %>
 
+<% if current_user.pending_payments_received.any? %>
+  <h2 class="user-home-section">Payments to you</h2>
+
+  <ul class="grid grid--wide mb-12 pb-2">
+    <% current_user.pending_payments_received.each do |payment| %>
+      <%= link_to choose_legal_entity_payee_path(payment.payee) do %>
+        <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+          <span>
+            <%= status_badge "info" %>
+            <strong><%= payment.amount.format(with_currency: true) %> from <%= payment.event.name %> for "<%= payment.purpose %>"</strong>
+          </span>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
+
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
     <% if @invites.any? %>
