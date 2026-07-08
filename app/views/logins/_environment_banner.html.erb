@@ -1,8 +1,4 @@
-<% if Rails.env.development? %>
-  <div class="!shadow-none shrink-0 p-4 my-7 border border-1 border-green card flex flex-row justify-between items-center">
-    <span>Please ping me (Emma) in Slack with your email to receive login codes, otherwise you won't get anything</span>
-  </div>
-<% elsif Rails.env.staging? %>
+<% if Rails.env.staging? %>
   <div class="!shadow-none shrink-0 p-4 my-7 border border-1 border-purple card">
     You're in <strong class="text-purple">staging</strong>
   </div>
