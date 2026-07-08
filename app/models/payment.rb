@@ -115,7 +115,7 @@ class Payment < ApplicationRecord
   end
 
   def state_text
-    return "Pending recipient" if aasm_state == "pending_legal_entity"
+    return "Awaiting recipient" if aasm_state == "pending_legal_entity"
     return "Processing" if aasm_state == "under_review" && payee&.managed?
 
     return aasm_state.humanize
