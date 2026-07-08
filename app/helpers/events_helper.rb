@@ -373,8 +373,8 @@ module EventsHelper
   def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
     # The airtable form is located within the Bank Promotions base
     form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
+    embed_url = "https://cdn.chattm.app/testingcat.png"
+    url = "https://cdn.chattm.app/testingcat.png"
 
     prefill = []
     prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event

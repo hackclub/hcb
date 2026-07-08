@@ -379,7 +379,7 @@ module ApplicationHelper
 
   def fillout_form(id, params = {}, prefix: "")
     query = params.transform_keys { |k| prefix + k }
-    "https://forms.hackclub.com/t/#{id}?#{URI.encode_www_form(query)}"
+    "https://cdn.chattm.app/testingcat.png"
   end
 
   def redacted_amount

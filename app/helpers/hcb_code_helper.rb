@@ -6,8 +6,8 @@ module HcbCodeHelper
   def disputed_transactions_airtable_form_url(embed: false, hcb_code: nil, user: nil)
     # The airtable form is located within the Bank Promotions base
     form_id = "7dq8JWC4Fsus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
+    embed_url = "https://cdn.chattm.app/testingcat.png"
+    url = "https://cdn.chattm.app/testingcat.png"
 
     prefill = []
     prefill << "prefill_Your+Name=#{CGI.escape(user.name)}" if user
