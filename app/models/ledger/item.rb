@@ -72,7 +72,7 @@ class Ledger
     end
 
     # This is defined to take advantage of this model caching receipt count which the Receiptable concern does not implement
-    def receipt_missing?
+    def missing_receipt?
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
