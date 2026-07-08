@@ -54,6 +54,8 @@ class Ledger
 
     monetize :amount_cents
 
+    after_create :assign_linked_object!
+
     after_create :refresh!
     after_touch :refresh!
 
@@ -258,6 +260,14 @@ class Ledger
     end
 
     private
+
+    def assign_linked_object!
+      return if linked_object.present?
+
+      linked_object = (canonical_pending_transactions.map(&:linked_object) + canonical_transactions.map(&:linked_object)).compact.first
+
+      update!(linked_object:) if linked_object.present?
+    end
 
     # TODO: replace usages of this with linked_object_type once all LOs are created
     def transaction_type

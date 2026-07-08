@@ -277,6 +277,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
     return increase_check if increase_check
     return paypal_transfer if paypal_transfer
     return wire if wire
@@ -284,6 +285,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return check_deposit if check_deposit
     return reimbursement_expense_payout if reimbursement_expense_payout
     return reimbursement_payout_holding if reimbursement_payout_holding
+    return card_charge if card_charge
 
     nil
   end
