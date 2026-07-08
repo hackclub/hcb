@@ -285,7 +285,6 @@ class CanonicalPendingTransaction < ApplicationRecord
     return check_deposit if check_deposit
     return reimbursement_expense_payout if reimbursement_expense_payout
     return reimbursement_payout_holding if reimbursement_payout_holding
-    return card_charge if card_charge
 
     nil
   end
