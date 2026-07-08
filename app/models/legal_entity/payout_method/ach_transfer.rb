@@ -18,6 +18,10 @@ class LegalEntity
       validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }
       validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }
 
+      def self.permitted_attributes
+        [:account_number, :routing_number]
+      end
+
       def kind
         "ach_transfer"
       end
@@ -54,6 +58,24 @@ class LegalEntity
 
       def currency
         "USD"
+      end
+
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, company_entry_description: nil, send_email_notification: false, **)
+        bank_name = ColumnService.get("/institutions/#{routing_number}")["full_name"] rescue "Bank Account"
+
+        event.ach_transfers.build(
+          routing_number:,
+          account_number:,
+          creator: user,
+          amount:,
+          bank_name:,
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          company_entry_description:,
+          send_email_notification:,
+        )
       end
 
     end

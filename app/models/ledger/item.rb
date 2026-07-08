@@ -11,19 +11,27 @@
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
+#  author_id                    :bigint
 #  linked_object_id             :bigint
 #
 # Indexes
 #
-#  index_ledger_items_on_amount_cents   (amount_cents)
-#  index_ledger_items_on_datetime       (datetime)
-#  index_ledger_items_on_linked_object  (linked_object_type,linked_object_id)
-#  index_ledger_items_on_short_code     (short_code) UNIQUE
+#  index_ledger_items_on_amount_cents     (amount_cents)
+#  index_ledger_items_on_author_id        (author_id)
+#  index_ledger_items_on_datetime         (datetime)
+#  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
+#  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
+#  index_ledger_items_on_short_code       (short_code) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (author_id => users.id)
 #
 class Ledger
   class Item < ApplicationRecord
@@ -37,6 +45,7 @@ class Ledger
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true
+    belongs_to :author, class_name: "User", optional: true
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -54,8 +63,11 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :refresh!
-    after_touch :refresh!
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
+
+    scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
@@ -64,6 +76,11 @@ class Ledger
 
     def receipt_optional?
       !receipt_required?
+    end
+
+    # This is defined to take advantage of this model caching receipt count which the Receiptable concern does not implement
+    def missing_receipt?
+      receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
     def calculate_amount_cents
@@ -151,66 +168,10 @@ class Ledger
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
-      else
-        self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo
       end
     end
 
-    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
-    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
-    # refresh! should not update any non-caching columns
-    def refresh!
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
-
-      self.amount_cents = calculate_amount_cents
-      self.receipt_required = calculate_receipt_required
-      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
-      self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || "Transaction"
-
-      save!
-    end
-
-    def update_custom_memo!(memo)
-      # TODO: remove CT and CPT updates because they are HCB code specific
-      ActiveRecord::Base.transaction do
-        if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
-        end
-        ledger_item.update!(custom_memo: memo)
-      end
-
-      item.refresh!
-    end
-
-    def map!
-      Ledger::Mapper.new(ledger_item: self).run
-      refresh!
-    end
-
-    def humanized_type
-      type_metadata.first
-    end
-
-    # TODO: add support for card charge icons
-    def icon
-      type_metadata.last
-    end
-
-    def sign
-      return :positive if amount_cents.positive?
-      return :negative if amount_cents.negative?
-
-      :zero
-    end
-
-    def author
+    def calculate_author
       case transaction_type
       when "AchTransfer"
         linked_object&.creator
@@ -239,6 +200,62 @@ class Ledger
       when "RawStripeTransaction"
         stripe_cardholder&.user
       end
+    end
+
+    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
+    # refresh! should not update any non-caching columns
+    def refresh!
+      # `after_create :refresh!` runs before any ledger mappings exist, which
+      # memoizes `primary_ledger` as nil on this instance. Reset the association
+      # caches so refresh! always recomputes from current database state (e.g.
+      # after a mapping is created).
+      association(:primary_mapping).reset
+      association(:primary_ledger).reset
+
+      self.amount_cents = calculate_amount_cents
+      self.author = calculate_author
+      self.receipt_count = receipts.count
+      self.receipt_required = calculate_receipt_required
+      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
+      self.system_memo = calculate_system_memo
+      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
+
+      save!
+    end
+
+    def update_custom_memo!(memo)
+      # TODO: remove CT and CPT updates because they are HCB code specific
+      ActiveRecord::Base.transaction do
+        if hcb_code.present?
+          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
+          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+        end
+        update!(custom_memo: memo)
+      end
+
+      refresh!
+    end
+
+    def map!
+      Ledger::Mapper.new(ledger_item: self).run
+      refresh!
+    end
+
+    def humanized_type
+      type_metadata.first
+    end
+
+    # TODO: add support for card charge icons
+    def icon
+      type_metadata.last
+    end
+
+    def sign
+      return :positive if amount_cents.positive?
+      return :negative if amount_cents.negative?
+
+      :zero
     end
 
     # TODO: get rid of this method once CardCharge is created as an LO
@@ -283,11 +300,11 @@ class Ledger
     end
 
     def raw_pending_transaction_type
-      canonical_pending_transactions.map(&:transaction_source_type).compact.first
+      @raw_pending_transaction_type ||= canonical_pending_transactions.map(&:transaction_source_type).compact.first
     end
 
     def raw_transaction_type
-      canonical_transactions.map(&:transaction_source_type).compact.first
+      @raw_transaction_type ||= canonical_transactions.map(&:transaction_source_type).compact.first
     end
 
   end
