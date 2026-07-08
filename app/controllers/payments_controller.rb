@@ -9,6 +9,7 @@ class PaymentsController < ApplicationController
     @payment = Payment.find(params[:id])
     authorize @payment
     @event = @payment.event
+    @payout_method = @payment.attempts.first&.payout_method || @payment.legal_entity&.default_payout_method
   end
 
   def new

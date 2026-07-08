@@ -52,6 +52,16 @@
         <strong>Status</strong>
         <%= @payment.state_text %>
       </p>
+      <% if @payout_method.present? %>
+        <p>
+          <strong>Payout method</strong>
+          <span class="flex items-center gap-1">
+            <%= inline_icon @payout_method.icon, size: 20 %>
+            <%= @payout_method.human_kind.capitalize %>
+            <span class="muted">— <%= @payout_method.detail_summary %></span>
+          </span>
+        </p>
+      <% end %>
     </section>
   </article>
 
