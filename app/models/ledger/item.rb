@@ -60,7 +60,7 @@ class Ledger
     after_create :map!
     after_touch :map!
 
-    scope :receipt_missing, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+    scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
