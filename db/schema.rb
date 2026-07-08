@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_151932) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -3065,7 +3065,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
-  add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
+  add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
