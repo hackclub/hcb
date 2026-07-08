@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1577,6 +1577,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
 
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
+    t.bigint "author_id"
     t.datetime "created_at", null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
@@ -1584,12 +1585,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["author_id"], name: "index_ledger_items_on_author_id"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
@@ -3030,6 +3034,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_07_145837) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
