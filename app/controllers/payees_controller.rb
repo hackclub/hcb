@@ -47,7 +47,7 @@ class PayeesController < ApplicationController
     payee = @event.payees.find_by_public_id!(params[:id])
     authorize payee
 
-    if payee.update(payee_params(payee))
+    if payee.update(payee_params)
       flash[:success] = "Recipient updated."
       redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
     else
@@ -68,10 +68,8 @@ class PayeesController < ApplicationController
 
   private
 
-  # Managers may edit every field; other organizers are limited to the email.
-  def payee_params(payee)
-    permitted = policy(payee).edit_details? ? [:display_name, :email] : [:email]
-    params.require(:payee).permit(*permitted)
+  def payee_params
+    params.require(:payee).permit(:display_name, :email)
   end
 
   def manual_payee_entity_type

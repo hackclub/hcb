@@ -9,17 +9,13 @@
       <div class="flex flex-col gap-3">
         <div>
           <%= form.label :display_name, "Name" %>
-          <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true, disabled: !policy(payee).edit_details %>
+          <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true %>
         </div>
         <div>
           <%= form.label :email, "Email" %>
           <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true %>
         </div>
       </div>
-
-      <% unless policy(payee).edit_details %>
-        <p class="muted text-sm mt-2 mb-0">You can update this recipient's email until their first payment is sent. Ask a manager to change other details.</p>
-      <% end %>
 
       <div class="flex gap-2 mt-4">
         <%= link_to "Cancel", cancel_path, class: "btn", data: { turbo_frame: "_top" } %>

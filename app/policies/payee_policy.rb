@@ -10,29 +10,17 @@ class PayeePolicy < ApplicationPolicy
   end
 
   def update?
-    manager? || (member? && !payment_sent?)
-  end
-
-  def edit_details?
-    manager?
+    member?
   end
 
   def destroy?
-    manager? && record.archivable?
+    member? && record.archivable?
   end
 
   private
 
-  def manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
-  end
-
   def member?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
-  end
-
-  def payment_sent?
-    record.payments.exists?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
 end
