@@ -9,5 +9,21 @@
     const meow = () => { new Audio(MEOW).play().catch(() => {}); };
     document.addEventListener("click", meow);
     document.addEventListener("keydown", meow);
+
+    // Make the cursor-chasing cat a discoverable off-switch: hover (or tap on
+    // mobile, via tooltipped--tappable) shows an HCB tooltip, click leads to
+    // the nap toggle. oneko sets pointer-events:none, so re-enable them. The
+    // meow plays on mobile taps too, so the hint must be reachable there.
+    // (No cat under reduced-motion.)
+    const cat = document.getElementById("oneko");
+    if (cat) {
+      cat.classList.add("tooltipped", "tooltipped--n", "tooltipped--tappable");
+      cat.setAttribute("aria-label", "too loud? click me to take a nap 😴");
+      cat.style.pointerEvents = "auto";
+      cat.style.cursor = "pointer";
+      cat.addEventListener("click", () => {
+        window.location = <%= raw settings_previews_path(anchor: "meow-nap").to_json %>;
+      });
+    }
   })();
 </script>
