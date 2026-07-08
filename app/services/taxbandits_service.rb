@@ -53,11 +53,15 @@ class TaxbanditsService
 
       oauth_response = Faraday.new(url: Rails.env.development? ? "https://testoauth.expressauth.net" : "https://oauth.expressauth.net") do |conn|
         conn.response :json
+        conn.response :raise_error
         conn.headers["Authentication"] = signature
         conn.adapter Faraday.default_adapter
       end.get("/v2/tbsauth")
 
-      oauth_response.body["AccessToken"]
+      token = oauth_response.body["AccessToken"]
+      raise "TaxBandits auth failed: no AccessToken in response" if token.blank?
+
+      token
     end
   end
 
