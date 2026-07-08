@@ -1,5 +1,6 @@
 <%# Easter egg: catgirl.hackclub.com (https://github.com/FoxMoss/catgirl-ysws). %>
-<%# Welp, it does make HCB very LOUD and unusable?? %>
+<%# Welp, it does make HCB very LOUD and unusable?? Retires end of July 2026. %>
+<% if Date.current < Date.new(2026, 8, 1) %>
 <script
   src="https://cdn.jsdelivr.net/gh/FoxMoss/catgirl-ysws@ebdad63ec5348f360d92ff0b5744e161cf8b3932/oneko.js"
   data-cat="https://cdn.jsdelivr.net/gh/FoxMoss/catgirl-ysws@ebdad63ec5348f360d92ff0b5744e161cf8b3932/oneko.gif"></script>
@@ -27,3 +28,4 @@
     }
   })();
 </script>
+<% end %>
