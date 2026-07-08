@@ -21,22 +21,20 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
+    @payee = @event.payees.find_by_public_id!(payment_params[:payee_id])
+    @legal_entity = @payee.legal_entity
+    @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
+
     if payment_params[:file].blank?
-      @payee = @event.payees.find_by_public_id(payment_params[:payee_id])
-      @payment = Payment.new(payment_params.except(:payee_id, :file))
       flash.now[:error] = "Please attach a receipt or invoice for this payment."
       return render :new, layout: "transfer", status: :unprocessable_entity
     end
 
     ActiveRecord::Base.transaction do
-      @payee = @event.payees.find_by_public_id!(payment_params[:payee_id])
-      @legal_entity = @payee.legal_entity
-
       # On the manual path the payee has a managed legal entity (created on the
       # recipient step); the payout method the organizer entered is saved here.
       build_payout_method if @legal_entity&.managed?
 
-      @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
       @payment.save!
 
       if payment_params[:file].present?
@@ -61,11 +59,19 @@ class PaymentsController < ApplicationController
     type = params.dig(:user, :payout_method_type).presence
     return unless LegalEntity::PayoutMethod.details_class_for(type)
 
+    details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
+
+    # When an existing payout method is prefilled, its sensitive fields render
+    # masked (e.g. ••••1234). If the organizer leaves them untouched, those
+    # masked values come back here — keep the existing method rather than
+    # trying to re-save unusable data.
+    return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
+
     LegalEntity::PayoutMethodService::Update.new(
       user: current_user,
       legal_entity: @legal_entity,
       details_type: type,
-      details_attrs: LegalEntity::PayoutMethod.details_params_from(params, type),
+      details_attrs:,
       make_default: true
     ).run!
   end
