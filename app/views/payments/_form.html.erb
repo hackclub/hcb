@@ -14,7 +14,12 @@
             <div class="flex gap-3 items-center">
               <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
               <div>
-                <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                <div class="flex items-center gap-2">
+                  <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                  <% if payee.managed? %>
+                    <span class="badge bg-muted shrink-0 ml-1">Managed</span>
+                  <% end %>
+                </div>
                 <p class="muted text-sm m-0"><%= payee.email %></p>
               </div>
             </div>
