@@ -55,6 +55,23 @@ class LegalEntity
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
 
+    # Shared contract for `create_transfer(event, **attrs)` across every payout
+    # method. Each detail class pulls only the attributes its transfer type
+    # supports.
+    #
+    # Required (MUST be passed):
+    #   amount:          Integer — amount in cents
+    #   payment_for:     String  — description of the payment
+    #   recipient_name:  String
+    #   recipient_email: String
+    #   user:            User    — the user initiating the transfer
+    #   memo:            String  — required by Check and Wire; ignored by ACH and Wise
+    #
+    # Optional (MAY be passed):
+    #   send_email_notification:   Boolean — default false
+    #   company_entry_description: String  — ACH only
+    delegate :create_transfer, to: :details
+
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
     end
