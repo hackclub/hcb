@@ -61,10 +61,6 @@ class PaymentsController < ApplicationController
 
     details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
 
-    # When an existing payout method is prefilled, its sensitive fields render
-    # masked (e.g. ••••1234). If the organizer leaves them untouched, those
-    # masked values come back here — keep the existing method rather than
-    # trying to re-save unusable data.
     return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
 
     LegalEntity::PayoutMethodService::Update.new(
