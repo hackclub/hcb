@@ -71,6 +71,9 @@
       "gift_card_novelty_and_souvenir_shops"
     ]
   },
+  "grants": {
+    "label": "Grants"
+  },
   "grants-stipends": {
     "label": "Grants / stipends"
   },
@@ -155,6 +158,9 @@
   },
   "payroll-payroll-taxes": {
     "label": "Payroll / Payroll taxes"
+  },
+  "prizes": {
+    "label": "Prizes"
   },
   "professional-fees-contractors": {
     "label": "Professional fees (contractors)",
