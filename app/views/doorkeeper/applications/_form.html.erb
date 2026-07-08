@@ -47,9 +47,7 @@
       <%= doorkeeper_errors_for application, :scopes %>
 
       <style>
-        .scope-category + .scope-category {
-          margin-top: 1.25rem;
-        }
+        .scope-category + .scope-category { margin-top: 1.25rem; }
         .scope-category-title {
           margin: 0 0 0.25rem;
           font-size: 0.75rem;
@@ -58,118 +56,31 @@
           letter-spacing: 0.03em;
           color: #6c757d;
         }
-        .scope-row {
-          padding: 0.5rem 0;
-          border-bottom: 1px solid #eee;
-        }
-        .scope-row:last-child {
-          border-bottom: none;
-        }
-        .scope-row-main {
+        .scope-row { padding: 0.4rem 0; border-bottom: 1px solid #eee; }
+        .scope-row:last-child { border-bottom: none; }
+        .scope-row label {
           display: flex;
           align-items: flex-start;
           gap: 0.5rem;
           font-weight: normal;
           margin-bottom: 0;
         }
-        .scope-row-main input[type="checkbox"] {
-          margin-top: 0.3rem;
-        }
-        .scope-row-desc {
-          font-size: 0.8125rem;
-          color: #6c757d;
-        }
-        .scope-restrict {
-          margin: 0.4rem 0 0 1.6rem;
-          font-size: 0.8125rem;
-        }
-        .scope-restrict summary {
-          cursor: pointer;
-          color: #495057;
-        }
-        .scope-restrict-body {
-          margin-top: 0.4rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.4rem;
-        }
-        .chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.3rem;
-        }
-        .chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.3rem;
-          background: #eef0f2;
-          border-radius: 1rem;
-          padding: 0.1rem 0.3rem 0.1rem 0.6rem;
-        }
-        .chip-remove {
-          border: none;
-          background: none;
-          cursor: pointer;
-          font-size: 1rem;
-          line-height: 1;
-          padding: 0 0.2rem;
-        }
-        .inline-grant-form {
-          display: flex;
-          gap: 0.3rem;
-          align-items: center;
-        }
-        .inline-grant-form select, .inline-grant-form input[type="number"] {
-          padding: 0.15rem;
-          font-size: 0.8125rem;
-        }
+        .scope-row input[type="checkbox"] { margin-top: 0.3rem; }
+        .scope-row-desc { font-size: 0.8125rem; color: #6c757d; }
       </style>
-
-      <% grants_by_type = application.persisted? ? application.resource_grants.group_by(&:resource_type) : {} %>
 
       <% Doorkeeper::Application.scope_groups.each do |group| %>
         <div class="scope-category">
           <h4 class="scope-category-title"><%= group[:name] %></h4>
           <% group[:scopes].each do |scope| %>
-            <% resource, level = scope[:value].split(":", 2) %>
-            <% grants_for_scope = level && resource != "admin" ? (grants_by_type[resource] || []).select { |g| g.access_level == level } : [] %>
             <div class="scope-row">
-              <label class="scope-row-main">
+              <label>
                 <input type="checkbox" class="scope-picker-checkbox" data-scope="<%= scope[:value] %>" <%= "checked" if known_scopes.include?(scope[:value]) %>>
                 <span>
                   <%= scope[:label] %> <code><%= scope[:value] %></code>
                   <div class="scope-row-desc"><%= scope[:description] %></div>
                 </span>
               </label>
-
-              <% if level && resource != "admin" && application.persisted? %>
-                <details class="scope-restrict" <%= "open" if grants_for_scope.any? %>>
-                  <summary>Restrict to specific organizations/users<%= " (#{grants_for_scope.size})" if grants_for_scope.any? %></summary>
-                  <div class="scope-restrict-body">
-                    <% if grants_for_scope.any? %>
-                      <div class="chips">
-                        <% grants_for_scope.each do |grant| %>
-                          <span class="chip">
-                            <%= grant.scope_root_type ? "#{grant.scope_root_type} ##{grant.scope_root_id}" : "whole type" %>
-                            <button type="button" class="chip-remove grant-remove-btn" data-url="<%= oauth_application_resource_grant_path(application, grant) %>" aria-label="Remove">&times;</button>
-                          </span>
-                        <% end %>
-                      </div>
-                    <% end %>
-                    <div class="inline-grant-form grant-add-form" data-url="<%= oauth_application_resource_grants_path(application) %>">
-                      <input type="hidden" name="resource_grant[resource_type]" value="<%= resource %>">
-                      <input type="hidden" name="resource_grant[access_level]" value="<%= level %>">
-                      <select name="resource_grant[scope_root_type]" class="form-control">
-                        <option value="Event">Organization #</option>
-                        <option value="User">User #</option>
-                      </select>
-                      <input type="number" name="resource_grant[scope_root_id]" class="form-control" placeholder="ID" style="width: 5rem;" data-required="true">
-                      <button type="button" class="btn btn-sm btn-secondary grant-add-btn">Add</button>
-                    </div>
-                    <span class="text-secondary">Leaving this empty means <code><%= scope[:value] %></code> applies everywhere.</span>
-                  </div>
-                </details>
-              <% end %>
             </div>
           <% end %>
         </div>
@@ -182,89 +93,10 @@
       </div>
 
       <% if application.persisted? %>
-        <% cataloged_resources = Doorkeeper::Application.scope_groups.flat_map { |g| g[:scopes].filter_map { |s| s[:value].split(":", 2).first if s[:value].include?(":") } }.uniq %>
-        <%
-          # A grant only has its own row above if a scope exists for that exact
-          # (resource_type, access_level) pair - e.g. "card_grants" only has a
-          # "write" scope, so a "card_grants" "read" grant has nowhere else to
-          # show and belongs here, not silently hidden.
-          cataloged_pairs = Doorkeeper::Application.scope_groups.flat_map do |g|
-            g[:scopes].filter_map do |s|
-              resource, level = s[:value].split(":", 2)
-              [resource, level] if level && resource != "admin"
-            end
-          end
-          other_grants = application.resource_grants
-                                     .reject { |g| cataloged_pairs.include?([g.resource_type, g.access_level]) }
-                                     .group_by(&:resource_type)
-        %>
-        <details class="mt-3">
-          <summary class="font-weight-bold">Advanced: admin-scoped or uncatalogued resource grants</summary>
-          <p class="form-text text-secondary">
-            Use this to grant admin-level access (<code>admin:read</code>/<code>admin:write</code> above) narrowed to
-            just one resource type instead of everything, or to restrict a resource that doesn't have its own scope
-            yet (e.g. <code>comments</code>).
-          </p>
-
-          <% if other_grants.any? %>
-            <table class="table">
-              <thead><tr><th>Resource type</th><th>Access level</th><th>Scope root</th><th></th></tr></thead>
-              <tbody>
-                <% other_grants.each do |resource_type, grants| %>
-                  <% grants.each do |grant| %>
-                    <tr>
-                      <td><code><%= resource_type %></code></td>
-                      <td><%= grant.access_level %></td>
-                      <td>
-                        <% if grant.scope_root_type %>
-                          <%= grant.scope_root_type %> #<%= grant.scope_root_id %>
-                        <% else %>
-                          <span class="text-muted">whole type</span>
-                        <% end %>
-                      </td>
-                      <td><button type="button" class="btn btn-sm btn-danger grant-remove-btn" data-url="<%= oauth_application_resource_grant_path(application, grant) %>">Remove</button></td>
-                    </tr>
-                  <% end %>
-                <% end %>
-              </tbody>
-            </table>
-          <% end %>
-
-          <div class="grant-add-form" data-url="<%= oauth_application_resource_grants_path(application) %>" style="display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap;">
-            <div>
-              <label class="d-block">Resource type</label>
-              <input type="text" name="resource_grant[resource_type]" list="known_resource_types" class="form-control" placeholder="e.g. comments" data-required="true">
-              <datalist id="known_resource_types">
-                <% (cataloged_resources + ["comments"]).uniq.sort.each do |resource| %>
-                  <option value="<%= resource %>">
-                <% end %>
-              </datalist>
-            </div>
-            <div>
-              <label class="d-block">Access level</label>
-              <select name="resource_grant[access_level]" class="form-control">
-                <option value="read">read</option>
-                <option value="write">write</option>
-              </select>
-            </div>
-            <div>
-              <label class="d-block">Scope root type</label>
-              <select name="resource_grant[scope_root_type]" class="form-control">
-                <option value="">(none - whole type)</option>
-                <option value="Event">Event (organization)</option>
-                <option value="User">User</option>
-              </select>
-            </div>
-            <div>
-              <label class="d-block">Scope root ID</label>
-              <input type="number" name="resource_grant[scope_root_id]" class="form-control" placeholder="e.g. 42">
-            </div>
-            <div>
-              <button type="button" class="btn btn-primary grant-add-btn">Add grant</button>
-            </div>
-          </div>
-          <span class="form-text text-secondary">Leave the scope root blank to grant the whole resource type (only meaningful as an admin-capability grant).</span>
-        </details>
+        <p class="form-text text-secondary mt-3">
+          Need to restrict any of these scopes to a specific organization or user?
+          <%= link_to "Manage resource grants →", oauth_application_resource_grants_path(application) %>
+        </p>
       <% end %>
     </div>
   </div>
@@ -287,60 +119,6 @@
       checkboxes.forEach(function (box) { box.addEventListener("change", syncScopes); });
       custom.addEventListener("input", syncScopes);
       hidden.form.addEventListener("submit", syncScopes);
-    })();
-  </script>
-
-  <script>
-    (function () {
-      // Resource grant add/remove controls are plain buttons, not real forms -
-      // this whole panel lives inside the application's own form tag, and HTML
-      // does not allow nesting one form inside another, so these submit via
-      // fetch instead.
-      function csrfToken() {
-        var meta = document.querySelector('meta[name="csrf-token"]');
-        return meta ? meta.content : null;
-      }
-
-      function submitGrantRequest(url, method, body) {
-        var headers = { "X-CSRF-Token": csrfToken() };
-        var options = { method: method, headers: headers };
-        if (body !== undefined) {
-          headers["Content-Type"] = "application/x-www-form-urlencoded";
-          options.body = body;
-        }
-        fetch(url, options).finally(function () { window.location.reload(); });
-      }
-
-      document.querySelectorAll(".grant-remove-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          if (window.confirm("Remove this grant?")) {
-            submitGrantRequest(btn.dataset.url, "DELETE");
-          }
-        });
-      });
-
-      document.querySelectorAll(".grant-add-form").forEach(function (panel) {
-        var addButton = panel.querySelector(".grant-add-btn");
-        addButton.addEventListener("click", function () {
-          // Plain data-required (not the required attribute) so these fields -
-          // which live inside the application's own <form> just for layout -
-          // never block that form's native submit validation.
-          var missing = Array.prototype.find.call(panel.querySelectorAll("[data-required]"), function (input) {
-            return !input.value;
-          });
-          if (missing) {
-            window.alert("Please fill out this field.");
-            missing.focus();
-            return;
-          }
-
-          var params = new URLSearchParams();
-          panel.querySelectorAll("[name]").forEach(function (input) {
-            params.append(input.name, input.value);
-          });
-          submitGrantRequest(panel.dataset.url, "POST", params.toString());
-        });
-      });
     })();
   </script>
 

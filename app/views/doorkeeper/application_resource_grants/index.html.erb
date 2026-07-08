@@ -1,0 +1,97 @@
+<div class="border-bottom mb-4">
+  <h1>Resource Grants &mdash; <%= @application.name %></h1>
+</div>
+
+<p class="text-secondary">
+  Restricts this application's scopes to specific organizations or users, on every token minted for it.
+  A scope with no grant here is unrestricted for that resource type.
+  <%= link_to "← Back to scopes", edit_oauth_application_path(@application) %>
+</p>
+
+<% if @grants.any? %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Resource type</th>
+        <th>Access level</th>
+        <th>Scope root</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @grants.each do |grant| %>
+        <tr>
+          <td><code><%= grant.resource_type %></code></td>
+          <td><%= grant.access_level %></td>
+          <td>
+            <% if grant.scope_root_type %>
+              <%= grant.scope_root_type %> #<%= grant.scope_root_id %>
+            <% else %>
+              <span class="text-muted">whole type</span>
+            <% end %>
+          </td>
+          <td>
+            <%= button_to "Remove", oauth_application_resource_grant_path(@application, grant), method: :delete, class: "btn btn-sm btn-danger", form: { data: { turbo_confirm: "Remove this grant?" } } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p class="text-secondary"><em>No grants yet - every scope on this application is unrestricted.</em></p>
+<% end %>
+
+<div class="border-top mt-4 pt-4">
+  <h3>Add a grant</h3>
+
+  <%= form_with url: oauth_application_resource_grants_path(@application), method: :post, local: true do |f| %>
+    <div class="form-group row">
+      <label class="col-sm-2 col-form-label font-weight-bold">Resource type</label>
+      <div class="col-sm-4">
+        <input type="text" name="resource_grant[resource_type]" list="known_resource_types" class="form-control" placeholder="e.g. comments" required>
+        <datalist id="known_resource_types">
+          <% (@known_resource_types + ["comments"]).uniq.sort.each do |resource| %>
+            <option value="<%= resource %>">
+          <% end %>
+        </datalist>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label class="col-sm-2 col-form-label font-weight-bold">Access level</label>
+      <div class="col-sm-4">
+        <select name="resource_grant[access_level]" class="form-control">
+          <option value="read">read</option>
+          <option value="write">write</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label class="col-sm-2 col-form-label font-weight-bold">Scope root type</label>
+      <div class="col-sm-4">
+        <select name="resource_grant[scope_root_type]" class="form-control">
+          <option value="">(none - whole type)</option>
+          <option value="Event">Event (organization)</option>
+          <option value="User">User</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <label class="col-sm-2 col-form-label font-weight-bold">Scope root ID</label>
+      <div class="col-sm-4">
+        <input type="number" name="resource_grant[scope_root_id]" class="form-control" placeholder="e.g. 42">
+      </div>
+      <div class="col-sm-6">
+        <span class="form-text text-secondary">Leave the scope root blank to grant the whole resource type (only meaningful as an admin-capability grant - see dev-docs/v4-api/scopes.md#admin-scopes).</span>
+      </div>
+    </div>
+
+    <div class="form-group row">
+      <div class="col-sm-10 offset-sm-2">
+        <%= f.submit "Add grant", class: "btn btn-primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>

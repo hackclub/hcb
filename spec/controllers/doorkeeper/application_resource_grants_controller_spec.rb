@@ -4,8 +4,29 @@ require "rails_helper"
 
 RSpec.describe Doorkeeper::ApplicationResourceGrantsController do
   include SessionSupport
+  render_views
 
   let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback", scopes: "restricted comments:read") }
+
+  describe "#index" do
+    it "is forbidden for a non-admin" do
+      create_session(create(:user), verified: true)
+
+      get :index, params: { application_id: application.id }
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "lists existing grants for an admin" do
+      create_session(create(:user, :make_admin), verified: true)
+      application.resource_grants.create!(resource_type: "comments", access_level: "read", scope_root_type: "Event", scope_root_id: 42)
+
+      get :index, params: { application_id: application.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("comments").and include("Event #42")
+    end
+  end
 
   describe "#create" do
     it "is forbidden for a non-admin" do
@@ -24,7 +45,7 @@ RSpec.describe Doorkeeper::ApplicationResourceGrantsController do
           post :create, params: { application_id: application.id, resource_grant: { resource_type: "comments", access_level: "read", scope_root_type: "Event", scope_root_id: 42 } }
         end.to change { application.resource_grants.count }.by(1)
 
-        expect(response).to redirect_to(edit_oauth_application_path(application))
+        expect(response).to redirect_to(oauth_application_resource_grants_path(application))
         grant = application.resource_grants.last
         expect(grant.scope_root_type).to eq("Event")
         expect(grant.scope_root_id).to eq(42)
@@ -42,7 +63,7 @@ RSpec.describe Doorkeeper::ApplicationResourceGrantsController do
           post :create, params: { application_id: application.id, resource_grant: { resource_type: "comments", access_level: "read", scope_root_type: "Event" } }
         end.not_to change(ResourceGrant, :count)
 
-        expect(response).to redirect_to(edit_oauth_application_path(application))
+        expect(response).to redirect_to(oauth_application_resource_grants_path(application))
         expect(flash[:alert]).to be_present
       end
     end

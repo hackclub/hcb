@@ -58,8 +58,8 @@
 
     <p><%= link_to t('doorkeeper.applications.buttons.edit'), edit_oauth_application_path(@application), class: 'btn btn-primary' %></p>
 
+    <p><%= link_to "Resource Grants", oauth_application_resource_grants_path(@application), class: 'btn btn-secondary' %></p>
+
     <p><%= render 'delete_form', application: @application, submit_btn_css: 'btn btn-danger' %></p>
   </div>
 </div>
-
-<p class="text-secondary">Scopes and resource grants are managed together on the <%= link_to "edit page", edit_oauth_application_path(@application) %>.</p>
