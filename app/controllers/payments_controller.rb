@@ -27,7 +27,7 @@ class PaymentsController < ApplicationController
 
       # On the manual path the payee has a managed legal entity (created on the
       # recipient step); the payout method the organizer entered is saved here.
-      build_payout_method if @legal_entity
+      build_payout_method if @legal_entity&.managed?
 
       @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
       @payment.save!

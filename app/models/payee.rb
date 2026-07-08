@@ -28,6 +28,8 @@ class Payee < ApplicationRecord
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
+  validate :managed_legal_entity_constraints
+
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
   def search_avatar
@@ -36,6 +38,20 @@ class Payee < ApplicationRecord
 
   def managed?
     legal_entity&.managing_event_id.present?
+  end
+
+  private
+
+  def managed_legal_entity_constraints
+    return unless managed?
+
+    if event_id != legal_entity.managing_event_id
+      errors.add(:event, "must be the event managing this legal entity")
+    end
+
+    if legal_entity.payees.where.not(id:).exists?
+      errors.add(:legal_entity, "is managed and can only have one payee")
+    end
   end
 
 end
