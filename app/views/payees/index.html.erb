@@ -16,6 +16,7 @@
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate"><%= payee.display_name %></p>
             <% legal_name = payee.legal_entity&.name.presence %>
+            <% legal_name = nil if legal_name == payee.display_name %>
             <p class="text-sm muted truncate"><%= "#{legal_name} • " if legal_name %><%= payee.email %></p>
           </div>
           <% if payee.managed? %>
