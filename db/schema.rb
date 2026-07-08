@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1578,6 +1578,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.bigint "author_id"
+    t.integer "comment_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
@@ -1585,6 +1586,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_143909) do
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.integer "not_admin_only_comment_count", default: 0, null: false
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"

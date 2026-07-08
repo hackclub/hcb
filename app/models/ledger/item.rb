@@ -6,11 +6,13 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
+#  comment_count                :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  not_admin_only_comment_count :integer          default(0), not null
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
@@ -215,6 +217,8 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
+      self.comment_count = comments.count
+      self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
