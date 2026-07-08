@@ -18,7 +18,7 @@
       <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
     <% else %>
       <p>
-        You're almost there - just add your default payout method below!
+        You're almost there - just add a payout method below!
       </p>
     <% end %>
 
@@ -35,7 +35,7 @@
       tax information is invalid.
     </p>
 
-    <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+    <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
 <% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
   <p>
@@ -45,7 +45,7 @@
     exceed IRS reporting requirements.
   </p>
 
-  <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+  <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
 <% else %>
   <p>
     Finish filling in <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
