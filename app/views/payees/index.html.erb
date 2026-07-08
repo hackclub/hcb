@@ -15,8 +15,11 @@
             <p class="font-medium"><%= payee.display_name %></p>
             <p class="text-sm muted"><%= payee.email %></p>
           </div>
+          <% if payee.managed? %>
+            <span class="badge bg-muted ml-auto shrink-0">Managed</span>
+          <% end %>
           <% if params[:payee_id].to_s == payee.id.to_s %>
-            <%= inline_icon "check-thin", class: "ml-auto success shrink-0" %>
+            <%= inline_icon "check-thin", class: "success shrink-0 #{'ml-auto' unless payee.managed?}" %>
           <% end %>
         <% end %>
       <% end %>

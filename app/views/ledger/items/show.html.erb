@@ -24,17 +24,36 @@
     <strong>
       Date
     </strong>
-    <div>
+    <span>
       <%= @item.datetime.strftime("%b %e, %Y") %>
+    </span>
   </div>
   <div>
     <strong>
       HCB Code
     </strong>
-    <div>
+    <span>
       <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
-    </div>
+    </span>
   </div>
+  <% if @item.linked_object.present? %>
+    <% admin_tool do %>
+      <strong>
+        Linked Object Type
+      </strong>
+      <span>
+        <%= @item.linked_object_type %>
+      </span>
+    <% end %>
+    <% admin_tool do %>
+      <strong>
+        Linked Object ID
+      </strong>
+      <span>
+        <%= @item.linked_object_id %>
+      </span>
+    <% end %>
+  <% end %>
 </section>
 
 <section class="my-5 flex flex-col gap-3">
@@ -121,34 +140,16 @@
 </section>
 
 <%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
-<%= begin receipt_upload_form_config = {
+<%= render partial: "receipts/form_v3", locals: {
       receiptable: @item,
       enable_linking: true,
       upload_method: "transaction_page",
       include_spacing: true,
       turbo: true
-    }
-          receipt_upload_form_config[:restricted_dropzone] = false
-          receipt_upload_form_config[:inline_linking] = false
-          receipt_upload_form_config[:show_receipt_button] = true
-          receipt_upload_form_config[:show_author_img] = true
-          render partial: "receipts/form_v3", locals: receipt_upload_form_config
-    end %>
+    } %>
 
 <%= render "comments/list", comments: @item.comments %>
 <%= render "comments/form", commentable: @item %>
-
-<ul class="grid grid--medium-narrow text-left w-100 mt-4 receipts_list">
-  <%= render partial: "receipts/receipt", collection: @item.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true } %>
-</ul>
-
-<%= render partial: "receipts/form_v3", locals: {
-      receiptable: @receiptable = @item,
-      enable_linking: true,
-      upload_method: "transaction_page",
-      include_spacing: true,
-      turbo: true
-    } %>
 
 <% admin_tool("p-2 my-3") do %>
   <h3 class="my-2">Quickly go to</h3>

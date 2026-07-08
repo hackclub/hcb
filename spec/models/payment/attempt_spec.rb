@@ -218,7 +218,7 @@ RSpec.describe Payment::Attempt, type: :model do
       # when called directly via attempt.send(:create_transfer!).
       allow(attempt).to receive(:create_transfer!).and_call_original
       payment_double = double("payment").as_null_object
-      allow(payment_double).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
+      allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_double)
       # Make safely a no-op so external-service calls inside each branch are
       # skipped; we only care that mark_under_review! is called at the end.
@@ -283,7 +283,7 @@ RSpec.describe Payment::Attempt, type: :model do
                            amount_cents: 10_000,
                            currency: "USD",
                            creator: double("creator"))
-      allow(payment_dbl).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
+      allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_dbl)
 
       allow(User).to receive(:system_user).and_return(double("system_user"))

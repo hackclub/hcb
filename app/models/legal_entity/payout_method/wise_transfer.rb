@@ -28,6 +28,12 @@ class LegalEntity
 
       validates_presence_of :address_line1, :address_city, :address_state, :address_postal_code, :recipient_country, :currency
 
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+         :recipient_country, :currency] +
+          recipient_information_accessors
+      end
+
       def kind
         "wise_transfer"
       end
