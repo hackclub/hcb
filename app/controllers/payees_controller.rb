@@ -10,12 +10,12 @@ class PayeesController < ApplicationController
 
   def index
     authorize @event
-    scope = @event.payees.not_archived.includes(:legal_entity, :payments)
-    payees = params[:q].present? ? scope.search(params[:q]) : scope
-    payees = payees.order(created_at: :desc).limit(15).to_a
+    all = @event.payees.not_archived.includes(:legal_entity, :payments)
+    payees = params[:q].present? ? payees.search(params[:q]) : all
+    payees = payees.order(created_at: :desc).limit(15)
 
-    selected = @event.payees.not_archived.includes(:legal_entity, :payments).find_by_public_id(params[:payee_id]) if params[:payee_id].present?
-    @payees = [selected, *payees].compact.uniq
+    selected = all.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
     render layout: false
   end
