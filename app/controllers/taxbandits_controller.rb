@@ -9,7 +9,7 @@ class TaxbanditsController < ActionController::Base
     form_type = params["FormType"]
     return if form_type.nil?
 
-    submission_id = params[form_type]["SubmissionId"]
+    submission_id = params[normalize_form_name(form_type)]&.[]("SubmissionId")
     return if submission_id.nil?
 
     # TaxBandits does send us the status in the webhook itself,
@@ -23,6 +23,11 @@ class TaxbanditsController < ActionController::Base
   end
 
   private
+  
+  # TaxBandits is inconsistent with their capitalization
+  def normalize_form_name(str)
+    str.sub(/\AFORM/i, "Form")
+  end
 
   def verify_signature
     time_stamp = request.headers["TimeStamp"]
