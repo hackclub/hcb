@@ -482,11 +482,18 @@ class User < ApplicationRecord
 
   # Bounded to the averaging window in SQL. Without the bound this would load the
   # user's entire card history, growing without limit as the program ages.
+  #
+  # `receipt_required?` mirrors the filter `card_locking_missing_receipts` applies
+  # through `HcbCode#missing_receipt?`. Without it, a charge that never needed a
+  # receipt but happened to get one would count as a timely upload and pull the
+  # user's average down, while never being able to count against them.
   memo_wise def card_locking_history_hcb_codes
     window_start = card_locking_window_start
     scope = HcbCode.card_locking_relevant.where(canonical_transactions: { created_at: window_start.. })
 
-    card_locking_hcb_codes(scope).select { |hcb_code| hcb_code.card_locking_settled_at >= window_start }
+    card_locking_hcb_codes(scope).select do |hcb_code|
+      hcb_code.card_locking_settled_at >= window_start && hcb_code.receipt_required?
+    end
   end
 
   # Deliberately unbounded in time, unlike the averaging window: the hard caps (a
