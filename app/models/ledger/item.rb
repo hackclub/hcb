@@ -65,6 +65,8 @@ class Ledger
 
     monetize :amount_cents
 
+    after_create_commit :assign_linked_object!
+
     # map! calls refresh!
     after_create :map!
     after_touch :map!
@@ -166,7 +168,12 @@ class Ledger
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
         linked_object.expense.memo
+      when "CardCharge"
+        network_id = linked_object.merchant_data&.dig("network_id")
+        merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
+        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge"
       when "RawPendingStripeTransaction", "RawStripeTransaction"
+        # TODO: Remove this once RPSTs and RSTs are migrated to CardCharges
         network_id = stripe_merchant&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
         merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
@@ -197,6 +204,8 @@ class Ledger
         linked_object&.user
       when "WiseTransfer"
         linked_object&.user
+      when "CardCharge"
+        linked_object&.stripe_cardholder&.user
       when "RawPendingStripeTransaction"
         stripe_cardholder&.user
       when "RawStripeTransaction"
@@ -277,6 +286,18 @@ class Ledger
 
     private
 
+    def assign_linked_object!
+      # Once a linked object is assigned, it should never be changed.
+      # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
+      # the ledger item with the CPT will persist, and the ledger item with the CT will be destroyed.
+      # No linked objects will be changed.
+      return if linked_object.present?
+
+      linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object)).compact.first
+
+      update!(linked_object:) if linked_object.present?
+    end
+
     # TODO: replace usages of this with linked_object_type once all LOs are created
     def transaction_type
       linked_object_type || raw_pending_transaction_type || raw_transaction_type
@@ -301,6 +322,7 @@ class Ledger
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
         "StripeServiceFee": ["Stripe service fee", "cash"],
+        "CardCharge": ["Card charge", "card"],
         "RawPendingStripeTransaction": ["Card charge", "card"],
         "RawStripeTransaction": ["Card charge", "card"]
       }[transaction_type&.to_sym] || ["Bank account transaction", "cash"]
