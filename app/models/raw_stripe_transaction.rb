@@ -24,6 +24,7 @@ class RawStripeTransaction < ApplicationRecord
   has_one :canonical_transaction, as: :transaction_source
   has_one :card_charge_raw_stripe_transaction
   has_one :card_charge, through: :card_charge_raw_stripe_transaction
+  has_one :stripe_card, through: :card_charge
 
   after_create :link_card_charge!
 
@@ -53,10 +54,6 @@ class RawStripeTransaction < ApplicationRecord
 
   def link_card_charge!
     CardCharge.link_raw_stripe_transaction!(self)
-  end
-
-  def stripe_card
-    @stripe_card ||= StripeCard.find_by(stripe_id: stripe_card_id)
   end
 
   private
