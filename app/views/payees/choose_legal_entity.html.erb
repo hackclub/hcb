@@ -1,10 +1,16 @@
-<% title "Choose a legal entity" %>
+<% title "Tax information for payment" %>
 
-<h1>Choose a legal entity</h1>
+<h1>Who's receiving this payment?</h1>
 
 <p>
   Before <%= @payee.event.name %> can pay you, we need to know what
   legal entity is receiving this payment for tax purposes.
+</p>
+
+<p>
+  If you're getting paid on behalf of a business, create a new
+  legal entity or choose one you've already created. Otherwise,
+  choose yourself.
 </p>
 
 <div class="grid grid-cols-3 gap-5">
