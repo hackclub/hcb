@@ -7,39 +7,38 @@
 #  id            :bigint           not null, primary key
 #  aasm_state    :string           not null
 #  currency      :string           default("USD"), not null
+#  description   :text             not null
 #  end_date      :date             not null
 #  onboarded_at  :datetime
 #  onboarding_at :datetime
-#  purpose       :text             not null
 #  rate_cents    :integer          default(0), not null
+#  rejected_at   :datetime
 #  start_date    :date             not null
 #  terminated_at :datetime
 #  title         :text             not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  contract_id   :bigint
 #  payee_id      :bigint           not null
 #
 # Indexes
 #
-#  index_payroll_positions_on_contract_id  (contract_id)
-#  index_payroll_positions_on_payee_id     (payee_id)
+#  index_payroll_positions_on_payee_id  (payee_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (contract_id => contracts.id)
 #  fk_rails_...  (payee_id => payees.id)
 #
 module Payroll
   class Position < ApplicationRecord
     include AASM
+    include Contractable
 
     has_paper_trail
 
     belongs_to :payee
-    belongs_to :contract, optional: true
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
+    has_one :contract_event, through: :payee, source: :event
 
     monetize :rate_cents, with_model_currency: :currency
 
@@ -51,10 +50,15 @@ module Payroll
       state :onboarding
       state :onboarded
       state :expired
+      state :rejected
       state :terminated
 
       event :mark_onboarding do
         transitions from: :under_review, to: :onboarding
+      end
+
+      event :mark_rejected do
+        transitions from: :under_review, to: :rejected
       end
 
       event :mark_onboarded do

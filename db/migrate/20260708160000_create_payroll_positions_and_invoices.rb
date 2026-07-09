@@ -2,10 +2,9 @@ class CreatePayrollPositionsAndInvoices < ActiveRecord::Migration[8.0]
   def change
     create_table :payroll_positions do |t|
       t.belongs_to :payee, null: false, foreign_key: true
-      t.belongs_to :contract, foreign_key: true
 
       t.text :title, null: false
-      t.text :purpose, null: false
+      t.text :description, null: false
       t.integer :rate_cents, null: false, default: 0
       t.string :currency, null: false, default: "USD"
 
@@ -15,6 +14,7 @@ class CreatePayrollPositionsAndInvoices < ActiveRecord::Migration[8.0]
       t.string :aasm_state, null: false
       t.datetime :onboarding_at
       t.datetime :onboarded_at
+      t.datetime :rejected_at
       t.datetime :terminated_at
 
       t.timestamps
