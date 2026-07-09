@@ -420,11 +420,11 @@ class Event < ApplicationRecord
   has_many :grants
 
   has_one_attached :donation_header_image
-  validates :donation_header_image, content_type: [:png, :jpeg]
+  validates :donation_header_image, content_type: [:png, :jpeg, :webp]
   validates :donation_header_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
-  validates :background_image, content_type: [:png, :jpeg, :gif]
+  validates :background_image, content_type: [:png, :jpeg, :webp, :gif]
   validates :background_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
