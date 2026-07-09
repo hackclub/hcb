@@ -38,7 +38,7 @@
         <div class="flex justify-between items-center">
           <div>
             <%= form.label :starts_on, "Duration" %>
-            <span class="muted block">Up to one year, starting within six months</span>
+            <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
           </div>
           <div class="flex items-center gap-2">
             <%= form.date_field :starts_on, required: true, disabled:,
@@ -61,7 +61,7 @@
         <div class="menu__divider my-0"></div>
 
         <%= render "events/transfers/attach_receipt", form:, disabled:,
-              label: "Attachment (required)", hint: "Attach a statement of work or agreement" %>
+              label: "Attachment (optional)", hint: "Attach a statement of work or agreement" %>
       </div>
     </div>
 
