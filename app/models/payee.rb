@@ -56,10 +56,6 @@ class Payee < ApplicationRecord
     legal_entity&.managing_event_id.present?
   end
 
-  def archivable?
-    payments.none?
-  end
-
   def archive!
     update!(archived_at: Time.current)
   end

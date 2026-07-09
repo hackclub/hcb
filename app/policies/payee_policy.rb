@@ -14,7 +14,7 @@ class PayeePolicy < ApplicationPolicy
   end
 
   def destroy?
-    member? && record.archivable?
+    member?
   end
 
   private
