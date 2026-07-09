@@ -11,7 +11,7 @@ class PayeesController < ApplicationController
   def index
     authorize @event
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
-    payees = params[:q].present? ? payees.search(params[:q]) : all
+    payees = params[:q].present? ? all.search(params[:q]) : all
     payees = payees.order(created_at: :desc).limit(15)
 
     selected = all.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
