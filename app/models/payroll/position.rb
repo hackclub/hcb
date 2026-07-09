@@ -41,6 +41,9 @@ module Payroll
     has_one :event, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
 
+    has_one_attached :file
+    validates :file, size: { less_than_or_equal_to: 25.megabytes }, content_type: [:pdf], if: -> { attachment_changes["file"].present? }
+
     monetize :rate_cents, with_model_currency: :currency
 
     after_create_commit do
