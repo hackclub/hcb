@@ -42,8 +42,14 @@ module Payroll
 
     monetize :rate_cents, with_model_currency: :currency
 
+    after_create_commit do
+      Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
+    end
+
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
+    validate :start_date_within_six_months
+    validate :duration_within_one_year
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -80,6 +86,14 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "must be after the start date") if end_date <= start_date
+    end
+
+    def start_date_within_six_months
+      errors.add(:start_date, "cannot be more than 6 months in the future") if start_date > 6.months.from_now.to_date
+    end
+
+    def duration_within_one_year
+      errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + 1.year
     end
 
   end
