@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
+import { toPng } from 'html-to-image'
 
 export default class extends Controller {
   static targets = ['downloadButton']
@@ -24,17 +25,12 @@ export default class extends Controller {
     const active = this.element.querySelector('qr-code.\\!block')
     if (!active) return
 
-    if (typeof window.html2canvas !== 'function') {
-      if (button) button.innerText = 'Download unavailable'
-      return
-    }
     if (button) button.innerText = 'Downloading...'
 
-    window
-      .html2canvas(active, { scale: 4, backgroundColor: null, useCORS: true })
-      .then(canvas => {
+    toPng(active, { pixelRatio: 4, backgroundColor: null, cacheBust: true })
+      .then(dataUrl => {
         const downloadLink = document.createElement('a')
-        downloadLink.href = canvas.toDataURL('image/png')
+        downloadLink.href = dataUrl
         downloadLink.download = 'qr_code.png'
         downloadLink.click()
         if (button) button.innerText = 'Download'
