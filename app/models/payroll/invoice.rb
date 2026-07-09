@@ -54,6 +54,9 @@ module Payroll
       state :rejected
 
       event :mark_approved do
+        after do |reviewed_by|
+          update!(reviewed_by:)
+        end
         transitions from: :submitted, to: :approved
       end
 
