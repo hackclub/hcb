@@ -23,10 +23,10 @@ class ContractorsController < ApplicationController
     authorize @event, policy_class: ContractorPolicy
 
     @contract = @payee.payroll_positions.build(
-      hourly_rate_cents: (contractor_params[:rate].to_d * 100).to_i,
-      starts_on: contractor_params[:starts_on],
-      ends_on: contractor_params[:ends_on],
-      purpose: contractor_params[:purpose]
+      rate_cents: (contractor_params[:rate].to_d * 100).to_i,
+      start_date: contractor_params[:starts_on],
+      end_date: contractor_params[:ends_on],
+      description: contractor_params[:purpose]
     )
     if (attachment = Array(contractor_params[:file]).compact_blank.first)
       @contract.file.attach(attachment)
