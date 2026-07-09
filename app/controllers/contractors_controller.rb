@@ -6,7 +6,7 @@ class ContractorsController < ApplicationController
   before_action :set_event
 
   def show
-    @contract = @event.payroll_contracts.find(params[:id])
+    @contract = @event.payroll_positions.find(params[:id])
     authorize @event, policy_class: ContractorPolicy
     @frame = params[:frame].present?
     @payments = @contract.payee.payments.order(created_at: :desc)
@@ -22,7 +22,7 @@ class ContractorsController < ApplicationController
     @payee = @event.payees.find_by_public_id!(contractor_params[:payee_id])
     authorize @event, policy_class: ContractorPolicy
 
-    @contract = @payee.payroll_contracts.build(
+    @contract = @payee.payroll_positions.build(
       hourly_rate_cents: (contractor_params[:rate].to_d * 100).to_i,
       starts_on: contractor_params[:starts_on],
       ends_on: contractor_params[:ends_on],

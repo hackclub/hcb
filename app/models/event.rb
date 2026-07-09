@@ -339,7 +339,7 @@ class Event < ApplicationRecord
   has_many :payment_recipients
   has_many :payees
   has_many :payments, through: :payees
-  has_many :payroll_contracts, through: :payees
+  has_many :payroll_positions, through: :payees, class_name: "Payroll::Position"
 
   has_many :disbursements
   has_many :incoming_disbursements, class_name: "Disbursement::Incoming"

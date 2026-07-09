@@ -42,7 +42,7 @@
           </div>
           <div class="flex items-center gap-2">
             <%= form.date_field :starts_on, required: true, disabled:,
-                  max: (Date.current + PayrollContract::MAX_START_LEAD_TIME).iso8601 %>
+                  max: (Date.current + Payroll::Position::MAX_START_LEAD_TIME).iso8601 %>
             <span class="muted">to</span>
             <%= form.date_field :ends_on, required: true, disabled: %>
           </div>

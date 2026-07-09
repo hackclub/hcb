@@ -43,14 +43,17 @@ module Payroll
 
     monetize :rate_cents, with_model_currency: :currency
 
+    MAX_DURATION = 1.year
+    MAX_START_LEAD_TIME = 6.months
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
-    validate :start_date_within_six_months
-    validate :duration_within_one_year
+    validate :start_date_within_set_lead_time
+    validate :duration_within_set_max
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -89,12 +92,12 @@ module Payroll
       errors.add(:end_date, "must be after the start date") if end_date <= start_date
     end
 
-    def start_date_within_six_months
-      errors.add(:start_date, "cannot be more than 6 months in the future") if start_date > 6.months.from_now.to_date
+    def start_date_within_set_lead_time
+      errors.add(:start_date, "cannot be more than 6 months in the future") if start_date > MAX_START_LEAD_TIME.from_now.to_date
     end
 
-    def duration_within_one_year
-      errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + 1.year
+    def duration_within_set_max
+      errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
     end
 
   end

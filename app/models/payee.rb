@@ -32,7 +32,7 @@ class Payee < ApplicationRecord
   belongs_to :legal_entity, optional: true
 
   has_many :payments
-  has_many :payroll_contracts
+  has_many :payroll_positions
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
