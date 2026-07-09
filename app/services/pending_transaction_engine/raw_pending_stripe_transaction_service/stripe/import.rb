@@ -10,21 +10,14 @@ module PendingTransactionEngine
 
         def run
           authorizations = ::Partners::Stripe::Issuing::Authorizations::List.new(created_after: @created_after).run
-          return if authorizations.empty?
 
-          RawPendingStripeTransaction.upsert_all(authorizations.map { |authorization|
-            {
-              stripe_transaction_id: authorization[:id],
-              stripe_transaction: authorization,
-              amount_cents: -authorization[:amount],
-              date_posted: Time.at(authorization[:created]),
-            }
-          }, unique_by: :stripe_transaction_id)
-
-          # upsert_all skips callbacks, so link charges for newly inserted rows
-          RawPendingStripeTransaction.where(stripe_transaction_id: authorizations.map { |a| a[:id] })
-                                     .where.missing(:card_charge)
-                                     .find_each(&:link_card_charge!)
+          authorizations.each do |authorization|
+            ::RawPendingStripeTransaction.find_or_initialize_by(stripe_transaction_id: authorization[:id]).tap do |pt|
+              pt.stripe_transaction = authorization
+              pt.amount_cents = -authorization[:amount]
+              pt.date_posted = Time.at(authorization[:created])
+            end.save!
+          end
 
           nil
         end
