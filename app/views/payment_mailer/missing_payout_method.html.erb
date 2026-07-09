@@ -4,13 +4,13 @@
   <%= render partial: "initial_message", locals: { payment: @payment } %>
 <% else %>
   <p>
-    Thank you for uploading your tax information for receiving your payment of <%= @payment.amount.format(with_currency: true) %>
-    for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB.
+    We're almost ready to send your payment of <%= @payment.amount.format(with_currency: true) %>
+    for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB!
   </p>
 <% end %>
 
 <p>
-  In order to process this payment, please login to HCB and configure your payout method.
+  In order to process this payment, please <%= link_to "configure your payout method on HCB", legal_entity_url(@payment.legal_entity) %>.
 </p>
 
 <p>

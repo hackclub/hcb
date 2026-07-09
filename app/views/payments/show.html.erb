@@ -1,8 +1,8 @@
 <% title "Payment of #{render_money @payment.amount}" %>
 <% page_sm %>
-<%= render "events/nav", selected: :payments %>
+<%= render "events/nav", selected: :payments if policy(@event).show? %>
 
-<%= turbo_frame_tag @payment.id, target: "_top" do %>
+<%= turbo_frame_tag "payment_#{@payment.id}", target: "_top" do %>
   <article class="hcb-code">
     <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
       <span class="flex items-center py-3 gap-2 flex-grow">
@@ -52,13 +52,23 @@
         <strong>Status</strong>
         <%= @payment.state_text %>
       </p>
+      <% if @payout_method.present? %>
+        <p>
+          <strong>Payout method</strong>
+          <span class="flex items-center gap-1">
+            <%= inline_icon @payout_method.icon, size: 20 %>
+            <%= @payout_method.human_kind.capitalize %>
+            <span class="muted">— <%= @payout_method.detail_summary %></span>
+          </span>
+        </p>
+      <% end %>
     </section>
   </article>
 
   <% if @payment.aasm_state == "pending_legal_entity" %>
     <%= render "application/callout", type: "info", title: "Tax information required", class: "mt-4" do %>
       <% days_remaining = [90 - (Date.current - @payment.created_at.to_date).to_i, 0].max %>
-      <%= @payment.payee.display_name %> has <%= days_remaining %> days to provide their tax information until this payment is canceled. We've sent an email with instructions.
+      <%= @payment.payee.display_name %> has <%= pluralize(days_remaining, "day") %> left to provide their tax information until this payment is canceled. We've sent them an email with instructions.
     <% end %>
   <% end %>
 

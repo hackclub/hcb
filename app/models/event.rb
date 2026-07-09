@@ -474,6 +474,10 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
+  after_update if: -> { can_front_balance_changed? } do
+    ledger.refresh_all!
+  end
+
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
@@ -785,10 +789,6 @@ class Event < ApplicationRecord
 
   def dormant?
     !engaged?
-  end
-
-  def frozen?
-    Flipper.enabled?(:frozen, self)
   end
 
   def revenue_fee
