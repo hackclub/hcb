@@ -24,7 +24,6 @@ class RawStripeTransaction < ApplicationRecord
   has_one :canonical_transaction, as: :transaction_source
   has_one :card_charge_raw_stripe_transaction
   has_one :card_charge, through: :card_charge_raw_stripe_transaction
-  has_one :stripe_card, through: :card_charge
 
   after_create :link_card_charge!
 
