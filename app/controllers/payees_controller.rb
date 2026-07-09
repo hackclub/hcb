@@ -71,12 +71,7 @@ class PayeesController < ApplicationController
     authorize @payee
 
     if @payee.legal_entity.present?
-      if @payee.legal_entity.payable?
-        redirect_to settings_payouts_path
-      else
-        redirect_to legal_entity_path(@payee.legal_entity)
-      end
-
+      redirect_to legal_entity_path(@payee.legal_entity)
       return
     end
 
@@ -97,11 +92,7 @@ class PayeesController < ApplicationController
 
     flash[:success] = "Legal entity successfully assigned"
 
-    if le.payable?
-      redirect_to settings_payouts_path
-    else
-      redirect_to legal_entity_path(le)
-    end
+    redirect_to legal_entity_path(le)
   end
 
   private
