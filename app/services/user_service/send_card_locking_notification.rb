@@ -9,10 +9,12 @@ module UserService
     def run
       return unless @user.present?
       return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
-      return if @user.cards_locked?
 
       now = Time.current
-      send_warning = warning_due?(now:)
+      # Warning someone that a receipt is approaching the deadline is noise once
+      # their cards are already locked. The violation digest keeps going, so they
+      # know what to upload to get unlocked.
+      send_warning = !@user.cards_locked? && warning_due?(now:)
       send_violation_digest = violation_digest_due?(now:)
 
       return unless send_warning || send_violation_digest
@@ -50,6 +52,8 @@ module UserService
     end
 
     def sms_message(now:)
+      return "Your HCB cards are locked because you have receipts past HCB's 72-hour upload deadline. Upload them at #{inbox_url} to get your cards unlocked." if @user.cards_locked?
+
       deadline_status = if @user.has_missing_receipt_violations?(now:)
                           "that are past"
                         else

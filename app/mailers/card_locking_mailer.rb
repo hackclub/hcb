@@ -12,10 +12,18 @@ class CardLockingMailer < ApplicationMailer
     mail to: @user.email, subject: "Your HCB cards have been unlocked"
   end
 
+  # Doubles as the recurring digest for users whose cards are already locked, so
+  # they keep seeing what they need to upload to get unlocked.
   def warning(user:)
     @user = user
     set_transaction_data
-    mail to: @user.email, subject: "[Urgent] Your HCB cards will be locked soon"
+    subject = if @cards_locked
+                "[Urgent] Your HCB cards are locked until you upload your receipts"
+              else
+                "[Urgent] Your HCB cards will be locked soon"
+              end
+
+    mail to: @user.email, subject:
   end
 
   private
@@ -24,6 +32,7 @@ class CardLockingMailer < ApplicationMailer
     @hcb_codes, @hcb_codes_upcoming = @user.card_locking_missing_receipts_partitioned
     @total_missing_count = @hcb_codes.count + @hcb_codes_upcoming.count
     @show_org = @user.events.size > 1
+    @cards_locked = @user.cards_locked?
   end
 
 end

@@ -1,5 +1,9 @@
 <p>
-Your HCB cards are at risk of getting locked if your receipts stay missing past 72 hours after settling.
+<% if @cards_locked %>
+  Your HCB cards are locked. Upload the receipts below to get them unlocked.
+<% else %>
+  Your HCB cards are at risk of getting locked if your receipts stay missing past 72 hours after settling.
+<% end %>
 </p>
 
 <p>

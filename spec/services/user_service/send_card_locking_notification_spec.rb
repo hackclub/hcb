@@ -117,14 +117,23 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     end
   end
 
-  describe "guard rails" do
-    it "does nothing when the user is already locked" do
-      user.update!(cards_locked: true)
-      stub_warning_state(warning_ids: { 48.hours => [1] }, has_violations: true)
+  describe "locked users" do
+    before { user.update!(cards_locked: true) }
+
+    it "keeps sending the violation digest" do
+      stub_warning_state(has_violations: true)
+
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+    end
+
+    it "does not send approaching-deadline warnings" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
 
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end
+  end
 
+  describe "guard rails" do
     it "is a no-op when the feature flag is disabled for the user" do
       Flipper.disable(:card_locking_2025_06_09, user)
       stub_warning_state(warning_ids: { 48.hours => [1] })
