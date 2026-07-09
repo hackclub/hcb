@@ -12,7 +12,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_120000) do
+  create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2217,6 +2218,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
     t.string "unique_bank_identifier", null: false
     t.datetime "updated_at", null: false
     t.index "(((stripe_transaction -> 'card'::text) ->> 'id'::text))", name: "index_raw_stripe_transactions_on_card_id_text", using: :hash
+    t.index "((stripe_transaction ->> 'card'::text))", name: "index_raw_stripe_transactions_on_card"
   end
 
   create_table "receipts", force: :cascade do |t|
