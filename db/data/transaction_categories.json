@@ -430,5 +430,8 @@
     "stripe_merchant_categories": [
       "trailer_parks_campgrounds"
     ]
+  },
+  "visa-fees": {
+    "label": "Visa fees"
   }
 }
