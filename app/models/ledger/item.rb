@@ -214,7 +214,7 @@ class Ledger
       association(:primary_ledger).reset
 
       # THIS IS TEMPORARY REMOVE ASAP
-      self.linked_object = hcb_code&.linked_object
+      self.linked_object = hcb_code&.linked_object unless linked_object.present?
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
