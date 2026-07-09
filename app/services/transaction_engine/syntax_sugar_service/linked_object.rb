@@ -42,8 +42,6 @@ module TransactionEngine
 
           return wire if wire
 
-          return wise if wise
-
           return card_charge if card_charge
 
           nil
