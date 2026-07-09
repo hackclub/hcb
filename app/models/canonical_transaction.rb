@@ -190,6 +190,14 @@ class CanonicalTransaction < ApplicationRecord
     @linked_object ||= TransactionEngine::SyntaxSugarService::LinkedObject.new(canonical_transaction: self).run
   end
 
+  def linked_object_v2
+    if column_id = column_transaction_id
+      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
+    else
+      transaction_source&.try(:card_charge)
+    end
+  end
+
   def raw_plaid_transaction
     transaction_source if transaction_source_type == RawPlaidTransaction.name
   end
@@ -479,7 +487,7 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def calculated_ledger_item
-    @calculated_ledger_item = Ledger::Item.find_by(short_code:) || Ledger::Item.find_by(linked_object:)
+    @calculated_ledger_item = Ledger::Item.find_by(short_code:) || Ledger::Item.find_by(linked_object: linked_object_v2)
   end
 
   def hashed_transaction
