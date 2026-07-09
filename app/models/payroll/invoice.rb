@@ -45,6 +45,7 @@ module Payroll
 
     monetize :amount_cents, with_model_currency: :currency
 
+    validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
     aasm timestamps: true do

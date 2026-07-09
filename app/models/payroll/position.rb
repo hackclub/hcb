@@ -39,7 +39,7 @@ module Payroll
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
-    has_one :contract_event, through: :payee, source: :event
+    has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
 
     monetize :rate_cents, with_model_currency: :currency
 
@@ -65,7 +65,7 @@ module Payroll
       end
 
       event :mark_rejected do
-        transitions from: :under_review, to: :rejected
+        transitions from: [:under_review, :onboarding], to: :rejected
       end
 
       event :mark_onboarded do
@@ -77,7 +77,7 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
+        transitions from: :onboarded, to: :terminated
       end
     end
 
