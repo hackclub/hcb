@@ -22,9 +22,10 @@ RSpec.describe User, type: :model do
     receipt.save!
   end
 
-  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil)
+  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil)
+    charge_event ||= event
     stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
-    stripe_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder:, event:)
+    stripe_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder:, event: charge_event)
     raw_stripe_transaction = create(
       :raw_stripe_transaction,
       stripe_card:,
@@ -42,7 +43,7 @@ RSpec.describe User, type: :model do
       updated_at: settled_at,
       transaction_source: raw_stripe_transaction
     )
-    create(:canonical_event_mapping, canonical_transaction:, event:)
+    create(:canonical_event_mapping, canonical_transaction:, event: charge_event)
 
     hcb_code = canonical_transaction.local_hcb_code.reload
 
@@ -64,6 +65,14 @@ RSpec.describe User, type: :model do
       reloaded_user = described_class.find(user.id)
 
       expect(reloaded_user.average_receipt_upload_time).to be_within(1.second).of(5.days / 3.0)
+    end
+
+    it "excludes missing receipts that are still within the grace period" do
+      settled_at = 10.days.ago
+      create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 24.hours)
+      create_settled_card_charge(user:, settled_at: 1.hour.ago)
+
+      expect(described_class.find(user.id).average_receipt_upload_time).to be_within(1.second).of(24.hours)
     end
 
     it "ignores pending charges" do
@@ -96,6 +105,61 @@ RSpec.describe User, type: :model do
 
       expect(reloaded_user.card_locking_missing_receipts).to be_empty
       expect(reloaded_user.average_receipt_upload_time).to eq(0.seconds)
+    end
+  end
+
+  describe "#card_locking_receipts_reaching_warning_threshold" do
+    # The recurring job runs more often than CARD_LOCKING_NOTIFICATION_WINDOW, so a
+    # receipt is only "reaching" a threshold for one window's worth of runs.
+    def reaching(age)
+      create_settled_card_charge(user:, settled_at: now - age)
+
+      described_class.find(user.id).card_locking_receipts_reaching_warning_threshold(threshold: 48.hours)
+    end
+
+    it "includes a receipt that has just crossed the threshold" do
+      expect(reaching(48.hours)).to be_present
+    end
+
+    it "includes a receipt still inside the notification window" do
+      expect(reaching(48.hours + User::CARD_LOCKING_NOTIFICATION_WINDOW - 1.minute)).to be_present
+    end
+
+    it "excludes a receipt that has not yet reached the threshold" do
+      expect(reaching(48.hours - 1.minute)).to be_empty
+    end
+
+    it "excludes a receipt that crossed the threshold before the notification window" do
+      expect(reaching(48.hours + User::CARD_LOCKING_NOTIFICATION_WINDOW + 1.minute)).to be_empty
+    end
+  end
+
+  describe ".card_locking_candidates" do
+    def candidate_ids = described_class.card_locking_candidates.pluck(:id)
+
+    it "includes a user with a settled charge that is missing a receipt" do
+      create_settled_card_charge(user:, settled_at: 1.hour.ago)
+
+      expect(candidate_ids).to include(user.id)
+    end
+
+    it "includes a locked user with no missing receipts, so they can be unlocked" do
+      user.update!(cards_locked: true)
+
+      expect(candidate_ids).to include(user.id)
+    end
+
+    it "excludes an unlocked user whose receipts are all uploaded" do
+      settled_at = 4.days.ago
+      create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.hour)
+
+      expect(candidate_ids).not_to include(user.id)
+    end
+
+    it "excludes a user whose only missing receipt is on a SalaryAccount-plan event" do
+      create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: create(:event, plan_type: Event::Plan::SalaryAccount))
+
+      expect(candidate_ids).not_to include(user.id)
     end
   end
 
@@ -206,15 +270,18 @@ RSpec.describe User, type: :model do
     end
 
     it "does not count charges on SalaryAccount-plan events toward card locking" do
-      salary_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+      create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: create(:event, plan_type: Event::Plan::SalaryAccount))
 
-      # Build a charge against the salary event — should be invisible to card locking
-      stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
-      salary_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, event: salary_event)
-      settled_at = 4.days.ago
-      raw = create(:raw_stripe_transaction, stripe_card: salary_card, stripe_authorization_id: SecureRandom.hex(8), created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date)
-      ct = create(:canonical_transaction, amount_cents: -10_00, memo: "Salary Charge", date: settled_at.to_date, created_at: settled_at, updated_at: settled_at, transaction_source: raw)
-      create(:canonical_event_mapping, canonical_transaction: ct, event: salary_event)
+      reloaded_user = described_class.find(user.id)
+
+      expect(reloaded_user.card_locking_missing_receipts).to be_empty
+      expect(reloaded_user).not_to be_cards_should_lock
+    end
+
+    it "does not count charges on events whose plan is no longer active" do
+      inactive_event = create(:event, plan_type: Event::Plan::Standard)
+      create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: inactive_event)
+      inactive_event.plan.update_columns(aasm_state: "inactive")
 
       reloaded_user = described_class.find(user.id)
 

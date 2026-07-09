@@ -56,6 +56,17 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
       }.not_to(change { user.reload.cards_locked? })
     end
 
+    # Receipt uploads run in unlock-only mode, so uploading a receipt must never be
+    # the thing that locks a user's cards.
+    it "never locks an unlocked user in unlock-only mode" do
+      service = described_class.new(user:, unlock_only: true)
+
+      allow(user).to receive(:cards_should_lock?).and_return(true)
+
+      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :cards_locked)
+      expect(user.reload).not_to be_cards_locked
+    end
+
     it "is a no-op when the flag is disabled for the user" do
       Flipper.disable(:card_locking_2025_06_09, user)
       allow(user).to receive(:cards_should_lock?).and_return(true)
