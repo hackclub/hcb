@@ -39,7 +39,7 @@
                   <% end %>
                 <% end %>
                 <% if policy(payee).archive? %>
-                  <%= link_to event_payee_path(event_id: @event.slug, id: payee.public_id), class: "flex items-center", data: { turbo_method: :delete, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
+                  <%= link_to archive_event_payee_path(event_id: @event.slug, id: payee.public_id), class: "flex items-center", data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
                     <%= inline_icon "delete", size: 24 %>
                     Archive recipient
                   <% end %>
