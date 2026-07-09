@@ -5,11 +5,14 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo">
-    <%= truncate(item.memo, length: 50) %>
+  <td class="transaction__memo transaction__memo--fluid">
+    <%= item.memo %>
   </td>
-  <td>
-    <%= list_badge_for item.receipts.size, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
+      <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+    </span>
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">

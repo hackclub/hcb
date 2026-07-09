@@ -2,8 +2,9 @@
 
 class LegalEntity
   module PayoutMethodService
-    # Builds, validates, and persists a user's default personal-legal-entity
-    # payout method. Encapsulates the business rules that previously lived
+    # Builds, validates, and persists the default payout method for a user's
+    # legal entity (their personal legal entity by default, or another legal
+    # entity they belong to). Encapsulates the business rules that previously lived
     # across User#build_default_payout_method, User#valid_payout_method, and
     # the UsersController#update transaction.
     #
@@ -12,10 +13,11 @@ class LegalEntity
     class Update
       attr_reader :payout_method
 
-      def initialize(user:, details_type:, details_attrs: {}, make_default: true, replacing: nil)
+      def initialize(user:, details_type:, details_attrs: {}, legal_entity: nil, make_default: true, replacing: nil)
         @user = user
         @details_type = details_type
         @details_attrs = details_attrs || {}
+        @legal_entity = legal_entity || user.personal_legal_entity
         @make_default = make_default
         @replacing = replacing
       end
@@ -48,10 +50,8 @@ class LegalEntity
       private
 
       def build_payout_method
-        # Resolve the user-supplied type against the allowlist by name rather
-        # than constantizing it, so arbitrary class names can never be loaded.
-        details_class = LegalEntity::PayoutMethod::ALL_METHODS.find { |klass| klass.name == @details_type }
-        pm = LegalEntity::PayoutMethod.new(legal_entity: @user.personal_legal_entity, default: @make_default)
+        details_class = LegalEntity::PayoutMethod.details_class_for(@details_type)
+        pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default)
         pm.details = details_class.new(@details_attrs) if details_class
         pm
       end

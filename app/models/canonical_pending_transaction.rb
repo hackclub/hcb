@@ -163,8 +163,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_create_commit unless: -> { ledger_item.present? } do
     safely do
-      li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-      update(ledger_item: li)
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+      end
     end
   end
 
@@ -277,6 +279,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
     return increase_check if increase_check
     return paypal_transfer if paypal_transfer
     return wire if wire
