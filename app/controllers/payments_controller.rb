@@ -32,6 +32,11 @@ class PaymentsController < ApplicationController
       return render :new, layout: "transfer", status: :unprocessable_entity
     end
 
+    if @payment.amount_cents > @event.balance_available_v2_cents
+      flash.now[:error] = "Your organization doesn't have enough money to send this payment! Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
+      return render :new, layout: "transfer", status: :unprocessable_entity
+    end
+
     ActiveRecord::Base.transaction do
       # On the manual path the payee has a managed legal entity (created on the
       # recipient step); the payout method the organizer entered is saved here.
