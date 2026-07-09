@@ -713,8 +713,11 @@ class HcbCode < ApplicationRecord
     missing_receipt? && card_locking_settled_at.present?
   end
 
+  # A receipt uploaded at exactly the grace period is timely, so a receipt that
+  # has been missing for exactly the grace period is not yet a violation. This
+  # keeps `User#timely_receipt_upload_count` and this predicate complementary.
   def card_locking_missing_receipt_violation?(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
-    card_locking_missing_receipt? && card_locking_receipt_age(now:) >= grace_period
+    card_locking_missing_receipt? && card_locking_receipt_age(now:) > grace_period
   end
 
   def card_locking_receipt_upload_time(now: Time.current, grace_period: User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)

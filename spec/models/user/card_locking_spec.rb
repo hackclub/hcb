@@ -99,6 +99,36 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#card_locking_missing_receipt_violations" do
+    it "does not treat a receipt missing for exactly the grace period as a violation" do
+      create_settled_card_charge(user:, settled_at: now - User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+
+      expect(described_class.find(user.id).card_locking_missing_receipt_violations).to be_empty
+    end
+
+    it "treats a receipt missing for longer than the grace period as a violation" do
+      create_settled_card_charge(user:, settled_at: now - User::CARD_LOCKING_RECEIPT_GRACE_PERIOD - 1.second)
+
+      expect(described_class.find(user.id).card_locking_missing_receipt_violations.count).to eq(1)
+    end
+  end
+
+  describe "#timely_receipt_upload_count" do
+    it "counts a receipt uploaded at exactly the grace period as timely" do
+      settled_at = 10.days.ago
+      create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + User::CARD_LOCKING_RECEIPT_GRACE_PERIOD)
+
+      expect(described_class.find(user.id).timely_receipt_upload_count).to eq(1)
+    end
+
+    it "does not count a receipt uploaded after the grace period as timely" do
+      settled_at = 10.days.ago
+      create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + User::CARD_LOCKING_RECEIPT_GRACE_PERIOD + 1.second)
+
+      expect(described_class.find(user.id).timely_receipt_upload_count).to eq(0)
+    end
+  end
+
   describe "#cards_should_lock?" do
     it "locks new users with fewer than five timely uploads once they have a violation" do
       4.times do |index|
