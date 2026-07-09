@@ -6,7 +6,7 @@
 #
 #  id                  :bigint           not null, primary key
 #  aasm_state          :string           not null
-#  amount_cents        :integer          default(0), not null
+#  amount_cents        :integer          not null
 #  approved_at         :datetime
 #  currency            :string           default("USD"), not null
 #  description         :text
