@@ -38,8 +38,7 @@ module UserService
         "Urgent: Your HCB cards have been locked because #{count} #{receipt_text} #{count == 1 ? 'is' : 'are'} still missing receipts more than 72 hours later. Upload your receipts at #{inbox_url}."
       else
         count = @user.card_locking_missing_receipts.count
-        receipt_text = "receipt".pluralize(count)
-        "Urgent: Your HCB cards have been locked because you have #{count} #{receipt_text} missing. Upload them at #{inbox_url}."
+        "Urgent: Your HCB cards have been locked because you have too many missing receipts (#{count}). Upload them at #{inbox_url}."
       end
     end
 

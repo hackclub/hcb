@@ -2,7 +2,7 @@
 <% if @hcb_codes.any? %>
   Your HCB cards have been locked because <%= @hcb_codes.count %> <%= "settled charge".pluralize(@hcb_codes.count) %> still <%= @hcb_codes.count == 1 ? "is" : "are" %> missing <%= "receipt".pluralize(@hcb_codes.count) %> more than 72 hours later.
 <% else %>
-  Your HCB cards have been locked because you have <%= @total_missing_count %> <%= "receipt".pluralize(@total_missing_count) %> missing.
+  Your HCB cards have been locked because you have too many missing receipts (<%= @total_missing_count %>).
 <% end %>
 </p>
 
