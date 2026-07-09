@@ -135,7 +135,7 @@ class CanonicalTransaction < ApplicationRecord
                             end
   end
 
-  after_create_commit :find_or_create_ledger_item, unless: -> { ledger_item.present? }
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
@@ -473,7 +473,7 @@ class CanonicalTransaction < ApplicationRecord
 
   private
 
-  def find_or_create_ledger_item
+  def assign_ledger_item
     safely do
       ActiveRecord::Base.transaction do
         if calculated_ledger_item != local_hcb_code.ledger_item
