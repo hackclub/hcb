@@ -6,11 +6,13 @@
 #
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
+#  comment_count                :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
+#  not_admin_only_comment_count :integer          default(0), not null
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
@@ -132,7 +134,7 @@ class Ledger
         elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
           "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
         else
           "Transfer to #{linked_object.destination_event.name}"
         end
@@ -140,7 +142,7 @@ class Ledger
         if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
           "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
@@ -213,8 +215,13 @@ class Ledger
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
+      # THIS IS TEMPORARY REMOVE ASAP
+      self.linked_object = hcb_code&.linked_object unless linked_object.present?
+
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
+      self.comment_count = comments.count
+      self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
