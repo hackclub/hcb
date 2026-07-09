@@ -33,14 +33,13 @@
 module Payroll
   class Invoice < ApplicationRecord
     include AASM
+    include Receiptable
 
     has_paper_trail
 
     belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true
-
-    has_one :receipt, as: :receiptable
 
     monetize :amount_cents, with_model_currency: :currency
 
@@ -58,6 +57,14 @@ module Payroll
       event :mark_rejected do
         transitions from: :submitted, to: :rejected
       end
+    end
+
+    def receipt_required?
+      true
+    end
+
+    def marked_no_or_lost_receipt_at
+      nil
     end
 
     private
