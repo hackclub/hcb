@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1577,17 +1577,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
 
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
+    t.bigint "author_id"
+    t.integer "comment_count", default: 0, null: false
     t.datetime "created_at", null: false
+    t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
+    t.integer "not_admin_only_comment_count", default: 0, null: false
+    t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
+    t.index ["author_id"], name: "index_ledger_items_on_author_id"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
+    t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
   end
@@ -1627,6 +1635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.string "address_line2"
     t.string "address_postal_code"
     t.string "address_state"
+    t.string "banned_reason"
     t.datetime "created_at", null: false
     t.string "entity_type"
     t.bigint "managing_event_id"
@@ -1915,12 +1924,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   end
 
   create_table "payees", force: :cascade do |t|
+    t.datetime "archived_at"
     t.datetime "created_at", null: false
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
+    t.index ["archived_at"], name: "index_payees_on_archived_at"
     t.index ["event_id"], name: "index_payees_on_event_id"
     t.index ["legal_entity_id", "event_id"], name: "index_payees_on_legal_entity_id_and_event_id", unique: true
     t.index ["legal_entity_id"], name: "index_payees_on_legal_entity_id"
@@ -2547,6 +2558,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
     t.string "form_type"
     t.bigint "legal_entity_id", null: false
     t.datetime "sent_at"
+    t.string "signing_url"
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.datetime "updated_at", null: false
@@ -3037,6 +3049,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_02_152814) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"

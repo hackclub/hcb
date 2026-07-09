@@ -106,6 +106,7 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+  has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
   accepts_nested_attributes_for :affiliations
@@ -181,6 +182,8 @@ class User < ApplicationRecord
   has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
+
+  has_many :payments_received, through: :legal_entities, source: :payments
 
   has_encrypted :birthday, type: :date
 
@@ -653,6 +656,14 @@ class User < ApplicationRecord
 
   def unverified?
     !verified?
+  end
+
+  def pending_payments_received
+    payments_received.pending_legal_entity + unassociated_payments_received
+  end
+
+  def unassociated_payments_received
+    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
   end
 
   private

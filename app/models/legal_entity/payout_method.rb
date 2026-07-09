@@ -52,8 +52,46 @@ class LegalEntity
 
     validate :details_must_be_supported
 
+    after_create do
+      if default? && other_methods.none?
+        legal_entity.payments.pending_legal_entity.each(&:on_default_payout_method_created)
+      end
+    end
+
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+
+    def self.details_class_for(type_name)
+      ALL_METHODS.find { |klass| klass.name == type_name }
+    end
+
+    # Permits and returns the type-specific detail attributes for `type_name`
+    # out of `params[:user][:payout_method_<kind>]`. Returns {} for an unknown
+    # or missing type.
+    def self.details_params_from(params, type_name)
+      details_class = details_class_for(type_name)
+      return {} unless details_class
+
+      key = :"payout_method_#{details_class.name.demodulize.underscore}"
+      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+    end
+
+    # Shared contract for `create_transfer(event, **attrs)` across every payout
+    # method. Each detail class pulls only the attributes its transfer type
+    # supports.
+    #
+    # Required (MUST be passed):
+    #   amount:          Integer — amount in cents
+    #   payment_for:     String  — description of the payment
+    #   recipient_name:  String
+    #   recipient_email: String
+    #   user:            User    — the user initiating the transfer
+    #   memo:            String  — required by Check and Wire; ignored by ACH and Wise
+    #
+    # Optional (MAY be passed):
+    #   send_email_notification:   Boolean — default false
+    #   company_entry_description: String  — ACH only
+    delegate :create_transfer, to: :details
 
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
@@ -91,11 +129,12 @@ class LegalEntity
       end
     end
 
+    def other_methods
+      LegalEntity::PayoutMethod.where(legal_entity_id:).excluding(self)
+    end
+
     def unset_other_defaults
-      LegalEntity::PayoutMethod
-        .where(legal_entity_id:)
-        .excluding(self)
-        .update_all(default: false)
+      other_methods.update_all(default: false)
     end
 
   end

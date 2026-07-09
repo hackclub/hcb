@@ -84,6 +84,7 @@ Rails.application.routes.draw do
     get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
+    get "pay", to: "my#pay", as: :my_pay
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -788,6 +789,7 @@ Rails.application.routes.draw do
         resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :wires, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
 
         resources :comments, only: [:index, :create]
@@ -896,6 +898,20 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payees, only: [] do
+    member do
+      get "choose_legal_entity"
+      post "set_legal_entity"
+    end
+  end
+
+  resources :legal_entities, only: [:show]
+  resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
+    member do
+      post "sync"
+    end
+  end
+
   scope module: :event do
     get "apply", to: "applications#apply"
 
@@ -981,7 +997,11 @@ Rails.application.routes.draw do
 
     resources :payments, only: [:new, :create]
     resources :contractors, only: [:new, :create, :show]
-    resources :payees, only: [:index, :create]
+    resources :payees, only: [:index, :create, :update] do
+      member do
+        post :archive
+      end
+    end
 
     get "async_balance"
     get "async_sub_organization_balance"

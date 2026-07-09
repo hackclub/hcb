@@ -25,11 +25,11 @@
         <span class="muted ml-auto shrink-0 text-sm">Edit</span>
       </summary>
       <div class="menu__divider my-0"></div>
-      <%= render "payments/payee_picker", event:, show_manual: true, destination: %>
+      <%= render "payments/payee_picker", event:, destination: %>
     </details>
   <% else %>
     <div class="card mb-4 p-0 overflow-hidden">
-      <%= render "payments/payee_picker", event:, show_manual: true, destination: %>
+      <%= render "payments/payee_picker", event:, destination: %>
     </div>
   <% end %>
 </div>

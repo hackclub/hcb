@@ -14,12 +14,12 @@ class ContractorsController < ApplicationController
 
   def new
     authorize @event, policy_class: ContractorPolicy
-    @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
+    @payee = @event.payees.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
     render layout: "transfer"
   end
 
   def create
-    @payee = @event.payees.find(contractor_params[:payee_id])
+    @payee = @event.payees.find_by_public_id!(contractor_params[:payee_id])
     authorize @event, policy_class: ContractorPolicy
 
     @contract = @payee.payroll_contracts.build(

@@ -28,6 +28,12 @@ class LegalEntity
 
       validates_presence_of :address_line1, :address_city, :address_state, :address_postal_code, :recipient_country, :currency
 
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+         :recipient_country, :currency] +
+          recipient_information_accessors
+      end
+
       def kind
         "wise_transfer"
       end
@@ -46,6 +52,27 @@ class LegalEntity
 
       def title_kind
         "Wise Transfer"
+      end
+
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, bank_name: nil, **)
+        event.wise_transfers.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_postal_code:,
+          recipient_country:,
+          currency:,
+          wise_recipient_id:,
+          recipient_information:,
+          amount_cents: amount,
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          user:,
+          bank_name:
+        )
       end
 
       def payout_summary

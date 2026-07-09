@@ -1,9 +1,14 @@
-<%# locals: (event:, show_manual: false, destination: "payments") %>
+<%# locals: (event:, destination: "payments") %>
+<%# The picker always opens in contractor mode; the manual-payee controller
+    toggles to the manual path client-side via the enable/undo buttons. %>
+<% manual = false %>
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
     <% if event.payees.any? %>
-      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
+        <%= render "application/loading_container", klass: "py-8" %>
+      <% end %>
     <% end %>
 
     <a class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" data-action="payee-picker#showAdding" data-payee-picker-target="searchHidden">
@@ -16,23 +21,6 @@
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
     </a>
-
-    <% if show_manual %>
-      <%= link_to new_recipient_transfer_path(destination, event, manual: true), class: "btn btn--list-item border-t rounded-none", data: { turbo_frame: "_top", "payee-picker-target": "searchHidden" } do %>
-        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-          <%= inline_icon "edit", size: 18 %>
-        </div>
-        <div>
-          <p class="font-medium">Manual</p>
-          <p class="text-sm muted">Tax forms and payment details entered directly</p>
-        </div>
-        <% if params[:manual] %>
-          <%= inline_icon "check-thin", class: "ml-auto success shrink-0" %>
-        <% else %>
-          <%= inline_icon "view-forward", class: "ml-auto muted" %>
-        <% end %>
-      <% end %>
-    <% end %>
   </div>
 
   <div data-payee-picker-target="addingPanel" hidden>
@@ -42,22 +30,58 @@
         Back
       </button>
 
-      <%= form_with(url: event_payees_path(event_id: event.slug), local: true) do |form| %>
+      <%# The recipient's name/email/type live in this form (associated via form:) and
+          submit to PayeesController on Continue. On the manual path this also creates a
+          managed legal entity, then the page reloads with ?payee_id= selected. %>
+      <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
         <%= hidden_field_tag :destination, destination %>
-        <div class="flex flex-col gap-3">
-          <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-            <%= form.label :name, "Name" %>
-            <%= form.text_field :name, placeholder: "Orpheus", required: true %>
-          </div>
-          <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-            <%= form.label :email, "Email" %>
-            <%= form.email_field :email, placeholder: "orpheus@hackclub.com", required: true %>
-          </div>
-          <button type="submit" class="btn bg-blue w-full gap-2">
+        <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
+      <% end %>
+
+      <div class="flex flex-col gap-3">
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+          <%= label_tag :name, "Name" %>
+          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput" } %>
+        </div>
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
+          <%= label_tag :email, "Email" %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
+        </div>
+        <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
+          <%= label_tag :payee_entity_type, "Recipient type" %>
+          <%= select_tag :payee_entity_type,
+              options_for_select([
+                                   ["Select type", ""],
+                                   ["An individual", "person"],
+                                   ["A business or organization", "business"]
+                                 ], params[:payee_entity_type]),
+              required: manual,
+              form: "new-payee-form",
+              data: { "manual-payee-target": "entityTypeInput" } %>
+        </div>
+
+        <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
+          <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
+            They'll be asked to submit their tax information and configure their payout method before receiving the payment.
+          <% end %>
+        </div>
+
+        <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
+          <%= render "application/callout", type: "warning", icon: "important", title: "Tax and payment info required", class: "mt-0 mb-0" do %>
+            We'll ask for this soon. Only use this if the recipient can't submit their own.
+          <% end %>
+        </div>
+
+          <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
             Continue <%= inline_icon "view-forward" %>
           </button>
+          <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
+            I want to submit tax and payout information on behalf of the recipient
+          </button>
+          <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
+            I'll have the recipient fill this out instead
+          </button>
         </div>
-      <% end %>
+      </div>
     </div>
   </div>
-</div>
