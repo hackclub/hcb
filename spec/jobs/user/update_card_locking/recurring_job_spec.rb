@@ -45,4 +45,13 @@ RSpec.describe User::UpdateCardLocking::RecurringJob, type: :job do
     expect(Rails.error).to have_received(:report).with(instance_of(RuntimeError), context: { user_id: first_user.id })
     expect(notified_users.map(&:id)).to eq([second_user.id])
   end
+
+  it "fails the run when more users fail than the tolerance allows" do
+    users = create_list(:user, described_class::FAILURE_TOLERANCE + 1)
+    allow(User).to receive(:card_locking_candidates).and_return(User.where(id: users.map(&:id)))
+    allow(UserService::UpdateCardLocking).to receive(:new).and_raise("Twilio is down")
+    allow(Rails.error).to receive(:report)
+
+    expect { described_class.perform_now }.to raise_error(/Card locking failed for/)
+  end
 end

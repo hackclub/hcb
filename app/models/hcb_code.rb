@@ -189,14 +189,10 @@ class HcbCode < ApplicationRecord
   def amount_cents
     @amount_cents ||=
       if canonical_transactions.any?
-        # Sum in memory when the association is already loaded. Card locking
-        # evaluates this across every one of a user's card charges at once, and a
-        # `SUM` per HCB code adds up.
-        if association(:canonical_transactions).loaded?
-          canonical_transactions.sum(&:amount_cents)
-        else
-          canonical_transactions.sum(:amount_cents)
-        end
+        # Sum in memory when the association is already loaded. Card locking reads
+        # this for every one of a user's card charges at once, and a `SUM` per HCB
+        # code adds up.
+        canonical_transactions.loaded? ? canonical_transactions.sum(&:amount_cents) : canonical_transactions.sum(:amount_cents)
       elsif ach_transfer? # ACH transfers that haven't been sent don't have any CPTs
         -ach_transfer.amount
       else

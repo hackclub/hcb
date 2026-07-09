@@ -56,6 +56,17 @@ RSpec.describe User, type: :model do
     hcb_code
   end
 
+  def queries_to_decide_locking
+    count = 0
+    subscription = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      count += 1 unless payload[:name] == "SCHEMA"
+    end
+    described_class.find(user.id).cards_should_lock?
+    count
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscription)
+  end
+
   describe "#average_receipt_upload_time" do
     it "uses settled charges and clamps uploads that happened before settlement" do
       create_settled_card_charge(user:, settled_at: 7.days.ago, uploaded_at: 6.days.ago)
@@ -287,6 +298,30 @@ RSpec.describe User, type: :model do
 
       expect(reloaded_user.card_locking_missing_receipts).to be_empty
       expect(reloaded_user).not_to be_cards_should_lock
+    end
+
+    # `cards_should_lock?` reaches through `HcbCode#missing_receipt?` and
+    # `#receipt_required?`, which read `event`, `event.plan`, `pt` and `amount_cents`.
+    # Without CARD_LOCKING_PRELOADS each of those costs a query per HCB code, for
+    # every user with a missing receipt, every time the recurring job runs.
+    it "decides in a constant number of queries as a user's history grows" do
+      stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:)
+
+      build_history = lambda do |uploaded_charge_count, offset|
+        uploaded_charge_count.times do |index|
+          settled_at = (offset + index).days.ago
+          create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.day, stripe_card:)
+        end
+        create_settled_card_charge(user:, settled_at: 4.days.ago, stripe_card:) # a violation, so the average is reached
+      end
+
+      build_history.call(5, 20)
+      small_history = queries_to_decide_locking
+
+      build_history.call(20, 30)
+      large_history = queries_to_decide_locking
+
+      expect(large_history).to eq(small_history)
     end
   end
 end

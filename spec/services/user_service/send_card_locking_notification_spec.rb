@@ -120,16 +120,33 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
   describe "locked users" do
     before { user.update!(cards_locked: true) }
 
-    it "keeps sending the violation digest" do
-      stub_warning_state(has_violations: true)
+    # Keyed on missing receipts rather than violations, because cards can lock on
+    # the "too many missing receipts" cap with nothing past the deadline.
+    it "keeps sending a digest while any receipt is outstanding" do
+      stub_warning_state
+      allow(user).to receive(:card_locking_missing_receipts).and_return([instance_double(HcbCode)])
 
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
     end
 
     it "does not send approaching-deadline warnings" do
       stub_warning_state(warning_ids: { 48.hours => [1] })
 
       expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
+    end
+  end
+
+  describe "when the mail cannot be enqueued" do
+    it "releases its dedup keys so the warning is not muted until they expire" do
+      stub_warning_state(warning_ids: { 48.hours => [1] })
+      allow(CardLockingMailer).to receive(:warning).and_raise("Redis is down")
+
+      expect { service.run }.to raise_error("Redis is down")
+
+      allow(CardLockingMailer).to receive(:warning).and_call_original
+
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
   end
 
