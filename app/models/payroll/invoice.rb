@@ -70,7 +70,7 @@ module Payroll
     private
 
     def currency_matches_position
-      return if payroll_position.blank? || currency == payroll_position.currency
+      return if currency == payroll_position.currency
 
       errors.add(:currency, "must match the position's currency")
     end

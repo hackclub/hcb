@@ -28,7 +28,7 @@ class CreatePayrollPositionsAndInvoices < ActiveRecord::Migration[8.0]
       t.text :name, null: false
       t.text :description
 
-      t.integer :amount_cents, null: false, default: 0
+      t.integer :amount_cents, null: false
       t.string :currency, null: false, default: "USD"
 
       t.string :aasm_state, null: false
