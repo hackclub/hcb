@@ -187,14 +187,21 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents
-    @amount_cents ||= begin
-      return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
-
-      # ACH transfers that haven't been sent don't have any CPTs
-      return -ach_transfer.amount if ach_transfer?
-
-      canonical_pending_transactions.sum(:amount_cents)
-    end
+    @amount_cents ||=
+      if canonical_transactions.any?
+        # Sum in memory when the association is already loaded. Card locking
+        # evaluates this across every one of a user's card charges at once, and a
+        # `SUM` per HCB code adds up.
+        if association(:canonical_transactions).loaded?
+          canonical_transactions.sum(&:amount_cents)
+        else
+          canonical_transactions.sum(:amount_cents)
+        end
+      elsif ach_transfer? # ACH transfers that haven't been sent don't have any CPTs
+        -ach_transfer.amount
+      else
+        canonical_pending_transactions.sum(:amount_cents)
+      end
   end
 
   # this replicates our balance calculation

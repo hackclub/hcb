@@ -454,32 +454,46 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
-  memo_wise def card_locking_relevant_hcb_codes
+  # `HcbCode#card_locking_missing_receipt?` reaches through `receipt_required?`,
+  # which reads `event`, `event.plan` and `pt`. Card locking runs on every receipt
+  # upload, every authorization, and for every candidate user on a five minute
+  # cron, so preload all of it rather than paying a query per HCB code.
+  #
+  # `preload` (not `includes`) is deliberate: `card_locking_relevant` filters
+  # `canonical_transactions` in its join, and an `eager_load` would leave the
+  # loaded association pre-filtered to expenses, silently changing
+  # `HcbCode#card_locking_settled_at`.
+  CARD_LOCKING_PRELOADS = [:receipts, :canonical_transactions, :canonical_pending_transactions, { event: :plan }].freeze
+
+  def card_locking_window_start
+    [CARD_LOCKING_AVERAGE_LOOKBACK.ago, Receipt::CARD_LOCKING_START_DATE.beginning_of_day].max
+  end
+
+  def card_locking_hcb_codes(scope)
     return [] unless stripe_cardholder.present?
 
-    HcbCode
-      .card_locking_relevant
+    scope
       .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
-      .includes(:receipts, :canonical_transactions)
+      .preload(*CARD_LOCKING_PRELOADS)
       .distinct
       .to_a
       .select { |hcb_code| hcb_code.card_locking_settled_at.present? }
   end
 
-  def card_locking_window_start(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago)
-    [since, Receipt::CARD_LOCKING_START_DATE.beginning_of_day].max
+  # Bounded to the averaging window in SQL. Without the bound this would load the
+  # user's entire card history, growing without limit as the program ages.
+  memo_wise def card_locking_history_hcb_codes
+    window_start = card_locking_window_start
+    scope = HcbCode.card_locking_relevant.where(canonical_transactions: { created_at: window_start.. })
+
+    card_locking_hcb_codes(scope).select { |hcb_code| hcb_code.card_locking_settled_at >= window_start }
   end
 
-  def card_locking_history_hcb_codes(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago)
-    window_start = card_locking_window_start(since:)
-
-    card_locking_relevant_hcb_codes.select do |hcb_code|
-      hcb_code.card_locking_settled_at >= window_start
-    end
-  end
-
+  # Deliberately unbounded in time, unlike the averaging window: the hard caps (a
+  # receipt outstanding for over a week, or too many missing receipts) apply to a
+  # charge no matter how old it is.
   memo_wise def card_locking_missing_receipts
-    card_locking_relevant_hcb_codes.select(&:card_locking_missing_receipt?)
+    card_locking_hcb_codes(HcbCode.card_locking_candidates).select(&:card_locking_missing_receipt?)
   end
 
   def card_locking_missing_receipts_partitioned(now: Time.current)
@@ -506,15 +520,15 @@ class User < ApplicationRecord
     end
   end
 
-  def timely_receipt_upload_count(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago, now: Time.current)
-    card_locking_history_hcb_codes(since:).count do |hcb_code|
+  def timely_receipt_upload_count(now: Time.current)
+    card_locking_history_hcb_codes.count do |hcb_code|
       upload_time = hcb_code.card_locking_receipt_upload_time(now:)
       upload_time.present? && upload_time <= CARD_LOCKING_RECEIPT_GRACE_PERIOD
     end
   end
 
-  def average_receipt_upload_time(since: CARD_LOCKING_AVERAGE_LOOKBACK.ago, now: Time.current)
-    durations = card_locking_history_hcb_codes(since:).filter_map do |hcb_code|
+  def average_receipt_upload_time(now: Time.current)
+    durations = card_locking_history_hcb_codes.filter_map do |hcb_code|
       hcb_code.card_locking_receipt_upload_time(now:)
     end
 
