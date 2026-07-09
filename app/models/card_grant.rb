@@ -178,8 +178,8 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
@@ -203,8 +203,8 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
@@ -243,8 +243,8 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
     disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
@@ -357,8 +357,8 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
     save!
