@@ -9,13 +9,12 @@ class PayeePolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).new_payment?
   end
 
-  alias update? member?
-  alias destroy? member?
+  def update?
+    member?
+  end
 
-  private
-
-  def member?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :member)
+  def archive?
+    member?
   end
 
   def choose_legal_entity?
@@ -24,6 +23,12 @@ class PayeePolicy < ApplicationPolicy
 
   def set_legal_entity?
     record.legal_entity.nil? && (user.admin? || user.email == record.email)
+  end
+
+  private
+
+  def member?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
 end
