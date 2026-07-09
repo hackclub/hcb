@@ -135,14 +135,7 @@ class CanonicalTransaction < ApplicationRecord
                             end
   end
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-        update!(ledger_item: li)
-      end
-    end
-  end
+  after_create_commit :find_or_create_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
@@ -471,6 +464,23 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   private
+
+  def find_or_create_ledger_item
+    safely do
+      ActiveRecord::Base.transaction do
+        if calculated_ledger_item != local_hcb_code.ledger_item
+          Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
+        end
+
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+      end
+    end
+  end
+
+  def calculated_ledger_item
+    @calculated_ledger_item = Ledger::Item.find_by(short_code:) || Ledger::Item.find_by(linked_object:)
+  end
 
   def hashed_transaction
     @hashed_transaction ||= begin
