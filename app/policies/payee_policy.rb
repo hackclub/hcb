@@ -9,13 +9,8 @@ class PayeePolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).new_payment?
   end
 
-  def update?
-    member?
-  end
-
-  def destroy?
-    member?
-  end
+  alias update? member?
+  alias destroy? member?
 
   private
 
