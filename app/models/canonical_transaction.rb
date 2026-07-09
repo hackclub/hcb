@@ -487,6 +487,7 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def calculated_ledger_item
+    puts "Short code: #{Ledger::Item.find_by(short_code:)&.id}, Linked object: #{Ledger::Item.find_by(linked_object: linked_object_v2)&.id}"
     @calculated_ledger_item = Ledger::Item.find_by(short_code:) || Ledger::Item.find_by(linked_object: linked_object_v2)
   end
 
