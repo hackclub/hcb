@@ -7,6 +7,7 @@ class CreatePayrollContractsAndInvoices < ActiveRecord::Migration[8.0]
       t.text :title, null: false
       t.text :purpose, null: false
       t.integer :rate_cents, null: false, default: 0
+      t.string :currency, null: false, default: "USD"
 
       t.date :start_date, null: false
       t.date :end_date, null: false
@@ -29,6 +30,7 @@ class CreatePayrollContractsAndInvoices < ActiveRecord::Migration[8.0]
       t.text :description
 
       t.integer :amount_cents, null: false, default: 0
+      t.string :currency, null: false, default: "USD"
 
       t.string :aasm_state, null: false
       t.datetime :approved_at

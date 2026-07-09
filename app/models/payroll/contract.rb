@@ -6,6 +6,7 @@
 #
 #  id            :bigint           not null, primary key
 #  aasm_state    :string           not null
+#  currency      :string           default("USD"), not null
 #  end_date      :date             not null
 #  expired_at    :datetime
 #  onboarded_at  :datetime
@@ -39,7 +40,7 @@ module Payroll
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_contract_id", inverse_of: :payroll_contract, dependent: :destroy
 
-    monetize :rate_cents
+    monetize :rate_cents, with_model_currency: :currency
 
     validate :end_date_after_start_date
 

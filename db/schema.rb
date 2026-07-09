@@ -1998,6 +1998,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
     t.string "aasm_state", null: false
     t.bigint "contract_id"
     t.datetime "created_at", null: false
+    t.string "currency", default: "USD", null: false
     t.date "end_date", null: false
     t.datetime "expired_at"
     t.datetime "onboarded_at"
@@ -2018,6 +2019,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_160000) do
     t.integer "amount_cents", default: 0, null: false
     t.datetime "approved_at"
     t.datetime "created_at", null: false
+    t.string "currency", default: "USD", null: false
     t.text "description"
     t.text "name", null: false
     t.bigint "payment_id"

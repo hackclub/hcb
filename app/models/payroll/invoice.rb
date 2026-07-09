@@ -8,6 +8,7 @@
 #  aasm_state          :string           not null
 #  amount_cents        :integer          default(0), not null
 #  approved_at         :datetime
+#  currency            :string           default("USD"), not null
 #  description         :text
 #  name                :text             not null
 #  rejected_at         :datetime
@@ -39,7 +40,9 @@ module Payroll
 
     has_one :receipt, as: :receiptable
 
-    monetize :amount_cents
+    monetize :amount_cents, with_model_currency: :currency
+
+    validate :currency_matches_contract
 
     aasm timestamps: true do
       state :submitted, initial: true
@@ -53,6 +56,14 @@ module Payroll
       event :mark_rejected do
         transitions from: :submitted, to: :rejected
       end
+    end
+
+    private
+
+    def currency_matches_contract
+      return if payroll_contract.blank? || currency == payroll_contract.currency
+
+      errors.add(:currency, "must match the contract's currency")
     end
 
   end
