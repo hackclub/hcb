@@ -25,7 +25,7 @@
       </p>
       <p>
         <strong>Rate</strong>
-        <%= "#{render_money @contract.hourly_rate_cents}/hr" %>
+        <%= "#{render_money @contract.rate_cents}/hr" %>
       </p>
       <p>
         <strong>Period</strong>
@@ -33,7 +33,7 @@
       </p>
       <p>
         <strong>Purpose</strong>
-        <%= @contract.purpose %>
+        <%= @contract.description %>
       </p>
       <p>
         <strong>Total paid</strong>

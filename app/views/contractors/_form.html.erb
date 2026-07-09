@@ -23,6 +23,16 @@
       <div class="card mb-4 flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div>
+            <%= form.label :title, "Title" %>
+            <span class="muted block">A short name for this position</span>
+          </div>
+          <%= form.text_field :title, placeholder: "e.g. Software Engineer", required: true, disabled: %>
+        </div>
+
+        <div class="menu__divider my-0"></div>
+
+        <div class="flex justify-between items-center">
+          <div>
             <%= form.label :rate, "Rate" %>
             <span class="muted block">Hourly rate for this contractor</span>
           </div>
@@ -60,7 +70,7 @@
 
         <div class="menu__divider my-0"></div>
 
-        <%= render "events/transfers/attach_receipt", form:, disabled:,
+        <%= render "events/transfers/attach_receipt", form:, disabled:, required: false,
               label: "Attachment (optional)", hint: "Attach a statement of work or agreement" %>
       </div>
     </div>

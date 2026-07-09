@@ -94,9 +94,9 @@
                 <span class="muted block"><%= contractor.email %></span>
               </td>
               <td><%= contractor.period_label %></td>
-              <td><%= "#{render_money_short(contractor.hourly_rate_cents)}/hr" %></td>
-              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= contractor.purpose %>">
-                <%= contractor.purpose %>
+              <td><%= "#{render_money_short(contractor.rate_cents)}/hr" %></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= contractor.description %>">
+                <%= contractor.description %>
               </td>
               <td class="text-right">
                 <% if contractor.total_paid_cents.positive? %>

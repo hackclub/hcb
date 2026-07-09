@@ -23,6 +23,7 @@ class ContractorsController < ApplicationController
     authorize @event, policy_class: ContractorPolicy
 
     @contract = @payee.payroll_positions.build(
+      title: contractor_params[:title],
       rate_cents: (contractor_params[:rate].to_d * 100).to_i,
       start_date: contractor_params[:starts_on],
       end_date: contractor_params[:ends_on],
@@ -43,7 +44,7 @@ class ContractorsController < ApplicationController
   private
 
   def contractor_params
-    params.require(:contractor).permit(:rate, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+    params.require(:contractor).permit(:title, :rate, :starts_on, :ends_on, :purpose, :payee_id, file: [])
   end
 
 end

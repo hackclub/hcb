@@ -32,10 +32,15 @@ module Payroll
   class Position < ApplicationRecord
     include AASM
     include Contractable
+    include PgSearch::Model
 
     has_paper_trail
 
     belongs_to :payee
+
+    pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
+
+    delegate :display_name, :email, :total_paid_cents, to: :payee
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
@@ -53,6 +58,7 @@ module Payroll
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
 
+    validates :title, :description, presence: true
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
@@ -84,6 +90,43 @@ module Payroll
 
       event :mark_terminated do
         transitions from: :onboarded, to: :terminated
+      end
+    end
+
+    def status
+      case aasm_state.to_sym
+      when :onboarded
+        :active
+      when :under_review, :onboarding
+        :onboarding
+      when :expired, :terminated, :rejected
+        :completed
+      end
+    end
+
+    def status_text
+      status.to_s.humanize
+    end
+
+    def status_color
+      case status
+      when :active then "success"
+      when :onboarding then "info"
+      else "muted"
+      end
+    end
+
+    # Renders the contract window like "Jan–Jun 2026", collapsing to a single
+    # month ("Apr 2026") or spanning years ("Dec 2025–Feb 2026") when needed.
+    def period_label
+      return if start_date.nil?
+
+      return start_date.strftime("%b %Y") if end_date.nil? || (start_date.month == end_date.month && start_date.year == end_date.year)
+
+      if start_date.year == end_date.year
+        "#{start_date.strftime("%b")}–#{end_date.strftime("%b %Y")}"
+      else
+        "#{start_date.strftime("%b %Y")}–#{end_date.strftime("%b %Y")}"
       end
     end
 
