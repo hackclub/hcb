@@ -16,9 +16,10 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_event_id    (event_id)
-#  index_hcb_codes_on_hcb_code    (hcb_code) UNIQUE
-#  index_hcb_codes_on_short_code  (short_code) UNIQUE
+#  index_hcb_codes_on_event_id        (event_id)
+#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
+#  index_hcb_codes_on_short_code      (short_code) UNIQUE
 #
 # Foreign Keys
 #
@@ -89,6 +90,8 @@ class HcbCode < ApplicationRecord
 
   before_create :generate_and_set_short_code
 
+  after_create :write_event_and_subledger_id
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -130,6 +133,15 @@ class HcbCode < ApplicationRecord
 
   def date
     @date ||= ct.try(:date) || pt.try(:date)
+  end
+
+  def datetime
+    @datetime ||=
+      pt.try(:raw_pending_stripe_transaction).try { |rpst| rpst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      pt.try(:created_at) ||
+      ct.try(:raw_stripe_transaction).try { |rst| rst.stripe_transaction["created"]&.then { |t| Time.at(t) } } ||
+      ct.try(:raw_column_transaction).try { |rct| rct.column_transaction["effective_at"]&.then { |t| Time.parse(t) } } ||
+      ct.try(:created_at)
   end
 
   def has_pending_expired?
@@ -201,6 +213,8 @@ class HcbCode < ApplicationRecord
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
     return invoice.item_amount if invoice?
+    return outgoing_disbursement.amount if outgoing_disbursement?
+    return incoming_disbursement.amount if incoming_disbursement?
 
     if canonical_transactions.any?
       return canonical_transactions
@@ -408,6 +422,7 @@ class HcbCode < ApplicationRecord
 
   def card_grant?
     # Is this the issuing of a card grant? This method should return false on the receiving end (never true for Disbursement::Incoming)
+    # TODO: this causes card grant issuing memos to only render on one side of the disbursement
     outgoing_disbursement? && outgoing_disbursement&.card_grant.present?
   end
 
@@ -602,12 +617,23 @@ class HcbCode < ApplicationRecord
     canonical_transactions.last
   end
 
+  def linked_object
+    invoice || donation ||
+      ach_transfer || wire ||
+      paypal_transfer || wise_transfer ||
+      check || increase_check ||
+      check_deposit || outgoing_disbursement ||
+      incoming_disbursement || bank_fee ||
+      fee_revenue || reimbursement_expense_payout ||
+      reimbursement_payout_holding
+  end
+
   # The `:receipt_required` scope determines the type of
   # transaction based on its HCB Code, for reference:
-  # HCB-300: ACH Transfers (receipts required starting from Feb. 2024)
+  # HCB-300: ACH Transfers (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
   # HCB-310: Wires
   # HCB-350: PayPal Transfers
-  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024)
+  # HCB-400 & HCB-401: Checks & Increase Checks (receipts required starting from Feb. 2024; marked_no_or_lost_receipt_at backfilled on 7/1/2026)
   # HCB-600: Stripe card charges (always required)
   # HCB-601: Stripe force captures (always required)
   # @sampoder
@@ -618,15 +644,15 @@ class HcbCode < ApplicationRecord
   # 1) it doesn't consider event plan
   # 2) it doesn't consider the amount of the HCB code
   #
-  # this is because these two things are expensive to compute on a HCB code.
+  # this is because these two things are expensive to compute on an HCB code.
 
   scope :receipt_required, -> {
     joins("LEFT JOIN canonical_pending_transactions ON canonical_pending_transactions.hcb_code = hcb_codes.hcb_code")
       .joins("LEFT JOIN canonical_pending_declined_mappings ON canonical_pending_declined_mappings.canonical_pending_transaction_id = canonical_pending_transactions.id")
       .where("(hcb_codes.hcb_code LIKE 'HCB-600%' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
-              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND hcb_codes.created_at >= '2024-02-01' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-300%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-400%' AND canonical_pending_declined_mappings.id IS NULL)
+              OR (hcb_codes.hcb_code LIKE 'HCB-401%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-350%' AND canonical_pending_declined_mappings.id IS NULL)
               OR (hcb_codes.hcb_code LIKE 'HCB-310%' AND canonical_pending_declined_mappings.id IS NULL)
               ")
@@ -640,10 +666,7 @@ class HcbCode < ApplicationRecord
 
     return false if amount_cents >= 0
 
-    return false unless event&.plan&.receipts_required?
-
-    # Before Feb. 2024, receipts were not required for ACHs, checks, PayPal transfers, and Wires
-    return false if [:ach, :check, :increase_check, :paypal_transfer, :wire].include?(type) && created_at <= Time.utc(2024, 2, 1)
+    return false unless event&.plan&.receipt_required?
 
     return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
@@ -803,11 +826,15 @@ class HcbCode < ApplicationRecord
     nil
   end
 
-  def write_event_and_subledger_id(event = events.first&.id, subledger = subledgers.first&.id)
+  def write_event_and_subledger_id(event = events.first, subledger = subledgers.first)
     update(event_id: event&.id, subledger_id: subledger&.id)
   end
 
   def update_custom_memo!(memo)
+    if ledger_item.present?
+      ledger_item.update_custom_memo!(memo)
+      return
+    end
     canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
     canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end

@@ -263,4 +263,145 @@ RSpec.describe Ledger::Mapping, type: :model do
       }.to raise_error(ActiveRecord::InvalidForeignKey)
     end
   end
+
+  describe ".map_primary!" do
+    let(:user) { create(:user) }
+    let(:ledger_item) { create(:ledger_item) }
+    let(:primary_ledger) { create(:event).ledger }
+
+    it "creates a primary mapping when none exists" do
+      mapping = nil
+      expect {
+        mapping = Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+      }.to change { Ledger::Mapping.count }.by(1)
+
+      expect(mapping).to be_persisted
+      expect(mapping.on_primary_ledger).to be true
+      expect(mapping.ledger).to eq(primary_ledger)
+      expect(mapping.mapped_by).to eq(user)
+    end
+
+    it "stores no mapped_by when mapped by the system" do
+      mapping = Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: Ledger::Mapper::SYSTEM)
+
+      expect(mapping.mapped_by).to be_nil
+      expect(mapping.mapped_by_human?).to be false
+    end
+
+    it "raises when mapped_by is nil" do
+      expect {
+        Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "reuses the existing primary mapping when remapping to another ledger" do
+      original = Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+
+      other_ledger = create(:event).ledger
+      remapped = nil
+      expect {
+        remapped = Ledger::Mapping.map_primary!(ledger: other_ledger, ledger_item:, mapped_by: user)
+      }.not_to(change { Ledger::Mapping.count })
+
+      expect(remapped.id).to eq(original.id)
+      expect(remapped.ledger).to eq(other_ledger)
+    end
+
+    it "does not reuse an existing non-primary mapping for the same item" do
+      non_primary_ledger = create(:ledger)
+      non_primary = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
+
+      mapping = nil
+      expect {
+        mapping = Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+      }.to change { Ledger::Mapping.count }.by(1)
+
+      expect(mapping.id).not_to eq(non_primary.id)
+      non_primary.reload
+      expect(non_primary.on_primary_ledger).to be false
+      expect(non_primary.ledger).to eq(non_primary_ledger)
+    end
+
+    it "refuses to map onto a non-primary ledger" do
+      expect {
+        Ledger::Mapping.map_primary!(ledger: create(:ledger), ledger_item:, mapped_by: user)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
+  describe ".map_non_primary!" do
+    let(:user) { create(:user) }
+    let(:ledger_item) { create(:ledger_item) }
+    let(:non_primary_ledger) { create(:ledger) }
+
+    it "creates a non-primary mapping" do
+      mapping = nil
+      expect {
+        mapping = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
+      }.to change { Ledger::Mapping.count }.by(1)
+
+      expect(mapping).to be_persisted
+      expect(mapping.on_primary_ledger).to be false
+      expect(mapping.ledger).to eq(non_primary_ledger)
+      expect(mapping.mapped_by).to eq(user)
+    end
+
+    it "stores no mapped_by when mapped by the system" do
+      mapping = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: Ledger::Mapper::SYSTEM)
+
+      expect(mapping.mapped_by).to be_nil
+    end
+
+    it "raises when mapped_by is nil" do
+      expect {
+        Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: nil)
+      }.to raise_error(ArgumentError)
+    end
+
+    it "is idempotent" do
+      original = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
+
+      repeated = nil
+      expect {
+        repeated = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
+      }.not_to(change { Ledger::Mapping.count })
+
+      expect(repeated.id).to eq(original.id)
+    end
+
+    it "does not reuse or modify the item's primary mapping" do
+      primary_ledger = create(:event).ledger
+      primary = Ledger::Mapping.map_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+
+      mapping = nil
+      expect {
+        mapping = Ledger::Mapping.map_non_primary!(ledger: non_primary_ledger, ledger_item:, mapped_by: user)
+      }.to change { Ledger::Mapping.count }.by(1)
+
+      expect(mapping.id).not_to eq(primary.id)
+      primary.reload
+      expect(primary.on_primary_ledger).to be true
+      expect(primary.ledger).to eq(primary_ledger)
+    end
+
+    it "refuses to map onto a primary ledger" do
+      primary_ledger = create(:event).ledger
+
+      expect {
+        Ledger::Mapping.map_non_primary!(ledger: primary_ledger, ledger_item:, mapped_by: user)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
+  describe "mapped_by scopes" do
+    let(:user) { create(:user) }
+
+    it "separates human and system mappings" do
+      human = Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: create(:ledger_item), mapped_by: user)
+      system = Ledger::Mapping.map_primary!(ledger: create(:event).ledger, ledger_item: create(:ledger_item), mapped_by: Ledger::Mapper::SYSTEM)
+
+      expect(Ledger::Mapping.mapped_by_human).to contain_exactly(human)
+      expect(Ledger::Mapping.mapped_by_system).to contain_exactly(system)
+    end
+  end
 end

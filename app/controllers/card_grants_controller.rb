@@ -243,6 +243,11 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
+    unless @card_grant.user.phone_number_verified?
+      settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
+      return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
+    end
+
     @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant

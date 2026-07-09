@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
@@ -144,7 +144,7 @@ class MyController < ApplicationController
 
     @reports = @reports.search(params[:q]) if params[:q].present?
 
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
   end
 
   def reimbursements_icon
@@ -155,7 +155,38 @@ class MyController < ApplicationController
 
   def payroll
     @jobs = current_user.jobs
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def pay
+    if params[:legal_entity_id].present?
+      session[:legal_entity_id] = params[:legal_entity_id]
+      return redirect_to my_pay_path
+    end
+
+    @legal_entities = current_user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.includes(:event, :payee, attempts: :payout).order(created_at: :desc)
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
   end
 
   def feed
