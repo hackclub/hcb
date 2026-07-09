@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 class TaxbanditsController < ActionController::Base
+  TAXBANDITS_IP = "34.194.128.121"
+
   protect_from_forgery except: :webhook
 
+  before_action :verify_ip
   before_action :verify_signature
 
   def webhook
@@ -23,10 +26,16 @@ class TaxbanditsController < ActionController::Base
   end
 
   private
-  
+
   # TaxBandits is inconsistent with their capitalization
   def normalize_form_name(str)
     str.sub(/\AFORM/i, "Form")
+  end
+
+  def verify_ip
+    if request.remote_ip != TAXBANDITS_IP
+      head :unauthorized
+    end
   end
 
   def verify_signature
