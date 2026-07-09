@@ -45,7 +45,7 @@ class PayeesController < ApplicationController
   end
 
   def update
-    payee = @event.payees.find_by_public_id!(params[:id])
+    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
     authorize payee
 
     if payee.update(payee_params)
@@ -57,8 +57,8 @@ class PayeesController < ApplicationController
     end
   end
 
-  def destroy
-    payee = @event.payees.find_by_public_id!(params[:id])
+  def archive
+    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
     authorize payee
 
     payee.archive!

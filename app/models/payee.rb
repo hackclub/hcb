@@ -24,7 +24,6 @@ class Payee < ApplicationRecord
   include PgSearch::Model
 
   include Hashid::Rails
-  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :pye
