@@ -11,7 +11,7 @@ module Tax
 
       if @form.completed?
         flash[:success] = "This form has been completed"
-        redirect_to settings_payouts_path
+        redirect_to legal_entity_path(@form.legal_entity)
         return
       end
     end
@@ -32,7 +32,7 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        redirect_to settings_payouts_path
+        redirect_to legal_entity_path(@form.legal_entity)
       else
         flash[:error] = "Complete the form before continuing"
         redirect_back_or_to tax_form_path(@form)
