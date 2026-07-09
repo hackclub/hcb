@@ -285,6 +285,10 @@ class Ledger
     private
 
     def assign_linked_object!
+      # Once a linked object is assigned, it should never be changed.
+      # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
+      # the ledger item with the CPT will persist, and the ledger item with the CT will be destroyed.
+      # No linked objects will be changed.
       return if linked_object.present?
 
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object)).compact.first
