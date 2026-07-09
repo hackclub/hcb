@@ -55,6 +55,10 @@ class RawStripeTransaction < ApplicationRecord
     CardCharge.link_raw_stripe_transaction!(self)
   end
 
+  def stripe_card
+    ::StripeCard.find_by!(stripe_id: stripe_card_id)
+  end
+
   private
 
   def stripe_card_id
