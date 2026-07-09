@@ -540,12 +540,6 @@ class User < ApplicationRecord
     average_receipt_upload_time(now:) > CARD_LOCKING_RECEIPT_GRACE_PERIOD
   end
 
-  def build_payout_method(params)
-    return unless payout_method_type
-
-    self.payout_method = payout_method_type.constantize.new(params)
-  end
-
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)
