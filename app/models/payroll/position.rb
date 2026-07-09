@@ -38,6 +38,7 @@ module Payroll
     belongs_to :payee
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
+    has_one :event, through: :payee
     has_one :contract_event, through: :payee, source: :event
 
     monetize :rate_cents, with_model_currency: :currency

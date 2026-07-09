@@ -41,6 +41,8 @@ module Payroll
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true
 
+    has_one :event, through: :payroll_position
+
     monetize :amount_cents, with_model_currency: :currency
 
     validate :currency_matches_position
