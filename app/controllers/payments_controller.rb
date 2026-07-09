@@ -23,7 +23,7 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
-    @payee = @event.payees.find_by_public_id!(payment_params[:payee_id])
+    @payee = @event.payees.not_archived.find_by_public_id!(payment_params[:payee_id])
     @legal_entity = @payee.legal_entity
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
 
