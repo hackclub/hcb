@@ -41,7 +41,7 @@ module HasWiseRecipient
         }
       end
 
-      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
+      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
       elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
         fields << ACCOUNT_NUMBER_FIELD
