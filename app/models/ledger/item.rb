@@ -136,7 +136,7 @@ class Ledger
         elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
           "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
         else
           "Transfer to #{linked_object.destination_event.name}"
         end
@@ -144,7 +144,7 @@ class Ledger
         if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
           "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.card_grant.user.name}"
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
         elsif linked_object.card_grant.present?
           "Grant to #{linked_object.card_grant.user.name}"
         elsif linked_object.destination_subledger.present?
@@ -221,6 +221,9 @@ class Ledger
       # after a mapping is created).
       association(:primary_mapping).reset
       association(:primary_ledger).reset
+
+      # THIS IS TEMPORARY REMOVE ASAP
+      self.linked_object = hcb_code&.linked_object unless linked_object.present?
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author

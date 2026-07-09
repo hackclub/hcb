@@ -3,14 +3,20 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create]
+  before_action :set_event, only: [:index, :create, :update, :archive]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
 
   def index
     authorize @event
-    @payees = params[:q].present? ? @event.payees.search(params[:q]) : @event.payees
+    all = @event.payees.not_archived.includes(:legal_entity, :payments)
+    payees = params[:q].present? ? all.search(params[:q]) : all
+    payees = payees.order(created_at: :desc).limit(15)
+
+    selected = all.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    @payees = [selected, *payees.to_a].compact.uniq.first(15)
+
     render layout: false
   end
 
@@ -31,10 +37,34 @@ class PayeesController < ApplicationController
 
       payee.save!
 
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.id)
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
     end
   rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
-    redirect_to new_event_payment_path(event_id: @event.slug), alert: e.message
+    flash[:error] = e.message
+    redirect_to new_event_payment_path(event_id: @event.slug)
+  end
+
+  def update
+    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
+    authorize payee
+
+    if payee.update(payee_params)
+      flash[:success] = "Recipient updated."
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
+    else
+      flash[:error] = payee.errors.full_messages.to_sentence
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id, edit_payee: true)
+    end
+  end
+
+  def archive
+    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
+    authorize payee
+
+    payee.archive!
+
+    flash[:success] = "Recipient archived."
+    redirect_to new_event_payment_path(event_id: @event.slug)
   end
 
   def choose_legal_entity
@@ -66,6 +96,10 @@ class PayeesController < ApplicationController
   end
 
   private
+
+  def payee_params
+    params.require(:payee).permit(:display_name, :email)
+  end
 
   def set_payee
     @payee = Payee.find_by_hashid!(params[:id])
