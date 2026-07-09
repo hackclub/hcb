@@ -103,6 +103,10 @@ payroll_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Payroll::NightlyJob"
 
+payroll_position_expire_nightly_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Payroll::Position::ExpireNightlyJob"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFee::NightlyJob"
