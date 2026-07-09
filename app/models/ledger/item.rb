@@ -65,7 +65,7 @@ class Ledger
 
     monetize :amount_cents
 
-    after_create :assign_linked_object!
+    after_create_commit :assign_linked_object!
 
     # map! calls refresh!
     after_create :map!
