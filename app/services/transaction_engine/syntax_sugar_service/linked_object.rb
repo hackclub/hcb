@@ -183,10 +183,6 @@ module TransactionEngine
         @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
       end
 
-      def wise
-        @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == WiseTransfer.name
-      end
-
       def card_charge
         return nil unless @canonical_transaction.transaction_source_type == "RawStripeTransaction"
 
