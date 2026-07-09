@@ -87,6 +87,8 @@ module Tax
         transitions from: :sent, to: :completed
         after do
           legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
+
+          import_taxbandits_data if sent_with_taxbandits?
         end
       end
 
@@ -110,8 +112,13 @@ module Tax
       mark_sent!
     end
 
-    def taxbandits_submission
+    # Only works if it's the latest submission for the LE
+    def get_taxbandits_submission
       TaxbanditsService.get_submission(payee_id: legal_entity.public_id, submission_id: external_id)
+    end
+
+    def get_taxbandits_list_entry
+      TaxbanditsService.get_list_entry(payee_id: legal_entity.public_id, submission_id: external_id)
     end
 
     def sync_with_taxbandits
@@ -132,6 +139,37 @@ module Tax
 
       update!(external_service: :taxbandits, signing_url: response["Url"], external_id: response["SubmissionId"])
       sync_with_taxbandits
+    end
+
+    def import_taxbandits_data
+      submission = get_taxbandits_submission
+      return if submission.nil?
+
+      submission_form_type = submission["FormType"]
+      form_data = submission.dig(TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type], "FormData")
+
+      return if form_data.blank?
+
+      address = case submission_form_type
+                when "FormW9"
+                  form_data["Address"]
+                when "FormW8BEN", "FormW8ECI"
+                  form_data["MailAdd"]
+                when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+                  form_data.dig("Part1", "MailAdd")
+                end
+
+      return if address.blank?
+
+      update!(
+        form_type: submission_form_type[4..],
+        address_line1: address["Address1"],
+        address_line2: address["Address2"],
+        address_city: address["City"],
+        address_state: address["State"] || address["ProvinceOrStateNm"],
+        address_postal_code: address["PostalCd"] || address["ZipCd"],
+        address_country: address["Country"]
+      )
     end
 
   end

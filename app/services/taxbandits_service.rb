@@ -1,6 +1,17 @@
 # frozen_string_literal: true
 
 class TaxbanditsService
+  # TaxBandits' response keys for the GET endpoint the form data under a slightly different
+  # casing than the "FormType" value itself (e.g. "FormW8BEN" -> "FormW8Ben").
+  TAXBANDITS_FORM_DATA_KEYS = {
+    "FormW9"     => "FormW9",
+    "FormW8BEN"  => "FormW8Ben",
+    "FormW8BENE" => "FormW8BenE",
+    "FormW8ECI"  => "FormW8ECI",
+    "FormW8IMY"  => "FormW8IMY",
+    "FormW8EXP"  => "FormW8EXP"
+  }.freeze
+
   def self.create_whcertificate(id:, name:)
     response = taxbandits_client.post("WhCertificate/RequestByUrl") do |req|
       req.body = {
@@ -16,7 +27,18 @@ class TaxbanditsService
     response.body
   end
 
+  # TaxBandits will only give us the full form data for the latest submission of a payee
   def self.get_submission(payee_id:, submission_id:)
+    submission = taxbandits_client.get("WhCertificate/Get?PayeeRef=#{payee_id}").body
+
+    if submission[TAXBANDITS_FORM_DATA_KEYS[submission["FormType"]]]&.[]("SubmissionId") == submission_id
+      submission
+    else
+      nil
+    end
+  end
+
+  def self.get_list_entry(payee_id:, submission_id:)
     submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{payee_id}").body
 
     submissions["WhcertificateRecords"].find { |s| s["SubmissionId"] == submission_id }
