@@ -14,7 +14,7 @@ module Maintenance
     def process(card_charge)
       ledger_item = card_charge.raw_pending_stripe_transaction&.canonical_pending_transaction&.ledger_item
       ledger_item ||= card_charge.raw_stripe_transactions.filter_map { |rst| rst.canonical_transaction&.ledger_item }.first
-        
+
       if ledger_item.nil?
         Rails.error.report AnomalyError.new("CardCharge #{card_charge.id} has no CT or CPT with a ledger item")
         return
