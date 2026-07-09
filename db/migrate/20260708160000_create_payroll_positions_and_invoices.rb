@@ -1,6 +1,6 @@
-class CreatePayrollContractsAndInvoices < ActiveRecord::Migration[8.0]
+class CreatePayrollPositionsAndInvoices < ActiveRecord::Migration[8.0]
   def change
-    create_table :payroll_contracts do |t|
+    create_table :payroll_positions do |t|
       t.belongs_to :payee, null: false, foreign_key: true
       t.belongs_to :contract, foreign_key: true
 
@@ -15,14 +15,13 @@ class CreatePayrollContractsAndInvoices < ActiveRecord::Migration[8.0]
       t.string :aasm_state, null: false
       t.datetime :onboarding_at
       t.datetime :onboarded_at
-      t.datetime :expired_at
       t.datetime :terminated_at
 
       t.timestamps
     end
 
     create_table :payroll_invoices do |t|
-      t.belongs_to :payroll_contract, null: false, foreign_key: true
+      t.belongs_to :payroll_position, null: false, foreign_key: true
       t.belongs_to :reviewed_by, foreign_key: { to_table: :users }
       t.belongs_to :payment, foreign_key: true
 

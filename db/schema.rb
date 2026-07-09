@@ -1996,26 +1996,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
     t.index ["user_id"], name: "index_paypal_transfers_on_user_id"
   end
 
-  create_table "payroll_contracts", force: :cascade do |t|
-    t.string "aasm_state", null: false
-    t.bigint "contract_id"
-    t.datetime "created_at", null: false
-    t.string "currency", default: "USD", null: false
-    t.date "end_date", null: false
-    t.datetime "expired_at"
-    t.datetime "onboarded_at"
-    t.datetime "onboarding_at"
-    t.bigint "payee_id", null: false
-    t.text "purpose", null: false
-    t.integer "rate_cents", default: 0, null: false
-    t.date "start_date", null: false
-    t.datetime "terminated_at"
-    t.text "title", null: false
-    t.datetime "updated_at", null: false
-    t.index ["contract_id"], name: "index_payroll_contracts_on_contract_id"
-    t.index ["payee_id"], name: "index_payroll_contracts_on_payee_id"
-  end
-
   create_table "payroll_invoices", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", default: 0, null: false
@@ -2025,13 +2005,32 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
     t.text "description"
     t.text "name", null: false
     t.bigint "payment_id"
-    t.bigint "payroll_contract_id", null: false
+    t.bigint "payroll_position_id", null: false
     t.datetime "rejected_at"
     t.bigint "reviewed_by_id"
     t.datetime "updated_at", null: false
     t.index ["payment_id"], name: "index_payroll_invoices_on_payment_id"
-    t.index ["payroll_contract_id"], name: "index_payroll_invoices_on_payroll_contract_id"
+    t.index ["payroll_position_id"], name: "index_payroll_invoices_on_payroll_position_id"
     t.index ["reviewed_by_id"], name: "index_payroll_invoices_on_reviewed_by_id"
+  end
+
+  create_table "payroll_positions", force: :cascade do |t|
+    t.string "aasm_state", null: false
+    t.bigint "contract_id"
+    t.datetime "created_at", null: false
+    t.string "currency", default: "USD", null: false
+    t.date "end_date", null: false
+    t.datetime "onboarded_at"
+    t.datetime "onboarding_at"
+    t.bigint "payee_id", null: false
+    t.text "purpose", null: false
+    t.integer "rate_cents", default: 0, null: false
+    t.date "start_date", null: false
+    t.datetime "terminated_at"
+    t.text "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["contract_id"], name: "index_payroll_positions_on_contract_id"
+    t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 
   create_table "raffles", force: :cascade do |t|
@@ -3107,11 +3106,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
-  add_foreign_key "payroll_contracts", "contracts"
-  add_foreign_key "payroll_contracts", "payees"
   add_foreign_key "payroll_invoices", "payments"
-  add_foreign_key "payroll_invoices", "payroll_contracts"
+  add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
+  add_foreign_key "payroll_positions", "contracts"
+  add_foreign_key "payroll_positions", "payees"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"

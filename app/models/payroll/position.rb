@@ -2,13 +2,12 @@
 
 # == Schema Information
 #
-# Table name: payroll_contracts
+# Table name: payroll_positions
 #
 #  id            :bigint           not null, primary key
 #  aasm_state    :string           not null
 #  currency      :string           default("USD"), not null
 #  end_date      :date             not null
-#  expired_at    :datetime
 #  onboarded_at  :datetime
 #  onboarding_at :datetime
 #  purpose       :text             not null
@@ -23,8 +22,8 @@
 #
 # Indexes
 #
-#  index_payroll_contracts_on_contract_id  (contract_id)
-#  index_payroll_contracts_on_payee_id     (payee_id)
+#  index_payroll_positions_on_contract_id  (contract_id)
+#  index_payroll_positions_on_payee_id     (payee_id)
 #
 # Foreign Keys
 #
@@ -32,13 +31,13 @@
 #  fk_rails_...  (payee_id => payees.id)
 #
 module Payroll
-  class Contract < ApplicationRecord
+  class Position < ApplicationRecord
     include AASM
 
     belongs_to :payee
-    belongs_to :contract, class_name: "Contract", optional: true
+    belongs_to :contract, optional: true
 
-    has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_contract_id", inverse_of: :payroll_contract, dependent: :destroy
+    has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
 
     monetize :rate_cents, with_model_currency: :currency
 

@@ -15,26 +15,26 @@
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #  payment_id          :bigint
-#  payroll_contract_id :bigint           not null
+#  payroll_position_id :bigint           not null
 #  reviewed_by_id      :bigint
 #
 # Indexes
 #
 #  index_payroll_invoices_on_payment_id           (payment_id)
-#  index_payroll_invoices_on_payroll_contract_id  (payroll_contract_id)
+#  index_payroll_invoices_on_payroll_position_id  (payroll_position_id)
 #  index_payroll_invoices_on_reviewed_by_id       (reviewed_by_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (payment_id => payments.id)
-#  fk_rails_...  (payroll_contract_id => payroll_contracts.id)
+#  fk_rails_...  (payroll_position_id => payroll_positions.id)
 #  fk_rails_...  (reviewed_by_id => users.id)
 #
 module Payroll
   class Invoice < ApplicationRecord
     include AASM
 
-    belongs_to :payroll_contract, class_name: "Payroll::Contract", inverse_of: :invoices
+    belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true
 
@@ -42,7 +42,7 @@ module Payroll
 
     monetize :amount_cents, with_model_currency: :currency
 
-    validate :currency_matches_contract
+    validate :currency_matches_position
 
     aasm timestamps: true do
       state :submitted, initial: true
@@ -60,10 +60,10 @@ module Payroll
 
     private
 
-    def currency_matches_contract
-      return if payroll_contract.blank? || currency == payroll_contract.currency
+    def currency_matches_position
+      return if payroll_position.blank? || currency == payroll_position.currency
 
-      errors.add(:currency, "must match the contract's currency")
+      errors.add(:currency, "must match the position's currency")
     end
 
   end
