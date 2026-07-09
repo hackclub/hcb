@@ -5,10 +5,31 @@
 <% manual = @payee&.managed? %>
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
-  <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
-  <%= render "events/transfers/step_item", number: 3, label: "Payout method", hidden: !manual, data: { "payout-step": "" } %>
-  <%= render "events/transfers/step_item", number: 4, label: "Tax information", hidden: !manual, data: { "payout-step": "" } %>
-  <%= render "events/transfers/step_item", number: manual ? 5 : 3, label: "Receipt" %>
+  <div class="contents <%= "visibility-hidden" if @payee.nil? %>">
+    <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
+    <%= render "events/transfers/step_item", number: 3, label: "Payout method", hidden: !manual, data: { "payout-step": "" } %>
+    <%= render "events/transfers/step_item", number: 4, label: "Tax information", hidden: !manual, data: { "payout-step": "" } %>
+    <%= render "events/transfers/step_item", number: manual ? 5 : 3, label: "Receipt" %>
+  </div>
+<% end %>
+
+<% if @recent_payments&.any? %>
+  <% content_for :sidebar_footer do %>
+    <div class="mt-6">
+      <h4 class="muted eyebrow">Recent payments to <%= @payee.display_name %></h4>
+      <div class="card p-0 overflow-hidden bg-transparent">
+        <% @recent_payments.each do |payment| %>
+          <%= link_to payment_path(payment), target: "_blank", rel: "noopener", class: "flex items-center gap-3 px-4 py-3 no-underline" do %>
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-sm m-0 truncate"><%= payment.purpose.presence || "Payment" %></p>
+              <p class="muted text-xs m-0 mt-0.5"><%= payment.created_at.strftime("%b %-d, %Y") %></p>
+            </div>
+            <span class="tabular-nums font-medium text-sm shrink-0"><%= render_money payment.amount_cents %></span>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 <% end %>
 
 <%= render "payments/form", event: @event, payment: @payment, payee: @payee %>

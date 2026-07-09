@@ -1,5 +1,9 @@
 <%# locals: (event:, payment:, payee: nil) %>
 
+<% if payee && params[:edit_payee].present? && policy(payee).update? %>
+  <%= render "payments/edit_payee", event:, payee: %>
+<% else %>
+
 <% disabled = !policy(event).create_transfer? %>
 <% manual = payee&.managed? %>
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
@@ -7,79 +11,113 @@
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient</h3>
-    <% if payee %>
-      <details class="card mb-4 p-0 overflow-hidden" data-payee-picker-target="details">
-        <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
+    <div class="card mb-4 p-0 overflow-hidden">
+      <% if payee %>
+
+        <div class="flex items-center px-5 py-4">
           <div class="flex-1 min-w-0">
             <div class="flex gap-3 items-center">
               <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
               <div>
-                <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                <div class="flex items-center gap-2">
+                  <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+                  <% if payee.managed? %>
+                    <span class="badge bg-muted shrink-0 ml-1">Managed</span>
+                  <% end %>
+                </div>
                 <p class="muted text-sm m-0"><%= payee.email %></p>
               </div>
             </div>
           </div>
-          <span class="muted ml-auto shrink-0 text-sm">Edit</span>
-        </summary>
-        <div class="menu__divider my-0"></div>
-        <%= render "payments/payee_picker", event: %>
-      </details>
-    <% else %>
-      <div class="card mb-4 p-0 overflow-hidden">
-        <%= render "payments/payee_picker", event: %>
-      </div>
-    <% end %>
-  </div>
-
-  <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
-    <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
-
-    <%= form.hidden_field :payee_id, value: payee&.id %>
-    <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
-
-    <div id="payment-details" data-scroll-seek-target="section">
-      <h3 class="mb-2">Payment details</h3>
-      <div class="card mb-4 flex flex-col gap-3">
-        <div class="flex justify-between items-center">
-          <%= form.label :amount, "Amount" %>
-          <div class="flex items-center">
-            <div class="input flex gap-2 items-center py-0">
-              <span class="bold muted">$</span>
-              <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
-            </div>
+          <div class="flex items-center gap-2 ml-auto shrink-0">
+            <% if policy(payee).update? %>
+              <%= link_to "Edit", new_event_payment_path(event_id: event.slug, payee_id: payee.public_id, edit_payee: true, selected: true), class: "btn text-sm", data: { turbo_frame: "_top" } %>
+            <% end %>
+            <%= pop_icon_to "down-caret", new_event_payment_path(event_id: event.slug), data: { turbo_frame: "_top" } %>
           </div>
         </div>
 
-        <div>
-          <%= form.label :purpose, "What's this payment for?" %>
-          <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
-          <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
+      <% else %>
+
+        <%= render "payments/payee_picker", event: %>
+
+      <% end %>
+    </div>
+  </div>
+
+  <div class="<%= "hidden" unless payee %>">
+    <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
+      <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
+
+      <%= form.hidden_field :payee_id, value: payee&.public_id %>
+      <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
+
+      <div id="payment-details" data-scroll-seek-target="section">
+        <h3 class="mb-2">Payment details</h3>
+        <div class="card mb-4 flex flex-col gap-3">
+          <div class="flex justify-between items-center">
+            <%= form.label :amount, "Amount" %>
+            <div class="flex items-center">
+              <div class="input flex gap-2 items-center py-0">
+                <span class="bold muted">$</span>
+                <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <%= form.label :purpose, "What's this payment for?" %>
+            <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
+            <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-      <h3 class="mb-2">Payout method</h3>
-      <div class="card mb-4 flex flex-col gap-3">
-        <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+      <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+        <h3 class="mb-2">Payout method</h3>
+        <% if existing_payout_method %>
+          <details class="card mb-4 p-0 overflow-hidden">
+            <summary class="flex items-center gap-3 px-5 py-4 cursor-pointer list-none select-none">
+              <div class="payout-methods__icon flex items-center justify-center shrink-0" style="width: 40px; height: 40px; border-radius: 10px;">
+                <%= inline_icon existing_payout_method.icon, size: 20 %>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <strong><%= existing_payout_method.title_kind %></strong>
+                </div>
+                <p class="muted text-sm m-0"><%= existing_payout_method.detail_summary %></p>
+              </div>
+              <span class="muted ml-auto shrink-0 text-sm">Edit</span>
+            </summary>
+            <div class="menu__divider my-0"></div>
+            <div class="p-5">
+              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+            </div>
+          </details>
+        <% else %>
+          <div class="card mb-4 flex flex-col gap-3">
+            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+          </div>
+        <% end %>
       </div>
-    </div>
 
-    <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-      <h3 class="mb-2">Tax information</h3>
-      <div class="card mb-4 p-20"></div>
-    </div>
-
-    <div data-scroll-seek-target="section">
-      <h3 class="mb-2">Receipt</h3>
-      <div class="card mb-4">
-        <%= render "events/transfers/attach_receipt", form:, disabled: %>
+      <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
+        <h3 class="mb-2">Tax information</h3>
+        <div class="card mb-4 p-20"></div>
       </div>
-    </div>
 
-    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
-      Send payment
-      <%= inline_icon "send" %>
-    </button>
-  <% end %>
+      <div data-scroll-seek-target="section">
+        <h3 class="mb-2">Receipt</h3>
+        <div class="card mb-4">
+          <%= render "events/transfers/attach_receipt", form:, disabled:, required: true %>
+        </div>
+      </div>
+
+      <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
+        Send payment
+        <%= inline_icon "send" %>
+      </button>
+    <% end %>
+  </div>
 </div>
+<% end %>

@@ -1,3 +1,4 @@
+<%# locals: (form:, disabled: false, required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26)) %>
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
     <%= form.label :file, "Attach a receipt or invoice", class: "font-semibold" %>
@@ -16,7 +17,7 @@
     <%= form.file_field :file,
         multiple: true,
         include_hidden: false,
-        required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26),
+        required: required,
         accept: "image/*,image/heic,.pdf",
         data: {
           "file-drop-target"   => "fileInput",

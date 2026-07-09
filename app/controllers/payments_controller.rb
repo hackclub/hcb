@@ -9,40 +9,51 @@ class PaymentsController < ApplicationController
     @payment = Payment.find(params[:id])
     authorize @payment
     @event = @payment.event
+    @payout_method = @payment.attempts.first&.payout_method || @payment.legal_entity&.default_payout_method
   end
 
   def new
     authorize @event, policy_class: PaymentPolicy
     @payment = Payment.new
-    @payee = @event.payees.find_by(id: params[:payee_id]) if params[:payee_id].present?
+    @payee = @event.payees.not_archived.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"
   end
 
   def create
     authorize @event, policy_class: PaymentPolicy
 
-    ActiveRecord::Base.transaction do
-      @payee = @event.payees.find(payment_params[:payee_id])
-      @legal_entity = @payee.legal_entity
+    @payee = @event.payees.not_archived.find_by_public_id!(payment_params[:payee_id])
+    @legal_entity = @payee.legal_entity
+    @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
 
+    if payment_params[:file].blank?
+      flash.now[:error] = "Please attach a receipt or invoice for this payment."
+      return render :new, layout: "transfer", status: :unprocessable_entity
+    end
+
+    if @payment.amount_cents > @event.balance_available_v2_cents
+      flash.now[:error] = "Your organization doesn't have enough money to send this payment! Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
+      return render :new, layout: "transfer", status: :unprocessable_entity
+    end
+
+    ActiveRecord::Base.transaction do
       # On the manual path the payee has a managed legal entity (created on the
       # recipient step); the payout method the organizer entered is saved here.
       build_payout_method if @legal_entity&.managed?
 
-      @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
       @payment.save!
 
-      if payment_params[:file].present?
-        ::ReceiptService::Create.new(
-          uploader: current_user,
-          attachments: payment_params[:file],
-          upload_method: :transfer_create_page,
-          receiptable: @payment
-        ).run!
-      end
+      ::ReceiptService::Create.new(
+        uploader: current_user,
+        attachments: payment_params[:file],
+        upload_method: :transfer_create_page,
+        receiptable: @payment
+      ).run!
     end
 
-    redirect_to event_payments_path(event_id: @event.slug), notice: "Payment submitted for review."
+    flash[:success] = "Payment submitted for review"
+    redirect_to payment_path(@payment)
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:error] = e.message
     render :new, layout: "transfer", status: :unprocessable_entity
@@ -54,11 +65,16 @@ class PaymentsController < ApplicationController
     type = params.dig(:user, :payout_method_type).presence
     return unless LegalEntity::PayoutMethod.details_class_for(type)
 
+    details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
+
+    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
+    return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
+
     LegalEntity::PayoutMethodService::Update.new(
       user: current_user,
       legal_entity: @legal_entity,
       details_type: type,
-      details_attrs: LegalEntity::PayoutMethod.details_params_from(params, type),
+      details_attrs:,
       make_default: true
     ).run!
   end
