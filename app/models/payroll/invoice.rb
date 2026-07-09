@@ -34,6 +34,8 @@ module Payroll
   class Invoice < ApplicationRecord
     include AASM
 
+    has_paper_trail
+
     belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true

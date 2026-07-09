@@ -34,6 +34,8 @@ module Payroll
   class Position < ApplicationRecord
     include AASM
 
+    has_paper_trail
+
     belongs_to :payee
     belongs_to :contract, optional: true
 
