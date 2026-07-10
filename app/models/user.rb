@@ -560,6 +560,61 @@ class User < ApplicationRecord
     average_receipt_upload_time(now:) > CARD_LOCKING_RECEIPT_GRACE_PERIOD
   end
 
+  def last_settled_charge_at
+    cardholder = stripe_cardholder
+    return nil unless cardholder
+
+    HcbCode.card_locking_relevant
+           .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
+           .maximum(:receipt_settled_at)
+  end
+
+  # Trusted iff on-time rate >= 80% over the last 6 months AND the most recent
+  # determined charge was on time. Determined = resolved, or overdue-and-unresolved.
+  # Not-yet-due unresolved charges are excluded. Constant query count regardless
+  # of history size (one pluck of scalars).
+  def receipt_trusted?(now: Time.current)
+    cardholder = stripe_cardholder
+    return false unless cardholder
+
+    rows = HcbCode.card_locking_relevant
+                  .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
+                  .where("hcb_codes.receipt_settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
+                  .distinct
+                  .pluck(:id, :receipt_settled_at, :receipt_due_at, :receipt_resolved_at)
+
+    considered = rows.filter_map do |id, settled, due, resolved|
+      next if settled.nil?
+
+      if resolved
+        [id, settled, resolved <= (due || settled + CardLocking::RECEIPT_DUE_WINDOW)]
+      elsif due && due <= now
+        [id, settled, false] # overdue, unresolved
+      end
+      # not-yet-due unresolved -> filtered out (block returns nil)
+    end
+    return false if considered.empty?
+
+    on_time_count = considered.count { |_id, _settled, on_time| on_time }
+    # Deterministic recency: break settled_at ties by id.
+    most_recent = considered.max_by { |id, settled, _on_time| [settled, id] }
+
+    CardLocking::TrustAssessment.new(
+      on_time_count:, considered_count: considered.size, most_recent_on_time: most_recent[2]
+    ).trusted?
+  end
+
+  def card_locking_has_overdue_charge?(now: Time.current)
+    cardholder = stripe_cardholder
+    return false unless cardholder
+
+    HcbCode.card_locking_relevant
+           .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
+           .where("hcb_codes.receipt_due_at <= ?", now)
+           .where(hcb_codes: { receipt_resolved_at: nil })
+           .exists?
+  end
+
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)
