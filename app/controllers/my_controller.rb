@@ -188,12 +188,11 @@ class MyController < ApplicationController
     ]
     @has_filter = params[:status].present?
 
-    party_scope = Contract::Party.where(user: current_user)
-                                 .or(Contract::Party.where(external_email: current_user.email))
-    @contracts = Contract.not_voided
-                         .where(id: party_scope.select(:contract_id))
-                         .includes(:parties)
-                         .order(created_at: :desc)
+    @contractor_positions = Payroll::Position.joins(:payee)
+                                             .where(payees: { email: current_user.email })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
   end
 
   def feed

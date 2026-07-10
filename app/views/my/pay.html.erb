@@ -59,7 +59,23 @@
   </div>
 </div>
 
-<% if @contracts.any? %>
+<% if @contractor_positions.any? %>
+  <% if @tax_form_required %>
+    <div class="card border b--warning warning flex items-center justify-between gap-4 p-4 mb-4">
+      <span class="flex items-center gap-2">
+        <%= inline_icon "important", size: 32, class: "shrink-0" %>
+        <span>
+          <strong>Action required:</strong>
+          You haven't completed your W-9/W-8BEN tax form yet. HCB requires this before releasing any payments.
+        </span>
+      </span>
+      <%= link_to tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "bold nowrap flex items-center gap-1" do %>
+        Complete tax form
+        <%= inline_icon "view-forward" %>
+      <% end %>
+    </div>
+  <% end %>
+
   <h2 class="mt-0 mb-2">Your contracts</h2>
   <article class="table-container mb-4">
     <table>
@@ -67,32 +83,37 @@
         <tr>
           <th>Status</th>
           <th>Organization</th>
-          <th>Type</th>
+          <th>Period</th>
+          <th>Rate</th>
+          <th>Purpose</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <% @contracts.each do |contract| %>
-          <% my_party = contract.parties.detect { |p| p.user_id == current_user.id || p.external_email == current_user.email } %>
-          <% signable = my_party.present? && my_party.pending? && contract.sent? %>
-          <% state_color = contract.signed? ? "success" : (contract.sent? ? "warning" : "muted") %>
-          <tr class="clickable">
+        <% @contractor_positions.each do |position| %>
+          <% pending_signature = position.status == :onboarding %>
+          <tr>
             <td>
-              <span class="ml0 badge bg-<%= state_color %>">
-                <%= signable ? "Pending signature" : contract.aasm_state.humanize %>
+              <span class="badge bg-<%= pending_signature ? "warning" : position.status_color %>">
+                <%= pending_signature ? "Pending signature" : position.status_text %>
               </span>
             </td>
-            <td><%= contract.event_name %></td>
-            <td>Fiscal sponsorship agreement</td>
-            <td>
-              <% if my_party.present? %>
-                <% if signable %>
-                  <%= link_to contract_party_path(my_party), class: "btn bg-warning" do %>
-                    <%= inline_icon "edit" %>
-                    Sign contract
-                  <% end %>
-                <% elsif contract.signed? %>
-                  <%= link_to "View", completed_contract_party_path(my_party), class: "stretched-link" %>
+            <td><strong><%= position.event.name %></strong></td>
+            <td><%= position.period_label %></td>
+            <td><%= "#{render_money_short(position.rate_cents)}/hr" %></td>
+            <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= position.description %>">
+              <%= position.description %>
+            </td>
+            <td class="text-right">
+              <% if position.status == :active %>
+                <%= link_to "#", class: "btn bg-success nowrap" do %>
+                  <%= inline_icon "cloud-upload" %>
+                  Submit invoice
+                <% end %>
+              <% elsif pending_signature %>
+                <%= link_to "#", class: "btn bg-warning nowrap" do %>
+                  <%= inline_icon "edit" %>
+                  Sign contract
                 <% end %>
               <% end %>
             </td>
