@@ -18,144 +18,40 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     Flipper.enable(:card_locking_2025_06_09, user)
   end
 
-  def stub_warning_state(warning_ids: {}, has_violations: false)
-    User::CARD_LOCKING_WARNING_THRESHOLDS.each do |threshold|
-      hcb_codes = Array(warning_ids[threshold]).map { |id| instance_double(HcbCode, id:) }
+  it "sends one pile warning per day when receipts are outstanding" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
 
-      allow(user).to receive(:card_locking_receipts_past_warning_threshold)
-        .with(threshold:, now: kind_of(ActiveSupport::TimeWithZone))
-        .and_return(hcb_codes)
-    end
+    expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+    expect(CardLocking::SendSmsJob).to have_been_enqueued
 
-    allow(user).to receive(:has_missing_receipt_violations?)
-      .with(now: kind_of(ActiveSupport::TimeWithZone))
-      .and_return(has_violations)
-  end
+    expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
 
-  describe "warning email dedup" do
-    it "enqueues a warning email when a receipt crosses the 48-hour threshold" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-
-      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-    end
-
-    it "does not re-enqueue the same 48-hour warning on a subsequent run" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-      service.run
-
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    end
-
-    it "sends a fresh warning when the same receipt later crosses the 71-hour threshold" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-      service.run
-
-      stub_warning_state(warning_ids: { 71.hours => [1] })
-
-      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-    end
-
-    it "deduplicates every receipt that crosses a threshold in the same run" do
-      stub_warning_state(warning_ids: { 48.hours => [1, 2] })
-
-      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    end
-
-    it "sends a daily digest while violations exist" do
-      stub_warning_state(has_violations: true)
-
-      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-
-      travel_to(26.hours.from_now) do
-        expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-      end
-    end
-  end
-
-  describe "warning SMS dedup" do
-    let(:twilio_send) { instance_double(TwilioMessageService::Send, run!: true) }
-
-    before do
-      allow(user).to receive(:phone_number).and_return("+15555555555")
-      allow(user).to receive(:phone_number_verified?).and_return(true)
-      allow(TwilioMessageService::Send).to receive(:new).and_return(twilio_send)
-    end
-
-    it "sends the 48-hour warning SMS once per threshold crossing" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-
-      service.run
-      service.run
-
-      expect(twilio_send).to have_received(:run!).once
-    end
-
-    it "sends a daily digest SMS while violations exist" do
-      stub_warning_state(has_violations: true)
-
-      service.run
-      service.run
-
-      expect(twilio_send).to have_received(:run!).once
-
-      travel_to(26.hours.from_now) do
-        service.run
-      end
-
-      expect(twilio_send).to have_received(:run!).twice
-    end
-
-    it "does not send when the phone is unverified" do
-      allow(user).to receive(:phone_number_verified?).and_return(false)
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-
-      service.run
-
-      expect(TwilioMessageService::Send).not_to have_received(:new)
-    end
-  end
-
-  describe "locked users" do
-    before { user.update!(cards_locked: true) }
-
-    # Keyed on missing receipts rather than violations, because cards can lock on
-    # the "too many missing receipts" cap with nothing past the deadline.
-    it "keeps sending a digest while any receipt is outstanding" do
-      stub_warning_state
-      allow(user).to receive(:card_locking_missing_receipts).and_return([instance_double(HcbCode)])
-
-      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    end
-
-    it "does not send approaching-deadline warnings" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    end
-  end
-
-  describe "when the mail cannot be enqueued" do
-    it "releases its dedup keys so the warning is not muted until they expire" do
-      stub_warning_state(warning_ids: { 48.hours => [1] })
-      allow(CardLockingMailer).to receive(:warning).and_raise("Redis is down")
-
-      expect { service.run }.to raise_error("Redis is down")
-
-      allow(CardLockingMailer).to receive(:warning).and_call_original
-
+    travel_to(26.hours.from_now) do
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
   end
 
-  describe "guard rails" do
-    it "is a no-op when the feature flag is disabled for the user" do
-      Flipper.disable(:card_locking_2025_06_09, user)
-      stub_warning_state(warning_ids: { 48.hours => [1] })
+  it "does not send when nothing is outstanding" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(0)
 
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    end
+    expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
+  end
+
+  it "releases the dedup key when the mail cannot be enqueued" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+    allow(CardLockingMailer).to receive(:warning).and_raise("Redis down")
+
+    expect { service.run }.to raise_error("Redis down")
+
+    allow(CardLockingMailer).to receive(:warning).and_call_original
+
+    expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+  end
+
+  it "is a no-op when the feature flag is disabled for the user" do
+    Flipper.disable(:card_locking_2025_06_09, user)
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+
+    expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
   end
 end

@@ -10,11 +10,11 @@
     </tr>
   </thead>
   <tbody>
-    <% hcb_codes.sort_by(&:card_locking_settled_at).reverse.each do |hcb| %>
+    <% hcb_codes.to_a.sort_by { |hcb| hcb.receipt_settled_at || hcb.created_at }.reverse.each do |hcb| %>
       <tr>
         <td><%= link_to render_money(hcb.amount_cents.abs.to_s), hcb_code_url(hcb) %></td>
         <td><%= hcb.stripe_merchant["name"] %></td>
-        <td><%= time_ago_in_words(hcb.card_locking_settled_at) %> ago</td>
+        <td><%= time_ago_in_words(hcb.receipt_settled_at || hcb.created_at) %> ago</td>
         <% if show_org %>
           <td><%= hcb.event.name %></td>
         <% end %>

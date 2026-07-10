@@ -1,21 +1,7 @@
 <p>
-<% if @hcb_codes.any? %>
-  Your HCB cards have been locked because <%= @hcb_codes.count %> <%= "settled charge".pluralize(@hcb_codes.count) %> still <%= @hcb_codes.count == 1 ? "is" : "are" %> missing <%= "receipt".pluralize(@hcb_codes.count) %> more than 72 hours later.
-<% else %>
-  Your HCB cards have been locked because you have too many missing receipts (<%= @total_missing_count %>).
-<% end %>
+  Your HCB cards are locked because <%= @count %> <%= "receipt".pluralize(@count) %> <%= @count == 1 ? "is" : "are" %> overdue. Upload <%= @count == 1 ? "it" : "them" %> and your cards work again within seconds.
 </p>
-
 <p>
-Every receipt must be uploaded within 72 hours of the charge settling. You can manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
+  Every charge needs a receipt within 7 days. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
 </p>
-
-<% if @hcb_codes.any? %>
-  <h3>Receipts violating the 72-hour rule (<%= @hcb_codes.count %>)</h3>
-  <%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
-<% end %>
-
-<% if @hcb_codes_upcoming.any? %>
-  <h3>Missing receipts still within 72 hours</h3>
-  <%= render "transactions_table", hcb_codes: @hcb_codes_upcoming, show_org: @show_org %>
-<% end %>
+<%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
