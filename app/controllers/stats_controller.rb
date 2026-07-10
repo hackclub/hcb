@@ -114,7 +114,7 @@ class StatsController < ApplicationController
       ORDER BY count DESC;
     SQL
 
-    render json: User.find_by_sql([q, (Receipt::CARD_LOCKING_START_DATE if since_card_locking), users].compact)
+    render json: User.find_by_sql([q, (Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE if since_card_locking), users].compact)
   end
 
 end

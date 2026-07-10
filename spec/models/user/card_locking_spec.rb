@@ -3,7 +3,9 @@
 require "rails_helper"
 
 RSpec.describe User, type: :model do
-  let(:now) { Time.zone.parse("2026-05-10 12:00:00") }
+  # Comfortably after CARD_LOCKING_ENFORCEMENT_START_DATE, but close enough that the
+  # six-month averaging window still reaches back before it.
+  let(:now) { Time.zone.parse("2026-10-10 12:00:00") }
   let(:user) { create(:user) }
   let(:event) { create(:event, plan_type: Event::Plan::Standard) }
 
@@ -171,6 +173,42 @@ RSpec.describe User, type: :model do
       create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: create(:event, plan_type: Event::Plan::SalaryAccount))
 
       expect(candidate_ids).not_to include(user.id)
+    end
+  end
+
+  describe "the enforcement start date" do
+    let(:before_enforcement) { Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day - 5.days }
+
+    it "never counts a charge that settled beforehand against the user" do
+      create_settled_card_charge(user:, settled_at: before_enforcement)
+
+      reloaded_user = described_class.find(user.id)
+
+      expect(reloaded_user.card_locking_history_hcb_codes.count).to eq(1) # the charge exists, and is in the window
+      expect(reloaded_user.card_locking_missing_receipts).to be_empty
+      expect(reloaded_user).not_to be_cards_should_lock
+      expect(described_class.card_locking_candidates.pluck(:id)).not_to include(user.id)
+    end
+
+    it "still credits receipts the user uploaded beforehand" do
+      5.times do |index|
+        settled_at = before_enforcement - index.days
+        create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.day)
+      end
+
+      expect(described_class.find(user.id).timely_receipt_upload_count).to eq(5)
+    end
+
+    # The asymmetry: history earned before enforcement buys flexibility, so a
+    # trustworthy cardholder is not treated as unproven on day one.
+    it "lets a user proven before enforcement absorb a violation after it" do
+      5.times do |index|
+        settled_at = before_enforcement - index.days
+        create_settled_card_charge(user:, settled_at:, uploaded_at: settled_at + 1.day)
+      end
+      create_settled_card_charge(user:, settled_at: 4.days.ago)
+
+      expect(described_class.find(user.id)).not_to be_cards_should_lock
     end
   end
 

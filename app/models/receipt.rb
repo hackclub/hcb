@@ -66,7 +66,10 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
-  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
+  # Charges that settled before this date can never count against a user. Receipts
+  # they uploaded before it still count in their favour, so a cardholder with a
+  # good history arrives at enforcement already trusted.
+  CARD_LOCKING_ENFORCEMENT_START_DATE = Date.new(2026, 7, 24)
 
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|

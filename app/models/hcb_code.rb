@@ -67,6 +67,8 @@ class HcbCode < ApplicationRecord
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
+  # Every settled Stripe card charge a cardholder has ever made. Unbounded in time,
+  # so callers must supply their own date bound or scan the whole table.
   scope :card_locking_relevant, -> {
     joins(:canonical_transactions)
       .merge(CanonicalTransaction.stripe_transaction)
@@ -74,15 +76,17 @@ class HcbCode < ApplicationRecord
       .joins(CARD_LOCKING_EVENT_MAPPING_JOIN)
       .joins(CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN)
       .where("canonical_transactions.amount_cents < 0")
-      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_START_DATE.beginning_of_day)
       .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
   }
+  # Charges that can count against a cardholder: no receipt, not written off, and
+  # settled once enforcement began.
   scope :card_locking_candidates, -> {
     card_locking_relevant
       .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
       .left_outer_joins(:receipts)
       .where(receipts: { id: nil })
       .where(marked_no_or_lost_receipt_at: nil)
+      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day)
   }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -712,8 +716,15 @@ class HcbCode < ApplicationRecord
     now - settled_at
   end
 
+  # Gating on the enforcement date here keeps charges that settled beforehand out of
+  # violations, out of the lock thresholds, and out of the violation branch of
+  # `card_locking_receipt_upload_time`. Cardholders were never asked to produce
+  # those receipts within the grace period.
   def card_locking_missing_receipt?
-    missing_receipt? && card_locking_settled_at.present?
+    return false unless missing_receipt?
+
+    settled_at = card_locking_settled_at
+    settled_at.present? && settled_at >= Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day
   end
 
   # A receipt uploaded at exactly the grace period is timely, so a receipt that

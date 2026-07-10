@@ -464,10 +464,6 @@ class User < ApplicationRecord
   # `HcbCode#card_locking_settled_at`.
   CARD_LOCKING_PRELOADS = [:receipts, :canonical_transactions, :canonical_pending_transactions, { event: :plan }].freeze
 
-  def card_locking_window_start
-    [CARD_LOCKING_AVERAGE_LOOKBACK.ago, Receipt::CARD_LOCKING_START_DATE.beginning_of_day].max
-  end
-
   def card_locking_hcb_codes(scope)
     return [] unless stripe_cardholder.present?
 
@@ -482,12 +478,16 @@ class User < ApplicationRecord
   # Bounded to the averaging window in SQL. Without the bound this would load the
   # user's entire card history, growing without limit as the program ages.
   #
+  # The window deliberately reaches back past the enforcement date: receipts a
+  # cardholder uploaded beforehand still earn them trust, even though charges from
+  # then can never count against them.
+  #
   # `receipt_required?` mirrors the filter `card_locking_missing_receipts` applies
   # through `HcbCode#missing_receipt?`. Without it, a charge that never needed a
   # receipt but happened to get one would count as a timely upload and pull the
   # user's average down, while never being able to count against them.
   memo_wise def card_locking_history_hcb_codes
-    window_start = card_locking_window_start
+    window_start = CARD_LOCKING_AVERAGE_LOOKBACK.ago
     scope = HcbCode.card_locking_relevant.where(canonical_transactions: { created_at: window_start.. })
 
     card_locking_hcb_codes(scope).select do |hcb_code|
