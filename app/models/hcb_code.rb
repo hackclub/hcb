@@ -7,6 +7,9 @@
 #  id                           :bigint           not null, primary key
 #  hcb_code                     :text             not null
 #  marked_no_or_lost_receipt_at :datetime
+#  receipt_due_at               :datetime
+#  receipt_resolved_at          :datetime
+#  receipt_settled_at           :datetime
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -16,10 +19,12 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_event_id        (event_id)
-#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
-#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
-#  index_hcb_codes_on_short_code      (short_code) UNIQUE
+#  index_hcb_codes_on_event_id             (event_id)
+#  index_hcb_codes_on_hcb_code             (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id       (ledger_item_id)
+#  index_hcb_codes_on_open_receipt_due_at  (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
+#  index_hcb_codes_on_receipt_settled_at   (receipt_settled_at)
+#  index_hcb_codes_on_short_code           (short_code) UNIQUE
 #
 # Foreign Keys
 #

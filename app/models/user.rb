@@ -7,6 +7,7 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
