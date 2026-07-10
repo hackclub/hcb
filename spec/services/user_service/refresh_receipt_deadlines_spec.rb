@@ -25,6 +25,9 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
   end
 
   it "slides due dates for a trusted cardholder to their most recent charge" do
+    # Deterministic on-time history: five charges settled 40-44 days ago, each with
+    # a receipt uploaded the next day (well inside the 7-day window). They resolve on
+    # time, giving a 100% on-time rate, so the cardholder is genuinely trusted.
     5.times do |i|
       offset = 40 + i
       create_settled_card_charge(user:, settled_at: offset.days.ago, uploaded_at: (offset - 1).days.ago)
@@ -32,14 +35,11 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
     old_outstanding = create_settled_card_charge(user:, settled_at: 4.days.ago)
     create_settled_card_charge(user:, settled_at: 1.day.ago)
 
-    # Materialize the history first so it resolves and freezes, establishing trust.
+    # First run materializes the outstanding charges so their settled_at is persisted
+    # and counts toward last_settled_charge_at on the next run's slide.
     described_class.new(user:).run
 
-    unless user.reload.receipt_trusted?(now:)
-      # Fallback: trust wasn't achieved via real history with this setup, so stub it.
-      allow_any_instance_of(User).to receive(:receipt_trusted?).and_return(true)
-      allow_any_instance_of(User).to receive(:last_settled_charge_at).and_return(now - 1.day)
-    end
+    expect(user.reload.receipt_trusted?(now:)).to be(true)
 
     described_class.new(user:).run
 
