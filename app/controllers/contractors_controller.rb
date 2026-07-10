@@ -34,9 +34,10 @@ class ContractorsController < ApplicationController
     end
 
     if @contract.save
-      redirect_to event_contractors_path(event_id: @event.slug), notice: "Contractor invited."
+      flash[:success] = "Contractor added"
+      redirect_to event_contractors_path(event_id: @event.slug)
     else
-      flash.now[:error] = @contract.errors.full_messages.to_sentence
+      flash[:error] = @contract.errors.full_messages.to_sentence
       render :new, layout: "transfer", status: :unprocessable_entity
     end
   end

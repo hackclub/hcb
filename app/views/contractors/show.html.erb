@@ -54,6 +54,24 @@
     <% end %>
   <% end %>
 
+  <% unless @contract.status == :completed %>
+    <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
+    <div class="flex flex-col gap-2">
+      <% @contract.onboarding_checklist.each do |item| %>
+        <div class="card flex items-center justify-between py-3 mb-0">
+          <span class="flex items-center gap-2">
+            <%= inline_icon item[:complete] ? "check-circle-fill" : "important-fill",
+                  size: 24, class: item[:complete] ? "text-green" : "text-orange" %>
+            <span class="<%= "muted" unless item[:complete] %>"><%= item[:label] %></span>
+          </span>
+          <span class="badge bg-<%= item[:complete] ? "success" : "warning" %>">
+            <%= item[:complete] ? "Done" : "Pending" %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
   <h3 class="mt-4 mb-2">Payments</h3>
   <% if @payments.any? %>
     <article class="table-container">

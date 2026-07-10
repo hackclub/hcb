@@ -130,6 +130,19 @@ module Payroll
       end
     end
 
+    # The steps a contractor must complete before payments can be sent, each as
+    # { label:, complete: }. Rendered in the contractor show modal.
+    def onboarding_checklist
+      legal_entity = payee.legal_entity
+
+      [
+        { label: "Contract reviewed by HCB ops", complete: !under_review? && !rejected? },
+        { label: "Contract signed by contractor", complete: contracts.any?(&:signed?) },
+        { label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
+        { label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
+      ]
+    end
+
     private
 
     def end_date_after_start_date
