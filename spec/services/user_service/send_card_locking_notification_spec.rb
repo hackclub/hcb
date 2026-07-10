@@ -54,4 +54,12 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
 
     expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
   end
+
+  it "suppresses the pre-lock warning when the user's cards are already locked" do
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+
+    expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
+    expect(CardLocking::SendSmsJob).not_to have_been_enqueued
+  end
 end
