@@ -34,7 +34,7 @@ class LegalEntitiesController < ApplicationController
       new_tax_form.update!(legal_entity: new_le)
 
       @legal_entity.payments.pending_legal_entity.each do |payment|
-        next unless payment.payee.archived?
+        next if payment.payee.archived?
 
         new_payee = payment.event.payees.create!(
           display_name: payment.payee.display_name,
