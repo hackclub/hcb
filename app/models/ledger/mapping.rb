@@ -49,6 +49,9 @@ class Ledger
       ledger_item.refresh!
     end
 
+    # Intentionally a plain after_commit (fires on create/update/destroy),
+    # matching this file's other hooks. MaterializeChargeJob is idempotent, so
+    # the extra fires are harmless.
     after_commit do
       item = ledger_item
       if on_primary_ledger && item&.amount_cents&.negative? && item.stripe_cardholder.present?

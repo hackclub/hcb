@@ -53,8 +53,8 @@ class CanonicalEventMapping < ApplicationRecord
 
   after_create_commit do
     ct = canonical_transaction
-    if ct&.stripe_card.present? && ct.amount_cents.negative?
-      CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: ct.local_hcb_code.id)
+    if ct&.stripe_card.present? && ct.amount_cents.negative? && (hc = ct.local_hcb_code)
+      CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: hc.id)
     end
   end
 

@@ -17,4 +17,9 @@ module CardLocking
 
   # Trust is computed over charges settled within this window.
   TRUST_LOOKBACK = 6.months
+
+  # The Receipt Bin URL cardholders are sent to upload outstanding receipts.
+  def self.inbox_url
+    Rails.application.routes.url_helpers.my_inbox_url
+  end
 end
