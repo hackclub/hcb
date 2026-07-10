@@ -227,6 +227,10 @@ class Contract < ApplicationRecord
     reissue_of_id.present?
   end
 
+  def inline_documents?
+    prefills&.dig("documents").present?
+  end
+
   private
 
   def docuseal_client
@@ -242,11 +246,16 @@ class Contract < ApplicationRecord
   end
 
   def send_using_docuseal!
-    response = docuseal_client.post("/submissions") do |req|
+    # /submissions/pdf combines our template with inline documents versus
+    # the standard /submissions
+    endpoint = inline_documents? ? "/submissions/pdf" : "/submissions"
+
+    response = docuseal_client.post(endpoint) do |req|
       req.body = payload.to_json
     end
 
-    update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+    external_id = inline_documents? ? response.body["id"] : response.body.first["submission_id"]
+    update(external_service: :docuseal, external_id:)
 
     submitters = docuseal_document["submitters"]
 

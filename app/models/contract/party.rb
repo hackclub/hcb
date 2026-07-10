@@ -32,7 +32,7 @@ class Contract
     belongs_to :user, optional: true
     belongs_to :contract, optional: false
 
-    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
+    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb", organizer: "organizer", contractor: "contractor" }
 
     attr_accessor :skip_pending_validation
 
@@ -81,6 +81,10 @@ class Contract
         "Cosigner"
       when "hcb"
         "HCB"
+      when "organizer"
+        "Organizer"
+      when "contractor"
+        "Contractor"
       else
         raise "Unexpected role"
       end
