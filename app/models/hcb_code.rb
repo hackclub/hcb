@@ -85,6 +85,13 @@ class HcbCode < ApplicationRecord
   }
   # Charges that can count against a cardholder: no receipt, not written off, and
   # settled once enforcement began.
+  #
+  # This is the live "still missing a receipt" source of truth for candidate
+  # discovery and materialization: it reads the actual receipts join and
+  # marked_no_or_lost_receipt_at, not the persisted receipt_due_at /
+  # receipt_resolved_at fast-path that drives the lock decision. The two are kept
+  # deliberately distinct (the persisted columns let the lock query use the partial
+  # index and self-heal against this join); a future cleanup must not collapse them.
   scope :card_locking_candidates, -> {
     card_locking_relevant
       .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)

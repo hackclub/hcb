@@ -453,11 +453,11 @@ class User < ApplicationRecord
   end
 
   def last_settled_charge_at
-    cardholder = stripe_cardholder
-    return nil unless cardholder
+    return nil unless stripe_cardholder
 
     HcbCode.card_locking_relevant
-           .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
+           .joins(HcbCode::CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
+           .where(stripe_cardholders: { user_id: id })
            .maximum(:receipt_settled_at)
   end
 
@@ -466,11 +466,11 @@ class User < ApplicationRecord
   # Not-yet-due unresolved charges are excluded. Constant query count regardless
   # of history size (one pluck of scalars).
   def receipt_trusted?(now: Time.current)
-    cardholder = stripe_cardholder
-    return false unless cardholder
+    return false unless stripe_cardholder
 
     rows = HcbCode.card_locking_relevant
-                  .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
+                  .joins(HcbCode::CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
+                  .where(stripe_cardholders: { user_id: id })
                   .where("hcb_codes.receipt_settled_at >= ?", CardLocking::TRUST_LOOKBACK.ago)
                   .distinct
                   .pluck(:id, :receipt_settled_at, :receipt_due_at, :receipt_resolved_at)
@@ -479,6 +479,9 @@ class User < ApplicationRecord
       next if settled.nil?
 
       if resolved
+        # Resolved pre-enforcement charges never got a real receipt_due_at, so
+        # synthesize a 7-day due date from settled_at. This lets a pre-enforcement
+        # receipt upload still count as on time and earn trust.
         [id, settled, resolved <= (due || settled + CardLocking::RECEIPT_DUE_WINDOW)]
       elsif due && due <= now
         [id, settled, false] # overdue, unresolved
@@ -497,29 +500,32 @@ class User < ApplicationRecord
   end
 
   def card_locking_has_overdue_charge?(now: Time.current)
-    cardholder = stripe_cardholder
-    return false unless cardholder
-
-    HcbCode.card_locking_relevant
-           .where(stripe_cards: { stripe_cardholder_id: cardholder.id })
-           .where("hcb_codes.receipt_due_at <= ?", now)
-           .where(hcb_codes: { receipt_resolved_at: nil })
-           .exists?
+    card_locking_overdue_charges(now:).exists?
   end
 
   def card_locking_suppressed?(now: Time.current)
     card_locking_suppressed_until.present? && card_locking_suppressed_until > now
   end
 
-  # Overdue charges for this cardholder: past deadline and unresolved. Keys off the
-  # persisted columns so the partial index on receipt_due_at is usable.
+  # Overdue charges: past deadline and still unresolved.
+  #
+  # All card-locking queries intentionally consider every cardholder this user
+  # owns (stripe_cardholders has no DB uniqueness on user_id), so the lock
+  # decision can never diverge from the notification/candidate set.
+  #
+  # The persisted receipt_due_at / receipt_resolved_at columns are the primary
+  # signal (partial-index-friendly). card_locking_candidates adds the live "still
+  # missing a receipt" join (no attached receipts row, marked_no_or_lost_receipt_at
+  # NULL) as a self-healing safety net: a charge whose receipt was attached via a
+  # path that bypassed the materializer (bulk insert, raw import, rolled-back
+  # callback) can't stay wrongly overdue forever. The extra join does not stop the
+  # partial index on receipt_due_at from being used for the persisted predicate.
   def card_locking_overdue_charges(now: Time.current)
     return HcbCode.none unless stripe_cardholder
 
-    HcbCode.card_locking_relevant
-           .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
-           .where("hcb_codes.receipt_due_at <= ?", now)
-           .where(hcb_codes: { receipt_resolved_at: nil })
+    HcbCode.card_locking_candidates
+           .where(stripe_cardholders: { user_id: id })
+           .receipt_overdue(now)
            .distinct
   end
 
@@ -533,7 +539,7 @@ class User < ApplicationRecord
   end
 
   def card_locking_outstanding_count
-    card_locking_outstanding_charges.count("hcb_codes.id")
+    card_locking_outstanding_charges.count
   end
 
   def email_address_with_name(full_name: false)
