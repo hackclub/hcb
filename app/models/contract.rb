@@ -92,13 +92,14 @@ class Contract < ApplicationRecord
       transitions from: :pending, to: :sent
       after_commit do |reissue_signee_message = nil, reissue_cosigner_message = nil|
         if reissue_signee_message.present? || reissue_cosigner_message.present?
-          party(:signee).notify_reissued(message: reissue_signee_message)
-          party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
+          party(:signee)&.notify_reissued(message: reissue_signee_message)
+          party(:contractor)&.notify_reissued(message: reissue_signee_message)
+          party(:cosigner)&.notify_reissued(message: reissue_cosigner_message)
         elsif contractable.contract_notify_when_sent
-          parties.not_hcb.each(&:notify)
+          notifiable_parties.each(&:notify)
         end
 
-        parties.not_hcb.each(&:schedule_reminders)
+        notifiable_parties.each(&:schedule_reminders)
       end
     end
 
@@ -113,7 +114,7 @@ class Contract < ApplicationRecord
       transitions from: [:pending, :sent], to: :voided
       after do |reissuing = false|
         archive_on_docuseal!
-        unless reissuings
+        unless reissuing
           contractable.on_contract_voided(self)
         end
       end
@@ -180,6 +181,10 @@ class Contract < ApplicationRecord
 
   def party(role)
     parties.find_by(role:)
+  end
+
+  def notifiable_parties
+    parties.not_hcb
   end
 
   def on_party_signed(party)

@@ -22,7 +22,7 @@ class ContractsController < ApplicationController
       return
     end
 
-    @contract.mark_voided!(reissuing: true)
+    @contract.mark_voided!(true)
     new_contract = @contract.contractable.send_contract(
       cosigner_email: @contract.party(:cosigner)&.email,
       include_videos: @contract.include_videos,

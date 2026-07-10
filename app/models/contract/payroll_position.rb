@@ -94,14 +94,21 @@ class Contract
       ["hcb", "organizer", "contractor"]
     end
 
-    def pending_signee_information
-      contractor = party :contractor
-      hcb = party :hcb
+    def notifiable_parties
+      parties.not_hcb.where.not(role: :organizer)
+    end
 
-      if contractor && !contractor.signed?
-        { label: "You", email: contractor.email }
+    def pending_signee_information
+      organizer = party :organizer
+      hcb = party :hcb
+      contractor = party :contractor
+
+      if organizer && !organizer.signed?
+        { label: "Organizer", email: organizer.email }
       elsif hcb && !hcb.signed?
         { label: "HCB point of contact", email: hcb.email }
+      elsif contractor && !contractor.signed?
+        { label: "You", email: contractor.email }
       else
         nil
       end
