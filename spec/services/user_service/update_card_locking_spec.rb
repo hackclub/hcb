@@ -4,76 +4,70 @@ require "rails_helper"
 
 RSpec.describe UserService::UpdateCardLocking, type: :service do
   let(:user) { create(:user) }
-  let(:service) { described_class.new(user:) }
 
   before do
     Flipper.enable(:card_locking_2025_06_09, user)
+    Flipper.enable(:card_locking_enforcement, user)
   end
 
-  describe "#run" do
-    it "locks cards when the policy says they should lock and enqueues the locked email" do
-      allow(user).to receive(:cards_should_lock?).and_return(true)
-      allow(user).to receive(:card_locking_missing_receipt_violations).and_return([double, double])
+  it "locks and notifies when a charge is overdue and enforcement is on" do
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+    expect {
+      described_class.new(user:).run
+    }.to change { user.reload.cards_locked? }.from(false).to(true)
+     .and have_enqueued_mail(CardLockingMailer, :cards_locked)
+     .and have_enqueued_job(CardLocking::SendSmsJob)
+  end
 
-      expect {
-        service.run
-      }.to change { user.reload.cards_locked? }.from(false).to(true)
-                                               .and have_enqueued_mail(CardLockingMailer, :cards_locked)
-    end
+  it "does not lock in dry run (enforcement off) and records the intent" do
+    Flipper.disable(:card_locking_enforcement, user)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    allow(Rails.error).to receive(:report)
+    expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
+    expect(Rails.error).to have_received(:report)
+  end
 
-    it "unlocks cards in the default mode when violations clear and enqueues the unlocked email" do
-      user.update!(cards_locked: true)
+  it "always unlocks when nothing is overdue, even in dry run" do
+    Flipper.disable(:card_locking_enforcement, user)
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(false)
+    expect {
+      described_class.new(user:).run
+    }.to change { user.reload.cards_locked? }.from(true).to(false)
+     .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
+  end
 
-      allow(user).to receive(:cards_should_lock?).and_return(false)
+  it "does NOT unlock in unlock_only mode while a charge is still overdue" do
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    expect {
+      described_class.new(user:, unlock_only: true).run
+    }.not_to(change { user.reload.cards_locked? })
+  end
 
-      expect {
-        service.run
-      }.to change { user.reload.cards_locked? }.from(true).to(false)
-                                               .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
-    end
+  it "unlocks in unlock_only mode when nothing is overdue" do
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(false)
+    expect {
+      described_class.new(user:, unlock_only: true).run
+    }.to change { user.reload.cards_locked? }.from(true).to(false)
+  end
 
-    it "unlocks cards in unlock-only mode once violations are cleared" do
-      user.update!(cards_locked: true)
+  it "is a no-op in unlock_only mode when the card is already unlocked" do
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(false)
+    expect { described_class.new(user:, unlock_only: true).run }.not_to(change { user.reload.cards_locked? })
+  end
 
-      service = described_class.new(user:, unlock_only: true)
+  it "respects an active admin suppression (does not lock)" do
+    allow(user).to receive(:card_locking_suppressed?).and_return(true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
+  end
 
-      allow(user).to receive(:cards_should_lock?).and_return(false)
-
-      expect {
-        service.run
-      }.to change { user.reload.cards_locked? }.from(true).to(false)
-    end
-
-    it "does not unlock cards in unlock-only mode if violations remain" do
-      user.update!(cards_locked: true)
-
-      service = described_class.new(user:, unlock_only: true)
-
-      allow(user).to receive(:cards_should_lock?).and_return(true)
-
-      expect {
-        service.run
-      }.not_to(change { user.reload.cards_locked? })
-    end
-
-    # Receipt uploads run in unlock-only mode, so uploading a receipt must never be
-    # the thing that locks a user's cards.
-    it "never locks an unlocked user in unlock-only mode" do
-      service = described_class.new(user:, unlock_only: true)
-
-      allow(user).to receive(:cards_should_lock?).and_return(true)
-
-      expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :cards_locked)
-      expect(user.reload).not_to be_cards_locked
-    end
-
-    it "is a no-op when the flag is disabled for the user" do
-      Flipper.disable(:card_locking_2025_06_09, user)
-      allow(user).to receive(:cards_should_lock?).and_return(true)
-
-      expect {
-        service.run
-      }.not_to(change { user.reload.cards_locked? })
-    end
+  it "is a no-op when the master flag is disabled" do
+    Flipper.disable(:card_locking_2025_06_09, user)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
   end
 end

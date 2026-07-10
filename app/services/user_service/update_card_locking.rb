@@ -13,47 +13,56 @@ module UserService
       return if @unlock_only && !@user.cards_locked?
 
       now = Time.current
-      cards_should_lock = @user.cards_should_lock?(now:)
+      should_lock = @user.card_locking_suppressed?(now:) ? false : @user.card_locking_has_overdue_charge?(now:)
 
-      return if cards_should_lock == @user.cards_locked?
+      # Uploading a receipt can only ever unlock. If a charge is still overdue,
+      # leave the lock exactly as it is (do NOT unlock with work outstanding).
+      return if @unlock_only && should_lock
 
-      @user.update!(cards_locked: cards_should_lock)
-
-      if cards_should_lock
-        CardLockingMailer.cards_locked(user: @user).deliver_later
-        send_sms(locked_message(now:))
-      else
-        CardLockingMailer.cards_unlocked(user: @user).deliver_later
-        send_sms(unlocked_message)
+      # Dry run: never write a lock, but always allow unlocking. Record the
+      # would-be lock so we can measure the real population before enforcing.
+      if should_lock && !Flipper.enabled?(:card_locking_enforcement, @user)
+        Rails.error.report(
+          StandardError.new("card_locking_dry_run_would_lock"),
+          context: { user_id: @user.id }, handled: true, severity: :info
+        )
+        should_lock = false
       end
+
+      # Race-safe: only writes when the value actually changes, and cannot clobber
+      # a concurrent unlock (the WHERE pins the expected prior value).
+      changed = User.where(id: @user.id, cards_locked: !should_lock).update_all(cards_locked: should_lock)
+      return if changed.zero?
+
+      @user.reload
+      should_lock ? notify_locked(now:) : notify_unlocked
     end
 
     private
 
-    def locked_message(now:)
-      violations = @user.card_locking_missing_receipt_violations(now:)
-      if violations.any?
-        count = violations.count
-        receipt_text = "settled charge".pluralize(count)
-        "Urgent: Your HCB cards have been locked because #{count} #{receipt_text} #{count == 1 ? 'is' : 'are'} still missing receipts more than 72 hours later. Upload your receipts at #{inbox_url}."
-      else
-        count = @user.card_locking_missing_receipts.count
-        "Urgent: Your HCB cards have been locked because you have too many missing receipts (#{count}). Upload them at #{inbox_url}."
-      end
+    def notify_locked(now:)
+      CardLockingMailer.cards_locked(user: @user).deliver_later
+      send_sms(locked_message(now:))
     end
 
-    def unlocked_message
-      "Your HCB cards have been unlocked. Please keep uploading every receipt within 72 hours of the charge settling. Manage receipts at #{inbox_url}."
+    def notify_unlocked
+      CardLockingMailer.cards_unlocked(user: @user).deliver_later
+      send_sms("Your HCB cards work again. Keep uploading receipts within 7 days of the charge. Manage them at #{inbox_url}.")
+    end
+
+    def locked_message(now:)
+      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      noun = "receipt".pluralize(count)
+      verb = count == 1 ? "is" : "are"
+      "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Upload to unlock in seconds at #{inbox_url}."
+    end
+
+    def send_sms(body)
+      CardLocking::SendSmsJob.perform_later(user_id: @user.id, body:)
     end
 
     def inbox_url
       Rails.application.routes.url_helpers.my_inbox_url
-    end
-
-    def send_sms(message)
-      return unless @user.phone_number.present? && @user.phone_number_verified?
-
-      TwilioMessageService::Send.new(@user, message).run!
     end
 
   end
