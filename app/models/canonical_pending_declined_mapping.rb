@@ -20,9 +20,20 @@
 class CanonicalPendingDeclinedMapping < ApplicationRecord
   belongs_to :canonical_pending_transaction
 
+  validate :not_already_settled, on: :create
+
   after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
     canonical_pending_transaction.ledger_item.map!
     canonical_pending_transaction.ledger_item.refresh!
+  end
+
+  private
+
+  def not_already_settled
+    return unless canonical_pending_transaction&.canonical_pending_settled_mappings&.exists?
+
+    errors.add(:canonical_pending_transaction, "already has a settled mapping")
+    Rails.error.unexpected "Attempted to create a decline mapping for CPT ##{canonical_pending_transaction.id}, but it already has a settle mapping."
   end
 
 end

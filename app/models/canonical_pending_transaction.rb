@@ -195,7 +195,8 @@ class CanonicalPendingTransaction < ApplicationRecord
 
     create_canonical_pending_declined_mapping!
     true
-  rescue ActiveRecord::RecordNotUnique
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
+    Rails.error.report(e)
     false
   end
 

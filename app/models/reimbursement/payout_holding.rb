@@ -112,15 +112,7 @@ module Reimbursement
       raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 
       ActiveRecord::Base.transaction do
-
         mark_reversed!
-
-        # This is the created_at of the first payout holding that had a CPT
-        if self.created_at <= DateTime.parse("2024-08-09 00:45:12.992236000 UTC +00:00")
-          canonical_pending_transaction&.decline!
-        else
-          canonical_pending_transaction.decline!
-        end
 
         # these are reversed because this is reverse!
         sender_bank_account_id = ColumnService::Accounts.id_of(book_transfer_receiving_account)
