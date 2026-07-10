@@ -77,7 +77,7 @@ module Tax
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      legal_entity.update!(tin_hash:)
+      legal_entity.update!(tin_hash:) if legal_entity.tin_hash.nil?
     end
 
     aasm timestamps: true do
