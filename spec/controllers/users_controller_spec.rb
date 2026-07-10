@@ -63,6 +63,37 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#suppress_card_locking" do
+    it "lets an admin suppress card locking for a user" do
+      freeze_time do
+        admin_user = create(:user, :make_admin)
+        user = create(:user)
+        create_session(admin_user, verified: true)
+
+        expect(User::UpdateCardLockingJob).to receive(:perform_later).with(user:)
+
+        post(:suppress_card_locking, params: { id: user.id, hours: 48 })
+
+        expect(response).to redirect_to(admin_user_path(user))
+        expect(flash[:success]).to eq("Card locking suppressed for 48h.")
+        expect(user.reload.card_locking_suppressed_until).to eq(48.hours.from_now)
+      end
+    end
+
+    it "forbids a non-admin from suppressing card locking" do
+      requester = create(:user)
+      user = create(:user)
+      create_session(requester, verified: true)
+
+      expect(User::UpdateCardLockingJob).not_to receive(:perform_later)
+
+      post(:suppress_card_locking, params: { id: user.id, hours: 48 })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(user.reload.card_locking_suppressed_until).to be_nil
+    end
+  end
+
   describe "#update" do
     render_views
 

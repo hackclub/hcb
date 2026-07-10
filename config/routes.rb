@@ -174,6 +174,8 @@ Rails.application.routes.draw do
 
       post "impersonate"
       post "unimpersonate"
+
+      post "suppress_card_locking", to: "users#suppress_card_locking"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
