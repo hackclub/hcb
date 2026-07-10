@@ -25,7 +25,7 @@
 class CanonicalPendingEventMapping < ApplicationRecord
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
-  belongs_to :canonical_pending_transaction
+  belongs_to :canonical_pending_transaction, touch: true
   belongs_to :event
   belongs_to :subledger, optional: true
 
