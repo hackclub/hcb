@@ -905,10 +905,20 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :legal_entities, only: [:show]
+  resources :legal_entities, only: [:show] do
+    collection do
+      post "create_from_tax_form"
+    end
+
+    member do
+      post "switch"
+    end
+  end
+
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
       post "sync"
+      post "discard"
     end
   end
 

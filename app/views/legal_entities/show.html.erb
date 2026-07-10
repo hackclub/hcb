@@ -24,11 +24,63 @@
 
     <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
 
+    <hr>
+
+    <p>
+      You last submitted a tax form for this legal entity on <%= format_date @legal_entity.latest_tax_form.completed_at %>
+      with TIN <code class="whitespace-nowrap"><%= @legal_entity.latest_tax_form.masked_tin %></code>.
+      If you need to update your tax information, start a new tax form.
+    </p>
+
+    <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+  <% elsif @legal_entity.mismatched_tax_form.present? %>
+    <p>
+      You submitted a W8/W9 with a different TIN (SSN, EIN, or foreign TIN) than your previous
+      tax form for this legal entity (<code class="whitespace-nowrap"><%= @legal_entity.masked_tin %></code>). Choose an option to continue:
+    </p>
+
+    <ul>
+      <li>
+        <strong>Switch to new TIN</strong>:
+        Pick this if your TIN for <%= @legal_entity.name %> changed to <code class="whitespace-nowrap"><%= @legal_entity.mismatched_tax_form.masked_tin %></code>.
+        You will no longer be able to receive payments through HCB to your old TIN (<code class="whitespace-nowrap"><%= @legal_entity.masked_tin %></code>).
+      </li>
+
+      <li>
+        <strong>Discard last tax form</strong>:
+        Pick this if you made a mistake in entering your TIN on your last tax form.
+        You'll then be able to submit a corrected tax form.
+      </li>
+
+      <% if @legal_entity.mismatched_tax_form.inferred_entity_type == :business %>
+        <li>
+          <strong>Create new legal entity</strong>:
+          Pick this if you entered in information for a different legal entity than <%= @legal_entity.name %>.
+          You'll be able to receive information to both TINs, and pending payments will be switched to the new legal entity.
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="flex justify-start gap-5 items-center">
+      <%= button_to "Switch to new TIN", switch_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: @legal_entity.mismatched_tax_form.id } %>
+      <%= button_to "Discard last tax form", discard_tax_form_path(@legal_entity.mismatched_tax_form), class: "btn" %>
+      <% if @legal_entity.mismatched_tax_form.inferred_entity_type == :business %>
+        <%= button_to "Create new legal entity", create_from_tax_form_legal_entities_path, class: "btn" %>
+      <% end %>
+    </div>
   <% elsif @legal_entity.tin_banned? %>
     <p>
       <%= @legal_entity.person? ? "You have" : "#{@legal_entity.name.presence || "Business"} has" %>
       been banned from receiving payments from organizations on HCB.
     </p>
+  <% elsif @legal_entity.archived? %>
+    <p>This legal entity has been archived. Your other legal entities are:</p>
+
+    <div class="grid grid-cols-2 gap-4">
+      <% current_user.legal_entities.each do |le| %>
+        <%= link_to le.name, legal_entity_path(le), class: "btn py-5" %>
+      <% end %>
+    </div>
   <% else %>
     <p>
       Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>

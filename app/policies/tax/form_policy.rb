@@ -14,5 +14,9 @@ module Tax
       user.admin? || record.legal_entity.users.include?(user)
     end
 
+    alias_method :switch_legal_entity?, :sync?
+    alias_method :create_legal_entity?, :sync?
+    alias_method :discard?, :sync?
+
   end
 end

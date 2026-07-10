@@ -5,6 +5,7 @@
 # Table name: legal_entities
 #
 #  id                :bigint           not null, primary key
+#  archived_at       :datetime
 #  banned_reason     :string
 #  entity_type       :string
 #  name              :string
@@ -45,6 +46,7 @@ class LegalEntity < ApplicationRecord
 
   scope :managed, -> { where.not(managing_event_id: nil) }
   scope :unmanaged, -> { where(managing_event_id: nil) }
+  scope :not_archived, -> { where(archived_at: nil) }
 
   validate :managing_event_cannot_change, on: :update
 
@@ -57,9 +59,9 @@ class LegalEntity < ApplicationRecord
   end
 
   def payable?
-    latest_tax_form&.completed? &&
+    latest_tax_form&.completed? && mismatched_tax_form.nil? &&
       (latest_tax_form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
-      !tin_banned?
+      !tin_banned? && !archived?
   end
 
   def send_tax_form!
@@ -74,6 +76,20 @@ class LegalEntity < ApplicationRecord
   def display_name
     person? ? "Personal" : (name.presence || "Business")
   end
+
+  def mismatched_tax_form
+    tax_forms.not_discarded.reject { |form| form.tin_hash == tin_hash }.last
+  end
+
+  def archive!
+    update!(archived_at: Time.current)
+  end
+
+  def archived?
+    archived_at.present?
+  end
+
+  delegate :masked_tin, to: :latest_tax_form
 
   private
 

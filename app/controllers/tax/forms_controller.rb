@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :sync]
+    before_action :set_form, only: [:show, :sync, :discard]
 
     def show
       authorize @form
@@ -19,6 +19,12 @@ module Tax
     def create
       @legal_entity = LegalEntity.find_by_hashid(params[:legal_entity_id])
       authorize @legal_entity, policy_class: Tax::FormPolicy
+
+      if @legal_entity.mismatched_tax_form.present?
+        flash[:error] = "Pick an option before starting a new tax form"
+        redirect_to legal_entity_path(@form.legal_entity)
+        return
+      end
 
       tax_form = @legal_entity.tax_forms.create!(external_service: :taxbandits)
       tax_form.send!
@@ -37,6 +43,14 @@ module Tax
         flash[:error] = "Complete the form before continuing"
         redirect_back_or_to tax_form_path(@form)
       end
+    end
+
+    def discard
+      authorize @form
+
+      @form.mark_discarded!
+
+      redirect_to legal_entity_path(@form.legal_entity)
     end
 
     private

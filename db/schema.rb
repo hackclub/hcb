@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_190224) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1635,6 +1635,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
     t.string "address_line2"
     t.string "address_postal_code"
     t.string "address_state"
+    t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
     t.string "entity_type"
@@ -2550,6 +2551,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_08_205326) do
     t.string "signing_url"
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
+    t.string "tin_hash"
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
   end

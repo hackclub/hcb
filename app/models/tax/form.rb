@@ -21,6 +21,7 @@
 #  signing_url                    :string
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
+#  tin_hash                       :string
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
@@ -66,6 +67,8 @@ module Tax
       failed
     ].index_with(&:itself), prefix: :taxbandits_tin_match
 
+    scope :not_discarded, -> { where.not(aasm_state: :discarded) }
+
     after_update if: -> {
       taxbandits_status_previously_changed?(to: :completed) ||
         taxbandits_status_previously_changed?(to: :completed_and_tin_match_inprogress)
@@ -73,11 +76,16 @@ module Tax
       mark_completed! if may_mark_completed?
     end
 
+    after_update if: -> { tin_hash_previously_changed?(from: nil) } do
+      legal_entity.update!(tin_hash:)
+    end
+
     aasm timestamps: true do
       state :pending, initial: true
       state :sent # Request sent to TaxBandits, not necessarily email sent
       state :completed
       state :failed # Failed to create document / send email
+      state :discarded
 
       event :mark_sent do
         transitions from: :pending, to: :sent
@@ -86,14 +94,18 @@ module Tax
       event :mark_completed do
         transitions from: :sent, to: :completed
         after do
-          legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
-
           import_taxbandits_data if sent_with_taxbandits?
+
+          legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
         end
       end
 
       event :mark_failed do
         transitions from: :sent, to: :failed
+      end
+
+      event :mark_discarded do
+        transitions from: [:pending, :sent, :completed], to: :discarded
       end
     end
 
@@ -132,6 +144,33 @@ module Tax
       end
     end
 
+    def inferred_entity_type
+      submission = get_taxbandits_submission
+      return if submission.nil?
+
+      case submission["FormType"]
+      when "FormW9"
+        :person
+      when "FormW8BEN"
+        :person
+      when "FormW8BENE"
+        :business
+      when "FormW8ECI"
+        submission["FormData"]["EntityType"] == "INDIVIDUAL" ? :person : :business
+      when "FormW8IMY"
+        :business
+      when "FormW8EXP"
+        :business
+      else
+        raise ArgumentError, "unknown tax form type"
+      end
+    end
+
+    def masked_tin
+      entry = get_taxbandits_list_entry
+      entry&.[]("TIN")
+    end
+
     private
 
     def send_using_taxbandits!
@@ -161,8 +200,22 @@ module Tax
 
       return if address.blank?
 
+      us_tin, foreign_tin = case submission_form_type
+                            when "FormW9"
+                              [form_data["TIN"], nil]
+                            when "FormW8BEN"
+                              [form_data["USTIN"], form_data["ForeignTIN"]]
+                            when "FormW8ECI"
+                              [form_data["TIN"], form_data["ForeignTIN"]]
+                            when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+                              [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
+                            end
+      tin = us_tin.presence || foreign_tin.presence
+      tin_hash = Tax::IdentificationNumber::Hasher.hash_tin(tin)
+
       update!(
         form_type: submission_form_type[4..],
+        tin_hash:,
         address_line1: address["Address1"],
         address_line2: address["Address2"],
         address_city: address["City"],
