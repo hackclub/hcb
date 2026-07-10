@@ -293,7 +293,7 @@ class Ledger
       # No linked objects will be changed.
       return if linked_object.present?
 
-      linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object)).compact.first
+      linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
     end
