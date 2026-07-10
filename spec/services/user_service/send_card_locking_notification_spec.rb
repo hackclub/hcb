@@ -22,7 +22,7 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     User::CARD_LOCKING_WARNING_THRESHOLDS.each do |threshold|
       hcb_codes = Array(warning_ids[threshold]).map { |id| instance_double(HcbCode, id:) }
 
-      allow(user).to receive(:card_locking_receipts_reaching_warning_threshold)
+      allow(user).to receive(:card_locking_receipts_past_warning_threshold)
         .with(threshold:, now: kind_of(ActiveSupport::TimeWithZone))
         .and_return(hcb_codes)
     end

@@ -93,7 +93,6 @@ class User < ApplicationRecord
   CARD_LOCKING_HARD_MAX_RECEIPT_AGE = 1.week
   CARD_LOCKING_AVERAGE_LOOKBACK = 6.months
   CARD_LOCKING_WARNING_THRESHOLDS = [48.hours, 71.hours].freeze
-  CARD_LOCKING_NOTIFICATION_WINDOW = 10.minutes
   CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD = 10
   CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD = 75
   CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS = 5
@@ -517,13 +516,12 @@ class User < ApplicationRecord
     card_locking_missing_receipts_partitioned(now:).last
   end
 
-  def card_locking_receipts_reaching_warning_threshold(threshold:, now: Time.current)
-    card_locking_missing_receipts.select do |hcb_code|
-      settled_at = hcb_code.card_locking_settled_at
-      next false if settled_at.blank?
-
-      age = now - settled_at
-      age >= threshold && age < threshold + CARD_LOCKING_NOTIFICATION_WINDOW
+  # A receipt stays past a warning threshold from the moment it crosses it until it
+  # becomes a violation, at which point the digest takes over. Callers deduplicate,
+  # so a delayed or skipped run cannot drop a warning on the floor.
+  def card_locking_receipts_past_warning_threshold(threshold:, now: Time.current)
+    card_locking_missing_receipts_within_grace_period(now:).select do |hcb_code|
+      hcb_code.card_locking_receipt_age(now:) >= threshold
     end
   end
 

@@ -119,29 +119,29 @@ RSpec.describe User, type: :model do
     end
   end
 
-  describe "#card_locking_receipts_reaching_warning_threshold" do
-    # The recurring job runs more often than CARD_LOCKING_NOTIFICATION_WINDOW, so a
-    # receipt is only "reaching" a threshold for one window's worth of runs.
-    def reaching(age)
+  describe "#card_locking_receipts_past_warning_threshold" do
+    def past_threshold(age)
       create_settled_card_charge(user:, settled_at: now - age)
 
-      described_class.find(user.id).card_locking_receipts_reaching_warning_threshold(threshold: 48.hours)
+      described_class.find(user.id).card_locking_receipts_past_warning_threshold(threshold: 48.hours)
     end
 
     it "includes a receipt that has just crossed the threshold" do
-      expect(reaching(48.hours)).to be_present
+      expect(past_threshold(48.hours)).to be_present
     end
 
-    it "includes a receipt still inside the notification window" do
-      expect(reaching(48.hours + User::CARD_LOCKING_NOTIFICATION_WINDOW - 1.minute)).to be_present
+    # A skipped or slow run must not be able to drop the warning permanently.
+    it "still includes a receipt hours after it crossed the threshold" do
+      expect(past_threshold(60.hours)).to be_present
     end
 
     it "excludes a receipt that has not yet reached the threshold" do
-      expect(reaching(48.hours - 1.minute)).to be_empty
+      expect(past_threshold(48.hours - 1.minute)).to be_empty
     end
 
-    it "excludes a receipt that crossed the threshold before the notification window" do
-      expect(reaching(48.hours + User::CARD_LOCKING_NOTIFICATION_WINDOW + 1.minute)).to be_empty
+    # Past the grace period the receipt is a violation, and the digest covers it.
+    it "excludes a receipt that is already a violation" do
+      expect(past_threshold(User::CARD_LOCKING_RECEIPT_GRACE_PERIOD + 1.minute)).to be_empty
     end
   end
 

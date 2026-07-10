@@ -25,7 +25,7 @@ module UserService
     # each time it crosses a threshold.
     def claim_warning_keys(now:)
       User::CARD_LOCKING_WARNING_THRESHOLDS.flat_map do |threshold|
-        @user.card_locking_receipts_reaching_warning_threshold(threshold:, now:).filter_map do |hcb_code|
+        @user.card_locking_receipts_past_warning_threshold(threshold:, now:).filter_map do |hcb_code|
           claim("card_locking_warning:#{@user.id}:#{hcb_code.id}:#{threshold.to_i}", ttl: 30.days)
         end
       end
