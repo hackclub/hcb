@@ -28,18 +28,26 @@ module UserService
 
       # Row-locked compare-and-set: only writes on an actual transition, and
       # cannot clobber a concurrent unlock because cards_locked is re-read under
-      # the lock. Unlike update_all, this runs callbacks and records a PaperTrail
-      # version, preserving the who/when audit trail for the lock state change.
+      # the lock. Unlike update_all, save! runs callbacks and records a
+      # PaperTrail version, preserving the who/when audit trail for the lock
+      # state change.
       #
       # NOTE: we cannot use `with_lock`/`lock!` here. `User#lock!` is overridden
       # to lock the *account* (sets locked_at, signs out sessions, revokes API
       # tokens), so `reload(lock: true)` takes the row lock (SELECT ... FOR
       # UPDATE) without triggering that.
+      #
+      # save!(validate: false) is deliberate: the lock write must not be coupled
+      # to unrelated User validations (a legacy-invalid email/phone would
+      # otherwise raise and leave a card stuck locked after a valid upload).
+      # after_update and PaperTrail hook on save, not validation, so the audit
+      # trail is still recorded.
       transitioned = false
       User.transaction do
         @user.reload(lock: true)
         unless @user.cards_locked == should_lock
-          @user.update!(cards_locked: should_lock)
+          @user.cards_locked = should_lock
+          @user.save!(validate: false)
           transitioned = true
         end
       end
