@@ -41,15 +41,7 @@ module UserService
 
     def sms_message(count)
       noun = "receipt".pluralize(count)
-      "You have #{count} #{noun} to upload. Cards that fall behind get locked. Upload them at #{inbox_url}."
-    end
-
-    # Delegates to the shared CardLocking.inbox_url helper. Falls back to the
-    # route helper directly if that module method has not landed yet.
-    def inbox_url
-      return CardLocking.inbox_url if CardLocking.respond_to?(:inbox_url)
-
-      Rails.application.routes.url_helpers.my_inbox_url
+      "You have #{count} #{noun} to upload. Cards that fall behind get locked. Upload them at #{CardLocking.inbox_url}."
     end
 
   end

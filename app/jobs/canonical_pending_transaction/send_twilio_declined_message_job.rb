@@ -38,7 +38,7 @@ class CanonicalPendingTransaction
                            when "cash_withdrawals_not_allowed"
                              "because cash withdrawals are not enabled on it"
                            when "user_cards_locked"
-                             "because your cards are locked (you need to upload receipts)"
+                             "because your cards are locked"
                            else
                              "at #{@merchant} due to insufficient funds"
                            end
@@ -49,7 +49,7 @@ class CanonicalPendingTransaction
       hcb_code = @cpt.local_hcb_code
       message = "Your card was declined just now #{humanized_reason}."
       if @reason == "webhook_declined" && @webhook_declined_reason == "user_cards_locked"
-        message += " Upload them to unlock in seconds."
+        message += " Upload your receipts to unlock in seconds."
       end
 
       TwilioMessageService::Send.new(@user, message, hcb_code:).run!

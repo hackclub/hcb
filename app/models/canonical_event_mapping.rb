@@ -53,7 +53,9 @@ class CanonicalEventMapping < ApplicationRecord
 
   after_create_commit do
     ct = canonical_transaction
-    if ct&.stripe_card.present? && ct.amount_cents.negative? && (hc = ct.local_hcb_code)
+    # Check the in-memory amount before the stripe_card lookup so non-card and
+    # positive mappings (fees, donations, incoming) skip the extra DB reads.
+    if ct&.amount_cents&.negative? && ct.stripe_card.present? && (hc = ct.local_hcb_code)
       CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: hc.id)
     end
   end

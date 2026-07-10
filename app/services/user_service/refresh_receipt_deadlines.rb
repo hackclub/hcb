@@ -25,7 +25,9 @@ module UserService
     private
 
     def outstanding_charges
-      HcbCode.card_locking_candidates.where(stripe_cardholders: { user_id: @user.id })
+      HcbCode.card_locking_candidates
+             .where(stripe_cardholders: { user_id: @user.id })
+             .includes(:canonical_transactions, :receipts)
     end
 
   end
