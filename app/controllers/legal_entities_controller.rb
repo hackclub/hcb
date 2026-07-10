@@ -57,6 +57,8 @@ class LegalEntitiesController < ApplicationController
     tax_form = Tax::Form.find(params[:new_tax_form_id])
     authorize tax_form, :create_legal_entity?
 
+    new_le = nil
+
     ActiveRecord::Base.transaction do
       new_le = LegalEntity.create!(
         name: params[:name],
@@ -65,7 +67,7 @@ class LegalEntitiesController < ApplicationController
         users: [current_user]
       )
 
-      tax_form.update!(new_le)
+      tax_form.update!(legal_entity: new_le)
     end
 
     redirect_to legal_entity_path(new_le)

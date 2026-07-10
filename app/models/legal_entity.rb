@@ -89,7 +89,13 @@ class LegalEntity < ApplicationRecord
     archived_at.present?
   end
 
-  delegate :masked_tin, to: :latest_tax_form
+  def latest_usable_tax_form
+    tax_forms.completed.order(completed_at: :desc, created_at: :desc).select do |form|
+      form.tin_hash == tin_hash
+    end.last
+  end
+
+  delegate :masked_tin, to: :latest_usable_tax_form
 
   private
 

@@ -149,13 +149,13 @@ module Tax
 
       case submission["FormType"]
       when "FormW9"
-        :person
+        submission["FormW9"]["FormData"]["TINType"] == "SSN" ? :person : :business
       when "FormW8BEN"
         :person
       when "FormW8BENE"
         :business
       when "FormW8ECI"
-        submission["FormData"]["EntityType"] == "INDIVIDUAL" ? :person : :business
+        submission["FormW8ECI"]["FormData"]["EntityType"] == "INDIVIDUAL" ? :person : :business
       when "FormW8IMY"
         :business
       when "FormW8EXP"
