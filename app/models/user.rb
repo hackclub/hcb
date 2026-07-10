@@ -615,6 +615,35 @@ class User < ApplicationRecord
            .exists?
   end
 
+  def card_locking_suppressed?(now: Time.current)
+    card_locking_suppressed_until.present? && card_locking_suppressed_until > now
+  end
+
+  # Overdue charges for this cardholder: past deadline and unresolved. Keys off the
+  # persisted columns so the partial index on receipt_due_at is usable.
+  def card_locking_overdue_charges(now: Time.current)
+    return HcbCode.none unless stripe_cardholder
+
+    HcbCode.card_locking_relevant
+           .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
+           .where("hcb_codes.receipt_due_at <= ?", now)
+           .where(hcb_codes: { receipt_resolved_at: nil })
+           .distinct
+  end
+
+  # All outstanding (unresolved, enforcement-era) charges for this cardholder.
+  def card_locking_outstanding_charges
+    return HcbCode.none unless stripe_cardholder
+
+    HcbCode.card_locking_candidates
+           .where(stripe_cardholders: { user_id: id })
+           .distinct
+  end
+
+  def card_locking_outstanding_count
+    card_locking_outstanding_charges.count("hcb_codes.id")
+  end
+
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)
