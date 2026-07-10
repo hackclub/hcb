@@ -446,6 +446,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_09_120000) do
     t.index ["transaction_source_type", "transaction_source_id"], name: "index_canonical_transactions_on_transaction_source"
   end
 
+  create_table "card_charge_raw_stripe_transactions", force: :cascade do |t|
+    t.bigint "card_charge_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "raw_stripe_transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["card_charge_id"], name: "index_card_charge_raw_stripe_transactions_on_card_charge_id"
+    t.index ["raw_stripe_transaction_id"], name: "index_card_charge_rsts_on_raw_stripe_transaction_id", unique: true
+  end
+
+  create_table "card_charges", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "raw_pending_stripe_transaction_id"
+    t.datetime "updated_at", null: false
+    t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
+  end
+
   create_table "card_grant_pre_authorizations", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.bigint "card_grant_id", null: false
@@ -2216,8 +2232,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_09_120000) do
     t.text "stripe_transaction_id"
     t.string "unique_bank_identifier", null: false
     t.datetime "updated_at", null: false
-    t.index "(((stripe_transaction -> 'card'::text) ->> 'id'::text))", name: "index_raw_stripe_transactions_on_card_id_text", using: :hash
     t.index "((stripe_transaction ->> 'card'::text))", name: "index_raw_stripe_transactions_on_card"
+    t.index "(((stripe_transaction -> 'card'::text) ->> 'id'::text))", name: "index_raw_stripe_transactions_on_card_id_text", using: :hash
+    t.index ["stripe_authorization_id"], name: "index_raw_stripe_transactions_on_stripe_authorization_id"
   end
 
   create_table "receipts", force: :cascade do |t|
@@ -2982,6 +2999,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_09_120000) do
   add_foreign_key "canonical_pending_transactions", "ledger_items"
   add_foreign_key "canonical_pending_transactions", "raw_pending_stripe_transactions"
   add_foreign_key "canonical_transactions", "ledger_items"
+  add_foreign_key "card_charge_raw_stripe_transactions", "card_charges", on_delete: :cascade
+  add_foreign_key "card_charge_raw_stripe_transactions", "raw_stripe_transactions", on_delete: :cascade
+  add_foreign_key "card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
