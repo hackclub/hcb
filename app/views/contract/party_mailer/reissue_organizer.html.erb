@@ -1,0 +1,19 @@
+<p>Hi there! 👋</p>
+
+<% if @message.present? %>
+  <p>
+    We couldn't finalize the payroll agreement with <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %> due to an issue:
+  </p>
+  <blockquote><%= MarkdownService.instance.render @message %></blockquote>
+<% else %>
+  <p>
+    We couldn't finalize the payroll agreement with <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %>.
+  </p>
+<% end %>
+
+<p><%= link_to "Click here", contract_party_url(@party) %> to sign a new agreement<%= @message.present? ? ", addressing the above issue" : "" %>.</p>
+
+<p>
+  Best,<br>
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> Team
+</p>

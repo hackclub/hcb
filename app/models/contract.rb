@@ -94,6 +94,7 @@ class Contract < ApplicationRecord
         if reissue_signee_message.present? || reissue_cosigner_message.present?
           party(:signee)&.notify_reissued(message: reissue_signee_message)
           party(:contractor)&.notify_reissued(message: reissue_signee_message)
+          party(:organizer)&.notify_reissued(message: reissue_signee_message)
           party(:cosigner)&.notify_reissued(message: reissue_cosigner_message)
         elsif contractable.contract_notify_when_sent
           notifiable_parties.each(&:notify)
