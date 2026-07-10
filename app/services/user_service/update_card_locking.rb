@@ -78,7 +78,7 @@ module UserService
       count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
       noun = "receipt".pluralize(count)
       verb = count == 1 ? "is" : "are"
-      "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Upload to unlock in seconds at #{CardLocking.inbox_url}."
+      "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Recurring charges will also fail until you upload. Upload to unlock in seconds at #{CardLocking.inbox_url}."
     end
 
     def send_sms(body)
