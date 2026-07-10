@@ -27,27 +27,20 @@ class TaxbanditsService
     response.body
   end
 
-  # TaxBandits will only give us the full form data for the latest submission of a payee
-  def self.get_submission(payee_id:, submission_id:)
-    submission = taxbandits_client.get("WhCertificate/Get?PayeeRef=#{payee_id}").body
-
-    if submission[TAXBANDITS_FORM_DATA_KEYS[submission["FormType"]]]&.[]("SubmissionId") == submission_id
-      submission
-    else
-      nil
-    end
+  def self.get_submission(form_id)
+    taxbandits_client.get("WhCertificate/Get?PayeeRef=#{form_id}").body
   end
 
-  def self.get_list_entry(payee_id:, submission_id:)
-    submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{payee_id}").body
+  def self.get_list_entry(form_id)
+    submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{form_id}").body
 
-    submissions["WhcertificateRecords"].find { |s| s["SubmissionId"] == submission_id }
+    submissions["WhcertificateRecords"].first
   end
 
-  def self.get_status(payee_id:, submission_id:)
-    responses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{payee_id}").body
+  def self.get_status(form_id)
+    statuses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{form_id}").body
 
-    responses["Status"].find { |r| r["SubmissionId"] == submission_id }
+    statuses["Status"].first
   end
 
   def self.taxbandits_client

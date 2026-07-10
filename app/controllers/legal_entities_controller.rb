@@ -13,6 +13,12 @@ class LegalEntitiesController < ApplicationController
     new_tax_form = Tax::Form.find(params[:new_tax_form_id])
     authorize new_tax_form, :switch_legal_entity?
 
+    if new_tax_form.inferred_entity_type.to_s != @legal_entity.entity_type
+      flash[:error] = "Can't switch to a legal entity of a different type"
+      redirect_to legal_entity_path(@legal_entity)
+      return
+    end
+
     new_le = nil
 
     ActiveRecord::Base.transaction do
@@ -36,7 +42,7 @@ class LegalEntitiesController < ApplicationController
           legal_entity: new_le
         )
 
-        payee.payments.pending_legal_entity.each do |payee_payment|
+        payment.payee.payments.pending_legal_entity.each do |payee_payment|
           payee_payment.update!(payee: new_payee)
         end
 

@@ -124,17 +124,16 @@ module Tax
       mark_sent!
     end
 
-    # Only works if it's the latest submission for the LE
     def get_taxbandits_submission
-      TaxbanditsService.get_submission(payee_id: legal_entity.public_id, submission_id: external_id)
+      TaxbanditsService.get_submission(public_id)
     end
 
     def get_taxbandits_list_entry
-      TaxbanditsService.get_list_entry(payee_id: legal_entity.public_id, submission_id: external_id)
+      TaxbanditsService.get_list_entry(public_id)
     end
 
     def sync_with_taxbandits
-      response = TaxbanditsService.get_status(payee_id: legal_entity.public_id, submission_id: external_id)
+      response = TaxbanditsService.get_status(public_id)
 
       if response.present?
         update!(
@@ -174,7 +173,7 @@ module Tax
     private
 
     def send_using_taxbandits!
-      response = TaxbanditsService.create_whcertificate(id: legal_entity.public_id, name: legal_entity.name)
+      response = TaxbanditsService.create_whcertificate(id: public_id, name: legal_entity.name)
 
       update!(external_service: :taxbandits, signing_url: response["Url"], external_id: response["SubmissionId"])
       sync_with_taxbandits
