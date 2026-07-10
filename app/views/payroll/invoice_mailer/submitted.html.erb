@@ -1,0 +1,30 @@
+<p>Hello,</p>
+
+<p>
+  <%= @position.display_name %> submitted an invoice to <%= @event.name %> for
+  <%= @invoice.amount.format(with_currency: true) %>.
+</p>
+
+<ul>
+  <li><strong>Contractor:</strong> <%= @position.display_name %> (<%= @position.email %>)</li>
+  <li><strong>Position:</strong> <%= @position.title %></li>
+  <li><strong>Description:</strong> <%= @invoice.name %></li>
+  <% if @invoice.description.present? %>
+    <li><strong>Notes:</strong> <%= @invoice.description %></li>
+  <% end %>
+  <li><strong>Amount:</strong> <%= @invoice.amount.format(with_currency: true) %></li>
+</ul>
+
+<p>
+  Review this invoice and approve or reject it from your contractors dashboard:
+  <br>
+  <%= link_to "Review invoice", event_contractor_url(event_id: @event.slug, id: @position.id) %>
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>
