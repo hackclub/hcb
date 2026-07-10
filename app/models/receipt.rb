@@ -99,7 +99,15 @@ class Receipt < ApplicationRecord
     end
   end
 
-  after_commit do
+  after_commit on: [:create, :update] do
+    receiptable.materialize_card_locking! if receiptable.is_a?(HcbCode) && receiptable.card_locking_chargeable?
+    User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
+  end
+
+  after_commit on: :destroy do
+    if receiptable.is_a?(HcbCode) && receiptable.card_locking_chargeable? && !receiptable.card_locking_resolved?
+      receiptable.update_columns(receipt_resolved_at: nil)
+    end
     User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
   end
 

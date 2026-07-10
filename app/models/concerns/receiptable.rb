@@ -34,6 +34,7 @@ module Receiptable
     def no_or_lost_receipt!
       self.marked_no_or_lost_receipt_at = Time.now
       self.save!
+      materialize_card_locking! if is_a?(HcbCode) && card_locking_chargeable?
       if user = try(:author) || try(:user)
         ::User::UpdateCardLockingJob.perform_later(user:, unlock_only: true)
       end
