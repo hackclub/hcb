@@ -187,6 +187,13 @@ class MyController < ApplicationController
       { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
     ]
     @has_filter = params[:status].present?
+
+    party_scope = Contract::Party.where(user: current_user)
+                                 .or(Contract::Party.where(external_email: current_user.email))
+    @contracts = Contract.not_voided
+                         .where(id: party_scope.select(:contract_id))
+                         .includes(:parties)
+                         .order(created_at: :desc)
   end
 
   def feed

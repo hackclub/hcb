@@ -59,6 +59,54 @@
   </div>
 </div>
 
+<% if @contracts.any? %>
+  <h2 class="mt-0 mb-2">Your contracts</h2>
+  <article class="table-container mb-4">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Organization</th>
+          <th>Type</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @contracts.each do |contract| %>
+          <% my_party = contract.parties.detect { |p| p.user_id == current_user.id || p.external_email == current_user.email } %>
+          <% signable = my_party.present? && my_party.pending? && contract.sent? %>
+          <% state_color = contract.signed? ? "success" : (contract.sent? ? "warning" : "muted") %>
+          <tr class="clickable">
+            <td>
+              <span class="ml0 badge bg-<%= state_color %>">
+                <%= signable ? "Pending signature" : contract.aasm_state.humanize %>
+              </span>
+            </td>
+            <td><%= contract.event_name %></td>
+            <td>Fiscal sponsorship agreement</td>
+            <td>
+              <% if my_party.present? %>
+                <% if signable %>
+                  <%= link_to contract_party_path(my_party), class: "btn bg-warning" do %>
+                    <%= inline_icon "edit" %>
+                    Sign contract
+                  <% end %>
+                <% elsif contract.signed? %>
+                  <%= link_to "View", completed_contract_party_path(my_party), class: "stretched-link" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% end %>
+
+<% if @contracts.any? %>
+  <h2 class="mt-0 mb-2">Payment history</h2>
+<% end %>
+
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/filters/search", form: %>
