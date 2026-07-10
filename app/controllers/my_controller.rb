@@ -96,7 +96,7 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.card_locking_missing_receipt_violations.count
+    @locking_count = current_user.card_locking_overdue_charges.count
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
