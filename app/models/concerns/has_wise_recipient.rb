@@ -24,22 +24,20 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
-      if self == User::PayoutMethod::WiseTransfer || self == LegalEntity::PayoutMethod::WiseTransfer
-        fields << {
-          type: :text_field,
-          key: "account_holder",
-          placeholder: "Fiona Hackworth",
-          label: "Account holder's full name",
-          description: "Must match the name on the bank account exactly"
-        }
+      fields << {
+        type: :text_field,
+        key: "account_holder",
+        placeholder: "Fiona Hackworth",
+        label: "Account holder's full name",
+        description: "Must match the name on the bank account exactly"
+      }
 
-        fields << {
-          type: :text_field,
-          key: "bank_name",
-          placeholder: "Silicon Valley Bank",
-          label: "Name of financial institution"
-        }
-      end
+      fields << {
+        type: :text_field,
+        key: "bank_name",
+        placeholder: "Silicon Valley Bank",
+        label: "Name of financial institution"
+      }
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
