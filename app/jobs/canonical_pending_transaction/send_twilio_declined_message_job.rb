@@ -48,6 +48,9 @@ class CanonicalPendingTransaction
 
       hcb_code = @cpt.local_hcb_code
       message = "Your card was declined just now #{humanized_reason}."
+      if @reason == "webhook_declined" && @webhook_declined_reason == "user_cards_locked"
+        message += " Upload them to unlock in seconds."
+      end
 
       TwilioMessageService::Send.new(@user, message, hcb_code:).run!
     end

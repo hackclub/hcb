@@ -78,7 +78,7 @@
 <h2 class="flex items-center mb2">
   Transactions
   <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-    <%= badge_for("#{@count} missing receipts") %>
+    <%= badge_for(pluralize(@count, "missing receipt")) %>
     <%= badge_for(pluralize(@locking_count, "overdue receipt")) %>
   <% else %>
     <%= badge_for(@count) %>
