@@ -111,9 +111,11 @@ class Contract < ApplicationRecord
 
     event :mark_voided do
       transitions from: [:pending, :sent], to: :voided
-      after do
+      after do |reissuing = false|
         archive_on_docuseal!
-        contractable.on_contract_voided(self)
+        unless reissuings
+          contractable.on_contract_voided(self)
+        end
       end
     end
   end
