@@ -106,10 +106,20 @@
             </td>
             <td class="text-right">
               <% if position.status == :active %>
-                <%= link_to "#", class: "btn bg-success nowrap" do %>
+                <%= link_to "#", class: "btn bg-success nowrap", data: { behavior: "modal_trigger", modal: dom_id(position, :submit_invoice) } do %>
                   <%= inline_icon "cloud-upload" %>
                   Submit invoice
                 <% end %>
+
+                <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
+                  id="<%= dom_id(position, :submit_invoice) %>"
+                  data-controller="turbo-frame-modal"
+                  data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+                  <%= modal_header "Submit an invoice" %>
+                  <%= turbo_frame_tag dom_id(position, :invoice_form), src: new_payroll_position_invoice_path(position), loading: :lazy do %>
+                    <%= render "application/loading_container", klass: "py-8" %>
+                  <% end %>
+                </section>
               <% elsif pending_signature %>
                 <%= link_to "#", class: "btn bg-warning nowrap" do %>
                   <%= inline_icon "edit" %>

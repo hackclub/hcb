@@ -86,6 +86,10 @@ Rails.application.routes.draw do
     get "payroll", to: "my#payroll", as: :my_payroll
     get "pay", to: "my#pay", as: :my_pay
 
+    resources :payroll_positions, only: [] do
+      resources :invoices, only: [:new, :create], controller: "payroll/invoices"
+    end
+
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
@@ -997,6 +1001,12 @@ Rails.application.routes.draw do
 
     resources :payments, only: [:new, :create]
     resources :contractors, only: [:new, :create, :show]
+    resources :contractor_invoices, only: [] do
+      member do
+        post :approve
+        post :reject
+      end
+    end
     resources :payees, only: [:index, :create, :update] do
       member do
         post :archive

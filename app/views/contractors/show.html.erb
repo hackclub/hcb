@@ -72,6 +72,56 @@
     </div>
   <% end %>
 
+  <h3 class="mt-4 mb-2">Invoices</h3>
+  <% if @invoices.any? %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Attachment</th>
+            <th class="text-right">Amount</th>
+            <% if @can_review %><th></th><% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
+            <tr>
+              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
+                <%= invoice.name %>
+              </td>
+              <td>
+                <% if invoice.receipts.any? %>
+                  <div class="receipts_list flex gap-2">
+                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                  </div>
+                <% else %>
+                  <span class="muted">&mdash;</span>
+                <% end %>
+              </td>
+              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+              <% if @can_review %>
+                <td class="text-right">
+                  <% if invoice.submitted? %>
+                    <div class="flex gap-2 justify-end">
+                      <%= button_to "Approve", approve_event_contractor_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+                      <%= button_to "Reject", reject_event_contractor_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+                    </div>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% else %>
+    <%= blankslate "No invoices yet" %>
+  <% end %>
+
   <h3 class="mt-4 mb-2">Payments</h3>
   <% if @payments.any? %>
     <article class="table-container">

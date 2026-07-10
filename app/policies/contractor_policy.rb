@@ -13,4 +13,10 @@ class ContractorPolicy < ApplicationPolicy
     EventPolicy.new(user, record).create_contractor?
   end
 
+  # Reviewing (approving/rejecting) invoices requires the same access as
+  # creating a contractor payment — i.e. an admin or manager.
+  def review?
+    EventPolicy.new(user, record).create_contractor?
+  end
+
 end
