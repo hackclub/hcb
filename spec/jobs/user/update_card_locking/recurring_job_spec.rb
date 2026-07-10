@@ -36,6 +36,17 @@ RSpec.describe User::UpdateCardLocking::RecurringJob, type: :job do
     expect(notified_users.map(&:id)).to contain_exactly(first_user.id, second_user.id)
   end
 
+  it "refreshes deadlines, updates locking, and notifies each candidate" do
+    allow(User).to receive(:card_locking_candidates).and_return(User.where(id: [first_user.id, second_user.id]))
+    [UserService::RefreshReceiptDeadlines, UserService::UpdateCardLocking, UserService::SendCardLockingNotification].each do |svc|
+      spy = instance_double(svc.name, run: nil)
+      allow(svc).to receive(:new).and_return(spy)
+      expect(spy).to receive(:run).twice
+    end
+
+    described_class.perform_now
+  end
+
   it "reports and moves on when one user raises, rather than starving the rest of the batch" do
     stub_update_card_locking(raising_for: first_user)
     allow(Rails.error).to receive(:report)

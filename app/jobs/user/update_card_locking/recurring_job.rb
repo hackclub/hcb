@@ -18,6 +18,7 @@ class User
 
         User.card_locking_candidates.find_each(batch_size: 100) do |user|
           processed += 1
+          ::UserService::RefreshReceiptDeadlines.new(user:).run
           ::UserService::UpdateCardLocking.new(user:).run
           ::UserService::SendCardLockingNotification.new(user:).run
         rescue => e
