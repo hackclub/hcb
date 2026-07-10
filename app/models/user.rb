@@ -90,14 +90,6 @@ class User < ApplicationRecord
     first_robotics_form: 6
   }
 
-  CARD_LOCKING_RECEIPT_GRACE_PERIOD = 72.hours
-  CARD_LOCKING_HARD_MAX_RECEIPT_AGE = 1.week
-  CARD_LOCKING_AVERAGE_LOOKBACK = 6.months
-  CARD_LOCKING_WARNING_THRESHOLDS = [48.hours, 71.hours].freeze
-  CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD = 10
-  CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD = 75
-  CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS = 5
-
   has_many :logins
   has_many :applications, class_name: "Event::Application", inverse_of: :user
   has_many :login_codes
@@ -454,110 +446,10 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
-  # `HcbCode#card_locking_missing_receipt?` reaches through `receipt_required?`,
-  # which reads `event`, `event.plan` and `pt`. Card locking runs on every receipt
-  # upload, every authorization, and for every candidate user on a five minute
-  # cron, so preload all of it rather than paying a query per HCB code.
-  #
-  # `preload` (not `includes`) is deliberate: `card_locking_relevant` filters
-  # `canonical_transactions` in its join, and an `eager_load` would leave the
-  # loaded association pre-filtered to expenses, silently changing
-  # `HcbCode#card_locking_settled_at`.
-  CARD_LOCKING_PRELOADS = [:receipts, :canonical_transactions, :canonical_pending_transactions, { event: :plan }].freeze
-
-  def card_locking_hcb_codes(scope)
-    return [] unless stripe_cardholder.present?
-
-    scope
-      .where(stripe_cards: { stripe_cardholder_id: stripe_cardholder.id })
-      .preload(*CARD_LOCKING_PRELOADS)
-      .distinct
-      .to_a
-      .select { |hcb_code| hcb_code.card_locking_settled_at.present? }
-  end
-
-  # Bounded to the averaging window in SQL. Without the bound this would load the
-  # user's entire card history, growing without limit as the program ages.
-  #
-  # The window deliberately reaches back past the enforcement date: receipts a
-  # cardholder uploaded beforehand still earn them trust, even though charges from
-  # then can never count against them.
-  #
-  # `receipt_required?` mirrors the filter `card_locking_missing_receipts` applies
-  # through `HcbCode#missing_receipt?`. Without it, a charge that never needed a
-  # receipt but happened to get one would count as a timely upload and pull the
-  # user's average down, while never being able to count against them.
-  memo_wise def card_locking_history_hcb_codes
-    window_start = CARD_LOCKING_AVERAGE_LOOKBACK.ago
-    scope = HcbCode.card_locking_relevant.where(canonical_transactions: { created_at: window_start.. })
-
-    card_locking_hcb_codes(scope).select do |hcb_code|
-      hcb_code.card_locking_settled_at >= window_start && hcb_code.receipt_required?
-    end
-  end
-
-  # Deliberately unbounded in time, unlike the averaging window: the hard caps (a
-  # receipt outstanding for over a week, or too many missing receipts) apply to a
-  # charge no matter how old it is.
-  memo_wise def card_locking_missing_receipts
-    card_locking_hcb_codes(HcbCode.card_locking_candidates).select(&:card_locking_missing_receipt?)
-  end
-
-  def card_locking_missing_receipts_partitioned(now: Time.current)
-    card_locking_missing_receipts.partition do |hcb_code|
-      hcb_code.card_locking_missing_receipt_violation?(now:)
-    end
-  end
-
-  def card_locking_missing_receipt_violations(now: Time.current)
-    card_locking_missing_receipts_partitioned(now:).first
-  end
-
-  def card_locking_missing_receipts_within_grace_period(now: Time.current)
-    card_locking_missing_receipts_partitioned(now:).last
-  end
-
-  # A receipt stays past a warning threshold from the moment it crosses it until it
-  # becomes a violation, at which point the digest takes over. Callers deduplicate,
-  # so a delayed or skipped run cannot drop a warning on the floor.
-  def card_locking_receipts_past_warning_threshold(threshold:, now: Time.current)
-    card_locking_missing_receipts_within_grace_period(now:).select do |hcb_code|
-      hcb_code.card_locking_receipt_age(now:) >= threshold
-    end
-  end
-
-  def timely_receipt_upload_count(now: Time.current)
-    card_locking_history_hcb_codes.count do |hcb_code|
-      upload_time = hcb_code.card_locking_receipt_upload_time(now:)
-      upload_time.present? && upload_time <= CARD_LOCKING_RECEIPT_GRACE_PERIOD
-    end
-  end
-
-  def average_receipt_upload_time(now: Time.current)
-    durations = card_locking_history_hcb_codes.filter_map do |hcb_code|
-      hcb_code.card_locking_receipt_upload_time(now:)
-    end
-
-    return 0.seconds if durations.empty?
-
-    (durations.sum / durations.size).seconds
-  end
-
-  def has_missing_receipt_violations?(now: Time.current)
-    card_locking_missing_receipt_violations(now:).any?
-  end
-
   def cards_should_lock?(now: Time.current)
-    return true if card_locking_missing_receipts.count >= CARD_LOCKING_MISSING_RECEIPT_LOCK_THRESHOLD
+    return false if card_locking_suppressed?(now:)
 
-    violations = card_locking_missing_receipt_violations(now:)
-    return false if violations.empty?
-
-    return true if violations.any? { |hcb_code| hcb_code.card_locking_receipt_age(now:) >= CARD_LOCKING_HARD_MAX_RECEIPT_AGE }
-    return true if violations.count >= CARD_LOCKING_MISSING_RECEIPT_VIOLATION_LOCK_THRESHOLD
-    return true if timely_receipt_upload_count(now:) < CARD_LOCKING_MIN_TIMELY_RECEIPT_UPLOADS
-
-    average_receipt_upload_time(now:) > CARD_LOCKING_RECEIPT_GRACE_PERIOD
+    card_locking_has_overdue_charge?(now:)
   end
 
   def last_settled_charge_at

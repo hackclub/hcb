@@ -29,4 +29,18 @@ RSpec.describe User, ".card_locking_candidates", type: :model do
 
     expect(candidate_ids).not_to include(user.id)
   end
+
+  it "excludes a user whose only outstanding charge is on a SalaryAccount-plan event" do
+    create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: create(:event, plan_type: Event::Plan::SalaryAccount))
+
+    expect(candidate_ids).not_to include(user.id)
+  end
+
+  it "excludes a user whose only outstanding charge is on an event whose plan is no longer active" do
+    inactive_event = create(:event, plan_type: Event::Plan::Standard)
+    create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: inactive_event)
+    inactive_event.plan.update_columns(aasm_state: "inactive")
+
+    expect(candidate_ids).not_to include(user.id)
+  end
 end
