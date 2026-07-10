@@ -49,6 +49,14 @@ class Ledger
       ledger_item.refresh!
     end
 
+    after_commit do
+      item = ledger_item
+      if on_primary_ledger && item&.amount_cents&.negative? && item.stripe_cardholder.present?
+        hcb_code = item.hcb_code
+        CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: hcb_code.id) if hcb_code
+      end
+    end
+
     def self.map_primary!(ledger:, ledger_item:, mapped_by:)
       # Mapping to a new primary ledger will _remove_ any existing primary mapping.
       # It always attempts to reuse the existing primary mapping to preserve a paper trail.

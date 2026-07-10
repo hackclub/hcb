@@ -51,6 +51,13 @@ class CanonicalEventMapping < ApplicationRecord
     canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
 
+  after_create_commit do
+    ct = canonical_transaction
+    if ct&.stripe_card.present? && ct.amount_cents.negative?
+      CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: ct.local_hcb_code.id)
+    end
+  end
+
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }
   scope :mapped_by_human, -> { where("user_id is not null") }
 
