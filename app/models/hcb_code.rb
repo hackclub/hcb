@@ -65,46 +65,11 @@ class HcbCode < ApplicationRecord
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
 
-  CARD_LOCKING_STRIPE_CARD_JOIN = "INNER JOIN stripe_cards ON raw_stripe_transactions.stripe_transaction->>'card' = stripe_cards.stripe_id"
-  CARD_LOCKING_STRIPE_CARDHOLDER_JOIN = "INNER JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id"
-  CARD_LOCKING_EVENT_MAPPING_JOIN = "INNER JOIN canonical_event_mappings ON canonical_event_mappings.canonical_transaction_id = canonical_transactions.id"
-  CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN = "INNER JOIN event_plans ON event_plans.event_id = canonical_event_mappings.event_id AND event_plans.aasm_state = 'active'"
+  # Card-locking scopes, columns, and the materializer. See the concern.
+  include CardLocking::ChargeBehavior
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
-  # Every settled Stripe card charge a cardholder has ever made. Unbounded in time,
-  # so callers must supply their own date bound or scan the whole table.
-  scope :card_locking_relevant, -> {
-    joins(:canonical_transactions)
-      .merge(CanonicalTransaction.stripe_transaction)
-      .joins(CARD_LOCKING_STRIPE_CARD_JOIN)
-      .joins(CARD_LOCKING_EVENT_MAPPING_JOIN)
-      .joins(CARD_LOCKING_ACTIVE_EVENT_PLAN_JOIN)
-      .where("canonical_transactions.amount_cents < 0")
-      .where.not(event_plans: { type: Event::Plan::SalaryAccount.name })
-  }
-  # Charges that can count against a cardholder: no receipt, not written off, and
-  # settled once enforcement began.
-  #
-  # This is the live "still missing a receipt" source of truth for candidate
-  # discovery and materialization: it reads the actual receipts join and
-  # marked_no_or_lost_receipt_at, not the persisted receipt_due_at /
-  # receipt_resolved_at fast-path that drives the lock decision. The two are kept
-  # deliberately distinct (the persisted columns let the lock query use the partial
-  # index and self-heal against this join); a future cleanup must not collapse them.
-  scope :card_locking_candidates, -> {
-    card_locking_relevant
-      .joins(CARD_LOCKING_STRIPE_CARDHOLDER_JOIN)
-      .left_outer_joins(:receipts)
-      .where(receipts: { id: nil })
-      .where(marked_no_or_lost_receipt_at: nil)
-      .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day)
-  }
-  # Charges past their deadline and still unresolved. Keys off the persisted columns
-  # directly (not the receipts join) so the partial index on receipt_due_at is usable.
-  scope :receipt_overdue, ->(now = Time.current) {
-    where("hcb_codes.receipt_due_at <= ?", now).where(receipt_resolved_at: nil)
-  }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -705,67 +670,6 @@ class HcbCode < ApplicationRecord
   # we have a custom implementation here for caching
   def missing_receipt?(event = self.event, type = self.type)
     receipt_required?(event, type) && without_receipt? && !no_or_lost_receipt?
-  end
-
-  def card_locking_settled_at
-    return unless stripe_card? || stripe_force_capture?
-    return @card_locking_settled_at if defined?(@card_locking_settled_at)
-
-    @card_locking_settled_at = if association(:canonical_transactions).loaded?
-                                 canonical_transactions.select { |ct| ct.amount_cents.negative? }.min_by(&:created_at)&.created_at
-                               else
-                                 canonical_transactions.expense.minimum(:created_at)
-                               end
-  end
-
-  def card_locking_chargeable?
-    (stripe_card? || stripe_force_capture?) && card_locking_settled_at.present?
-  end
-
-  def card_locking_resolved_at
-    receipt_at = if association(:receipts).loaded?
-                   receipts.map(&:created_at).compact.min
-                 else
-                   receipts.minimum(:created_at)
-                 end
-    [receipt_at, marked_no_or_lost_receipt_at].compact.min
-  end
-
-  def card_locking_resolved?
-    card_locking_resolved_at.present?
-  end
-
-  # The single writer of receipt_settled_at / receipt_resolved_at / receipt_due_at.
-  # Idempotent. Only populates columns for a receipt-required settled card charge,
-  # and clears them if the charge stops being one (e.g. a refund nets it to zero).
-  # receipt_resolved_at is frozen once set (never moved here); the destroy callback
-  # resets it when a charge becomes unresolved. Callers pass the user's trust state.
-  #
-  # ADAPTER: this and the methods above concentrate all card-locking coupling to
-  # HcbCode. See docs/card-locking/migrating-hcbcode-to-ledger.md.
-  def materialize_card_locking!(now: Time.current, trusted: false, last_settled_charge_at: nil)
-    unless card_locking_chargeable? && receipt_required?
-      clear_card_locking! if receipt_settled_at.present? || receipt_due_at.present? || receipt_resolved_at.present?
-      return
-    end
-
-    settled_at = receipt_settled_at || card_locking_settled_at
-    resolved_at = receipt_resolved_at || card_locking_resolved_at
-
-    due_at =
-      if settled_at >= Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day
-        CardLocking::Deadline.new(
-          settled_at:, trusted:, last_settled_charge_at:, current_due_at: receipt_due_at, now:
-        ).compute
-      end
-
-    return if receipt_settled_at == settled_at && receipt_resolved_at == resolved_at && receipt_due_at == due_at
-
-    update_columns(receipt_settled_at: settled_at, receipt_resolved_at: resolved_at, receipt_due_at: due_at)
-  end
-
-  def clear_card_locking!
-    update_columns(receipt_settled_at: nil, receipt_due_at: nil, receipt_resolved_at: nil)
   end
 
   def receipts

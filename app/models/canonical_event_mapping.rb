@@ -51,14 +51,7 @@ class CanonicalEventMapping < ApplicationRecord
     canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
 
-  after_create_commit do
-    ct = canonical_transaction
-    # Check the in-memory amount before the stripe_card lookup so non-card and
-    # positive mappings (fees, donations, incoming) skip the extra DB reads.
-    if ct&.amount_cents&.negative? && ct.stripe_card.present? && (hc = ct.local_hcb_code)
-      CardLocking::MaterializeChargeJob.perform_later(hcb_code_id: hc.id)
-    end
-  end
+  after_create_commit { CardLocking::Settlement.on_canonical_transaction(canonical_transaction) }
 
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }
   scope :mapped_by_human, -> { where("user_id is not null") }

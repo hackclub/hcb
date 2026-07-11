@@ -99,22 +99,8 @@ class Receipt < ApplicationRecord
     end
   end
 
-  after_commit on: [:create, :update] do
-    receiptable.materialize_card_locking! if receiptable.is_a?(HcbCode) && receiptable.card_locking_chargeable?
-    User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
-  end
-
-  after_commit on: :destroy do
-    # receipt_resolved_at is only ever cleared here, never revised. Once a charge
-    # is resolved the timestamp is frozen, so destroying an earlier receipt while a
-    # later one remains (card_locking_resolved? still true) leaves the original
-    # resolution timestamp in place. It resets to nil only when the charge becomes
-    # genuinely unresolved again (no receipts, not marked no/lost).
-    if receiptable.is_a?(HcbCode) && receiptable.card_locking_chargeable? && !receiptable.card_locking_resolved?
-      receiptable.update_columns(receipt_resolved_at: nil)
-    end
-    User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
-  end
+  after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
+  after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
 
   validate :has_owner
 
