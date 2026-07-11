@@ -84,6 +84,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Comments</h3>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user, admin_only: true %>
   <% end %>

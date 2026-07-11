@@ -5,7 +5,7 @@
 # Table name: invoices
 #
 #  id                                                           :bigint           not null, primary key
-#  aasm_state                                                   :string
+#  aasm_state                                                   :string           not null
 #  amount_due                                                   :bigint
 #  amount_paid                                                  :bigint
 #  amount_remaining                                             :bigint
@@ -111,6 +111,7 @@ class Invoice < ApplicationRecord
 
   extend FriendlyId
   include AASM
+  include HasLedgerItem
 
   include Freezable
 
@@ -151,7 +152,7 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
-  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true

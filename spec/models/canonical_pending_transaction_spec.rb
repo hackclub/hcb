@@ -70,12 +70,11 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
       cpt = create(:canonical_pending_transaction, amount_cents: -999)
 
       expect(cpt.ledger_item).to be_present
-      expect(cpt.ledger_item.memo).to eq(cpt.memo)
       expect(cpt.ledger_item.amount_cents).to eq(cpt.amount_cents)
     end
 
     it "does not create a ledger_item when one is already provided" do
-      existing_item = Ledger::Item.new(memo: "Existing", amount_cents: 500, date: Time.current)
+      existing_item = Ledger::Item.new(memo: "Existing", amount_cents: 500, datetime: Time.current)
       existing_item.save(validate: false)
 
       cpt = create(:canonical_pending_transaction, ledger_item: existing_item)

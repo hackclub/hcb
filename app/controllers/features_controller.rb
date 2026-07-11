@@ -4,7 +4,8 @@ class FeaturesController < ApplicationController
   FEATURES = { # the keys are current feature flags, the values are emojis that show when-enabled.
     hcb_code_popovers_2023_06_16: nil,
     transactions_background_2024_06_05: %w[🌈 🔴 🟢],
-    sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓]
+    sudo_mode_2015_07_21: %w[🔐 🔒 🔑 🔓],
+    meow_nap_2026_07_07: %w[😹 😿 💤]
   }.freeze
 
   before_action :set_actor_and_feature

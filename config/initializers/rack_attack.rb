@@ -18,8 +18,8 @@ class Rack::Attack
     bad_ips&.include?(req.ip)
   end
 
-  # Safelist Hack Club Office
-  if office_ip = Credentials.fetch(:OFFICE_IP)
+  # Safelist Hack Club Office(s)
+  Credentials.fetch(:OFFICE_IP)&.split(",")&.map(&:strip)&.each do |office_ip|
     safelist_ip(office_ip)
   end
   safelist_ip("10.0.0.0/16")
