@@ -104,7 +104,7 @@ class WiseTransfersController < ApplicationController
   def generate_quote
     authorize WiseTransfer.new
 
-    money = Money.from_dollars(params[:amount].to_f, params[:currency])
+    money = Money.from_amount(params[:amount].to_f, params[:currency])
     quote = WiseTransfer.generate_quote(money)
 
     render plain: quote.format, content_type: "text/plain"

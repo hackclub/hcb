@@ -25,7 +25,7 @@
 class CanonicalPendingEventMapping < ApplicationRecord
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
-  belongs_to :canonical_pending_transaction
+  belongs_to :canonical_pending_transaction, touch: true
   belongs_to :event
   belongs_to :subledger, optional: true
 
@@ -33,6 +33,10 @@ class CanonicalPendingEventMapping < ApplicationRecord
 
   after_commit do
     canonical_pending_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
+  end
+
+  after_create do
+    canonical_pending_transaction.touch
   end
 
 end
