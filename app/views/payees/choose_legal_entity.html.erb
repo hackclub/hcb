@@ -1,0 +1,30 @@
+<% title "Tax information for payment" %>
+
+<h1>Who's receiving this payment?</h1>
+
+<p>
+  Before <%= @payee.event.name %> can pay you, we need to know what
+  legal entity is receiving this payment for tax purposes.
+</p>
+
+<p>
+  If you're getting paid on behalf of a business, create a new
+  legal entity or choose one you've already created. Otherwise,
+  choose yourself.
+</p>
+
+<div class="grid grid-cols-3 gap-5">
+  <% @legal_entities.each do |le| %>
+    <div class="card">
+      <p class="text-lg font-bold my-0"><%= le.name %></p>
+      <p class="text-muted my-0"><%= le.entity_type.humanize %></p>
+
+      <div class="tooltipped" aria-label="<%= le.tin_banned? ? "This legal entity is banned" : nil %>">
+        <%= button_to "Choose", set_legal_entity_payee_path(@payee),
+          class: "btn mt-5 w-full",
+          params: { legal_entity_id: le.id },
+          disabled: le.tin_banned? %>
+      </div>
+    </div>
+  <% end %>
+</div>

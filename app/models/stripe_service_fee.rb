@@ -19,6 +19,9 @@
 #
 class StripeServiceFee < ApplicationRecord
   belongs_to :stripe_topup, optional: true
+
+  include HasLedgerItem
+
   after_create_commit do
     topup = StripeTopup.create(
       amount_cents:,

@@ -42,6 +42,10 @@ transaction_grouping_engine_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "TransactionGroupingEngine::NightlyJob"
 
+money_printer_stats_job:
+  cron: "*/15 * * * *" # run every 15 minutes
+  class: "MoneyPrinterStatsJob"
+
 sync_payouts_job:
   cron: "0,30 * * * *" # run every 30 minutes
   class: "SyncPayoutsJob"
@@ -144,6 +148,14 @@ calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "Metric::CalculateSubjectsJob"
 
+detect_logical_transaction_anomalies:
+  cron: "0 * * * *" # run every 1 hour
+  class: "Admin::DetectLogicalTransactionAnomaliesJob"
+
+detect_balance_anomalies:
+  cron: "0 7 * * *" # run every 1 day
+  class: "Admin::DetectBalanceAnomaliesJob"
+
 ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
   class: "Admin::LedgerAudit::GenerateJob"
@@ -244,3 +256,7 @@ notify_events_with_negative_balance_job:
 refresh_disposable_domains:
   cron: "0 11 * * *" # run at 6am est every day
   class: "DisposableEmailDomainListUpdateJob"
+
+hide_onboarding_messages:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Event::HideOnboardingMessagesJob"

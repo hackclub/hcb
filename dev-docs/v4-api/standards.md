@@ -19,13 +19,14 @@ This document defines the conventions and standards for the HCB v4 API. All new 
 - [Admin Access](#admin-access)
 - [Naming Conventions](#naming-conventions)
 - [Rate Limits](#rate-limits)
+- [Request Size & Timeouts](#request-size--timeouts)
 
 ---
 
 ## Basics
 
-- **All requests and responses use JSON.** Always send `Content-Type: application/json` and expect `application/json` back.
-- There is no XML, form-encoded, or multipart support.
+- **Requests and responses use JSON by default.** Send `Content-Type: application/json` and expect `application/json` back.
+- Two exceptions: **file uploads** (e.g. `POST /api/v4/receipts`) use `multipart/form-data`, and the **OAuth token endpoint** accepts `application/x-www-form-urlencoded`. There is no XML support.
 
 ---
 
@@ -39,7 +40,9 @@ Authorization: Bearer hcb_<token>
 
 ### Creating an OAuth Application
 
-There are two ways to register an app in development:
+There are two ways to register an app. The examples below use the local dev host `localhost:3000`; on **production, use `https://hcb.hackclub.com`** for the same `/api/v4/oauth/...` endpoints and the application UI at `https://hcb.hackclub.com/api/v4/oauth/applications`, with a real `redirect_uri`.
+
+> To use the granular v4 scopes (e.g. `restricted receipts:write ledgers:read receipts:read`), register the application with **those** scopes instead of `read write`, and request the same strings in the authorize step. See [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token).
 
 **Option A — Web UI**
 
@@ -79,7 +82,7 @@ Save the `uid` and `secret` from the output.
    redirect_uri=http://localhost:3000/
    ```
 
-HCB also supports the `device_code` grant type for CLI tools and devices without a browser. See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) — HCB uses the scope `api/v4/oauth` instead of `oauth`.
+HCB also supports the `device_code` grant type for CLI tools and devices without a browser (useful for a headless agent). See the [doorkeeper-device_authorization_grant docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage). HCB mounts these endpoints under `api/v4/oauth` instead of the default `oauth` — that is a URL **path prefix**, not an OAuth access scope, so don't add `api/v4/oauth` to your requested `scope=`.
 
 ### Token Expiry & Refresh
 
@@ -499,6 +502,21 @@ All monetary values are represented in **cents** (the smallest currency unit) as
 ## Rate Limits
 
 Requests are throttled at **1,000 requests per 5 minutes per IP address**. Requests that exceed this limit receive a `429 Too Many Requests` response.
+
+---
+
+## Request Size & Timeouts
+
+Every request is bound by a **30-second server timeout**. A call that runs longer is terminated, so keep each request small and page through results instead of asking for everything at once.
+
+- **Paginate listings.** For cursor-paginated list endpoints, the `limit` query param sets the page size: it **defaults to 25** and is **capped at 100** (a larger value returns `400 invalid_operation`). Follow the `after` cursor to page (see [Pagination](#pagination)).
+- **Prefer smaller pages.** Request modest pages such as `?limit=25` and follow the cursor, rather than pushing `limit` to 100 on a large dataset. Smaller pages return faster and stay well under the 30s ceiling.
+
+  ```
+  GET /api/v4/organizations/org_h1izp/transactions?limit=25
+  # then pass the last item's id back as ?after=txn_… for the next page
+  ```
+- **Large uploads count too.** A `multipart/form-data` upload (e.g. `POST /api/v4/receipts`, files up to 50 MB) is also subject to the 30s timeout; a large file over a slow link can approach it. If an upload times out you cannot tell from the response whether it landed.
 
 ---
 
