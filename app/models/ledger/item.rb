@@ -16,6 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  status                       :string
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -61,6 +62,42 @@ class Ledger
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
+    enum :status, {
+      pending: "pending",
+      settled: "settled",
+      reversed: "reversed",
+      released: "released",
+      rejected: "rejected",
+      failed: "failed",
+      canceled: "canceled",
+      declined: "declined"
+    }
+
+    def status_text
+      status.humanize
+    end
+
+    def status_css
+      case status.to_sym
+      when :pending
+        "bg-transparent border border-dashed border-muted m0 mr1"
+      when :settled
+        nil
+      when :reversed
+        "bg-info m0 mr1"
+      when :released
+        "bg-info m0 mr1"
+      when :rejected
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :failed
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :canceled
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :declined
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      end
+    end
+
     validates_presence_of :amount_cents, :memo, :datetime
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
@@ -105,6 +142,29 @@ class Ledger
 
     def calculate_receipt_required
       amount_cents < 0 && primary_ledger&.receipt_required? && linked_object_type != "Disbursement::Outgoing"
+    end
+
+    def calculate_status
+      return :pending if canonical_pending_transactions.unsettled.exists?
+
+      if canonical_transactions.exists?
+        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+
+        return :settled
+      end
+
+      # A declined CPT and no CTs — determine why it never settled
+      if canonical_pending_transactions.any?(&:declined?)
+        return :released if uncaptured_stripe_authorization?
+        return :rejected if linked_object.try(:rejected?)
+        return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :declined
+      end
+
+      # Nothing has mapped to this item yet
+      :pending
     end
 
     def calculate_system_memo
@@ -223,6 +283,7 @@ class Ledger
       self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
+      self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
       self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
@@ -265,6 +326,12 @@ class Ledger
     end
 
     private
+
+    # An approved Stripe authorization that never settled was released without
+    # capture, as opposed to being declined outright
+    def uncaptured_stripe_authorization?
+      canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
+    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.

@@ -6,6 +6,9 @@
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
   <td class="transaction__memo transaction__memo--fluid">
+    <% if item.status.present? && !item.settled? %>
+      <%= badge_for item.status_text, class: item.status_css %>
+    <% end %>
     <%= item.memo %>
   </td>
   <td class="nowrap">
